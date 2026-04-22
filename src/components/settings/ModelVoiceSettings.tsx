@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ModelOption } from '../../types';
 import { Info, Maximize2, Image as ImageIcon } from 'lucide-react';
 import { Tooltip } from '../shared/Tooltip';
@@ -61,6 +61,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const { t: i18n } = useI18n();
 
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
+  const skipNextPromptBlurCommitRef = useRef(false);
 
   // Local state for the large textarea to prevent re-render lag and IME issues
   const [localPrompt, setLocalPrompt] = useState(systemInstruction);
@@ -76,11 +77,39 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   };
 
   const handlePromptBlur = () => {
+    if (skipNextPromptBlurCommitRef.current) {
+      skipNextPromptBlurCommitRef.current = false;
+      return;
+    }
+
     // Commit changes to global state only when the user finishes typing
     if (localPrompt !== systemInstruction) {
       setSystemInstruction(localPrompt);
     }
   };
+
+  const commitPromptIfNeeded = useCallback(() => {
+    if (localPrompt !== systemInstruction) {
+      setSystemInstruction(localPrompt);
+    }
+  }, [localPrompt, setSystemInstruction, systemInstruction]);
+
+  const handleModelSelectorPointerDownCapture = () => {
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLTextAreaElement && activeElement.id === 'system-prompt-input') {
+      skipNextPromptBlurCommitRef.current = true;
+    }
+  };
+
+  const handleModelSelectorClickCapture = () => {
+    queueMicrotask(() => {
+      commitPromptIfNeeded();
+    });
+  };
+
+  const handleModelIdChange = useCallback((id: string) => {
+    setModelId(id);
+  }, [setModelId]);
 
   const handleOpenExpand = () => {
     // Sync current local edits before opening the separate editor modal
@@ -101,12 +130,17 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     <div className="space-y-8">
       {/* Model Selection Group */}
       <div className="space-y-4">
-          <ModelSelector
-            availableModels={availableModels}
-            selectedModelId={modelId}
-            onSelectModel={setModelId}
-            setAvailableModels={setAvailableModels}
-          />
+          <div
+            onPointerDownCapture={handleModelSelectorPointerDownCapture}
+            onClickCapture={handleModelSelectorClickCapture}
+          >
+            <ModelSelector
+              availableModels={availableModels}
+              selectedModelId={modelId}
+              onSelectModel={handleModelIdChange}
+              setAvailableModels={setAvailableModels}
+            />
+          </div>
 
           {/* Thinking Controls */}
           <ThinkingControl

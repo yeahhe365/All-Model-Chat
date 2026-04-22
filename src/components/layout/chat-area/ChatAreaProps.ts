@@ -34,6 +34,7 @@ export interface ChatAreaHeaderModel {
   availableModels: ModelOption[];
   selectedModelId: string;
   isCanvasPromptActive: boolean;
+  isCanvasPromptBusy?: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onNewChat: () => void;

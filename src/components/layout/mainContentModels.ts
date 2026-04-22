@@ -24,6 +24,11 @@ export const buildSettingsForModal = ({
   return {
     ...appSettings,
     ...sessionOverrides,
+    modelId: appSettings.modelId,
+    systemInstruction: appSettings.systemInstruction,
+    thinkingBudget: appSettings.thinkingBudget,
+    thinkingLevel: appSettings.thinkingLevel,
+    mediaResolution: appSettings.mediaResolution,
   };
 };
 

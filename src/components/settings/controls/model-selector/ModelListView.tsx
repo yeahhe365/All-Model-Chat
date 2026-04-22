@@ -49,6 +49,10 @@ export const ModelListView: React.FC<ModelListViewProps> = ({ availableModels, s
                                 <button
                                     type="button"
                                     key={entry.id}
+                                    data-testid={`settings-model-option-${entry.id}`}
+                                    onPointerDown={(event) => {
+                                        event.preventDefault();
+                                    }}
                                     onClick={() => onSelectModel(entry.id)}
                                     className={`w-full flex items-start gap-3 px-3 py-2.5 text-sm rounded-xl border transition-colors text-left ${
                                         isSelected

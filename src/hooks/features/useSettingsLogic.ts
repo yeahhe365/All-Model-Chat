@@ -31,6 +31,12 @@ export const useSettingsLogic = ({
     onImportHistory,
     t
 }: UseSettingsLogicProps) => {
+    const latestSettingsRef = useRef(currentSettings);
+
+    useEffect(() => {
+        latestSettingsRef.current = currentSettings;
+    }, [currentSettings]);
+
     const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
         try {
             const saved = localStorage.getItem(SETTINGS_TAB_STORAGE_KEY);
@@ -146,36 +152,51 @@ export const useSettingsLogic = ({
     };
 
     const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-        onSave({ ...currentSettings, [key]: value });
+        if (Object.is(latestSettingsRef.current[key], value)) {
+            return;
+        }
+
+        const nextSettings = { ...latestSettingsRef.current, [key]: value };
+        latestSettingsRef.current = nextSettings;
+        onSave(nextSettings);
     };
 
     const handleModelChange = (newModelId: string) => {
+        const latestSettings = latestSettingsRef.current;
+
+        if (latestSettings.modelId === newModelId) {
+            return;
+        }
+
         // 1. Cache current model settings
-        if (currentSettings.modelId) {
-            cacheModelSettings(currentSettings.modelId, {
-                mediaResolution: currentSettings.mediaResolution,
-                thinkingBudget: currentSettings.thinkingBudget,
-                thinkingLevel: currentSettings.thinkingLevel
+        if (latestSettings.modelId) {
+            cacheModelSettings(latestSettings.modelId, {
+                mediaResolution: latestSettings.mediaResolution,
+                thinkingBudget: latestSettings.thinkingBudget,
+                thinkingLevel: latestSettings.thinkingLevel
             });
         }
 
         // 2. Load cached settings for new model
         const cached = getCachedModelSettings(newModelId);
 
-        let newThinkingBudget = cached?.thinkingBudget ?? currentSettings.thinkingBudget;
-        const newThinkingLevel = cached?.thinkingLevel ?? getDefaultThinkingLevelForModel(newModelId, currentSettings.thinkingLevel);
-        const newMediaResolution = cached?.mediaResolution ?? currentSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+        let newThinkingBudget = cached?.thinkingBudget ?? latestSettings.thinkingBudget;
+        const newThinkingLevel = cached?.thinkingLevel ?? getDefaultThinkingLevelForModel(newModelId, latestSettings.thinkingLevel);
+        const newMediaResolution = cached?.mediaResolution ?? latestSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
 
         // 3. Apply defaults/clamping logic using shared helper
         newThinkingBudget = adjustThinkingBudget(newModelId, newThinkingBudget);
 
-        onSave({
-            ...currentSettings,
+        const nextSettings = {
+            ...latestSettings,
             modelId: newModelId,
             thinkingBudget: newThinkingBudget,
             thinkingLevel: newThinkingLevel,
             mediaResolution: newMediaResolution,
-        });
+        };
+
+        latestSettingsRef.current = nextSettings;
+        onSave(nextSettings);
     };
 
     const tabs = useMemo<SettingsTabDescriptor[]>(() => [

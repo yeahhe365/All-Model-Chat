@@ -17,6 +17,10 @@ export const ModelSelectorHeader: React.FC<ModelSelectorHeaderProps> = ({ isEdit
             </h4>
 
             <button
+                type="button"
+                onPointerDown={(event) => {
+                    event.preventDefault();
+                }}
                 onClick={() => setIsEditingList(!isEditingList)}
                 className={`text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors ${isEditingList ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]'}`}
             >

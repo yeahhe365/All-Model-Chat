@@ -50,6 +50,11 @@ export const useAppPromptModes = ({
 }: UseAppPromptModesOptions) => {
   const [pendingCanvasPromptActivation, setPendingCanvasPromptActivation] =
     useState<PendingCanvasPromptActivation | null>(null);
+  const [canvasPromptBusy, setCanvasPromptBusy] = useState(false);
+  const [canvasPromptOverrideActive, setCanvasPromptOverrideActive] = useState<boolean | null>(null);
+
+  const isCanvasPromptActive =
+    canvasPromptOverrideActive ?? isCanvasSystemInstruction(currentChatSettings.systemInstruction);
 
   useEffect(() => {
     if (!pendingCanvasPromptActivation) {
@@ -94,6 +99,22 @@ export const useAppPromptModes = ({
     });
   }, [activeChat, activeSessionId, pendingCanvasPromptActivation, setCurrentChatSettings]);
 
+  useEffect(() => {
+    if (canvasPromptOverrideActive === null) {
+      return;
+    }
+
+    const actualActive = isCanvasSystemInstruction(currentChatSettings.systemInstruction);
+    if (actualActive === canvasPromptOverrideActive) {
+      queueMicrotask(() => {
+        setCanvasPromptOverrideActive((current) =>
+          current === canvasPromptOverrideActive ? null : current,
+        );
+        setCanvasPromptBusy(false);
+      });
+    }
+  }, [canvasPromptOverrideActive, currentChatSettings.systemInstruction]);
+
   const activateCanvasPrompt = useCallback(
     async (targetSessionId: string | null) => {
       const newSystemInstruction = await loadCanvasSystemPrompt();
@@ -117,25 +138,41 @@ export const useAppPromptModes = ({
   );
 
   const handleLoadCanvasPromptAndSave = useCallback(async () => {
-    const isCurrentlyCanvasPrompt = isCanvasSystemInstruction(currentChatSettings.systemInstruction);
+    if (canvasPromptBusy) {
+      return;
+    }
 
-    if (isCurrentlyCanvasPrompt) {
-      setPendingCanvasPromptActivation(null);
-      setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
-      if (activeSessionId) {
-        setCurrentChatSettings((prev) => ({
-          ...prev,
-          systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-        }));
+    const isCurrentlyCanvasPrompt =
+      canvasPromptOverrideActive ?? isCanvasSystemInstruction(currentChatSettings.systemInstruction);
+
+    setCanvasPromptBusy(true);
+    setCanvasPromptOverrideActive(!isCurrentlyCanvasPrompt);
+
+    try {
+      if (isCurrentlyCanvasPrompt) {
+        setPendingCanvasPromptActivation(null);
+        setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
+        if (activeSessionId) {
+          setCurrentChatSettings((prev) => ({
+            ...prev,
+            systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
+          }));
+        }
+      } else {
+        await activateCanvasPrompt(activeSessionId);
       }
-    } else {
-      await activateCanvasPrompt(activeSessionId);
+    } catch (error) {
+      setCanvasPromptOverrideActive(isCurrentlyCanvasPrompt);
+      setCanvasPromptBusy(false);
+      throw error;
     }
 
     focusChatInput();
   }, [
     activateCanvasPrompt,
     activeSessionId,
+    canvasPromptBusy,
+    canvasPromptOverrideActive,
     currentChatSettings.systemInstruction,
     setAppSettings,
     setCurrentChatSettings,
@@ -248,5 +285,7 @@ export const useAppPromptModes = ({
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
+    isCanvasPromptActive,
+    isCanvasPromptBusy: canvasPromptBusy,
   };
 };

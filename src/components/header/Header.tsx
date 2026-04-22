@@ -19,6 +19,7 @@ interface HeaderProps {
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
+  isCanvasPromptBusy?: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onTogglePip: () => void;
@@ -44,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   isHistorySidebarOpen,
   onLoadCanvasPrompt,
   isCanvasPromptActive,
+  isCanvasPromptBusy = false,
   isPipSupported,
   isPipActive,
   onTogglePip,
@@ -110,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
         {showTextTools && (
             <button
             onClick={onLoadCanvasPrompt}
-            disabled={isLoading}
+            disabled={isLoading || isCanvasPromptBusy}
             className={`${headerButtonBase} ${isCanvasPromptActive ? headerButtonActive : headerButtonInactive}`}
             aria-label={canvasPromptAriaLabel}
             title={canvasPromptTitle}

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AppSettings, ModelOption } from '../../types';
 import { Modal } from '../shared/Modal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
@@ -31,6 +31,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onImportScenarios, onExportScenarios,
   setAvailableModels
 }) => {
+  const [liveSettings, setLiveSettings] = useState(currentSettings);
   
   const {
       activeTab,
@@ -49,8 +50,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       tabs
   } = useSettingsLogic({
       isOpen,
-      currentSettings,
-      onSave,
+      currentSettings: liveSettings,
+      onSave: (nextSettings) => {
+        setLiveSettings(nextSettings);
+        onSave(nextSettings);
+      },
       onClearAllHistory,
       onClearCache,
       onImportHistory,
@@ -92,7 +96,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     <SettingsContent
                         activeTab={activeTab}
-                        currentSettings={currentSettings}
+                        currentSettings={liveSettings}
                         availableModels={availableModels}
                         updateSetting={updateSetting}
                         handleModelChange={handleModelChange}

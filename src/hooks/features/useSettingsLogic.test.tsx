@@ -62,4 +62,38 @@ describe('useSettingsLogic', () => {
     expect(result.current.tabs.map((tab) => tab.id)).not.toContain('usage');
     unmount();
   });
+
+  it('preserves pending setting updates when a model change happens immediately after', () => {
+    const onSave = vi.fn();
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
+        isOpen: true,
+        currentSettings: DEFAULT_APP_SETTINGS,
+        onSave,
+        onClearAllHistory: vi.fn(),
+        onClearCache: vi.fn(),
+        onImportHistory: vi.fn(),
+        t: (key: string) => key,
+      }),
+    );
+
+    act(() => {
+      result.current.updateSetting('systemInstruction', 'Persist this prompt');
+      result.current.handleModelChange('gemma-4-31b-it');
+    });
+
+    expect(onSave).toHaveBeenNthCalledWith(1, {
+      ...DEFAULT_APP_SETTINGS,
+      systemInstruction: 'Persist this prompt',
+    });
+
+    expect(onSave).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        modelId: 'gemma-4-31b-it',
+        systemInstruction: 'Persist this prompt',
+      }),
+    );
+
+    unmount();
+  });
 });

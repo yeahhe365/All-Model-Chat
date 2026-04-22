@@ -162,10 +162,22 @@ export const useApp = () => {
       setAppSettings(newSettings);
 
       if (activeSessionId) {
-      setCurrentChatSettings((prevChatSettings) => {
+        if (newSettings.modelId !== currentChatSettings.modelId) {
+          handleSelectModelInHeader(newSettings.modelId);
+        }
+
+        setCurrentChatSettings((prevChatSettings) => {
           const sessionOverrides = Object.fromEntries(
             (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>)
-              .filter((key) => key !== 'lockedApiKey' && key in newSettings)
+              .filter(
+                (key) =>
+                  key !== 'lockedApiKey'
+                  && key !== 'modelId'
+                  && key !== 'thinkingBudget'
+                  && key !== 'thinkingLevel'
+                  && key !== 'mediaResolution'
+                  && key in newSettings,
+              )
               .map((key) => [key, newSettings[key]])
           ) as Partial<ChatSettings>;
 
@@ -177,7 +189,7 @@ export const useApp = () => {
         });
       }
     },
-    [activeSessionId, setAppSettings, setCurrentChatSettings]
+    [activeSessionId, currentChatSettings.modelId, handleSelectModelInHeader, setAppSettings, setCurrentChatSettings]
   );
 
   const {
@@ -185,6 +197,8 @@ export const useApp = () => {
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
+    isCanvasPromptActive,
+    isCanvasPromptBusy,
   } = useAppPromptModes({
     appSettings,
     setAppSettings,
@@ -259,6 +273,8 @@ export const useApp = () => {
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
+    isCanvasPromptActive,
+    isCanvasPromptBusy,
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
     handleExportSettings: dataExport.handleExportSettings,

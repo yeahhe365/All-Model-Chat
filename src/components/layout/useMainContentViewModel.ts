@@ -7,7 +7,6 @@ import { useChatStore } from '../../stores/chatStore';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
 import {
   isBboxSystemInstruction,
-  isCanvasSystemInstruction,
   isHdGuideSystemInstruction,
 } from '../../constants/promptHelpers';
 import type { ChatAreaProps } from './chat-area/ChatAreaProps';
@@ -38,6 +37,8 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
+    isCanvasPromptActive,
+    isCanvasPromptBusy,
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
     handleExportSettings,
@@ -390,7 +391,8 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
         currentModelName,
         availableModels: chatState.apiModels,
         selectedModelId: chatState.currentChatSettings.modelId || appSettings.modelId,
-        isCanvasPromptActive: isCanvasSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        isCanvasPromptActive,
+        isCanvasPromptBusy,
         isPipSupported: pipState.isPipSupported,
         isPipActive: pipState.isPipActive,
         onNewChat: chatState.startNewChat,
@@ -435,6 +437,8 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
       handleLoadCanvasPromptAndSave,
       handleSetThinkingLevel,
       inputActions,
+      isCanvasPromptActive,
+      isCanvasPromptBusy,
       messageActions,
       onToggleGemmaReasoning,
       openScenariosModal,

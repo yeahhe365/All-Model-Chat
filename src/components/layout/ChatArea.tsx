@@ -247,6 +247,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
         isHistorySidebarOpen={isHistorySidebarOpen}
         onLoadCanvasPrompt={header.onLoadCanvasPrompt}
         isCanvasPromptActive={header.isCanvasPromptActive}
+        isCanvasPromptBusy={header.isCanvasPromptBusy}
         isPipSupported={header.isPipSupported}
         isPipActive={header.isPipActive}
         onTogglePip={header.onTogglePip}
