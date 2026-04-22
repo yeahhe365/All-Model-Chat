@@ -4,7 +4,7 @@ type MarkdownNode = {
   children?: MarkdownNode[];
 };
 
-const WRAPPED_STRONG_PATTERN = /(\*\*|__)(["'“‘([{（【《「『])([^\n]+?)(["'”’)\]}）】》」』])\1/gu;
+const WRAPPED_STRONG_PATTERN = /(\*\*|__)(["'“‘([{（【《「『])([^\n]*?)(["'”’)\]}）】》」』])([^\n]*?)\1/gu;
 const WRAPPER_PAIRS: Record<string, string> = {
   '"': '"',
   "'": "'",
@@ -26,7 +26,7 @@ const convertWrappedStrongText = (value: string): MarkdownNode[] | null => {
   let cursor = 0;
 
   for (const match of value.matchAll(WRAPPED_STRONG_PATTERN)) {
-    const [fullMatch, , openingWrapper, innerContent, closingWrapper] = match;
+    const [fullMatch, , openingWrapper, innerContent, closingWrapper, trailingContent] = match;
     const matchIndex = match.index ?? -1;
 
     if (matchIndex < 0) {
@@ -47,7 +47,7 @@ const convertWrappedStrongText = (value: string): MarkdownNode[] | null => {
 
     segments.push({
       type: 'strong',
-      children: [{ type: 'text', value: `${openingWrapper}${innerContent}${closingWrapper}` }],
+      children: [{ type: 'text', value: `${openingWrapper}${innerContent}${closingWrapper}${trailingContent}` }],
     });
     cursor = matchIndex + fullMatch.length;
   }

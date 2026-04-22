@@ -45,6 +45,31 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(strong?.textContent).toBe('“不定式”');
   });
 
+  it('renders bold text when wrapped quotes are followed by additional CJK text inside emphasis', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content="这句话听起来像是一个**“反差萌”的幽默表达**"
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const strong = container.querySelector('strong');
+
+    expect(container.textContent).toBe('这句话听起来像是一个“反差萌”的幽默表达');
+    expect(strong).not.toBeNull();
+    expect(strong?.textContent).toBe('“反差萌”的幽默表达');
+  });
+
   it('keeps quoted emphasis markers literal inside inline code', () => {
     act(() => {
       root.render(
