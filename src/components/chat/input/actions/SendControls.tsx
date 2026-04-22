@@ -38,8 +38,9 @@ export const SendControls: React.FC<SendControlsProps> = ({
     onQueueMessage,
 }) => {
     const { t } = useI18n();
-    const iconSize = 20;
+    const iconSize = 18;
     const [ripples, setRipples] = useState<Ripple[]>([]);
+    const mainButtonSizeClass = '!h-9 !w-9';
 
     useEffect(() => {
         if (ripples.length > 0) {
@@ -184,7 +185,7 @@ export const SendControls: React.FC<SendControlsProps> = ({
                 onClick={handleClick}
                 onContextMenu={handleContextMenu}
                 disabled={!isStop && isDisabled}
-                className={`${CHAT_INPUT_BUTTON_CLASS} ${bgClass} ${shapeClass} relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm`}
+                className={`${CHAT_INPUT_BUTTON_CLASS} ${mainButtonSizeClass} ${bgClass} ${shapeClass} relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm`}
                 aria-label={label}
                 title={title}
             >
@@ -203,7 +204,7 @@ export const SendControls: React.FC<SendControlsProps> = ({
                 ))}
 
                 {/* Icons stack on top of each other and fade/rotate in/out */}
-                {renderIcon(isStop, IconStop, { size: 12 })}
+                {renderIcon(isStop, IconStop, { size: 11 })}
                 {renderIcon(isUpload, Loader2, { size: iconSize, className: "animate-spin", strokeWidth: 2 })}
                 {renderIcon(isEdit, editMode === 'update' ? Save : Edit2, { size: iconSize, strokeWidth: 2 })}
                 {renderIcon(isSend, ArrowUp, { size: iconSize, strokeWidth: 2 })}
