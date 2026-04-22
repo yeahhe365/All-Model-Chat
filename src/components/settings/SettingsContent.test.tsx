@@ -130,4 +130,38 @@ describe('SettingsContent', () => {
     expect(handleModelChange).toHaveBeenCalledWith('fallback-model');
     expect(updateSetting).not.toHaveBeenCalledWith('modelId', 'fallback-model');
   });
+
+  it('does not apply zoom-based enter animation to the active settings panel', () => {
+    act(() => {
+      root.render(
+        <SettingsContent
+          activeTab="model"
+          currentSettings={DEFAULT_APP_SETTINGS}
+          availableModels={[]}
+          updateSetting={vi.fn()}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    const panelSurface = container.querySelector('[data-testid="save-model-list"]')?.closest('div');
+
+    expect(panelSurface).not.toBeNull();
+    expect(panelSurface?.className).not.toContain('zoom-in-95');
+  });
 });

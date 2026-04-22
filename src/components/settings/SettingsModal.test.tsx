@@ -73,4 +73,42 @@ describe('SettingsModal', () => {
     expect(scrollingDesktopTitle?.textContent).toBe('API');
     expect(document.body.textContent).toContain('API & Connection');
   });
+
+  it('opens the settings surface without any enter animation class', async () => {
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <WindowProvider>
+          <I18nProvider>
+            <SettingsModal
+              isOpen
+              onClose={vi.fn()}
+              currentSettings={DEFAULT_APP_SETTINGS}
+              availableModels={[]}
+              onSave={vi.fn()}
+              onClearAllHistory={vi.fn()}
+              onClearCache={vi.fn()}
+              onOpenLogViewer={vi.fn()}
+              setAvailableModels={vi.fn()}
+              onInstallPwa={vi.fn()}
+              installState="installed"
+              onImportSettings={vi.fn()}
+              onExportSettings={vi.fn()}
+              onImportHistory={vi.fn()}
+              onExportHistory={vi.fn()}
+              onImportScenarios={vi.fn()}
+              onExportScenarios={vi.fn()}
+              t={t}
+            />
+          </I18nProvider>
+        </WindowProvider>,
+      );
+    });
+
+    const settingsSurface = document.querySelector('[role="dialog"] > div');
+
+    expect(settingsSurface).not.toBeNull();
+    expect(settingsSurface?.className).not.toContain('modal-enter-animation');
+    expect(settingsSurface?.className).not.toContain('settings-surface-enter-animation');
+  });
 });

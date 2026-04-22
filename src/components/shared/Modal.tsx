@@ -9,6 +9,8 @@ interface ModalProps {
   children: React.ReactNode;
   contentClassName?: string;
   backdropClassName?: string;
+  enterAnimationClassName?: string;
+  exitAnimationClassName?: string;
   noPadding?: boolean;
 }
 
@@ -18,6 +20,8 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   contentClassName = '',
   backdropClassName = 'bg-black/60 backdrop-blur-sm',
+  enterAnimationClassName = 'modal-enter-animation',
+  exitAnimationClassName = 'modal-exit-animation',
   noPadding = false,
 }) => {
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
@@ -87,7 +91,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalContentRef}
-        className={`${contentClassName} ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
+        className={`${contentClassName} ${isOpen ? enterAnimationClassName : exitAnimationClassName}`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
