@@ -16,6 +16,11 @@ import { useIsMobile } from '../../hooks/useDevice';
 import { useWindowContext } from '../../contexts/WindowContext';
 
 const SWIPE_FOCUS_MIN_DISTANCE_PX = 60;
+type NavigatorWithVirtualKeyboard = Navigator & {
+  virtualKeyboard?: {
+    show?: () => void;
+  };
+};
 
 const shouldIgnoreSwipeFocusTarget = (target: EventTarget | null) => {
   if (!(target instanceof Element)) {
@@ -27,6 +32,30 @@ const shouldIgnoreSwipeFocusTarget = (target: EventTarget | null) => {
       'header, button, a, input, textarea, select, label, summary, [role="button"], [role="link"], [contenteditable="true"]',
     ),
   );
+};
+
+const activateComposerInput = (
+  composer: HTMLTextAreaElement,
+  navigatorObject?: Navigator,
+) => {
+  if (composer.disabled || composer.readOnly) {
+    return;
+  }
+
+  composer.focus();
+
+  try {
+    const textLength = composer.value.length;
+    composer.setSelectionRange(textLength, textLength);
+  } catch {
+    // Some environments can focus textareas without supporting selection updates.
+  }
+
+  try {
+    (navigatorObject as NavigatorWithVirtualKeyboard | undefined)?.virtualKeyboard?.show?.();
+  } catch {
+    // Ignore virtual keyboard API failures on unsupported browsers.
+  }
 };
 
 export type { ChatAreaProps };
@@ -78,9 +107,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       return;
     }
 
-    if (targetDocument.activeElement !== composer) {
-      composer.focus();
-    }
+    activateComposerInput(composer, targetDocument.defaultView?.navigator);
   }, [targetDocument]);
 
   const handleTouchStart = useCallback(

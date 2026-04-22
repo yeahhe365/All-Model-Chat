@@ -217,6 +217,7 @@ describe('ChatArea provider slice memoization', () => {
   let root: Root;
   let matchMediaMatches = false;
   let windowInnerWidth = 1024;
+  const virtualKeyboardShow = vi.fn();
 
   beforeEach(() => {
     vi.stubGlobal(
@@ -246,6 +247,12 @@ describe('ChatArea provider slice memoization', () => {
         onchange: null,
       })),
     });
+    Object.defineProperty(window.navigator, 'virtualKeyboard', {
+      configurable: true,
+      value: {
+        show: virtualKeyboardShow,
+      },
+    });
 
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -258,6 +265,7 @@ describe('ChatArea provider slice memoization', () => {
     mockState.ui.isHistorySidebarOpen = false;
     mockState.renders.messageList.mockClear();
     mockState.renders.chatInput.mockClear();
+    virtualKeyboardShow.mockClear();
   });
 
   afterEach(() => {
@@ -330,7 +338,7 @@ describe('ChatArea provider slice memoization', () => {
     expect(mockState.renders.chatInput.mock.calls.length).toBe(chatInputRenderCount);
   });
 
-  it('focuses the composer after a downward swipe in the chat area on mobile', () => {
+  it('activates the composer and opens the virtual keyboard after a downward swipe in the chat area on mobile', () => {
     matchMediaMatches = true;
     windowInnerWidth = 390;
     Object.defineProperty(window, 'innerWidth', {
@@ -341,8 +349,10 @@ describe('ChatArea provider slice memoization', () => {
 
     const composer = document.createElement('textarea');
     composer.setAttribute('aria-label', 'Chat message input');
+    composer.value = 'Draft message';
     document.body.appendChild(composer);
     const focusSpy = vi.spyOn(composer, 'focus');
+    const selectionSpy = vi.spyOn(composer, 'setSelectionRange');
 
     const props = createChatAreaProps();
 
@@ -359,5 +369,7 @@ describe('ChatArea provider slice memoization', () => {
     });
 
     expect(focusSpy).toHaveBeenCalledTimes(1);
+    expect(selectionSpy).toHaveBeenCalledWith(composer.value.length, composer.value.length);
+    expect(virtualKeyboardShow).toHaveBeenCalledTimes(1);
   });
 });
