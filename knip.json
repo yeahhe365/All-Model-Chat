@@ -1,6 +1,7 @@
 {
   "entry": [
-    "server/src/index.ts"
+    "server/src/index.ts",
+    "src/pwa/sw.ts"
   ],
   "ignore": [
     "public/runtime-config.js",

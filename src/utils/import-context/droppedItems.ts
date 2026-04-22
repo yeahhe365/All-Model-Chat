@@ -1,6 +1,6 @@
 import { IGNORED_DIRS } from './shared';
 
-export interface DroppedItemsResult {
+interface DroppedItemsResult {
   files: File[];
   emptyDirectoryPaths: string[];
 }

@@ -14,7 +14,7 @@ interface UsageSummary {
   estimatedCostUsdAvailable: boolean;
 }
 
-export interface UsageModelBreakdown extends UsageSummary {
+interface UsageModelBreakdown extends UsageSummary {
   modelId: string;
 }
 

@@ -1,4 +1,4 @@
-export interface TtsVoiceOption {
+interface TtsVoiceOption {
   id: string;
   name: string;
   styleKey: string;

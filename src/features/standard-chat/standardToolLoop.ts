@@ -5,7 +5,7 @@ import type {
   UploadedFile,
 } from '../../types';
 
-export interface StandardToolTurnResult {
+interface StandardToolTurnResult {
   modelContent: ChatHistoryItem;
   parts: Part[];
   thoughts?: string;
@@ -15,7 +15,7 @@ export interface StandardToolTurnResult {
   urlContext?: unknown;
 }
 
-export interface StandardToolLoopMessagePair {
+interface StandardToolLoopMessagePair {
   modelContent: ChatHistoryItem;
   functionResponseParts: Part[];
 }

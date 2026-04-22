@@ -1,6 +1,6 @@
 import { IGNORED_DIRS } from './shared';
 
-export interface DirectoryReadResult {
+interface DirectoryReadResult {
   files: File[];
   emptyDirectoryPaths: string[];
 }

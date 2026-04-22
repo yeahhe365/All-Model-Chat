@@ -35,7 +35,7 @@ const BASE_SUMMARY_NOTES = [
   '- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files',
 ];
 
-export interface RepomixPlainOutputOptions {
+interface RepomixPlainOutputOptions {
   includeFileSummary: boolean;
   includeDirectoryStructure: boolean;
   includeFiles: boolean;

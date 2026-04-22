@@ -6,7 +6,5 @@ export {
 } from '../../../contexts/ChatAreaContext';
 
 export type {
-  ChatAreaInputContextValue,
-  ChatAreaMessageListContextValue,
   ChatAreaProviderValue,
 } from '../../../contexts/ChatAreaContext';

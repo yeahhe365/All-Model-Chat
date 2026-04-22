@@ -14,7 +14,7 @@ import { SavedScenario } from '../../types';
 
 type ScenarioSeedStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
-export interface ScenarioImportPayload {
+interface ScenarioImportPayload {
   type: 'AllModelChat-Scenarios';
   version: 1;
   scenarios: SavedScenario[];
@@ -33,7 +33,7 @@ interface InitializeScenarioStateResult {
 
 const DEPRECATED_SCENARIO_IDS = ['cyberpunk-rpg-scenario'];
 
-export const SYSTEM_SCENARIOS: SavedScenario[] = [
+const SYSTEM_SCENARIOS: SavedScenario[] = [
   reasonerScenario,
   succinctScenario,
   socraticScenario,
@@ -71,8 +71,6 @@ const getScenarioFingerprint = (scenario: SavedScenario): string =>
       ({ role, content }: { role: 'user' | 'model'; content: string }) => ({ role, content }),
     ),
   });
-
-export const isSystemScenarioId = (scenarioId: string): boolean => SYSTEM_SCENARIO_IDS.includes(scenarioId);
 
 export const getExportableUserScenarios = (scenarios: SavedScenario[]): SavedScenario[] =>
   scenarios.filter((scenario) => !RESERVED_SCENARIO_IDS.has(scenario.id));

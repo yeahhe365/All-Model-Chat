@@ -1,7 +1,6 @@
 export type UpdateServiceWorker = (reloadPage?: boolean) => Promise<void>;
-export type ManualUpdateCheckState = 'idle' | 'checking' | 'up-to-date' | 'update-available' | 'error';
 
-export interface RegisterPwaOptions {
+interface RegisterPwaOptions {
   enabled: boolean;
   registerSWImpl?: (options: {
     immediate: boolean;

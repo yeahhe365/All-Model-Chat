@@ -107,7 +107,7 @@ const stableCollator = new Intl.Collator(undefined, {
   sensitivity: 'variant',
 });
 
-export function compareNaturalText(a: string, b: string): number {
+function compareNaturalText(a: string, b: string): number {
   return naturalCollator.compare(a, b) || stableCollator.compare(a, b);
 }
 

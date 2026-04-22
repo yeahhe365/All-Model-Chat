@@ -111,7 +111,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
     const [localContent, setLocalContent] = useState<string | null>(null);
     const hasProvidedContent = content !== undefined && content !== null;
     const [isLoading, setIsLoading] = useState(() => !hasProvidedContent && !!file.dataUrl);
-    const [shouldForceMarkdownRender, setShouldForceMarkdownRender] = useState(false);
+    const [forcedMarkdownPreviewKey, setForcedMarkdownPreviewKey] = useState<string | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -142,11 +142,9 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
         }
     }, [isEditable]);
 
-    useEffect(() => {
-        setShouldForceMarkdownRender(false);
-    }, [content, file.id, file.name, renderMode]);
-
     const displayContent = content ?? localContent;
+    const markdownPreviewKey = `${file.id}:${file.name}:${renderMode}:${displayContent ?? ''}`;
+    const shouldForceMarkdownRender = forcedMarkdownPreviewKey === markdownPreviewKey;
     // Use virtualization for files larger than ~50KB to prevent freezing
     const isLargeFile = (displayContent?.length || 0) > LARGE_TEXT_FILE_THRESHOLD;
     const shouldShowLoading = hasProvidedContent ? false : isLoading;
@@ -191,7 +189,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
                         <button
                             type="button"
                             className="shrink-0 rounded-lg border border-[var(--theme-border-focus)] bg-[var(--theme-bg-accent)]/10 px-3 py-1.5 text-sm font-medium text-[var(--theme-text-primary)] transition-colors hover:bg-[var(--theme-bg-accent)]/20"
-                            onClick={() => setShouldForceMarkdownRender(true)}
+                            onClick={() => setForcedMarkdownPreviewKey(markdownPreviewKey)}
                         >
                             {t('filePreview_render_markdown_anyway')}
                         </button>

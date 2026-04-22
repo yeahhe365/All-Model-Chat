@@ -17,7 +17,7 @@ self.onmessage = async function(e) {
 };
 `;
 
-export interface ExtractDocxTextResult {
+interface ExtractDocxTextResult {
     text: string;
     messages: string[];
 }

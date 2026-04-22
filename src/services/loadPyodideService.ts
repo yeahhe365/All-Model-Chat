@@ -1,4 +1,4 @@
-import type { ExecutionResult, PyodideFile } from './pyodideService';
+import type { PyodideFile } from './pyodideService';
 
 let pyodideServicePromise: Promise<(typeof import('./pyodideService'))['pyodideService']> | null = null;
 
@@ -10,4 +10,4 @@ export const getPyodideService = async () => {
   return pyodideServicePromise;
 };
 
-export type { ExecutionResult, PyodideFile };
+export type { PyodideFile };

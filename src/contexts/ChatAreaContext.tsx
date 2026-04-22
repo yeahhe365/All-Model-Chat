@@ -13,7 +13,7 @@ import type {
 } from '../types';
 import type { ImageOutputMode, ImagePersonGeneration, MediaResolution } from '../types/settings';
 
-export interface ChatAreaMessageListContextValue {
+interface ChatAreaMessageListContextValue {
   messages: ChatMessage[];
   sessionTitle: string;
   setScrollContainerRef: (node: HTMLDivElement | null) => void;
@@ -46,7 +46,7 @@ export interface ChatAreaMessageListContextValue {
   activeSessionId: string | null;
 }
 
-export interface ChatAreaInputContextValue {
+interface ChatAreaInputContextValue {
   appSettings: AppSettings;
   currentChatSettings: ChatSettings;
   setAppFileError: (error: string | null) => void;

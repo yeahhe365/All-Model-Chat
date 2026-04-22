@@ -1,4 +1,4 @@
-export type PreviewMarkupType = 'html' | 'svg';
+type PreviewMarkupType = 'html' | 'svg';
 
 const HTML_LANGUAGE_ALIASES = new Set(['html', 'htm']);
 const SVG_LANGUAGE_ALIASES = new Set(['svg']);

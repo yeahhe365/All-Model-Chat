@@ -28,7 +28,7 @@ type ClientConfig = {
   httpOptions?: ClientHttpOptions;
 };
 
-export type GenerationConfig = {
+type GenerationConfig = {
   responseModalities?: ReadonlyArray<'IMAGE' | 'TEXT'>;
   responseMimeType?: string;
   responseSchema?: Record<string, unknown>;

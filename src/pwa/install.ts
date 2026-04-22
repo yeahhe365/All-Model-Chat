@@ -1,6 +1,6 @@
 export type PwaInstallState = 'available' | 'manual' | 'installed';
 
-export interface PwaInstallSnapshot {
+interface PwaInstallSnapshot {
   state: PwaInstallState;
   canInstall: boolean;
 }

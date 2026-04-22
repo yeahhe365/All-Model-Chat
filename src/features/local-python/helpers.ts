@@ -4,7 +4,7 @@ const PYTHON_BLOCK_REGEX = /```(?:python|py)\s*([\s\S]*?)\s*```/gi;
 
 export const createLocalPythonExecutionSignature = (code: string) => code.trim();
 
-export const getLatestPythonCodeBlock = (content: string): string | null => {
+const getLatestPythonCodeBlock = (content: string): string | null => {
   let latestCode: string | null = null;
   let match: RegExpExecArray | null;
 
