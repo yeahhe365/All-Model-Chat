@@ -55,6 +55,11 @@ interface UseCodeBlockProps {
     onOpenSidePanel: (content: SideViewContent) => void;
 }
 
+type CodeElementProps = {
+    className?: string;
+    children?: React.ReactNode;
+};
+
 export const useCodeBlock = ({
     children,
     className,
@@ -75,7 +80,12 @@ export const useCodeBlock = ({
 
     // Find the code element
     const codeElement = React.Children.toArray(children).find(
-        (child): child is React.ReactElement => React.isValidElement(child)
+        (child): child is React.ReactElement<CodeElementProps> =>
+            React.isValidElement<CodeElementProps>(child)
+            && (
+                child.type === 'code'
+                || Boolean(child.props.className?.includes('language-'))
+            )
     );
 
     // Synchronously resolve content string

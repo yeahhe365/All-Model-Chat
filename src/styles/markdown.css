@@ -169,6 +169,48 @@
   opacity: 0.85; /* Slight dimming for differentiation, but keeping high readability */
 }
 
+.markdown-body details {
+  margin: 0.85rem 0;
+  border: 1px solid var(--theme-border-secondary);
+  border-radius: 0.85rem;
+  background-color: color-mix(in srgb, var(--theme-bg-tertiary) 24%, transparent);
+  overflow: hidden;
+}
+
+.markdown-body details > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.7rem 0.9rem;
+  color: var(--theme-text-secondary);
+  font-weight: 600;
+  user-select: none;
+}
+
+.markdown-body details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.markdown-body details > summary::after {
+  content: '▾';
+  float: right;
+  color: var(--theme-text-tertiary);
+  transition: transform 0.2s ease;
+}
+
+.markdown-body details[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.markdown-body details > div {
+  padding: 0.8rem 0.9rem;
+  border-top: 1px solid var(--theme-border-secondary);
+  color: var(--theme-text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875em;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
 /* Horizontal Rule (Thin Line) - Darker/More Visible */
 .markdown-body hr {
   height: 1px !important;

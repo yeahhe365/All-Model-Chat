@@ -19,10 +19,10 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
     ],
     attributes: {
       ...defaultSchema.attributes,
-      '*': ['className', 'class', 'style', 'ariaHidden', 'ariaLabel', 'role', 'title', 'id', 'width', 'height', 'viewBox', 'preserveAspectRatio', 'xmlns', 'd', 'fill', 'stroke', 'strokeWidth', 'opacity', 'align', 'valign'],
-      code: [...(defaultSchema.attributes?.code || []), 'className', 'inline'],
-      span: [...(defaultSchema.attributes?.span || []), 'className', 'style'],
-      div: [...(defaultSchema.attributes?.div || []), 'className', 'class', 'style', 'align'],
+      '*': ['ariaHidden', 'ariaLabel', 'role', 'title'],
+      code: [...(defaultSchema.attributes?.code || []), 'inline'],
+      span: [...(defaultSchema.attributes?.span || [])],
+      div: [...(defaultSchema.attributes?.div || []), 'align'],
       p: [...(defaultSchema.attributes?.p || []), 'align'],
       img: [...(defaultSchema.attributes?.img || []), 'align', 'width', 'height', 'src'],
       caption: ['align'],
@@ -30,14 +30,20 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
       col: ['span', 'width'],
       td: ['align', 'colSpan', 'rowSpan', 'valign'],
       th: ['align', 'colSpan', 'rowSpan', 'valign'],
-      details: ['open', 'className'],
-      summary: ['className'],
+      svg: ['width', 'height', 'viewBox', 'preserveAspectRatio', 'xmlns', 'fill', 'stroke', 'strokeWidth', 'opacity'],
+      path: ['d', 'fill', 'stroke', 'strokeWidth', 'opacity'],
+      defs: [],
+      symbol: ['viewBox'],
+      use: ['href'],
+      g: ['fill', 'stroke', 'strokeWidth', 'opacity'],
+      details: ['open'],
+      summary: [],
     },
     protocols: {
       ...defaultSchema.protocols,
       src: ['http', 'https', 'data', 'blob'],
     },
-    clobberPrefix: '',
+    clobberPrefix: 'user-content-',
   };
 
   const plugins: PluggableList = [];

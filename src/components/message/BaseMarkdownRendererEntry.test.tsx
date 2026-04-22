@@ -119,6 +119,128 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(caption?.textContent).toBe('Monthly totals');
   });
 
+  it('strips raw html positioning attributes that can escape the markdown surface', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'<section id="danger-zone" class="fixed inset-0 z-[9999]" style="position:fixed;inset:0">Safe text</section>'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const section = container.querySelector('section');
+
+    expect(section).not.toBeNull();
+    expect(section?.getAttribute('id')).toBeNull();
+    expect(section?.getAttribute('class') ?? '').not.toContain('fixed');
+    expect(section?.getAttribute('class') ?? '').not.toContain('z-[9999]');
+    expect(section?.getAttribute('style')).toBeNull();
+    expect(section?.textContent).toBe('Safe text');
+  });
+
+  it('keeps escaped dollar delimiters literal in prose', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'Price is \\$5\\$ today.'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('Price is $5$ today.');
+    expect(container.textContent).not.toContain('Price is (5) today.');
+  });
+
+  it('keeps thinking tags literal inside inline code examples', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'示例：`<thinking>secret</thinking>`'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+          hideThinkingInContext
+        />,
+      );
+    });
+
+    const code = container.querySelector('code');
+
+    expect(code?.textContent).toBe('<thinking>secret</thinking>');
+    expect(container.querySelector('details')).toBeNull();
+  });
+
+  it('keeps thinking tags literal inside fenced code blocks', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'```html\n<thinking>secret</thinking>\n```'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+          hideThinkingInContext
+        />,
+      );
+    });
+
+    expect(container.querySelector('details')).toBeNull();
+    expect(container.textContent).toContain('<thinking>secret</thinking>');
+  });
+
+  it('keeps all raw html pre children when html is allowed', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'<pre><span>alpha</span>beta</pre>'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('alpha');
+    expect(container.textContent).toContain('beta');
+  });
+
   it('hides markdown preview affordances when interactive mode is disabled', () => {
     act(() => {
       root.render(

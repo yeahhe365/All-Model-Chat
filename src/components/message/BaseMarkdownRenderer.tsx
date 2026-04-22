@@ -8,7 +8,6 @@ import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock';
 import { UploadedFile, SideViewContent } from '../../types';
 import { translations } from '../../utils/translations';
 import { extractTextFromNode } from '../../utils/uiUtils';
-import { extractGemmaThoughtChannel } from '../../utils/chat/reasoning';
 import { InlineCode } from './code-block/InlineCode';
 
 const loadMermaidBlock = async () => {
@@ -70,6 +69,144 @@ interface BaseMarkdownRendererProps extends MarkdownRendererProps {
   remarkPlugins: PluggableList;
   rehypePlugins: PluggableList;
 }
+
+type MarkdownSegment = {
+  type: 'text' | 'literal';
+  value: string;
+};
+
+const GEMMA_THOUGHT_CHANNEL_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/gi;
+const THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/gi;
+const INCOMPLETE_THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)$/i;
+const INLINE_MATH_OPERATOR_REGEX = /(?:^|[^A-Za-z])(?:\d+\s*[=+\-*/<>]\s*\d+|[A-Za-z]\s*[=+\-*/<>]\s*[A-Za-z0-9])/;
+const INLINE_MATH_MARKER_REGEX = /[\\^_{}]/;
+
+const splitMarkdownSegments = (value: string): MarkdownSegment[] => {
+  if (!value) {
+    return [];
+  }
+
+  const segments: MarkdownSegment[] = [];
+  let cursor = 0;
+
+  while (cursor < value.length) {
+    if (value.startsWith('```', cursor)) {
+      const closingFenceIndex = value.indexOf('```', cursor + 3);
+
+      if (closingFenceIndex === -1) {
+        segments.push({ type: 'literal', value: value.slice(cursor) });
+        break;
+      }
+
+      segments.push({
+        type: 'literal',
+        value: value.slice(cursor, closingFenceIndex + 3),
+      });
+      cursor = closingFenceIndex + 3;
+      continue;
+    }
+
+    if (value[cursor] === '`') {
+      let tickCount = 1;
+      while (value[cursor + tickCount] === '`') {
+        tickCount += 1;
+      }
+
+      const delimiter = '`'.repeat(tickCount);
+      const closingInlineCodeIndex = value.indexOf(delimiter, cursor + tickCount);
+
+      if (closingInlineCodeIndex === -1) {
+        segments.push({ type: 'text', value: value.slice(cursor, cursor + tickCount) });
+        cursor += tickCount;
+        continue;
+      }
+
+      segments.push({
+        type: 'literal',
+        value: value.slice(cursor, closingInlineCodeIndex + tickCount),
+      });
+      cursor = closingInlineCodeIndex + tickCount;
+      continue;
+    }
+
+    const nextCodeDelimiterIndex = value.indexOf('`', cursor);
+    const nextCursor = nextCodeDelimiterIndex === -1 ? value.length : nextCodeDelimiterIndex;
+    segments.push({ type: 'text', value: value.slice(cursor, nextCursor) });
+    cursor = nextCursor;
+  }
+
+  return segments.filter((segment) => segment.value.length > 0);
+};
+
+const transformMarkdownTextSegments = (
+  value: string,
+  transform: (segment: string) => string,
+): string =>
+  splitMarkdownSegments(value)
+    .map((segment) => (segment.type === 'literal' ? segment.value : transform(segment.value)))
+    .join('');
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const isLikelyMathExpression = (value: string): boolean => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return false;
+  }
+
+  return (
+    INLINE_MATH_MARKER_REGEX.test(trimmedValue)
+    || INLINE_MATH_OPERATOR_REGEX.test(trimmedValue)
+    || trimmedValue.includes('\n')
+  );
+};
+
+const normalizeEscapedMathDelimiters = (value: string): string => {
+  let nextValue = value.replace(/\\\$\$([\s\S]+?)\\\$\$/g, (match, innerContent: string) =>
+    isLikelyMathExpression(innerContent) ? `$$${innerContent}$$` : match,
+  );
+
+  nextValue = nextValue.replace(/\\\$((?:\\.|[^\\$])+?)\\\$/g, (match, innerContent: string) =>
+    isLikelyMathExpression(innerContent) ? `$${innerContent}$` : match,
+  );
+
+  return nextValue;
+};
+
+const createThinkingBlockMarkup = (innerContent: string, isLoading: boolean): string => {
+  const escapedContent = escapeHtml(innerContent.trim());
+  const openAttribute = isLoading ? ' open' : '';
+
+  return `<details${openAttribute}><summary>Raw Thinking Process</summary><div>${escapedContent}</div></details>`;
+};
+
+const wrapReasoningMarkup = (value: string, isLoading: boolean): string => {
+  let nextValue = value.replace(THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
+    createThinkingBlockMarkup(innerContent, isLoading),
+  );
+
+  if (isLoading) {
+    nextValue = nextValue.replace(INCOMPLETE_THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
+      createThinkingBlockMarkup(innerContent, true),
+    );
+  }
+
+  nextValue = nextValue.replace(GEMMA_THOUGHT_CHANNEL_REGEX, (_match, innerContent: string) =>
+    createThinkingBlockMarkup(innerContent, isLoading),
+  );
+
+  return nextValue;
+};
+
+const stripGemmaThoughtMarkup = (value: string): string =>
+  value.replace(GEMMA_THOUGHT_CHANNEL_REGEX, ' ');
 
 export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.memo(({
   content,
@@ -169,8 +306,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
         (child): child is React.ReactElement<CodeElementProps> => {
           return React.isValidElement<CodeElementProps>(child) && (
             child.type === 'code' ||
-            child.props.className?.includes('language-') ||
-            true
+            Boolean(child.props.className?.includes('language-'))
           );
         }
       );
@@ -240,70 +376,18 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
   const processedContent = useMemo(() => {
     if (!content) return '';
 
-    let text = content;
+    const contentWithNormalizedMath = transformMarkdownTextSegments(
+      content,
+      normalizeEscapedMathDelimiters,
+    );
+
     if (hideThinkingInContext) {
-      const openAttr = isLoading ? 'open' : '';
-      const createDetailsBlock = (innerContent: string) =>
-        `<details ${openAttr} class="group rounded-xl bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 open:bg-[var(--theme-bg-tertiary)]/30 open:shadow-sm my-2">
-                <summary class="list-none flex select-none items-center justify-between gap-2 px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--theme-bg-tertiary)]/40 focus:outline-none">
-                    <div class="flex items-center gap-2 min-w-0 overflow-hidden flex-grow">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <div class="flex flex-col min-w-0 justify-center min-h-[1.75rem] sm:min-h-[2rem]">
-                                <div class="flex items-baseline gap-2 min-w-0">
-                                    <span class="text-base text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
-                                        Raw Thinking Process
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-[var(--theme-bg-input)] transition-colors flex-shrink-0">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--theme-text-tertiary)] transition-transform duration-300 group-open:rotate-180">
-                                    <path d="m6 9 6 6 6-6"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </summary>
-                <div class="px-3 pb-3 pt-2 border-t border-[var(--theme-border-secondary)]/50 animate-in fade-in slide-in-from-top-2 duration-300 text-xs relative">
-                    <div class="text-[var(--theme-text-secondary)] leading-relaxed font-mono whitespace-pre-wrap opacity-90">${innerContent}</div>
-                </div>
-            </details>`;
-
-      text = text.replace(/<thinking>([\s\S]*?)<\/[^>]+>/gi, (_, innerContent) => createDetailsBlock(innerContent));
-
-      if (isLoading) {
-        text = text.replace(/<thinking>([\s\S]*?)$/i, (_, innerContent) => createDetailsBlock(innerContent));
-      }
-
-      text = text.replace(/<\|channel\|thought>\s*([\s\S]*?)\s*<channel\|>/gi, (_match, innerContent) =>
-        createDetailsBlock(innerContent.trim()),
+      return transformMarkdownTextSegments(contentWithNormalizedMath, (segment) =>
+        wrapReasoningMarkup(segment, isLoading),
       );
-    } else {
-      const { content: contentWithoutGemmaThoughtChannels } = extractGemmaThoughtChannel(text);
-      text = contentWithoutGemmaThoughtChannels || text;
     }
 
-    const parts = text.split(/(```[\s\S]*?```|```[\s\S]*$)/g);
-    return parts.map(part => {
-      if (part.startsWith('```')) {
-        return part;
-      }
-
-      let processedPart = part.replace(/\\\$\$([\s\S]*?)\\\$\$/g, (_match, innerContent) => {
-        if (/^\s*[\w\d\s,.]+\s*$/.test(innerContent) && !innerContent.includes('_') && !innerContent.includes('^')) {
-          return `[${innerContent.trim()}]`;
-        }
-        return `$$${innerContent}$$`;
-      });
-
-      processedPart = processedPart.replace(/\\\$([\s\S]*?)\\\$/g, (_match, innerContent) => {
-        if (/^\s*[\w\d\s,.]+\s*$/.test(innerContent) && !innerContent.includes('_') && !innerContent.includes('^')) {
-          return `(${innerContent.trim()})`;
-        }
-        return `$${innerContent}$`;
-      });
-
-      return processedPart;
-    }).join('');
+    return transformMarkdownTextSegments(contentWithNormalizedMath, stripGemmaThoughtMarkup);
   }, [content, hideThinkingInContext, isLoading]);
 
   return (
