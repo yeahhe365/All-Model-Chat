@@ -53,3 +53,29 @@ interface FileSystemDirectoryEntry extends FileSystemEntry {
 interface DataTransferItem {
   webkitGetAsEntry?: () => FileSystemEntry | null;
 }
+
+interface FileSystemHandlePermissionDescriptor {
+  mode?: 'read' | 'readwrite';
+}
+
+interface FileSystemHandle {
+  kind: 'file' | 'directory';
+  queryPermission(descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+  requestPermission(descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+}
+
+interface FileSystemDirectoryHandle extends FileSystemHandle {
+  readonly name: string;
+  values(): AsyncIterableIterator<FileSystemHandle>;
+}
+
+interface FileSystemFileHandle extends FileSystemHandle {
+  getFile(): Promise<File>;
+}
+
+interface Window {
+  showDirectoryPicker?: (options?: {
+    id?: string;
+    mode?: 'read' | 'readwrite';
+  }) => Promise<FileSystemDirectoryHandle>;
+}

@@ -10,18 +10,24 @@ interface UseChatInputFileUiOptions {
   selectedFiles: UploadedFile[];
   setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
+  onOpenFolderPicker: () => Promise<void>;
   onScreenshot: () => Promise<void>;
   justInitiatedFileOpRef: React.MutableRefObject<boolean>;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
+  isConverting: boolean;
+  setIsConverting: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const useChatInputFileUi = ({
   selectedFiles,
   setSelectedFiles,
   onProcessFiles,
+  onOpenFolderPicker,
   onScreenshot,
   justInitiatedFileOpRef,
   textareaRef,
+  isConverting,
+  setIsConverting,
 }: UseChatInputFileUiOptions) => {
   const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
   const [editingFile, setEditingFile] = useState<UploadedFile | null>(null);
@@ -30,7 +36,6 @@ export const useChatInputFileUi = ({
   const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [showTtsContextEditor, setShowTtsContextEditor] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
 
   const {
@@ -66,7 +71,11 @@ export const useChatInputFileUi = ({
           imageInputRef.current?.click();
           break;
         case 'folder':
-          folderInputRef.current?.click();
+          if (window.showDirectoryPicker) {
+            void onOpenFolderPicker();
+          } else {
+            folderInputRef.current?.click();
+          }
           break;
         case 'zip':
           zipInputRef.current?.click();
@@ -92,7 +101,7 @@ export const useChatInputFileUi = ({
           break;
       }
     },
-    [onScreenshot],
+    [onOpenFolderPicker, onScreenshot],
   );
 
   const handleConfirmCreateTextFile = useCallback(
@@ -275,6 +284,7 @@ export const useChatInputFileUi = ({
       isPreviewEditable,
       previewFile,
       setConfiguringFile,
+      setIsConverting,
       showTokenModal,
     ],
   );

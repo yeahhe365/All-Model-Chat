@@ -11,6 +11,7 @@ import { useLiveAPI } from '../useLiveAPI';
 import { useTextAreaInsert } from '../useTextAreaInsert';
 import { processClipboardData } from '../../utils/clipboardUtils';
 import { generateFolderContext } from '../../utils/folderImportUtils';
+import { readDirectoryHandle } from '../../utils/import-context/directoryHandleReader';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { geminiServiceInstance } from '../../services/geminiService';
@@ -84,6 +85,7 @@ export const useChatInput = () => {
   } = inputState;
   const pendingSubmissionRef = useRef<PendingChatInputSubmission | null>(null);
   const [queuedSubmission, setQueuedSubmission] = useState<QueuedChatInputSubmission | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
   const { document: targetDocument } = useWindowContext();
   const insertText = useTextAreaInsert(textareaRef, setInputText);
 
@@ -110,13 +112,75 @@ export const useChatInput = () => {
     inputState.justInitiatedFileOpRef.current = true;
     await onProcessFiles([file]);
   }, [inputState.justInitiatedFileOpRef, onProcessFiles]);
+
+  const processFolderImport = useCallback(
+    async (files: File[] | FileList, emptyDirectoryPaths: string[] = []) => {
+      const fileCount = Array.isArray(files) ? files.length : files.length;
+      if (fileCount === 0 && emptyDirectoryPaths.length === 0) {
+        return;
+      }
+
+      const tempId = generateUniqueId();
+
+      setIsConverting(true);
+      setSelectedFiles((prev) => [
+        ...prev,
+        {
+          id: tempId,
+          name: 'Processing folder...',
+          type: 'application/x-directory',
+          size: 0,
+          isProcessing: true,
+          uploadState: 'pending',
+        },
+      ]);
+
+      try {
+        inputState.justInitiatedFileOpRef.current = true;
+        const contextFile = await generateFolderContext(files, {
+          emptyDirectoryPaths,
+        });
+        setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
+        await onProcessFiles([contextFile]);
+      } catch (error) {
+        console.error(error);
+        setAppFileError('Failed to process folder structure.');
+        setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
+      } finally {
+        setIsConverting(false);
+      }
+    },
+    [inputState.justInitiatedFileOpRef, onProcessFiles, setAppFileError, setSelectedFiles],
+  );
+
+  const handleOpenFolderPicker = useCallback(async () => {
+    if (!window.showDirectoryPicker) {
+      return;
+    }
+
+    try {
+      const directoryHandle = await window.showDirectoryPicker({ mode: 'read' });
+      const dropped = await readDirectoryHandle(directoryHandle);
+      await processFolderImport(dropped.files, dropped.emptyDirectoryPaths);
+    } catch (error) {
+      const errorName = error instanceof DOMException ? error.name : '';
+      if (errorName !== 'AbortError' && errorName !== 'NotAllowedError') {
+        console.error(error);
+        setAppFileError('Failed to process folder structure.');
+      }
+    }
+  }, [processFolderImport, setAppFileError]);
+
   const { modalsState, localFileState } = useChatInputFileUi({
     selectedFiles,
     setSelectedFiles,
     onProcessFiles,
+    onOpenFolderPicker: handleOpenFolderPicker,
     onScreenshot: handleScreenshot,
     justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
     textareaRef: inputState.textareaRef,
+    isConverting,
+    setIsConverting,
   });
 
   const voiceState = useVoiceInput({
@@ -381,33 +445,7 @@ export const useChatInput = () => {
   const handleFolderChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.files?.length) {
-        const tempId = generateUniqueId();
-
-        localFileState.setIsConverting(true);
-        setSelectedFiles((prev) => [
-          ...prev,
-          {
-            id: tempId,
-            name: 'Processing folder...',
-            type: 'application/x-directory',
-            size: 0,
-            isProcessing: true,
-            uploadState: 'pending',
-          },
-        ]);
-
-        try {
-          inputState.justInitiatedFileOpRef.current = true;
-          const contextFile = await generateFolderContext(event.target.files);
-          setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
-          await onProcessFiles([contextFile]);
-        } catch (error) {
-          console.error(error);
-          setAppFileError('Failed to process folder structure.');
-          setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
-        } finally {
-          localFileState.setIsConverting(false);
-        }
+        await processFolderImport(event.target.files);
       }
 
       if (modalsState.folderInputRef.current) {
@@ -415,12 +453,8 @@ export const useChatInput = () => {
       }
     },
     [
-      inputState.justInitiatedFileOpRef,
-      localFileState,
       modalsState.folderInputRef,
-      onProcessFiles,
-      setAppFileError,
-      setSelectedFiles,
+      processFolderImport,
     ],
   );
 
