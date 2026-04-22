@@ -218,6 +218,34 @@ describe('chatStore', () => {
       expect(useChatStore.getState().activeMessages).toHaveLength(1);
     });
 
+    it('does not overwrite active session runtime messages while that session is still loading', async () => {
+      const persistedSession = makeSession({
+        id: 's1',
+        title: 'Persisted',
+        messages: [{ id: 'm-db', role: 'model', content: 'stale', timestamp: new Date() }],
+      });
+      const localStreamingMessage = {
+        id: 'm-local',
+        role: 'model' as const,
+        content: 'local partial',
+        isLoading: true,
+        timestamp: new Date(),
+      };
+
+      vi.mocked(dbService.getAllSessionMetadata).mockResolvedValue([{ ...persistedSession, messages: [] }]);
+      vi.mocked(dbService.getSession).mockResolvedValue(persistedSession);
+
+      useChatStore.getState().setActiveSessionId('s1');
+      useChatStore.getState().setActiveMessages([localStreamingMessage]);
+      useChatStore.getState().setSavedSessions([{ ...persistedSession, messages: [localStreamingMessage] }]);
+      useChatStore.getState().setSessionLoading('s1', true);
+
+      await useChatStore.getState().refreshSessions();
+
+      expect(useChatStore.getState().activeMessages).toEqual([localStreamingMessage]);
+      expect(useChatStore.getState().savedSessions[0].messages).toEqual([localStreamingMessage]);
+    });
+
     it('handles DB errors gracefully', async () => {
       vi.mocked(dbService.getAllSessionMetadata).mockRejectedValue(new Error('DB fail'));
       await useChatStore.getState().refreshSessions();
@@ -256,6 +284,20 @@ describe('chatStore', () => {
       useChatStore.getState().setSessionLoading('s1', false);
       expect(useChatStore.getState().loadingSessionIds.has('s1')).toBe(false);
     });
+
+    it('strips completed background session messages when loading ends', () => {
+      useChatStore.getState().setSavedSessions([
+        makeSession({
+          id: 's1',
+          messages: [{ id: 'm1', role: 'model', content: 'Done', timestamp: new Date() }],
+        }),
+      ]);
+
+      useChatStore.getState().setSessionLoading('s1', true);
+      useChatStore.getState().setSessionLoading('s1', false);
+
+      expect(useChatStore.getState().savedSessions[0].messages).toEqual([]);
+    });
   });
 
   // ── updateAndPersistSessions ──
@@ -271,6 +313,54 @@ describe('chatStore', () => {
       );
 
       expect(useChatStore.getState().activeMessages).toHaveLength(1);
+    });
+
+    it('retains background loading session messages in memory while it is still generating', () => {
+      const backgroundMessage = {
+        id: 'm-background',
+        role: 'model' as const,
+        content: '',
+        isLoading: true,
+        timestamp: new Date(),
+      };
+      const activeMessage = {
+        id: 'm-active',
+        role: 'user' as const,
+        content: 'Current',
+        timestamp: new Date(),
+      };
+
+      useChatStore.getState().setSavedSessions([
+        makeSession({ id: 's1', messages: [backgroundMessage], title: 'Background' }),
+        makeSession({ id: 's2', messages: [], title: 'Active' }),
+      ]);
+      useChatStore.getState().setActiveSessionId('s2');
+      useChatStore.getState().setActiveMessages([activeMessage]);
+      useChatStore.getState().setSessionLoading('s1', true);
+
+      useChatStore.getState().updateAndPersistSessions(
+        (prev) =>
+          prev.map((session) =>
+            session.id === 's1'
+              ? {
+                  ...session,
+                  messages: session.messages.map((message) =>
+                    message.id === 'm-background'
+                      ? { ...message, content: 'partial response' }
+                      : message,
+                  ),
+                }
+              : session,
+          ),
+        { persist: false },
+      );
+
+      const backgroundSession = useChatStore
+        .getState()
+        .savedSessions.find((session) => session.id === 's1');
+
+      expect(backgroundSession?.messages).toHaveLength(1);
+      expect(backgroundSession?.messages[0].content).toBe('partial response');
     });
 
     it('persists modified sessions to DB', async () => {

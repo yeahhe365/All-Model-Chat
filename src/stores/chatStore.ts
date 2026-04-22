@@ -17,6 +17,7 @@ const _activeJobs: { current: Map<string, AbortController> } = { current: new Ma
 const _userScrolledUp: { current: boolean } = { current: false };
 const _fileDrafts: { current: Record<string, UploadedFile[]> } = { current: {} };
 const _localLoadingSessionIds = new Set<string>();
+const _sessionPersistVersion = new Map<string, number>();
 let _isDirty = false;
 
 // ── BroadcastChannel for multi-tab sync ──
@@ -43,6 +44,14 @@ function sortSessions(sessions: SavedChatSession[]) {
     if (!a.isPinned && b.isPinned) return 1;
     return b.timestamp - a.timestamp;
   });
+}
+
+function shouldRetainRuntimeMessages(
+  sessionId: string,
+  activeSessionId: string | null,
+  loadingSessionIds: Set<string>,
+) {
+  return sessionId === activeSessionId || loadingSessionIds.has(sessionId);
 }
 
 function sanitizeSessionModel(session: SavedChatSession): SavedChatSession {
@@ -260,9 +269,14 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   refreshSessions: async () => {
     try {
       const metadataList = await dbService.getAllSessionMetadata();
-      const { activeSessionId, setActiveMessages, setSavedSessions } = get();
+      const {
+        activeSessionId,
+        loadingSessionIds,
+        setActiveMessages,
+        setSavedSessions,
+      } = get();
 
-      if (activeSessionId) {
+      if (activeSessionId && !loadingSessionIds.has(activeSessionId)) {
         const fullActiveSession = await dbService.getSession(activeSessionId);
         if (fullActiveSession) {
           const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(fullActiveSession));
@@ -272,7 +286,38 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
       const sanitizedMetadata = metadataList.map(sanitizeSessionModel);
       sortSessions(sanitizedMetadata);
-      setSavedSessions(sanitizedMetadata);
+      setSavedSessions((prev) => {
+        const prevById = new Map(prev.map((session) => [session.id, session]));
+        const merged = sanitizedMetadata.map((session) => {
+          const existing = prevById.get(session.id);
+
+          if (!existing) {
+            return session;
+          }
+
+          prevById.delete(session.id);
+
+          const keepRuntimeMessages = shouldRetainRuntimeMessages(
+            session.id,
+            activeSessionId,
+            loadingSessionIds,
+          );
+
+          return {
+            ...session,
+            ...existing,
+            settings: {
+              ...session.settings,
+              ...existing.settings,
+            },
+            messages: keepRuntimeMessages ? existing.messages : [],
+          };
+        });
+
+        const nextSessions = [...merged, ...prevById.values()];
+        sortSessions(nextSessions);
+        return nextSessions;
+      });
     } catch (e) {
       logService.error('Failed to refresh sessions from DB', { error: e });
     }
@@ -298,7 +343,20 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       const next = new Set(s.loadingSessionIds);
       if (isLoading) next.add(sessionId);
       else next.delete(sessionId);
-      return { loadingSessionIds: next };
+
+      const nextSavedSessions =
+        !isLoading && sessionId !== s.activeSessionId
+          ? s.savedSessions.map((session) =>
+              session.id === sessionId && session.messages.length > 0
+                ? { ...session, messages: [] }
+                : session,
+            )
+          : s.savedSessions;
+
+      return {
+        loadingSessionIds: next,
+        savedSessions: nextSavedSessions,
+      };
     });
 
     broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
@@ -306,7 +364,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
   updateAndPersistSessions: (updater, options = {}) => {
     const { persist = true } = options;
-    const { savedSessions, activeSessionId, activeMessages } = get();
+    const { savedSessions, activeSessionId, activeMessages, loadingSessionIds } = get();
 
     // 1. Reconstruct "Virtual" Full State
     const virtualFullSessions = savedSessions.map(s => {
@@ -342,14 +400,29 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
         .map(session => session.id);
 
       if (modifiedSessions.length > 0 || deletedSessionIds.length > 0) {
+        const persistVersions = new Map<string, number>();
+        modifiedSessions.forEach((session) => {
+          const nextVersion = (_sessionPersistVersion.get(session.id) ?? 0) + 1;
+          _sessionPersistVersion.set(session.id, nextVersion);
+          persistVersions.set(session.id, nextVersion);
+        });
+
         void (async () => {
           const sessionsToPersist = await Promise.all(
             modifiedSessions.map(async (session) => {
+              const version = persistVersions.get(session.id);
+              if (version !== undefined && _sessionPersistVersion.get(session.id) !== version) {
+                return null;
+              }
+
               if (session.id === activeSessionId || session.messages.length > 0) {
                 return session;
               }
 
               const persistedSession = await dbService.getSession(session.id);
+              if (version !== undefined && _sessionPersistVersion.get(session.id) !== version) {
+                return null;
+              }
               if (!persistedSession) {
                 return session;
               }
@@ -363,15 +436,29 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
             }),
           );
 
+          const persistedSessionIds = new Set<string>();
           await Promise.all([
-            ...sessionsToPersist.map((session) => dbService.saveSession(session)),
+            ...sessionsToPersist.map(async (session) => {
+              if (!session) return;
+
+              const version = persistVersions.get(session.id);
+              if (version !== undefined && _sessionPersistVersion.get(session.id) !== version) {
+                return;
+              }
+
+              await dbService.saveSession(session);
+
+              if (version !== undefined && _sessionPersistVersion.get(session.id) === version) {
+                persistedSessionIds.add(session.id);
+              }
+            }),
             ...deletedSessionIds.map((id) => dbService.deleteSession(id)),
           ]);
 
           if (
             deletedSessionIds.length === 0
             && modifiedSessions.length === 1
-            && modifiedSessions[0].id === activeSessionId
+            && persistedSessionIds.has(modifiedSessions[0].id)
           ) {
             broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessions[0].id });
           } else {
@@ -383,7 +470,11 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
     // 6. Return Metadata Only (strip messages)
     const metadataOnly = newFullSessions.map(s => (
-      s.messages && s.messages.length > 0 ? { ...s, messages: [] } : s
+      s.messages
+      && s.messages.length > 0
+      && !shouldRetainRuntimeMessages(s.id, activeSessionId, loadingSessionIds)
+        ? { ...s, messages: [] }
+        : s
     ));
 
     set({ savedSessions: metadataOnly });

@@ -77,12 +77,10 @@ export const useMessageActions = ({
 
                 activeJobs.current.delete(generationId);
             } else {
-                 logService.error(`Could not find active job to stop for generationId: ${generationId}. Aborting all as a fallback.`);
-                 activeJobs.current.forEach(c => c.abort());
+                 logService.error(`Could not find active job to stop for generationId: ${generationId}. Leaving other active jobs untouched.`);
             }
         } else {
-            logService.warn(`handleStopGenerating called for session ${activeSessionId}, but no loading message was found. Aborting all as a fallback.`);
-            activeJobs.current.forEach(c => c.abort());
+            logService.warn(`handleStopGenerating called for session ${activeSessionId}, but no loading message was found. Leaving other active jobs untouched.`);
             
             if (!skipLoadingUpdate) {
                 setSessionLoading(activeSessionId, false);

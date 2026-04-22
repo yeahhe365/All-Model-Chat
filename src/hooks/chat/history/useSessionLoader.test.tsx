@@ -208,6 +208,51 @@ describe('useSessionLoader', () => {
     unmount();
   });
 
+  it('retains outgoing active session messages in memory before switching sessions', async () => {
+    const nextRequest = createDeferred<SavedChatSession | null>();
+    mockGetSession.mockImplementationOnce(() => nextRequest.promise);
+
+    const setSavedSessions = vi.fn();
+    const activeChat = createSession('session-active', 'Active Session');
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: { modelId: 'gemini-2.5-flash' } as any,
+        setSavedSessions,
+        setSavedGroups: vi.fn(),
+        setActiveSessionId: vi.fn(),
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        activeChat,
+        userScrolledUpRef: { current: false },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-active',
+        savedSessions: [{ ...activeChat, messages: [] }] as SavedChatSession[],
+      }),
+    );
+
+    act(() => {
+      void result.current.loadChatSession('session-next');
+    });
+
+    const retainUpdater = setSavedSessions.mock.calls[0]?.[0];
+    expect(typeof retainUpdater).toBe('function');
+
+    const retainedSessions = retainUpdater([{ ...activeChat, messages: [] }]);
+    expect(retainedSessions[0].messages).toEqual(activeChat.messages);
+
+    await act(async () => {
+      nextRequest.resolve(createSession('session-next', 'Next Session'));
+      await flushPromises();
+    });
+
+    unmount();
+  });
+
   it('does not overwrite newer in-memory session settings when initial metadata resolves late', async () => {
     const metadataDeferred = createDeferred<SavedChatSession[]>();
     const groupsDeferred = createDeferred<any[]>();
