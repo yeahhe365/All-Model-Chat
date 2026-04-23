@@ -1,4 +1,4 @@
-import type { FunctionCall, Part, UsageMetadata } from '@google/genai';
+import type { FunctionCall, ModalityTokenCount, Part, UsageMetadata } from '@google/genai';
 import type {
   ChatHistoryItem,
   StandardClientFunctions,
@@ -27,6 +27,415 @@ interface RunStandardToolLoopOptions {
   maxIterations?: number;
 }
 
+interface GroundingSource {
+  uri?: string;
+  title?: string;
+}
+
+interface GroundingChunkLike {
+  web?: GroundingSource;
+  image?: {
+    sourceUri?: string;
+    imageUri?: string;
+    title?: string;
+    domain?: string;
+  };
+}
+
+interface GroundingCarryover {
+  webSearchQueries?: string[];
+  imageSearchQueries?: string[];
+  citations?: GroundingSource[];
+  searchEntryPoint?: unknown;
+}
+
+interface UrlContextItem {
+  retrievedUrl?: string;
+  retrieved_url?: string;
+  urlRetrievalStatus?: string;
+  url_retrieval_status?: string;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const dedupeArray = (values: unknown[]): unknown[] => {
+  const seen = new Set<string>();
+  const merged: unknown[] = [];
+
+  for (const value of values) {
+    const key = JSON.stringify(value);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    merged.push(value);
+  }
+
+  return merged;
+};
+
+const mergeMetadata = (existing: unknown, incoming: unknown): unknown => {
+  if (incoming === undefined || incoming === null) {
+    return existing;
+  }
+
+  if (existing === undefined || existing === null) {
+    return incoming;
+  }
+
+  if (Array.isArray(existing) && Array.isArray(incoming)) {
+    return dedupeArray([...existing, ...incoming]);
+  }
+
+  if (isRecord(existing) && isRecord(incoming)) {
+    const merged: Record<string, unknown> = { ...existing };
+
+    for (const [key, value] of Object.entries(incoming)) {
+      merged[key] = mergeMetadata(merged[key], value);
+    }
+
+    return merged;
+  }
+
+  return incoming;
+};
+
+const mergeUniqueStrings = (existing: string[] = [], incoming: string[] = []) =>
+  Array.from(new Set([...existing, ...incoming]));
+
+const mergeGroundingSources = (
+  existing: GroundingSource[] = [],
+  incoming: GroundingSource[] = [],
+): GroundingSource[] | undefined => {
+  const merged = new Map<string, GroundingSource>();
+
+  for (const source of [...existing, ...incoming]) {
+    const uri = typeof source.uri === 'string' ? source.uri : '';
+    const title = typeof source.title === 'string' ? source.title : '';
+    const key = uri || JSON.stringify(source);
+    if (!key) continue;
+    merged.set(key, {
+      ...(uri ? { uri } : {}),
+      ...(title ? { title } : {}),
+    });
+  }
+
+  return merged.size > 0 ? Array.from(merged.values()) : undefined;
+};
+
+const getGroundingChunkSource = (chunk: GroundingChunkLike): GroundingSource | undefined => {
+  if (chunk.web?.uri) {
+    return chunk.web;
+  }
+
+  if (chunk.image?.sourceUri) {
+    return {
+      uri: chunk.image.sourceUri,
+      title: chunk.image.title || chunk.image.domain,
+    };
+  }
+
+  return undefined;
+};
+
+const extractGroundingCarryover = (metadata: unknown): GroundingCarryover | undefined => {
+  if (!isRecord(metadata)) {
+    return undefined;
+  }
+
+  const webSearchQueries = Array.isArray(metadata.webSearchQueries)
+    ? metadata.webSearchQueries.filter((value): value is string => typeof value === 'string')
+    : [];
+  const imageSearchQueries = Array.isArray(metadata.imageSearchQueries)
+    ? metadata.imageSearchQueries.filter((value): value is string => typeof value === 'string')
+    : [];
+  const groundingChunkSources = Array.isArray(metadata.groundingChunks)
+    ? metadata.groundingChunks
+        .filter((chunk): chunk is GroundingChunkLike => isRecord(chunk))
+        .map(getGroundingChunkSource)
+        .filter((source): source is GroundingSource => Boolean(source?.uri))
+    : [];
+  const citations = Array.isArray(metadata.citations)
+    ? metadata.citations
+        .filter((citation): citation is GroundingSource => isRecord(citation))
+        .filter((citation) => typeof citation.uri === 'string' && citation.uri.length > 0)
+    : [];
+  const mergedSources = mergeGroundingSources(groundingChunkSources, citations);
+  const searchEntryPoint = metadata.searchEntryPoint;
+
+  if (
+    webSearchQueries.length === 0 &&
+    imageSearchQueries.length === 0 &&
+    !mergedSources?.length &&
+    searchEntryPoint === undefined
+  ) {
+    return undefined;
+  }
+
+  return {
+    ...(webSearchQueries.length ? { webSearchQueries } : {}),
+    ...(imageSearchQueries.length ? { imageSearchQueries } : {}),
+    ...(mergedSources?.length ? { citations: mergedSources } : {}),
+    ...(searchEntryPoint !== undefined ? { searchEntryPoint } : {}),
+  };
+};
+
+const mergeGroundingCarryover = (
+  existing: GroundingCarryover | undefined,
+  incoming: unknown,
+): GroundingCarryover | undefined => {
+  const incomingCarryover = extractGroundingCarryover(incoming);
+  if (!incomingCarryover) {
+    return existing;
+  }
+
+  if (!existing) {
+    return incomingCarryover;
+  }
+
+  return {
+    ...(existing.webSearchQueries || incomingCarryover.webSearchQueries
+      ? {
+          webSearchQueries: mergeUniqueStrings(
+            existing.webSearchQueries,
+            incomingCarryover.webSearchQueries,
+          ),
+        }
+      : {}),
+    ...(existing.imageSearchQueries || incomingCarryover.imageSearchQueries
+      ? {
+          imageSearchQueries: mergeUniqueStrings(
+            existing.imageSearchQueries,
+            incomingCarryover.imageSearchQueries,
+          ),
+        }
+      : {}),
+    ...(existing.citations || incomingCarryover.citations
+      ? {
+          citations: mergeGroundingSources(existing.citations, incomingCarryover.citations),
+        }
+      : {}),
+    searchEntryPoint: incomingCarryover.searchEntryPoint ?? existing.searchEntryPoint,
+  };
+};
+
+const mergeGroundingForFinalTurn = (
+  finalGrounding: unknown,
+  carryover: GroundingCarryover | undefined,
+): unknown => {
+  if (!carryover) {
+    return finalGrounding;
+  }
+
+  if (!isRecord(finalGrounding)) {
+    return {
+      ...(carryover.webSearchQueries?.length ? { webSearchQueries: carryover.webSearchQueries } : {}),
+      ...(carryover.imageSearchQueries?.length ? { imageSearchQueries: carryover.imageSearchQueries } : {}),
+      ...(carryover.citations?.length ? { citations: carryover.citations } : {}),
+      ...(carryover.searchEntryPoint !== undefined ? { searchEntryPoint: carryover.searchEntryPoint } : {}),
+    };
+  }
+
+  const currentWebSearchQueries = Array.isArray(finalGrounding.webSearchQueries)
+    ? finalGrounding.webSearchQueries.filter((value): value is string => typeof value === 'string')
+    : [];
+  const currentImageSearchQueries = Array.isArray(finalGrounding.imageSearchQueries)
+    ? finalGrounding.imageSearchQueries.filter((value): value is string => typeof value === 'string')
+    : [];
+  const currentCitations = Array.isArray(finalGrounding.citations)
+    ? finalGrounding.citations.filter((citation): citation is GroundingSource => isRecord(citation))
+    : [];
+
+  return {
+    ...finalGrounding,
+    ...(carryover.webSearchQueries?.length || currentWebSearchQueries.length
+      ? {
+          webSearchQueries: mergeUniqueStrings(
+            carryover.webSearchQueries,
+            currentWebSearchQueries,
+          ),
+        }
+      : {}),
+    ...(carryover.imageSearchQueries?.length || currentImageSearchQueries.length
+      ? {
+          imageSearchQueries: mergeUniqueStrings(
+            carryover.imageSearchQueries,
+            currentImageSearchQueries,
+          ),
+        }
+      : {}),
+    ...(carryover.citations?.length || currentCitations.length
+      ? {
+          citations: mergeGroundingSources(currentCitations, carryover.citations),
+        }
+      : {}),
+    ...(finalGrounding.searchEntryPoint === undefined && carryover.searchEntryPoint !== undefined
+      ? { searchEntryPoint: carryover.searchEntryPoint }
+      : {}),
+  };
+};
+
+const extractUrlContextItems = (metadata: unknown): UrlContextItem[] => {
+  if (!isRecord(metadata)) {
+    return [];
+  }
+
+  const urlMetadata = metadata.urlMetadata;
+  const snakeCaseUrlMetadata = metadata.url_metadata;
+  const items = Array.isArray(urlMetadata)
+    ? urlMetadata
+    : Array.isArray(snakeCaseUrlMetadata)
+      ? snakeCaseUrlMetadata
+      : [];
+
+  return items.filter((item): item is UrlContextItem => isRecord(item));
+};
+
+const mergeUrlContext = (existing: unknown, incoming: unknown): unknown => {
+  if (incoming === undefined || incoming === null) {
+    return existing;
+  }
+
+  if (existing === undefined || existing === null) {
+    return incoming;
+  }
+
+  if (!isRecord(existing) || !isRecord(incoming)) {
+    return mergeMetadata(existing, incoming);
+  }
+
+  const mergedItems = new Map<string, UrlContextItem>();
+  const addItems = (items: UrlContextItem[]) => {
+    for (const item of items) {
+      const url = item.retrievedUrl || item.retrieved_url;
+      const key = url || JSON.stringify(item);
+      if (!key) continue;
+      mergedItems.set(key, item);
+    }
+  };
+
+  addItems(extractUrlContextItems(existing));
+  addItems(extractUrlContextItems(incoming));
+
+  const merged: Record<string, unknown> = {
+    ...existing,
+    ...incoming,
+  };
+
+  delete merged.url_metadata;
+
+  if (mergedItems.size > 0) {
+    merged.urlMetadata = Array.from(mergedItems.values());
+  }
+
+  return merged;
+};
+
+const mergeTokenDetails = (
+  existing: ModalityTokenCount[] | undefined,
+  incoming: ModalityTokenCount[] | undefined,
+): ModalityTokenCount[] | undefined => {
+  const totals = new Map<string, number>();
+
+  for (const detail of [...(existing ?? []), ...(incoming ?? [])]) {
+    const modality = detail.modality;
+    if (!modality) continue;
+    totals.set(modality, (totals.get(modality) ?? 0) + (detail.tokenCount ?? 0));
+  }
+
+  if (totals.size === 0) {
+    return undefined;
+  }
+
+  return Array.from(totals.entries()).map(([modality, tokenCount]) => ({
+    modality: modality as ModalityTokenCount['modality'],
+    tokenCount,
+  }));
+};
+
+const sumTokenDetails = (details: ModalityTokenCount[] | undefined): number | undefined => {
+  if (!details?.length) {
+    return undefined;
+  }
+
+  const total = details.reduce((sum, detail) => sum + (detail.tokenCount ?? 0), 0);
+  return total > 0 ? total : undefined;
+};
+
+const mergeOptionalCounts = (
+  existing?: number,
+  incoming?: number,
+): number | undefined => {
+  const hasExisting = typeof existing === 'number' && existing > 0;
+  const hasIncoming = typeof incoming === 'number' && incoming > 0;
+
+  if (!hasExisting && !hasIncoming) {
+    return undefined;
+  }
+
+  return (existing ?? 0) + (incoming ?? 0);
+};
+
+const mergeUsage = (
+  existing: UsageMetadata | undefined,
+  incoming: UsageMetadata | undefined,
+): UsageMetadata | undefined => {
+  if (!incoming) {
+    return existing;
+  }
+
+  if (!existing) {
+    return incoming;
+  }
+
+  const promptTokensDetails = mergeTokenDetails(
+    existing.promptTokensDetails,
+    incoming.promptTokensDetails,
+  );
+  const cacheTokensDetails = mergeTokenDetails(
+    existing.cacheTokensDetails,
+    incoming.cacheTokensDetails,
+  );
+  const responseTokensDetails = mergeTokenDetails(
+    existing.responseTokensDetails,
+    incoming.responseTokensDetails,
+  );
+  const toolUsePromptTokensDetails = mergeTokenDetails(
+    existing.toolUsePromptTokensDetails,
+    incoming.toolUsePromptTokensDetails,
+  );
+
+  return {
+    promptTokenCount: mergeOptionalCounts(
+      existing.promptTokenCount ?? sumTokenDetails(existing.promptTokensDetails),
+      incoming.promptTokenCount ?? sumTokenDetails(incoming.promptTokensDetails),
+    ),
+    cachedContentTokenCount: mergeOptionalCounts(
+      existing.cachedContentTokenCount ?? sumTokenDetails(existing.cacheTokensDetails),
+      incoming.cachedContentTokenCount ?? sumTokenDetails(incoming.cacheTokensDetails),
+    ),
+    responseTokenCount: mergeOptionalCounts(
+      existing.responseTokenCount ?? sumTokenDetails(existing.responseTokensDetails),
+      incoming.responseTokenCount ?? sumTokenDetails(incoming.responseTokensDetails),
+    ),
+    toolUsePromptTokenCount: mergeOptionalCounts(
+      existing.toolUsePromptTokenCount ?? sumTokenDetails(existing.toolUsePromptTokensDetails),
+      incoming.toolUsePromptTokenCount ?? sumTokenDetails(incoming.toolUsePromptTokensDetails),
+    ),
+    thoughtsTokenCount: mergeOptionalCounts(
+      existing.thoughtsTokenCount,
+      incoming.thoughtsTokenCount,
+    ),
+    totalTokenCount: mergeOptionalCounts(existing.totalTokenCount, incoming.totalTokenCount),
+    promptTokensDetails,
+    cacheTokensDetails,
+    responseTokensDetails,
+    toolUsePromptTokensDetails,
+    trafficType: incoming.trafficType ?? existing.trafficType,
+  };
+};
+
 export const runStandardToolLoop = async ({
   initialContents,
   clientFunctions,
@@ -40,6 +449,9 @@ export const runStandardToolLoop = async ({
   const toolMessages: StandardToolLoopMessagePair[] = [];
   const generatedFiles: UploadedFile[] = [];
   let contents = [...initialContents];
+  let aggregatedUsage: UsageMetadata | undefined;
+  let groundingCarryover: GroundingCarryover | undefined;
+  let aggregatedUrlContext: unknown;
 
   const toStructuredToolResponse = (value: unknown): Record<string, unknown> => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -51,10 +463,21 @@ export const runStandardToolLoop = async ({
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const turn = await runTurn(contents);
+    aggregatedUsage = mergeUsage(aggregatedUsage, turn.usage);
+    aggregatedUrlContext = mergeUrlContext(aggregatedUrlContext, turn.urlContext);
     const functionCalls = turn.functionCalls ?? [];
 
     if (functionCalls.length === 0) {
-      return { finalTurn: turn, toolMessages, generatedFiles };
+      return {
+        finalTurn: {
+          ...turn,
+          usage: aggregatedUsage,
+          grounding: mergeGroundingForFinalTurn(turn.grounding, groundingCarryover),
+          urlContext: aggregatedUrlContext,
+        },
+        toolMessages,
+        generatedFiles,
+      };
     }
 
     const functionResponseParts: Part[] = [];
@@ -113,6 +536,7 @@ export const runStandardToolLoop = async ({
         parts: functionResponseParts,
       },
     ];
+    groundingCarryover = mergeGroundingCarryover(groundingCarryover, turn.grounding);
   }
 
   throw new Error(`Exceeded maximum tool loop iterations (${maxIterations}).`);

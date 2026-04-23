@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import type { Session as LiveSession } from '@google/genai';
-import type { AppSettings, ChatSettings, LiveClientFunctions } from '../types';
+import type { AppSettings, ChatSettings, LiveClientFunctions, UploadedFile } from '../types';
 import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
 import { useLiveConfig } from './live-api/useLiveConfig';
@@ -18,10 +18,11 @@ interface UseLiveAPIProps {
     modelId: string;
     onClose?: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
+    onGeneratedFiles?: (files: UploadedFile[]) => void;
     clientFunctions?: LiveClientFunctions;
 }
 
-export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTranscript, clientFunctions }: UseLiveAPIProps) => {
+export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTranscript, onGeneratedFiles, clientFunctions }: UseLiveAPIProps) => {
     const { t } = useI18n();
     const sessionRef = useRef<Promise<LiveSession> | null>(null);
     const goAwayHandlerRef = useRef<(goAway: { timeLeft?: string }) => void>(() => {});
@@ -71,6 +72,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         stopAudioPlayback,
         onTranscript,
         onGoAway: (goAway) => goAwayHandlerRef.current(goAway),
+        onGeneratedFiles,
         clientFunctions,
         sessionRef,
         setSessionHandle,

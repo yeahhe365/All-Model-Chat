@@ -211,6 +211,180 @@ describe('PyodideService', () => {
     await rejection;
   });
 
+  it('aborts an in-flight execution when the abort signal fires', async () => {
+    const { service, workers } = createService();
+    const [worker] = workers;
+    const abortController = new AbortController();
+
+    const runPromise = service.runPython('print("slow")', {
+      abortSignal: abortController.signal,
+    });
+
+    await flushMicrotasks();
+    abortController.abort();
+
+    await expect(runPromise).rejects.toMatchObject({
+      name: 'AbortError',
+      message: 'Execution aborted.',
+    });
+    expect(worker.terminate).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts while preparing attachment buffers before the worker request starts', async () => {
+    vi.useFakeTimers();
+
+    const { service, workers } = createService();
+    const [worker] = workers;
+    let streamCancelled = false;
+
+    const delayedFile = {
+      stream: () =>
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            setTimeout(() => {
+              controller.enqueue(new Uint8Array([1, 2, 3]));
+              controller.close();
+            }, 1000);
+          },
+          cancel() {
+            streamCancelled = true;
+          },
+        }),
+      arrayBuffer: vi.fn(
+        () =>
+          new Promise<ArrayBuffer>((resolve) => {
+            setTimeout(() => resolve(new Uint8Array([1, 2, 3]).buffer), 1000);
+          }),
+      ),
+    };
+
+    const abortController = new AbortController();
+    const runPromise = service.runPython('print("slow files")', {
+      abortSignal: abortController.signal,
+      files: [
+        {
+          id: 'file-1',
+          name: 'large.bin',
+          rawFile: delayedFile as any,
+        } as any,
+      ],
+    });
+    const rejectionExpectation = expect(runPromise).rejects.toMatchObject({
+      name: 'AbortError',
+      message: 'Execution aborted.',
+    });
+
+    await flushMicrotasks();
+    abortController.abort();
+    await vi.advanceTimersByTimeAsync(0);
+
+    await rejectionExpectation;
+    expect(worker.postMessage).not.toHaveBeenCalled();
+    expect(streamCancelled).toBe(true);
+  });
+
+  it('rejects overlapping requests while attachment preparation is still in progress', async () => {
+    vi.useFakeTimers();
+
+    const { service, workers } = createService();
+    const [worker] = workers;
+    const delayedFile = {
+      arrayBuffer: vi.fn(
+        () =>
+          new Promise<ArrayBuffer>((resolve) => {
+            setTimeout(() => resolve(new Uint8Array([1, 2, 3]).buffer), 1000);
+          }),
+      ),
+    };
+
+    const firstRun = service.runPython('print("first")', {
+      files: [
+        {
+          id: 'file-1',
+          name: 'large.bin',
+          rawFile: delayedFile as any,
+        } as any,
+      ],
+    });
+    const secondRun = service.runPython('print("second")');
+
+    await expect(secondRun).rejects.toThrow('Pyodide request already in progress');
+    expect(worker.postMessage).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushMicrotasks();
+
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      {
+        id: 'mount-1',
+        type: 'RUN_PYTHON',
+        code: 'print("first")',
+        files: [
+          {
+            name: 'large.bin',
+            data: expect.any(ArrayBuffer),
+          },
+        ],
+      },
+      [expect.any(ArrayBuffer)],
+    );
+
+    worker.emit({
+      id: 'mount-1',
+      status: 'success',
+      output: 'first',
+    });
+
+    await expect(firstRun).resolves.toEqual({
+      status: 'success',
+      output: 'first',
+      image: undefined,
+      files: undefined,
+      result: undefined,
+    });
+  });
+
+  it('clears pending request bookkeeping when worker postMessage throws synchronously', async () => {
+    const { service, workers } = createService();
+    const [worker] = workers;
+
+    worker.postMessage.mockImplementationOnce(() => {
+      throw new Error('structured clone failed');
+    });
+
+    await expect(service.runPython('print("boom")')).rejects.toThrow('structured clone failed');
+    expect((service as any).pendingPromises.size).toBe(0);
+    expect((service as any).activeRequestId).toBeNull();
+
+    const recoveredRun = service.runPython('print("after clone error")');
+    await flushMicrotasks();
+
+    expect(worker.postMessage).toHaveBeenNthCalledWith(
+      2,
+      {
+        id: 'run-1',
+        type: 'RUN_PYTHON',
+        code: 'print("after clone error")',
+        files: [],
+      },
+      [],
+    );
+
+    worker.emit({
+      id: 'run-1',
+      status: 'success',
+      output: 'after clone error',
+    });
+
+    await expect(recoveredRun).resolves.toEqual({
+      status: 'success',
+      output: 'after clone error',
+      image: undefined,
+      files: undefined,
+      result: undefined,
+    });
+  });
+
   it('recreates the worker after a timed out execution so the next request can recover', async () => {
     vi.useFakeTimers();
 

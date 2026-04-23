@@ -314,6 +314,7 @@ interface PyodideServiceDependencies {
 
 interface RunPythonOptions {
     files?: UploadedFile[];
+    abortSignal?: AbortSignal;
 }
 
 export const buildPyodideWorkerScript = (baseUri: string) => {
@@ -377,6 +378,12 @@ export class PyodideService {
         }
 
         return new Error(fallbackMessage);
+    }
+
+    private createAbortError() {
+        const abortError = new Error('Execution aborted.');
+        abortError.name = 'AbortError';
+        return abortError;
     }
 
     private beginRequest(id: string) {
@@ -515,47 +522,162 @@ export class PyodideService {
         });
     }
 
-    private async prepareExecutionFiles(files: UploadedFile[] = []) {
-        const preparedFiles = await Promise.all(
-            files.map(async (file) => {
-                if (!file.rawFile) return null;
-                const buffer = await file.rawFile.arrayBuffer();
-                return { name: file.name, data: buffer };
-            })
-        );
+    private async readRawFileBuffer(
+        rawFile: Blob,
+        abortSignal?: AbortSignal,
+    ): Promise<ArrayBuffer> {
+        const abortError = this.createAbortError();
 
-        return preparedFiles.filter(
-            (file): file is { name: string; data: ArrayBuffer } => file !== null
-        );
+        if (abortSignal?.aborted) {
+            throw abortError;
+        }
+
+        const streamFn = (rawFile as Blob & { stream?: () => ReadableStream<Uint8Array> }).stream;
+        if (!abortSignal || typeof streamFn !== 'function') {
+            const buffer = await rawFile.arrayBuffer();
+            if (abortSignal?.aborted) {
+                throw abortError;
+            }
+            return buffer;
+        }
+
+        const reader = streamFn.call(rawFile).getReader();
+        let rejectAbort: ((reason?: unknown) => void) | null = null;
+        const abortPromise = new Promise<never>((_, reject) => {
+            rejectAbort = reject;
+        });
+        const handleAbort = () => {
+            void reader.cancel(abortError).catch(() => undefined);
+            rejectAbort?.(abortError);
+        };
+        abortSignal.addEventListener('abort', handleAbort, { once: true });
+
+        try {
+            const chunks: Uint8Array[] = [];
+            let totalLength = 0;
+
+            while (true) {
+                const { done, value } = await Promise.race([reader.read(), abortPromise]);
+                if (done) {
+                    break;
+                }
+
+                if (value) {
+                    chunks.push(value);
+                    totalLength += value.byteLength;
+                }
+            }
+
+            if (abortSignal.aborted) {
+                throw abortError;
+            }
+
+            const combined = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+                combined.set(chunk, offset);
+                offset += chunk.byteLength;
+            }
+
+            return combined.buffer;
+        } catch (error) {
+            if (abortSignal.aborted) {
+                throw abortError;
+            }
+            throw error;
+        } finally {
+            abortSignal.removeEventListener('abort', handleAbort);
+            try {
+                reader.releaseLock();
+            } catch {
+                // no-op
+            }
+        }
+    }
+
+    private async prepareExecutionFiles(files: UploadedFile[] = [], abortSignal?: AbortSignal) {
+        const preparedFiles: Array<{ name: string; data: ArrayBuffer }> = [];
+        const abortError = this.createAbortError();
+
+        for (const file of files) {
+            if (!file.rawFile) continue;
+            if (abortSignal?.aborted) {
+                throw abortError;
+            }
+
+            const buffer = await this.readRawFileBuffer(file.rawFile, abortSignal);
+            preparedFiles.push({ name: file.name, data: buffer });
+        }
+
+        return preparedFiles;
     }
 
     public async runPython(code: string, options: RunPythonOptions = {}): Promise<ExecutionResult> {
         this.initWorker();
         const id = this.createRequestId();
-        const files = await this.prepareExecutionFiles(options.files);
-        
-        return new Promise<ExecutionResult>((resolve, reject) => {
-            try {
-                this.beginRequest(id);
-            } catch (error) {
-                reject(error);
-                return;
-            }
+        const abortSignal = options.abortSignal;
+        const abortError = this.createAbortError();
 
-            this.pendingPromises.set(id, { resolve: resolve as (val: void | ExecutionResult) => void, reject });
-            const buffers = files.map((file) => file.data);
-            this.worker?.postMessage({ id, type: 'RUN_PYTHON', code, files }, buffers);
+        if (abortSignal?.aborted) {
+            throw abortError;
+        }
+        this.beginRequest(id);
+
+        try {
+            const files = await this.prepareExecutionFiles(options.files, abortSignal);
+            if (abortSignal?.aborted) {
+                throw abortError;
+            }
             
-            // Timeout safety
-            this.setTimeoutFn(() => {
-                if (this.pendingPromises.has(id)) {
+            return await new Promise<ExecutionResult>((resolve, reject) => {
+                const cleanupAbortListener = () => {
+                    abortSignal?.removeEventListener('abort', handleAbort);
+                };
+                const resolveWithCleanup = (value: void | ExecutionResult) => {
+                    cleanupAbortListener();
+                    resolve(value as ExecutionResult);
+                };
+                const rejectWithCleanup = (error: unknown) => {
+                    cleanupAbortListener();
+                    reject(error);
+                };
+                const handleAbort = () => {
+                    if (!this.pendingPromises.has(id)) {
+                        return;
+                    }
+                    this.resetWorker(abortError);
+                };
+
+                abortSignal?.addEventListener('abort', handleAbort, { once: true });
+
+                this.pendingPromises.set(id, {
+                    resolve: resolveWithCleanup as (val: void | ExecutionResult) => void,
+                    reject: rejectWithCleanup,
+                });
+                try {
+                    const buffers = files.map((file) => file.data);
+                    this.worker?.postMessage({ id, type: 'RUN_PYTHON', code, files }, buffers);
+                } catch (error) {
                     this.pendingPromises.delete(id);
                     this.completeRequest(id);
-                    this.resetWorker(new Error("Execution timed out (60s)"), { skipRejectIds: [id] });
-                    reject(new Error("Execution timed out (60s)"));
+                    rejectWithCleanup(error);
+                    return;
                 }
-            }, 60000);
-        });
+                
+                // Timeout safety
+                this.setTimeoutFn(() => {
+                    if (this.pendingPromises.has(id)) {
+                        this.pendingPromises.delete(id);
+                        this.completeRequest(id);
+                        this.resetWorker(new Error("Execution timed out (60s)"), { skipRejectIds: [id] });
+                        rejectWithCleanup(new Error("Execution timed out (60s)"));
+                    }
+                }, 60000);
+            });
+        } catch (error) {
+            this.completeRequest(id);
+            throw error;
+        }
     }
 }
 

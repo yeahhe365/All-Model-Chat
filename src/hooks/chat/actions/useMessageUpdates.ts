@@ -100,11 +100,11 @@ export const useMessageUpdates = ({
         userScrolledUpRef.current = false;
     }, [activeSessionId, updateAndPersistSessions, userScrolledUpRef, appSettings, currentChatSettings, setActiveSessionId]);
 
-    const handleLiveTranscript = useCallback((text: string, role: 'user' | 'model', isFinal: boolean, type: 'content' | 'thought' = 'content', audioUrl?: string | null) => {
+    const handleLiveTranscript = useCallback((text: string, role: 'user' | 'model', isFinal: boolean, type: 'content' | 'thought' = 'content', audioUrl?: string | null, generatedFiles?: UploadedFile[]) => {
         let currentSessionId = activeSessionId || pendingSessionIdRef.current;
 
-        // Auto-create session if receiving transcript in New Chat state
-        if (!currentSessionId && text) {
+        // Auto-create session if receiving any live output in New Chat state.
+        if (!currentSessionId && (text || audioUrl || (generatedFiles && generatedFiles.length > 0))) {
             const newSession = createNewSession({...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings}, [], "Live Session");
             currentSessionId = newSession.id;
             pendingSessionIdRef.current = currentSessionId;
@@ -128,7 +128,7 @@ export const useMessageUpdates = ({
 
             // Only create or update if there is actual text content (or thoughts)
             // OR if there is an audioUrl to attach (e.g. at the end of a turn even if no text change)
-            if (text || audioUrl) {
+            if (text || audioUrl || (generatedFiles && generatedFiles.length > 0)) {
                 if (messageIndex === -1) {
                     // Start a new message for this turn
                     const newMessage = createMessage(role === 'user' ? 'user' : 'model', type === 'content' ? text : '', {
@@ -136,7 +136,8 @@ export const useMessageUpdates = ({
                          isLoading: true, // Mark as loading to indicate active stream/live status
                          firstTokenTimeMs: 0, // Initialize TTFT to 0 for Live API
                          audioSrc: audioUrl || undefined,
-                         audioAutoplay: audioUrl ? false : undefined
+                         audioAutoplay: audioUrl ? false : undefined,
+                         files: generatedFiles?.length ? generatedFiles : undefined,
                     });
                     
                     messages.push(newMessage);
@@ -168,6 +169,9 @@ export const useMessageUpdates = ({
                     if (audioUrl) {
                         updates.audioSrc = audioUrl;
                         updates.audioAutoplay = false; // Disable autoplay for Live API generated audio
+                    }
+                    if (generatedFiles?.length) {
+                        updates.files = [...(msg.files || []), ...generatedFiles];
                     }
                     
                     messages[messageIndex] = { ...msg, ...updates };

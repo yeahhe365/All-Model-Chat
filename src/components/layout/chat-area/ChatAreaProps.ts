@@ -94,7 +94,8 @@ export interface ChatAreaInputActionsModel {
     role: 'user' | 'model',
     isFinal: boolean,
     type?: 'content' | 'thought',
-    audioUrl?: string | null
+    audioUrl?: string | null,
+    generatedFiles?: UploadedFile[],
   ) => void;
   liveClientFunctions?: LiveClientFunctions;
   onEditMessageContent: (messageId: string, newContent: string) => void;

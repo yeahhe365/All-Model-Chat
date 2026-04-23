@@ -114,6 +114,7 @@ interface ChatAreaInputContextValue {
     isFinal: boolean,
     type?: 'content' | 'thought',
     audioUrl?: string | null,
+    generatedFiles?: UploadedFile[],
   ) => void;
   liveClientFunctions?: LiveClientFunctions;
   onToggleBBox?: () => void;

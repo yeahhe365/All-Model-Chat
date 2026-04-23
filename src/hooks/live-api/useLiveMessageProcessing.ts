@@ -2,7 +2,7 @@
 import { useCallback, useRef } from 'react';
 import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
-import type { LiveClientFunctions, ThoughtSupportingPart } from '../../types';
+import type { LiveClientFunctions, ThoughtSupportingPart, UploadedFile } from '../../types';
 import { createWavBlobFromPCMChunks } from '../../utils/audio/audioProcessing';
 
 interface UseLiveMessageProcessingProps {
@@ -10,6 +10,7 @@ interface UseLiveMessageProcessingProps {
     stopAudioPlayback: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
     onGoAway?: (goAway: NonNullable<LiveServerMessage['goAway']>) => void;
+    onGeneratedFiles?: (files: UploadedFile[]) => void;
     clientFunctions?: LiveClientFunctions;
     sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
     setSessionHandle: (handle: string | null) => void;
@@ -21,13 +22,14 @@ export const useLiveMessageProcessing = ({
     stopAudioPlayback,
     onTranscript,
     onGoAway,
+    onGeneratedFiles,
     clientFunctions,
     sessionRef,
     setSessionHandle,
     sessionHandleRef
 }: UseLiveMessageProcessingProps) => {
     
-    const { handleToolCall, cancelToolCalls } = useLiveTools({ clientFunctions, sessionRef });
+    const { handleToolCall, cancelToolCalls } = useLiveTools({ clientFunctions, sessionRef, onGeneratedFiles });
     
     // Buffer for audio chunks to create a downloadable file later
     const audioChunksRef = useRef<string[]>([]);

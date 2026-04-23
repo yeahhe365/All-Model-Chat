@@ -43,18 +43,24 @@ describe('useLiveTools', () => {
 
   it('sends tool responses for uncancelled function calls', async () => {
     const sendToolResponse = vi.fn();
+    const onGeneratedFiles = vi.fn();
+    const generatedFile = { id: 'file-1', name: 'chart.png', type: 'image/png' } as any;
 
     const { result, unmount } = renderHook(() =>
       useLiveTools({
         clientFunctions: {
           run_local_python: {
             declaration: { name: 'run_local_python' } as any,
-            handler: vi.fn(async () => ({ output: '42' })),
+            handler: vi.fn(async () => ({
+              response: { output: '42' },
+              generatedFiles: [generatedFile],
+            })),
           },
         },
         sessionRef: {
           current: Promise.resolve({ sendToolResponse } as any),
         },
+        onGeneratedFiles,
       }),
     );
 
@@ -76,20 +82,21 @@ describe('useLiveTools', () => {
           id: 'call-1',
           name: 'run_local_python',
           response: {
-            result: {
-              output: '42',
-            },
+            output: '42',
           },
         },
       ],
     });
+    expect(onGeneratedFiles).toHaveBeenCalledWith([generatedFile]);
 
     unmount();
   });
 
   it('does not send tool responses for cancelled calls that finish later', async () => {
     const sendToolResponse = vi.fn();
-    let resolveHandler: ((value: unknown) => void) | null = null;
+    let resolveHandler:
+      | ((value: { response: { output: string }; generatedFiles: [] }) => void)
+      | null = null;
 
     const { result, unmount } = renderHook(() =>
       useLiveTools({
@@ -97,8 +104,13 @@ describe('useLiveTools', () => {
           run_local_python: {
             declaration: { name: 'run_local_python' } as any,
             handler: vi.fn(
-              () =>
-                new Promise((resolve) => {
+              (_args, options) =>
+                new Promise<{ response: { output: string }; generatedFiles: [] }>((resolve, reject) => {
+                  options?.abortSignal?.addEventListener('abort', () => {
+                    const abortError = new Error('aborted');
+                    abortError.name = 'AbortError';
+                    reject(abortError);
+                  });
                   resolveHandler = resolve;
                 }),
             ),
@@ -128,7 +140,7 @@ describe('useLiveTools', () => {
     });
 
     await act(async () => {
-      resolveHandler?.({ output: '42' });
+      resolveHandler?.({ response: { output: '42' }, generatedFiles: [] });
       await toolCallPromise;
     });
 

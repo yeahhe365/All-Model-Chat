@@ -97,6 +97,9 @@ export const useChatInput = () => {
     modelId: currentChatSettings.modelId,
     onClose: undefined,
     onTranscript: onLiveTranscript,
+    onGeneratedFiles: onLiveTranscript
+      ? (files) => onLiveTranscript('', 'model', false, 'content', undefined, files)
+      : undefined,
     clientFunctions: liveClientFunctions,
   });
 

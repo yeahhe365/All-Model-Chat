@@ -49,10 +49,18 @@ export type NonStreamMessageSender = (
 
 export interface LiveClientFunction {
   declaration: FunctionDeclaration;
-  handler: (args: unknown) => Promise<unknown>;
+  handler: (
+    args: unknown,
+    options?: { abortSignal?: AbortSignal },
+  ) => Promise<LiveClientFunctionExecutionResult>;
 }
 
 export type LiveClientFunctions = Record<string, LiveClientFunction>;
+
+export interface LiveClientFunctionExecutionResult {
+  response: unknown;
+  generatedFiles?: UploadedFile[];
+}
 
 export interface StandardClientFunctionExecutionResult {
   response: unknown;
