@@ -20,9 +20,10 @@ test('canvas helper toggles on from an edge tap after hover', async ({ page }) =
   const centerY = box.y + box.height / 2;
 
   // Hover first so any hover-state transform is active, then tap near the edge.
+  // Keep a small inset to avoid device-pixel rounding pushing the click outside.
   await page.mouse.move(box.x + box.width / 2, centerY);
   await page.waitForTimeout(50);
-  await page.mouse.move(box.x + box.width - 0.6, centerY);
+  await page.mouse.move(box.x + box.width - 2, centerY);
   await page.mouse.down();
   await page.waitForTimeout(20);
   await page.mouse.up();

@@ -53,10 +53,14 @@ test('renders a streamed chat response from intercepted API chunks', async ({ pa
   await input.fill('Stream this answer');
 
   await page.getByLabel('Send message').click();
+  await page.waitForURL(/\/chat\//);
 
   const messageList = page.locator('[data-testid="virtuoso-item-list"]');
+  await expect(messageList).toBeVisible();
 
-  await expect(messageList.getByText('Stream this answer')).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Stream this answer', exact: true }),
+  ).toBeVisible();
   await expect(messageList.getByText('Streamed markdown reply')).toBeVisible();
   await expect(page.locator('strong', { hasText: 'markdown' })).toBeVisible();
 });

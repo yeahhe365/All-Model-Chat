@@ -11,6 +11,8 @@ const {
   mockAppendFunctionDeclarationsToTools,
   mockRunStandardToolLoop,
   mockCreateStandardClientFunctions,
+  mockSendMessageStream,
+  mockSendMessageNonStream,
 } = vi.hoisted(() => ({
   mockBuildContentParts: vi.fn(),
   mockCreateChatHistoryForApi: vi.fn(),
@@ -19,6 +21,8 @@ const {
   mockAppendFunctionDeclarationsToTools: vi.fn(),
   mockRunStandardToolLoop: vi.fn(),
   mockCreateStandardClientFunctions: vi.fn(),
+  mockSendMessageStream: vi.fn(),
+  mockSendMessageNonStream: vi.fn(),
 }));
 
 vi.mock('../../services/logService', () => ({
@@ -77,8 +81,8 @@ vi.mock('../../services/api/chatApi', () => ({
 
 vi.mock('../../services/geminiService', () => ({
   geminiServiceInstance: {
-    sendMessageStream: vi.fn(),
-    sendMessageNonStream: vi.fn(),
+    sendMessageStream: mockSendMessageStream,
+    sendMessageNonStream: mockSendMessageNonStream,
   },
 }));
 
@@ -162,6 +166,8 @@ describe('useStandardChat', () => {
       toolMessages: [],
       generatedFiles: [],
     });
+    mockSendMessageStream.mockResolvedValue(undefined);
+    mockSendMessageNonStream.mockResolvedValue(undefined);
   });
 
   it('passes the local-python flag into generation config when the client tool is enabled', async () => {
@@ -324,6 +330,207 @@ describe('useStandardChat', () => {
       'gemini-3-pro-image-preview',
       expect.any(Object),
       [],
+    );
+
+    unmount();
+  });
+
+  it('falls back to the normal send path when custom declarations were stripped from the final request', async () => {
+    const streamOnError = vi.fn();
+    const streamOnComplete = vi.fn();
+    const streamOnPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete,
+      streamOnPart,
+      onThoughtChunk,
+    }));
+
+    mockBuildGenerationConfig.mockResolvedValue({
+      systemInstruction: 'base config',
+      tools: [{ googleSearch: {} }],
+    });
+    mockAppendFunctionDeclarationsToTools.mockReturnValue({
+      systemInstruction: 'base config',
+      tools: [{ googleSearch: {} }],
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          hideThinkingInContext: false,
+          isRawModeEnabled: false,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: true,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-2.5-flash',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: true,
+          isCodeExecutionEnabled: false,
+          isLocalPythonEnabled: true,
+          isUrlContextEnabled: false,
+          isDeepSearchEnabled: false,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.sendStandardMessage(
+        'analyze the csv',
+        [],
+        null,
+        'gemini-2.5-flash',
+      );
+    });
+
+    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
+      'gemini-2.5-flash',
+      'Custom system instruction',
+      expect.any(Object),
+      true,
+      0,
+      true,
+      false,
+      false,
+      'LOW',
+      '1:1',
+      false,
+      '1K',
+      [],
+      'MEDIA_RESOLUTION_UNSPECIFIED',
+      false,
+      'IMAGE_TEXT',
+      'ALLOW_ADULT',
+    );
+    expect(mockRunStandardToolLoop).not.toHaveBeenCalled();
+    expect(mockSendMessageStream).toHaveBeenCalledOnce();
+
+    unmount();
+  });
+
+  it('forwards url context metadata to the completion handler on non-stream standard requests', async () => {
+    const streamOnError = vi.fn();
+    const streamOnComplete = vi.fn();
+    const streamOnPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete,
+      streamOnPart,
+      onThoughtChunk,
+    }));
+
+    mockCreateStandardClientFunctions.mockReturnValue({});
+    mockSendMessageNonStream.mockImplementation(
+      async (
+        _apiKey,
+        _modelId,
+        _history,
+        _parts,
+        _config,
+        _signal,
+        _onError,
+        onComplete,
+      ) => {
+        onComplete(
+          [{ text: 'done' }],
+          undefined,
+          { totalTokenCount: 7 },
+          { citations: [{ uri: 'https://example.com/grounding' }] },
+          { visitedUrls: ['https://example.com/article'] },
+        );
+      },
+    );
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          hideThinkingInContext: false,
+          isRawModeEnabled: false,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: false,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-2.5-flash',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: false,
+          isCodeExecutionEnabled: false,
+          isLocalPythonEnabled: false,
+          isUrlContextEnabled: true,
+          isDeepSearchEnabled: false,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.sendStandardMessage(
+        'summarize this url',
+        [],
+        null,
+        'gemini-2.5-flash',
+      );
+    });
+
+    expect(streamOnComplete).toHaveBeenCalledWith(
+      { totalTokenCount: 7 },
+      { citations: [{ uri: 'https://example.com/grounding' }] },
+      { visitedUrls: ['https://example.com/article'] },
     );
 
     unmount();

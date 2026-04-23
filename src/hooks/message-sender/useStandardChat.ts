@@ -267,7 +267,16 @@ export const useStandardChat = ({
       const standardFunctionDeclarations = Object.values(standardClientFunctions).map(
         ({ declaration }) => declaration
       );
-      const isLocalPythonEnabledForTurn = standardFunctionDeclarations.length > 0;
+      const hasRequestedServerSideToolThatNeedsCombination =
+        !!sessionToUpdate.isGoogleSearchEnabled
+        || !!sessionToUpdate.isDeepSearchEnabled
+        || !!sessionToUpdate.isUrlContextEnabled;
+      const isLocalPythonEnabledForTurn =
+        standardFunctionDeclarations.length > 0
+        && (
+          isGemini3Model(activeModelId)
+          || !hasRequestedServerSideToolThatNeedsCombination
+        );
 
       const config = await buildGenerationConfig(
         activeModelId,
@@ -296,7 +305,10 @@ export const useStandardChat = ({
       const requestConfig = appendFunctionDeclarationsToTools(
         activeModelId,
         config,
-        standardFunctionDeclarations,
+        isLocalPythonEnabledForTurn ? standardFunctionDeclarations : [],
+      );
+      const hasFunctionDeclarationsInRequest = !!requestConfig.tools?.some(
+        (tool) => 'functionDeclarations' in tool,
       );
 
       const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } =
@@ -330,7 +342,7 @@ export const useStandardChat = ({
       setSessionLoading(finalSessionId, true);
       activeJobs.current.set(generationId, newAbortController);
 
-      if (standardFunctionDeclarations.length > 0) {
+      if (hasFunctionDeclarationsInRequest) {
         try {
           const toolLoopResult = await runStandardToolLoop({
             initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
@@ -437,14 +449,14 @@ export const useStandardChat = ({
         requestConfig,
         newAbortController.signal,
         streamOnError,
-        (parts, thoughts, usage, grounding) => {
+        (parts, thoughts, usage, grounding, urlContext) => {
           for (const part of parts) {
             streamOnPart(part);
           }
           if (thoughts) {
             onThoughtChunk(thoughts);
           }
-          streamOnComplete(usage, grounding);
+          streamOnComplete(usage, grounding, urlContext);
         }
       );
     },

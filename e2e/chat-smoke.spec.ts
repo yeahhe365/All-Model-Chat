@@ -45,9 +45,9 @@ test('loads the chat shell and executes a python code block through the browser 
   });
 
   await page.goto(`/chat/${SESSION_ID}`);
+  await expect(page.getByText('E2E Pyodide Session')).toBeVisible();
 
   await expect(page.getByLabel('Chat message input')).toBeVisible();
-  await expect(page.getByText('E2E Pyodide Session')).toBeVisible();
 
   const runButton = page.getByTitle('Run Python Code');
   await expect(runButton).toBeVisible();

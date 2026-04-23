@@ -612,7 +612,7 @@ describe('buildGenerationConfig', () => {
       false, false, false, undefined, undefined, false, undefined, undefined, undefined, true
     );
     expect(config.systemInstruction).toContain('Original');
-    expect(config.systemInstruction).toContain('Return ONLY a single fenced Python code block');
+    expect(config.systemInstruction).toContain('Call the `run_local_python` tool');
     expect(config.systemInstruction).toContain('plt.savefig("chart.png")');
   });
 
