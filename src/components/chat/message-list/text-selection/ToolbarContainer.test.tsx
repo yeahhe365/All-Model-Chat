@@ -14,7 +14,7 @@ describe('ToolbarContainer', () => {
     root = createRoot(container);
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this instanceof HTMLDivElement && this.textContent?.includes('Quote')) {
         return {
           x: 0,

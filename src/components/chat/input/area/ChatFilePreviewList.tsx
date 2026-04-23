@@ -8,6 +8,7 @@ interface ChatFilePreviewListProps {
     onRemove: (id: string) => void;
     onCancelUpload: (id: string) => void;
     onConfigure: (file: UploadedFile) => void;
+    onMoveTextToInput: (file: UploadedFile) => Promise<void>;
     onPreview: (file: UploadedFile) => void;
     isGemini3?: boolean;
 }
@@ -17,6 +18,7 @@ export const ChatFilePreviewList: React.FC<ChatFilePreviewListProps> = ({
     onRemove,
     onCancelUpload,
     onConfigure,
+    onMoveTextToInput,
     onPreview,
     isGemini3
 }) => {
@@ -36,6 +38,7 @@ export const ChatFilePreviewList: React.FC<ChatFilePreviewListProps> = ({
                     onRemove={onRemove} 
                     onCancelUpload={onCancelUpload}
                     onConfigure={onConfigure}
+                    onMoveTextToInput={onMoveTextToInput}
                     onPreview={onPreview}
                     isGemini3={isGemini3}
                 />

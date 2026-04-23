@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
-import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal } from 'lucide-react';
+import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, FileText } from 'lucide-react';
 import { CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
-import { formatFileSize } from '../../../utils/fileHelpers';
+import { formatFileSize, isTextFile } from '../../../utils/fileHelpers';
 import { getFileCardMeta } from '../../../utils/fileCardUtils';
 
 interface SelectedFileDisplayProps {
@@ -13,11 +13,20 @@ interface SelectedFileDisplayProps {
   onRemove: (fileId: string) => void;
   onCancelUpload: (fileId: string) => void;
   onConfigure?: (file: UploadedFile) => void;
+  onMoveTextToInput?: (file: UploadedFile) => Promise<void>;
   onPreview?: (file: UploadedFile) => void;
   isGemini3?: boolean;
 }
 
-export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, onRemove, onCancelUpload, onConfigure, onPreview, isGemini3 }) => {
+export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
+  file,
+  onRemove,
+  onCancelUpload,
+  onConfigure,
+  onMoveTextToInput,
+  onPreview,
+  isGemini3,
+}) => {
   const [isNewlyActive, setIsNewlyActive] = useState(false);
   const prevUploadState = useRef(file.uploadState);
   const { isCopied: idCopied, copyToClipboard } = useCopyToClipboard();
@@ -51,6 +60,13 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const isFailed = file.uploadState === 'failed' || !!file.error;
   const isCancelled = file.uploadState === 'cancelled';
   const uploadPercent = Math.max(0, Math.min(100, Math.round(file.progress ?? 0)));
+  const canMoveTextToInput =
+    !!onMoveTextToInput
+    && isTextFile(file)
+    && file.uploadState === 'active'
+    && !isProcessing
+    && !isFailed
+    && !isCancelled;
 
   const isCancellable = isUploading || (isProcessing && file.uploadState !== 'processing_api');
   const {
@@ -157,6 +173,21 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
              >
                 <ConfigIcon size={12} strokeWidth={2} />
              </button>
+        )}
+
+        {canMoveTextToInput && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                void onMoveTextToInput?.(file);
+              }}
+              title="Move text to input"
+              aria-label="Move text to input"
+              className="absolute top-1 left-1 p-1.5 rounded-md bg-black/75 text-white/80 hover:text-white hover:bg-black/90 transition-all z-20"
+            >
+              <FileText size={12} strokeWidth={2} />
+            </button>
         )}
 
         {file.fileApiName && isActive && !file.error && (

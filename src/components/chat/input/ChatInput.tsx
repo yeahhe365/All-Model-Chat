@@ -147,6 +147,7 @@ const ChatInputComponent: React.FC = () => {
       onRemove: handlers.removeSelectedFile,
       onCancelUpload: chatInput.onCancelUpload,
       onConfigure: localFileState.handleConfigureFile,
+      onMoveTextToInput: localFileState.handleMoveTextFileToInput,
       onPreview: localFileState.handlePreviewFile,
       isGemini3: capabilities.isGemini3,
     },

@@ -91,4 +91,49 @@ describe('SelectedFileDisplay', () => {
 
     expect(container.textContent).toContain('Processing on Gemini');
   });
+
+  it('shows a move-to-input action for active text files when the callback is provided', () => {
+    act(() => {
+      root.render(
+        <SelectedFileDisplay
+          {...({
+            file: createFile(),
+            onRemove: () => {},
+            onCancelUpload: () => {},
+            onMoveTextToInput: vi.fn(),
+          } as any)}
+        />
+      );
+    });
+
+    const moveButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.getAttribute('aria-label') === 'Move text to input',
+    );
+
+    expect(moveButton).not.toBeUndefined();
+  });
+
+  it('does not show the move-to-input action for non-text files', () => {
+    act(() => {
+      root.render(
+        <SelectedFileDisplay
+          {...({
+            file: createFile({
+              name: 'diagram.png',
+              type: 'image/png',
+            }),
+            onRemove: () => {},
+            onCancelUpload: () => {},
+            onMoveTextToInput: vi.fn(),
+          } as any)}
+        />
+      );
+    });
+
+    const moveButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.getAttribute('aria-label') === 'Move text to input',
+    );
+
+    expect(moveButton).toBeUndefined();
+  });
 });

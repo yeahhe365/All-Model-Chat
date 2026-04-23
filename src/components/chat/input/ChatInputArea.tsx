@@ -113,6 +113,7 @@ export const ChatInputArea: React.FC = () => {
                             onRemove={fileDisplayProps.onRemove}
                             onCancelUpload={fileDisplayProps.onCancelUpload}
                             onConfigure={fileDisplayProps.onConfigure}
+                            onMoveTextToInput={fileDisplayProps.onMoveTextToInput}
                             onPreview={fileDisplayProps.onPreview}
                             isGemini3={fileDisplayProps.isGemini3}
                         />

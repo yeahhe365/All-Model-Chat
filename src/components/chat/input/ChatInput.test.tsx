@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaResolution, type AppSettings, type ChatSettings, type InputCommand } from '../../../types';
+import { MediaResolution, type AppSettings, type ChatSettings, type InputCommand, type UploadedFile } from '../../../types';
 import { ChatAreaProvider, type ChatAreaProviderValue } from '../../layout/chat-area/ChatAreaContext';
 import { ChatInput } from './ChatInput';
 
@@ -112,7 +112,8 @@ vi.mock('./ChatInputArea', async () => {
   const { useChatInputView } = await import('./ChatInputViewContext');
 
   const ChatInputArea = () => {
-    const { formProps, inputProps, actionsProps } = useChatInputView();
+    const view = useChatInputView() as any;
+    const { formProps, inputProps, actionsProps, fileDisplayProps } = view;
     const queuedProps = (useChatInputView() as any).queuedSubmissionProps;
     const extendedActionsProps = actionsProps as typeof actionsProps & {
       canQueueMessage?: boolean;
@@ -154,6 +155,16 @@ vi.mock('./ChatInputArea', async () => {
         >
           queue
         </button>
+        {fileDisplayProps.selectedFiles.map((file: { id: string; name: string }) => (
+          <button
+            key={file.id}
+            type="button"
+            data-testid={`move-file-${file.id}`}
+            onClick={() => fileDisplayProps.onMoveTextToInput?.(file)}
+          >
+            move {file.name}
+          </button>
+        ))}
       </form>
     );
   };
@@ -213,7 +224,7 @@ const createProviderValue = (commandedInput: InputCommand | null) =>
       activeSessionId: 'session-1',
       commandedInput,
       onMessageSent: vi.fn(),
-      selectedFiles: [],
+      selectedFiles: [] as UploadedFile[],
       setSelectedFiles: vi.fn(),
       onSendMessage: vi.fn(),
       isLoading: false as boolean,
@@ -640,5 +651,60 @@ describe('ChatInput', () => {
 
     expect(container.querySelector('[data-testid="queued-card"]')).toBeNull();
     expect(textarea?.value).toBe('Bring this back');
+  });
+
+  it('moves text file content into the composer and removes only that file from the selection', async () => {
+    const setSelectedFiles = vi.fn();
+    const providerValue = createProviderValue(null);
+    const selectedFiles: UploadedFile[] = [
+      {
+        id: 'text-file',
+        name: 'prompt.txt',
+        type: 'text/plain',
+        size: 24,
+        uploadState: 'active',
+        textContent: 'Prompt from attachment',
+      },
+      {
+        id: 'image-file',
+        name: 'diagram.png',
+        type: 'image/png',
+        size: 128,
+        uploadState: 'active',
+      },
+    ];
+    providerValue.input.selectedFiles = selectedFiles;
+    providerValue.input.setSelectedFiles = setSelectedFiles;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const moveButton = container.querySelector<HTMLButtonElement>('[data-testid="move-file-text-file"]');
+
+    expect(textarea).not.toBeNull();
+    expect(moveButton).not.toBeNull();
+
+    await act(async () => {
+      moveButton?.click();
+    });
+
+    expect(textarea?.value).toBe('Prompt from attachment');
+    expect(setSelectedFiles).toHaveBeenCalledTimes(1);
+
+    const removeConvertedFile = setSelectedFiles.mock.calls[0]?.[0] as
+      | ((files: Array<{ id: string }>) => Array<{ id: string }>)
+      | undefined;
+
+    expect(removeConvertedFile).toBeTypeOf('function');
+    expect(removeConvertedFile?.([
+      { id: 'text-file' },
+      { id: 'image-file' },
+    ])).toEqual([{ id: 'image-file' }]);
   });
 });

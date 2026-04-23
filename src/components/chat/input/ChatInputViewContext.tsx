@@ -17,6 +17,7 @@ export interface ChatInputViewModel {
     onRemove: (id: string) => void;
     onCancelUpload: (id: string) => void;
     onConfigure: (file: UploadedFile) => void;
+    onMoveTextToInput: (file: UploadedFile) => Promise<void>;
     onPreview: (file: UploadedFile) => void;
     isGemini3?: boolean;
   };

@@ -5,10 +5,13 @@ import type { UploadedFile } from '../../types';
 import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
 import { isTextFile } from '../../utils/fileHelpers';
 import { useFileModalState } from '../ui/useFileModalState';
+import { readUploadedTextFileContent } from './textFileToInput';
 
 interface UseChatInputFileUiOptions {
   selectedFiles: UploadedFile[];
   setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
+  setInputText: React.Dispatch<React.SetStateAction<string>>;
+  setAppFileError: (error: string | null) => void;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
   onOpenFolderPicker: () => Promise<void>;
   onScreenshot: () => Promise<void>;
@@ -21,6 +24,8 @@ interface UseChatInputFileUiOptions {
 export const useChatInputFileUi = ({
   selectedFiles,
   setSelectedFiles,
+  setInputText,
+  setAppFileError,
   onProcessFiles,
   onOpenFolderPicker,
   onScreenshot,
@@ -208,6 +213,31 @@ export const useChatInputFileUi = ({
     openPreview(file);
   }, [openPreview]);
 
+  const handleMoveTextFileToInput = useCallback(
+    async (file: UploadedFile) => {
+      try {
+        setAppFileError(null);
+        const content = await readUploadedTextFileContent(file);
+        setInputText(content);
+        setSelectedFiles((prev) => prev.filter((candidate) => candidate.id !== file.id));
+
+        requestAnimationFrame(() => {
+          const textarea = textareaRef.current;
+          if (!textarea) {
+            return;
+          }
+
+          textarea.focus();
+          textarea.setSelectionRange(content.length, content.length);
+        });
+      } catch (error) {
+        console.error('Failed to move text file into input:', error);
+        setAppFileError('Failed to read text file content.');
+      }
+    },
+    [setAppFileError, setInputText, setSelectedFiles, textareaRef],
+  );
+
   const modalsState = useMemo(
     () => ({
       showCreateTextFileEditor,
@@ -263,6 +293,7 @@ export const useChatInputFileUi = ({
       handleSaveTextFile,
       handleSavePreviewTextFile,
       handleConfigureFile,
+      handleMoveTextFileToInput,
       handlePreviewFile,
       handlePrevImage,
       handleNextImage,
@@ -274,6 +305,7 @@ export const useChatInputFileUi = ({
       configuringFile,
       currentImageIndex,
       handleConfigureFile,
+      handleMoveTextFileToInput,
       handleNextImage,
       handlePreviewFile,
       handlePrevImage,

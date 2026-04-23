@@ -177,6 +177,8 @@ export const useChatInput = () => {
   const { modalsState, localFileState } = useChatInputFileUi({
     selectedFiles,
     setSelectedFiles,
+    setInputText: inputState.setInputText,
+    setAppFileError,
     onProcessFiles,
     onOpenFolderPicker: handleOpenFolderPicker,
     onScreenshot: handleScreenshot,
