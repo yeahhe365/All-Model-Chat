@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
+import { LOCAL_PYTHON_SYSTEM_PROMPT } from '../../constants/promptConstants';
 import { useLiveConfig } from './useLiveConfig';
 
 const renderHook = <T,>(callback: () => T) => {
@@ -99,6 +100,36 @@ describe('useLiveConfig', () => {
         {
           name: 'turn_on_the_lights',
           description: 'Turns on the lights.',
+        },
+      ],
+    });
+    unmount();
+  });
+
+  it('appends the local python execution prompt when the live session exposes run_local_python', () => {
+    const { result, unmount } = renderHook(() =>
+      useLiveConfig({
+        chatSettings: {
+          ...baseChatSettings,
+          systemInstruction: 'Custom live instruction',
+        } as any,
+        sessionHandle: null,
+        clientFunctions: {
+          run_local_python: {
+            declaration: {
+              name: 'run_local_python',
+              description: 'Runs Python locally.',
+            },
+            handler: async () => 'ok',
+          },
+        } as any,
+      }),
+    );
+
+    expect(result.current.liveConfig.systemInstruction).toEqual({
+      parts: [
+        {
+          text: `Custom live instruction\n\n${LOCAL_PYTHON_SYSTEM_PROMPT}`,
         },
       ],
     });

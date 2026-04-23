@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { ChatSettings } from '../../types';
 import type { Tool } from '@google/genai';
 import type { LiveClientFunctions } from '../../types';
+import { LOCAL_PYTHON_SYSTEM_PROMPT } from '../../constants/promptConstants';
 
 interface UseLiveConfigProps {
     chatSettings: ChatSettings;
@@ -55,6 +56,17 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: 
             tools.push({ functionDeclarations });
         }
 
+        const hasLocalPythonTool = functionDeclarations.some(
+            (declaration) => declaration.name === 'run_local_python',
+        );
+        const effectiveSystemInstruction = hasLocalPythonTool
+            ? (
+                chatSettings.systemInstruction
+                    ? `${chatSettings.systemInstruction}\n\n${LOCAL_PYTHON_SYSTEM_PROMPT}`
+                    : LOCAL_PYTHON_SYSTEM_PROMPT
+            )
+            : chatSettings.systemInstruction;
+
         // Build Config
         const liveConfig: LiveConfig = {
             // Use string literal 'AUDIO' for better compatibility in Live API JSON serialization
@@ -63,8 +75,8 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: 
                 voiceConfig: { prebuiltVoiceConfig: { voiceName: chatSettings.ttsVoice || 'Zephyr' } },
             },
             // Fix: systemInstruction must be a Content object { parts: [{ text: ... }] } for Live API
-            systemInstruction: chatSettings.systemInstruction 
-                ? { parts: [{ text: chatSettings.systemInstruction }] } 
+            systemInstruction: effectiveSystemInstruction
+                ? { parts: [{ text: effectiveSystemInstruction }] }
                 : undefined,
             tools: tools.length > 0 ? tools : undefined,
             // Enable transcription for both input and output

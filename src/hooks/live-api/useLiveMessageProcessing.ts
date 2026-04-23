@@ -27,7 +27,7 @@ export const useLiveMessageProcessing = ({
     sessionHandleRef
 }: UseLiveMessageProcessingProps) => {
     
-    const { handleToolCall } = useLiveTools({ clientFunctions, sessionRef });
+    const { handleToolCall, cancelToolCalls } = useLiveTools({ clientFunctions, sessionRef });
     
     // Buffer for audio chunks to create a downloadable file later
     const audioChunksRef = useRef<string[]>([]);
@@ -88,6 +88,10 @@ export const useLiveMessageProcessing = ({
             await handleToolCall(msg.toolCall);
         }
 
+        if (msg.toolCallCancellation?.ids?.length) {
+            cancelToolCalls(msg.toolCallCancellation.ids);
+        }
+
         // 3. Handle Interruption
         if (msg.serverContent?.interrupted) {
             stopAudioPlayback();
@@ -134,7 +138,7 @@ export const useLiveMessageProcessing = ({
             // sessionHandleRef is updated via Effect in parent, but we update it here too for immediate consistency
             sessionHandleRef.current = newHandle;
         }
-    }, [playAudioChunk, stopAudioPlayback, onTranscript, onGoAway, handleToolCall, setSessionHandle, sessionHandleRef, finalizeAudio]);
+    }, [playAudioChunk, stopAudioPlayback, onTranscript, onGoAway, handleToolCall, cancelToolCalls, setSessionHandle, sessionHandleRef, finalizeAudio]);
 
     return { handleMessage, clearBufferedAudio };
 };

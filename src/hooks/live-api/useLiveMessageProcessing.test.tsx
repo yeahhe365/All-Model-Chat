@@ -2,14 +2,16 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockHandleToolCall, mockCreateWavBlobFromPCMChunks } = vi.hoisted(() => ({
+const { mockHandleToolCall, mockCancelToolCalls, mockCreateWavBlobFromPCMChunks } = vi.hoisted(() => ({
   mockHandleToolCall: vi.fn(),
+  mockCancelToolCalls: vi.fn(),
   mockCreateWavBlobFromPCMChunks: vi.fn(() => 'blob:audio'),
 }));
 
 vi.mock('./useLiveTools', () => ({
   useLiveTools: () => ({
     handleToolCall: mockHandleToolCall,
+    cancelToolCalls: mockCancelToolCalls,
   }),
 }));
 
@@ -199,6 +201,30 @@ describe('useLiveMessageProcessing', () => {
     });
 
     expect(onGoAway).toHaveBeenCalledWith({ timeLeft: '5s' });
+
+    unmount();
+  });
+
+  it('forwards tool call cancellations to the live tools layer', async () => {
+    const { result, unmount } = renderHook(() =>
+      useLiveMessageProcessing({
+        playAudioChunk: vi.fn(),
+        stopAudioPlayback: vi.fn(),
+        sessionRef: { current: null },
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleMessage({
+        toolCallCancellation: {
+          ids: ['call-1', 'call-2'],
+        },
+      } as any);
+    });
+
+    expect(mockCancelToolCalls).toHaveBeenCalledWith(['call-1', 'call-2']);
 
     unmount();
   });

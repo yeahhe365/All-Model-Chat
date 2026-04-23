@@ -264,6 +264,7 @@ export const useStandardChat = ({
       const standardFunctionDeclarations = Object.values(standardClientFunctions).map(
         ({ declaration }) => declaration
       );
+      const isLocalPythonEnabledForTurn = standardFunctionDeclarations.length > 0;
 
       const config = await buildGenerationConfig(
         activeModelId,
@@ -284,7 +285,7 @@ export const useStandardChat = ({
         imageSize,
         sessionToUpdate.safetySettings,
         sessionToUpdate.mediaResolution,
-        false,
+        isLocalPythonEnabledForTurn,
         imageOutputMode,
         personGeneration,
       );

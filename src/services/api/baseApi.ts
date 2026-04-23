@@ -55,6 +55,9 @@ type GenerationConfig = {
     | { codeExecution: Record<string, never> }
     | { urlContext: Record<string, never> }
   >;
+  toolConfig?: {
+    includeServerSideToolInvocations?: boolean;
+  };
   temperature?: number;
   topP?: number;
   topK?: number;
@@ -488,12 +491,21 @@ export const appendFunctionDeclarationsToTools = (
         return generationConfig;
     }
 
+    const hasBuiltIns = hasBuiltInTools(generationConfig.tools);
+    const shouldIncludeServerSideToolInvocations = hasBuiltIns && isGemini3Model(modelId);
+
     return {
         ...generationConfig,
         tools: [
             ...(generationConfig.tools ?? []),
             { functionDeclarations },
         ],
+        toolConfig: shouldIncludeServerSideToolInvocations
+            ? {
+                ...(generationConfig.toolConfig ?? {}),
+                includeServerSideToolInvocations: true,
+            }
+            : generationConfig.toolConfig,
     };
 };
 

@@ -758,6 +758,9 @@ describe('appendFunctionDeclarationsToTools', () => {
         ],
       },
     ]);
+    expect(config.toolConfig).toEqual({
+      includeServerSideToolInvocations: true,
+    });
   });
 
   it('skips combining built-in tools with custom function declarations for non-Gemini-3 models', () => {
@@ -773,5 +776,30 @@ describe('appendFunctionDeclarationsToTools', () => {
     );
 
     expect(config.tools).toEqual([{ googleSearch: {} }]);
+  });
+
+  it('does not enable server-side tool invocation circulation for function-only Gemini 3 configs', () => {
+    const config = appendFunctionDeclarationsToTools(
+      'gemini-3-flash-preview',
+      {},
+      [
+        {
+          name: 'run_local_python',
+          description: 'Execute Python locally.',
+        },
+      ],
+    );
+
+    expect(config.tools).toEqual([
+      {
+        functionDeclarations: [
+          {
+            name: 'run_local_python',
+            description: 'Execute Python locally.',
+          },
+        ],
+      },
+    ]);
+    expect(config.toolConfig).toBeUndefined();
   });
 });
