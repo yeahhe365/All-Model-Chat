@@ -140,7 +140,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                 <button
                     type="button"
                     onClick={() => handleScroll('left')}
-                    className={`absolute left-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/80 backdrop-blur-sm border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    className={`absolute left-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                     aria-label="Scroll left"
                 >
                     <ChevronLeft size={16} strokeWidth={2} />
@@ -150,7 +150,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                 <button
                     type="button"
                     onClick={() => handleScroll('right')}
-                    className={`absolute right-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/80 backdrop-blur-sm border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    className={`absolute right-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                     aria-label="Scroll right"
                 >
                     <ChevronRight size={16} strokeWidth={2} />

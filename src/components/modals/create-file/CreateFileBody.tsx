@@ -92,8 +92,8 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                     spellCheck={false}
                   />
                   {isDragging && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-[var(--theme-bg-accent)]/10 backdrop-blur-sm">
-                          <div className="bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] px-4 py-2 rounded-lg font-medium shadow-lg animate-in fade-in zoom-in duration-200">
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-[var(--theme-bg-accent)]/12">
+                          <div className="bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] px-4 py-2 rounded-lg font-medium shadow-lg">
                               Drop image to insert
                           </div>
                       </div>

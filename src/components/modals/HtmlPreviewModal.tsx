@@ -62,7 +62,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   // but keep it in the DOM so the iframe can be fullscreened.
   const containerClass = isDirectFullscreenLaunch 
     ? 'fixed inset-0 z-[2100] opacity-0 pointer-events-none' 
-    : 'fixed inset-0 bg-black/80 flex items-center justify-center z-[2100] backdrop-blur-sm';
+    : 'fixed inset-0 bg-black/80 flex items-center justify-center z-[2100]';
 
   return createPortal(
     <div

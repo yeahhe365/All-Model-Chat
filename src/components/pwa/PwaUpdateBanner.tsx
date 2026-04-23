@@ -13,7 +13,7 @@ export const PwaUpdateBanner: React.FC<PwaUpdateBannerProps> = ({
   const { t } = useI18n();
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-xl rounded-2xl border border-slate-800/20 bg-slate-900/95 px-4 py-3 text-white shadow-2xl backdrop-blur">
+    <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-xl rounded-2xl border border-slate-800/35 bg-slate-950 px-4 py-3 text-white shadow-2xl">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t('about_update_ready')}</p>

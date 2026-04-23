@@ -56,7 +56,7 @@ export const PdfSidebar: React.FC<PdfSidebarProps> = ({
                                                 PAGE {pageNum}
                                             </div>
                                         )}
-                                        <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded backdrop-blur-sm font-mono">
+                                        <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1.5 py-0.5 rounded font-mono">
                                             {pageNum}
                                         </div>
                                     </div>

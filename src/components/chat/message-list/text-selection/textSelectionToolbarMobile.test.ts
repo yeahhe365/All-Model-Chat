@@ -13,8 +13,8 @@ describe('mobile text selection toolbar styles', () => {
     expect(source).toContain('overflow-x-auto');
     expect(source).toContain('no-scrollbar');
     expect(source).toContain('p-px');
-    expect(source).toContain("translate: '-50% 0'");
-    expect(source).not.toContain("transform: 'translateX(-50%)'");
+    expect(source).not.toContain("translate: '-50% 0'");
+    expect(source).not.toContain('zoom-in');
   });
 
   it('prevents action labels from wrapping into stacked Chinese text on narrow screens', () => {

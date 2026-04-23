@@ -165,7 +165,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 {isOpen && targetWindow && createPortal(
                     <div 
                         ref={menuRef}
-                        className="fixed w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 animate-in fade-in zoom-in-95 duration-100 custom-scrollbar" 
+                        className="fixed w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 custom-scrollbar" 
                         style={menuPosition}
                         role="menu"
                     >

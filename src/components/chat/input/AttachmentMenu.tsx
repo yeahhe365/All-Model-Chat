@@ -85,7 +85,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
             {isOpen && targetWindow && createPortal(
                 <div 
                     ref={menuRef}
-                    className="w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 custom-scrollbar animate-in fade-in zoom-in-95 duration-100" 
+                    className="w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 custom-scrollbar" 
                     style={menuPosition}
                     role="menu"
                 >

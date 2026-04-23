@@ -19,7 +19,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   contentClassName = '',
-  backdropClassName = 'bg-black/60 backdrop-blur-sm',
+  backdropClassName = 'bg-black/60',
   enterAnimationClassName = 'modal-enter-animation',
   exitAnimationClassName = 'modal-exit-animation',
   noPadding = false,

@@ -41,7 +41,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands,
                 role="document"
             >
                 {/* Header */}
-                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)]/50 backdrop-blur-md">
+                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)]/85">
                     <h2 id="help-modal-title" className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
                         <HelpCircle size={20} className="text-[var(--theme-text-link)]" />
                         {t('helpModal_title')}
@@ -95,7 +95,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands,
                                                 {command.name}
                                             </code>
                                             {copiedCommand === command.name ? (
-                                                <Check size={14} className="text-[var(--theme-text-success)] animate-in fade-in zoom-in duration-200" />
+                                                <Check size={14} className="text-[var(--theme-text-success)]" />
                                             ) : (
                                                 <Copy size={14} className="text-[var(--theme-text-tertiary)] opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                                             )}

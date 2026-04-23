@@ -96,13 +96,10 @@ html, body, #root {
   padding: 0.5rem 0.75rem;
   position: absolute;
   z-index: 50;
-  bottom: 135%;
-  left: 50%;
-  transform: translateX(-50%) scale(0.95);
+  bottom: calc(100% + 0.5rem);
+  left: 0;
   opacity: 0;
-  transition:
-    opacity 0.2s var(--ease-out-expo),
-    transform 0.2s var(--ease-out-expo);
+  transition: opacity 0.2s var(--ease-out-expo);
   border: 1px solid var(--theme-border-secondary);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
   font-size: 0.75rem;
@@ -110,13 +107,11 @@ html, body, #root {
   white-space: normal;
   pointer-events: none;
   line-height: 1.4;
-  transform-origin: bottom center;
 }
 
 .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
-  transform: translateX(-50%) scale(1);
 }
 
 /* 

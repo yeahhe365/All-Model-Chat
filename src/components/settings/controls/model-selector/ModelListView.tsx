@@ -72,7 +72,7 @@ export const ModelListView: React.FC<ModelListViewProps> = ({ availableModels, s
 
                                     <div className="flex-shrink-0 ml-2">
                                         {isSelected && (
-                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] text-[10px] font-bold shadow-sm border border-transparent animate-in fade-in zoom-in duration-200">
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] text-[10px] font-bold shadow-sm border border-transparent">
                                                 <Check size={11} strokeWidth={3} />
                                                 <span>{t('settingsActiveModel')}</span>
                                             </div>

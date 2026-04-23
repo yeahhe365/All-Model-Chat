@@ -8,7 +8,7 @@ interface FloatingToolbarProps {
 
 export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ children, className = '' }) => {
     return (
-        <div className={`bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200 rounded-full p-1.5 flex items-center gap-1 ${className}`}>
+        <div className={`bg-black/85 border border-white/15 shadow-xl transition-all duration-200 rounded-full p-1.5 flex items-center gap-1 ${className}`}>
             {children}
         </div>
     );

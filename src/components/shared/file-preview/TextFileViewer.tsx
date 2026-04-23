@@ -182,7 +182,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
                 />
             ) : shouldDeferMarkdown ? (
                 <div className="w-full h-full flex flex-col min-h-0">
-                    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)]/95 backdrop-blur-sm">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)]">
                         <p className="text-sm text-[var(--theme-text-secondary)]">
                             {t('filePreview_large_markdown_notice')}
                         </p>

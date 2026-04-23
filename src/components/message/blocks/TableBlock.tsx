@@ -94,11 +94,11 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
     // When fullscreen, we use a portal and a specific layout.
     if (isFullscreen) {
         return createPortal(
-            <div className="fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-10 overflow-auto flex flex-col items-center animate-in fade-in duration-200 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-10 overflow-auto flex flex-col items-center animate-in fade-in duration-200">
                 <div className="fixed top-4 right-4 flex gap-2 z-50">
                     <button
                         onClick={handleCopyMarkdown}
-                        className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all backdrop-blur-sm ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
+                        className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                         title={isCopied ? "Copied!" : "Copy Markdown"}
                     >
                         {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
@@ -107,14 +107,14 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                     <div className="relative" ref={menuRef}>
                          <button
                             onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                            className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all backdrop-blur-sm ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
+                            className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                             title="Download"
                         >
                             <Download size={16} />
                         </button>
                         
                         {showDownloadMenu && (
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-xl overflow-hidden z-50">
                                 <button 
                                     onClick={handleDownloadCSV}
                                     className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS} px-4 py-3 gap-3`}
@@ -135,7 +135,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
 
                     <button
                         onClick={toggleFullscreen}
-                        className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all backdrop-blur-sm ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
+                        className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                         title="Exit Fullscreen"
                     >
                         <Minimize2 size={16} />
@@ -185,7 +185,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                         <Download size={14} />
                     </button>
                     {showDownloadMenu && (
-                        <div className="absolute right-0 top-full mt-1 w-40 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
+                        <div className="absolute right-0 top-full mt-1 w-40 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-lg overflow-hidden z-50">
                             <button 
                                 onClick={handleDownloadCSV}
                                 className={`${MENU_ITEM_COMPACT_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS}`}

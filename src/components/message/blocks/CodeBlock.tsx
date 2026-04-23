@@ -130,7 +130,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                         className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[var(--theme-bg-code-block)] to-transparent cursor-pointer flex items-end justify-center pb-2 group/expand code-block-expand-overlay"
                         onClick={handleToggleExpand}
                     >
-                        <span className="text-xs font-medium text-[var(--theme-text-tertiary)] group-hover/expand:text-[var(--theme-text-primary)] flex items-center gap-1 bg-[var(--theme-bg-primary)]/80 px-3 py-1 rounded-full shadow-sm border border-[var(--theme-border-secondary)] backdrop-blur-md transition-all transform group-hover/expand:scale-105">
+                        <span className="text-xs font-medium text-[var(--theme-text-tertiary)] group-hover/expand:text-[var(--theme-text-primary)] flex items-center gap-1 bg-[var(--theme-bg-primary)] px-3 py-1 rounded-full shadow-sm border border-[var(--theme-border-secondary)] transition-colors">
                             <ChevronDown size={12} /> Show more
                         </span>
                     </div>
@@ -141,7 +141,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                     >
                          <button 
                             onClick={handleToggleExpand}
-                            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-tertiary)] border border-[var(--theme-border-secondary)] rounded-full text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] shadow-sm backdrop-blur-md transition-all"
+                            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-tertiary)] border border-[var(--theme-border-secondary)] rounded-full text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] shadow-sm transition-colors"
                             title="Collapse code block"
                         >
                             <ChevronUp size={12} strokeWidth={2} /> Show less

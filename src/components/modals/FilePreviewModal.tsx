@@ -175,7 +175,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
    }, [file, isDocx, t]);
 
   const navButtonClass =
-      'absolute top-1/2 -translate-y-1/2 p-2 bg-black/20 hover:bg-black/60 text-white/70 hover:text-white rounded-full backdrop-blur-md transition-all z-50 focus:outline-none';
+      'absolute top-1/2 -translate-y-1/2 p-2 bg-black/45 hover:bg-black/70 text-white/70 hover:text-white rounded-full transition-colors z-50 focus:outline-none';
 
   const getYoutubeEmbedUrl = (url: string) => {
       if (!url) return null;
@@ -189,7 +189,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
       isOpen={true}
       onClose={onClose}
       noPadding
-      backdropClassName="bg-black/95 backdrop-blur-sm"
+      backdropClassName="bg-black/95"
       contentClassName="w-full h-full"
     >
       <div className="w-full h-full relative flex flex-col">
@@ -298,7 +298,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
           ) : isAudio ? (
               <div className="w-full h-full flex items-center justify-center">
                 {file.dataUrl && (
-                  <div className="bg-white/10 p-8 rounded-2xl backdrop-blur-xl border border-white/10 shadow-2xl flex flex-col items-center gap-4">
+                  <div className="bg-white/15 p-8 rounded-2xl border border-white/10 shadow-2xl flex flex-col items-center gap-4">
                       <FileAudio size={64} className="text-white/50" />
                       <audio
                           src={file.dataUrl}

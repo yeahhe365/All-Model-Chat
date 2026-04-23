@@ -46,7 +46,8 @@ describe('CodeHeader', () => {
     const toolbar = container.querySelector('[data-code-header-toolbar]');
 
     expect(header).not.toBeNull();
-    expect(header?.className).toContain('bg-[var(--theme-bg-code-block-header)]/95');
+    expect(header?.className).toContain('bg-[var(--theme-bg-code-block-header)]');
+    expect(header?.className).not.toContain('backdrop-blur');
     expect(header?.className).toContain('border-b');
     expect(header?.className.split(/\s+/)).toContain('py-0');
     expect(toolbar).not.toBeNull();

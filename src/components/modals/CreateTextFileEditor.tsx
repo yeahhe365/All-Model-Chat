@@ -60,7 +60,7 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
   return (
     <TextEditorModalShell
       onClose={onCancel}
-      contentClassName="w-full h-full max-w-none bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-none flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      contentClassName="w-full h-full max-w-none bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-none flex flex-col overflow-hidden"
       header={(
         <CreateFileHeader 
           isEditing={isEditing}

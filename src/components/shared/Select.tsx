@@ -118,7 +118,7 @@ export const Select: React.FC<SelectProps> = ({
                 
                 {isOpen && (
                     <div
-                        className={`absolute ${dropdownPositionClass} left-0 z-50 w-full bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col ${dropdownClassName || 'max-h-[300px]'}`}
+                        className={`absolute ${dropdownPositionClass} left-0 z-50 w-full bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden flex flex-col ${dropdownClassName || 'max-h-[300px]'}`}
                     >
                         <div className="overflow-y-auto custom-scrollbar p-1">
                             {options.map((opt, idx) => (

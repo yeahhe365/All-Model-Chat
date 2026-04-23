@@ -59,7 +59,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
         <Modal 
             isOpen={true} 
             onClose={onCancel}
-            backdropClassName="bg-black/80 backdrop-blur-sm"
+            backdropClassName="bg-black/80"
             contentClassName="w-full max-w-md bg-[var(--theme-bg-secondary)] rounded-2xl shadow-2xl overflow-hidden border border-[var(--theme-border-primary)]"
             noPadding
         >
@@ -77,7 +77,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             <div className="p-6 flex flex-col items-center justify-center min-h-[220px]">
                 
                 {error && (
-                    <div className="flex flex-col items-center text-[var(--theme-text-danger)] gap-2 mb-4 text-center animate-in fade-in zoom-in duration-200">
+                    <div className="flex flex-col items-center text-[var(--theme-text-danger)] gap-2 mb-4 text-center">
                         <AlertCircle size={32} />
                         <p className="text-sm">{error}</p>
                     </div>
@@ -85,7 +85,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
 
                 {/* State: Idle / Initializing */}
                 {(viewState === 'idle' || (viewState === 'recording' && status !== 'recording')) && !error && (
-                    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300">
+                    <div className="flex flex-col items-center gap-6">
                         <div className="relative">
                             <div className="absolute inset-0 bg-[var(--theme-bg-accent)]/20 rounded-full animate-ping"></div>
                             <div className="relative w-20 h-20 bg-[var(--theme-bg-accent)]/10 rounded-full flex items-center justify-center text-[var(--theme-text-link)]">

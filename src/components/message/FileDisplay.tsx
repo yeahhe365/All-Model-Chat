@@ -103,12 +103,12 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                                 }
                             }}
                             title={file.mediaResolution ? `Configure (Resolution: ${file.mediaResolution})` : "Configure"}
-                            className={`p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-colors ${getResolutionColor(file.mediaResolution)}`}
+                            className={`p-1.5 rounded-full bg-black/75 hover:bg-black/90 transition-colors ${getResolutionColor(file.mediaResolution)}`}
                         >
                             <ConfigIcon size={14} strokeWidth={2} />
                         </button>
                     ) : file.mediaResolution ? (
-                        <div className={`p-1.5 rounded-full bg-black/50 backdrop-blur-sm ${getResolutionColor(file.mediaResolution)}`} title={`Resolution: ${file.mediaResolution}`}>
+                        <div className={`p-1.5 rounded-full bg-black/75 ${getResolutionColor(file.mediaResolution)}`} title={`Resolution: ${file.mediaResolution}`}>
                             <SlidersHorizontal size={14} strokeWidth={2} />
                         </div>
                     ) : null}
@@ -118,7 +118,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                             type="button"
                             onClick={handleDownloadFile}
                             title="Download Image"
-                            className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm transition-colors"
+                            className="p-1.5 rounded-full bg-black/75 hover:bg-black/90 text-white transition-colors"
                         >
                             <Download size={14} strokeWidth={2} />
                         </button>
@@ -128,7 +128,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                             type="button"
                             onClick={handleCopyId}
                             title={idCopied ? "ID Copied!" : "Copy File ID"}
-                            className={`p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-colors ${idCopied ? 'text-green-400' : 'text-white'}`}
+                            className={`p-1.5 rounded-full bg-black/75 hover:bg-black/90 transition-colors ${idCopied ? 'text-green-400' : 'text-white'}`}
                         >
                             {idCopied ? <Check size={14} strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
                         </button>

@@ -32,7 +32,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                     onClick={onScrollToPrev}
                     className="
                         p-2.5 rounded-full 
-                        bg-[var(--theme-bg-secondary)]/90 backdrop-blur-sm
+                        bg-[var(--theme-bg-secondary)]
                         border border-[var(--theme-border-secondary)] 
                         text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] 
                         hover:bg-[var(--theme-bg-primary)] hover:border-[var(--theme-border-focus)]
@@ -52,7 +52,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                     onClick={onScrollToNext}
                     className="
                         p-2.5 rounded-full 
-                        bg-[var(--theme-bg-secondary)]/90 backdrop-blur-sm
+                        bg-[var(--theme-bg-secondary)]
                         border border-[var(--theme-border-secondary)] 
                         text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] 
                         hover:bg-[var(--theme-bg-primary)] hover:border-[var(--theme-border-focus)]

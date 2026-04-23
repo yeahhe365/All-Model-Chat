@@ -24,7 +24,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
 
     if (isReconnecting) {
         return (
-            <div className="flex items-center justify-between p-2 mb-2 bg-[var(--theme-bg-accent)]/10 border border-[var(--theme-bg-accent)]/20 rounded-xl animate-in fade-in slide-in-from-bottom-2 backdrop-blur-sm">
+            <div className="flex items-center justify-between p-2 mb-2 bg-[var(--theme-bg-accent)]/10 border border-[var(--theme-bg-accent)]/20 rounded-xl animate-in fade-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-3 pl-2 min-w-0">
                     <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-link)]">
                         <Activity size={16} className="animate-pulse" />
@@ -64,7 +64,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
     if (!isConnected) return null;
 
     return (
-        <div className="flex items-center justify-between p-2 mb-2 bg-[var(--theme-bg-accent)]/10 border border-[var(--theme-bg-accent)]/20 rounded-xl animate-in fade-in slide-in-from-bottom-2 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-2 mb-2 bg-[var(--theme-bg-accent)]/10 border border-[var(--theme-bg-accent)]/20 rounded-xl animate-in fade-in slide-in-from-bottom-2">
             <div className="flex items-center gap-3 pl-2 min-w-0">
                 <div className={`relative flex items-center justify-center w-8 h-8 rounded-full ${isSpeaking ? 'bg-blue-500 text-white' : 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-link)]'}`}>
                     {isSpeaking ? (

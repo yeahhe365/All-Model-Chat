@@ -22,14 +22,13 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
         const viewportHeight = window.innerHeight;
         const padding = 10;
 
-        let newLeft = clientX - dragOffset.current.x;
-        let newTop = clientY - dragOffset.current.y;
+        const maxLeft = Math.max(padding, viewportWidth - padding - width);
+        const maxTop = Math.max(padding, viewportHeight - padding - height);
 
-        const halfWidth = width / 2;
-        newLeft = Math.max(padding + halfWidth, Math.min(newLeft, viewportWidth - padding - halfWidth));
-        newTop = Math.max(padding, Math.min(newTop, viewportHeight - padding - height));
+        const newLeft = Math.round(Math.max(padding, Math.min(clientX - dragOffset.current.x, maxLeft)));
+        const newTop = Math.round(Math.max(padding, Math.min(clientY - dragOffset.current.y, maxTop)));
 
-        return { toolbar, top: newTop, left: newLeft };
+        return { toolbar, width, top: newTop, left: newLeft };
     }, [toolbarRef]);
 
     const handleDragMove = useCallback((e: MouseEvent) => {
@@ -61,7 +60,10 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
         // Sync final position to React state
         const nextPosition = getClampedPosition(e.clientX, e.clientY);
         if (nextPosition) {
-            onPositionChange({ top: nextPosition.top, left: nextPosition.left });
+            onPositionChange({
+                top: nextPosition.top,
+                left: nextPosition.left + nextPosition.width / 2,
+            });
         }
 
         if (toolbarRef.current) {
@@ -76,10 +78,12 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
         
         isDragging.current = true;
         toolbarRef.current.style.transition = 'none';
+
+        const rect = toolbarRef.current.getBoundingClientRect();
         
         dragOffset.current = {
-            x: e.clientX - position.left,
-            y: e.clientY - position.top
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
         };
         
         document.body.style.userSelect = 'none';

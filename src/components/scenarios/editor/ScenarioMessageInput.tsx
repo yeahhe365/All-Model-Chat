@@ -39,7 +39,7 @@ export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
     };
 
     return (
-        <div className="flex-shrink-0 p-3 sm:p-4 bg-[var(--theme-bg-secondary)]/30 border-t border-[var(--theme-border-secondary)] backdrop-blur-sm">
+        <div className="flex-shrink-0 p-3 sm:p-4 bg-[var(--theme-bg-secondary)]/45 border-t border-[var(--theme-border-secondary)]">
             <div className="flex items-center gap-3 mb-3">
                 <span className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider">{t('scenarios_editor_add_message_as')}</span>
                 <div className="flex bg-[var(--theme-bg-input)] p-0.5 rounded-lg border border-[var(--theme-border-secondary)]">

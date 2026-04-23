@@ -155,7 +155,7 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
                 {/* Loading Indicator */}
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-black/50 backdrop-blur-md p-4 rounded-xl flex flex-col items-center gap-2 text-white">
+                        <div className="bg-black/80 p-4 rounded-xl flex flex-col items-center gap-2 text-white">
                             <Loader2 size={32} className="animate-spin" />
                             <span className="text-sm font-medium">{t('pdf_loading')}</span>
                         </div>
@@ -165,7 +165,7 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
                 {/* Error Indicator */}
                 {error && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-red-900/50 backdrop-blur-md p-6 rounded-xl flex flex-col items-center gap-3 text-red-200 border border-red-500/30 max-w-sm text-center">
+                        <div className="bg-red-950/80 p-6 rounded-xl flex flex-col items-center gap-3 text-red-200 border border-red-500/30 max-w-sm text-center">
                             <AlertCircle size={32} />
                             <span className="text-sm font-medium">{error}</span>
                         </div>

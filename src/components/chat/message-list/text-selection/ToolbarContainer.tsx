@@ -8,6 +8,23 @@ interface ToolbarContainerProps {
     isDragging: boolean;
 }
 
+const VIEWPORT_PADDING = 10;
+
+const getToolbarRenderPosition = (
+    position: { top: number; left: number },
+    rect: Pick<DOMRect, 'width' | 'height'>,
+    viewportWidth: number,
+    viewportHeight: number
+) => {
+    const maxLeft = Math.max(VIEWPORT_PADDING, viewportWidth - VIEWPORT_PADDING - rect.width);
+    const maxTop = Math.max(VIEWPORT_PADDING, viewportHeight - VIEWPORT_PADDING - rect.height);
+
+    return {
+        left: Math.min(Math.max(Math.round(position.left - rect.width / 2), VIEWPORT_PADDING), maxLeft),
+        top: Math.min(Math.max(Math.round(position.top), VIEWPORT_PADDING), maxTop),
+    };
+};
+
 export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps>(({ children, position, isDragging }, ref) => {
     const localRef = useRef<HTMLDivElement | null>(null);
     const [renderPosition, setRenderPosition] = useState(position);
@@ -29,39 +46,22 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
         const clampToViewport = () => {
             const toolbar = localRef.current;
             if (!toolbar) {
-                setRenderPosition(position);
+                setRenderPosition({
+                    left: Math.round(position.left),
+                    top: Math.round(position.top),
+                });
                 return;
             }
 
             const rect = toolbar.getBoundingClientRect();
-            const padding = 10;
-            const halfWidth = rect.width / 2;
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            let nextLeft = position.left;
-            let nextTop = position.top;
-
-            if (nextLeft - halfWidth < padding) {
-                nextLeft = padding + halfWidth;
-            }
-            if (nextLeft + halfWidth > viewportWidth - padding) {
-                nextLeft = viewportWidth - padding - halfWidth;
-            }
-
-            if (nextTop < padding) {
-                nextTop = padding;
-            }
-            if (nextTop + rect.height > viewportHeight - padding) {
-                nextTop = viewportHeight - padding - rect.height;
-            }
+            const nextPosition = getToolbarRenderPosition(position, rect, window.innerWidth, window.innerHeight);
 
             setRenderPosition((prev) => {
-                if (prev.left === nextLeft && prev.top === nextTop) {
+                if (prev.left === nextPosition.left && prev.top === nextPosition.top) {
                     return prev;
                 }
 
-                return { left: nextLeft, top: nextTop };
+                return nextPosition;
             });
         };
 
@@ -91,12 +91,12 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
     return createPortal(
         <div 
             ref={handleRef}
-            className="fixed z-[9999] flex max-w-[calc(100vw-20px)] items-center gap-0 overflow-x-auto rounded-full border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] p-px shadow-lg pointer-events-auto no-scrollbar animate-in fade-in zoom-in"
+            className="fixed z-[9999] flex max-w-[calc(100vw-20px)] items-center gap-0 overflow-x-auto rounded-full border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] p-px shadow-lg pointer-events-auto no-scrollbar"
             style={{ 
                 top: renderPosition.top, 
                 left: renderPosition.left, 
-                translate: '-50% 0',
-                transition: isDragging ? 'none' : 'opacity 0.2s, translate 0.2s'
+                animation: 'fadeIn 0.2s var(--ease-out-expo) both',
+                transition: isDragging ? 'none' : 'opacity 0.2s'
             }}
         >
             {children}

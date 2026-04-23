@@ -63,7 +63,7 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
 
   return (
     <div className="relative group my-3">
-      <div className="flex items-center justify-between px-3 py-2 border border-[var(--theme-border-secondary)] border-b-0 rounded-t-lg bg-[var(--theme-bg-tertiary)]/30 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-3 py-2 border border-[var(--theme-border-secondary)] border-b-0 rounded-t-lg bg-[var(--theme-bg-tertiary)]/45">
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1">{title}</span>
           <div className="flex items-center gap-1 flex-shrink-0">
              <button onClick={() => setShowSource(!showSource)} className={MESSAGE_BLOCK_BUTTON_CLASS} title={showSource ? t('diagram_hide_source') : t('diagram_show_source')}>
