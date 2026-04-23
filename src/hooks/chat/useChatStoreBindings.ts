@@ -27,6 +27,7 @@ export const useChatStoreBindings = () => {
   const setEditMode = useChatStore((state) => state.setEditMode);
   const setIsAppProcessingFile = useChatStore((state) => state.setIsAppProcessingFile);
   const setAspectRatio = useChatStore((state) => state.setAspectRatio);
+  const setImageSize = useChatStore((state) => state.setImageSize);
   const setIsSwitchingModel = useChatStore((state) => state.setIsSwitchingModel);
   const setGeneratingTitleSessionIds = useChatStore((state) => state.setGeneratingTitleSessionIds);
   const updateAndPersistSessions = useChatStore((state) => state.updateAndPersistSessions);
@@ -64,6 +65,7 @@ export const useChatStoreBindings = () => {
     setEditMode,
     setIsAppProcessingFile,
     setAspectRatio,
+    setImageSize,
     setIsSwitchingModel,
     setGeneratingTitleSessionIds,
     updateAndPersistSessions,

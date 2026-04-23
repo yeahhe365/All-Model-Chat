@@ -56,6 +56,8 @@ const createProps = (overrides: Partial<Parameters<typeof useChatEffects>[0]> = 
   } as any,
   aspectRatio: '1:1',
   setAspectRatio: vi.fn(),
+  imageSize: '1K',
+  setImageSize: vi.fn(),
   loadInitialData: vi.fn(async () => undefined),
   loadChatSession: vi.fn(),
   startNewChat: vi.fn(),
@@ -96,6 +98,32 @@ describe('useChatEffects', () => {
     hook.rerender();
 
     expect(setAspectRatio).toHaveBeenCalledWith('Auto');
+    hook.unmount();
+  });
+
+  it('clamps stale image settings when switching from Nano Banana 2 to Imagen', () => {
+    const setAspectRatio = vi.fn();
+    const setImageSize = vi.fn();
+    const props = createProps({
+      currentChatSettings: {
+        modelId: 'gemini-3.1-flash-image-preview',
+      } as any,
+      aspectRatio: '1:4',
+      imageSize: '4K',
+      setAspectRatio,
+      setImageSize,
+    });
+
+    const hook = renderHook(() => useChatEffects(props));
+
+    props.currentChatSettings = {
+      modelId: 'imagen-4.0-generate-001',
+    } as any;
+
+    hook.rerender();
+
+    expect(setAspectRatio).toHaveBeenCalledWith('1:1');
+    expect(setImageSize).toHaveBeenCalledWith('1K');
     hook.unmount();
   });
 

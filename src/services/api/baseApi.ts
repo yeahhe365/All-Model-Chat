@@ -4,7 +4,13 @@ import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
 import { ImageOutputMode, ImagePersonGeneration, SafetySetting, MediaResolution } from "../../types/settings";
-import { isGemini3Model, isGeminiRoboticsModel, isGemmaModel } from '../../utils/modelHelpers';
+import {
+  isGemini3Model,
+  isGeminiRoboticsModel,
+  isGemmaModel,
+  normalizeAspectRatioForModel,
+  normalizeImageSizeForModel,
+} from '../../utils/modelHelpers';
 import { DEFAULT_GEMINI_API_BASE_URL, normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
 
@@ -312,6 +318,8 @@ export const buildGenerationConfig = async (
     imageOutputMode: ImageOutputMode = 'IMAGE_TEXT',
     personGeneration: ImagePersonGeneration = 'ALLOW_ADULT',
 ): Promise<GenerationConfig> => {
+    const normalizedAspectRatio = normalizeAspectRatioForModel(modelId, aspectRatio);
+    const normalizedImageSize = normalizeImageSizeForModel(modelId, imageSize);
     const googleSearchTool = modelId === 'gemini-3.1-flash-image-preview'
         ? {
             googleSearch: {
@@ -325,7 +333,7 @@ export const buildGenerationConfig = async (
 
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {};
-        if (aspectRatio && aspectRatio !== 'Auto') imageConfig.aspectRatio = aspectRatio;
+        if (normalizedAspectRatio && normalizedAspectRatio !== 'Auto') imageConfig.aspectRatio = normalizedAspectRatio;
         imageConfig.personGeneration = toGeminiPersonGeneration(personGeneration);
         
         const config: GenerationConfig = {
@@ -339,11 +347,11 @@ export const buildGenerationConfig = async (
 
     if (modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') {
          const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {
-            imageSize: imageSize || '1K',
+            imageSize: normalizedImageSize || '1K',
             personGeneration: toGeminiPersonGeneration(personGeneration),
          };
-         if (aspectRatio && aspectRatio !== 'Auto') {
-            imageConfig.aspectRatio = aspectRatio;
+         if (normalizedAspectRatio && normalizedAspectRatio !== 'Auto') {
+            imageConfig.aspectRatio = normalizedAspectRatio;
          }
          
          const config: GenerationConfig = {

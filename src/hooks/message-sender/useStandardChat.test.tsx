@@ -57,6 +57,7 @@ vi.mock('../../utils/chat/session', () => ({
 
 vi.mock('../../utils/modelHelpers', () => ({
   isGemini3Model: vi.fn((id: string) => id.includes('gemini-3')),
+  isImageModel: vi.fn((id: string) => id.includes('image')),
   shouldStripThinkingFromContext: vi.fn(() => false),
 }));
 
@@ -137,15 +138,19 @@ describe('useStandardChat', () => {
     mockCreateChatHistoryForApi.mockResolvedValue([]);
     mockBuildGenerationConfig.mockResolvedValue({ systemInstruction: 'base config' });
     mockAppendFunctionDeclarationsToTools.mockImplementation((_modelId, config) => config);
-    mockCreateStandardClientFunctions.mockReturnValue({
-      run_local_python: {
-        declaration: {
-          name: 'run_local_python',
-          description: 'Run Python locally.',
-        },
-        handler: vi.fn(),
-      },
-    });
+    mockCreateStandardClientFunctions.mockImplementation(({ isLocalPythonEnabled }) =>
+      isLocalPythonEnabled
+        ? {
+            run_local_python: {
+              declaration: {
+                name: 'run_local_python',
+                description: 'Run Python locally.',
+              },
+              handler: vi.fn(),
+            },
+          }
+        : {},
+    );
     mockRunStandardToolLoop.mockResolvedValue({
       finalTurn: {
         parts: [{ text: 'done' }],
@@ -241,6 +246,84 @@ describe('useStandardChat', () => {
       true,
       'IMAGE_TEXT',
       'ALLOW_ADULT',
+    );
+
+    unmount();
+  });
+
+  it('does not expose local python tools on image-generation models', async () => {
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError: vi.fn(),
+      streamOnComplete: vi.fn(),
+      streamOnPart: vi.fn(),
+      onThoughtChunk: vi.fn(),
+    }));
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          hideThinkingInContext: false,
+          isRawModeEnabled: false,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: true,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-pro-image-preview',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: false,
+          isCodeExecutionEnabled: false,
+          isLocalPythonEnabled: true,
+          isUrlContextEnabled: false,
+          isDeepSearchEnabled: false,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.sendStandardMessage(
+        'make it cinematic',
+        [],
+        null,
+        'gemini-3-pro-image-preview',
+      );
+    });
+
+    expect(mockCreateStandardClientFunctions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isLocalPythonEnabled: false,
+      }),
+    );
+    expect(mockAppendFunctionDeclarationsToTools).toHaveBeenCalledWith(
+      'gemini-3-pro-image-preview',
+      expect.any(Object),
+      [],
     );
 
     unmount();

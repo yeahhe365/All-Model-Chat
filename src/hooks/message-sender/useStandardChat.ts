@@ -5,7 +5,7 @@ import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { performOptimisticSessionUpdate, generateSessionTitle, createMessage } from '../../utils/chat/session';
-import { isGemini3Model, shouldStripThinkingFromContext } from '../../utils/modelHelpers';
+import { isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '../../utils/modelHelpers';
 import { DEFAULT_CHAT_SETTINGS, MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
 import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { StandardChatProps } from './types';
@@ -243,7 +243,10 @@ export const useStandardChat = ({
           : baseMessagesForApi;
       const standardClientFunctions = createStandardClientFunctions({
         isLocalPythonEnabled:
-          !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode,
+          !!sessionToUpdate.isLocalPythonEnabled
+          && finalRole === 'user'
+          && !isRawMode
+          && !isImageModel(activeModelId),
         inputFiles: collectLocalPythonInputFiles(
           [
             ...localPythonContextMessages,

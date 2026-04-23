@@ -159,6 +159,40 @@ export const getModelCapabilities = (modelId: string) => {
     };
 };
 
+export const normalizeAspectRatioForModel = (
+    modelId: string,
+    aspectRatio?: string,
+): string | undefined => {
+    const supportedAspectRatios = getModelCapabilities(modelId).supportedAspectRatios;
+
+    if (!supportedAspectRatios || supportedAspectRatios.length === 0) {
+        return aspectRatio;
+    }
+
+    if (aspectRatio && supportedAspectRatios.includes(aspectRatio)) {
+        return aspectRatio;
+    }
+
+    return supportedAspectRatios[0];
+};
+
+export const normalizeImageSizeForModel = (
+    modelId: string,
+    imageSize?: string,
+): string | undefined => {
+    const supportedImageSizes = getModelCapabilities(modelId).supportedImageSizes;
+
+    if (!supportedImageSizes || supportedImageSizes.length === 0) {
+        return undefined;
+    }
+
+    if (imageSize && supportedImageSizes.includes(imageSize)) {
+        return imageSize;
+    }
+
+    return supportedImageSizes[0];
+};
+
 export const getDefaultThinkingLevelForModel = (
     modelId: string,
     fallback: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH' = 'HIGH',

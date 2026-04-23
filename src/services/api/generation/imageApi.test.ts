@@ -114,4 +114,27 @@ describe('generateImagesApi', () => {
       },
     });
   });
+
+  it('normalizes stale aspect ratio and image size values for Imagen standard', async () => {
+    await generateImagesApi(
+      'api-key',
+      'imagen-4.0-generate-001',
+      'draw a robot',
+      '1:4',
+      '4K',
+      new AbortController().signal,
+    );
+
+    expect(generateImagesMock).toHaveBeenCalledWith({
+      model: 'imagen-4.0-generate-001',
+      prompt: 'draw a robot',
+      config: {
+        abortSignal: expect.any(AbortSignal),
+        numberOfImages: 1,
+        outputMimeType: 'image/png',
+        aspectRatio: '1:1',
+        imageSize: '1K',
+      },
+    });
+  });
 });

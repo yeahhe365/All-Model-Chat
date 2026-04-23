@@ -286,6 +286,15 @@ describe('buildGenerationConfig', () => {
     expect(config.imageConfig!.imageSize).toBe('2K');
   });
 
+  it('normalizes stale imageSize values for gemini-3-pro-image-preview', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3-pro-image-preview', 'sys', baseConfig, false, 0,
+      false, false, false, undefined, '1:1', false, '512'
+    );
+
+    expect(config.imageConfig!.imageSize).toBe('1K');
+  });
+
   it('defaults imageSize to 1K for gemini-3-pro-image-preview', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-pro-image-preview', 'sys', baseConfig, false, 0,
@@ -389,6 +398,24 @@ describe('buildGenerationConfig', () => {
         personGeneration: 'ALLOW_ADULT',
       }),
     );
+  });
+
+  it('drops unsupported panoramic ratios for gemini-3-pro-image-preview', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3-pro-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '1:4',
+    );
+
+    expect(config.imageConfig).not.toHaveProperty('aspectRatio');
+    expect(config.imageConfig!.imageSize).toBe('1K');
   });
 
   it('adds personGeneration to Gemini 2.5 image config when requested', async () => {

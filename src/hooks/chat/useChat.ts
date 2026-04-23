@@ -52,6 +52,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setEditMode,
         setIsAppProcessingFile,
         setAspectRatio,
+        setImageSize,
         setIsSwitchingModel,
         setGeneratingTitleSessionIds,
         updateAndPersistSessions,
@@ -209,6 +210,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         currentChatSettings,
         aspectRatio,
         setAspectRatio,
+        imageSize,
+        setImageSize,
         loadInitialData: historyHandler.loadInitialData,
         loadChatSession,
         startNewChat

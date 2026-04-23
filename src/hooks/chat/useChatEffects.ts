@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { UploadedFile, SavedChatSession, ChatSettings, ModelOption } from '../../types';
 import { logService } from '../../services/logService';
 import { cleanupFilePreviewUrls } from '../../utils/fileHelpers';
+import { getModelCapabilities, normalizeAspectRatioForModel, normalizeImageSizeForModel } from '../../utils/modelHelpers';
 
 interface UseChatEffectsProps {
     activeSessionId: string | null;
@@ -19,6 +20,8 @@ interface UseChatEffectsProps {
     currentChatSettings: ChatSettings;
     aspectRatio: string;
     setAspectRatio: (value: string) => void;
+    imageSize: string;
+    setImageSize: (value: string) => void;
     loadInitialData: () => Promise<void>;
     loadChatSession: (id: string) => void;
     startNewChat: () => void;
@@ -39,6 +42,8 @@ export const useChatEffects = ({
     currentChatSettings,
     aspectRatio,
     setAspectRatio,
+    imageSize,
+    setImageSize,
     loadInitialData,
     loadChatSession,
     startNewChat
@@ -137,17 +142,26 @@ export const useChatEffects = ({
     useEffect(() => {
         if (prevModelIdRef.current !== currentChatSettings.modelId) {
             const modelId = currentChatSettings.modelId;
-            const isBananaModel =
-                modelId.includes('gemini-2.5-flash-image')
-                || modelId.includes('gemini-3-pro-image')
-                || modelId.includes('gemini-3.1-flash-image');
-            
-            if (isBananaModel) {
-                setAspectRatio('Auto');
+            const capabilities = getModelCapabilities(modelId);
+            const isBananaModel = capabilities.isFlashImageModel || capabilities.isGemini3ImageModel;
+
+            if (capabilities.supportedAspectRatios?.length) {
+                const preferredAspectRatio = isBananaModel ? 'Auto' : aspectRatio;
+                const normalizedAspectRatio = normalizeAspectRatioForModel(modelId, preferredAspectRatio);
+
+                if (normalizedAspectRatio && normalizedAspectRatio !== aspectRatio) {
+                    setAspectRatio(normalizedAspectRatio);
+                }
             } else if (aspectRatio === 'Auto') {
                 setAspectRatio('1:1');
             }
+
+            const normalizedImageSize = normalizeImageSizeForModel(modelId, imageSize);
+            if (normalizedImageSize && normalizedImageSize !== imageSize) {
+                setImageSize(normalizedImageSize);
+            }
+
             prevModelIdRef.current = modelId;
         }
-    }, [currentChatSettings.modelId, aspectRatio, setAspectRatio]);
+    }, [currentChatSettings.modelId, aspectRatio, imageSize, setAspectRatio, setImageSize]);
 };

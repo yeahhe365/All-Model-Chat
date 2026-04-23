@@ -3,9 +3,7 @@ import type { GenerateImagesRequestOptions } from '../../../types';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import { buildExactImageGenerationPricing } from '../../../utils/usagePricingTelemetry';
-
-const supportsImagenImageSize = (modelId: string): boolean =>
-    modelId === 'imagen-4.0-generate-001' || modelId === 'imagen-4.0-ultra-generate-001';
+import { normalizeAspectRatioForModel, normalizeImageSizeForModel } from '../../../utils/modelHelpers';
 
 export const generateImagesApi = async (
     apiKey: string,
@@ -30,15 +28,17 @@ export const generateImagesApi = async (
 
     try {
         const ai = await getConfiguredApiClient(apiKey);
+        const normalizedAspectRatio = normalizeAspectRatioForModel(modelId, aspectRatio) || '1:1';
+        const normalizedImageSize = normalizeImageSizeForModel(modelId, imageSize);
         const config: GenerateImagesConfig = { 
             abortSignal,
             numberOfImages: options.numberOfImages ?? 1, 
             outputMimeType: 'image/png', 
-            aspectRatio: aspectRatio 
+            aspectRatio: normalizedAspectRatio,
         };
 
-        if (imageSize && supportsImagenImageSize(modelId)) {
-            config.imageSize = imageSize;
+        if (normalizedImageSize) {
+            config.imageSize = normalizedImageSize;
         }
 
         if (options.personGeneration) {
