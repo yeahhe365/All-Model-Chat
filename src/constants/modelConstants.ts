@@ -23,6 +23,7 @@ export const MODELS_SUPPORTING_RAW_MODE = [
     'gemini-3-flash-preview',
     'gemini-3.1-flash-lite-preview',
     'gemini-3.1-pro-preview',
+    'gemini-robotics-er-1.6-preview',
 ];
 
 export const DEFAULT_THINKING_LEVEL = 'HIGH';

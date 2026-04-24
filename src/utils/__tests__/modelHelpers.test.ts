@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
+  MODELS_SUPPORTING_RAW_MODE,
+} from '../../constants/appConstants';
+import {
   sortModels,
   isGemini3Model,
   getModelCapabilities,
@@ -11,6 +14,12 @@ import {
   adjustThinkingBudget,
 } from '../modelHelpers';
 import { ModelOption } from '../../types';
+
+describe('raw mode support', () => {
+  it('includes Gemini Robotics-ER 1.6', () => {
+    expect(MODELS_SUPPORTING_RAW_MODE).toContain('gemini-robotics-er-1.6-preview');
+  });
+});
 
 describe('sortModels', () => {
   it('sorts pinned models before unpinned', () => {

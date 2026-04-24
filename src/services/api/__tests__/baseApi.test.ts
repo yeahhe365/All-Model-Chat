@@ -790,7 +790,7 @@ describe('appendFunctionDeclarationsToTools', () => {
     });
   });
 
-  it('skips combining built-in tools with custom function declarations for non-Gemini-3 models', () => {
+  it('keeps custom function declarations alongside built-in tools for Gemini Robotics models', () => {
     const config = appendFunctionDeclarationsToTools(
       'gemini-robotics-er-1.6-preview',
       { tools: [{ googleSearch: {} }] },
@@ -802,7 +802,20 @@ describe('appendFunctionDeclarationsToTools', () => {
       ],
     );
 
-    expect(config.tools).toEqual([{ googleSearch: {} }]);
+    expect(config.tools).toEqual([
+      { googleSearch: {} },
+      {
+        functionDeclarations: [
+          {
+            name: 'run_local_python',
+            description: 'Execute Python locally.',
+          },
+        ],
+      },
+    ]);
+    expect(config.toolConfig).toEqual({
+      includeServerSideToolInvocations: true,
+    });
   });
 
   it('does not enable server-side tool invocation circulation for function-only Gemini 3 configs', () => {

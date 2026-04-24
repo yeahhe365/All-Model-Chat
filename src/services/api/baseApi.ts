@@ -488,7 +488,9 @@ export const appendFunctionDeclarationsToTools = (
         return generationConfig;
     }
 
-    if (hasBuiltInTools(generationConfig.tools) && !isGemini3Model(modelId)) {
+    const supportsBuiltInCustomToolCombination = isGemini3Model(modelId) || isGeminiRoboticsModel(modelId);
+
+    if (hasBuiltInTools(generationConfig.tools) && !supportsBuiltInCustomToolCombination) {
         logService.warn(
             'Skipping custom function declarations because built-in/custom tool combinations are only supported for Gemini 3 models.',
             {
@@ -500,7 +502,7 @@ export const appendFunctionDeclarationsToTools = (
     }
 
     const hasBuiltIns = hasBuiltInTools(generationConfig.tools);
-    const shouldIncludeServerSideToolInvocations = hasBuiltIns && isGemini3Model(modelId);
+    const shouldIncludeServerSideToolInvocations = hasBuiltIns && supportsBuiltInCustomToolCombination;
 
     return {
         ...generationConfig,

@@ -125,7 +125,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   
   const capabilities = getModelCapabilities(modelId);
   const isNativeAudio = capabilities.isNativeAudioModel;
-  const supportsUltraHighResolution = capabilities.isGemini3;
+  const supportsUltraHighResolution = capabilities.isGemini3 || modelId.toLowerCase().includes('gemini-robotics-er');
 
   return (
     <div className="space-y-8">
