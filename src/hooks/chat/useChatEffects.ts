@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { UploadedFile, SavedChatSession, ChatSettings, ModelOption } from '../../types';
+import { UploadedFile, SavedChatSession, ChatSettings } from '../../types';
 import { logService } from '../../services/logService';
 import { cleanupFilePreviewUrls } from '../../utils/fileHelpers';
 import { getModelCapabilities, normalizeAspectRatioForModel, normalizeImageSizeForModel } from '../../utils/modelHelpers';
@@ -11,10 +11,6 @@ interface UseChatEffectsProps {
     selectedFiles: UploadedFile[];
     appFileError: string | null;
     setAppFileError: React.Dispatch<React.SetStateAction<string | null>>;
-    isModelsLoading: boolean;
-    apiModels: ModelOption[];
-    activeChat: SavedChatSession | undefined;
-    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
     isSwitchingModel: boolean;
     setIsSwitchingModel: (value: boolean) => void;
     currentChatSettings: ChatSettings;
@@ -33,10 +29,6 @@ export const useChatEffects = ({
     selectedFiles,
     appFileError,
     setAppFileError,
-    isModelsLoading,
-    apiModels,
-    activeChat,
-    updateAndPersistSessions,
     isSwitchingModel,
     setIsSwitchingModel,
     currentChatSettings,
@@ -118,17 +110,7 @@ export const useChatEffects = ({
         });
     }, []);
 
-    // 6. Model Preference Auto-Correction
-    useEffect(() => {
-        if (!isModelsLoading && apiModels.length > 0 && activeChat && !apiModels.some(m => m.id === activeChat.settings.modelId)) {
-            const preferredModelId = apiModels.find(m => m.isPinned)?.id || apiModels[0]?.id;
-            if(preferredModelId) {
-                updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? {...s, settings: {...s.settings, modelId: preferredModelId }} : s));
-            }
-        }
-    }, [isModelsLoading, apiModels, activeChat, activeSessionId, updateAndPersistSessions]);
-
-    // 7. Reset Switching Model State
+    // 6. Reset Switching Model State
     useEffect(() => { 
         if (isSwitchingModel) { 
             const timer = setTimeout(() => setIsSwitchingModel(false), 0); 

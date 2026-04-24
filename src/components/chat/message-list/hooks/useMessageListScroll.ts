@@ -21,7 +21,10 @@ export const useMessageListScroll = ({
     const visibleRangeRef = useRef({ startIndex: 0, endIndex: 0 });
     
     const scrollSaveTimeoutRef = useRef<number | null>(null);
+    const anchorTimeoutRef = useRef<number | null>(null);
+    const restoreTimeoutRef = useRef<number | null>(null);
     const lastRestoredSessionIdRef = useRef<string | null>(null);
+    const activeSessionIdRef = useRef(activeSessionId);
     
     // Track the last index we programmatically scrolled to
     const lastScrollTarget = useRef<number | null>(null);
@@ -29,6 +32,24 @@ export const useMessageListScroll = ({
     // Track state for the anchoring effect specifically
     const prevMsgCount = useRef(messages.length);
     const prevSessionIdForAnchor = useRef(activeSessionId);
+
+    useEffect(() => {
+        activeSessionIdRef.current = activeSessionId;
+    }, [activeSessionId]);
+
+    const clearAnchorTimeout = useCallback(() => {
+        if (anchorTimeoutRef.current !== null) {
+            clearTimeout(anchorTimeoutRef.current);
+            anchorTimeoutRef.current = null;
+        }
+    }, []);
+
+    const clearRestoreTimeout = useCallback(() => {
+        if (restoreTimeoutRef.current !== null) {
+            clearTimeout(restoreTimeoutRef.current);
+            restoreTimeoutRef.current = null;
+        }
+    }, []);
 
     // Range tracking for navigation
     const onRangeChanged = useCallback(({ startIndex, endIndex }: { startIndex: number, endIndex: number }) => {
@@ -71,9 +92,13 @@ export const useMessageListScroll = ({
             }
 
             if (targetIndex !== -1) {
+                const sessionIdForScroll = activeSessionId;
+                clearAnchorTimeout();
                 // Anchor view to the top of the model message (start of response)
                 // Timeout ensures render cycle is complete including footer height adjustment
-                setTimeout(() => {
+                anchorTimeoutRef.current = window.setTimeout(() => {
+                    anchorTimeoutRef.current = null;
+                    if (activeSessionIdRef.current !== sessionIdForScroll) return;
                     virtuosoRef.current?.scrollToIndex({
                         index: targetIndex,
                         align: 'start',
@@ -84,7 +109,7 @@ export const useMessageListScroll = ({
             }
         }
         prevMsgCount.current = messages.length;
-    }, [messages, activeSessionId]);
+    }, [messages, activeSessionId, clearAnchorTimeout]);
 
     // Enhanced Navigation Logic: Search data array instead of DOM
     const scrollToPrevTurn = useCallback(() => {
@@ -159,8 +184,10 @@ export const useMessageListScroll = ({
             if (scrollSaveTimeoutRef.current) {
                 clearTimeout(scrollSaveTimeoutRef.current);
             }
+            clearAnchorTimeout();
+            clearRestoreTimeout();
         };
-    }, []);
+    }, [clearAnchorTimeout, clearRestoreTimeout]);
 
     // Restore scroll position on session change
     useEffect(() => {
@@ -171,22 +198,28 @@ export const useMessageListScroll = ({
              // If we have content, perform restoration
              if (messages.length > 0) {
                 const savedPos = localStorage.getItem(`chat_scroll_pos_${activeSessionId}`);
+                const sessionIdForRestore = activeSessionId;
+                const messageCountForRestore = messages.length;
+                clearRestoreTimeout();
                 
                 // Use setTimeout to allow Virtuoso to layout the items first
-                setTimeout(() => {
+                restoreTimeoutRef.current = window.setTimeout(() => {
+                    restoreTimeoutRef.current = null;
+                    if (activeSessionIdRef.current !== sessionIdForRestore) return;
+
                     if (savedPos !== null) {
                         const top = parseInt(savedPos, 10);
                         virtuosoRef.current?.scrollTo({ top });
                     } else {
                         // Default to bottom for new/unvisited sessions
-                        virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end' });
+                        virtuosoRef.current?.scrollToIndex({ index: messageCountForRestore - 1, align: 'end' });
                     }
                     // Mark restoration as complete for this session ID
-                    lastRestoredSessionIdRef.current = activeSessionId;
+                    lastRestoredSessionIdRef.current = sessionIdForRestore;
                 }, 50);
              }
         }
-    }, [activeSessionId, messages.length]);
+    }, [activeSessionId, messages.length, clearRestoreTimeout]);
 
     const showScrollDown = !atBottom;
     const showScrollUp = visibleStartIndex > 0;

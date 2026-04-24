@@ -13,6 +13,7 @@ const virtuosoPropsSpy = vi.fn();
 interface VirtuosoMockProps<T> {
   data: T[];
   itemContent: (index: number, item: T) => ReactNode;
+  computeItemKey?: (index: number, item: T) => React.Key;
 }
 
 vi.mock('react-virtuoso', async () => {
@@ -224,7 +225,7 @@ describe('MessageList scroll configuration', () => {
     vi.clearAllMocks();
   });
 
-  it('configures Virtuoso to pre-render below the viewport and use a single bottom threshold', () => {
+  it('configures Virtuoso to pre-render below the viewport and use stable message keys', () => {
     act(() => {
       root.render(
         <I18nProvider>
@@ -239,7 +240,11 @@ describe('MessageList scroll configuration', () => {
       expect.objectContaining({
         increaseViewportBy: { bottom: 800, top: 0 },
         atBottomThreshold: 150,
+        computeItemKey: expect.any(Function),
       }),
     );
+
+    const props = virtuosoPropsSpy.mock.calls[0]?.[0] as VirtuosoMockProps<ChatMessage>;
+    expect(props.computeItemKey?.(0, messages[0])).toBe('message-1');
   });
 });

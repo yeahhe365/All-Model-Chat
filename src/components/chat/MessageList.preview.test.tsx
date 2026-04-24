@@ -46,6 +46,11 @@ vi.mock('../modals/FilePreviewModal', () => ({
     file ? <div data-testid="file-preview-modal">{file.name}</div> : null,
 }));
 
+vi.mock('../modals/MarkdownPreviewModal', () => ({
+  MarkdownPreviewModal: ({ file }: { file: UploadedFile | null }) =>
+    file ? <div data-testid="markdown-preview-modal">{file.name}</div> : null,
+}));
+
 vi.mock('./message-list/hooks/useMessageListScroll', () => ({
   useMessageListScroll: () => ({
     virtuosoRef: { current: null },
@@ -100,9 +105,9 @@ describe('MessageList image preview', () => {
     },
   ];
 
-  const createProviderValue = (): ChatAreaProviderValue => ({
+  const createProviderValue = (messageFiles: UploadedFile[] = [file]): ChatAreaProviderValue => ({
     messageList: {
-      messages,
+      messages: [{ ...messages[0], files: messageFiles }],
       sessionTitle: 'Test',
       setScrollContainerRef: () => {},
       onEditMessage: () => {},
@@ -235,5 +240,39 @@ describe('MessageList image preview', () => {
     });
 
     expect(document.querySelector('[data-testid="file-preview-modal"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="markdown-preview-modal"]')).not.toBeInTheDocument();
+  });
+
+  it('opens markdown files in the dedicated markdown preview modal', async () => {
+    const markdownFile: UploadedFile = {
+      id: 'markdown-1',
+      name: 'notes.md',
+      type: 'text/markdown',
+      size: 128,
+      textContent: '# Notes',
+      uploadState: 'active',
+    };
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ChatAreaProvider value={createProviderValue([markdownFile])}>
+            <MessageList />
+          </ChatAreaProvider>
+        </I18nProvider>
+      );
+    });
+
+    const trigger = document.querySelector('[data-testid="open-preview-message-1"]');
+    expect(trigger).not.toBeNull();
+
+    await act(async () => {
+      trigger!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(document.querySelector('[data-testid="markdown-preview-modal"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="file-preview-modal"]')).not.toBeInTheDocument();
   });
 });

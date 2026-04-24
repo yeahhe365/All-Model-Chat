@@ -55,17 +55,25 @@ export const MessageText: React.FC<MessageTextProps> = ({
     // Auto Fullscreen HTML Logic
     const prevIsLoadingRef = useRef(isLoading);
     useEffect(() => {
+        let previewTimeout: number | null = null;
+
         if (prevIsLoadingRef.current && !isLoading) {
             if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
                 const previewableBlock = extractPreviewableCodeBlock(effectiveContent);
                 if (previewableBlock) {
-                    setTimeout(() => {
+                    previewTimeout = window.setTimeout(() => {
                         onOpenHtmlPreview(previewableBlock.content, { initialTrueFullscreen: false });
                     }, 100);
                 }
             }
         }
         prevIsLoadingRef.current = isLoading;
+
+        return () => {
+            if (previewTimeout !== null) {
+                clearTimeout(previewTimeout);
+            }
+        };
     }, [isLoading, appSettings.autoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
 
     // Only show the primary thinking indicator (spinner) if:

@@ -13,6 +13,7 @@ import { MessageListFooter } from './message-list/MessageListFooter';
 import { isGemini3Model } from '../../utils/modelHelpers';
 import { useChatAreaMessageList } from '../layout/chat-area/ChatAreaContext';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
+import { isMarkdownFile } from '../../utils/fileHelpers';
 
 const LazyHtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');
@@ -22,6 +23,11 @@ const LazyHtmlPreviewModal = lazy(async () => {
 const LazyFilePreviewModal = lazy(async () => {
   const module = await import('../modals/FilePreviewModal');
   return { default: module.FilePreviewModal };
+});
+
+const LazyMarkdownPreviewModal = lazy(async () => {
+  const module = await import('../modals/MarkdownPreviewModal');
+  return { default: module.MarkdownPreviewModal };
 });
 
 const MessageListComponent: React.FC = () => {
@@ -91,6 +97,8 @@ const MessageListComponent: React.FC = () => {
 
   // Determine if current model is Gemini 3 to enable per-part resolution
   const isGemini3 = useMemo(() => isGemini3Model(currentModelId), [currentModelId]);
+  const markdownPreviewFile = previewFile && isMarkdownFile(previewFile) ? previewFile : null;
+  const genericPreviewFile = previewFile && !isMarkdownFile(previewFile) ? previewFile : null;
 
   return (
     <>
@@ -111,6 +119,7 @@ const MessageListComponent: React.FC = () => {
             atBottomStateChange={setAtBottom}
             atBottomThreshold={150}
             followOutput={false} // Disable auto-scroll to bottom during streaming (we handle it via auto-anchor or user interaction)
+            computeItemKey={(_, msg) => msg.id}
             rangeChanged={onRangeChanged}
             increaseViewportBy={{ top: 0, bottom: 800 }}
             className="custom-scrollbar"
@@ -169,15 +178,24 @@ const MessageListComponent: React.FC = () => {
       </div>
     
       {/* Modals */}
-      {previewFile && (
+      {genericPreviewFile && (
         <Suspense fallback={null}>
           <LazyFilePreviewModal 
-              file={previewFile} 
-              onClose={closeFilePreviewModal}
-              onPrev={handlePrevImage}
-              onNext={handleNextImage}
+              file={genericPreviewFile} 
+              onClose={closeFilePreviewModal} 
+              onPrev={handlePrevImage} 
+              onNext={handleNextImage} 
               hasPrev={currentImageIndex > 0}
               hasNext={currentImageIndex !== -1 && currentImageIndex < allImages.length - 1}
+          />
+        </Suspense>
+      )}
+
+      {markdownPreviewFile && (
+        <Suspense fallback={null}>
+          <LazyMarkdownPreviewModal
+            file={markdownPreviewFile}
+            onClose={closeFilePreviewModal}
           />
         </Suspense>
       )}

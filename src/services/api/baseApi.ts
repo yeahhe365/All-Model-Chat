@@ -312,7 +312,7 @@ export const buildGenerationConfig = async (
     mediaResolution?: MediaResolution,
     isLocalPythonEnabled?: boolean,
     imageOutputMode: ImageOutputMode = 'IMAGE_TEXT',
-    personGeneration: ImagePersonGeneration = 'ALLOW_ADULT',
+    _personGeneration: ImagePersonGeneration = 'ALLOW_ADULT',
 ): Promise<GenerationConfig> => {
     const normalizedAspectRatio = normalizeAspectRatioForModel(modelId, aspectRatio);
     const normalizedImageSize = normalizeImageSizeForModel(modelId, imageSize);

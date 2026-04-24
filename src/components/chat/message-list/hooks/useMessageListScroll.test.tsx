@@ -179,6 +179,33 @@ describe('useMessageListScroll', () => {
     unmount();
   });
 
+  it('cancels pending scroll restoration when the hook unmounts', () => {
+    localStorage.setItem('chat_scroll_pos_session-restore', '144');
+
+    const { result, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages: createMessages(),
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-restore',
+      }),
+    );
+
+    const scrollTo = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo,
+      scrollToIndex: vi.fn(),
+    } as unknown as VirtuosoHandle;
+
+    unmount();
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
   it('does not recalculate bottom-state during scroll handling', () => {
     const { result, unmount } = renderHook(() =>
       useMessageListScroll({

@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageText } from './MessageText';
 
 vi.mock('../../../contexts/I18nContext', () => ({
@@ -33,6 +33,16 @@ vi.mock('../../../hooks/ui/useMessageStream', () => ({
 }));
 
 describe('MessageText', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
   it('renders grounded response metadata even when the message only contains images', () => {
     const container = document.createElement('div');
     const root = createRoot(container);
@@ -85,5 +95,56 @@ describe('MessageText', () => {
     act(() => {
       root.unmount();
     });
+  });
+
+  it('cancels pending automatic HTML preview when unmounted', () => {
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    const onOpenHtmlPreview = vi.fn();
+    const loadingMessage = {
+      id: 'message-html',
+      role: 'model' as const,
+      content: '```html\n<div>preview</div>\n```',
+      isLoading: true,
+      timestamp: new Date('2026-04-21T00:00:00.000Z'),
+    };
+    const loadedMessage = {
+      ...loadingMessage,
+      isLoading: false,
+    };
+
+    const renderMessage = (message: typeof loadingMessage) => (
+      <MessageText
+        message={message}
+        showThoughts={false}
+        appSettings={{
+          autoFullscreenHtml: true,
+          hideThinkingInContext: false,
+        } as any}
+        themeId="pearl"
+        baseFontSize={16}
+        onImageClick={vi.fn()}
+        onOpenHtmlPreview={onOpenHtmlPreview}
+        expandCodeBlocksByDefault={false}
+        isMermaidRenderingEnabled={true}
+        isGraphvizRenderingEnabled={true}
+        onOpenSidePanel={vi.fn()}
+      />
+    );
+
+    act(() => {
+      root.render(renderMessage(loadingMessage));
+    });
+
+    act(() => {
+      root.render(renderMessage(loadedMessage));
+    });
+
+    act(() => {
+      root.unmount();
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(onOpenHtmlPreview).not.toHaveBeenCalled();
   });
 });

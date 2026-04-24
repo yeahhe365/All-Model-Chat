@@ -167,4 +167,15 @@ describe('useChatEffects', () => {
     expect(startNewChat).toHaveBeenCalledTimes(1);
     hook.unmount();
   });
+
+  it('does not require model-list fallback props that can silently rewrite session models', () => {
+    const props = createProps({
+      activeSessionId: 'session-1',
+    });
+
+    const hook = renderHook(() => useChatEffects(props));
+
+    expect(props.startNewChat).not.toHaveBeenCalled();
+    hook.unmount();
+  });
 });

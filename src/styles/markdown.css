@@ -272,12 +272,12 @@ code.hljs {
 /* Table Styles - Clean Minimalist Style (No Grid Borders) */
 .markdown-body table {
   border-collapse: collapse;
-  width: max-content;
+  width: 100%;
   min-width: 100%;
   margin: 0; /* Handled by TableBlock wrapper */
   background-color: transparent !important;
   border: none !important;
-  table-layout: auto;
+  table-layout: fixed;
 }
 
 .markdown-body caption {
@@ -305,7 +305,9 @@ code.hljs {
   padding: 0.875rem 1rem;
   text-align: left;
   border: none !important;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   vertical-align: top;
   font-size: 0.95em;
   opacity: 0.9;
@@ -340,6 +342,9 @@ code.hljs {
   vertical-align: top;
   background-color: transparent !important;
   line-height: 1.6;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Citation Styles */
