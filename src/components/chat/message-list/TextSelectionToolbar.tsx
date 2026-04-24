@@ -1,11 +1,12 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { translations } from '../../../utils/translations';
 
 // Hooks
 import { useSelectionPosition } from '../../../hooks/text-selection/useSelectionPosition';
 import { useSelectionDrag } from '../../../hooks/text-selection/useSelectionDrag';
 import { useSelectionAudio } from '../../../hooks/text-selection/useSelectionAudio';
+import { writeSelectionTextToClipboard } from '../../../hooks/text-selection/selectionClipboard';
 
 // Components
 import { ToolbarContainer } from './text-selection/ToolbarContainer';
@@ -22,7 +23,27 @@ interface TextSelectionToolbarProps {
 
 export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQuote, onInsert, onTTS, containerRef, t }) => {
     const toolbarRef = useRef<HTMLDivElement>(null);
+    const copyResetTimeoutRef = useRef<number | null>(null);
     const [isCopied, setIsCopied] = useState(false);
+
+    const showCopiedFeedback = () => {
+        setIsCopied(true);
+        if (copyResetTimeoutRef.current) {
+            window.clearTimeout(copyResetTimeoutRef.current);
+        }
+        copyResetTimeoutRef.current = window.setTimeout(() => {
+            setIsCopied(false);
+            copyResetTimeoutRef.current = null;
+        }, 1000);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (copyResetTimeoutRef.current) {
+                window.clearTimeout(copyResetTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // 1. Audio Logic
     const audioState = useSelectionAudio();
@@ -31,7 +52,8 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQu
     const { position, setPosition, selectedText, clearSelection } = useSelectionPosition({
         containerRef,
         isAudioActive: audioState.isPlaying || audioState.isLoading,
-        toolbarRef
+        toolbarRef,
+        onCopySuccess: showCopiedFeedback
     });
 
     // 3. Drag Logic
@@ -55,15 +77,14 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQu
         clearSelection();
     };
 
-    const handleCopyClick = (e: React.MouseEvent) => {
+    const handleCopyClick = async (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
-        navigator.clipboard.writeText(selectedText).then(() => {
-            setIsCopied(true);
+        if (await writeSelectionTextToClipboard(selectedText)) {
+            showCopiedFeedback();
             setTimeout(() => {
                  clearSelection();
-                 setIsCopied(false);
             }, 1000);
-        });
+        }
     };
     
     const handleSearchClick = (e: React.MouseEvent) => {

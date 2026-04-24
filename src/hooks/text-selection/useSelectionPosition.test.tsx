@@ -178,6 +178,41 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
+  it('notifies when global copy uses the selected markdown text', () => {
+    const host = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.textContent = 'hello world';
+    host.appendChild(strong);
+    document.body.appendChild(host);
+
+    const onCopySuccess = vi.fn();
+    const toolbarRef = createToolbarRef();
+    const { unmount } = renderHook(() =>
+      useSelectionPosition({
+        containerRef: host as any,
+        isAudioActive: false,
+        toolbarRef,
+        onCopySuccess,
+      }),
+    );
+
+    selectNode(strong);
+
+    const copyEvent = new Event('copy', { bubbles: true, cancelable: true });
+    Object.defineProperty(copyEvent, 'clipboardData', {
+      configurable: true,
+      value: { setData: vi.fn() },
+    });
+
+    act(() => {
+      document.dispatchEvent(copyEvent);
+    });
+
+    expect(onCopySuccess).toHaveBeenCalledWith('**hello world**');
+
+    unmount();
+  });
+
   it('does not override copy while an editable field is focused', () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');

@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/refs */
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
+import { copySelectionTextToClipboardEvent } from './selectionClipboard';
 
 type ContainerRefLike = React.RefObject<HTMLElement> | HTMLElement | null;
 
@@ -9,6 +10,7 @@ interface UseSelectionPositionProps {
     containerRef: ContainerRefLike;
     isAudioActive: boolean;
     toolbarRef: React.RefObject<HTMLDivElement>;
+    onCopySuccess?: (text: string) => void;
 }
 
 const resolveContainerElement = (containerRef: ContainerRefLike): HTMLElement | null => {
@@ -27,7 +29,7 @@ const isEditableElement = (element: Element | null): boolean => {
     );
 };
 
-export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }: UseSelectionPositionProps) => {
+export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, onCopySuccess }: UseSelectionPositionProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
     const [selectedText, setSelectedText] = useState('');
     const [toolbarElement, setToolbarElement] = useState<HTMLDivElement | null>(null);
@@ -117,17 +119,14 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             }
 
             const text = selectedTextRef.current;
-            if (!text || !e.clipboardData) {
-                return;
+            if (copySelectionTextToClipboardEvent(e, text)) {
+                onCopySuccess?.(text);
             }
-
-            e.preventDefault();
-            e.clipboardData.setData('text/plain', text);
         };
 
         document.addEventListener('copy', handleCopy);
         return () => document.removeEventListener('copy', handleCopy);
-    }, [isAudioActive]);
+    }, [isAudioActive, onCopySuccess]);
 
     useLayoutEffect(() => {
         if (!position) {
