@@ -33,7 +33,8 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
   
   const handleCopyCode = () => copyToClipboard(code);
 
-  const containerClasses = "p-2 sm:p-4 border border-[var(--theme-border-secondary)] rounded-md shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[100px] sm:min-h-[150px] transition-colors duration-300";
+  const containerClasses = "p-2 sm:p-4 overflow-auto custom-scrollbar flex items-center justify-center min-h-[100px] sm:min-h-[150px] transition-colors duration-300";
+  const headerButtonClass = `${MESSAGE_BLOCK_BUTTON_CLASS} !min-h-10 !min-w-10 !rounded-md !p-0 !opacity-90 hover:!opacity-100 hover:bg-[var(--theme-bg-tertiary)]/40`;
   const bgClass = themeId === 'onyx' ? 'bg-[var(--theme-bg-secondary)]' : 'bg-white';
 
   if (isRendering) {
@@ -62,37 +63,37 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
   }
 
   return (
-    <div className="relative group my-3">
-      <div className="flex items-center justify-between px-3 py-2 border border-[var(--theme-border-secondary)] border-b-0 rounded-t-lg bg-[var(--theme-bg-tertiary)]/45">
+    <div className="relative group my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] shadow-sm">
+      <div className="flex items-center justify-between gap-2 rounded-t-lg border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-code-block-header)] px-3 py-0 transition-all">
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1">{title}</span>
-          <div className="flex items-center gap-1 flex-shrink-0">
-             <button onClick={() => setShowSource(!showSource)} className={MESSAGE_BLOCK_BUTTON_CLASS} title={showSource ? t('diagram_hide_source') : t('diagram_show_source')}>
-                <Code size={14} />
+          <div className="flex flex-shrink-0 items-center gap-0.5">
+             <button onClick={() => setShowSource(!showSource)} className={headerButtonClass} title={showSource ? t('diagram_hide_source') : t('diagram_show_source')}>
+                <Code size={16} />
              </button>
              {extraActions}
              <button 
                 onClick={onOpenSidePanel}
-                className={MESSAGE_BLOCK_BUTTON_CLASS}
+                className={headerButtonClass}
                 title={t('diagram_open_side_panel')}
              >
-                <Sidebar size={14} />
+                <Sidebar size={16} />
              </button>
              {diagramFile && (
                 <>
                     <button
                         onClick={(e) => { e.stopPropagation(); onImageClick(diagramFile); }}
-                        className={MESSAGE_BLOCK_BUTTON_CLASS}
+                        className={headerButtonClass}
                         title={t('diagram_zoom')}
                     >
-                        <Maximize size={14} />
+                        <Maximize size={16} />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDownloadJpg(); }}
                         disabled={isDownloading}
-                        className={MESSAGE_BLOCK_BUTTON_CLASS}
+                        className={headerButtonClass}
                         title={t('diagram_download_jpg')}
                     >
-                        {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                        {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                     </button>
                 </>
              )}
@@ -101,16 +102,16 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
       
       <div
         ref={containerRef}
-        className={`${containerClasses} ${bgClass} ${diagramFile ? 'cursor-pointer' : ''} ${showSource ? 'rounded-b-none border-b-0' : 'rounded-b-lg'} !my-0 !border-t-0`}
+        className={`${containerClasses} ${bgClass} ${diagramFile ? 'cursor-pointer' : ''} ${showSource ? '' : 'rounded-b-lg'} !my-0`}
         onClick={() => diagramFile && onImageClick(diagramFile)}
       >
         {children}
       </div>
 
       {showSource && (
-          <div className="relative rounded-b-lg border border-[var(--theme-border-secondary)] border-t-0 bg-[var(--theme-bg-code-block)] overflow-hidden">
+          <div className="relative border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-code-block)] overflow-hidden rounded-b-lg">
               <div className="absolute top-2 right-2 z-10">
-                  <button onClick={handleCopyCode} className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('diagram_copy_code')}>
+                  <button onClick={handleCopyCode} className={headerButtonClass} title={t('diagram_copy_code')}>
                       {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                   </button>
               </div>

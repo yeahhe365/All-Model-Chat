@@ -74,4 +74,20 @@ describe('UI clarity regressions', () => {
       expect(source).not.toContain('backdrop-blur-sm');
     }
   });
+
+  it('keeps diagram blocks visually aligned with code blocks', () => {
+    const codeBlock = readSource('components/message/blocks/CodeBlock.tsx');
+    const codeHeader = readSource('components/message/blocks/parts/CodeHeader.tsx');
+    const diagramWrapper = readSource('components/message/blocks/parts/DiagramWrapper.tsx');
+
+    expect(codeBlock).toContain('border border-[var(--theme-border-primary)]');
+    expect(codeBlock).toContain('bg-[var(--theme-bg-code-block)]');
+    expect(codeHeader).toContain('bg-[var(--theme-bg-code-block-header)]');
+
+    expect(diagramWrapper).toContain('border border-[var(--theme-border-primary)]');
+    expect(diagramWrapper).toContain('bg-[var(--theme-bg-code-block)]');
+    expect(diagramWrapper).toContain('bg-[var(--theme-bg-code-block-header)]');
+    expect(diagramWrapper).not.toContain('border-[var(--theme-border-secondary)] border-b-0');
+    expect(diagramWrapper).not.toContain('bg-[var(--theme-bg-tertiary)]/45');
+  });
 });
