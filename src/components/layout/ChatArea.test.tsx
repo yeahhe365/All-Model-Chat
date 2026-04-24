@@ -338,7 +338,7 @@ describe('ChatArea provider slice memoization', () => {
     expect(mockState.renders.chatInput.mock.calls.length).toBe(chatInputRenderCount);
   });
 
-  it('activates the composer and opens the virtual keyboard after a downward swipe in the chat area on mobile', () => {
+  it('does not focus the composer after a downward swipe in the chat area on mobile', () => {
     matchMediaMatches = true;
     windowInnerWidth = 390;
     Object.defineProperty(window, 'innerWidth', {
@@ -368,8 +368,8 @@ describe('ChatArea provider slice memoization', () => {
       dispatchTouchEvent(chatArea!, 'touchend', [{ clientX: 102, clientY: 250 }]);
     });
 
-    expect(focusSpy).toHaveBeenCalledTimes(1);
-    expect(selectionSpy).toHaveBeenCalledWith(composer.value.length, composer.value.length);
-    expect(virtualKeyboardShow).toHaveBeenCalledTimes(1);
+    expect(focusSpy).not.toHaveBeenCalled();
+    expect(selectionSpy).not.toHaveBeenCalled();
+    expect(virtualKeyboardShow).not.toHaveBeenCalled();
   });
 });

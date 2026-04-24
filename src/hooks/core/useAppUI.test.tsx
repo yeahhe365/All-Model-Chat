@@ -1,7 +1,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppUI } from './useAppUI';
 import { useUIStore } from '../../stores/uiStore';
 
@@ -39,8 +39,15 @@ const createTouchEvent = (
   changedTouches: [{ clientX: x, clientY: y }],
 } as unknown as React.TouchEvent);
 
+const flushRafCallbacks = () => {
+  act(() => {
+    vi.runOnlyPendingTimers();
+  });
+};
+
 describe('useAppUI', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     localStorage.clear();
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
@@ -58,6 +65,7 @@ describe('useAppUI', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     document.body.innerHTML = '';
   });
 
@@ -130,12 +138,39 @@ describe('useAppUI', () => {
       window.innerWidth = 1024;
       window.dispatchEvent(new Event('resize'));
     });
+
+    flushRafCallbacks();
     expect(useUIStore.getState().isHistorySidebarOpen).toBe(false);
 
     act(() => {
       window.innerWidth = 375;
       window.dispatchEvent(new Event('resize'));
     });
+
+    flushRafCallbacks();
+    expect(useUIStore.getState().isHistorySidebarOpen).toBe(true);
+
+    unmount();
+  });
+
+  it('coalesces resize handling into the next animation frame', () => {
+    useUIStore.setState({
+      isHistorySidebarOpen: false,
+      desktopHistorySidebarOpen: true,
+      mobileHistorySidebarOpen: false,
+    });
+    const { unmount } = renderHook(() => useAppUI());
+
+    act(() => {
+      window.innerWidth = 375;
+      window.dispatchEvent(new Event('resize'));
+      window.innerWidth = 1024;
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    expect(useUIStore.getState().isHistorySidebarOpen).toBe(false);
+
+    flushRafCallbacks();
     expect(useUIStore.getState().isHistorySidebarOpen).toBe(true);
 
     unmount();

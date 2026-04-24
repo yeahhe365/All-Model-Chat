@@ -19,9 +19,6 @@ const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 const IMAGE_TEXT_MODALITIES = ['IMAGE', 'TEXT'] as const;
 const IMAGE_ONLY_MODALITIES = ['IMAGE'] as const;
-const toGeminiPersonGeneration = (personGeneration: ImagePersonGeneration): 'ALLOW_ADULT' | 'ALLOW_ALL' | 'ALLOW_NONE' =>
-  personGeneration === 'DONT_ALLOW' ? 'ALLOW_NONE' : personGeneration;
-
 export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
 type ClientHttpOptions = {
@@ -41,7 +38,6 @@ type GenerationConfig = {
   imageConfig?: {
     aspectRatio?: string;
     imageSize?: string;
-    personGeneration?: 'ALLOW_ADULT' | 'ALLOW_ALL' | 'ALLOW_NONE';
   };
   thinkingConfig?: {
     includeThoughts: boolean;
@@ -334,7 +330,6 @@ export const buildGenerationConfig = async (
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {};
         if (normalizedAspectRatio && normalizedAspectRatio !== 'Auto') imageConfig.aspectRatio = normalizedAspectRatio;
-        imageConfig.personGeneration = toGeminiPersonGeneration(personGeneration);
         
         const config: GenerationConfig = {
             responseModalities: imageOutputMode === 'IMAGE_ONLY' ? IMAGE_ONLY_MODALITIES : IMAGE_TEXT_MODALITIES,
@@ -348,7 +343,6 @@ export const buildGenerationConfig = async (
     if (modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') {
          const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {
             imageSize: normalizedImageSize || '1K',
-            personGeneration: toGeminiPersonGeneration(personGeneration),
          };
          if (normalizedAspectRatio && normalizedAspectRatio !== 'Auto') {
             imageConfig.aspectRatio = normalizedAspectRatio;

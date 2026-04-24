@@ -391,13 +391,10 @@ describe('buildGenerationConfig', () => {
     );
 
     expect(config.responseModalities).toEqual(['IMAGE']);
-    expect(config.imageConfig).toEqual(
-      expect.objectContaining({
-        aspectRatio: '1:1',
-        imageSize: '2K',
-        personGeneration: 'ALLOW_ADULT',
-      }),
-    );
+    expect(config.imageConfig).toEqual({
+      aspectRatio: '1:1',
+      imageSize: '2K',
+    });
   });
 
   it('drops unsupported panoramic ratios for gemini-3-pro-image-preview', async () => {
@@ -418,7 +415,7 @@ describe('buildGenerationConfig', () => {
     expect(config.imageConfig!.imageSize).toBe('1K');
   });
 
-  it('adds personGeneration to Gemini 2.5 image config when requested', async () => {
+  it('omits unsupported personGeneration for Gemini 2.5 image config', async () => {
     const config = await (buildGenerationConfig as unknown as (
       modelId: string,
       systemInstruction: string,
@@ -460,7 +457,6 @@ describe('buildGenerationConfig', () => {
     expect(config.responseModalities).toEqual(['IMAGE', 'TEXT']);
     expect(config.imageConfig).toEqual({
       aspectRatio: '16:9',
-      personGeneration: 'ALLOW_NONE',
     });
   });
 

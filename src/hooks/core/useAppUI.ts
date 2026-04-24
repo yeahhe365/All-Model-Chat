@@ -20,9 +20,11 @@ export const useAppUI = () => {
 
   const touchStartRef = useRef({ x: 0, y: 0, startedInSidebar: false });
   const wasDesktopRef = useRef(window.innerWidth >= DESKTOP_BREAKPOINT);
+  const resizeFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const handleResize = () => {
+    const syncSidebarForCurrentViewport = () => {
+      resizeFrameRef.current = null;
       const isDesktop = window.innerWidth >= DESKTOP_BREAKPOINT;
       if (isDesktop !== wasDesktopRef.current) {
         wasDesktopRef.current = isDesktop;
@@ -30,8 +32,22 @@ export const useAppUI = () => {
       }
     };
 
+    const handleResize = () => {
+      if (resizeFrameRef.current !== null) {
+        return;
+      }
+
+      resizeFrameRef.current = window.requestAnimationFrame(syncSidebarForCurrentViewport);
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (resizeFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizeFrameRef.current);
+        resizeFrameRef.current = null;
+      }
+    };
   }, [syncHistorySidebarForViewport]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {

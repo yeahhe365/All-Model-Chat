@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
 import { ChatInput } from '../chat/input/ChatInput';
@@ -12,51 +12,6 @@ import { getVisibleChatMessages } from '../../utils/chat/visibility';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useIsMobile } from '../../hooks/useDevice';
-import { useWindowContext } from '../../contexts/WindowContext';
-
-const SWIPE_FOCUS_MIN_DISTANCE_PX = 60;
-type NavigatorWithVirtualKeyboard = Navigator & {
-  virtualKeyboard?: {
-    show?: () => void;
-  };
-};
-
-const shouldIgnoreSwipeFocusTarget = (target: EventTarget | null) => {
-  if (!(target instanceof Element)) {
-    return false;
-  }
-
-  return Boolean(
-    target.closest(
-      'header, button, a, input, textarea, select, label, summary, [role="button"], [role="link"], [contenteditable="true"]',
-    ),
-  );
-};
-
-const activateComposerInput = (
-  composer: HTMLTextAreaElement,
-  navigatorObject?: Navigator,
-) => {
-  if (composer.disabled || composer.readOnly) {
-    return;
-  }
-
-  composer.focus();
-
-  try {
-    const textLength = composer.value.length;
-    composer.setSelectionRange(textLength, textLength);
-  } catch {
-    // Some environments can focus textareas without supporting selection updates.
-  }
-
-  try {
-    (navigatorObject as NavigatorWithVirtualKeyboard | undefined)?.virtualKeyboard?.show?.();
-  } catch {
-    // Ignore virtual keyboard API failures on unsupported browsers.
-  }
-};
 
 export type { ChatAreaProps };
 
@@ -92,75 +47,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
   const setImageOutputMode = useChatStore(s => s.setImageOutputMode);
   const personGeneration = useChatStore(s => s.personGeneration);
   const setPersonGeneration = useChatStore(s => s.setPersonGeneration);
-  const isMobile = useIsMobile();
-  const { document: targetDocument } = useWindowContext();
-  const swipeStartRef = useRef<{ x: number; y: number; canFocus: boolean } | null>(null);
-
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea({
     currentChatSettings: session.currentChatSettings,
   });
-
-  const focusComposerInput = useCallback(() => {
-    const composer = targetDocument.querySelector('textarea[aria-label="Chat message input"]');
-
-    if (!(composer instanceof HTMLTextAreaElement) || composer.disabled) {
-      return;
-    }
-
-    activateComposerInput(composer, targetDocument.defaultView?.navigator);
-  }, [targetDocument]);
-
-  const handleTouchStart = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      if (!isMobile || event.touches.length !== 1) {
-        swipeStartRef.current = null;
-        return;
-      }
-
-      const touch = event.touches[0];
-      swipeStartRef.current = {
-        x: touch.clientX,
-        y: touch.clientY,
-        canFocus: !shouldIgnoreSwipeFocusTarget(event.target),
-      };
-    },
-    [isMobile],
-  );
-
-  const resetSwipeFocusGesture = useCallback(() => {
-    swipeStartRef.current = null;
-  }, []);
-
-  const handleTouchEnd = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      if (!isMobile || event.changedTouches.length !== 1) {
-        swipeStartRef.current = null;
-        return;
-      }
-
-      const swipeStart = swipeStartRef.current;
-      swipeStartRef.current = null;
-
-      if (!swipeStart?.canFocus) {
-        return;
-      }
-
-      const touch = event.changedTouches[0];
-      const deltaX = touch.clientX - swipeStart.x;
-      const deltaY = touch.clientY - swipeStart.y;
-
-      if (deltaY < SWIPE_FOCUS_MIN_DISTANCE_PX) {
-        return;
-      }
-
-      if (Math.abs(deltaY) <= Math.abs(deltaX)) {
-        return;
-      }
-
-      focusComposerInput();
-    },
-    [focusComposerInput, isMobile],
-  );
 
   const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);
   const pipShortcut = useMemo(() => getShortcutDisplay('general.togglePip', appSettings), [appSettings]);
@@ -341,9 +230,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       onDragOver={shell.handleAppDragOver}
       onDragLeave={shell.handleAppDragLeave}
       onDrop={shell.handleAppDrop}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={resetSwipeFocusGesture}
     >
       <DragDropOverlay isDraggingOver={shell.isAppDraggingOver} />
 

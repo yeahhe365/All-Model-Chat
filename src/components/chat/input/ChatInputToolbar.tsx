@@ -56,7 +56,7 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   const showAspectRatio = (isImagenModel || isGemini3ImageModel) && setAspectRatio && aspectRatio;
   const showImageSize = supportedImageSizes && supportedImageSizes.length > 0 && setImageSize && imageSize;
   const showImageOutputMode = isImagenModel && !isRealImagenModel && setImageOutputMode && imageOutputMode;
-  const showPersonGeneration = isImagenModel && setPersonGeneration && personGeneration;
+  const showPersonGeneration = isRealImagenModel && setPersonGeneration && personGeneration;
   const showQuadToggle = (isImagenModel || isGemini3ImageModel) && onToggleQuadImages && generateQuadImages !== undefined;
   
   // Allow voice selection for both explicit TTS models and Native Audio (Live) models
