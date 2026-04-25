@@ -129,8 +129,7 @@ export const buildContentParts = async (
                     textContent = await response.text();
                 }
                 if (textContent) {
-                    // Format as a pseudo-file block for the model
-                    part = { text: `\n--- START OF FILE ${file.name} ---\n${textContent}\n--- END OF FILE ${file.name} ---\n` };
+                    part = { text: textContent };
                 }
             }
         } else {
@@ -210,7 +209,22 @@ export const buildContentParts = async (
   }));
 
   const enrichedFiles = processedResults.map(r => r.file);
-  const dataParts = processedResults.map(r => r.part).filter((p): p is ContentPart => p !== null);
+  const dataParts = processedResults.flatMap((result): ContentPart[] => {
+    if (!result.part) return [];
+
+    const isTextLike = isTextFile(result.file);
+    if (isTextLike && result.part.text) {
+      return [
+        { text: 'Attached text file:' },
+        { text: result.file.name },
+        { text: 'Text file content:' },
+        result.part,
+        { text: 'End of attached text file.' },
+      ];
+    }
+
+    return [result.part];
+  });
 
   const userTypedText = text.trim();
   const contentPartsResult: ContentPart[] = [];
@@ -277,6 +291,10 @@ export const createChatHistoryForApi = async (
                                 const canRehydrateGeneratedMedia =
                                     mimeType.startsWith('image/') &&
                                     (hasCodeExecutionArtifacts || isGeminiImageHistoryTarget(modelId));
+                                if (partCopy.inlineData.data && canRehydrateGeneratedMedia) {
+                                    return partCopy;
+                                }
+
                                 const generatedFile = canRehydrateGeneratedMedia ? takeGeneratedFile(mimeType) : undefined;
 
                                 if (generatedFile?.rawFile instanceof Blob) {

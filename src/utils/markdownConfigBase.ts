@@ -22,7 +22,11 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
       '*': ['ariaHidden', 'ariaLabel', 'role', 'title'],
       code: [...(defaultSchema.attributes?.code || []), 'inline'],
       span: [...(defaultSchema.attributes?.span || [])],
-      div: [...(defaultSchema.attributes?.div || []), 'align'],
+      div: [
+        ...(defaultSchema.attributes?.div || []),
+        'align',
+        ['className', 'tool-result', /^outcome-[a-z0-9_-]+$/],
+      ],
       p: [...(defaultSchema.attributes?.p || []), 'align'],
       img: [...(defaultSchema.attributes?.img || []), 'align', 'width', 'height', 'src'],
       caption: ['align'],

@@ -478,11 +478,21 @@ export const appendFunctionDeclarationsToTools = (
     generationConfig: GenerationConfig,
     functionDeclarations: FunctionDeclaration[],
 ): GenerationConfig => {
-    if (functionDeclarations.length === 0) {
-        return generationConfig;
-    }
-
     const supportsBuiltInCustomToolCombination = isGemini3Model(modelId) || isGeminiRoboticsModel(modelId);
+    const hasBuiltIns = hasBuiltInTools(generationConfig.tools);
+    const shouldIncludeServerSideToolInvocations = hasBuiltIns && supportsBuiltInCustomToolCombination;
+
+    if (functionDeclarations.length === 0) {
+        return shouldIncludeServerSideToolInvocations
+            ? {
+                ...generationConfig,
+                toolConfig: {
+                    ...(generationConfig.toolConfig ?? {}),
+                    includeServerSideToolInvocations: true,
+                },
+            }
+            : generationConfig;
+    }
 
     if (hasBuiltInTools(generationConfig.tools) && !supportsBuiltInCustomToolCombination) {
         logService.warn(
@@ -494,9 +504,6 @@ export const appendFunctionDeclarationsToTools = (
         );
         return generationConfig;
     }
-
-    const hasBuiltIns = hasBuiltInTools(generationConfig.tools);
-    const shouldIncludeServerSideToolInvocations = hasBuiltIns && supportsBuiltInCustomToolCombination;
 
     return {
         ...generationConfig,

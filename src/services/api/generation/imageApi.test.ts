@@ -79,7 +79,7 @@ describe('generateImagesApi', () => {
     });
   });
 
-  it('passes through Imagen-specific generation options', async () => {
+  it('maps Imagen-specific generation options to API parameter values', async () => {
     await (generateImagesApi as unknown as (
       apiKey: string,
       modelId: string,
@@ -110,7 +110,7 @@ describe('generateImagesApi', () => {
         outputMimeType: 'image/png',
         aspectRatio: '16:9',
         imageSize: '2K',
-        personGeneration: 'ALLOW_ALL',
+        personGeneration: 'allow_all',
       },
     });
   });

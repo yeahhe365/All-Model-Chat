@@ -32,18 +32,7 @@ export const appendApiPart = (parts: Part[] = [], newPart: Part) => {
         }
     }
     
-    // --- MEMORY OPTIMIZATION ---
-    // 剔除巨大的 Base64 数据以防内存泄漏。UI 渲染依赖的是已生成的 UploadedFile (Blob URL)，
-    // 保留原始 apiParts 中的 base64 会导致内存翻倍且无法回收。
-    const partToStore = { ...newPart } as Part & { inlineData?: { mimeType: string; data?: string } };
-    if (partToStore.inlineData && partToStore.inlineData.data) {
-        partToStore.inlineData = {
-            ...partToStore.inlineData,
-            data: "" // 清空 Base64 数据，释放内存
-        };
-    }
-    
-    newParts.push(partToStore);
+    newParts.push({ ...newPart });
     return newParts;
 };
 

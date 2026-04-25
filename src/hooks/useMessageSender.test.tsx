@@ -74,6 +74,7 @@ vi.mock('../contexts/I18nContext', () => ({
         messageSender_imageModelSupportsImageAndPdfOnly: 'Nano Banana 2 仅支持图片和 PDF 附件。',
         messageSender_imageReferenceLimit: 'Gemini 3 图片模型每次请求最多支持 14 张参考图。',
         messageSender_imagenTextOnly: 'Imagen 模型仅支持文本提示词。',
+        messageSender_codeExecutionTextFileTooLarge: '代码执行文本/CSV 文件建议不超过 2MB。请拆分文件或关闭代码执行。',
         messageSender_noModelSelected: '未选择模型。',
         messageSender_errorSessionTitle: '错误',
         messageSender_apiKeyErrorSessionTitle: 'API 密钥错误',
@@ -239,6 +240,67 @@ describe('useMessageSender', () => {
     expect(mockHandleTtsImagenMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
     expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('blocks oversized text files when server-side code execution is enabled', async () => {
+    mockGetModelCapabilities.mockReturnValue({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: false,
+    });
+
+    const setAppFileError = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useMessageSender({
+        appSettings: {
+          isAutoScrollOnSendEnabled: true,
+          generateQuadImages: false,
+          isCodeExecutionEnabled: true,
+          isLocalPythonEnabled: false,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          isCodeExecutionEnabled: true,
+          isLocalPythonEnabled: false,
+        } as any,
+        messages: [],
+        selectedFiles: [
+          {
+            id: 'file-1',
+            name: 'large.csv',
+            type: 'text/csv',
+            size: 2 * 1024 * 1024 + 1,
+            uploadState: 'active',
+          } as any,
+        ],
+        setSelectedFiles: vi.fn(),
+        editingMessageId: null,
+        setEditingMessageId: vi.fn(),
+        setAppFileError,
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: null,
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        updateAndPersistSessions: vi.fn(),
+        sessionKeyMapRef: { current: new Map() },
+        language: 'zh',
+        setSessionLoading: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSendMessage({ text: 'analyze this file' });
+    });
+
+    expect(setAppFileError).toHaveBeenCalledWith('代码执行文本/CSV 文件建议不超过 2MB。请拆分文件或关闭代码执行。');
+    expect(mockSendStandardMessage).not.toHaveBeenCalled();
     unmount();
   });
 

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
+import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../../types';
 import type { Part, UsageMetadata } from '@google/genai';
 import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
 
@@ -11,7 +11,7 @@ export type SessionsUpdater = (
 
 export interface StreamHandlerFunctions {
     streamOnError: (error: Error) => void;
-    streamOnComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: unknown, urlContextMetadata?: unknown) => void;
+    streamOnComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: unknown, urlContextMetadata?: unknown, generatedFiles?: UploadedFile[]) => void;
     streamOnPart: (part: Part) => void;
     onThoughtChunk: (thoughtChunk: string) => void;
 }

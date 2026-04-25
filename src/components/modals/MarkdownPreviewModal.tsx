@@ -34,6 +34,14 @@ export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({
   const [isCopied, setIsCopied] = useState(false);
 
   const contentForActions = isEditing ? editedContent : (loadedContent || file?.textContent || '');
+  const savedContent = loadedContent || file?.textContent || '';
+  const savedName = file?.name || '';
+  const hasUnsavedChanges = isEditing && (editedContent !== savedContent || editedName !== savedName);
+
+  const confirmDiscardChanges = useCallback(() => {
+    if (!hasUnsavedChanges) return true;
+    return window.confirm(t('filePreview_discard_unsaved_changes'));
+  }, [hasUnsavedChanges, t]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -64,6 +72,7 @@ export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({
     if (!file) return;
 
     if (isEditing) {
+      if (!confirmDiscardChanges()) return;
       setEditedName(file.name);
       setEditedContent(loadedContent || file.textContent || '');
       setIsEditing(false);
@@ -73,14 +82,19 @@ export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({
     setEditedContent(loadedContent || file.textContent || '');
     setEditedName(file.name);
     setIsEditing(true);
-  }, [file, isEditing, loadedContent]);
+  }, [confirmDiscardChanges, file, isEditing, loadedContent]);
+
+  const handleClose = useCallback(() => {
+    if (!confirmDiscardChanges()) return;
+    onClose();
+  }, [confirmDiscardChanges, onClose]);
 
   if (!file) return null;
 
   return (
     <Modal
       isOpen={true}
-      onClose={onClose}
+      onClose={handleClose}
       noPadding
       backdropClassName="bg-black/45 backdrop-blur-sm"
       contentClassName="w-[min(1200px,96vw)] h-[min(900px,94vh)]"
@@ -122,7 +136,7 @@ export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({
             <button type="button" onClick={handleDownload} className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]" title={t('filePreview_download_file')}>
               <Download size={18} />
             </button>
-            <button type="button" onClick={isEditing ? handleToggleEdit : onClose} className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:border-red-400/60 hover:text-red-500" title={isEditing ? t('filePreview_cancel_edit') : t('imageZoom_close_title')}>
+            <button type="button" onClick={isEditing ? handleToggleEdit : handleClose} className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:border-red-400/60 hover:text-red-500" title={isEditing ? t('filePreview_cancel_edit') : t('imageZoom_close_title')}>
               <X size={18} />
             </button>
           </div>

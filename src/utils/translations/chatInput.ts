@@ -145,6 +145,7 @@ export const chatInputTranslations = {
     messageSender_imageModelSupportsImageAndPdfOnly: { en: 'Nano Banana 2 supports image and PDF attachments only.', zh: 'Nano Banana 2 仅支持图片和 PDF 附件。' },
     messageSender_imageModelSupportsImageOnly: { en: 'This image model supports image attachments only.', zh: '这个图片模型仅支持图片附件。' },
     messageSender_imageReferenceLimit: { en: 'Gemini 3 image models support up to 14 reference images per request.', zh: 'Gemini 3 图片模型每次请求最多支持 14 张参考图。' },
+    messageSender_codeExecutionTextFileTooLarge: { en: 'Code execution text/CSV files should be 2MB or smaller. Split the file or turn off Code Execution.', zh: '代码执行文本/CSV 文件建议不超过 2MB。请拆分文件或关闭代码执行。' },
     messageSender_imagenTextOnly: { en: 'Imagen models support text prompts only.', zh: 'Imagen 模型仅支持文本提示词。' },
     messageSender_noModelSelected: { en: 'No model selected.', zh: '未选择模型。' },
     messageSender_errorSessionTitle: { en: 'Error', zh: '错误' },

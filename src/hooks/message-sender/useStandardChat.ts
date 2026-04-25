@@ -357,10 +357,7 @@ export const useStandardChat = ({
               ),
           });
 
-          if (
-            toolLoopResult.toolMessages.length > 0 ||
-            toolLoopResult.generatedFiles.length > 0
-          ) {
+          if (toolLoopResult.toolMessages.length > 0) {
             const internalMessages = toolLoopResult.toolMessages.flatMap(
               ({ modelContent, functionResponseParts }) => [
                 createMessage('model', '', {
@@ -394,10 +391,6 @@ export const useStandardChat = ({
                         ...internalMessages,
                         {
                           ...message,
-                          files: [
-                            ...(message.files || []),
-                            ...toolLoopResult.generatedFiles,
-                          ],
                         },
                       ];
                     }),
@@ -416,7 +409,8 @@ export const useStandardChat = ({
           streamOnComplete(
             toolLoopResult.finalTurn.usage,
             toolLoopResult.finalTurn.grounding,
-            toolLoopResult.finalTurn.urlContext
+            toolLoopResult.finalTurn.urlContext,
+            toolLoopResult.generatedFiles
           );
         } catch (error) {
           streamOnError(error instanceof Error ? error : new Error(String(error)));

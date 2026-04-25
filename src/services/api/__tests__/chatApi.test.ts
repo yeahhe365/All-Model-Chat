@@ -257,6 +257,50 @@ describe('chatApi media resolution routing', () => {
     expect(onPart).toHaveBeenNthCalledWith(2, { text: '\nworld' });
   });
 
+  it('preserves streamed thought signatures as context parts without rendering thought text', async () => {
+    mockGenerateContentStream.mockResolvedValue(
+      (async function* () {
+        yield {
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: 'Plan internally.',
+                    thought: true,
+                    thoughtSignature: 'sig-thought-stream',
+                  },
+                ],
+              },
+            },
+          ],
+        };
+      })(),
+    );
+
+    const onPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+
+    await sendStatelessMessageStreamApi(
+      'key',
+      'gemini-3-flash-preview',
+      [],
+      [{ text: 'Solve this.' }],
+      {},
+      new AbortController().signal,
+      onPart,
+      onThoughtChunk,
+      vi.fn(),
+      vi.fn(),
+    );
+
+    expect(onThoughtChunk).toHaveBeenCalledWith('Plan internally.');
+    expect(onPart).toHaveBeenCalledWith({
+      text: '',
+      thoughtSignature: 'sig-thought-stream',
+    });
+  });
+
   it('extracts Gemma thought channels from official non-stream text responses', async () => {
     mockGenerateContent.mockResolvedValue({
       candidates: [
@@ -288,6 +332,52 @@ describe('chatApi media resolution routing', () => {
     expect(onComplete).toHaveBeenCalledWith(
       [{ text: 'Final answer.' }],
       'Plan carefully.',
+      undefined,
+      undefined,
+      undefined,
+    );
+  });
+
+  it('preserves non-stream thought signatures as context parts without rendering thought text', async () => {
+    mockGenerateContent.mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: 'Plan internally.',
+                thought: true,
+                thoughtSignature: 'sig-thought-nonstream',
+              },
+              { text: 'Final answer.' },
+            ],
+          },
+        },
+      ],
+    });
+
+    const onComplete = vi.fn();
+
+    await sendStatelessMessageNonStreamApi(
+      'key',
+      'gemini-3-flash-preview',
+      [],
+      [{ text: 'Solve this.' }],
+      {},
+      new AbortController().signal,
+      vi.fn(),
+      onComplete,
+    );
+
+    expect(onComplete).toHaveBeenCalledWith(
+      [
+        {
+          text: '',
+          thoughtSignature: 'sig-thought-nonstream',
+        },
+        { text: 'Final answer.' },
+      ],
+      'Plan internally.',
       undefined,
       undefined,
       undefined,

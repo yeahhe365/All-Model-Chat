@@ -535,4 +535,108 @@ describe('useStandardChat', () => {
 
     unmount();
   });
+
+  it('keeps local python generated files on the final visible message when the tool loop completes', async () => {
+    const streamOnError = vi.fn();
+    const streamOnComplete = vi.fn();
+    const streamOnPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const updateAndPersistSessions = vi.fn();
+    const generatedFile = {
+      id: 'plot-file',
+      name: 'generated-plot.png',
+      type: 'image/png',
+      size: 12,
+      dataUrl: 'blob:plot',
+      uploadState: 'active',
+    };
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete,
+      streamOnPart,
+      onThoughtChunk,
+    }));
+
+    mockBuildGenerationConfig.mockResolvedValue({ systemInstruction: 'base config' });
+    mockAppendFunctionDeclarationsToTools.mockImplementation((_modelId, config, declarations) => ({
+      ...config,
+      tools: [{ functionDeclarations: declarations }],
+    }));
+    mockRunStandardToolLoop.mockResolvedValue({
+      finalTurn: {
+        parts: [{ text: '已生成图片。' }],
+        thoughts: undefined,
+        usage: undefined,
+        grounding: undefined,
+        urlContext: undefined,
+      },
+      toolMessages: [],
+      generatedFiles: [generatedFile],
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          hideThinkingInContext: false,
+          isRawModeEnabled: false,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: true,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: false,
+          isCodeExecutionEnabled: false,
+          isLocalPythonEnabled: true,
+          isUrlContextEnabled: false,
+          isDeepSearchEnabled: false,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions,
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.sendStandardMessage(
+        '用 Python 画图',
+        [],
+        null,
+        'gemini-3-flash-preview',
+      );
+    });
+
+    expect(streamOnComplete).toHaveBeenCalledWith(
+      undefined,
+      undefined,
+      undefined,
+      [generatedFile],
+    );
+
+    unmount();
+  });
 });

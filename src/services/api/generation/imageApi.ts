@@ -5,6 +5,21 @@ import { logService } from "../../logService";
 import { buildExactImageGenerationPricing } from '../../../utils/usagePricingTelemetry';
 import { normalizeAspectRatioForModel, normalizeImageSizeForModel } from '../../../utils/modelHelpers';
 
+const mapPersonGenerationForApi = (
+    personGeneration: GenerateImagesRequestOptions['personGeneration'],
+): GenerateImagesConfig['personGeneration'] | undefined => {
+    switch (personGeneration) {
+        case 'DONT_ALLOW':
+            return 'dont_allow' as GenerateImagesConfig['personGeneration'];
+        case 'ALLOW_ADULT':
+            return 'allow_adult' as GenerateImagesConfig['personGeneration'];
+        case 'ALLOW_ALL':
+            return 'allow_all' as GenerateImagesConfig['personGeneration'];
+        default:
+            return personGeneration as GenerateImagesConfig['personGeneration'] | undefined;
+    }
+};
+
 export const generateImagesApi = async (
     apiKey: string,
     modelId: string,
@@ -41,8 +56,9 @@ export const generateImagesApi = async (
             config.imageSize = normalizedImageSize;
         }
 
-        if (options.personGeneration) {
-            config.personGeneration = options.personGeneration as GenerateImagesConfig['personGeneration'];
+        const personGeneration = mapPersonGenerationForApi(options.personGeneration);
+        if (personGeneration) {
+            config.personGeneration = personGeneration;
         }
 
         const response = await ai.models.generateImages({

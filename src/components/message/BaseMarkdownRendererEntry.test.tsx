@@ -119,6 +119,42 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(caption?.textContent).toBe('Monthly totals');
   });
 
+  it('renders generated files inside sanitized tool result blocks', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'<div class="tool-result outcome-ok"><strong>Execution Result (OK):</strong><pre><code>plot saved</code></pre></div>'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+          files={[
+            {
+              id: 'generated-plot',
+              name: 'generated-plot.png',
+              type: 'image/png',
+              size: 12,
+              dataUrl: 'blob:generated-plot',
+              uploadState: 'active',
+            },
+          ]}
+        />,
+      );
+    });
+
+    const generatedOutputLabel = container.textContent || '';
+    const image = container.querySelector('img');
+
+    expect(generatedOutputLabel).toContain('Generated Output Files');
+    expect(image?.getAttribute('src')).toBe('blob:generated-plot');
+  });
+
   it('strips raw html positioning attributes that can escape the markdown surface', () => {
     act(() => {
       root.render(

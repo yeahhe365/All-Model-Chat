@@ -15,6 +15,9 @@ import { getModelCapabilities } from '../utils/modelHelpers';
 import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
 import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
+import { isTextFile } from '../utils/fileHelpers';
+
+const CODE_EXECUTION_TEXT_FILE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024;
 
 type SessionsUpdater = (
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -129,6 +132,23 @@ export const useMessageSender = (props: MessageSenderProps) => {
             logService.warn("Send message blocked: files are still processing.");
             setAppFileError(t('messageSender_waitForFiles')); 
             return; 
+        }
+
+        const isServerCodeExecutionEnabled =
+            !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled;
+        if (isServerCodeExecutionEnabled) {
+            const oversizedTextFile = filesToUse.find((file) =>
+                file.uploadState === 'active' && isTextFile(file) && file.size > CODE_EXECUTION_TEXT_FILE_SIZE_LIMIT_BYTES,
+            );
+
+            if (oversizedTextFile) {
+                logService.warn('Send message blocked: code execution text file is too large.', {
+                    fileName: oversizedTextFile.name,
+                    fileSize: oversizedTextFile.size,
+                });
+                setAppFileError(t('messageSender_codeExecutionTextFileTooLarge'));
+                return;
+            }
         }
 
         if (isImageEditModel || isGemini3Image) {

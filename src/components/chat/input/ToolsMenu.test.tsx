@@ -64,7 +64,7 @@ describe('ToolsMenu', () => {
     expect(document.body.textContent).not.toContain('Deep Search');
   });
 
-  it('limits Gemini image models to supported search tooling', () => {
+  it('hides code execution tooling for Gemini image-generation models', () => {
     act(() => {
       root.render(
         <I18nProvider>
@@ -98,9 +98,9 @@ describe('ToolsMenu', () => {
     });
 
     expect(document.body.textContent).toContain('Web Search');
+    expect(document.body.textContent).not.toContain('Code Execution');
     expect(document.body.textContent).toContain('Token Calculator');
     expect(document.body.textContent).not.toContain('Deep Search');
-    expect(document.body.textContent).not.toContain('Code Execution');
     expect(document.body.textContent).not.toContain('Pyodide');
     expect(document.body.textContent).not.toContain('URL Context');
     expect(document.body.textContent).not.toContain('Add YouTube Video');

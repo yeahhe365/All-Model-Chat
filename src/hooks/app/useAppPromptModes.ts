@@ -22,6 +22,7 @@ interface CanvasPromptOverrideState {
 }
 
 interface UseAppPromptModesOptions {
+  language?: 'en' | 'zh';
   appSettings: {
     isAutoSendOnSuggestionClick?: boolean;
     systemInstruction?: string | null;
@@ -45,6 +46,7 @@ const focusChatInput = () => {
 };
 
 export const useAppPromptModes = ({
+  language = 'zh',
   appSettings,
   setAppSettings,
   activeChat,
@@ -150,7 +152,7 @@ export const useAppPromptModes = ({
 
   const activateCanvasPrompt = useCallback(
     async (targetSessionId: string | null) => {
-      const newSystemInstruction = await loadCanvasSystemPrompt();
+      const newSystemInstruction = await loadCanvasSystemPrompt(language);
 
       setPendingCanvasPromptActivation({
         systemInstruction: newSystemInstruction,
@@ -160,7 +162,7 @@ export const useAppPromptModes = ({
 
       return newSystemInstruction;
     },
-    [setAppSettings],
+    [language, setAppSettings],
   );
 
   const handleLoadCanvasPromptAndSave = useCallback(async () => {

@@ -63,6 +63,7 @@ const createDeferred = <T,>() => {
 };
 
 const CANVAS_PROMPT = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
+const CANVAS_PROMPT_EN = '<title>Canvas Assistant: Responsive Visual Guide</title>\ncanvas prompt';
 
 describe('useAppPromptModes', () => {
   beforeEach(() => {
@@ -119,6 +120,49 @@ describe('useAppPromptModes', () => {
 
     expect(setAppSettings).toHaveBeenCalled();
     expect(setCurrentChatSettings).toHaveBeenCalled();
+    unmount();
+  });
+
+  it('loads the canvas prompt in the active UI language', async () => {
+    mockLoadCanvasSystemPrompt.mockResolvedValue(CANVAS_PROMPT_EN);
+
+    const setAppSettings = vi.fn();
+    const setCurrentChatSettings = vi.fn();
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: {} as AppSettings,
+        setAppSettings,
+        activeChat: {
+          id: 'session-1',
+          title: 'Session',
+          timestamp: Date.now(),
+          messages: [],
+          settings: {
+            modelId: 'gemini-3-flash-preview',
+            systemInstruction: '',
+          } as ChatSettings,
+        } as SavedChatSession,
+        activeSessionId: 'session-1',
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: '',
+        } as ChatSettings,
+        setCurrentChatSettings,
+        handleSendMessage: vi.fn(),
+        setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleLoadCanvasPromptAndSave();
+    });
+
+    expect(mockLoadCanvasSystemPrompt).toHaveBeenCalledWith('en');
+    expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
+    const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
+    expect(appSettingsUpdater({} as AppSettings).systemInstruction).toBe(CANVAS_PROMPT_EN);
+
     unmount();
   });
 

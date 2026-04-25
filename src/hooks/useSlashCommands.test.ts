@@ -141,7 +141,33 @@ describe('useSlashCommands', () => {
     expect(handled).toBe(true);
     expect(props.setIsHelpModalOpen).toHaveBeenCalledWith(true);
     expect(props.setInputText).toHaveBeenCalledWith('');
-    expect(props.onMessageSent).toHaveBeenCalledTimes(1);
+    expect(props.onMessageSent).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('opens the model command list after selecting /model from the slash menu', () => {
+    vi.useFakeTimers();
+    const props = createProps();
+    const { result, unmount } = renderHook(() => useSlashCommands(props));
+
+    act(() => {
+      result.current.handleInputChange('/');
+    });
+
+    const modelCommand = result.current.slashCommandState.filteredCommands.find((command) => command.name === 'model');
+    expect(modelCommand).toBeDefined();
+
+    act(() => {
+      result.current.handleCommandSelect(modelCommand!);
+      vi.runAllTimers();
+    });
+
+    expect(props.setInputText).toHaveBeenCalledWith('/model ');
+    expect(result.current.slashCommandState.isOpen).toBe(true);
+    expect(result.current.slashCommandState.filteredCommands.map((command) => command.name)).toEqual([
+      'Gemini 2.5 Pro',
+      'Gemini 2.5 Flash',
+    ]);
     unmount();
   });
 });

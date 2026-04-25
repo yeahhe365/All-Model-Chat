@@ -1,19 +1,34 @@
 
 
 import React, { useCallback } from 'react';
-import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
+import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
 import type { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService } from '../../services/logService';
 import { calculateTokenStats } from '../../utils/modelHelpers';
 import { showNotification, playCompletionSound } from '../../utils/uiUtils';
-import { finalizeMessages, updateMessagesWithBatch, appendApiPart } from '../chat-stream/processors';
+import { finalizeMessages, appendApiPart } from '../chat-stream/processors';
 import { streamingStore } from '../../services/streamingStore';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 import { buildExactPricingFromUsageMetadata } from '../../utils/usagePricingTelemetry';
 import { resolveChatExactPricing } from '../../utils/chatPricingEvidence';
+import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
+
+const mergeUniqueFiles = (existing: UploadedFile[] = [], incoming: UploadedFile[] = []) => {
+    const files = [...existing];
+    const seen = new Set(files.map((file) => file.id));
+
+    for (const file of incoming) {
+        if (!seen.has(file.id)) {
+            files.push(file);
+            seen.add(file.id);
+        }
+    }
+
+    return files;
+};
 
 interface ChatStreamHandlerProps {
     appSettings: AppSettings;
@@ -45,6 +60,7 @@ export const useChatStreamHandler = ({
         let accumulatedText = "";
         let accumulatedThoughts = "";
         let accumulatedApiParts: Part[] = [];
+        let accumulatedGeneratedFiles: UploadedFile[] = [];
 
         // Reset store for this new generation
         streamingStore.clear(generationId);
@@ -83,7 +99,7 @@ export const useChatStreamHandler = ({
             streamingStore.clear(generationId);
         };
 
-        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: unknown, urlContextMetadata?: unknown) => {
+        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: unknown, urlContextMetadata?: unknown, generatedFiles?: UploadedFile[]) => {
             const lang = appSettings.language === 'system' 
                 ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
                 : appSettings.language;
@@ -138,6 +154,9 @@ export const useChatStreamHandler = ({
                             ...msg,
                             content: (msg.content || '') + accumulatedText,
                             thoughts: (msg.thoughts || '') + accumulatedThoughts,
+                            files: [...accumulatedGeneratedFiles, ...(generatedFiles || [])].length
+                                ? mergeUniqueFiles(msg.files, [...accumulatedGeneratedFiles, ...(generatedFiles || [])])
+                                : msg.files,
                             apiParts: msg.apiParts ? [...msg.apiParts, ...accumulatedApiParts] : accumulatedApiParts
                         };
                     }
@@ -201,7 +220,7 @@ export const useChatStreamHandler = ({
                 text?: string;
                 executableCode?: { language: string; code: string };
                 codeExecutionResult?: { outcome: string; output?: string };
-                inlineData?: { mimeType: string };
+                inlineData?: { mimeType: string; data?: string };
             };
             
             // 1. Accumulate plain text
@@ -231,7 +250,7 @@ export const useChatStreamHandler = ({
                 accumulatedText += toolContent;
                 streamingStore.updateContent(generationId, toolContent);
             } else if (anyPart.inlineData) {
-                const { mimeType } = anyPart.inlineData;
+                const { mimeType, data } = anyPart.inlineData;
                 
                 const isSupportedFile = 
                     mimeType.startsWith('image/') || 
@@ -240,6 +259,21 @@ export const useChatStreamHandler = ({
                     SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
 
                 if (isSupportedFile) {
+                    const generatedFile = data
+                        ? createUploadedFileFromBase64(
+                            data,
+                            mimeType,
+                            mimeType.startsWith('image/') ? `generated-plot-${Date.now()}` : 'generated-file'
+                        )
+                        : undefined;
+
+                    if (generatedFile) {
+                        accumulatedGeneratedFiles = [
+                            ...accumulatedGeneratedFiles,
+                            generatedFile,
+                        ];
+                    }
+
                     // Save to files array instead of hardcoding base64 into text to prevent critical performance issues
                     updateAndPersistSessions(prev => {
                          const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
@@ -247,14 +281,16 @@ export const useChatStreamHandler = ({
                          const newSessions = [...prev];
                          const sessionToUpdate = { ...newSessions[sessionIndex] };
                          
-                         sessionToUpdate.messages = updateMessagesWithBatch(
-                             sessionToUpdate.messages,
-                             [part], 
-                             "", 
-                             generationStartTime, 
-                             newModelMessageIds, 
-                             firstContentPartTime
-                         );
+                         sessionToUpdate.messages = sessionToUpdate.messages.map((message) => {
+                             if (message.id !== generationId || !generatedFile) {
+                                 return message;
+                             }
+
+                             return {
+                                 ...message,
+                                 files: mergeUniqueFiles(message.files, [generatedFile]),
+                             };
+                         });
                          newSessions[sessionIndex] = sessionToUpdate;
                          return newSessions;
                     }, { persist: false });

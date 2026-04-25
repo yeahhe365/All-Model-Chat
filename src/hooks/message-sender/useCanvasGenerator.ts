@@ -102,14 +102,13 @@ export const useCanvasGenerator = ({
 
         const t = getTranslator(language);
         const promptInstruction = t('suggestion_html_desc');
-        const finalPrompt = `${promptInstruction}\n\n${content}`;
 
         try {
             await geminiServiceInstance.sendMessageStream(
                 keyToUse,
                 canvasModelId,
                 [],
-                [{ text: finalPrompt }],
+                [{ text: promptInstruction }, { text: content }],
                 config,
                 newAbortController.signal,
                 streamOnPart,

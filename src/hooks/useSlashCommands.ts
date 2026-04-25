@@ -188,12 +188,37 @@ export const useSlashCommands = ({
     setSlashCommandState(CLOSED_SLASH_COMMAND_STATE);
   }, []);
 
+  const openModelCommandList = useCallback(() => {
+    const modelCommands: Command[] = availableModels.map(model => ({
+      name: model.name,
+      description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
+      icon: model.id.includes('imagen') ? 'image' : (model.isPinned ? 'pin' : 'bot'),
+      action: () => {
+        onSelectModel(model.id);
+        setInputText('');
+        onMessageSent();
+      },
+    }));
+
+    setSlashCommandState({
+      isOpen: true,
+      query: 'model',
+      filteredCommands: modelCommands,
+      selectedIndex: 0,
+    });
+  }, [availableModels, onMessageSent, onSelectModel, setInputText]);
+
   const handleCommandSelect = useCallback((command: Command) => {
     if (!command) return;
     
     // Execute the command action immediately
     command.action();
     
+    if (command.name === 'model') {
+      openModelCommandList();
+      return;
+    }
+
     resetSlashCommandState();
 
     const isDynamicModelCommand = availableModels.some(m => m.name === command.name);
@@ -206,10 +231,9 @@ export const useSlashCommands = ({
         // This solves issues where Enter key press might interfere with state updates
         setTimeout(() => {
             setInputText('');
-            onMessageSent();
         }, 0);
     }
-  }, [availableModels, onMessageSent, resetSlashCommandState, setInputText]);
+  }, [availableModels, openModelCommandList, resetSlashCommandState, setInputText]);
   
   const handleInputChange = useCallback((value: string) => {
     setInputText(value);

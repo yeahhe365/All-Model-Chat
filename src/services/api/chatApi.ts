@@ -23,6 +23,20 @@ type MetadataWithCitations = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null;
 
+const getThoughtSignature = (part: Part): string | undefined => {
+    const partWithSignature = part as Part & {
+        thoughtSignature?: unknown;
+        thought_signature?: unknown;
+    };
+    const signature = partWithSignature.thoughtSignature ?? partWithSignature.thought_signature;
+    return typeof signature === 'string' && signature.length > 0 ? signature : undefined;
+};
+
+const createThoughtSignatureContextPart = (part: Part): Part | undefined => {
+    const thoughtSignature = getThoughtSignature(part);
+    return thoughtSignature ? ({ text: '', thoughtSignature } as Part) : undefined;
+};
+
 const mergeUniqueStrings = (existing: unknown, incoming: unknown): string[] | undefined => {
     const existingValues = Array.isArray(existing) ? existing.filter((value): value is string => typeof value === 'string') : [];
     const incomingValues = Array.isArray(incoming) ? incoming.filter((value): value is string => typeof value === 'string') : [];
@@ -151,7 +165,11 @@ const processResponse = (response: GenerateContentResponse) => {
         for (const part of response.candidates[0].content.parts) {
             const pAsThoughtSupporting = part as ThoughtSupportingPart;
             if (pAsThoughtSupporting.thought) {
-                thoughtsText += part.text;
+                thoughtsText += part.text || '';
+                const signaturePart = createThoughtSignatureContextPart(part);
+                if (signaturePart) {
+                    responseParts.push(signaturePart);
+                }
             } else if (typeof part.text === 'string') {
                 const { content, thoughts } = extractGemmaThoughtChannel(part.text);
                 if (thoughts) {
@@ -316,6 +334,10 @@ export const sendStatelessMessageStreamApi: StreamMessageSender = async (
 
                         if (pAsThoughtSupporting.thought) {
                             onThoughtChunk(part.text || '');
+                            const signaturePart = createThoughtSignatureContextPart(part);
+                            if (signaturePart) {
+                                onPart(signaturePart);
+                            }
                         } else if (typeof part.text === 'string') {
                             const { content, thoughts } = extractGemmaThoughtChannel(part.text);
                             if (thoughts) {

@@ -1,5 +1,5 @@
 
-export const CANVAS_SYSTEM_PROMPT = `<!DOCTYPE html>
+export const CANVAS_SYSTEM_PROMPT_ZH = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -531,3 +531,74 @@ export const CANVAS_SYSTEM_PROMPT = `<!DOCTYPE html>
 
 </body>
 </html>`;
+
+const CANVAS_PROMPT_EN_REPLACEMENTS: Array<[string, string]> = [
+  ['<html lang="zh-CN">', '<html lang="en">'],
+  ['<title>Canvas 助手：响应式视觉指南</title>', '<title>Canvas Assistant: Responsive Visual Guide</title>'],
+  ['【依赖引入策略】', '[Dependency Loading Strategy]'],
+  ['注意：仅在生成复杂图表（逻辑流、大数据统计）时才引入以下脚本。', 'Note: Import the following scripts only when generating complex charts (logic flows, large-scale data statistics).'],
+  ['简单列表、表格必须使用原生 HTML/CSS 实现，无需引入这些库。', 'Simple lists and tables must be implemented with native HTML/CSS; do not import these libraries.'],
+  ['规则框样式升级，支持多行列表', 'Upgraded rule-box styles with support for multi-line lists'],
+  ['全屏模式样式', 'Fullscreen mode styles'],
+  ['响应式适配', 'Responsive adaptation'],
+  ['Canvas 助手：<span style="font-size: 0.8em; font-weight: 400; color: #555;">视觉风格强制规范</span>', 'Canvas Assistant: <span style="font-size: 0.8em; font-weight: 400; color: #555;">Visual Style Enforcement Spec</span>'],
+  ['输出格式：', 'Output Format:'],
+  ['禁止 Markdown 排版。必须返回包含 &lt;style&gt; 的完整 HTML，且必须包裹在代码块中。', 'Markdown formatting is forbidden. Return complete HTML that includes &lt;style&gt;, and wrap it in a code block.'],
+  ['轻量化原则 (Zero-Dependency)：', 'Zero-Dependency Principle:'],
+  ['默认严禁引入外部库 (Viz.js / ECharts)。', 'External libraries are forbidden by default (Viz.js / ECharts).'],
+  ['简单场景', 'Simple scenarios'],
+  ['（键值对、表格、静态布局）：必须使用原生 HTML Table / Flexbox / Grid。', ' (key-value pairs, tables, static layouts): use native HTML Table / Flexbox / Grid.'],
+  ['（逻辑流、大数据可视化）：仅在此类情况下才允许按需引入对应的 JS 库。', ' (logic flows, large-scale data visualization): only in these cases may the corresponding JS libraries be imported as needed.'],
+  ['一、 元素映射表 (Element Mapping)', '1. Element Mapping'],
+  ['容器与布局 (Native)', 'Containers and Layout (Native)'],
+  ['核心内容包裹在 <span class="blue-stamp">.paper</span> 中。', 'Wrap the core content inside <span class="blue-stamp">.paper</span>.'],
+  ['响应式：', 'Responsive:'],
+  ['使用 Flex/Grid 自适应宽度。', 'Use Flex/Grid to adapt to width.'],
+  ['移动端：', 'Mobile:'],
+  ['卡片自动切换为单列堆叠。', 'Cards automatically switch to a single-column stack.'],
+  ['文本与标题 (Native)', 'Text and Headings (Native)'],
+  ['标题栏 <span class="blue-stamp">.section-header</span> 自动伸缩。', 'The <span class="blue-stamp">.section-header</span> heading bar scales automatically.'],
+  ['文字大小随屏幕宽度动态微调。', 'Text size adjusts dynamically with screen width.'],
+  ['元数据使用样式类名进行自定义。', 'Use CSS class names to customize metadata.'],
+  ['二、 视觉调性 (Visual Tone)', '2. Visual Tone'],
+  ['色彩变量', 'Color Variable'],
+  ['用途', 'Purpose'],
+  ['技术实现策略', 'Implementation Strategy'],
+  ['强调、警告', 'Emphasis, warnings'],
+  ['注释背景', 'Note background'],
+  ['原生 CSS border/color', 'Native CSS border/color'],
+  ['原生 CSS background', 'Native CSS background'],
+  ['布局逻辑', 'Layout logic'],
+  ['三、 复杂场景演示 (Strictly Complex Only)', '3. Complex Scenario Demo (Strictly Complex Only)'],
+  ['复杂场景', 'Complex scenarios'],
+  ['*以下组件仅用于展示复杂逻辑或数据时的效果。如能用表格展示，请勿使用以下组件。', '*The following components are only for complex logic or data. If a table can show it, do not use these components.'],
+  ['切换布局', 'Switch Layout'],
+  ['全屏 / 缩放', 'Fullscreen / Zoom'],
+  ['退出全屏', 'Exit Fullscreen'],
+  ['仅在确有必要时使用', 'Use only when truly necessary'],
+  ['自动适配容器', 'Auto-fit container'],
+  ['带 SVG-Pan-Zoom 和高对比度配置', 'With SVG-Pan-Zoom and high-contrast configuration'],
+  ['全屏关闭按钮', 'Fullscreen close button'],
+  ['高对比度样式定义', 'High-contrast style definition'],
+  ['节点通用样式：黑字，浅蓝背景，清晰边框', 'Generic node style: black text, light-blue background, clear border'],
+  ['连线样式：深色线条', 'Edge style: dark lines'],
+  ['用户请求', 'User Request'],
+  ['复杂度判定', 'Complexity Check'],
+  ['原生 HTML/CSS', 'Native HTML/CSS'],
+  ['引入 JS 库', 'Import JS Library'],
+  ['简单', 'Simple'],
+  ['复杂', 'Complex'],
+  ['重置并初始化缩放插件', 'Reset and initialize the zoom plugin'],
+  ['全屏与缩放逻辑', 'Fullscreen and zoom logic'],
+  ['逻辑', 'Logic'],
+];
+
+const applyCanvasPromptTranslations = (prompt: string) =>
+  CANVAS_PROMPT_EN_REPLACEMENTS.reduce(
+    (nextPrompt, [source, target]) => nextPrompt.split(source).join(target),
+    prompt,
+  );
+
+export const CANVAS_SYSTEM_PROMPT_EN = applyCanvasPromptTranslations(CANVAS_SYSTEM_PROMPT_ZH);
+
+export const CANVAS_SYSTEM_PROMPT = CANVAS_SYSTEM_PROMPT_ZH;

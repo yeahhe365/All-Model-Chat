@@ -16,6 +16,7 @@ interface MarkdownFileViewerProps {
 const LARGE_MARKDOWN_LENGTH_THRESHOLD = 50000;
 const LARGE_MARKDOWN_LINE_THRESHOLD = 1200;
 const LARGE_MARKDOWN_FENCE_THRESHOLD = 12;
+const MARKDOWN_VIEW_MODE_STORAGE_PREFIX = 'markdown-preview-mode:';
 
 const shouldDeferMarkdownPreview = (content: string): boolean => {
   if (!content) return false;
@@ -39,8 +40,15 @@ export const MarkdownFileViewer: React.FC<MarkdownFileViewerProps> = ({
   onLoad,
 }) => {
   const { t } = useI18n();
+  const storageKey = useMemo(() => `${MARKDOWN_VIEW_MODE_STORAGE_PREFIX}${file.id}:${file.name}`, [file.id, file.name]);
   const [localContent, setLocalContent] = useState<string | null>(null);
-  const [mode, setMode] = useState<'preview' | 'source'>('preview');
+  const [mode, setMode] = useState<'preview' | 'source'>(() => {
+    try {
+      return localStorage.getItem(storageKey) === 'source' ? 'source' : 'preview';
+    } catch {
+      return 'preview';
+    }
+  });
   const [forcePreview, setForcePreview] = useState(false);
   const hasProvidedContent = content !== undefined && content !== null;
   const [isLoading, setIsLoading] = useState(() => !hasProvidedContent && !!file.dataUrl);
@@ -79,6 +87,24 @@ export const MarkdownFileViewer: React.FC<MarkdownFileViewerProps> = ({
     }
   }, [isEditable]);
 
+  useEffect(() => {
+    try {
+      const storedMode = localStorage.getItem(storageKey);
+      setMode(storedMode === 'source' ? 'source' : 'preview');
+    } catch {
+      setMode('preview');
+    }
+    setForcePreview(false);
+  }, [storageKey]);
+
+  const updateMode = (nextMode: 'preview' | 'source') => {
+    setMode(nextMode);
+    try {
+      localStorage.setItem(storageKey, nextMode);
+    } catch {
+    }
+  };
+
   const displayContent = content ?? localContent ?? '';
   const shouldDefer = useMemo(() => shouldDeferMarkdownPreview(displayContent), [displayContent]);
   const showSource = isEditable || mode === 'source' || (shouldDefer && !forcePreview);
@@ -99,7 +125,7 @@ export const MarkdownFileViewer: React.FC<MarkdownFileViewerProps> = ({
             type="button"
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${!showSource ? 'bg-[var(--theme-bg-accent)] text-white shadow-sm' : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}`}
             onClick={() => {
-              setMode('preview');
+              updateMode('preview');
               setForcePreview(true);
             }}
             disabled={isEditable}
@@ -109,7 +135,7 @@ export const MarkdownFileViewer: React.FC<MarkdownFileViewerProps> = ({
           <button
             type="button"
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${showSource ? 'bg-[var(--theme-bg-accent)] text-white shadow-sm' : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}`}
-            onClick={() => setMode('source')}
+            onClick={() => updateMode('source')}
           >
             {t('markdownPreview_source')}
           </button>

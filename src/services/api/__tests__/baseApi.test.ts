@@ -574,6 +574,19 @@ describe('buildGenerationConfig', () => {
     expect(config.tools).toContainEqual({ codeExecution: {} });
   });
 
+  it('does not add codeExecution tool for Gemini image-generation models when enabled', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3.1-flash-image-preview', 'sys', baseConfig, true, 0,
+      false, true, false, 'HIGH'
+    );
+
+    expect(config.tools?.some((tool) => 'codeExecution' in tool)).toBeFalsy();
+    expect(config.thinkingConfig).toEqual({
+      includeThoughts: true,
+      thinkingLevel: 'HIGH',
+    });
+  });
+
   it('skips codeExecution for non-image models when localPython is explicitly enabled', async () => {
     // gemini-2.5-flash is a non-G3 model that hits the standard path
     // isCodeExecutionEnabled=true at param 6, isLocalPythonEnabled=true at param 14
@@ -758,6 +771,18 @@ describe('toCountTokensConfig', () => {
 });
 
 describe('appendFunctionDeclarationsToTools', () => {
+  it('enables server-side tool invocation circulation for built-in-only Gemini 3 configs', () => {
+    const config = appendFunctionDeclarationsToTools(
+      'gemini-3-flash-preview',
+      { tools: [{ googleSearch: {} }, { codeExecution: {} }] },
+      [],
+    );
+
+    expect(config.toolConfig).toEqual({
+      includeServerSideToolInvocations: true,
+    });
+  });
+
   it('keeps custom function declarations alongside built-in tools for Gemini 3 models', () => {
     const config = appendFunctionDeclarationsToTools(
       'gemini-3-flash-preview',

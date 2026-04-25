@@ -207,6 +207,7 @@ export const useApp = () => {
     activeChat,
     activeSessionId,
     currentChatSettings,
+    language,
     setCurrentChatSettings,
     handleSendMessage,
     setCommandedInput,
