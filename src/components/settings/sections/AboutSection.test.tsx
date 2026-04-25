@@ -69,6 +69,36 @@ describe('AboutSection', () => {
     expect(container.textContent).toContain('不可用');
   });
 
+  it('renders the about panel logo from the PNG asset', async () => {
+    await act(async () => {
+      useSettingsStore.setState({ language: 'zh' });
+      root.render(
+        <I18nProvider>
+          <AboutSection />
+        </I18nProvider>,
+      );
+    });
+
+    const logo = container.querySelector('img[alt="All Model Chat 标志"]');
+
+    expect(logo?.getAttribute('src')).toBe('/about-logo.png');
+    expect(container.querySelector('svg[aria-label="All Model Chat 标志"]')).toBeNull();
+  });
+
+  it('does not render a duplicate app title under the about logo', async () => {
+    await act(async () => {
+      useSettingsStore.setState({ language: 'zh' });
+      root.render(
+        <I18nProvider>
+          <AboutSection />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.querySelector('h3')).toBeNull();
+    expect(container.textContent).not.toContain('All Model Chat');
+  });
+
   it('localizes release status copy and mirrors the package version', async () => {
     fetchMock
       .mockResolvedValueOnce({

@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { Github, Star, ExternalLink } from 'lucide-react';
 import { useI18n } from '../../../contexts/I18nContext';
-import { AppLogo } from '../../icons/AppLogo';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import packageJson from '../../../../package.json';
 
@@ -117,17 +116,16 @@ export const AboutSection: React.FC = () => {
       <div className="relative group">
         <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
         <div className="relative">
-            <AppLogo
-              className={`h-auto drop-shadow-2xl ${isCompactViewport ? 'w-24' : 'w-28 sm:w-32 md:w-36'}`}
-              ariaLabel={t('about_logo_alt')}
+            <img
+              src="/about-logo.png"
+              alt={t('about_logo_alt')}
+              className={`h-auto drop-shadow-2xl ${isCompactViewport ? 'w-40' : 'w-48 sm:w-56 md:w-64'}`}
             />
         </div>
       </div>
 
       {/* Main Content */}
-      <div className={`flex max-w-lg flex-col items-center ${isCompactViewport ? 'mt-3 space-y-3.5' : 'mt-4 space-y-4 sm:mt-5 sm:space-y-5'}`}>
-         <h3 className={`font-bold tracking-tight text-[var(--theme-text-primary)] ${isCompactViewport ? 'text-[1.75rem]' : 'text-2xl'}`}>{t('about_title')}</h3>
-         
+      <div className={`flex max-w-lg flex-col items-center ${isCompactViewport ? 'mt-2.5 space-y-3.5' : 'mt-3 space-y-4 sm:mt-4 sm:space-y-5'}`}>
          <div className="flex flex-wrap items-center justify-center gap-2">
            {/* Redesigned Version Pill */}
            <a 
