@@ -85,6 +85,25 @@ describe('AboutSection', () => {
     expect(container.querySelector('svg[aria-label="All Model Chat 标志"]')).toBeNull();
   });
 
+  it('uses the dark about logo for the resolved onyx theme', async () => {
+    await act(async () => {
+      useSettingsStore.getState().setAppSettings((settings) => ({
+        ...settings,
+        language: 'zh',
+        themeId: 'onyx',
+      }));
+      root.render(
+        <I18nProvider>
+          <AboutSection />
+        </I18nProvider>,
+      );
+    });
+
+    const logo = container.querySelector('img[alt="All Model Chat 标志"]');
+
+    expect(logo?.getAttribute('src')).toBe('/about-logo-dark.png');
+  });
+
   it('does not render a duplicate app title under the about logo', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'zh' });

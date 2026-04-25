@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Github, Star, ExternalLink } from 'lucide-react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
+import { useSettingsStore } from '../../../stores/settingsStore';
 import packageJson from '../../../../package.json';
 
 const compareVersions = (v1: string, v2: string) => {
@@ -20,6 +21,7 @@ const compareVersions = (v1: string, v2: string) => {
 
 export const AboutSection: React.FC = () => {
   const { language, t } = useI18n();
+  const themeId = useSettingsStore((state) => state.currentTheme.id);
   const iconSize = useResponsiveValue(18, 20);
   const isCompactViewport = useResponsiveValue(true, false, 900);
   const currentVersion = packageJson.version;
@@ -117,7 +119,7 @@ export const AboutSection: React.FC = () => {
         <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
         <div className="relative">
             <img
-              src="/about-logo.png"
+              src={themeId === 'onyx' ? '/about-logo-dark.png' : '/about-logo.png'}
               alt={t('about_logo_alt')}
               className={`h-auto drop-shadow-2xl ${isCompactViewport ? 'w-40' : 'w-48 sm:w-56 md:w-64'}`}
             />

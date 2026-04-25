@@ -25,12 +25,22 @@ describe('SidebarHeader', () => {
 
   it('renders the sidebar logo from the PNG asset', () => {
     act(() => {
-      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} />);
+      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="pearl" />);
     });
 
     const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="All Model Chat"]');
 
     expect(logo?.getAttribute('src')).toBe('/sidebar-logo.png');
     expect(container.querySelector('a[href="https://all-model-chat.pages.dev/"] svg')).toBeNull();
+  });
+
+  it('uses the dark sidebar logo for the onyx theme', () => {
+    act(() => {
+      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="onyx" />);
+    });
+
+    const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="All Model Chat"]');
+
+    expect(logo?.getAttribute('src')).toBe('/sidebar-logo-dark.png');
   });
 });
