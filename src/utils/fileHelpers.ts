@@ -1,35 +1,33 @@
-
-
 import { MIME_TO_EXTENSION_MAP, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
 import { UploadedFile } from '../types';
 
 const getFileExtension = (filename: string): string => {
-    const extension = filename.split('.').pop()?.toLowerCase();
-    return extension ? `.${extension}` : '';
+  const extension = filename.split('.').pop()?.toLowerCase();
+  return extension ? `.${extension}` : '';
 };
 
 export const isTextFile = (file: File | UploadedFile | { name: string; type: string }): boolean => {
-    const fileExtension = getFileExtension(file.name);
-    return (
-        SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || 
-        TEXT_BASED_EXTENSIONS.includes(fileExtension) || 
-        file.type === 'text/plain'
-    );
+  const fileExtension = getFileExtension(file.name);
+  return (
+    SUPPORTED_TEXT_MIME_TYPES.includes(file.type) ||
+    TEXT_BASED_EXTENSIONS.includes(fileExtension) ||
+    file.type === 'text/plain'
+  );
 };
 
 export const isMarkdownFile = (file: File | UploadedFile | { name: string; type: string }): boolean => {
-    const fileExtension = getFileExtension(file.name);
-    return file.type === 'text/markdown' || fileExtension === '.md' || fileExtension === '.markdown';
+  const fileExtension = getFileExtension(file.name);
+  return file.type === 'text/markdown' || fileExtension === '.md' || fileExtension === '.markdown';
 };
 
 export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
 };
 
 /**
@@ -37,102 +35,113 @@ export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
  * Used primarily just before sending data to the API.
  */
 export const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const result = reader.result as string;
-            // Strip the data:mime/type;base64, prefix
-            const base64Data = result.split(',')[1];
-            if (base64Data) {
-                resolve(base64Data);
-            } else {
-                reject(new Error("Failed to extract base64 data from blob."));
-            }
-        };
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(blob);
-    });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip the data:mime/type;base64, prefix
+      const base64Data = result.split(',')[1];
+      if (base64Data) {
+        resolve(base64Data);
+      } else {
+        reject(new Error('Failed to extract base64 data from blob.'));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(blob);
+  });
 };
 
 export const fileToString = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-        reader.readAsText(file);
-    });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+    reader.readAsText(file);
+  });
 };
 
 export const fileToBlobUrl = (file: File | Blob): string => {
-    return URL.createObjectURL(file);
+  return URL.createObjectURL(file);
 };
 
 const isClipboardTextType = (mimeType: string): boolean => {
-    return (
-        mimeType.startsWith('text/')
-        || mimeType === 'application/json'
-        || mimeType.includes('javascript')
-        || mimeType.includes('xml')
-    );
+  return (
+    mimeType.startsWith('text/') ||
+    mimeType === 'application/json' ||
+    mimeType.includes('javascript') ||
+    mimeType.includes('xml')
+  );
 };
 
 export const copyFileToClipboard = async (file: Pick<UploadedFile, 'dataUrl' | 'type'>): Promise<void> => {
-    if (!file.dataUrl) {
-        throw new Error('File preview URL is missing.');
-    }
+  if (!file.dataUrl) {
+    throw new Error('File preview URL is missing.');
+  }
 
-    const response = await fetch(file.dataUrl);
-    const blob = await response.blob();
+  const response = await fetch(file.dataUrl);
+  const blob = await response.blob();
 
-    if (isClipboardTextType(file.type)) {
-        const text = await blob.text();
-        await navigator.clipboard.writeText(text);
-        return;
-    }
+  if (isClipboardTextType(file.type)) {
+    const text = await blob.text();
+    await navigator.clipboard.writeText(text);
+    return;
+  }
 
-    if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
-        throw new Error('Clipboard API not available.');
-    }
+  if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
+    throw new Error('Clipboard API not available.');
+  }
 
-    await navigator.clipboard.write([
-        new ClipboardItem({
-            [blob.type]: blob
-        })
-    ]);
+  await navigator.clipboard.write([
+    new ClipboardItem({
+      [blob.type]: blob,
+    }),
+  ]);
 };
 
 export const base64ToBlob = (base64: string, mimeType: string): Blob => {
-    const byteArray = decodeBase64ToArrayBuffer(base64);
-    const buffer = new ArrayBuffer(byteArray.byteLength);
-    new Uint8Array(buffer).set(byteArray);
-    return new Blob([buffer], { type: mimeType });
+  const byteArray = decodeBase64ToArrayBuffer(base64);
+  const buffer = new ArrayBuffer(byteArray.byteLength);
+  new Uint8Array(buffer).set(byteArray);
+  return new Blob([buffer], { type: mimeType });
 };
 
 export const getExtensionFromMimeType = (mimeType: string): string => {
-    if (MIME_TO_EXTENSION_MAP[mimeType]) return MIME_TO_EXTENSION_MAP[mimeType];
-    
-    // Fallback logic for generic types (image/xyz -> .xyz)
-    if (mimeType.startsWith('image/') || mimeType.startsWith('audio/') || mimeType.startsWith('video/')) {
-        const subtype = mimeType.split('/')[1];
-        if (subtype) return `.${subtype}`;
-    }
-    
-    return '.file';
+  if (MIME_TO_EXTENSION_MAP[mimeType]) return MIME_TO_EXTENSION_MAP[mimeType];
+
+  // Fallback logic for generic types (image/xyz -> .xyz)
+  if (mimeType.startsWith('image/') || mimeType.startsWith('audio/') || mimeType.startsWith('video/')) {
+    const subtype = mimeType.split('/')[1];
+    if (subtype) return `.${subtype}`;
+  }
+
+  return '.file';
 };
 
 export const formatFileSize = (sizeInBytes: number): string => {
-    if (!sizeInBytes) return '';
-    if (sizeInBytes < 1024) return `${Math.round(sizeInBytes)} B`;
-    const sizeInKb = sizeInBytes / 1024;
-    if (sizeInKb < 1024) return `${sizeInKb.toFixed(1)} KB`;
-    const sizeInMb = sizeInKb / 1024;
-    return `${sizeInMb.toFixed(2)} MB`;
+  if (!sizeInBytes) return '';
+  if (sizeInBytes < 1024) return `${Math.round(sizeInBytes)} B`;
+  const sizeInKb = sizeInBytes / 1024;
+  if (sizeInKb < 1024) return `${sizeInKb.toFixed(1)} KB`;
+  const sizeInMb = sizeInKb / 1024;
+  return `${sizeInMb.toFixed(2)} MB`;
+};
+
+export const cleanupFilePreviewUrl = (file: { dataUrl?: string } | undefined) => {
+  if (file?.dataUrl?.startsWith('blob:')) {
+    URL.revokeObjectURL(file.dataUrl);
+  }
+};
+
+export const cleanupReplacedFilePreviewUrl = (
+  previousFile: { dataUrl?: string } | undefined,
+  nextFile: { dataUrl?: string } | undefined,
+) => {
+  if (previousFile?.dataUrl && previousFile.dataUrl !== nextFile?.dataUrl) {
+    cleanupFilePreviewUrl(previousFile);
+  }
 };
 
 export const cleanupFilePreviewUrls = (files: { dataUrl?: string }[] | undefined) => {
-    files?.forEach(f => {
-         if (f.dataUrl && f.dataUrl.startsWith('blob:')) {
-             URL.revokeObjectURL(f.dataUrl);
-         }
-    });
+  files?.forEach(cleanupFilePreviewUrl);
 };

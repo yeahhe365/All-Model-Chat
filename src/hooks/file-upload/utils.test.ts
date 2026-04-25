@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { AppSettings } from '../../types';
 import {
+  buildFileUploadPreflight,
   checkBatchNeedsApiKey,
   getEffectiveMimeType,
   getFilesRequiringFileApi,
@@ -112,5 +113,37 @@ describe('file upload strategy limits', () => {
     expect(filesRequiringApi.has(first)).toBe(true);
     expect(filesRequiringApi.has(second)).toBe(true);
     expect(checkBatchNeedsApiKey([first, second], settings)).toBe(true);
+  });
+});
+
+describe('buildFileUploadPreflight', () => {
+  it('skips duplicate incoming files while preserving the first occurrence', () => {
+    const settings = makeSettings();
+    const existingFile = {
+      id: 'existing',
+      name: 'report.pdf',
+      type: 'application/pdf',
+      size: 1024,
+    };
+    const duplicateOfExisting = createFile('report.pdf', 'application/pdf', 1024);
+    const duplicateOne = createFile('photo.png', 'image/png', 2048);
+    const duplicateTwo = createFile('photo.png', 'image/png', 2048);
+
+    const result = buildFileUploadPreflight([duplicateOfExisting, duplicateOne, duplicateTwo], settings, [
+      existingFile,
+    ]);
+
+    expect(result.filesToUpload).toEqual([duplicateOne]);
+    expect(result.notice).toContain('Skipped duplicate files: report.pdf, photo.png');
+  });
+
+  it('surfaces unsupported file types before upload starts', () => {
+    const settings = makeSettings();
+    const unsupported = createFile('archive.rar', 'application/vnd.rar', 4096);
+
+    const result = buildFileUploadPreflight([unsupported], settings, []);
+
+    expect(result.filesToUpload).toEqual([unsupported]);
+    expect(result.notice).toContain('Unsupported file types: archive.rar');
   });
 });

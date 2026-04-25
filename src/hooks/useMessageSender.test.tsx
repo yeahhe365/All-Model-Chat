@@ -70,6 +70,7 @@ vi.mock('../contexts/I18nContext', () => ({
     t: (key: string) =>
       ({
         messageSender_waitForFiles: '请等待文件处理完成。',
+        messageSender_fileUploadFailedBeforeSend: '附件上传失败。请移除失败文件或重新上传后再发送。',
         messageSender_imageModelSupportsImageOnly: '这个图片模型仅支持图片附件。',
         messageSender_imageModelSupportsImageAndPdfOnly: 'Nano Banana 2 仅支持图片和 PDF 附件。',
         messageSender_imageReferenceLimit: 'Gemini 3 图片模型每次请求最多支持 14 张参考图。',
@@ -234,9 +235,7 @@ describe('useMessageSender', () => {
       });
     });
 
-    expect(setAppFileError).toHaveBeenCalledWith(
-      'Gemini 3 图片模型每次请求最多支持 14 张参考图。',
-    );
+    expect(setAppFileError).toHaveBeenCalledWith('Gemini 3 图片模型每次请求最多支持 14 张参考图。');
     expect(mockHandleTtsImagenMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
     expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
@@ -300,6 +299,64 @@ describe('useMessageSender', () => {
     });
 
     expect(setAppFileError).toHaveBeenCalledWith('代码执行文本/CSV 文件建议不超过 2MB。请拆分文件或关闭代码执行。');
+    expect(mockSendStandardMessage).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('blocks manual sends while failed attachments are still selected', async () => {
+    mockGetModelCapabilities.mockReturnValue({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: false,
+    });
+
+    const setAppFileError = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useMessageSender({
+        appSettings: {
+          isAutoScrollOnSendEnabled: true,
+          generateQuadImages: false,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+        } as any,
+        messages: [],
+        selectedFiles: [
+          {
+            id: 'file-1',
+            name: 'failed.pdf',
+            type: 'application/pdf',
+            size: 123,
+            uploadState: 'failed',
+            error: 'Backend processing failed.',
+          } as any,
+        ],
+        setSelectedFiles: vi.fn(),
+        editingMessageId: null,
+        setEditingMessageId: vi.fn(),
+        setAppFileError,
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: null,
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        updateAndPersistSessions: vi.fn(),
+        sessionKeyMapRef: { current: new Map() },
+        language: 'zh',
+        setSessionLoading: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSendMessage({ text: 'summarize this' });
+    });
+
+    expect(setAppFileError).toHaveBeenCalledWith('附件上传失败。请移除失败文件或重新上传后再发送。');
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
     unmount();
   });

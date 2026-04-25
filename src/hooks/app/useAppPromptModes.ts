@@ -36,13 +36,15 @@ interface UseAppPromptModesOptions {
   setCommandedInput: (command: InputCommand) => void;
 }
 
-const focusChatInput = () => {
+export const focusChatInput = (delayMs = 50) => {
   setTimeout(() => {
-    const textarea = document.querySelector(
-      'textarea[aria-label="Chat message input"]',
-    ) as HTMLTextAreaElement | null;
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement | null;
     textarea?.focus();
-  }, 50);
+  }, delayMs);
 };
 
 export const useAppPromptModes = ({
@@ -59,8 +61,7 @@ export const useAppPromptModes = ({
   const [pendingCanvasPromptActivation, setPendingCanvasPromptActivation] =
     useState<PendingCanvasPromptActivation | null>(null);
   const [canvasPromptBusySessionId, setCanvasPromptBusySessionId] = useState<string | null>(null);
-  const [canvasPromptOverrideState, setCanvasPromptOverrideState] =
-    useState<CanvasPromptOverrideState | null>(null);
+  const [canvasPromptOverrideState, setCanvasPromptOverrideState] = useState<CanvasPromptOverrideState | null>(null);
 
   const currentCanvasPromptTargetSessionId = activeSessionId ?? null;
   const canvasPromptOverrideActive =
@@ -69,11 +70,10 @@ export const useAppPromptModes = ({
       : null;
   const canvasPromptBusy = canvasPromptBusySessionId === currentCanvasPromptTargetSessionId;
   const persistedCanvasPromptActive =
-    isCanvasSystemInstruction(currentChatSettings.systemInstruction)
-    || isCanvasSystemInstruction(appSettings.systemInstruction);
+    isCanvasSystemInstruction(currentChatSettings.systemInstruction) ||
+    isCanvasSystemInstruction(appSettings.systemInstruction);
 
-  const isCanvasPromptActive =
-    canvasPromptOverrideActive ?? persistedCanvasPromptActive;
+  const isCanvasPromptActive = canvasPromptOverrideActive ?? persistedCanvasPromptActive;
 
   useEffect(() => {
     if (!pendingCanvasPromptActivation) {
@@ -82,8 +82,7 @@ export const useAppPromptModes = ({
 
     const pendingActivation = pendingCanvasPromptActivation;
     const targetMatches =
-      pendingActivation.targetSessionId === null ||
-      pendingActivation.targetSessionId === activeSessionId;
+      pendingActivation.targetSessionId === null || pendingActivation.targetSessionId === activeSessionId;
 
     if (!targetMatches) {
       return;
@@ -91,9 +90,7 @@ export const useAppPromptModes = ({
 
     if (activeChat && isCanvasSystemInstruction(activeChat.settings.systemInstruction)) {
       queueMicrotask(() => {
-        setPendingCanvasPromptActivation((current) =>
-          current === pendingActivation ? null : current,
-        );
+        setPendingCanvasPromptActivation((current) => (current === pendingActivation ? null : current));
       });
       return;
     }
@@ -112,29 +109,27 @@ export const useAppPromptModes = ({
     );
 
     queueMicrotask(() => {
-      setPendingCanvasPromptActivation((current) =>
-        current === pendingActivation ? null : current,
-      );
+      setPendingCanvasPromptActivation((current) => (current === pendingActivation ? null : current));
     });
   }, [activeChat, activeSessionId, pendingCanvasPromptActivation, setCurrentChatSettings]);
 
   useEffect(() => {
     if (
-      !canvasPromptOverrideState
-      || canvasPromptOverrideState.targetSessionId !== currentCanvasPromptTargetSessionId
+      !canvasPromptOverrideState ||
+      canvasPromptOverrideState.targetSessionId !== currentCanvasPromptTargetSessionId
     ) {
       return;
     }
 
     const actualActive =
-      isCanvasSystemInstruction(currentChatSettings.systemInstruction)
-      || isCanvasSystemInstruction(appSettings.systemInstruction);
+      isCanvasSystemInstruction(currentChatSettings.systemInstruction) ||
+      isCanvasSystemInstruction(appSettings.systemInstruction);
     if (actualActive === canvasPromptOverrideState.active) {
       queueMicrotask(() => {
         setCanvasPromptOverrideState((current) =>
-          current
-          && current.targetSessionId === canvasPromptOverrideState.targetSessionId
-          && current.active === canvasPromptOverrideState.active
+          current &&
+          current.targetSessionId === canvasPromptOverrideState.targetSessionId &&
+          current.active === canvasPromptOverrideState.active
             ? null
             : current,
         );
@@ -172,8 +167,7 @@ export const useAppPromptModes = ({
       return;
     }
 
-    const isCurrentlyCanvasPrompt =
-      canvasPromptOverrideActive ?? persistedCanvasPromptActive;
+    const isCurrentlyCanvasPrompt = canvasPromptOverrideActive ?? persistedCanvasPromptActive;
 
     setCanvasPromptBusySessionId(targetSessionId);
     setCanvasPromptOverrideState({
@@ -196,13 +190,9 @@ export const useAppPromptModes = ({
       }
     } catch (error) {
       setCanvasPromptOverrideState((current) =>
-        current?.targetSessionId === targetSessionId
-          ? { active: isCurrentlyCanvasPrompt, targetSessionId }
-          : current,
+        current?.targetSessionId === targetSessionId ? { active: isCurrentlyCanvasPrompt, targetSessionId } : current,
       );
-      setCanvasPromptBusySessionId((current) =>
-        current === targetSessionId ? null : current,
-      );
+      setCanvasPromptBusySessionId((current) => (current === targetSessionId ? null : current));
       throw error;
     }
 
@@ -289,10 +279,7 @@ export const useAppPromptModes = ({
     async (type: 'homepage' | 'organize' | 'follow-up', text: string) => {
       const { isAutoSendOnSuggestionClick } = appSettings;
 
-      if (
-        type === 'organize' &&
-        !isCanvasSystemInstruction(currentChatSettings.systemInstruction)
-      ) {
+      if (type === 'organize' && !isCanvasSystemInstruction(currentChatSettings.systemInstruction)) {
         await activateCanvasPrompt(activeSessionId);
       }
 
@@ -302,12 +289,7 @@ export const useAppPromptModes = ({
       }
 
       setCommandedInput({ text: `${text}\n`, id: Date.now() });
-      setTimeout(() => {
-        const textarea = document.querySelector(
-          'textarea[aria-label="Chat message input"]',
-        ) as HTMLTextAreaElement | null;
-        textarea?.focus();
-      }, 0);
+      focusChatInput(0);
     },
     [
       activeSessionId,

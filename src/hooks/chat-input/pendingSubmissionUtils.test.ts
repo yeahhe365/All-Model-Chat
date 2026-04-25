@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { UploadedFile } from '../../types';
 import {
+  getBlockingFileUploadFailure,
   buildPendingChatInputSubmission,
   buildQueuedChatInputSubmission,
   shouldFlushPendingSubmission,
@@ -112,5 +113,36 @@ describe('shouldFlushPendingSubmission', () => {
         currentFiles: [makeFile({ id: 'processing', isProcessing: false })],
       }),
     ).toBe(false);
+  });
+});
+
+describe('getBlockingFileUploadFailure', () => {
+  it('returns null when files finish successfully', () => {
+    expect(
+      getBlockingFileUploadFailure([makeFile({ id: 'ready', uploadState: 'active', isProcessing: false })]),
+    ).toBeNull();
+  });
+
+  it('returns the failed file when a pending send waited for an upload that failed', () => {
+    const failedFile = makeFile({
+      id: 'failed',
+      name: 'broken.pdf',
+      uploadState: 'failed',
+      isProcessing: false,
+      error: 'Backend processing failed.',
+    });
+
+    expect(getBlockingFileUploadFailure([failedFile, makeFile({ id: 'ready' })])).toEqual(failedFile);
+  });
+
+  it('treats cancelled files as blocking a pending automatic send', () => {
+    const cancelledFile = makeFile({
+      id: 'cancelled',
+      name: 'cancelled.mp4',
+      uploadState: 'cancelled',
+      isProcessing: false,
+    });
+
+    expect(getBlockingFileUploadFailure([cancelledFile])).toEqual(cancelledFile);
   });
 });

@@ -3,7 +3,7 @@ import type React from 'react';
 
 import type { UploadedFile } from '../../types';
 import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
-import { isTextFile } from '../../utils/fileHelpers';
+import { cleanupFilePreviewUrl, cleanupReplacedFilePreviewUrl, isTextFile } from '../../utils/fileHelpers';
 import { useFileModalState } from '../ui/useFileModalState';
 import { readUploadedTextFileContent } from './textFileToInput';
 
@@ -64,7 +64,9 @@ export const useChatInputFileUi = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleAttachmentAction = useCallback(
-    (action: 'upload' | 'gallery' | 'folder' | 'zip' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot') => {
+    (
+      action: 'upload' | 'gallery' | 'folder' | 'zip' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot',
+    ) => {
       setShowAddByIdInput(false);
       setShowAddByUrlInput(false);
 
@@ -152,18 +154,25 @@ export const useChatInputFileUi = ({
       if (editingFile) {
         const size = content instanceof Blob ? content.size : content.length;
         const type = content instanceof Blob ? content.type : 'text/markdown';
+        const finalName = filename.includes('.') ? filename : `${filename}.md`;
+        const nextRawFile = new File([content], finalName, { type });
+        const nextDataUrl = URL.createObjectURL(nextRawFile);
 
         setSelectedFiles((prev) =>
           prev.map((file) =>
             file.id === editingFile.id
-              ? {
-                  ...file,
-                  name: filename.includes('.') ? filename : `${filename}.md`,
-                  textContent: typeof content === 'string' ? content : undefined,
-                  size,
-                  rawFile: new File([content], filename, { type }),
-                  dataUrl: content instanceof Blob ? URL.createObjectURL(content) : file.dataUrl,
-                }
+              ? (() => {
+                  const nextFile = {
+                    ...file,
+                    name: finalName,
+                    textContent: typeof content === 'string' ? content : undefined,
+                    size,
+                    rawFile: nextRawFile,
+                    dataUrl: nextDataUrl,
+                  };
+                  cleanupReplacedFilePreviewUrl(file, nextFile);
+                  return nextFile;
+                })()
               : file,
           ),
         );
@@ -182,14 +191,19 @@ export const useChatInputFileUi = ({
       setSelectedFiles((prev) =>
         prev.map((file) =>
           file.id === fileId
-            ? {
-                ...file,
-                name: newName,
-                textContent: content,
-                size: content.length,
-                dataUrl: URL.createObjectURL(new File([content], newName, { type: 'text/plain' })),
-                rawFile: new File([content], newName, { type: 'text/plain' }),
-              }
+            ? (() => {
+                const nextRawFile = new File([content], newName, { type: 'text/plain' });
+                const nextFile = {
+                  ...file,
+                  name: newName,
+                  textContent: content,
+                  size: content.length,
+                  dataUrl: URL.createObjectURL(nextRawFile),
+                  rawFile: nextRawFile,
+                };
+                cleanupReplacedFilePreviewUrl(file, nextFile);
+                return nextFile;
+              })()
             : file,
         ),
       );
@@ -209,9 +223,12 @@ export const useChatInputFileUi = ({
     [openConfiguration, openPreview],
   );
 
-  const handlePreviewFile = useCallback((file: UploadedFile) => {
-    openPreview(file);
-  }, [openPreview]);
+  const handlePreviewFile = useCallback(
+    (file: UploadedFile) => {
+      openPreview(file);
+    },
+    [openPreview],
+  );
 
   const handleMoveTextFileToInput = useCallback(
     async (file: UploadedFile) => {
@@ -219,7 +236,11 @@ export const useChatInputFileUi = ({
         setAppFileError(null);
         const content = await readUploadedTextFileContent(file);
         setInputText(content);
-        setSelectedFiles((prev) => prev.filter((candidate) => candidate.id !== file.id));
+        setSelectedFiles((prev) => {
+          const fileToRemove = prev.find((candidate) => candidate.id === file.id);
+          cleanupFilePreviewUrl(fileToRemove);
+          return prev.filter((candidate) => candidate.id !== file.id);
+        });
 
         requestAnimationFrame(() => {
           const textarea = textareaRef.current;

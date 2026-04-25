@@ -105,6 +105,9 @@ export const buildQueuedChatInputSubmission = ({
 
 export const areFilesStillProcessing = (files: UploadedFile[]) => files.some((file) => file.isProcessing);
 
+export const getBlockingFileUploadFailure = (files: UploadedFile[]): UploadedFile | null =>
+  files.find((file) => file.uploadState === 'failed' || file.uploadState === 'cancelled' || !!file.error) ?? null;
+
 export const shouldFlushPendingSubmission = ({
   pendingSubmission,
   previousFiles,

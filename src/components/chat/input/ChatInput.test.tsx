@@ -1,7 +1,13 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaResolution, type AppSettings, type ChatSettings, type InputCommand, type UploadedFile } from '../../../types';
+import {
+  MediaResolution,
+  type AppSettings,
+  type ChatSettings,
+  type InputCommand,
+  type UploadedFile,
+} from '../../../types';
 import { ChatAreaProvider, type ChatAreaProviderValue } from '../../layout/chat-area/ChatAreaContext';
 import { ChatInput } from './ChatInput';
 
@@ -88,9 +94,7 @@ vi.mock('../../../stores/chatStore', () => {
       selector ? selector(mockChatStoreState) : mockChatStoreState,
     {
       getState: () => mockChatStoreState,
-      subscribe: (
-        listener: (state: typeof mockChatStoreState, previousState: typeof mockChatStoreState) => void,
-      ) => {
+      subscribe: (listener: (state: typeof mockChatStoreState, previousState: typeof mockChatStoreState) => void) => {
         mockChatStoreSubscribers.add(listener);
         return () => mockChatStoreSubscribers.delete(listener);
       },
@@ -702,9 +706,66 @@ describe('ChatInput', () => {
       | undefined;
 
     expect(removeConvertedFile).toBeTypeOf('function');
-    expect(removeConvertedFile?.([
-      { id: 'text-file' },
-      { id: 'image-file' },
-    ])).toEqual([{ id: 'image-file' }]);
+    expect(removeConvertedFile?.([{ id: 'text-file' }, { id: 'image-file' }])).toEqual([{ id: 'image-file' }]);
+  });
+
+  it('does not auto-send a pending message when an attachment finishes as failed', async () => {
+    const onSendMessage = vi.fn();
+    const setAppFileError = vi.fn();
+    const processingFile: UploadedFile = {
+      id: 'processing-file',
+      name: 'large.pdf',
+      type: 'application/pdf',
+      size: 4096,
+      uploadState: 'processing_api',
+      isProcessing: true,
+    };
+    const failedFile: UploadedFile = {
+      ...processingFile,
+      uploadState: 'failed',
+      isProcessing: false,
+      error: 'Backend processing failed.',
+    };
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = false;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.selectedFiles = [processingFile];
+    providerValue.input.onSendMessage = onSendMessage;
+    providerValue.input.setAppFileError = setAppFileError;
+    mockChatStoreState.selectedFiles = [processingFile];
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Summarize this file');
+      dispatchKeyDown(textarea, 'Enter');
+    });
+
+    expect(onSendMessage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      const previousState = { selectedFiles: [processingFile] };
+      const nextState = { selectedFiles: [failedFile] };
+      mockChatStoreState.selectedFiles = nextState.selectedFiles;
+      mockChatStoreSubscribers.forEach((subscriber) => subscriber(nextState, previousState));
+    });
+
+    expect(onSendMessage).not.toHaveBeenCalled();
+    expect(setAppFileError).toHaveBeenCalledWith('messageSender_fileUploadFailedBeforeSend');
   });
 });

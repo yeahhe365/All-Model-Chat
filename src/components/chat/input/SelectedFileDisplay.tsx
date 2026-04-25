@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
 import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, FileText } from 'lucide-react';
 import { CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { formatFileSize, isTextFile } from '../../../utils/fileHelpers';
 import { getFileCardMeta } from '../../../utils/fileCardUtils';
+import { useI18n } from '../../../contexts/I18nContext';
+import { FileThumbnail } from './FileThumbnail';
 
 interface SelectedFileDisplayProps {
   file: UploadedFile;
@@ -27,6 +27,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
   onPreview,
   isGemini3,
 }) => {
+  const { t } = useI18n();
   const [isNewlyActive, setIsNewlyActive] = useState(false);
   const prevUploadState = useRef(file.uploadState);
   const { isCopied: idCopied, copyToClipboard } = useCopyToClipboard();
@@ -51,7 +52,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
   const handleCopyId = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (file.fileApiName) {
-        copyToClipboard(file.fileApiName);
+      copyToClipboard(file.fileApiName);
     }
   };
 
@@ -61,21 +62,15 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
   const isCancelled = file.uploadState === 'cancelled';
   const uploadPercent = Math.max(0, Math.min(100, Math.round(file.progress ?? 0)));
   const canMoveTextToInput =
-    !!onMoveTextToInput
-    && isTextFile(file)
-    && file.uploadState === 'active'
-    && !isProcessing
-    && !isFailed
-    && !isCancelled;
+    !!onMoveTextToInput &&
+    isTextFile(file) &&
+    file.uploadState === 'active' &&
+    !isProcessing &&
+    !isFailed &&
+    !isCancelled;
 
   const isCancellable = isUploading || (isProcessing && file.uploadState !== 'processing_api');
-  const {
-    category,
-    isActive,
-    isText,
-    canConfigure,
-    ConfigIcon,
-  } = getFileCardMeta(file, {
+  const { category, isActive, isText, canConfigure, ConfigIcon } = getFileCardMeta(file, {
     isGemini3,
     includeTextEditing: true,
     requireActiveForConfigure: true,
@@ -86,8 +81,9 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
   const ErrorIcon = CATEGORY_STYLES['error'].Icon;
 
   return (
-    <div className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}>
-      
+    <div
+      className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}
+    >
       <button
         type="button"
         onClick={(e) => {
@@ -98,14 +94,14 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
             onRemove(file.id);
           }
         }}
-        className="absolute -top-2 -right-2 z-30 p-1 bg-[var(--theme-bg-secondary)] rounded-full shadow-sm border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:border-[var(--theme-text-danger)] transition-all opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto"
-        title={isCancellable ? "Cancel Upload" : "Remove File"}
-        aria-label={isCancellable ? "Cancel Upload" : "Remove File"}
+        className="absolute -top-2 -right-2 z-30 p-1 bg-[var(--theme-bg-secondary)] rounded-full shadow-sm border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:border-[var(--theme-text-danger)] transition-all opacity-100 pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto"
+        title={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
+        aria-label={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
       >
         {isCancellable ? <Ban size={14} /> : <X size={14} />}
       </button>
 
-      <div 
+      <div
         onClick={() => {
           if (isActive && onPreview) {
             onPreview(file);
@@ -113,115 +109,111 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
         }}
         className={`file-preview-box relative w-full aspect-square rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/30 overflow-hidden flex items-center justify-center transition-colors group-hover:border-[var(--theme-border-focus)]/50 ${isActive && onPreview ? 'cursor-pointer hover:opacity-90' : ''}`}
       >
-        
-        <div className={`w-full h-full flex items-center justify-center p-2 transition-all duration-300 ${isUploading || isProcessing ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100'}`}>
-            {file.dataUrl && SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) ? (
-                <img 
-                    src={file.dataUrl} 
-                    alt={file.name} 
-                    className="w-full h-full object-cover rounded-lg shadow-sm" 
-                />
-            ) : (
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${bgClass} transition-colors`}>
-                    <Icon size={24} className={colorClass} strokeWidth={1.5} />
-                </div>
-            )}
+        <div
+          className={`w-full h-full flex items-center justify-center p-2 transition-all duration-300 ${isUploading || isProcessing ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100'}`}
+        >
+          <FileThumbnail file={file} Icon={Icon} colorClass={colorClass} bgClass={bgClass} />
         </div>
 
         {(isUploading || isProcessing) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                <div className="flex flex-col items-center gap-1">
-                    <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" />
-                </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+            <div className="flex flex-col items-center gap-1">
+              <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" />
             </div>
+          </div>
         )}
 
         {isUploading && (
-            <div className="absolute inset-x-2 bottom-2 z-20">
-              <div className="h-1.5 overflow-hidden rounded-full bg-black/25">
-                <div
-                  className="h-full rounded-full bg-[var(--theme-text-link)] transition-[width] duration-300"
-                  style={{ width: `${uploadPercent}%` }}
-                />
-              </div>
+          <div className="absolute inset-x-2 bottom-2 z-20">
+            <div className="h-1.5 overflow-hidden rounded-full bg-black/25">
+              <div
+                className="h-full rounded-full bg-[var(--theme-text-link)] transition-[width] duration-300"
+                style={{ width: `${uploadPercent}%` }}
+              />
             </div>
+          </div>
         )}
 
         {isFailed && !isCancelled && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--theme-bg-danger)]/10 backdrop-blur-[1px] z-20">
-                <ErrorIcon size={20} className="text-[var(--theme-text-danger)] mb-1" />
-            </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--theme-bg-danger)]/10 backdrop-blur-[1px] z-20">
+            <ErrorIcon size={20} className="text-[var(--theme-text-danger)] mb-1" />
+          </div>
         )}
 
         {isNewlyActive && (
-             <div className="absolute inset-0 flex items-center justify-center bg-[var(--theme-bg-success)]/20 backdrop-blur-[1px] animate-pulse z-20">
-                <CheckCircle size={24} className="text-[var(--theme-text-success)] drop-shadow-md" />
-             </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--theme-bg-success)]/20 backdrop-blur-[1px] animate-pulse z-20">
+            <CheckCircle size={24} className="text-[var(--theme-text-success)] drop-shadow-md" />
+          </div>
         )}
 
         {canConfigure && (
-             <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onConfigure) {
-                    onConfigure(file);
-                  }
-                }}
-                title={isText ? "Edit File" : "Configure File"}
-                className={`absolute bottom-1 left-1 p-1.5 rounded-md bg-black/75 hover:bg-black/90 transition-all z-20 ${getResolutionColor(file.mediaResolution)}`}
-             >
-                <ConfigIcon size={12} strokeWidth={2} />
-             </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onConfigure) {
+                onConfigure(file);
+              }
+            }}
+            title={isText ? t('selectedFile_editFile') : t('selectedFile_configureFile')}
+            className={`absolute bottom-1 left-1 p-1.5 rounded-md bg-black/75 hover:bg-black/90 transition-all z-20 ${getResolutionColor(file.mediaResolution)}`}
+          >
+            <ConfigIcon size={12} strokeWidth={2} />
+          </button>
         )}
 
         {canMoveTextToInput && (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                void onMoveTextToInput?.(file);
-              }}
-              title="Move text to input"
-              aria-label="Move text to input"
-              className="absolute top-1 left-1 p-1.5 rounded-md bg-black/75 text-white/80 hover:text-white hover:bg-black/90 transition-all z-20"
-            >
-              <FileText size={12} strokeWidth={2} />
-            </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void onMoveTextToInput?.(file);
+            }}
+            title={t('selectedFile_moveTextToInput')}
+            aria-label={t('selectedFile_moveTextToInput')}
+            className="absolute top-1 left-1 p-1.5 rounded-md bg-black/75 text-white/80 hover:text-white hover:bg-black/90 transition-all z-20"
+          >
+            <FileText size={12} strokeWidth={2} />
+          </button>
         )}
 
         {file.fileApiName && isActive && !file.error && (
-            <button
-              type="button"
-              onClick={handleCopyId}
-              title={idCopied ? "ID Copied" : "Copy File ID"}
-              className={`absolute bottom-1 right-1 p-1.5 rounded-md bg-black/75 text-white/80 hover:text-white hover:bg-black/90 transition-all opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto z-20 ${idCopied ? '!text-green-400 !opacity-100 !pointer-events-auto' : ''}`}
-            >
-              {idCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={2} />}
-            </button>
+          <button
+            type="button"
+            onClick={handleCopyId}
+            title={idCopied ? t('selectedFile_idCopied') : t('selectedFile_copyFileId')}
+            className={`absolute bottom-1 right-1 p-1.5 rounded-md bg-black/75 text-white/80 hover:text-white hover:bg-black/90 transition-all opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto z-20 ${idCopied ? '!text-green-400 !opacity-100 !pointer-events-auto' : ''}`}
+          >
+            {idCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={2} />}
+          </button>
         )}
       </div>
 
       <div className="mt-1.5 px-0.5 text-left w-full">
-        <p className="text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight" title={file.name}>
-            {file.name}
-        </p>
-        <p 
-            className={`text-[9px] truncate leading-tight mt-0.5 flex items-center gap-1 ${isFailed ? 'text-[var(--theme-text-danger)] font-medium' : 'text-[var(--theme-text-tertiary)]'}`}
-            title={isFailed ? file.error : undefined}
+        <p
+          className="text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight"
+          title={file.name}
         >
-            {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
-            {file.mediaResolution && <SlidersHorizontal size={8} className="text-[var(--theme-text-link)]" />}
-            {isFailed ? (file.error || 'Error') : 
-             isUploading ? `Uploading ${uploadPercent}%` :
-             isProcessing ? 'Processing on Gemini' :
-             isCancelled ? 'Cancelled' : 
-             formatFileSize(file.size)}
+          {file.name}
+        </p>
+        <p
+          className={`text-[9px] truncate leading-tight mt-0.5 flex items-center gap-1 ${isFailed ? 'text-[var(--theme-text-danger)] font-medium' : 'text-[var(--theme-text-tertiary)]'}`}
+          title={isFailed ? file.error : undefined}
+        >
+          {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
+          {file.mediaResolution && <SlidersHorizontal size={8} className="text-[var(--theme-text-link)]" />}
+          {isFailed
+            ? file.error || t('selectedFile_errorFallback')
+            : isUploading
+              ? t('selectedFile_uploading').replace('{percent}', String(uploadPercent))
+              : isProcessing
+                ? t('selectedFile_processingGemini')
+                : isCancelled
+                  ? t('selectedFile_cancelled')
+                  : formatFileSize(file.size)}
         </p>
         {isUploading && file.uploadSpeed && (
-          <p className="text-[9px] truncate leading-tight mt-0.5 text-[var(--theme-text-link)]">
-            {file.uploadSpeed}
-          </p>
+          <p className="text-[9px] truncate leading-tight mt-0.5 text-[var(--theme-text-link)]">{file.uploadSpeed}</p>
         )}
       </div>
     </div>

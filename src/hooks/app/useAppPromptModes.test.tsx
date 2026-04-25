@@ -9,9 +9,7 @@ const { mockLoadCanvasSystemPrompt } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../constants/promptHelpers', async () => {
-  const actual = await vi.importActual<typeof import('../../constants/promptHelpers')>(
-    '../../constants/promptHelpers',
-  );
+  const actual = await vi.importActual<typeof import('../../constants/promptHelpers')>('../../constants/promptHelpers');
 
   return {
     ...actual,
@@ -19,7 +17,7 @@ vi.mock('../../constants/promptHelpers', async () => {
   };
 });
 
-import { useAppPromptModes } from './useAppPromptModes';
+import { focusChatInput, useAppPromptModes } from './useAppPromptModes';
 
 const renderHook = <T,>(callback: () => T) => {
   const container = document.createElement('div');
@@ -71,7 +69,20 @@ describe('useAppPromptModes', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
     document.body.innerHTML = '';
+  });
+
+  it('ignores delayed focus after the document has been torn down', () => {
+    const originalDocument = document;
+    vi.useFakeTimers();
+
+    focusChatInput(0);
+    vi.stubGlobal('document', undefined);
+
+    expect(() => vi.runOnlyPendingTimers()).not.toThrow();
+    vi.stubGlobal('document', originalDocument);
   });
 
   it('optimistically marks the canvas prompt active while it is loading', async () => {
@@ -216,9 +227,7 @@ describe('useAppPromptModes', () => {
 
   it('allows toggling the canvas prompt in a different session after switching away from an in-flight load', async () => {
     const deferred = createDeferred<string>();
-    mockLoadCanvasSystemPrompt
-      .mockReturnValueOnce(deferred.promise)
-      .mockResolvedValue(CANVAS_PROMPT);
+    mockLoadCanvasSystemPrompt.mockReturnValueOnce(deferred.promise).mockResolvedValue(CANVAS_PROMPT);
 
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();

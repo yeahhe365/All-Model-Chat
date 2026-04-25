@@ -2,102 +2,125 @@ import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { logService } from '../../services/logService';
 import { getKeyForRequest } from '../../utils/apiUtils';
-import { checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
+import { buildFileUploadPreflight, checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
 import { uploadFileItem } from './uploadFileItem';
+import { runWithConcurrencyLimit } from './uploadQueue';
+
+const MAX_CONCURRENT_FILE_UPLOADS = 3;
 
 interface UseFileUploaderProps {
-    appSettings: AppSettings;
-    setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
-    setAppFileError: Dispatch<SetStateAction<string | null>>;
-    currentChatSettings: IndividualChatSettings;
-    setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
+  appSettings: AppSettings;
+  selectedFiles: UploadedFile[];
+  setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
+  setAppFileError: Dispatch<SetStateAction<string | null>>;
+  currentChatSettings: IndividualChatSettings;
+  setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
 }
 
 export const useFileUploader = ({
-    appSettings,
-    setSelectedFiles,
-    setAppFileError,
-    currentChatSettings,
-    setCurrentChatSettings,
+  appSettings,
+  selectedFiles,
+  setSelectedFiles,
+  setAppFileError,
+  currentChatSettings,
+  setCurrentChatSettings,
 }: UseFileUploaderProps) => {
-    
-    // Refs to track upload speed for each file ID
-    const uploadStatsRef = useRef<Map<string, { lastLoaded: number, lastTime: number }>>(new Map());
+  // Refs to track upload speed for each file ID
+  const uploadStatsRef = useRef<Map<string, { lastLoaded: number; lastTime: number }>>(new Map());
 
-    const uploadFiles = useCallback(async (filesArray: File[]) => {
-        if (filesArray.length === 0) return;
+  const uploadFiles = useCallback(
+    async (filesArray: File[]) => {
+      if (filesArray.length === 0) return;
 
-        // Calculate if ANY file requires API upload to handle key rotation logic first
-        const needsApiKeyForUpload = checkBatchNeedsApiKey(filesArray, appSettings);
-        const filesRequiringApi = getFilesRequiringFileApi(filesArray, appSettings);
+      const preflight = buildFileUploadPreflight(filesArray, appSettings, selectedFiles);
+      if (preflight.notice) {
+        setAppFileError(preflight.notice);
+      }
 
-        let keyToUse: string | null = null;
-        if (needsApiKeyForUpload) {
-            const keyResult = getKeyForRequest(appSettings, currentChatSettings);
-            if ('error' in keyResult) {
-                setAppFileError(keyResult.error);
-                logService.error('Cannot process files: API key not configured.');
-                return;
-            }
-            keyToUse = keyResult.key;
-            if (keyResult.isNewKey) {
-                logService.info('New API key selected for this session due to file upload.');
-                setCurrentChatSettings(prev => ({ ...prev, lockedApiKey: keyToUse! }));
-            }
+      if (preflight.filesToUpload.length === 0) {
+        return;
+      }
+
+      // Calculate if ANY file requires API upload to handle key rotation logic first
+      const needsApiKeyForUpload = checkBatchNeedsApiKey(preflight.filesToUpload, appSettings);
+      const filesRequiringApi = getFilesRequiringFileApi(preflight.filesToUpload, appSettings);
+
+      let keyToUse: string | null = null;
+      if (needsApiKeyForUpload) {
+        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+        if ('error' in keyResult) {
+          setAppFileError(keyResult.error);
+          logService.error('Cannot process files: API key not configured.');
+          return;
         }
+        keyToUse = keyResult.key;
+        if (keyResult.isNewKey) {
+          logService.info('New API key selected for this session due to file upload.');
+          setCurrentChatSettings((prev) => ({ ...prev, lockedApiKey: keyToUse! }));
+        }
+      }
 
-        // Determine default resolution for new files
-        const defaultResolution = currentChatSettings.mediaResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED
-            ? currentChatSettings.mediaResolution
-            : undefined;
+      // Determine default resolution for new files
+      const defaultResolution =
+        currentChatSettings.mediaResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED
+          ? currentChatSettings.mediaResolution
+          : undefined;
 
-        const uploadPromises = filesArray.map(file => uploadFileItem({
+      const uploadTasks = preflight.filesToUpload.map(
+        (file) => () =>
+          uploadFileItem({
             file,
             keyToUse,
             forceFileApi: filesRequiringApi.has(file),
             defaultResolution,
             appSettings,
             setSelectedFiles,
-            uploadStatsRef
-        }));
+            uploadStatsRef,
+          }),
+      );
 
-        await Promise.allSettled(uploadPromises);
-    }, [appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError, setSelectedFiles]);
+      await runWithConcurrencyLimit(uploadTasks, MAX_CONCURRENT_FILE_UPLOADS);
+    },
+    [appSettings, currentChatSettings, selectedFiles, setCurrentChatSettings, setAppFileError, setSelectedFiles],
+  );
 
-    const cancelUpload = useCallback((fileIdToCancel: string) => {
-        logService.warn(`User cancelled file upload: ${fileIdToCancel}`);
-        
-        setSelectedFiles(prevFiles =>
-            prevFiles.map(file => {
-                if (file.id === fileIdToCancel) {
-                    // 1. Abort the actual network request
-                    if (file.abortController) {
-                        file.abortController.abort();
-                    }
-                    
-                    // 2. Fix Memory Leak: Revoke the local Blob URL to free up browser memory
-                    if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
-                        URL.revokeObjectURL(file.dataUrl);
-                    }
-                    
-                    // 3. Update state to reflect cancellation and clear heavy object references
-                    return { 
-                        ...file, 
-                        isProcessing: false, 
-                        error: "Upload cancelled.", 
-                        uploadState: 'cancelled', 
-                        uploadSpeed: undefined,
-                        dataUrl: undefined, // Clear URL so UI gracefully falls back to a file type icon
-                        rawFile: undefined  // Clear the actual File/Blob reference from memory
-                    };
-                }
-                return file;
-            })
-        );
-        
-        // Clean up speed calculation stats
-        uploadStatsRef.current.delete(fileIdToCancel);
-    }, [setSelectedFiles]);
+  const cancelUpload = useCallback(
+    (fileIdToCancel: string) => {
+      logService.warn(`User cancelled file upload: ${fileIdToCancel}`);
 
-    return { uploadFiles, cancelUpload };
+      setSelectedFiles((prevFiles) =>
+        prevFiles.map((file) => {
+          if (file.id === fileIdToCancel) {
+            // 1. Abort the actual network request
+            if (file.abortController) {
+              file.abortController.abort();
+            }
+
+            // 2. Fix Memory Leak: Revoke the local Blob URL to free up browser memory
+            if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
+              URL.revokeObjectURL(file.dataUrl);
+            }
+
+            // 3. Update state to reflect cancellation and clear heavy object references
+            return {
+              ...file,
+              isProcessing: false,
+              error: 'Upload cancelled.',
+              uploadState: 'cancelled',
+              uploadSpeed: undefined,
+              dataUrl: undefined, // Clear URL so UI gracefully falls back to a file type icon
+              rawFile: undefined, // Clear the actual File/Blob reference from memory
+            };
+          }
+          return file;
+        }),
+      );
+
+      // Clean up speed calculation stats
+      uploadStatsRef.current.delete(fileIdToCancel);
+    },
+    [setSelectedFiles],
+  );
+
+  return { uploadFiles, cancelUpload };
 };

@@ -23,11 +23,13 @@ import {
   areFilesStillProcessing,
   buildPendingChatInputSubmission,
   buildQueuedChatInputSubmission,
+  getBlockingFileUploadFailure,
   PendingChatInputSubmission,
   QueuedChatInputSubmission,
   shouldFlushPendingSubmission,
 } from './pendingSubmissionUtils';
 import { useChatInputFileUi } from './useChatInputFileUi';
+import { cleanupFilePreviewUrl } from '../../utils/fileHelpers';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
@@ -77,12 +79,7 @@ export const useChatInput = () => {
   } = chatInput;
 
   const inputState = useChatInputState(activeSessionId, isEditing);
-  const {
-    setIsWaitingForUpload,
-    setInputText,
-    setQuotes,
-    textareaRef,
-  } = inputState;
+  const { setIsWaitingForUpload, setInputText, setQuotes, textareaRef } = inputState;
   const pendingSubmissionRef = useRef<PendingChatInputSubmission | null>(null);
   const [queuedSubmission, setQueuedSubmission] = useState<QueuedChatInputSubmission | null>(null);
   const [isConverting, setIsConverting] = useState(false);
@@ -329,6 +326,14 @@ export const useChatInput = () => {
         return;
       }
 
+      const blockingFileFailure = getBlockingFileUploadFailure(useChatStore.getState().selectedFiles);
+      if (blockingFileFailure) {
+        pendingSubmissionRef.current = null;
+        setIsWaitingForUpload(false);
+        setAppFileError(t('messageSender_fileUploadFailedBeforeSend'));
+        return;
+      }
+
       pendingSubmissionRef.current = null;
       setIsWaitingForUpload(false);
 
@@ -339,7 +344,7 @@ export const useChatInput = () => {
 
       completeSendSubmission(submission.textToSend, submission.isFastMode);
     },
-    [completeEditSubmission, completeSendSubmission, setIsWaitingForUpload],
+    [completeEditSubmission, completeSendSubmission, setAppFileError, setIsWaitingForUpload, t],
   );
 
   const removeQueuedSubmission = useCallback(() => {
@@ -457,10 +462,7 @@ export const useChatInput = () => {
         modalsState.folderInputRef.current.value = '';
       }
     },
-    [
-      modalsState.folderInputRef,
-      processFolderImport,
-    ],
+    [modalsState.folderInputRef, processFolderImport],
   );
 
   const handleZipChange = useCallback(
@@ -819,9 +821,7 @@ export const useChatInput = () => {
     (fileIdToRemove: string) => {
       setSelectedFiles((prev) => {
         const fileToRemove = prev.find((file) => file.id === fileIdToRemove);
-        if (fileToRemove?.dataUrl?.startsWith('blob:')) {
-          URL.revokeObjectURL(fileToRemove.dataUrl);
-        }
+        cleanupFilePreviewUrl(fileToRemove);
         return prev.filter((file) => file.id !== fileIdToRemove);
       });
     },
@@ -962,8 +962,7 @@ export const useChatInput = () => {
       }
 
       const target = event.target as HTMLElement;
-      const isInput =
-        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
       if (isInput) {
         return;
