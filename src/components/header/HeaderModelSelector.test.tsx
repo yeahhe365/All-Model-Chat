@@ -81,7 +81,7 @@ describe('HeaderModelSelector', () => {
     expect(toggleButton?.getAttribute('title')).toBe('headerReasoningMinimalFastTitle');
   });
 
-  it('does not render a model icon inside the collapsed selector trigger', async () => {
+  it('does not render an icon inside the collapsed selector trigger', async () => {
     await act(async () => {
       root.render(
         <HeaderModelSelector
@@ -100,7 +100,35 @@ describe('HeaderModelSelector', () => {
     });
 
     const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
-    expect(triggerButton?.querySelectorAll('svg')).toHaveLength(1);
+    expect(triggerButton?.querySelectorAll('svg')).toHaveLength(0);
+  });
+
+  it('hides the selector chevron while the model menu is expanded', async () => {
+    await act(async () => {
+      root.render(
+        <HeaderModelSelector
+          currentModelName="Custom Model"
+          availableModels={[{ id: 'custom-model', name: 'Custom Model' }]}
+          selectedModelId="custom-model"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isLoading={false}
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={vi.fn()}
+          showThoughts={false}
+          onToggleGemmaReasoning={vi.fn()}
+        />,
+      );
+    });
+
+    const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
+
+    await act(async () => {
+      triggerButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(triggerButton?.getAttribute('aria-expanded')).toBe('true');
+    expect(triggerButton?.querySelectorAll('svg')).toHaveLength(0);
   });
 
   it('keeps compact header controls stable by avoiding scale transforms', async () => {
@@ -124,10 +152,10 @@ describe('HeaderModelSelector', () => {
     const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
     const thinkingButton = container.querySelector('button[aria-label="headerThinkingToggleAria"]');
 
-    expect(triggerButton?.className).toContain('min-h-11');
+    expect(triggerButton?.className).toContain('min-h-9');
     expect(triggerButton?.className).not.toContain('scale');
-    expect(thinkingButton?.className).toContain('h-11');
-    expect(thinkingButton?.className).toContain('w-11');
+    expect(thinkingButton?.className).toContain('h-9');
+    expect(thinkingButton?.className).toContain('w-9');
     expect(thinkingButton?.className).not.toContain('scale');
   });
 

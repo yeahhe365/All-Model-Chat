@@ -45,6 +45,7 @@ describe('AppearanceSection', () => {
     expect(container.textContent).toContain('Reading Size');
     expect(container.textContent).toContain('File Transfer Method');
     expect(container.textContent).toContain('Streaming Responses');
+    expect(container.textContent).toContain('Preserve Formatting When Copying Selection');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
@@ -54,5 +55,39 @@ describe('AppearanceSection', () => {
     expect(container.textContent).toContain('阅读字号');
     expect(container.textContent).toContain('文件传输方式');
     expect(container.textContent).toContain('流式输出');
+    expect(container.textContent).toContain('复制选区时保留格式');
+  });
+
+  it('updates the selected-text formatting copy preference', async () => {
+    const onUpdate = vi.fn();
+
+    await act(async () => {
+      useSettingsStore.setState({ language: 'zh' });
+      root.render(
+        <I18nProvider>
+          <AppearanceSection
+            settings={{
+              ...settingsFixture,
+              isCopySelectionFormattingEnabled: false,
+            }}
+            onUpdate={onUpdate}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    const toggleRow = Array.from(container.querySelectorAll('div')).find((element) =>
+      element.textContent?.trim().startsWith('复制选区时保留格式'),
+    ) as HTMLDivElement | undefined;
+    const toggle = toggleRow?.querySelector('input[type="checkbox"]') as HTMLInputElement | undefined;
+
+    expect(toggle).not.toBeUndefined();
+    expect(toggle?.checked).toBe(false);
+
+    act(() => {
+      toggle?.click();
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith('isCopySelectionFormattingEnabled', true);
   });
 });

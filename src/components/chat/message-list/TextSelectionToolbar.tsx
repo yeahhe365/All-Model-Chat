@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { translations } from '../../../utils/translations';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 // Hooks
 import { useSelectionPosition } from '../../../hooks/text-selection/useSelectionPosition';
@@ -25,6 +26,9 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQu
     const toolbarRef = useRef<HTMLDivElement>(null);
     const copyResetTimeoutRef = useRef<number | null>(null);
     const [isCopied, setIsCopied] = useState(false);
+    const preserveFormattingOnCopy = useSettingsStore(
+        (state) => state.appSettings.isCopySelectionFormattingEnabled ?? true,
+    );
 
     const showCopiedFeedback = () => {
         setIsCopied(true);
@@ -49,11 +53,12 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQu
     const audioState = useSelectionAudio();
 
     // 2. Position Logic
-    const { position, setPosition, selectedText, clearSelection } = useSelectionPosition({
+    const { position, setPosition, selectedText, selectedCopyText, clearSelection } = useSelectionPosition({
         containerRef,
         isAudioActive: audioState.isPlaying || audioState.isLoading,
         toolbarRef,
-        onCopySuccess: showCopiedFeedback
+        onCopySuccess: showCopiedFeedback,
+        preserveFormattingOnCopy,
     });
 
     // 3. Drag Logic
@@ -79,7 +84,7 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQu
 
     const handleCopyClick = async (e: React.MouseEvent) => {
         e.preventDefault(); e.stopPropagation();
-        if (await writeSelectionTextToClipboard(selectedText)) {
+        if (await writeSelectionTextToClipboard(selectedCopyText || selectedText)) {
             showCopiedFeedback();
             setTimeout(() => {
                  clearSelection();

@@ -42,6 +42,8 @@ export const appearanceSettings = {
     settings_pasteRichTextAsMarkdown_tooltip: { en: 'Automatically convert formatted text (HTML) from clipboard to Markdown when pasting.', zh: '粘贴时自动将剪贴板中的富文本（HTML）转换为 Markdown。' },
     settings_pasteAsTextFile_label: { en: 'Attach Long Pasted Text as File', zh: '长文本粘贴为文件附件' },
     settings_pasteAsTextFile_tooltip: { en: 'Automatically convert large pasted text (>5000 characters) into an attached .txt file.', zh: '粘贴大量文本（>5000 字符）时，自动将其转换为 .txt 附件。' },
+    settings_copySelectionFormatting_label: { en: 'Preserve Formatting When Copying Selection', zh: '复制选区时保留格式' },
+    settings_copySelectionFormatting_tooltip: { en: 'When enabled, copied message selections keep Markdown formatting. Turn it off to copy plain selected text only.', zh: '启用后，复制消息选区会保留 Markdown 格式。关闭后只复制纯文本。' },
     settings_systemAudioRecording_label: { en: 'Include System Audio in Recordings', zh: '录音时包含系统音频' },
     settings_systemAudioRecording_tooltip: { en: 'When enabled, you will be prompted to share system audio (via screen share) along with microphone input during recording.', zh: '启用后，录音时将提示您共享系统音频（通过屏幕共享）以混合麦克风输入。' },
     settings_rawMode_label: { en: 'Raw Reasoning', zh: '原始推理' },

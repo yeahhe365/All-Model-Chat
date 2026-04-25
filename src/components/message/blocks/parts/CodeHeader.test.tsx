@@ -49,6 +49,8 @@ describe('CodeHeader', () => {
     expect(header?.className).toContain('bg-[var(--theme-bg-code-block-header)]');
     expect(header?.className).not.toContain('backdrop-blur');
     expect(header?.className).toContain('border-b');
+    expect(header?.className.split(/\s+/)).toContain('z-10');
+    expect(header?.className.split(/\s+/)).not.toContain('z-30');
     expect(header?.className.split(/\s+/)).toContain('py-0');
     expect(toolbar).not.toBeNull();
     expect(toolbar?.className.split(/\s+/)).toContain('gap-0.5');

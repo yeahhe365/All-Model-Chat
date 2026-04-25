@@ -58,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
   pipShortcut,
 }) => {
   const { t } = useI18n();
-  const headerButtonBase = "w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.19,1,0.22,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)]";
+  const headerButtonBase = "w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.19,1,0.22,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)]";
   const headerButtonInactive = "bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] active:bg-[var(--theme-bg-tertiary)] active:text-[var(--theme-text-primary)]";
   const headerButtonActive = "text-[var(--theme-text-link)] bg-[var(--theme-bg-accent)]/10 hover:bg-[var(--theme-bg-accent)]/20";
 
@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
     ? t('canvasHelperActive_title')
     : t('canvasHelperInactive_title');
 
-  const iconSize = 20; 
+  const iconSize = 18; 
   const strokeWidth = 2; 
 
   const { isNativeAudioModel, isImagenModel, isTtsModel } = getModelCapabilities(selectedModelId || '');
@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
   const showTextTools = !isNativeAudioModel && !isImagenModel && !isTtsModel;
 
   return (
-    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 sm:p-3 flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}>
+    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} px-2 py-[0.32rem] sm:px-3 sm:py-[0.48rem] flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}>
       
       {/* Left Section: Navigation & Model Selector */}
       <div className="flex items-center gap-2 min-w-0">

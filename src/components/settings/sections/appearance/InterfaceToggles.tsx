@@ -49,6 +49,7 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
             <ToggleItem label={t('settings_hideThinkingInContext_label')} checked={settings.hideThinkingInContext ?? false} onChange={(v) => onUpdate('hideThinkingInContext', v)} tooltip={t('settings_hideThinkingInContext_tooltip')} />
             <ToggleItem label={t('settings_pasteRichTextAsMarkdown_label')} checked={settings.isPasteRichTextAsMarkdownEnabled ?? true} onChange={(v) => onUpdate('isPasteRichTextAsMarkdownEnabled', v)} tooltip={t('settings_pasteRichTextAsMarkdown_tooltip')} />
             <ToggleItem label={t('settings_pasteAsTextFile_label')} checked={settings.isPasteAsTextFileEnabled ?? true} onChange={(v) => onUpdate('isPasteAsTextFileEnabled', v)} tooltip={t('settings_pasteAsTextFile_tooltip')} />
+            <ToggleItem label={t('settings_copySelectionFormatting_label')} checked={settings.isCopySelectionFormattingEnabled ?? true} onChange={(v) => onUpdate('isCopySelectionFormattingEnabled', v)} tooltip={t('settings_copySelectionFormatting_tooltip')} />
             <ToggleItem label={t('settings_systemAudioRecording_label')} checked={settings.isSystemAudioRecordingEnabled ?? false} onChange={(v) => onUpdate('isSystemAudioRecordingEnabled', v)} tooltip={t('settings_systemAudioRecording_tooltip')} />
             
             <ToggleItem label={t('isAutoTitleEnabled')} checked={settings.isAutoTitleEnabled} onChange={(v) => onUpdate('isAutoTitleEnabled', v)} />

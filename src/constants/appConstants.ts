@@ -117,6 +117,7 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
     autoCanvasModelId: DEFAULT_AUTO_CANVAS_MODEL_ID,
     isPasteRichTextAsMarkdownEnabled: true,
     isPasteAsTextFileEnabled: true,
+    isCopySelectionFormattingEnabled: true,
     isSystemAudioRecordingEnabled: false,
     customShortcuts: {},
     tabModelCycleIds: undefined,

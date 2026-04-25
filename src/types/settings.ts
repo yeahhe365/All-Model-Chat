@@ -97,6 +97,7 @@ export interface AppSettings extends ChatSettings {
  autoCanvasModelId: string;
  isPasteRichTextAsMarkdownEnabled?: boolean;
  isPasteAsTextFileEnabled?: boolean;
+ isCopySelectionFormattingEnabled?: boolean;
  isSystemAudioRecordingEnabled?: boolean;
  customShortcuts: Record<string, string>; // ID -> Key Combination String
  tabModelCycleIds?: string[];

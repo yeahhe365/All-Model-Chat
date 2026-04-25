@@ -42,7 +42,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
     const runButtonClass = `${headerButtonClass} ${isRunning ? 'text-[var(--theme-text-link)]' : 'text-emerald-500 hover:text-emerald-400'} !bg-transparent`;
 
     return (
-        <div className="sticky top-0 z-30 flex items-center justify-between gap-2 rounded-t-lg border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-code-block-header)] px-3 py-0 transition-all">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-t-lg border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-code-block-header)] px-3 py-0 transition-all">
             <div className="flex min-w-0 items-center gap-1 pl-0.5">
                 <LanguageIcon language={language} />
             </div>

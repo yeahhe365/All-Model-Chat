@@ -178,6 +178,44 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
+  it('copies plain selected text on global copy when formatting preservation is disabled', () => {
+    const host = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.textContent = 'hello world';
+    host.appendChild(strong);
+    document.body.appendChild(host);
+
+    const toolbarRef = createToolbarRef();
+    const { result, unmount } = renderHook(() =>
+      useSelectionPosition({
+        containerRef: host as any,
+        isAudioActive: false,
+        toolbarRef,
+        preserveFormattingOnCopy: false,
+      }),
+    );
+
+    selectNode(strong);
+
+    expect(result.current.selectedText).toBe('**hello world**');
+
+    const setData = vi.fn();
+    const copyEvent = new Event('copy', { bubbles: true, cancelable: true });
+    Object.defineProperty(copyEvent, 'clipboardData', {
+      configurable: true,
+      value: { setData },
+    });
+
+    act(() => {
+      document.dispatchEvent(copyEvent);
+    });
+
+    expect(copyEvent.defaultPrevented).toBe(true);
+    expect(setData).toHaveBeenCalledWith('text/plain', 'hello world');
+
+    unmount();
+  });
+
   it('notifies when global copy uses the selected markdown text', () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');

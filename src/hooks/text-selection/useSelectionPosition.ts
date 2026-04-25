@@ -11,6 +11,7 @@ interface UseSelectionPositionProps {
     isAudioActive: boolean;
     toolbarRef: React.RefObject<HTMLDivElement>;
     onCopySuccess?: (text: string) => void;
+    preserveFormattingOnCopy?: boolean;
 }
 
 const resolveContainerElement = (containerRef: ContainerRefLike): HTMLElement | null => {
@@ -29,13 +30,21 @@ const isEditableElement = (element: Element | null): boolean => {
     );
 };
 
-export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, onCopySuccess }: UseSelectionPositionProps) => {
+export const useSelectionPosition = ({
+    containerRef,
+    isAudioActive,
+    toolbarRef,
+    onCopySuccess,
+    preserveFormattingOnCopy = true,
+}: UseSelectionPositionProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
     const [selectedText, setSelectedText] = useState('');
+    const [selectedCopyText, setSelectedCopyText] = useState('');
     const [toolbarElement, setToolbarElement] = useState<HTMLDivElement | null>(null);
     const [toolbarSize, setToolbarSize] = useState<{ width: number; height: number } | null>(null);
     const selectionBoundsRef = useRef<DOMRect | null>(null);
     const selectedTextRef = useRef('');
+    const selectedPlainTextRef = useRef('');
     const toolbarNode = toolbarRef.current;
 
     // Monitor selection changes
@@ -44,7 +53,9 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, 
             setPosition(null);
             selectionBoundsRef.current = null;
             selectedTextRef.current = '';
+            selectedPlainTextRef.current = '';
             setSelectedText('');
+            setSelectedCopyText('');
         };
 
         const handleSelectionChange = () => {
@@ -79,6 +90,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, 
             container.appendChild(range.cloneContents());
             const html = container.innerHTML;
             const text = convertHtmlToMarkdown(html).trim();
+            const plainText = selection.toString().trim();
 
             if (!text) {
                 clearSelectionState();
@@ -88,12 +100,14 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, 
             const rect = range.getBoundingClientRect();
             selectionBoundsRef.current = rect;
             selectedTextRef.current = text;
+            selectedPlainTextRef.current = plainText;
             
             setPosition({
                 top: rect.top - 50, 
                 left: rect.left + (rect.width / 2)
             });
             setSelectedText(text);
+            setSelectedCopyText(preserveFormattingOnCopy ? text : plainText || text);
         };
 
         document.addEventListener('selectionchange', handleSelectionChange);
@@ -105,7 +119,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, 
             document.removeEventListener('mouseup', handleSelectionChange);
             document.removeEventListener('keyup', handleSelectionChange);
         };
-    }, [containerRef, isAudioActive]);
+    }, [containerRef, isAudioActive, preserveFormattingOnCopy]);
 
     useEffect(() => {
         const handleCopy = (e: ClipboardEvent) => {
@@ -118,7 +132,9 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, 
                 return;
             }
 
-            const text = selectedTextRef.current;
+            const text = preserveFormattingOnCopy
+                ? selectedTextRef.current
+                : selectedPlainTextRef.current || selectedTextRef.current;
             if (copySelectionTextToClipboardEvent(e, text)) {
                 onCopySuccess?.(text);
             }
@@ -126,7 +142,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, 
 
         document.addEventListener('copy', handleCopy);
         return () => document.removeEventListener('copy', handleCopy);
-    }, [isAudioActive, onCopySuccess]);
+    }, [isAudioActive, onCopySuccess, preserveFormattingOnCopy]);
 
     useLayoutEffect(() => {
         if (!position) {
@@ -229,9 +245,11 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef, 
         window.getSelection()?.removeAllRanges();
         selectionBoundsRef.current = null;
         selectedTextRef.current = '';
+        selectedPlainTextRef.current = '';
         setPosition(null);
         setSelectedText('');
+        setSelectedCopyText('');
     };
 
-    return { position: clampedPosition, setPosition, selectedText, clearSelection };
+    return { position: clampedPosition, setPosition, selectedText, selectedCopyText, clearSelection };
 };
