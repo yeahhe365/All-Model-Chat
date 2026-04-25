@@ -173,11 +173,11 @@ const ChatInputComponent: React.FC = () => {
     },
     queuedSubmissionProps: queuedSubmission
       ? {
-          title: 'Next Up',
+          title: t('queuedSubmission_title'),
           previewText:
             queuedSubmission.inputText.trim() ||
             queuedSubmission.textToSend.trim() ||
-            `${queuedSubmission.files.length} attachment${queuedSubmission.files.length > 1 ? 's' : ''}`,
+            t('queuedSubmission_attachmentOnlyPreview'),
           fileCount: queuedSubmission.files.length,
           onEdit: handlers.restoreQueuedSubmission,
           onRemove: handlers.removeQueuedSubmission,

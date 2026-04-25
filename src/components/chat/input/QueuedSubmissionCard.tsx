@@ -1,7 +1,7 @@
 import React from 'react';
-import { Clock3, PencilLine, Trash2 } from 'lucide-react';
+import { CornerDownLeft, Trash2 } from 'lucide-react';
 import { useI18n } from '../../../contexts/I18nContext';
-import { SMALL_ICON_BUTTON_ROUND_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../constants/appConstants';
+import { FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../constants/appConstants';
 
 interface QueuedSubmissionCardProps {
   title: string;
@@ -23,29 +23,38 @@ export const QueuedSubmissionCard: React.FC<QueuedSubmissionCardProps> = ({
     fileCount > 0 ? `${fileCount} ${t(fileCount > 1 ? 'queuedSubmission_attachments' : 'queuedSubmission_attachment')}` : null;
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-[20px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/70 px-3 py-2.5 shadow-sm">
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-center gap-2 text-xs font-medium text-[var(--theme-text-tertiary)]">
-          <Clock3 size={12} strokeWidth={2} />
-          <span>{title}</span>
-        </div>
-        <p className="line-clamp-2 whitespace-pre-wrap break-words text-sm text-[var(--theme-text-primary)]">
+    <div
+      data-queued-submission-card="composer-strip"
+      className="flex min-h-14 items-start justify-between gap-2 rounded-[24px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)]/85 px-3 pb-4 pt-2 text-sm shadow-[0_4px_14px_rgba(15,23,42,0.08)] backdrop-blur-sm"
+    >
+      <button
+        type="button"
+        onClick={onEdit}
+        className={`flex min-w-0 flex-1 items-center gap-2 rounded-full px-1.5 py-1 text-left text-[var(--theme-text-secondary)] transition-colors hover:bg-[var(--theme-bg-tertiary)]/55 ${FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS}`}
+        aria-label={`${t('queuedSubmission_edit')}: ${title}`}
+        title={t('queuedSubmission_edit')}
+      >
+        <CornerDownLeft size={13} strokeWidth={2} className="flex-shrink-0 text-[var(--theme-text-tertiary)]" />
+        <span data-testid="queued-submission-preview" className="min-w-0 truncate">
           {previewText}
-        </p>
+        </span>
         {attachmentLabel ? (
-          <div className="mt-1 text-xs text-[var(--theme-text-tertiary)]">{attachmentLabel}</div>
+          <span className="hidden flex-shrink-0 rounded-full bg-[var(--theme-bg-tertiary)] px-2 py-0.5 text-xs text-[var(--theme-text-tertiary)] sm:inline">
+            {attachmentLabel}
+          </span>
         ) : null}
-      </div>
+      </button>
 
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={onEdit}
-          className={SMALL_ICON_BUTTON_ROUND_CLASS}
+          className={`inline-flex h-7 items-center gap-1 rounded-full px-2 text-xs font-medium text-[var(--theme-text-tertiary)] transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] ${FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS}`}
           aria-label={t('queuedSubmission_edit')}
           title={t('queuedSubmission_edit')}
         >
-          <PencilLine size={14} strokeWidth={2} />
+          <CornerDownLeft size={13} strokeWidth={2} />
+          <span>{t('queuedSubmission_action')}</span>
         </button>
         <button
           type="button"

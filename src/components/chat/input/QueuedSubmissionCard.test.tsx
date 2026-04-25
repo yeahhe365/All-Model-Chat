@@ -44,4 +44,29 @@ describe('QueuedSubmissionCard', () => {
     expect(container.querySelector('button[aria-label="queuedSubmission_edit"]')).not.toBeNull();
     expect(container.querySelector('button[aria-label="queuedSubmission_remove"]')).not.toBeNull();
   });
+
+  it('uses the compact composer-strip presentation for queued drafts', async () => {
+    await act(async () => {
+      root.render(
+        <QueuedSubmissionCard
+          title="queued"
+          previewText="阿斯顿发大水"
+          fileCount={0}
+          onEdit={vi.fn()}
+          onRemove={vi.fn()}
+        />,
+      );
+    });
+
+    const strip = container.querySelector('[data-queued-submission-card="composer-strip"]');
+    const preview = container.querySelector('[data-testid="queued-submission-preview"]');
+    const editButton = container.querySelector<HTMLButtonElement>('button[aria-label="queuedSubmission_edit"]');
+
+    expect(strip).not.toBeNull();
+    expect(strip?.className).toContain('min-h-14');
+    expect(strip?.className).toContain('pb-4');
+    expect(preview?.className).toContain('truncate');
+    expect(preview?.textContent).toBe('阿斯顿发大水');
+    expect(editButton?.textContent).toContain('queuedSubmission_action');
+  });
 });

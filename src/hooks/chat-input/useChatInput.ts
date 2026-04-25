@@ -82,6 +82,7 @@ export const useChatInput = () => {
   const { setIsWaitingForUpload, setInputText, setQuotes, textareaRef } = inputState;
   const pendingSubmissionRef = useRef<PendingChatInputSubmission | null>(null);
   const [queuedSubmission, setQueuedSubmission] = useState<QueuedChatInputSubmission | null>(null);
+  const flushingQueuedSubmissionRef = useRef<QueuedChatInputSubmission | null>(null);
   const [isConverting, setIsConverting] = useState(false);
   const { document: targetDocument } = useWindowContext();
   const insertText = useTextAreaInsert(textareaRef, setInputText);
@@ -348,6 +349,7 @@ export const useChatInput = () => {
   );
 
   const removeQueuedSubmission = useCallback(() => {
+    flushingQueuedSubmissionRef.current = null;
     setQueuedSubmission(null);
   }, []);
 
@@ -356,6 +358,7 @@ export const useChatInput = () => {
       return;
     }
 
+    flushingQueuedSubmissionRef.current = null;
     setQueuedSubmission(null);
     inputState.setInputText(queuedSubmission.inputText);
     inputState.setQuotes(queuedSubmission.quotes);
@@ -369,7 +372,12 @@ export const useChatInput = () => {
         return;
       }
 
-      setQueuedSubmission(null);
+      if (flushingQueuedSubmissionRef.current === submission) {
+        return;
+      }
+
+      flushingQueuedSubmissionRef.current = submission;
+      setQueuedSubmission((current) => (current === submission ? null : current));
       completeSendSubmission(submission.textToSend, submission.isFastMode, {
         files: submission.files.length > 0 ? submission.files : undefined,
         preserveComposer: true,
@@ -394,6 +402,7 @@ export const useChatInput = () => {
     });
 
     setQueuedSubmission(submission);
+    flushingQueuedSubmissionRef.current = null;
     inputState.clearCurrentDraft();
     inputState.setInputText('');
     inputState.setQuotes([]);
@@ -777,6 +786,12 @@ export const useChatInput = () => {
         if (canSend) {
           event.preventDefault();
           handleSubmit(event as unknown as React.FormEvent);
+          return;
+        }
+
+        if (canQueueMessage) {
+          event.preventDefault();
+          queueCurrentSubmission();
         }
         return;
       }
@@ -806,6 +821,7 @@ export const useChatInput = () => {
     [
       appSettings,
       canSend,
+      canQueueMessage,
       handleSubmit,
       inputState,
       isEditing,
@@ -813,6 +829,7 @@ export const useChatInput = () => {
       onCancelEdit,
       onEditLastUserMessage,
       onStopGenerating,
+      queueCurrentSubmission,
       slashCommandState,
     ],
   );

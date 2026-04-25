@@ -32,4 +32,25 @@ describe('ChatInputArea default spacing', () => {
     expect(source).toContain('const focusBlockingSelector =');
     expect(source).toContain('onClick={handleInputShellClick}');
   });
+
+  it('renders the queued submission strip above the input shell instead of inside it', () => {
+    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+
+    const queuedStripIndex = source.indexOf('className={queuedSubmissionContainerClass}');
+    const inputShellIndex = source.indexOf('className={inputContainerClass} onClick={handleInputShellClick}');
+    const inputShellEndIndex = source.indexOf('<ChatTextArea', inputShellIndex);
+
+    expect(source).toContain('const queuedSubmissionContainerClass =');
+    expect(queuedStripIndex).toBeGreaterThan(-1);
+    expect(inputShellIndex).toBeGreaterThan(-1);
+    expect(queuedStripIndex).toBeLessThan(inputShellIndex);
+    expect(source.slice(inputShellIndex, inputShellEndIndex)).not.toContain('QueuedSubmissionCard');
+  });
+
+  it('uses an inset queued strip that visually docks to the wider composer shell', () => {
+    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+
+    expect(source).toContain(': "relative z-10 mx-5 mb-[-22px]"');
+    expect(source).toContain('shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative z-20');
+  });
 });

@@ -221,6 +221,9 @@ export const chatInputTranslations = {
   fileIdAdder_fetchErrorLabel: { en: 'Error: {id}', zh: '错误：{id}' },
 
   // Queued submissions
+  queuedSubmission_title: { en: 'Next up', zh: '稍后发送' },
+  queuedSubmission_action: { en: 'Edit', zh: '引导' },
+  queuedSubmission_attachmentOnlyPreview: { en: 'Attachment queued', zh: '附件已排队' },
   queuedSubmission_attachment: { en: 'attachment', zh: '个附件' },
   queuedSubmission_attachments: { en: 'attachments', zh: '个附件' },
   queuedSubmission_edit: { en: 'Edit queued message', zh: '编辑排队消息' },

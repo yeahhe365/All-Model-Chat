@@ -458,6 +458,7 @@ describe('ChatInput', () => {
     });
 
     expect(container.querySelector('[data-testid="queued-card"]')?.textContent).toContain('Queue this next');
+    expect(container.querySelector('[data-testid="queued-title"]')?.textContent).toBe('queuedSubmission_title');
     expect(textarea?.value).toBe('');
 
     const completedProviderValue = {
@@ -477,6 +478,57 @@ describe('ChatInput', () => {
     });
 
     expect(onSendMessage).toHaveBeenCalledWith('Queue this next', { isFastMode: false, files: undefined });
+  });
+
+  it('queues the next draft when pressing Enter while loading and auto-sends it after loading finishes', async () => {
+    const onSendMessage = vi.fn();
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = true;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onSendMessage = onSendMessage;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Queue this via Enter');
+      dispatchKeyDown(textarea, 'Enter');
+    });
+
+    expect(container.querySelector('[data-testid="queued-card"]')?.textContent).toContain('Queue this via Enter');
+    expect(textarea?.value).toBe('');
+
+    const completedProviderValue = {
+      ...providerValue,
+      input: {
+        ...providerValue.input,
+        isLoading: false,
+      },
+    } satisfies ChatAreaProviderValue;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={completedProviderValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(onSendMessage).toHaveBeenCalledWith('Queue this via Enter', { isFastMode: false, files: undefined });
   });
 
   it('preserves a newer draft when a queued message auto-sends', async () => {
