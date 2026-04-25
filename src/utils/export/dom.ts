@@ -32,6 +32,8 @@ const formatRgba = ({ r, g, b, a }: ColorChannels): string => {
     return `rgba(${Math.round(clamp(r, 0, 255))}, ${Math.round(clamp(g, 0, 255))}, ${Math.round(clamp(b, 0, 255))}, ${formatAlpha(a)})`;
 };
 
+const parseCssNumber = (value: string): number => Number(value.trim());
+
 const splitTopLevel = (value: string, separator: string): string[] => {
     const parts: string[] = [];
     let depth = 0;
@@ -123,6 +125,66 @@ const parseRgbColor = (value: string): ColorChannels | null => {
     };
 };
 
+const parseHueDegrees = (value: string): number => {
+    const trimmed = value.trim().toLowerCase();
+    if (trimmed.endsWith('turn')) return parseCssNumber(trimmed.slice(0, -4)) * 360;
+    if (trimmed.endsWith('rad')) return parseCssNumber(trimmed.slice(0, -3)) * (180 / Math.PI);
+    if (trimmed.endsWith('grad')) return parseCssNumber(trimmed.slice(0, -4)) * 0.9;
+    if (trimmed.endsWith('deg')) return parseCssNumber(trimmed.slice(0, -3));
+    return parseCssNumber(trimmed);
+};
+
+const parseOklchLightness = (value: string): number => {
+    const trimmed = value.trim();
+    if (trimmed.endsWith('%')) return clamp(parseCssNumber(trimmed.slice(0, -1)) / 100, 0, 1);
+    return clamp(parseCssNumber(trimmed), 0, 1);
+};
+
+const linearSrgbToChannel = (value: number): number => {
+    const clamped = clamp(value, 0, 1);
+    const encoded = clamped <= 0.0031308
+        ? 12.92 * clamped
+        : (1.055 * Math.pow(clamped, 1 / 2.4)) - 0.055;
+
+    return encoded * 255;
+};
+
+const parseOklchColor = (value: string): ColorChannels | null => {
+    const match = value.match(/^oklch\((.*)\)$/i);
+    if (!match) return null;
+
+    const parts = match[1].replace(/\s*\/\s*/, ' / ').split(/\s+/).filter(Boolean);
+    const slashIndex = parts.indexOf('/');
+    const colorParts = slashIndex === -1 ? parts : parts.slice(0, slashIndex);
+    const alphaPart = slashIndex === -1 ? undefined : parts[slashIndex + 1];
+
+    if (colorParts.length < 3) return null;
+
+    const lightness = parseOklchLightness(colorParts[0]);
+    const chroma = parseCssNumber(colorParts[1]);
+    const hueRadians = parseHueDegrees(colorParts[2]) * (Math.PI / 180);
+
+    if (![lightness, chroma, hueRadians].every(Number.isFinite)) return null;
+
+    const okA = chroma * Math.cos(hueRadians);
+    const okB = chroma * Math.sin(hueRadians);
+
+    const lPrime = lightness + (0.3963377774 * okA) + (0.2158037573 * okB);
+    const mPrime = lightness - (0.1055613458 * okA) - (0.0638541728 * okB);
+    const sPrime = lightness - (0.0894841775 * okA) - (1.2914855480 * okB);
+
+    const l = lPrime ** 3;
+    const m = mPrime ** 3;
+    const s = sPrime ** 3;
+
+    return {
+        r: linearSrgbToChannel((4.0767416621 * l) - (3.3077115913 * m) + (0.2309699292 * s)),
+        g: linearSrgbToChannel((-1.2684380046 * l) + (2.6097574011 * m) - (0.3413193965 * s)),
+        b: linearSrgbToChannel((-0.0041960863 * l) - (0.7034186147 * m) + (1.7076147010 * s)),
+        a: parseAlphaChannel(alphaPart),
+    };
+};
+
 const parseCssColor = (
     value: string,
     resolveCssVariable: (name: string) => string,
@@ -149,7 +211,7 @@ const parseCssColor = (
         return null;
     }
 
-    return parseHexColor(trimmed) ?? parseRgbColor(trimmed);
+    return parseHexColor(trimmed) ?? parseRgbColor(trimmed) ?? parseOklchColor(trimmed);
 };
 
 const parseColorStop = (
@@ -218,27 +280,29 @@ const convertColorMixToRgba = (
     return formatRgba(mixColors(firstStop.color, firstWeight, secondStop.color, secondWeight));
 };
 
-/**
- * html2canvas 1.x cannot parse modern CSS color functions emitted by Tailwind v4,
- * especially color-mix(in oklab, ...). Convert them in the PNG snapshot CSS only.
- */
-export const sanitizeCssColorFunctionsForPngExport = (
+const convertOklchToRgba = (expression: string): string => {
+    const color = parseOklchColor(expression);
+    return color ? formatRgba(color) : 'rgba(0, 0, 0, 0)';
+};
+
+const replaceCssFunction = (
     css: string,
-    options: CssColorSanitizerOptions = {}
+    functionName: string,
+    replacement: (expression: string) => string
 ): string => {
-    const resolveCssVariable = options.resolveCssVariable ?? defaultResolveCssVariable;
     const lowerCss = css.toLowerCase();
+    const search = `${functionName.toLowerCase()}(`;
     let cursor = 0;
     let result = '';
 
     while (cursor < css.length) {
-        const start = lowerCss.indexOf('color-mix(', cursor);
+        const start = lowerCss.indexOf(search, cursor);
         if (start === -1) {
             result += css.slice(cursor);
             break;
         }
 
-        const openIndex = start + 'color-mix'.length;
+        const openIndex = start + functionName.length;
         const end = findMatchingParenthesis(css, openIndex);
         if (end === -1) {
             result += css.slice(cursor);
@@ -246,11 +310,29 @@ export const sanitizeCssColorFunctionsForPngExport = (
         }
 
         result += css.slice(cursor, start);
-        result += convertColorMixToRgba(css.slice(start, end + 1), resolveCssVariable);
+        result += replacement(css.slice(start, end + 1));
         cursor = end + 1;
     }
 
     return result;
+};
+
+/**
+ * html2canvas 1.x cannot parse modern CSS color functions emitted by Tailwind v4,
+ * especially oklch(...) and color-mix(in oklab, ...). Convert them in the PNG snapshot CSS only.
+ */
+export const sanitizeCssColorFunctionsForPngExport = (
+    css: string,
+    options: CssColorSanitizerOptions = {}
+): string => {
+    const resolveCssVariable = options.resolveCssVariable ?? defaultResolveCssVariable;
+    const cssWithoutColorMix = replaceCssFunction(
+        css,
+        'color-mix',
+        expression => convertColorMixToRgba(expression, resolveCssVariable)
+    );
+
+    return replaceCssFunction(cssWithoutColorMix, 'oklch', convertOklchToRgba);
 };
 
 export const sanitizeDocumentStylesForPngExport = (doc: Document): void => {

@@ -2,6 +2,23 @@ import { describe, expect, it } from 'vitest';
 import { sanitizeCssColorFunctionsForPngExport } from './dom';
 
 describe('sanitizeCssColorFunctionsForPngExport', () => {
+  it('converts Tailwind oklch palette variables into rgba', () => {
+    const css = `
+      :root {
+        --color-blue-500: oklch(62.3% .214 259.815);
+      }
+
+      .text-blue-500 {
+        color: var(--color-blue-500);
+      }
+    `;
+
+    const sanitized = sanitizeCssColorFunctionsForPngExport(css);
+
+    expect(sanitized).not.toContain('oklch');
+    expect(sanitized).toContain('--color-blue-500: rgba(43, 127, 255, 1)');
+  });
+
   it('converts Tailwind color-mix oklab theme opacity colors into rgba', () => {
     const css = `
       .bg-quiet {
