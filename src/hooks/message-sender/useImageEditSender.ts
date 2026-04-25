@@ -19,6 +19,19 @@ import { appendApiPart } from '../chat-stream/processors';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
+const stripGeneratedInlinePayload = (part: Part): Part => {
+    const inlineData = (part as Part & { inlineData?: { mimeType?: string; data?: string } }).inlineData;
+    if (!inlineData?.data) return part;
+
+    return {
+        ...part,
+        inlineData: {
+            ...inlineData,
+            data: '',
+        },
+    } as Part;
+};
+
 interface ImageEditSenderProps {
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
@@ -145,7 +158,7 @@ export const useImageEditSender = ({
                 if (result.status === 'fulfilled') {
                     const parts: Part[] = result.value;
                     combinedApiParts = parts.reduce<Part[]>(
-                        (acc, part) => appendApiPart(acc, part),
+                        (acc, part) => appendApiPart(acc, stripGeneratedInlinePayload(part)),
                         combinedApiParts,
                     );
                     let hasImagePart = false;

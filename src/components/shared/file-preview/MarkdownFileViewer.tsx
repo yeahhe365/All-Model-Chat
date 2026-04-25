@@ -102,6 +102,7 @@ export const MarkdownFileViewer: React.FC<MarkdownFileViewerProps> = ({
     try {
       localStorage.setItem(storageKey, nextMode);
     } catch {
+      // localStorage may be unavailable; keep the in-memory mode change.
     }
   };
 
