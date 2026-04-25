@@ -9,6 +9,13 @@
   line-height: 1.8 !important; /* Increased line spacing */
 }
 
+.message-content-container .markdown-body {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .markdown-body h1 { font-size: 1.8em !important; font-weight: 800 !important; }
 .markdown-body h2 { font-size: 1.55em !important; font-weight: 750 !important; }
 .markdown-body h3 { font-size: 1.3em !important; font-weight: 700 !important; }

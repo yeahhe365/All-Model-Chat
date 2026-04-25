@@ -9,7 +9,7 @@ interface ShortcutDefinition {
 
 export const SHORTCUT_REGISTRY: ShortcutDefinition[] = [
     // General
-    { id: 'general.newChat', labelKey: 'shortcuts_new_chat', defaultKey: 'mod+n', category: 'general' },
+    { id: 'general.newChat', labelKey: 'shortcuts_new_chat', defaultKey: 'mod+shift+o', category: 'general' },
     { id: 'general.openLogs', labelKey: 'shortcuts_open_logs', defaultKey: 'mod+alt+l', category: 'general' },
     { id: 'general.togglePip', labelKey: 'shortcuts_toggle_pip', defaultKey: 'mod+alt+p', category: 'general' },
     { id: 'general.toggleFullscreen', labelKey: 'shortcuts_toggle_fullscreen', defaultKey: 'mod+alt+f', category: 'general' },
