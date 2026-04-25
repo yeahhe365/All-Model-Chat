@@ -21,6 +21,7 @@ vi.mock('../../../contexts/I18nContext', () => ({
         selectedFile_editFile: 'Edit File',
         selectedFile_configureFile: 'Configure File',
         selectedFile_moveTextToInput: 'Move text to input',
+        selectedFile_moreActions: 'More file actions',
         selectedFile_idCopied: 'ID Copied',
         selectedFile_copyFileId: 'Copy File ID',
         selectedFile_errorFallback: 'Error',
@@ -139,12 +140,38 @@ describe('SelectedFileDisplay', () => {
     expect(container.textContent).toContain('Processing on Gemini');
   });
 
-  it('shows a move-to-input action for active text files when the callback is provided', () => {
+  it('renders primary file controls in a right-side action rail with larger targets', () => {
+    const onConfigure = vi.fn();
+    const onRemove = vi.fn();
+
+    act(() => {
+      root.render(
+        <SelectedFileDisplay
+          file={createFile()}
+          onRemove={onRemove}
+          onCancelUpload={() => {}}
+          onConfigure={onConfigure}
+        />,
+      );
+    });
+
+    const actionRail = container.querySelector('[data-file-action-rail="true"]');
+    const editButton = actionRail?.querySelector('[aria-label="Edit File"]');
+    const removeButton = actionRail?.querySelector('[aria-label="Remove File"]');
+
+    expect(actionRail).not.toBeNull();
+    expect(editButton).not.toBeNull();
+    expect(removeButton).not.toBeNull();
+    expect(editButton?.className).toContain('h-[30px]');
+    expect(removeButton?.className).toContain('w-[30px]');
+  });
+
+  it('moves low-frequency text file actions into the overflow menu', () => {
     act(() => {
       root.render(
         <SelectedFileDisplay
           {...({
-            file: createFile(),
+            file: createFile({ fileApiName: 'files/abc123' }),
             onRemove: () => {},
             onCancelUpload: () => {},
             onMoveTextToInput: vi.fn(),
@@ -153,11 +180,21 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    const moveButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.getAttribute('aria-label') === 'Move text to input',
-    );
+    const actionRail = container.querySelector('[data-file-action-rail="true"]');
+    const moreButton = actionRail?.querySelector('[aria-label="More file actions"]') as HTMLButtonElement | null;
 
-    expect(moveButton).not.toBeUndefined();
+    expect(moreButton).not.toBeNull();
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    act(() => {
+      moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const menu = container.querySelector('[role="menu"]');
+
+    expect(menu).not.toBeNull();
+    expect(menu?.textContent).toContain('Move text to input');
+    expect(menu?.textContent).toContain('Copy File ID');
   });
 
   it('does not show the move-to-input action for non-text files', () => {

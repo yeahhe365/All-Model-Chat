@@ -74,7 +74,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                 }
                             }}
                             className="
-                                flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
+                                flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
                                 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]
                                 border border-[var(--theme-border-secondary)]
                                 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]
@@ -94,7 +94,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                         type="button"
                                         onClick={onToggleBBox}
                                         className={`
-                                            flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
+                                            flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
                                             border border-[var(--theme-border-secondary)]
                                             text-xs sm:text-sm font-medium whitespace-nowrap
                                             transition-all shadow-sm
@@ -114,7 +114,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                         type="button"
                                         onClick={onToggleGuide}
                                         className={`
-                                            flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
+                                            flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
                                             border border-[var(--theme-border-secondary)]
                                             text-xs sm:text-sm font-medium whitespace-nowrap
                                             transition-all shadow-sm
@@ -125,7 +125,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                         aria-label={t('guide_button_title')}
                                         title={t('guide_button_title')}
                                     >
-                                        <MousePointer2 size={16} />
+                                        <MousePointer2 size={13} />
                                         <span>Guide</span>
                                     </button>
                                 )}

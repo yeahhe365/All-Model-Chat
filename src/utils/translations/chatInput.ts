@@ -52,6 +52,7 @@ export const chatInputTranslations = {
   selectedFile_editFile: { en: 'Edit File', zh: '编辑文件' },
   selectedFile_configureFile: { en: 'Configure File', zh: '配置文件' },
   selectedFile_moveTextToInput: { en: 'Move text to input', zh: '移到输入框' },
+  selectedFile_moreActions: { en: 'More file actions', zh: '更多文件操作' },
   selectedFile_idCopied: { en: 'ID Copied', zh: 'ID 已复制' },
   selectedFile_copyFileId: { en: 'Copy File ID', zh: '复制文件 ID' },
   selectedFile_errorFallback: { en: 'Error', zh: '错误' },

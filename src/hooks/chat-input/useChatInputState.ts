@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useIsMobile } from '../useDevice';
 
-export const INITIAL_TEXTAREA_HEIGHT_PX = 28;
+export const INITIAL_TEXTAREA_HEIGHT_PX = 25.2;
 export const MAX_TEXTAREA_HEIGHT_PX = 150;
 
 export const useChatInputState = (activeSessionId: string | null, isEditing: boolean) => {

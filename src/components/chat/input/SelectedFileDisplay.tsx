@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
-import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, FileText } from 'lucide-react';
+import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, FileText, Ellipsis } from 'lucide-react';
 import { CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { formatFileSize, isTextFile } from '../../../utils/fileHelpers';
@@ -29,6 +29,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
 }) => {
   const { t } = useI18n();
   const [isNewlyActive, setIsNewlyActive] = useState(false);
+  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const prevUploadState = useRef(file.uploadState);
   const { isCopied: idCopied, copyToClipboard } = useCopyToClipboard();
 
@@ -54,6 +55,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
     if (file.fileApiName) {
       copyToClipboard(file.fileApiName);
     }
+    setIsOverflowOpen(false);
   };
 
   const isUploading = file.uploadState === 'uploading';
@@ -79,73 +81,98 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
   const { Icon, colorClass, bgClass } = CATEGORY_STYLES[category] || CATEGORY_STYLES['code'];
 
   const ErrorIcon = CATEGORY_STYLES['error'].Icon;
+  const canCopyFileId = Boolean(file.fileApiName && isActive && !file.error);
+  const hasOverflowActions = canMoveTextToInput || canCopyFileId;
+  const actionButtonClass =
+    'flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/90 text-[var(--theme-text-secondary)] shadow-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]';
+  const menuItemClass =
+    'flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[11px] leading-tight text-[var(--theme-text-secondary)] transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]';
 
   return (
     <div
-      className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}
+      className={`group relative flex w-[8.25rem] flex-shrink-0 items-start gap-1.5 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}
     >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isCancellable) {
-            onCancelUpload(file.id);
-          } else {
-            onRemove(file.id);
-          }
-        }}
-        className="absolute -top-2 -right-2 z-30 p-1 bg-[var(--theme-bg-secondary)] rounded-full shadow-sm border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:border-[var(--theme-text-danger)] transition-all opacity-100 pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto"
-        title={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
-        aria-label={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
-      >
-        {isCancellable ? <Ban size={14} /> : <X size={14} />}
-      </button>
-
-      <div
-        onClick={() => {
-          if (isActive && onPreview) {
-            onPreview(file);
-          }
-        }}
-        className={`file-preview-box relative w-full aspect-square rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/30 overflow-hidden flex items-center justify-center transition-colors group-hover:border-[var(--theme-border-focus)]/50 ${isActive && onPreview ? 'cursor-pointer hover:opacity-90' : ''}`}
-      >
+      <div className="w-24 min-w-0">
         <div
-          className={`w-full h-full flex items-center justify-center p-2 transition-all duration-300 ${isUploading || isProcessing ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100'}`}
+          onClick={() => {
+            if (isActive && onPreview) {
+              onPreview(file);
+            }
+          }}
+          className={`file-preview-box relative w-full aspect-square rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/30 flex items-center justify-center transition-colors group-hover:border-[var(--theme-border-focus)]/50 ${isActive && onPreview ? 'cursor-pointer hover:opacity-90' : ''}`}
         >
-          <FileThumbnail file={file} Icon={Icon} colorClass={colorClass} bgClass={bgClass} />
+          <div
+            className={`absolute inset-0 overflow-hidden rounded-xl flex items-center justify-center p-2 transition-all duration-300 ${isUploading || isProcessing ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100'}`}
+          >
+            <FileThumbnail file={file} Icon={Icon} colorClass={colorClass} bgClass={bgClass} />
+          </div>
+
+          {(isUploading || isProcessing) && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+              <div className="flex flex-col items-center gap-1">
+                <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" />
+              </div>
+            </div>
+          )}
+
+          {isUploading && (
+            <div className="absolute inset-x-2 bottom-2 z-20">
+              <div className="h-1.5 overflow-hidden rounded-full bg-black/25">
+                <div
+                  className="h-full rounded-full bg-[var(--theme-text-link)] transition-[width] duration-300"
+                  style={{ width: `${uploadPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {isFailed && !isCancelled && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-[var(--theme-bg-danger)]/10 backdrop-blur-[1px] z-20">
+              <ErrorIcon size={20} className="text-[var(--theme-text-danger)] mb-1" />
+            </div>
+          )}
+
+          {isNewlyActive && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-[var(--theme-bg-success)]/20 backdrop-blur-[1px] animate-pulse z-20">
+              <CheckCircle size={24} className="text-[var(--theme-text-success)] drop-shadow-md" />
+            </div>
+          )}
         </div>
 
-        {(isUploading || isProcessing) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-            <div className="flex flex-col items-center gap-1">
-              <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" />
-            </div>
-          </div>
-        )}
+        <div className="mt-1.5 px-0.5 text-left w-full">
+          <p
+            className="text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight"
+            title={file.name}
+          >
+            {file.name}
+          </p>
+          <p
+            className={`text-[9px] truncate leading-tight mt-0.5 flex items-center gap-1 ${isFailed ? 'text-[var(--theme-text-danger)] font-medium' : 'text-[var(--theme-text-tertiary)]'}`}
+            title={isFailed ? file.error : undefined}
+          >
+            {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
+            {file.mediaResolution && <SlidersHorizontal size={8} className="text-[var(--theme-text-link)]" />}
+            {isFailed
+              ? file.error || t('selectedFile_errorFallback')
+              : isUploading
+                ? t('selectedFile_uploading').replace('{percent}', String(uploadPercent))
+                : isProcessing
+                  ? t('selectedFile_processingGemini')
+                  : isCancelled
+                    ? t('selectedFile_cancelled')
+                    : formatFileSize(file.size)}
+          </p>
+          {isUploading && file.uploadSpeed && (
+            <p className="text-[9px] truncate leading-tight mt-0.5 text-[var(--theme-text-link)]">{file.uploadSpeed}</p>
+          )}
+        </div>
+      </div>
 
-        {isUploading && (
-          <div className="absolute inset-x-2 bottom-2 z-20">
-            <div className="h-1.5 overflow-hidden rounded-full bg-black/25">
-              <div
-                className="h-full rounded-full bg-[var(--theme-text-link)] transition-[width] duration-300"
-                style={{ width: `${uploadPercent}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {isFailed && !isCancelled && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--theme-bg-danger)]/10 backdrop-blur-[1px] z-20">
-            <ErrorIcon size={20} className="text-[var(--theme-text-danger)] mb-1" />
-          </div>
-        )}
-
-        {isNewlyActive && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[var(--theme-bg-success)]/20 backdrop-blur-[1px] animate-pulse z-20">
-            <CheckCircle size={24} className="text-[var(--theme-text-success)] drop-shadow-md" />
-          </div>
-        )}
-
+      <div
+        data-file-action-rail="true"
+        className="relative z-30 flex w-[30px] flex-shrink-0 flex-col items-center gap-1 pt-0.5"
+        onClick={(event) => event.stopPropagation()}
+      >
         {canConfigure && (
           <button
             type="button"
@@ -156,65 +183,81 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
               }
             }}
             title={isText ? t('selectedFile_editFile') : t('selectedFile_configureFile')}
-            className={`absolute bottom-1 left-1 p-1.5 rounded-md bg-black/75 hover:bg-black/90 transition-all z-20 ${getResolutionColor(file.mediaResolution)}`}
+            aria-label={isText ? t('selectedFile_editFile') : t('selectedFile_configureFile')}
+            className={`${actionButtonClass} ${getResolutionColor(file.mediaResolution)}`}
           >
-            <ConfigIcon size={12} strokeWidth={2} />
+            <ConfigIcon size={14} strokeWidth={2} />
           </button>
         )}
 
-        {canMoveTextToInput && (
+        {hasOverflowActions && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsOverflowOpen((value) => !value);
+              }}
+              title={t('selectedFile_moreActions')}
+              aria-label={t('selectedFile_moreActions')}
+              aria-haspopup="menu"
+              aria-expanded={isOverflowOpen}
+              className={actionButtonClass}
+            >
+              <Ellipsis size={15} strokeWidth={2.2} />
+            </button>
+
+            {isOverflowOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-8 z-40 min-w-36 overflow-hidden rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] py-1 shadow-lg"
+              >
+                {canMoveTextToInput && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setIsOverflowOpen(false);
+                      void onMoveTextToInput?.(file);
+                    }}
+                    className={menuItemClass}
+                  >
+                    <FileText size={12} strokeWidth={2} />
+                    <span>{t('selectedFile_moveTextToInput')}</span>
+                  </button>
+                )}
+
+                {canCopyFileId && (
+                  <button type="button" role="menuitem" onClick={handleCopyId} className={menuItemClass}>
+                    {idCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={2} />}
+                    <span>{idCopied ? t('selectedFile_idCopied') : t('selectedFile_copyFileId')}</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-auto">
           <button
             type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              void onMoveTextToInput?.(file);
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOverflowOpen(false);
+              if (isCancellable) {
+                onCancelUpload(file.id);
+              } else {
+                onRemove(file.id);
+              }
             }}
-            title={t('selectedFile_moveTextToInput')}
-            aria-label={t('selectedFile_moveTextToInput')}
-            className="absolute top-1 left-1 p-1.5 rounded-md bg-black/75 text-white/80 hover:text-white hover:bg-black/90 transition-all z-20"
+            className={`${actionButtonClass} hover:text-[var(--theme-text-danger)]`}
+            title={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
+            aria-label={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
           >
-            <FileText size={12} strokeWidth={2} />
+            {isCancellable ? <Ban size={15} /> : <X size={15} />}
           </button>
-        )}
-
-        {file.fileApiName && isActive && !file.error && (
-          <button
-            type="button"
-            onClick={handleCopyId}
-            title={idCopied ? t('selectedFile_idCopied') : t('selectedFile_copyFileId')}
-            className={`absolute bottom-1 right-1 p-1.5 rounded-md bg-black/75 text-white/80 hover:text-white hover:bg-black/90 transition-all opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto z-20 ${idCopied ? '!text-green-400 !opacity-100 !pointer-events-auto' : ''}`}
-          >
-            {idCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={2} />}
-          </button>
-        )}
-      </div>
-
-      <div className="mt-1.5 px-0.5 text-left w-full">
-        <p
-          className="text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight"
-          title={file.name}
-        >
-          {file.name}
-        </p>
-        <p
-          className={`text-[9px] truncate leading-tight mt-0.5 flex items-center gap-1 ${isFailed ? 'text-[var(--theme-text-danger)] font-medium' : 'text-[var(--theme-text-tertiary)]'}`}
-          title={isFailed ? file.error : undefined}
-        >
-          {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
-          {file.mediaResolution && <SlidersHorizontal size={8} className="text-[var(--theme-text-link)]" />}
-          {isFailed
-            ? file.error || t('selectedFile_errorFallback')
-            : isUploading
-              ? t('selectedFile_uploading').replace('{percent}', String(uploadPercent))
-              : isProcessing
-                ? t('selectedFile_processingGemini')
-                : isCancelled
-                  ? t('selectedFile_cancelled')
-                  : formatFileSize(file.size)}
-        </p>
-        {isUploading && file.uploadSpeed && (
-          <p className="text-[9px] truncate leading-tight mt-0.5 text-[var(--theme-text-link)]">{file.uploadSpeed}</p>
-        )}
+        </div>
       </div>
     </div>
   );

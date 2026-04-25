@@ -159,14 +159,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                  transition-transform duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] md:transition-[width] transform-gpu
                  absolute md:static top-0 left-0 z-50
                  overflow-hidden
-                 ${isOpen ? 'w-64 md:w-72 translate-x-0' : 'w-64 md:w-[58px] -translate-x-full md:translate-x-0'}
+                 ${isOpen ? 'w-64 md:w-[16.2rem] translate-x-0' : 'w-64 md:w-[52.2px] -translate-x-full md:translate-x-0'}
                  
                  border-r border-[var(--theme-border-primary)]`}
       role="complementary" aria-label={t('history_title')}
     >
       <div
         aria-hidden={!isOpen}
-        className={`w-64 md:w-72 h-full flex flex-col shrink-0 min-w-[16rem] md:min-w-[18rem] md:absolute md:inset-0 transition-opacity duration-200 ${
+        className={`w-64 md:w-[16.2rem] h-full flex flex-col shrink-0 min-w-[16rem] md:min-w-[16.2rem] md:absolute md:inset-0 transition-opacity duration-200 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-100 pointer-events-auto md:opacity-0 md:pointer-events-none'
         }`}
       >
@@ -246,7 +246,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
 
       <div 
         aria-hidden={isOpen}
-        className={`hidden md:flex absolute inset-0 flex-col items-center py-4 h-full gap-[0.56rem] w-full min-w-[58px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors transition-opacity duration-200 ${
+        className={`hidden md:flex absolute inset-0 flex-col items-center py-4 h-full gap-[0.56rem] w-full min-w-[52.2px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors transition-opacity duration-200 ${
           isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
         onClick={onToggle}

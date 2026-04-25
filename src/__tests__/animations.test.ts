@@ -86,10 +86,29 @@ describe('layout animation guardrails', () => {
     expect(source).not.toContain('{isOpen ? (');
   });
 
+  it('uses a ten-percent narrower desktop history sidebar width', () => {
+    const source = fs.readFileSync(historySidebarPath, 'utf8');
+
+    expect(source).toContain("isOpen ? 'w-64 md:w-[16.2rem] translate-x-0'");
+    expect(source).toContain('w-64 md:w-[16.2rem] h-full');
+    expect(source).toContain('md:min-w-[16.2rem]');
+    expect(source).not.toContain('md:w-72');
+    expect(source).not.toContain('md:min-w-[18rem]');
+  });
+
   it('tightens collapsed desktop sidebar button spacing so mini actions do not feel too sparse', () => {
     const source = fs.readFileSync(historySidebarPath, 'utf8');
 
     expect(source).toContain('gap-[0.56rem]');
+  });
+
+  it('uses a ten-percent narrower collapsed desktop history sidebar width', () => {
+    const source = fs.readFileSync(historySidebarPath, 'utf8');
+
+    expect(source).toContain("isOpen ? 'w-64 md:w-[16.2rem] translate-x-0' : 'w-64 md:w-[52.2px]");
+    expect(source).toContain('min-w-[52.2px]');
+    expect(source).not.toContain('md:w-[58px]');
+    expect(source).not.toContain('min-w-[58px]');
   });
 
   it('does not keep chat area on width-based will-change hints', () => {
