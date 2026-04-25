@@ -70,6 +70,102 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(strong?.textContent).toBe('“反差萌”的幽默表达');
   });
 
+  it('renders bold title text that ends with punctuation before adjacent content', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content="**背景：**这是说明。"
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const strong = container.querySelector('strong');
+
+    expect(container.textContent).toBe('背景：这是说明。');
+    expect(strong).not.toBeNull();
+    expect(strong?.textContent).toBe('背景：');
+  });
+
+  it('renders wrapped and title-style fallback bold text in the same paragraph', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content="先看**“不定式”**，再看**背景：**这是说明。"
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const strongTexts = Array.from(container.querySelectorAll('strong')).map((strong) => strong.textContent);
+
+    expect(container.textContent).toBe('先看“不定式”，再看背景：这是说明。');
+    expect(strongTexts).toEqual(['“不定式”', '背景：']);
+  });
+
+  it('renders underscored bold text adjacent to CJK text', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content="这是__重点__内容。"
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const strong = container.querySelector('strong');
+
+    expect(container.textContent).toBe('这是重点内容。');
+    expect(strong).not.toBeNull();
+    expect(strong?.textContent).toBe('重点');
+  });
+
+  it('keeps underscore markers literal inside ASCII identifiers', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content="Keep foo__bar__baz literal."
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(container.textContent).toBe('Keep foo__bar__baz literal.');
+    expect(container.querySelector('strong')).toBeNull();
+  });
+
   it('keeps quoted emphasis markers literal inside inline code', () => {
     act(() => {
       root.render(
