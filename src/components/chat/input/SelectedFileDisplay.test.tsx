@@ -163,10 +163,13 @@ describe('SelectedFileDisplay', () => {
     expect(editButton).not.toBeNull();
     expect(removeButton).not.toBeNull();
     expect(editButton?.className).toContain('h-[30px]');
+    expect(editButton?.className).not.toContain('text-white/80');
     expect(removeButton?.className).toContain('w-[30px]');
   });
 
-  it('moves low-frequency text file actions into the overflow menu', () => {
+  it('renders move-to-input as a direct text file action and keeps copy id in overflow', () => {
+    const onMoveTextToInput = vi.fn();
+
     act(() => {
       root.render(
         <SelectedFileDisplay
@@ -174,16 +177,24 @@ describe('SelectedFileDisplay', () => {
             file: createFile({ fileApiName: 'files/abc123' }),
             onRemove: () => {},
             onCancelUpload: () => {},
-            onMoveTextToInput: vi.fn(),
+            onMoveTextToInput,
           } as any)}
         />,
       );
     });
 
     const actionRail = container.querySelector('[data-file-action-rail="true"]');
+    const moveButton = actionRail?.querySelector('[aria-label="Move text to input"]') as HTMLButtonElement | null;
     const moreButton = actionRail?.querySelector('[aria-label="More file actions"]') as HTMLButtonElement | null;
 
+    expect(moveButton).not.toBeNull();
     expect(moreButton).not.toBeNull();
+
+    act(() => {
+      moveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onMoveTextToInput).toHaveBeenCalledWith(expect.objectContaining({ id: 'file-1' }));
     expect(container.querySelector('[role="menu"]')).toBeNull();
 
     act(() => {
@@ -193,7 +204,7 @@ describe('SelectedFileDisplay', () => {
     const menu = container.querySelector('[role="menu"]');
 
     expect(menu).not.toBeNull();
-    expect(menu?.textContent).toContain('Move text to input');
+    expect(menu?.textContent).not.toContain('Move text to input');
     expect(menu?.textContent).toContain('Copy File ID');
   });
 

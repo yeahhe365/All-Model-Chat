@@ -82,7 +82,8 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
 
   const ErrorIcon = CATEGORY_STYLES['error'].Icon;
   const canCopyFileId = Boolean(file.fileApiName && isActive && !file.error);
-  const hasOverflowActions = canMoveTextToInput || canCopyFileId;
+  const hasOverflowActions = canCopyFileId;
+  const configureButtonColorClass = file.mediaResolution ? getResolutionColor(file.mediaResolution) : '';
   const actionButtonClass =
     'flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/90 text-[var(--theme-text-secondary)] shadow-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]';
   const menuItemClass =
@@ -184,9 +185,25 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
             }}
             title={isText ? t('selectedFile_editFile') : t('selectedFile_configureFile')}
             aria-label={isText ? t('selectedFile_editFile') : t('selectedFile_configureFile')}
-            className={`${actionButtonClass} ${getResolutionColor(file.mediaResolution)}`}
+            className={`${actionButtonClass} ${configureButtonColorClass}`}
           >
             <ConfigIcon size={14} strokeWidth={2} />
+          </button>
+        )}
+
+        {canMoveTextToInput && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsOverflowOpen(false);
+              void onMoveTextToInput?.(file);
+            }}
+            title={t('selectedFile_moveTextToInput')}
+            aria-label={t('selectedFile_moveTextToInput')}
+            className={actionButtonClass}
+          >
+            <FileText size={14} strokeWidth={2} />
           </button>
         )}
 
@@ -212,22 +229,6 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
                 role="menu"
                 className="absolute right-0 top-8 z-40 min-w-36 overflow-hidden rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] py-1 shadow-lg"
               >
-                {canMoveTextToInput && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setIsOverflowOpen(false);
-                      void onMoveTextToInput?.(file);
-                    }}
-                    className={menuItemClass}
-                  >
-                    <FileText size={12} strokeWidth={2} />
-                    <span>{t('selectedFile_moveTextToInput')}</span>
-                  </button>
-                )}
-
                 {canCopyFileId && (
                   <button type="button" role="menuitem" onClick={handleCopyId} className={menuItemClass}>
                     {idCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={2} />}
