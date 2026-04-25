@@ -68,3 +68,26 @@ test('selecting a model still works when the system prompt textarea has pending 
 
   await expect(page.getByTestId('settings-model-option-gemma-4-31b-it')).toContainText('Active');
 });
+
+test('workspace settings content does not expose a horizontal scrollbar', async ({ page }) => {
+  await seedAppState(page, {
+    appSettings: {
+      language: 'en',
+    },
+  });
+
+  await page.goto('/');
+
+  await page
+    .getByRole('complementary', { name: 'History', exact: true })
+    .getByRole('button', { name: 'Settings', exact: true })
+    .click();
+
+  await page.getByRole('tab', { name: 'Workspace' }).click();
+
+  const settingsScroller = page.locator('main > div').first();
+
+  await expect
+    .poll(() => settingsScroller.evaluate((element) => getComputedStyle(element).overflowX))
+    .toBe('hidden');
+});

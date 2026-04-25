@@ -5,6 +5,7 @@ import { SavedChatSession, Theme } from '../../types';
 import { logService } from '../../services/logService';
 import { serializeSessionForPortableExport } from '../../utils/chat/session';
 import { triggerDownload } from '../../utils/export/core';
+import { createChatExportElement } from '../../utils/export/conversation';
 import {
     buildChatExportFilename,
     createExportDateMeta,
@@ -21,7 +22,6 @@ interface UseChatSessionExportProps {
 
 export const useChatSessionExport = ({
     activeChat,
-    scrollContainerRef,
     currentTheme,
     language,
     t
@@ -36,11 +36,7 @@ export const useChatSessionExport = ({
             format,
             date: dateObj,
         });
-        const scrollContainer = scrollContainerRef.current;
-
         if (format === 'png' || format === 'html') {
-            if (!scrollContainer) return;
-
             const {
                 exportHtmlStringAsFile,
                 prepareElementForExport,
@@ -51,37 +47,41 @@ export const useChatSessionExport = ({
             // Use unified helper to clone, clean, and embed images.
             // For PNG, force expand details to ensure visibility in static image.
             // For HTML, allow details to be collapsed by default (interactive).
-            const chatClone = await prepareElementForExport(scrollContainer, { expandDetails: format === 'png' });
+            const { element: exportElement, cleanup } = await createChatExportElement(activeChat, currentTheme.id);
+            const chatClone = await prepareElementForExport(exportElement, { expandDetails: format === 'png' });
 
-            if (format === 'png') {
-                await generateSnapshotPng(
-                    chatClone,
-                    filename,
-                    currentTheme.id,
-                    {
+            try {
+                if (format === 'png') {
+                    await generateSnapshotPng(
+                        chatClone,
+                        filename,
+                        currentTheme.id,
+                        {
+                            title: activeChat.title,
+                            metaLeft: dateStr,
+                            metaRight: activeChat.settings.modelId
+                        },
+                        {
+                            scale: 2 // Standard 2x scale for full chat
+                        }
+                    );
+                } else {
+                    // HTML Export
+                    const chatHtml = chatClone.innerHTML;
+
+                    const fullHtml = await buildHtmlDocument({
                         title: activeChat.title,
-                        metaLeft: dateStr,
-                        metaRight: activeChat.settings.modelId
-                    },
-                    {
-                        scale: 2 // Standard 2x scale for full chat
-                    }
-                );
-            } else {
-                // HTML Export
-                const { default: DOMPurify } = await import('dompurify');
-                const chatHtml = chatClone.innerHTML;
-
-                const fullHtml = await buildHtmlDocument({
-                    title: DOMPurify.sanitize(activeChat.title),
-                    date: dateStr,
-                    model: activeChat.settings.modelId,
-                    contentHtml: chatHtml,
-                    themeId: currentTheme.id,
-                    language,
-                });
-                
-                exportHtmlStringAsFile(fullHtml, filename);
+                        date: dateStr,
+                        model: activeChat.settings.modelId,
+                        contentHtml: chatHtml,
+                        themeId: currentTheme.id,
+                        language,
+                    });
+                    
+                    exportHtmlStringAsFile(fullHtml, filename);
+                }
+            } finally {
+                cleanup();
             }
         } else if (format === 'txt') {
             const { exportTextStringAsFile, buildTextDocument } = await loadExportRuntime();
@@ -119,7 +119,7 @@ export const useChatSessionExport = ({
                 alert(t('export_failed_title'));
             }
         }
-    }, [activeChat, currentTheme, language, scrollContainerRef, t]);
+    }, [activeChat, currentTheme, language, t]);
 
     return { exportChatLogic };
 };

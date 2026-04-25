@@ -34,4 +34,24 @@ describe('generateExportHtmlTemplate', () => {
 
     expect(html).not.toContain('message-container-animate');
   });
+
+  it('escapes metadata inserted into the exported HTML shell', () => {
+    const html = generateExportHtmlTemplate({
+      title: '<img src=x onerror=alert(1)>',
+      date: '2026-04-26 <script>alert(2)</script>',
+      model: 'gemini"><script>alert(3)</script>',
+      contentHtml: '<div data-message-id="1">safe content</div>',
+      styles: '',
+      themeId: 'pearl',
+      language: 'en',
+      rootBgColor: '#ffffff',
+      bodyClasses: 'antialiased',
+    });
+
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(html).toContain('2026-04-26 &lt;script&gt;alert(2)&lt;/script&gt;');
+    expect(html).toContain('gemini&quot;&gt;&lt;script&gt;alert(3)&lt;/script&gt;');
+    expect(html).not.toContain('<img src=x onerror=alert(1)>');
+    expect(html).not.toContain('<script>alert(3)</script>');
+  });
 });

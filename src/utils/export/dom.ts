@@ -1,5 +1,264 @@
 
 
+type ColorChannels = {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+};
+
+type ColorStop = {
+    color: ColorChannels;
+    percentage?: number;
+};
+
+type CssColorSanitizerOptions = {
+    resolveCssVariable?: (name: string) => string;
+};
+
+const defaultResolveCssVariable = (name: string): string => {
+    if (typeof document === 'undefined') return '';
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+};
+
+const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
+const formatAlpha = (alpha: number): string => {
+    const rounded = Math.round(clamp(alpha, 0, 1) * 1000) / 1000;
+    return rounded.toString();
+};
+
+const formatRgba = ({ r, g, b, a }: ColorChannels): string => {
+    return `rgba(${Math.round(clamp(r, 0, 255))}, ${Math.round(clamp(g, 0, 255))}, ${Math.round(clamp(b, 0, 255))}, ${formatAlpha(a)})`;
+};
+
+const splitTopLevel = (value: string, separator: string): string[] => {
+    const parts: string[] = [];
+    let depth = 0;
+    let current = '';
+
+    for (const char of value) {
+        if (char === '(') depth += 1;
+        if (char === ')') depth = Math.max(0, depth - 1);
+
+        if (char === separator && depth === 0) {
+            parts.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+
+    if (current.trim()) {
+        parts.push(current.trim());
+    }
+
+    return parts;
+};
+
+const findMatchingParenthesis = (value: string, openIndex: number): number => {
+    let depth = 0;
+
+    for (let index = openIndex; index < value.length; index += 1) {
+        const char = value[index];
+        if (char === '(') depth += 1;
+        if (char === ')') {
+            depth -= 1;
+            if (depth === 0) return index;
+        }
+    }
+
+    return -1;
+};
+
+const parseHexColor = (value: string): ColorChannels | null => {
+    const match = value.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+    if (!match) return null;
+
+    let hex = match[1];
+    if (hex.length === 3 || hex.length === 4) {
+        hex = hex.split('').map(char => `${char}${char}`).join('');
+    }
+
+    const hasAlpha = hex.length === 8;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const a = hasAlpha ? parseInt(hex.slice(6, 8), 16) / 255 : 1;
+
+    return { r, g, b, a };
+};
+
+const parseRgbChannel = (value: string): number => {
+    if (value.endsWith('%')) {
+        return clamp((Number(value.slice(0, -1)) / 100) * 255, 0, 255);
+    }
+    return clamp(Number(value), 0, 255);
+};
+
+const parseAlphaChannel = (value: string | undefined): number => {
+    if (!value) return 1;
+    if (value.endsWith('%')) {
+        return clamp(Number(value.slice(0, -1)) / 100, 0, 1);
+    }
+    return clamp(Number(value), 0, 1);
+};
+
+const parseRgbColor = (value: string): ColorChannels | null => {
+    const match = value.match(/^rgba?\((.*)\)$/i);
+    if (!match) return null;
+
+    const normalized = match[1].replace(/\s*\/\s*/, ' ');
+    const channels = normalized.includes(',')
+        ? normalized.split(',').map(part => part.trim())
+        : normalized.split(/\s+/).filter(Boolean);
+
+    if (channels.length < 3) return null;
+
+    return {
+        r: parseRgbChannel(channels[0]),
+        g: parseRgbChannel(channels[1]),
+        b: parseRgbChannel(channels[2]),
+        a: parseAlphaChannel(channels[3]),
+    };
+};
+
+const parseCssColor = (
+    value: string,
+    resolveCssVariable: (name: string) => string,
+    depth = 0
+): ColorChannels | null => {
+    const trimmed = value.trim();
+    if (!trimmed || depth > 5) return null;
+    if (trimmed === 'transparent') return { r: 0, g: 0, b: 0, a: 0 };
+    if (trimmed === 'black') return { r: 0, g: 0, b: 0, a: 1 };
+    if (trimmed === 'white') return { r: 255, g: 255, b: 255, a: 1 };
+
+    if (trimmed.startsWith('var(') && trimmed.endsWith(')')) {
+        const variableParts = splitTopLevel(trimmed.slice(4, -1), ',');
+        const variableName = variableParts[0]?.trim();
+        const resolved = variableName ? resolveCssVariable(variableName) : '';
+        const fallback = variableParts.slice(1).join(',').trim();
+
+        if (resolved) {
+            return parseCssColor(resolved, resolveCssVariable, depth + 1);
+        }
+        if (fallback) {
+            return parseCssColor(fallback, resolveCssVariable, depth + 1);
+        }
+        return null;
+    }
+
+    return parseHexColor(trimmed) ?? parseRgbColor(trimmed);
+};
+
+const parseColorStop = (
+    value: string,
+    resolveCssVariable: (name: string) => string
+): ColorStop | null => {
+    const match = value.trim().match(/^(.*?)(?:\s*([+-]?\d*\.?\d+)%)?$/);
+    if (!match) return null;
+
+    const color = parseCssColor(match[1].trim(), resolveCssVariable);
+    if (!color) return null;
+
+    return {
+        color,
+        percentage: match[2] === undefined ? undefined : clamp(Number(match[2]) / 100, 0, 1),
+    };
+};
+
+const resolveColorMixWeights = (first?: number, second?: number): [number, number] => {
+    if (first === undefined && second === undefined) return [0.5, 0.5];
+    if (first !== undefined && second === undefined) return [first, 1 - first];
+    if (first === undefined && second !== undefined) return [1 - second, second];
+
+    const total = (first ?? 0) + (second ?? 0);
+    if (total <= 0) return [0, 0];
+    return [(first ?? 0) / total, (second ?? 0) / total];
+};
+
+const mixColors = (first: ColorChannels, firstWeight: number, second: ColorChannels, secondWeight: number): ColorChannels => {
+    if (first.a > 0 && second.a === 0) {
+        return { ...first, a: first.a * firstWeight };
+    }
+
+    if (first.a === 0 && second.a > 0) {
+        return { ...second, a: second.a * secondWeight };
+    }
+
+    const alpha = first.a * firstWeight + second.a * secondWeight;
+    if (alpha <= 0) return { r: 0, g: 0, b: 0, a: 0 };
+
+    return {
+        r: ((first.r * first.a * firstWeight) + (second.r * second.a * secondWeight)) / alpha,
+        g: ((first.g * first.a * firstWeight) + (second.g * second.a * secondWeight)) / alpha,
+        b: ((first.b * first.a * firstWeight) + (second.b * second.a * secondWeight)) / alpha,
+        a: alpha,
+    };
+};
+
+const convertColorMixToRgba = (
+    expression: string,
+    resolveCssVariable: (name: string) => string
+): string => {
+    const inner = expression.slice('color-mix('.length, -1);
+    const parts = splitTopLevel(inner, ',');
+    if (parts.length < 3 || !parts[0].trim().startsWith('in ')) {
+        return 'rgba(0, 0, 0, 0)';
+    }
+
+    const firstStop = parseColorStop(parts[1], resolveCssVariable);
+    const secondStop = parseColorStop(parts[2], resolveCssVariable);
+    if (!firstStop || !secondStop) {
+        return 'rgba(0, 0, 0, 0)';
+    }
+
+    const [firstWeight, secondWeight] = resolveColorMixWeights(firstStop.percentage, secondStop.percentage);
+    return formatRgba(mixColors(firstStop.color, firstWeight, secondStop.color, secondWeight));
+};
+
+/**
+ * html2canvas 1.x cannot parse modern CSS color functions emitted by Tailwind v4,
+ * especially color-mix(in oklab, ...). Convert them in the PNG snapshot CSS only.
+ */
+export const sanitizeCssColorFunctionsForPngExport = (
+    css: string,
+    options: CssColorSanitizerOptions = {}
+): string => {
+    const resolveCssVariable = options.resolveCssVariable ?? defaultResolveCssVariable;
+    const lowerCss = css.toLowerCase();
+    let cursor = 0;
+    let result = '';
+
+    while (cursor < css.length) {
+        const start = lowerCss.indexOf('color-mix(', cursor);
+        if (start === -1) {
+            result += css.slice(cursor);
+            break;
+        }
+
+        const openIndex = start + 'color-mix'.length;
+        const end = findMatchingParenthesis(css, openIndex);
+        if (end === -1) {
+            result += css.slice(cursor);
+            break;
+        }
+
+        result += css.slice(cursor, start);
+        result += convertColorMixToRgba(css.slice(start, end + 1), resolveCssVariable);
+        cursor = end + 1;
+    }
+
+    return result;
+};
+
+export const sanitizeDocumentStylesForPngExport = (doc: Document): void => {
+    doc.querySelectorAll('style').forEach(styleElement => {
+        styleElement.textContent = sanitizeCssColorFunctionsForPngExport(styleElement.textContent ?? '');
+    });
+};
+
 
 /**
  * Gathers all style and link tags from the current document's head to be inlined.
@@ -9,7 +268,7 @@ export const gatherPageStyles = async (): Promise<string> => {
     const stylePromises = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
         .map(async el => {
             if (el.tagName === 'STYLE') {
-                return `<style>${el.innerHTML}</style>`;
+                return `<style>${sanitizeCssColorFunctionsForPngExport(el.innerHTML)}</style>`;
             }
             if (el.tagName === 'LINK' && (el as HTMLLinkElement).rel === 'stylesheet') {
                 const href = (el as HTMLLinkElement).href;
@@ -26,7 +285,7 @@ export const gatherPageStyles = async (): Promise<string> => {
                     }
 
                     const css = await res.text();
-                    return `<style>${css}</style>`;
+                    return `<style>${sanitizeCssColorFunctionsForPngExport(css)}</style>`;
                 } catch (err) {
                     console.warn('Could not fetch stylesheet for export:', href, err);
                     // Fallback: If we can't fetch it, we ignore it rather than linking it, 
@@ -156,9 +415,17 @@ export const createExportDOMHeader = (title: string, metaLeft: string, metaRight
     metaDiv.style.display = 'flex';
     metaDiv.style.gap = '1rem';
 
-    metaDiv.innerHTML = `<span>${metaLeft}</span><span>•</span><span>${metaRight}</span>`;
+    const leftSpan = document.createElement('span');
+    leftSpan.textContent = metaLeft;
+    const separatorSpan = document.createElement('span');
+    separatorSpan.textContent = '•';
+    const rightSpan = document.createElement('span');
+    rightSpan.textContent = metaRight;
 
     headerDiv.appendChild(titleEl);
+    metaDiv.appendChild(leftSpan);
+    metaDiv.appendChild(separatorSpan);
+    metaDiv.appendChild(rightSpan);
     headerDiv.appendChild(metaDiv);
     
     return headerDiv;

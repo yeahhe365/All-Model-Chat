@@ -1,6 +1,6 @@
 
 import { triggerDownload } from './core';
-import { createSnapshotContainer, createExportDOMHeader } from './dom';
+import { createSnapshotContainer, createExportDOMHeader, sanitizeDocumentStylesForPngExport } from './dom';
 
 /**
  * Exports a given HTML element as a PNG image.
@@ -70,6 +70,8 @@ export const exportElementAsPng = async (
             // Stability settings
             imageTimeout: 15000,
             onclone: (clonedDoc) => {
+                sanitizeDocumentStylesForPngExport(clonedDoc);
+
                 // Ensure the cloned container is visible for rendering
                 const clonedElement = clonedDoc.querySelector('.is-exporting-png') as HTMLElement;
                 if (clonedElement) {

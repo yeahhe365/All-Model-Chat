@@ -128,4 +128,58 @@ describe('MessageActions', () => {
     const deleteButton = container.querySelector('button[aria-label="Delete"]');
     expect(deleteButton?.className).not.toContain('scale');
   });
+
+  it('uses the custom assistant avatar image for model messages only', () => {
+    const userMessage: ChatMessage = {
+      ...message,
+      id: 'message-2',
+      role: 'user',
+      content: 'Hello from the user',
+    };
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <WindowProvider window={window} document={document}>
+            <>
+              <MessageActions
+                message={message}
+                sessionTitle="Session"
+                messageIndex={0}
+                isGrouped={false}
+                onEditMessage={() => {}}
+                onDeleteMessage={() => {}}
+                onRetryMessage={() => {}}
+                onGenerateCanvas={() => {}}
+                onContinueGeneration={() => {}}
+                themeId="pearl"
+              />
+              <MessageActions
+                message={userMessage}
+                sessionTitle="Session"
+                messageIndex={1}
+                isGrouped={false}
+                onEditMessage={() => {}}
+                onDeleteMessage={() => {}}
+                onRetryMessage={() => {}}
+                onGenerateCanvas={() => {}}
+                onContinueGeneration={() => {}}
+                themeId="pearl"
+              />
+            </>
+          </WindowProvider>
+        </I18nProvider>
+      );
+    });
+
+    const assistantAvatar = container.querySelector<HTMLImageElement>(
+      'img[alt="Assistant avatar"]',
+    );
+
+    expect(assistantAvatar).toBeInTheDocument();
+    expect(assistantAvatar?.getAttribute('src')).toBe('/assets/assistant-avatar.png');
+    expect(assistantAvatar?.className).toContain('object-contain');
+    expect(assistantAvatar?.className).not.toContain('rounded-full');
+    expect(container.querySelectorAll('img[alt="Assistant avatar"]')).toHaveLength(1);
+  });
 });

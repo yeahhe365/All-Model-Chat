@@ -77,14 +77,17 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
 
   const selectSession = useCallback(
     (id: string) => {
-      loadChatSession(id);
+      return loadChatSession(id);
     },
     [loadChatSession],
   );
 
-  const openExportModal = useCallback(() => {
+  const openExportModal = useCallback(async (sessionId?: string) => {
+    if (sessionId && sessionId !== chatState.activeSessionId) {
+      await loadChatSession(sessionId);
+    }
     setIsExportModalOpen(true);
-  }, [setIsExportModalOpen]);
+  }, [chatState.activeSessionId, loadChatSession, setIsExportModalOpen]);
 
   const onSuggestionClick = useCallback(
     (text: string) => {

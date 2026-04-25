@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Pencil, Wand2, CirclePlay } from 'lucide-react';
+import { User, AlertTriangle, Edit3, Trash2, RotateCw, Pencil, Wand2, CirclePlay } from 'lucide-react';
 import { ChatMessage } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
@@ -25,7 +25,15 @@ const UserIcon: React.FC = () => {
 
 const BotIcon: React.FC = () => {
     const size = useResponsiveValue(24, 29);
-    return <Bot size={size} className="text-[var(--theme-icon-model)] flex-shrink-0" strokeWidth={2} />;
+    return (
+        <img
+            src="/assets/assistant-avatar.png"
+            alt="Assistant avatar"
+            width={size}
+            height={size}
+            className="flex-shrink-0 object-contain"
+        />
+    );
 };
 
 const ErrorMsgIcon: React.FC = () => {

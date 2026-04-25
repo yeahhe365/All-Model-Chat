@@ -19,7 +19,7 @@ interface SessionItemProps {
   onTogglePinSession: (sessionId: string) => void;
   onDeleteSession: (sessionId: string) => void;
   onDuplicateSession: (sessionId: string) => void;
-  onOpenExportModal: () => void;
+  onOpenExportModal: (sessionId?: string) => void | Promise<void>;
   handleStartEdit: (item: SavedChatSession) => void;
   handleRenameConfirm: () => void;
   handleRenameKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -92,7 +92,7 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
           onStartEdit={() => { handleStartEdit(session); setActiveMenu(null); }}
           onTogglePin={() => { onTogglePinSession(session.id); setActiveMenu(null); }}
           onDuplicate={() => { onDuplicateSession(session.id); setActiveMenu(null); }}
-          onExport={() => { onSelectSession(session.id); onOpenExportModal(); setActiveMenu(null); }}
+          onExport={() => { onOpenExportModal(session.id); setActiveMenu(null); }}
           onDelete={() => { onDeleteSession(session.id); setActiveMenu(null); }}
           t={t}
         />

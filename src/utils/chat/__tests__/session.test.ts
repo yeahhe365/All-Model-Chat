@@ -7,6 +7,7 @@ import {
   generateSessionTitle,
   performOptimisticSessionUpdate,
   sanitizeSessionForExport,
+  serializeMessageForPortableExport,
   stripSessionFilePayloads,
   updateSessionWithNewMessages,
 } from '../session';
@@ -315,6 +316,29 @@ describe('sanitizeSessionForExport', () => {
     });
     const result = sanitizeSessionForExport(session);
     expect(result.messages[0].files).toBeUndefined();
+  });
+});
+
+describe('serializeMessageForPortableExport', () => {
+  it('converts attachment blobs to portable data URLs for single-message JSON export', async () => {
+    const rawFile = new File(['hello'], 'note.txt', { type: 'text/plain' });
+    const message = makeMessage('user', 'with attachment', {
+      files: [
+        {
+          id: 'file-1',
+          name: 'note.txt',
+          type: 'text/plain',
+          size: rawFile.size,
+          rawFile,
+          dataUrl: 'blob:http://localhost/ephemeral',
+        } as any,
+      ],
+    });
+
+    const result = await serializeMessageForPortableExport(message);
+
+    expect(result.files?.[0].rawFile).toBeUndefined();
+    expect(result.files?.[0].dataUrl).toBe('data:text/plain;base64,aGVsbG8=');
   });
 });
 

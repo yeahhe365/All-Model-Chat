@@ -235,13 +235,15 @@ const serializeFileForPortableExport = async (file: UploadedFile): Promise<Uploa
 export const serializeSessionForPortableExport = async (session: SavedChatSession): Promise<SavedChatSession> => ({
     ...session,
     messages: await Promise.all(
-        session.messages.map(async (message) => ({
-            ...message,
-            files: message.files
-                ? await Promise.all(message.files.map(serializeFileForPortableExport))
-                : undefined,
-        })),
+        session.messages.map(serializeMessageForPortableExport),
     ),
+});
+
+export const serializeMessageForPortableExport = async (message: ChatMessage): Promise<ChatMessage> => ({
+    ...message,
+    files: message.files
+        ? await Promise.all(message.files.map(serializeFileForPortableExport))
+        : undefined,
 });
 
 /**

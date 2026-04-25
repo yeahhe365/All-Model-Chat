@@ -19,4 +19,11 @@ describe('SessionItem spacing', () => {
     expect(source).not.toContain('draggable="true"');
     expect(source).not.toContain("history_drag_session");
   });
+
+  it('delegates export session selection to the export opener to avoid opening the dialog before async load completes', () => {
+    const source = fs.readFileSync(sessionItemPath, 'utf8');
+
+    expect(source).toContain('onExport={() => { onOpenExportModal(session.id); setActiveMenu(null); }}');
+    expect(source).not.toContain('onExport={() => { onSelectSession(session.id); onOpenExportModal(); setActiveMenu(null); }}');
+  });
 });

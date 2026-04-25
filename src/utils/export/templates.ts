@@ -1,3 +1,11 @@
+const escapeHtml = (value: string): string =>
+    value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
 export const generateExportHtmlTemplate = ({
     title,
     date,
@@ -19,13 +27,20 @@ export const generateExportHtmlTemplate = ({
     rootBgColor: string,
     bodyClasses: string
 }) => {
+    const safeTitle = escapeHtml(title);
+    const safeDate = escapeHtml(date);
+    const safeModel = escapeHtml(model);
+    const safeLanguage = escapeHtml(language);
+    const safeThemeId = escapeHtml(themeId);
+    const safeBodyClasses = escapeHtml(bodyClasses);
+
     return `
         <!DOCTYPE html>
-        <html lang="${language}">
+        <html lang="${safeLanguage}">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Chat Export: ${title}</title>
+            <title>Chat Export: ${safeTitle}</title>
             ${styles}
             <style>
                 /* Reset & Layout */
@@ -107,12 +122,12 @@ export const generateExportHtmlTemplate = ({
                 }
             </style>
         </head>
-        <body class="${bodyClasses} theme-${themeId} is-exporting-png">
+        <body class="${safeBodyClasses} theme-${safeThemeId} is-exporting-png">
             <div class="exported-chat-container">
                 <div class="exported-chat-header">
-                    <h1 class="exported-chat-title">${title}</h1>
+                    <h1 class="exported-chat-title">${safeTitle}</h1>
                     <div class="exported-chat-meta">
-                        <span>${date}</span> • <span>${model}</span>
+                        <span>${safeDate}</span> • <span>${safeModel}</span>
                     </div>
                 </div>
                 ${contentHtml}
