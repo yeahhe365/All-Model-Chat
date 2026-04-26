@@ -158,6 +158,10 @@ describe('getConfiguredApiClient', () => {
 });
 
 describe('getLiveApiClient', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('throws a configuration error when the ephemeral token endpoint is missing', async () => {
     await expect(
       getLiveApiClient(
@@ -222,6 +226,124 @@ describe('getLiveApiClient', () => {
     );
 
     expect(fetchMock).toHaveBeenCalledWith('https://example.test/live-token');
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'ephemeral-token-name',
+      httpOptions: { apiVersion: 'v1alpha' },
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('posts the browser API key to the live token endpoint for BYOK token creation', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ name: 'ephemeral-token-name' }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClient(
+      {
+        liveApiEphemeralTokenEndpoint: 'https://example.test/live-token',
+        useCustomApiConfig: false,
+        useApiProxy: false,
+        apiProxyUrl: null,
+      },
+      { apiVersion: 'v1alpha' },
+      'browser-key',
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith('https://example.test/live-token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ apiKey: 'browser-key' }),
+    });
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'ephemeral-token-name',
+      httpOptions: { apiVersion: 'v1alpha' },
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('posts the configured proxy baseUrl to the live token endpoint for BYOK token creation', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ name: 'ephemeral-token-name' }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClient(
+      {
+        liveApiEphemeralTokenEndpoint: 'https://example.test/live-token',
+        useCustomApiConfig: true,
+        useApiProxy: true,
+        apiProxyUrl: 'http://localhost:7860/v1alpha/',
+      },
+      { apiVersion: 'v1alpha' },
+      'browser-key',
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith('https://example.test/live-token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: 'browser-key',
+        apiBaseUrl: 'http://localhost:7860',
+      }),
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('does not post a relative frontend proxy path to the live token endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ name: 'ephemeral-token-name' }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClient(
+      {
+        liveApiEphemeralTokenEndpoint: '/api/live-token',
+        useCustomApiConfig: true,
+        useApiProxy: true,
+        apiProxyUrl: '/api/gemini',
+      },
+      { apiVersion: 'v1alpha' },
+      'browser-key',
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/live-token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ apiKey: 'browser-key' }),
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('does not apply a relative frontend proxy path to the live WebSocket client', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ name: 'ephemeral-token-name' }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClient(
+      {
+        liveApiEphemeralTokenEndpoint: '/api/live-token',
+        useCustomApiConfig: true,
+        useApiProxy: true,
+        apiProxyUrl: '/api/gemini',
+      },
+      { apiVersion: 'v1alpha' },
+      'browser-key',
+    );
+
     expect(GoogleGenAI).toHaveBeenCalledWith({
       apiKey: 'ephemeral-token-name',
       httpOptions: { apiVersion: 'v1alpha' },

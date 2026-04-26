@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { KeyRound } from 'lucide-react';
+import { ChevronDown, ChevronRight, KeyRound, RadioTower } from 'lucide-react';
 import type { ModelOption } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
@@ -49,6 +49,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
+  const [showAdvancedLiveSettings, setShowAdvancedLiveSettings] = useState(false);
   const overflowTimerRef = useRef<number | null>(null);
   const viteEnv = (import.meta as ImportMeta & { env?: { VITE_GEMINI_API_KEY?: string } }).env;
 
@@ -160,7 +161,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           hasEnvKey={hasEnvKey}
         />
 
-        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
+        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[1000px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
           <div className="space-y-5">
             <ApiKeyInput
               apiKey={apiKey}
@@ -183,25 +184,64 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
               }}
             />
 
-            <div className="space-y-2 pt-2">
-              <label htmlFor="live-token-endpoint-input" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
-                {t('settingsLiveTokenEndpoint')}
-              </label>
-              <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
-                {t('settingsLiveTokenEndpointHelp')}
-              </p>
-              <input
-                id="live-token-endpoint-input"
-                type="text"
-                value={liveApiEphemeralTokenEndpoint || ''}
-                onChange={(e) => {
-                  const value = e.target.value.trim();
-                  setLiveApiEphemeralTokenEndpoint(value || null);
-                }}
-                className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
-                placeholder={t('settingsLiveTokenEndpointPlaceholder')}
-                aria-label={t('settingsLiveTokenEndpoint')}
-              />
+            <div className="space-y-3 pt-2">
+              <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/20 p-3">
+                <div className="flex items-start gap-3">
+                  <RadioTower size={16} className="mt-0.5 flex-shrink-0 text-[var(--theme-text-link)]" strokeWidth={1.5} />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className="text-sm font-medium text-[var(--theme-text-primary)]">
+                        {t('settingsLiveAutomaticTitle')}
+                      </p>
+                      <code className="rounded bg-[var(--theme-bg-secondary)] px-1.5 py-0.5 text-[11px] text-[var(--theme-text-secondary)]">
+                        {liveApiEphemeralTokenEndpoint || '/api/live-token'}
+                      </code>
+                    </div>
+                    <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                      {t('settingsLiveAutomaticHelp')}
+                    </p>
+                    {useApiProxy && (
+                      <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                        {t('settingsLiveProxyCompatibilityHelp')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAdvancedLiveSettings((value) => !value)}
+                className="flex w-full items-center justify-between rounded-lg border border-transparent px-2 py-2 text-left text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] transition-colors hover:border-[var(--theme-border-secondary)] hover:bg-[var(--theme-bg-tertiary)]/40 hover:text-[var(--theme-text-primary)]"
+                aria-expanded={showAdvancedLiveSettings}
+                aria-controls="advanced-live-settings"
+              >
+                <span>{t('settingsLiveAdvancedToggle')}</span>
+                {showAdvancedLiveSettings ? <ChevronDown size={14} strokeWidth={1.5} /> : <ChevronRight size={14} strokeWidth={1.5} />}
+              </button>
+
+              {showAdvancedLiveSettings && (
+                <div id="advanced-live-settings" className="space-y-2">
+                  <label htmlFor="live-token-endpoint-input" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+                    {t('settingsLiveTokenEndpoint')}
+                  </label>
+                  <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                    {t('settingsLiveTokenEndpointHelp')}
+                  </p>
+                  <input
+                    id="live-token-endpoint-input"
+                    type="text"
+                    value={liveApiEphemeralTokenEndpoint || ''}
+                    onChange={(e) => {
+                      const value = e.target.value.trim();
+                      setLiveApiEphemeralTokenEndpoint(value || null);
+                    }}
+                    className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
+                    placeholder={t('settingsLiveTokenEndpointPlaceholder')}
+                    aria-label={t('settingsLiveTokenEndpoint')}
+                  />
+                </div>
+              )}
             </div>
 
             <ApiConnectionTester

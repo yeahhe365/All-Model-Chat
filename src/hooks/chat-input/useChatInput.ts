@@ -28,6 +28,7 @@ import {
   QueuedChatInputSubmission,
   shouldFlushPendingSubmission,
 } from './pendingSubmissionUtils';
+import { hasSendableChatInputContent } from './chatInputUtils';
 import { useChatInputFileUi } from './useChatInputFileUi';
 import { cleanupFilePreviewUrl } from '../../utils/fileHelpers';
 
@@ -229,15 +230,23 @@ export const useChatInput = () => {
     modalsState.showTtsContextEditor;
   const isAnyModalOpen = isModalOpen || modalsState.isHelpModalOpen;
 
+  const hasSendableContent = hasSendableChatInputContent({
+    inputText: inputState.inputText,
+    quotes: inputState.quotes,
+    selectedFileCount: selectedFiles.length,
+    isNativeAudioModel: capabilities.isNativeAudioModel,
+  });
+
   const canSend =
-    (inputState.inputText.trim() !== '' || selectedFiles.length > 0 || inputState.quotes.length > 0) &&
+    hasSendableContent &&
     !isLoading &&
     !inputState.isAddingById &&
     !isModalOpen &&
     !localFileState.isConverting;
 
   const canQueueMessage =
-    (inputState.inputText.trim() !== '' || selectedFiles.length > 0 || inputState.quotes.length > 0) &&
+    !capabilities.isNativeAudioModel &&
+    hasSendableContent &&
     !!activeSessionId &&
     isLoading &&
     !isEditing &&
@@ -253,16 +262,24 @@ export const useChatInput = () => {
   const handleSmartSendMessage = useCallback(
     async (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => {
       if (capabilities.isNativeAudioModel) {
+        let didConnect = liveAPI.isConnected;
         if (!liveAPI.isConnected) {
           try {
-            await liveAPI.connect();
+            didConnect = await liveAPI.connect();
           } catch (error) {
             console.error('Failed to auto-connect Live API:', error);
             return;
           }
         }
 
-        liveAPI.sendText(text);
+        if (!didConnect) {
+          return;
+        }
+
+        const didSend = await liveAPI.sendText(text);
+        if (!didSend) {
+          return;
+        }
 
         if (onAddUserMessage) {
           onAddUserMessage(text);

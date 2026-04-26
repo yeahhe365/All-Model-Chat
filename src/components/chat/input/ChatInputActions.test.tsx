@@ -129,6 +129,16 @@ describe('ChatInputActions', () => {
     );
   });
 
+  it('disables attachments for Live models because selected files are not sent through Live text turns', () => {
+    act(() => {
+      root.render(<ChatInputActions {...baseProps} isNativeAudioModel />);
+    });
+
+    expect(attachmentMenuMock).toHaveBeenCalledWith(
+      expect.objectContaining({ disabled: true }),
+    );
+  });
+
   it('forwards Gemma capability into the tools menu', () => {
     act(() => {
       root.render(<ChatInputActions {...baseProps} isGemmaModel />);

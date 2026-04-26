@@ -49,13 +49,14 @@ export const parseApiKeys = (apiKeysString: string | null): string[] => {
 export const getKeyForRequest = (
     appSettings: AppSettings,
     currentChatSettings: ChatSettings,
-    options: { skipIncrement?: boolean } = {},
+    options: { skipIncrement?: boolean; skipUsageLogging?: boolean } = {},
 ): { key: string; isNewKey: boolean } | { error: string } => {
     const { skipIncrement = false } = options;
+    const { skipUsageLogging = false } = options;
     const shouldUseServerManagedMarker = isServerManagedApiEnabledForProxyRequests(appSettings);
 
     const logUsage = (key: string) => {
-        if (appSettings.useCustomApiConfig) {
+        if (appSettings.useCustomApiConfig && !skipUsageLogging) {
             logService.recordApiKeyUsage(key);
         }
     };

@@ -37,7 +37,7 @@ describe('ApiProxySettings', () => {
     });
 
     expect(document.body).toHaveTextContent(
-      'https://api-proxy.de/gemini/v1beta/models/gemini-2.5-flash:generateContent'
+      'https://api-proxy.de/gemini/v1beta/models/gemini-3-flash-preview:generateContent'
     );
   });
 });

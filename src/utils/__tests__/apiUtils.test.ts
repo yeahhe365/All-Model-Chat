@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { ChatSettings } from '../../types';
 import {
@@ -6,6 +6,7 @@ import {
   isServerManagedApiEnabledForProxyRequests,
   SERVER_MANAGED_API_KEY,
 } from '../apiUtils';
+import { logService } from '../../services/logService';
 
 vi.mock('../../services/logService', () => ({
   logService: {
@@ -16,6 +17,10 @@ vi.mock('../../services/logService', () => ({
 }));
 
 describe('getKeyForRequest', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const chatSettings: ChatSettings = {
     modelId: 'gemini-2.5-flash-preview-09-2025',
     temperature: 1,
@@ -79,6 +84,24 @@ describe('getKeyForRequest', () => {
       key: 'real-browser-key',
       isNewKey: true,
     });
+  });
+
+  it('can select a key without recording usage for Live token setup', () => {
+    const result = getKeyForRequest(
+      {
+        ...DEFAULT_APP_SETTINGS,
+        useCustomApiConfig: true,
+        apiKey: 'real-browser-key',
+      },
+      chatSettings,
+      { skipIncrement: true, skipUsageLogging: true },
+    );
+
+    expect(result).toEqual({
+      key: 'real-browser-key',
+      isNewKey: true,
+    });
+    expect(logService.recordApiKeyUsage).not.toHaveBeenCalled();
   });
 });
 

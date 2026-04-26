@@ -3,6 +3,7 @@ import React from 'react';
 import { AlertCircle, ArrowRight, RotateCcw } from 'lucide-react';
 import { Toggle } from '../../../shared/Toggle';
 import { SETTINGS_INPUT_CLASS } from '../../../../constants/appConstants';
+import { DEFAULT_MODEL_ID } from '../../../../constants/modelConstants';
 import { useI18n } from '../../../../contexts/I18nContext';
 import {
     buildGeminiRequestPreviewUrl,
@@ -38,7 +39,7 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
     const currentBaseUrl = apiProxyUrl?.trim() || DEFAULT_GEMINI_API_BASE_URL;
     const previewUrl = buildGeminiRequestPreviewUrl(
         currentBaseUrl,
-        'gemini-2.5-flash',
+        DEFAULT_MODEL_ID,
         'generateContent',
     );
 

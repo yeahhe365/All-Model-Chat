@@ -11,6 +11,7 @@ import { useLiveFrameCapture } from './live-api/useLiveFrameCapture';
 import { resolveLiveErrorText } from './live-api/liveErrorState';
 import { useBackgroundKeepAlive } from './core/useBackgroundKeepAlive';
 import { useI18n } from '../contexts/I18nContext';
+import { getKeyForRequest, SERVER_MANAGED_API_KEY } from '../utils/apiUtils';
 
 interface UseLiveAPIProps {
     appSettings: AppSettings;
@@ -65,6 +66,17 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         sessionHandle,
         clientFunctions
     });
+    const liveApiKeyForTokenCreation = useMemo(() => {
+        const keyResult = getKeyForRequest(appSettings, chatSettings, {
+            skipIncrement: true,
+            skipUsageLogging: true,
+        });
+        if ('error' in keyResult || keyResult.key === SERVER_MANAGED_API_KEY) {
+            return null;
+        }
+
+        return keyResult.key;
+    }, [appSettings, chatSettings]);
 
     // 4. Message Processing Hook
     const { handleMessage, clearBufferedAudio } = useLiveMessageProcessing({
@@ -92,6 +104,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         appSettings,
         modelId,
         liveConfig,
+        liveApiKeyForTokenCreation,
         tools,
         initializeAudio,
         cleanupAudio,

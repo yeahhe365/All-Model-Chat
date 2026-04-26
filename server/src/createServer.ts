@@ -6,6 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 import type { ApiServerConfig } from './config.js';
 
 const GEMINI_PROXY_PREFIX = '/api/gemini';
+const GEMINI_API_VERSION_SUFFIX = /\/v\d+(?:(?:alpha|beta)\d*|\.\d+)?$/i;
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'keep-alive',
@@ -37,7 +38,12 @@ interface LiveTokenPayload {
 
 interface CreateServerDependencies {
   fetchImpl?: typeof fetch;
-  createLiveToken?: (apiKey: string) => Promise<LiveTokenPayload>;
+  createLiveToken?: (apiKey: string, apiBaseUrl?: string) => Promise<LiveTokenPayload>;
+}
+
+interface LiveTokenRequestBody extends Record<string, unknown> {
+  apiKey?: unknown;
+  apiBaseUrl?: unknown;
 }
 
 type CreateServerConfig = Pick<ApiServerConfig, 'geminiApiBase' | 'geminiApiKey'> &
@@ -47,10 +53,46 @@ interface ResolvedServerConfig extends CreateServerConfig {
   allowedOrigins: string[];
 }
 
-export async function createLiveTokenWithGemini(apiKey: string): Promise<LiveTokenPayload> {
+function normalizeGeminiApiBaseUrl(baseUrl: string): string {
+  const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
+  return trimmedBaseUrl.replace(GEMINI_API_VERSION_SUFFIX, '');
+}
+
+function resolveServerReachableApiBaseUrl(apiBaseUrl: string): string | undefined {
+  const normalizedBaseUrl = normalizeGeminiApiBaseUrl(apiBaseUrl);
+
+  try {
+    const url = new URL(normalizedBaseUrl);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return undefined;
+    }
+
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      url.hostname = 'host.docker.internal';
+      return url.toString().replace(/\/$/, '');
+    }
+  } catch {
+    return undefined;
+  }
+
+  return normalizedBaseUrl;
+}
+
+export async function createLiveTokenWithGemini(
+  apiKey: string,
+  apiBaseUrl?: string,
+): Promise<LiveTokenPayload> {
+  const httpOptions: { apiVersion: 'v1alpha'; baseUrl?: string } = { apiVersion: 'v1alpha' };
+  if (apiBaseUrl?.trim()) {
+    const resolvedApiBaseUrl = resolveServerReachableApiBaseUrl(apiBaseUrl);
+    if (resolvedApiBaseUrl) {
+      httpOptions.baseUrl = resolvedApiBaseUrl;
+    }
+  }
+
   const client = new GoogleGenAI({
     apiKey,
-    httpOptions: { apiVersion: 'v1alpha' },
+    httpOptions,
   });
 
   return client.authTokens.create({ config: { uses: 1 } });
@@ -98,6 +140,26 @@ function sendJson(
   response.end(JSON.stringify(body));
 }
 
+async function readJsonBody<T extends Record<string, unknown>>(
+  request: IncomingMessage,
+): Promise<T | null> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of request) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  const rawBody = Buffer.concat(chunks).toString('utf8').trim();
+  if (!rawBody) {
+    return null;
+  }
+
+  const parsed = JSON.parse(rawBody);
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+    ? parsed as T
+    : null;
+}
+
 function getConnectionManagedHeaders(value: string | null | undefined): Set<string> {
   if (!value) {
     return new Set();
@@ -109,6 +171,20 @@ function getConnectionManagedHeaders(value: string | null | undefined): Set<stri
       .map((headerName) => headerName.trim().toLowerCase())
       .filter((headerName) => headerName.length > 0),
   );
+}
+
+function resolveRequestApiKey(request: IncomingMessage, serverApiKey?: string): string {
+  const trimmedServerApiKey = serverApiKey?.trim();
+  if (trimmedServerApiKey) {
+    return trimmedServerApiKey;
+  }
+
+  const browserApiKey = request.headers['x-goog-api-key'];
+  if (Array.isArray(browserApiKey)) {
+    return browserApiKey[0]?.trim() ?? '';
+  }
+
+  return browserApiKey?.trim() ?? '';
 }
 
 function buildProxyHeaders(request: IncomingMessage, apiKey: string): Headers {
@@ -172,7 +248,9 @@ async function proxyGeminiRequest(
   config: ResolvedServerConfig,
   fetchImpl: typeof fetch,
 ): Promise<void> {
-  if (!config.geminiApiKey) {
+  const apiKeyForProxy = resolveRequestApiKey(request, config.geminiApiKey);
+
+  if (!apiKeyForProxy) {
     sendJson(request, response, 500, { error: 'GEMINI_API_KEY is not configured.' }, config.allowedOrigins);
     return;
   }
@@ -192,7 +270,7 @@ async function proxyGeminiRequest(
 
   const requestInit: RequestInit & { duplex?: 'half' } = {
     method,
-    headers: buildProxyHeaders(request, config.geminiApiKey),
+    headers: buildProxyHeaders(request, apiKeyForProxy),
     signal: abortController.signal,
   };
 
@@ -291,22 +369,49 @@ export function createServer(
         return;
       }
 
-      if (method === 'GET' && path === '/api/live-token') {
+      if ((method === 'GET' || method === 'POST') && path === '/api/live-token') {
         response.setHeader('cache-control', 'no-store');
 
-        if (!resolvedConfig.geminiApiKey) {
+        let apiKeyForToken = resolvedConfig.geminiApiKey?.trim() ?? '';
+        let apiBaseUrlForToken: string | undefined;
+
+        if (method === 'POST') {
+          try {
+            const body = await readJsonBody<LiveTokenRequestBody>(request);
+            const bodyApiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
+            if (bodyApiKey) {
+              apiKeyForToken = bodyApiKey;
+            }
+
+            const bodyApiBaseUrl = typeof body?.apiBaseUrl === 'string' ? body.apiBaseUrl.trim() : '';
+            if (bodyApiBaseUrl) {
+              apiBaseUrlForToken = resolveServerReachableApiBaseUrl(bodyApiBaseUrl);
+            }
+          } catch {
+            sendJson(request, response, 400, { error: 'Live token request body must be valid JSON.' }, resolvedConfig.allowedOrigins);
+            return;
+          }
+        }
+
+        if (!apiKeyForToken) {
           sendJson(
             request,
             response,
-            500,
-            { error: 'GEMINI_API_KEY is not configured.' },
+            method === 'GET' ? 500 : 400,
+            {
+              error: method === 'GET'
+                ? 'GEMINI_API_KEY is not configured.'
+                : 'API key is required to create a Live API token.',
+            },
             resolvedConfig.allowedOrigins,
           );
           return;
         }
 
         try {
-          const tokenPayload = await createLiveToken(resolvedConfig.geminiApiKey);
+          const tokenPayload = apiBaseUrlForToken
+            ? await createLiveToken(apiKeyForToken, apiBaseUrlForToken)
+            : await createLiveToken(apiKeyForToken);
           if (typeof tokenPayload.name === 'string' && tokenPayload.name.length > 0) {
             sendJson(request, response, 200, { name: tokenPayload.name }, resolvedConfig.allowedOrigins);
             return;

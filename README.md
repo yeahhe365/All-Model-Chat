@@ -154,7 +154,7 @@ npm run dev
 GEMINI_API_KEY=your_api_key_here
 ```
 
-### 方式二：Docker Compose（推荐生产部署）
+### 方式二：Docker Compose（自用推荐）
 
 项目包含双容器部署：
 - `web`：Nginx 托管前端静态资源，并反向代理 `/api/*` 到 `api` 服务
@@ -171,12 +171,13 @@ docker compose up -d --build
 默认访问 `http://localhost:8080`。如需关闭后台运行可执行 `docker compose down`。
 
 说明：
+- Docker 默认是 BYOK 自用模式：启动后在 **设置 -> API 配置** 填入 Gemini API Key 即可使用普通聊天与 Live API，不需要在 `.env` 或 `docker-compose.yml` 里配置 `GEMINI_API_KEY`。
 - `web` 镜像默认直接打包宿主机已生成的 `dist/`，不再在容器内执行前端生产构建。
 - 修改前端代码后，请先重新执行 `npm run build`，再执行 `docker compose up -d --build`。
 
 > ⚠️ 安全边界说明
 > 当前 `web + api` 代理方案定位为 **受信任/自托管环境**（trusted self-hosted deployment）。
-> 它用于隐藏服务端 `GEMINI_API_KEY` 并转发请求，但**本身并不足以**作为公开互联网下“无鉴权多用户 API 网关”。
+> 默认 BYOK 模式会使用浏览器设置里的 API Key 发起请求；它**本身并不足以**作为公开互联网下“无鉴权多用户 API 网关”。
 > 若要对公网开放，请额外引入鉴权、配额/限流、滥用防护、审计与租户隔离等能力。
 
 ### 运行时配置与环境变量
@@ -185,11 +186,11 @@ docker compose up -d --build
 
 | 变量名 | 用途 | 公开性 | 默认值 |
 | :--- | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | 后端调用 Gemini API 的真实密钥（`api` 服务读取） | **仅服务端** | 空（必须在生产环境提供） |
+| `GEMINI_API_KEY` | 可选的服务端托管 Gemini API Key（配置后优先于浏览器设置 key） | **仅服务端** | 空 |
 | `PORT` | `api` 服务监听端口 | 仅服务端 | `3001` |
 | `GEMINI_API_BASE` | Gemini 上游地址（代理目标） | 仅服务端 | `https://generativelanguage.googleapis.com` |
 | `ALLOWED_ORIGINS` | 逗号分隔 CORS 白名单（跨域部署时使用） | 仅服务端 | 空 |
-| `RUNTIME_SERVER_MANAGED_API` | 前端默认启用服务端托管 API | **公开运行时配置** | `true` |
+| `RUNTIME_SERVER_MANAGED_API` | 前端默认启用服务端托管 API | **公开运行时配置** | `false` |
 | `RUNTIME_USE_CUSTOM_API_CONFIG` | 前端默认启用“自定义 API 配置” | 公开运行时配置 | `true` |
 | `RUNTIME_USE_API_PROXY` | 前端默认启用 API 代理 | 公开运行时配置 | `true` |
 | `RUNTIME_API_PROXY_URL` | 前端默认 Gemini 代理地址 | 公开运行时配置 | `/api/gemini` |
@@ -197,7 +198,8 @@ docker compose up -d --build
 
 说明：
 - 上述 `RUNTIME_*` 会在容器启动时写入 `runtime-config.js`，可被浏览器读取，因此只能放“可公开”信息。
-- `GEMINI_API_KEY` 只应存在于后端环境变量，不应写入前端构建产物、`runtime-config.js` 或浏览器设置备份。
+- 默认 BYOK 模式只需要在设置界面填写 API Key：普通 Gemini 代理会使用浏览器请求携带的 key，Live API 会临时把该 key POST 到 `/api/live-token` 用于生成短期 token，后端不保存。
+- 如需服务端统一托管 key，可配置 `GEMINI_API_KEY` 并将 `RUNTIME_SERVER_MANAGED_API=true`。
 - 前端在部署时默认依赖后端端点：`/api/gemini/*` 与 `/api/live-token`。
 
 ### 方式三：Cloudflare Pages（静态前端）+ 独立 API 服务
@@ -218,7 +220,7 @@ npm run start:api
 RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
 RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-token
 ```
-4. 在后端环境设置 `GEMINI_API_KEY`，并按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。
+4. 如需服务端统一托管密钥，在后端环境设置 `GEMINI_API_KEY`；如果使用 BYOK，可不设置该变量。跨域部署时按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。
 
 #### 可选：使用 AIStudioToAPI 作为 Gemini 兼容后端
 

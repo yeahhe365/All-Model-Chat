@@ -25,13 +25,23 @@ export const apiSettings = {
     apiConfig_invalidKeyFormat: { en: 'The API key format looks invalid.', zh: 'API 密钥格式无效。' },
     apiRuntime_keyNotConfigured: { en: 'API Key not configured.', zh: 'API 密钥未配置。' },
     apiRuntime_noValidKeysFound: { en: 'No valid API keys found.', zh: '未找到有效的 API 密钥。' },
+    settingsLiveAutomaticTitle: { en: 'Live works automatically', zh: 'Live 会自动处理' },
+    settingsLiveAutomaticHelp: {
+        en: 'Official API mode uses the key above to create short-lived Live tokens through the local endpoint.',
+        zh: '官方 API 模式会使用上方密钥，通过本地端点自动创建短期 Live 令牌。',
+    },
+    settingsLiveProxyCompatibilityHelp: {
+        en: 'Proxy note: the connection test checks regular Gemini requests. Live also needs the proxy to support /v1alpha/auth_tokens and Live WebSocket routes.',
+        zh: '代理提示：连通性测试只检查普通 Gemini 请求。Live 还需要代理支持 /v1alpha/auth_tokens 和 Live WebSocket 路由。',
+    },
+    settingsLiveAdvancedToggle: { en: 'Advanced Live Settings', zh: '高级 Live 设置' },
     settingsLiveTokenEndpoint: { en: 'Live Session Token Endpoint', zh: 'Live 会话令牌端点' },
     settingsLiveTokenEndpointHelp: {
-        en: 'Required for Live API in the browser. Point this to a backend endpoint that returns JSON containing an ephemeral token `name` or `token`.',
-        zh: '浏览器中的 Live API 必须配置该项。请填写一个后端端点，它需要返回包含临时令牌 `name` 或 `token` 的 JSON。',
+        en: 'Self-hosted Docker normally uses /api/live-token. Change this only when you run a custom token service that returns JSON containing `name` or `token`.',
+        zh: '自托管 Docker 通常使用 /api/live-token。只有在运行自定义令牌服务，并且它会返回包含 `name` 或 `token` 的 JSON 时才需要修改。',
     },
     settingsLiveTokenEndpointPlaceholder: {
-        en: 'e.g., https://example.com/api/live-token',
-        zh: '例如：https://example.com/api/live-token',
+        en: 'Default: /api/live-token',
+        zh: '默认：/api/live-token',
     },
 };

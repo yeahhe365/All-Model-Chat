@@ -192,6 +192,20 @@ const resolveConfiguredBaseUrl = (
     return shouldUseProxy ? (appSettings.apiProxyUrl ?? null) : null;
 };
 
+const isAbsoluteHttpUrl = (url: string): boolean => /^https?:\/\//i.test(url.trim());
+
+const resolveLiveClientBaseUrl = (
+    appSettings: Pick<AppSettings, 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>,
+): string | null => {
+    const configuredBaseUrl = resolveConfiguredBaseUrl(appSettings);
+    if (!configuredBaseUrl) {
+        return null;
+    }
+
+    const normalizedConfiguredBaseUrl = normalizeGeminiApiBaseUrl(configuredBaseUrl);
+    return isAbsoluteHttpUrl(normalizedConfiguredBaseUrl) ? normalizedConfiguredBaseUrl : null;
+};
+
 export const getConfiguredApiBaseUrl = async (): Promise<string> => {
     const settings = await dbService.getAppSettings();
     const configuredBaseUrl = settings
@@ -232,6 +246,7 @@ const extractLiveApiToken = (payload: unknown): string | null => {
 export const getLiveApiClient = async (
     appSettings: Pick<AppSettings, 'liveApiEphemeralTokenEndpoint' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>,
     httpOptions?: ClientHttpOptions,
+    apiKeyForTokenCreation?: string | null,
 ): Promise<GoogleGenAI> => {
     const endpoint = appSettings.liveApiEphemeralTokenEndpoint?.trim();
 
@@ -244,7 +259,23 @@ export const getLiveApiClient = async (
 
     let response: Response;
     try {
-        response = await fetch(endpoint);
+        const trimmedApiKey = apiKeyForTokenCreation?.trim();
+        const liveClientBaseUrl = resolveLiveClientBaseUrl(appSettings);
+        const tokenRequestBody = trimmedApiKey
+            ? {
+                apiKey: trimmedApiKey,
+                ...(liveClientBaseUrl
+                    ? { apiBaseUrl: liveClientBaseUrl }
+                    : {}),
+            }
+            : null;
+        response = trimmedApiKey
+            ? await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(tokenRequestBody),
+            })
+            : await fetch(endpoint);
     } catch (error) {
         throw new LiveApiAuthConfigurationError(
             'FAILED_TO_FETCH_EPHEMERAL_TOKEN',
@@ -279,7 +310,7 @@ export const getLiveApiClient = async (
         );
     }
 
-    return getClient(token, resolveConfiguredBaseUrl(appSettings), httpOptions);
+    return getClient(token, resolveLiveClientBaseUrl(appSettings), httpOptions);
 };
 
 const hasPerPartMediaResolution = (parts: Part[] = []): boolean =>

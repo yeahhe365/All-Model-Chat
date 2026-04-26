@@ -142,4 +142,80 @@ describe('ApiConfigSection', () => {
     expect(container.textContent).toContain('API 与连接');
     expect(container.textContent).toContain('测试连通性');
   });
+
+  it('keeps Live token endpoint editing behind advanced settings by default', async () => {
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <ApiConfigSection
+            useCustomApiConfig
+            setUseCustomApiConfig={vi.fn()}
+            apiKey="browser-key"
+            setApiKey={vi.fn()}
+            apiProxyUrl={null}
+            setApiProxyUrl={vi.fn()}
+            useApiProxy={false}
+            setUseApiProxy={vi.fn()}
+            serverManagedApi={false}
+            liveApiEphemeralTokenEndpoint="/api/live-token"
+            setLiveApiEphemeralTokenEndpoint={vi.fn()}
+            availableModels={[]}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.textContent).toContain('Live works automatically');
+    expect(container.textContent).toContain('/api/live-token');
+    expect(container.querySelector('#live-token-endpoint-input')).toBeNull();
+  });
+
+  it('allows editing the Live token endpoint after opening advanced settings', async () => {
+    const setLiveApiEphemeralTokenEndpoint = vi.fn();
+
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <ApiConfigSection
+            useCustomApiConfig
+            setUseCustomApiConfig={vi.fn()}
+            apiKey="browser-key"
+            setApiKey={vi.fn()}
+            apiProxyUrl="http://localhost:7860"
+            setApiProxyUrl={vi.fn()}
+            useApiProxy
+            setUseApiProxy={vi.fn()}
+            serverManagedApi={false}
+            liveApiEphemeralTokenEndpoint="/api/live-token"
+            setLiveApiEphemeralTokenEndpoint={setLiveApiEphemeralTokenEndpoint}
+            availableModels={[]}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    const advancedButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Advanced Live Settings')
+    );
+    expect(advancedButton).toBeDefined();
+
+    await act(async () => {
+      advancedButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const endpointInput = container.querySelector<HTMLInputElement>('#live-token-endpoint-input');
+    expect(endpointInput).not.toBeNull();
+
+    await act(async () => {
+      if (endpointInput) {
+        const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+        valueSetter?.call(endpointInput, 'https://example.com/live-token');
+        endpointInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+
+    expect(setLiveApiEphemeralTokenEndpoint).toHaveBeenCalledWith('https://example.com/live-token');
+  });
 });

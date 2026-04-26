@@ -10,6 +10,7 @@ interface UseLiveConnectionProps {
     appSettings: AppSettings;
     modelId: string;
     liveConfig: unknown;
+    liveApiKeyForTokenCreation?: string | null;
     tools: Tool[];
     initializeAudio: (onAudioData: (data: Float32Array) => void) => Promise<void | { audioCtx: AudioContext; inputCtx: AudioContext }>;
     cleanupAudio: () => void;
@@ -27,6 +28,7 @@ export const useLiveConnection = ({
     appSettings,
     modelId,
     liveConfig,
+    liveApiKeyForTokenCreation,
     tools,
     initializeAudio,
     cleanupAudio,
@@ -64,7 +66,7 @@ export const useLiveConnection = ({
     const retryCountRef = useRef(0);
     const isUserDisconnectRef = useRef(false);
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const connectRef = useRef<() => Promise<void>>(async () => {});
+    const connectRef = useRef<() => Promise<boolean>>(async () => false);
     
     const maxRetries = 5;
     const baseDelay = 1000;
@@ -148,7 +150,7 @@ export const useLiveConnection = ({
 	        sessionRef.current?.then((session) => session.close());
 		    }, [sessionHandleRef, sessionRef, setTranslationError]);
 
-	    const connect = useCallback(async () => {
+	    const connect = useCallback(async (): Promise<boolean> => {
 	        // Clear any pending reconnection timeout if we are manually connecting
 	        if (reconnectTimeoutRef.current) {
 	            clearTimeout(reconnectTimeoutRef.current);
@@ -162,7 +164,7 @@ export const useLiveConnection = ({
 
 	        try {
 	            // Specify API version v1alpha for Live API support
-	            const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' });
+	            const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' }, liveApiKeyForTokenCreation);
 	            const setupCompletePromise = new Promise<void>((resolve, reject) => {
 	                setupCompleteResolveRef.current = resolve;
 	                setupCompleteRejectRef.current = reject;
@@ -271,6 +273,7 @@ export const useLiveConnection = ({
 	            sessionRef.current = sessionPromise;
 	            await sessionPromise;
 	            await setupCompletePromise;
+	            return true;
 
 	        } catch (err) {
 	            logService.error("Failed to connect to Live API", err);
@@ -296,7 +299,7 @@ export const useLiveConnection = ({
                     }
 	                resetAudioState();
 	                stopVideo();
-	                return;
+	                return false;
 	            }
 	            
 	            if (!isUserDisconnectRef.current) {
@@ -309,18 +312,21 @@ export const useLiveConnection = ({
                     }
 	                resetAudioState();
 	            }
+	            return false;
 	        }
-		    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, resetAudioState, stopVideo, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef, resolveSetupComplete, rejectSetupComplete, clearSetupCompleteWaiters, setRawError, setTranslationError]);
+		    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, resetAudioState, stopVideo, triggerReconnect, liveConfig, liveApiKeyForTokenCreation, tools, handleMessage, sessionRef, sessionHandleRef, resolveSetupComplete, rejectSetupComplete, clearSetupCompleteWaiters, setRawError, setTranslationError]);
 
-	    const sendText = useCallback(async (text: string) => {
-	        if (!sessionRef.current || !isConnectedRef.current) return;
+	    const sendText = useCallback(async (text: string): Promise<boolean> => {
+	        if (!sessionRef.current || !isConnectedRef.current) return false;
 	        try {
 	            const session = await sessionRef.current;
-	            if (!isConnectedRef.current) return;
+	            if (!isConnectedRef.current) return false;
 	            session.sendRealtimeInput({ text });
 	            logService.info("Sent text to Live API", { textLength: text.length });
+	            return true;
 	        } catch (e) {
             logService.error("Failed to send text to Live API", e);
+            return false;
         }
     }, [sessionRef]);
 

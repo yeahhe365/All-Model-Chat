@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildChatInputSubmitText } from './chatInputUtils';
+import { buildChatInputSubmitText, hasSendableChatInputContent } from './chatInputUtils';
 
 describe('buildChatInputSubmitText', () => {
   it('wraps transcript text with TTS context before sending', () => {
@@ -23,5 +23,51 @@ describe('buildChatInputSubmitText', () => {
     ).toBe(
       '**Quote 1**:\n> first line\n> second line\n\n**Quote 2**:\n> third line\n\nSummarize this.'
     );
+  });
+});
+
+describe('hasSendableChatInputContent', () => {
+  const base = {
+    inputText: '',
+    quotes: [] as string[],
+    selectedFileCount: 0,
+  };
+
+  it('does not treat files as sendable content for Live sessions', () => {
+    expect(
+      hasSendableChatInputContent({
+        ...base,
+        isNativeAudioModel: true,
+        selectedFileCount: 1,
+      }),
+    ).toBe(false);
+  });
+
+  it('allows Live sessions to send text or quoted text', () => {
+    expect(
+      hasSendableChatInputContent({
+        ...base,
+        isNativeAudioModel: true,
+        inputText: 'hello live',
+      }),
+    ).toBe(true);
+
+    expect(
+      hasSendableChatInputContent({
+        ...base,
+        isNativeAudioModel: true,
+        quotes: ['selected text'],
+      }),
+    ).toBe(true);
+  });
+
+  it('keeps file-only sends available for standard models', () => {
+    expect(
+      hasSendableChatInputContent({
+        ...base,
+        isNativeAudioModel: false,
+        selectedFileCount: 1,
+      }),
+    ).toBe(true);
   });
 });

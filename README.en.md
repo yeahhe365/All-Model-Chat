@@ -146,7 +146,7 @@ For local frontend development, you can also create `.env.local` in the reposito
 GEMINI_API_KEY=your_api_key_here
 ```
 
-### Option 2: Docker Compose
+### Option 2: Docker Compose (Recommended for Personal Use)
 
 The Docker deployment contains two services:
 
@@ -166,28 +166,29 @@ docker compose down
 
 Notes:
 
+- Docker defaults to BYOK for personal deployments. After startup, enter your Gemini API key in **Settings -> API Configuration** to use both regular chat and Live API. You do not need to set `GEMINI_API_KEY` in `.env` or `docker-compose.yml`.
 - The `web` image packages the already built local `dist/` directory.
 - After frontend changes, run `npm run build` before rebuilding the Docker services.
 
 > Security note
 >
-> The `web + api` proxy setup is intended for trusted self-hosted deployments. It hides the server-side `GEMINI_API_KEY` from the browser and forwards requests, but it is not a complete public multi-user API gateway. Add authentication, quotas, rate limiting, abuse protection, audit logging, and tenant isolation before exposing it publicly.
+> The `web + api` proxy setup is intended for trusted self-hosted deployments. The default BYOK mode uses the API key stored in the browser settings for requests, and it is not a complete public multi-user API gateway. Add authentication, quotas, rate limiting, abuse protection, audit logging, and tenant isolation before exposing it publicly.
 
 ### Runtime Configuration and Environment Variables
 
 | Variable | Purpose | Public | Default |
 | :--- | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | Real Gemini API key used by the `api` service | Server only | Empty, required in production |
+| `GEMINI_API_KEY` | Optional server-managed Gemini API key; when set, it takes precedence over browser settings keys | Server only | Empty |
 | `PORT` | Port used by the API service | Server only | `3001` |
 | `GEMINI_API_BASE` | Upstream Gemini API base URL | Server only | `https://generativelanguage.googleapis.com` |
 | `ALLOWED_ORIGINS` | Comma-separated CORS allowlist for cross-origin deployments | Server only | Empty |
-| `RUNTIME_SERVER_MANAGED_API` | Enables server-managed API mode by default in the frontend | Public runtime config | `true` |
+| `RUNTIME_SERVER_MANAGED_API` | Enables server-managed API mode by default in the frontend | Public runtime config | `false` |
 | `RUNTIME_USE_CUSTOM_API_CONFIG` | Enables custom API configuration by default | Public runtime config | `true` |
 | `RUNTIME_USE_API_PROXY` | Enables API proxy mode by default | Public runtime config | `true` |
 | `RUNTIME_API_PROXY_URL` | Default Gemini proxy URL for the frontend | Public runtime config | `/api/gemini` |
 | `RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT` | Default Live API token endpoint | Public runtime config | `/api/live-token` |
 
-The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. Keep `GEMINI_API_KEY` in the backend environment only.
+The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. Docker defaults to BYOK: after you enter an API key in Settings, Gemini proxy requests use the browser-provided key, and Live API temporarily POSTs that key to `/api/live-token` to mint a short-lived token. The backend does not store it. If you want server-managed credentials instead, set `GEMINI_API_KEY` and `RUNTIME_SERVER_MANAGED_API=true`.
 
 ### Option 3: Cloudflare Pages + Standalone API
 
@@ -213,7 +214,7 @@ RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
 RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-token
 ```
 
-4. Set `GEMINI_API_KEY` in the backend environment and optionally set `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`.
+4. Set `GEMINI_API_KEY` in the backend environment if you want server-managed credentials. For BYOK, you can omit it. For cross-origin deployments, optionally set `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`.
 
 #### Optional: Use AIStudioToAPI as a Gemini-Compatible Backend
 

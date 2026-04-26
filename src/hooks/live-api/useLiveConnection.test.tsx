@@ -110,13 +110,63 @@ describe('useLiveConnection', () => {
       }),
     );
 
+    let didConnect: boolean | undefined;
+    let didSend: boolean | undefined;
+
     await act(async () => {
-      await result.current.connect();
-      await result.current.sendText('Hello live');
+      didConnect = await result.current.connect();
+      didSend = await result.current.sendText('Hello live');
     });
 
+    expect(didConnect).toBe(true);
+    expect(didSend).toBe(true);
     expect(sendRealtimeInput).toHaveBeenCalledWith({ text: 'Hello live' });
     expect(sendClientContent).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('passes a browser API key through for BYOK live token creation', async () => {
+    const sendRealtimeInput = vi.fn();
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: vi.fn(({ callbacks }) => {
+          callbacks.onopen?.();
+          callbacks.onmessage?.({ setupComplete: {} });
+          return Promise.resolve({
+            sendRealtimeInput,
+            close: vi.fn(),
+          });
+        }),
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        liveApiKeyForTokenCreation: 'browser-key',
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio: vi.fn(),
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+        sessionRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    expect(mockGetLiveApiClient).toHaveBeenCalledWith(
+      {},
+      { apiVersion: 'v1alpha' },
+      'browser-key',
+    );
     unmount();
   });
 
@@ -152,10 +202,12 @@ describe('useLiveConnection', () => {
       result.current.disconnect();
     });
 
+    let didSend: boolean | undefined;
     await act(async () => {
-      await result.current.sendText('should not send');
+      didSend = await result.current.sendText('should not send');
     });
 
+    expect(didSend).toBe(false);
     expect(close).toHaveBeenCalled();
     expect(sendRealtimeInput).not.toHaveBeenCalled();
     unmount();
@@ -243,10 +295,12 @@ describe('useLiveConnection', () => {
       }),
     );
 
+    let didConnect: boolean | undefined;
     await act(async () => {
-      await result.current.connect();
+      didConnect = await result.current.connect();
     });
 
+    expect(didConnect).toBe(false);
     expect(result.current.errorState).toEqual({
       kind: 'translation',
       key: 'liveStatus_missing_token_endpoint',

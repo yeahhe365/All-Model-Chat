@@ -5,6 +5,13 @@ interface BuildChatInputSubmitTextOptions {
   ttsContext?: string;
 }
 
+interface HasSendableChatInputContentOptions {
+  inputText: string;
+  quotes: string[];
+  selectedFileCount: number;
+  isNativeAudioModel: boolean;
+}
+
 const formatQuoteBlock = (quote: string, index: number, totalQuotes: number) => {
   const label = totalQuotes > 1 ? `**Quote ${index + 1}**:\n` : '';
   const block = quote
@@ -41,4 +48,19 @@ export const buildChatInputSubmitText = ({
   }
 
   return inputText;
+};
+
+export const hasSendableChatInputContent = ({
+  inputText,
+  quotes,
+  selectedFileCount,
+  isNativeAudioModel,
+}: HasSendableChatInputContentOptions): boolean => {
+  const hasTextPayload = inputText.trim() !== '' || quotes.length > 0;
+
+  if (isNativeAudioModel) {
+    return hasTextPayload;
+  }
+
+  return hasTextPayload || selectedFileCount > 0;
 };

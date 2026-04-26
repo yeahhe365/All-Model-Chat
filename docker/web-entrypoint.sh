@@ -21,7 +21,7 @@ escape_js_single_quoted() {
   printf '%s' "$1" | sed "s/\\\\/\\\\\\\\/g; s/'/'\"'\"'/g"
 }
 
-server_managed_api="$(to_bool "${RUNTIME_SERVER_MANAGED_API:-true}")"
+server_managed_api="$(to_bool "${RUNTIME_SERVER_MANAGED_API:-false}")"
 use_custom_api_config="$(to_bool "${RUNTIME_USE_CUSTOM_API_CONFIG:-true}")"
 use_api_proxy="$(to_bool "${RUNTIME_USE_API_PROXY:-true}")"
 api_proxy_url_escaped="$(escape_js_single_quoted "${RUNTIME_API_PROXY_URL:-/api/gemini}")"
