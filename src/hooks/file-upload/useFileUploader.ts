@@ -29,8 +29,9 @@ export const useFileUploader = ({
   const uploadStatsRef = useRef<Map<string, { lastLoaded: number; lastTime: number }>>(new Map());
 
   const uploadFiles = useCallback(
-    async (filesArray: File[]) => {
+    async (filesArray: File[], options: { setSelectedFiles?: Dispatch<SetStateAction<UploadedFile[]>> } = {}) => {
       if (filesArray.length === 0) return;
+      const writeSelectedFiles = options.setSelectedFiles ?? setSelectedFiles;
 
       const preflight = buildFileUploadPreflight(filesArray, appSettings, selectedFiles);
       if (preflight.notice) {
@@ -74,7 +75,7 @@ export const useFileUploader = ({
             forceFileApi: filesRequiringApi.has(file),
             defaultResolution,
             appSettings,
-            setSelectedFiles,
+            setSelectedFiles: writeSelectedFiles,
             uploadStatsRef,
           }),
       );

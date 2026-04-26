@@ -5,12 +5,14 @@ import { UploadedFile } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { triggerDownload } from '../../../utils/export/core';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
-import { copyFileToClipboard, formatFileSize } from '../../../utils/fileHelpers';
+import { formatFileSize } from '../../../utils/fileHelpers';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider } from './FloatingToolbar';
 
 interface FilePreviewHeaderProps {
     file: UploadedFile;
     onClose: () => void;
+    isCopied?: boolean;
+    onCopy?: () => void;
     isEditable?: boolean;
     onToggleEdit?: () => void;
     onSave?: () => void;
@@ -21,6 +23,8 @@ interface FilePreviewHeaderProps {
 export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ 
     file, 
     onClose, 
+    isCopied = false,
+    onCopy,
     isEditable = false,
     onToggleEdit,
     onSave,
@@ -29,7 +33,6 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
 }) => {
     const { t } = useI18n();
     const [isDownloading, setIsDownloading] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
 
     const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type === 'image/svg+xml';
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
@@ -39,18 +42,6 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
     const isText = !isImage && !isPdf && !isVideo && !isAudio;
 
     const FileIcon = isImage ? ImageIcon : isPdf ? FileText : isVideo ? FileVideo : isAudio ? FileAudio : FileCode2;
-
-    const handleCopy = useCallback(async () => {
-        if (!file.dataUrl || isCopied) return;
-        try {
-            await copyFileToClipboard(file);
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy content:', err);
-            alert(t('filePreview_copy_failed'));
-        }
-    }, [file, isCopied, t]);
 
     const handleDownload = useCallback(async () => {
         if (!file.dataUrl || isDownloading) return;
@@ -126,7 +117,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
                                 <Edit3 size={18} strokeWidth={1.5} />
                             </ToolbarButton>
                         )}
-                        <ToolbarButton onClick={handleCopy} disabled={isCopied} title={isCopied ? t('copied_button_title') : t('filePreview_copy_content')}>
+                        <ToolbarButton onClick={onCopy} disabled={isCopied} title={isCopied ? t('copied_button_title') : t('filePreview_copy_content')}>
                             {isCopied ? <Check size={18} className="text-green-400" strokeWidth={2} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
                         </ToolbarButton>
                         <ToolbarButton onClick={handleDownload} disabled={isDownloading} title={isMermaidDiagram ? t('filePreview_download_svg') : t('filePreview_download_file')}>

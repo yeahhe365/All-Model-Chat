@@ -189,9 +189,7 @@ describe('useSessionLoader', () => {
     });
 
     expect(setActiveSessionId).toHaveBeenLastCalledWith('newer-session', { history: 'push' });
-    expect((setActiveMessages.mock.calls.at(-1)?.[0] as ChatMessage[])[0]?.content).toBe(
-      'Newer Session content',
-    );
+    expect((setActiveMessages.mock.calls.at(-1)?.[0] as ChatMessage[])[0]?.content).toBe('Newer Session content');
 
     const olderSession = createSession('older-session', 'Older Session');
     await act(async () => {
@@ -200,9 +198,7 @@ describe('useSessionLoader', () => {
     });
 
     expect(setActiveSessionId).toHaveBeenLastCalledWith('newer-session', { history: 'push' });
-    expect((setActiveMessages.mock.calls.at(-1)?.[0] as ChatMessage[])[0]?.content).toBe(
-      'Newer Session content',
-    );
+    expect((setActiveMessages.mock.calls.at(-1)?.[0] as ChatMessage[])[0]?.content).toBe('Newer Session content');
 
     expect(setSavedGroups).not.toHaveBeenCalled();
     unmount();
@@ -375,6 +371,132 @@ describe('useSessionLoader', () => {
     const mergedSessions = updater([freshSession]);
     expect(mergedSessions).toHaveLength(1);
     expect(mergedSessions[0].settings.systemInstruction).toBe('');
+
+    unmount();
+  });
+
+  it('clears stale file errors when starting a fresh chat', () => {
+    const setAppFileError = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: { modelId: 'gemini-2.5-flash' } as any,
+        setSavedSessions: vi.fn(),
+        setSavedGroups: vi.fn(),
+        setActiveSessionId: vi.fn(),
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        activeChat: undefined,
+        userScrolledUpRef: { current: true },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-current',
+        savedSessions: [] as SavedChatSession[],
+        setAppFileError,
+      } as any),
+    );
+
+    act(() => {
+      result.current.startNewChat();
+    });
+
+    expect(setAppFileError).toHaveBeenCalledWith(null);
+    unmount();
+  });
+
+  it('refreshes reused empty chat settings from app defaults instead of keeping stale session settings', () => {
+    const updateAndPersistSessions = vi.fn();
+    const emptyActiveSession = {
+      ...createSession('session-empty', 'Empty Session'),
+      messages: [],
+      timestamp: 2,
+      settings: {
+        ...createSession('session-empty', 'Empty Session').settings,
+        modelId: 'stale-model',
+        lockedApiKey: 'old-key',
+        isGoogleSearchEnabled: true,
+      },
+    };
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: {
+          modelId: 'global-model',
+          isGoogleSearchEnabled: false,
+          lockedApiKey: null,
+        } as any,
+        setSavedSessions: vi.fn(),
+        setSavedGroups: vi.fn(),
+        setActiveSessionId: vi.fn(),
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions,
+        activeChat: emptyActiveSession,
+        userScrolledUpRef: { current: true },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-empty',
+        savedSessions: [emptyActiveSession] as SavedChatSession[],
+        setAppFileError: vi.fn(),
+      } as any),
+    );
+
+    act(() => {
+      result.current.startNewChat();
+    });
+
+    expect(updateAndPersistSessions).toHaveBeenCalledTimes(1);
+    const updater = updateAndPersistSessions.mock.calls[0][0];
+    const updatedSessions = updater([emptyActiveSession]);
+    expect(updatedSessions[0].settings.modelId).toBe('global-model');
+    expect(updatedSessions[0].settings.lockedApiKey).toBeNull();
+    expect(updatedSessions[0].settings.isGoogleSearchEnabled).toBe(false);
+
+    unmount();
+  });
+
+  it('inherits new chat settings from the most recent session by timestamp instead of a pinned session', () => {
+    const pinnedSession = createSession('session-pinned', 'Pinned Session');
+    pinnedSession.timestamp = 1;
+    pinnedSession.isPinned = true;
+    pinnedSession.settings.modelId = 'pinned-model';
+
+    const recentSession = createSession('session-recent', 'Recent Session');
+    recentSession.timestamp = 3;
+    recentSession.isPinned = false;
+    recentSession.settings.modelId = 'recent-model';
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: { modelId: 'global-model' } as any,
+        setSavedSessions: vi.fn(),
+        setSavedGroups: vi.fn(),
+        setActiveSessionId: vi.fn(),
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        activeChat: createSession('session-current', 'Current Session'),
+        userScrolledUpRef: { current: true },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-current',
+        savedSessions: [pinnedSession, recentSession] as SavedChatSession[],
+        setAppFileError: vi.fn(),
+      } as any),
+    );
+
+    act(() => {
+      result.current.startNewChat();
+    });
+
+    expect(mockCreateNewSession).toHaveBeenCalledWith(expect.objectContaining({ modelId: 'recent-model' }));
 
     unmount();
   });

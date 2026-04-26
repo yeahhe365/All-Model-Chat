@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { UploadedFile } from '../../types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { useI18n } from '../../contexts/I18nContext';
@@ -58,15 +58,51 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
           : null,
   );
   const [isDocxPreviewLoading, setIsDocxPreviewLoading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const copyFeedbackTimeoutRef = useRef<number | null>(null);
 
-  const handleCopyShortcut = useCallback(async () => {
+  const showCopyFeedback = useCallback(() => {
+      setIsCopied(true);
+
+      if (copyFeedbackTimeoutRef.current !== null) {
+          window.clearTimeout(copyFeedbackTimeoutRef.current);
+      }
+
+      copyFeedbackTimeoutRef.current = window.setTimeout(() => {
+          setIsCopied(false);
+          copyFeedbackTimeoutRef.current = null;
+      }, 2000);
+  }, []);
+
+  useEffect(() => {
+      return () => {
+          if (copyFeedbackTimeoutRef.current !== null) {
+              window.clearTimeout(copyFeedbackTimeoutRef.current);
+          }
+      };
+  }, []);
+
+  const handleCopyFile = useCallback(async (showFailureAlert: boolean) => {
       if (!file.dataUrl) return;
+
       try {
           await copyFileToClipboard(file);
+          showCopyFeedback();
       } catch (err) {
           console.error('Failed to copy content:', err);
+          if (showFailureAlert) {
+              alert(t('filePreview_copy_failed'));
+          }
       }
-  }, [file]);
+  }, [file, showCopyFeedback, t]);
+
+  const handleCopyButton = useCallback(() => {
+      void handleCopyFile(true);
+  }, [handleCopyFile]);
+
+  const handleCopyShortcut = useCallback(async () => {
+      await handleCopyFile(false);
+  }, [handleCopyFile]);
 
   useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
@@ -200,6 +236,8 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
         <FilePreviewHeader
           file={file}
           onClose={onClose}
+          isCopied={isCopied}
+          onCopy={handleCopyButton}
           isEditable={isEditing}
           onToggleEdit={isText && onSaveText ? handleToggleEdit : undefined}
           onSave={handleSave}

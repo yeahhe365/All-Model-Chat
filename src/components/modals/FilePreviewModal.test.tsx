@@ -58,7 +58,22 @@ vi.mock('../shared/Modal', () => ({
 }));
 
 vi.mock('../shared/file-preview/FilePreviewHeader', () => ({
-  FilePreviewHeader: () => <div data-testid="file-preview-header" />,
+  FilePreviewHeader: ({
+    isCopied = false,
+    onCopy,
+  }: {
+    isCopied?: boolean;
+    onCopy?: () => void;
+  }) => (
+    <button
+      type="button"
+      data-testid="file-preview-copy-button"
+      data-copied={isCopied ? 'true' : 'false'}
+      onClick={onCopy}
+    >
+      {isCopied ? 'Copied' : 'Copy'}
+    </button>
+  ),
 }));
 
 vi.mock('../shared/file-preview/TextFileViewer', () => ({
@@ -244,5 +259,32 @@ describe('FilePreviewModal', () => {
     });
 
     expect(mockCopyFileToClipboard).not.toHaveBeenCalled();
+  });
+
+  it('shows copy button feedback when the file is copied with the keyboard shortcut', async () => {
+    await act(async () => {
+      root.render(
+        <FilePreviewModal
+          file={createMarkdownFile()}
+          onClose={() => {}}
+        />,
+      );
+    });
+
+    expect(document.querySelector('[data-testid="file-preview-copy-button"]')?.getAttribute('data-copied')).toBe('false');
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'c',
+        ctrlKey: true,
+        bubbles: true,
+      }));
+    });
+
+    expect(mockCopyFileToClipboard).toHaveBeenCalledTimes(1);
+
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-testid="file-preview-copy-button"]')?.getAttribute('data-copied')).toBe('true');
+    });
   });
 });

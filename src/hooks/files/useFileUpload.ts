@@ -4,6 +4,7 @@ import { logService } from '../../services/logService';
 import { useFilePreProcessing } from '../file-upload/useFilePreProcessing';
 import { useFileUploader } from '../file-upload/useFileUploader';
 import { useFileIdAdder } from '../file-upload/useFileIdAdder';
+import { useChatStore } from '../../stores/chatStore';
 
 interface UseFileUploadProps {
   appSettings: AppSettings;
@@ -47,14 +48,38 @@ export const useFileUpload = ({
       if (!files || files.length === 0) return;
       setAppFileError(null);
       logService.info(`Processing ${files.length} files.`);
+      const operationSessionId = useChatStore.getState().activeSessionId;
+      const operationGeneration = useChatStore.getState().getFileOperationGeneration();
+      const isStillCurrentSession = () => {
+        const chatStore = useChatStore.getState();
+        return (
+          chatStore.activeSessionId === operationSessionId &&
+          chatStore.getFileOperationGeneration() === operationGeneration
+        );
+      };
+      const setSelectedFilesForCurrentSession: Dispatch<SetStateAction<UploadedFile[]>> = (updater) => {
+        if (!isStillCurrentSession()) {
+          return;
+        }
+
+        setSelectedFiles(updater);
+      };
 
       // 1. Pre-process files (ZIP extraction, Audio compression, etc.)
-      const processedFiles = await processFiles(files);
+      const processedFiles = await processFiles(files, {
+        setSelectedFiles: setSelectedFilesForCurrentSession,
+      });
+
+      if (!isStillCurrentSession()) {
+        return;
+      }
 
       // 2. Hand off to uploader (Inline vs API strategy)
-      await uploadFiles(processedFiles);
+      await uploadFiles(processedFiles, {
+        setSelectedFiles: setSelectedFilesForCurrentSession,
+      });
     },
-    [processFiles, uploadFiles, setAppFileError],
+    [processFiles, uploadFiles, setAppFileError, setSelectedFiles],
   );
 
   return {

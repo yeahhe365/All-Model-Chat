@@ -22,6 +22,7 @@ const _userScrolledUp: { current: boolean } = { current: false };
 const _fileDrafts: { current: Record<string, UploadedFile[]> } = { current: {} };
 const _localLoadingSessionIds = new Set<string>();
 const _sessionPersistVersion = new Map<string, number>();
+let _fileOperationGeneration = 0;
 let _isDirty = false;
 
 // ── BroadcastChannel for multi-tab sync ──
@@ -69,10 +70,7 @@ function sanitizeSessionModel(session: SavedChatSession): SavedChatSession {
 }
 
 // ── URL & sessionStorage sync ──
-function syncActiveSessionToUrl(
-  activeSessionId: string | null,
-  historyMode: SessionHistoryMode = 'auto',
-) {
+function syncActiveSessionToUrl(activeSessionId: string | null, historyMode: SessionHistoryMode = 'auto') {
   if (activeSessionId) {
     try {
       sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
@@ -155,10 +153,7 @@ interface ChatActions {
   // Session setters
   setSavedSessions: (v: UpdaterOrValue<SavedChatSession[]>) => void;
   setSavedGroups: (v: UpdaterOrValue<ChatGroup[]>) => void;
-  setActiveSessionId: (
-    id: UpdaterOrValue<string | null>,
-    options?: SetActiveSessionOptions,
-  ) => void;
+  setActiveSessionId: (id: UpdaterOrValue<string | null>, options?: SetActiveSessionOptions) => void;
   setActiveMessages: (v: UpdaterOrValue<ChatMessage[]>) => void;
 
   // Auxiliary setters
@@ -177,11 +172,16 @@ interface ChatActions {
   setIsSwitchingModel: (v: UpdaterOrValue<boolean>) => void;
 
   // Persistence
-  updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
+  updateAndPersistSessions: (
+    updater: (prev: SavedChatSession[]) => SavedChatSession[],
+    options?: { persist?: boolean },
+  ) => void;
   updateAndPersistGroups: (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
   refreshSessions: () => Promise<void>;
   refreshGroups: () => Promise<void>;
   setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+  getFileOperationGeneration: () => number;
+  invalidateFileOperations: () => void;
 
   // Computed helpers (call getState inside)
   setCurrentChatSettings: (updater: (prev: ChatSettings) => ChatSettings) => void;
@@ -213,30 +213,31 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   _fileDrafts,
 
   // ── Session Setters ──
-  setSavedSessions: (v) => set((s) => ({
-    savedSessions: typeof v === 'function' ? v(s.savedSessions) : v,
-  })),
+  setSavedSessions: (v) =>
+    set((s) => ({
+      savedSessions: typeof v === 'function' ? v(s.savedSessions) : v,
+    })),
 
-  setSavedGroups: (v) => set((s) => ({
-    savedGroups: typeof v === 'function' ? v(s.savedGroups) : v,
-  })),
+  setSavedGroups: (v) =>
+    set((s) => ({
+      savedGroups: typeof v === 'function' ? v(s.savedGroups) : v,
+    })),
 
   setActiveSessionId: (value, options) => {
-    const nextValue =
-      typeof value === 'function' ? value(get().activeSessionId) : value;
+    const nextValue = typeof value === 'function' ? value(get().activeSessionId) : value;
     set({ activeSessionId: nextValue });
     syncActiveSessionToUrl(nextValue, options?.history ?? 'auto');
   },
 
-  setActiveMessages: (v) => set((s) => ({
-    activeMessages: typeof v === 'function' ? v(s.activeMessages) : v,
-  })),
+  setActiveMessages: (v) =>
+    set((s) => ({
+      activeMessages: typeof v === 'function' ? v(s.activeMessages) : v,
+    })),
 
   // ── Auxiliary Setters ──
   setEditingMessageId: (value) =>
     set((state) => ({
-      editingMessageId:
-        typeof value === 'function' ? value(state.editingMessageId) : value,
+      editingMessageId: typeof value === 'function' ? value(state.editingMessageId) : value,
     })),
   setEditMode: (value) =>
     set((state) => ({
@@ -244,27 +245,27 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     })),
   setCommandedInput: (value) =>
     set((state) => ({
-      commandedInput:
-        typeof value === 'function' ? value(state.commandedInput) : value,
+      commandedInput: typeof value === 'function' ? value(state.commandedInput) : value,
     })),
-  setLoadingSessionIds: (v) => set((s) => ({
-    loadingSessionIds: typeof v === 'function' ? v(s.loadingSessionIds) : v,
-  })),
-  setGeneratingTitleSessionIds: (v) => set((s) => ({
-    generatingTitleSessionIds: typeof v === 'function' ? v(s.generatingTitleSessionIds) : v,
-  })),
-  setSelectedFiles: (v) => set((s) => ({
-    selectedFiles: typeof v === 'function' ? v(s.selectedFiles) : v,
-  })),
+  setLoadingSessionIds: (v) =>
+    set((s) => ({
+      loadingSessionIds: typeof v === 'function' ? v(s.loadingSessionIds) : v,
+    })),
+  setGeneratingTitleSessionIds: (v) =>
+    set((s) => ({
+      generatingTitleSessionIds: typeof v === 'function' ? v(s.generatingTitleSessionIds) : v,
+    })),
+  setSelectedFiles: (v) =>
+    set((s) => ({
+      selectedFiles: typeof v === 'function' ? v(s.selectedFiles) : v,
+    })),
   setAppFileError: (value) =>
     set((state) => ({
-      appFileError:
-        typeof value === 'function' ? value(state.appFileError) : value,
+      appFileError: typeof value === 'function' ? value(state.appFileError) : value,
     })),
   setIsAppProcessingFile: (value) =>
     set((state) => ({
-      isAppProcessingFile:
-        typeof value === 'function' ? value(state.isAppProcessingFile) : value,
+      isAppProcessingFile: typeof value === 'function' ? value(state.isAppProcessingFile) : value,
     })),
   setAspectRatio: (value) =>
     set((state) => ({
@@ -276,30 +277,22 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     })),
   setImageOutputMode: (value) =>
     set((state) => ({
-      imageOutputMode:
-        typeof value === 'function' ? value(state.imageOutputMode) : value,
+      imageOutputMode: typeof value === 'function' ? value(state.imageOutputMode) : value,
     })),
   setPersonGeneration: (value) =>
     set((state) => ({
-      personGeneration:
-        typeof value === 'function' ? value(state.personGeneration) : value,
+      personGeneration: typeof value === 'function' ? value(state.personGeneration) : value,
     })),
   setIsSwitchingModel: (value) =>
     set((state) => ({
-      isSwitchingModel:
-        typeof value === 'function' ? value(state.isSwitchingModel) : value,
+      isSwitchingModel: typeof value === 'function' ? value(state.isSwitchingModel) : value,
     })),
 
   // ── Persistence Actions ──
   refreshSessions: async () => {
     try {
       const metadataList = await dbService.getAllSessionMetadata();
-      const {
-        activeSessionId,
-        loadingSessionIds,
-        setActiveMessages,
-        setSavedSessions,
-      } = get();
+      const { activeSessionId, loadingSessionIds, setActiveMessages, setSavedSessions } = get();
 
       if (activeSessionId && !loadingSessionIds.has(activeSessionId)) {
         const fullActiveSession = await dbService.getSession(activeSessionId);
@@ -322,11 +315,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
           prevById.delete(session.id);
 
-          const keepRuntimeMessages = shouldRetainRuntimeMessages(
-            session.id,
-            activeSessionId,
-            loadingSessionIds,
-          );
+          const keepRuntimeMessages = shouldRetainRuntimeMessages(session.id, activeSessionId, loadingSessionIds);
 
           return {
             ...session,
@@ -372,9 +361,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       const nextSavedSessions =
         !isLoading && sessionId !== s.activeSessionId
           ? s.savedSessions.map((session) =>
-              session.id === sessionId && session.messages.length > 0
-                ? { ...session, messages: [] }
-                : session,
+              session.id === sessionId && session.messages.length > 0 ? { ...session, messages: [] } : session,
             )
           : s.savedSessions;
 
@@ -387,12 +374,18 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
   },
 
+  getFileOperationGeneration: () => _fileOperationGeneration,
+
+  invalidateFileOperations: () => {
+    _fileOperationGeneration += 1;
+  },
+
   updateAndPersistSessions: (updater, options = {}) => {
     const { persist = true } = options;
     const { savedSessions, activeSessionId, activeMessages, loadingSessionIds } = get();
 
     // 1. Reconstruct "Virtual" Full State
-    const virtualFullSessions = savedSessions.map(s => {
+    const virtualFullSessions = savedSessions.map((s) => {
       if (s.id === activeSessionId) {
         return { ...s, messages: activeMessages };
       }
@@ -407,7 +400,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
     // 4. Update Active Messages if changed
     if (activeSessionId) {
-      const newActiveSession = newFullSessions.find(s => s.id === activeSessionId);
+      const newActiveSession = newFullSessions.find((s) => s.id === activeSessionId);
       if (newActiveSession && newActiveSession.messages !== activeMessages) {
         set({ activeMessages: newActiveSession.messages });
       }
@@ -415,14 +408,14 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
     // 5. Persist
     if (persist) {
-      const newSessionsMap = new Map(newFullSessions.map(s => [s.id, s]));
+      const newSessionsMap = new Map(newFullSessions.map((s) => [s.id, s]));
       const modifiedSessions = newFullSessions.filter((session) => {
-        const prevSession = virtualFullSessions.find(ps => ps.id === session.id);
+        const prevSession = virtualFullSessions.find((ps) => ps.id === session.id);
         return prevSession !== session;
       });
       const deletedSessionIds = savedSessions
-        .filter(session => !newSessionsMap.has(session.id))
-        .map(session => session.id);
+        .filter((session) => !newSessionsMap.has(session.id))
+        .map((session) => session.id);
 
       if (modifiedSessions.length > 0 || deletedSessionIds.length > 0) {
         const persistVersions = new Map<string, number>();
@@ -481,26 +474,24 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
           ]);
 
           if (
-            deletedSessionIds.length === 0
-            && modifiedSessions.length === 1
-            && persistedSessionIds.has(modifiedSessions[0].id)
+            deletedSessionIds.length === 0 &&
+            modifiedSessions.length === 1 &&
+            persistedSessionIds.has(modifiedSessions[0].id)
           ) {
             broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessions[0].id });
           } else {
             broadcast({ type: 'SESSIONS_UPDATED' });
           }
-        })().catch(e => logService.error('Failed to persist session updates', { error: e }));
+        })().catch((e) => logService.error('Failed to persist session updates', { error: e }));
       }
     }
 
     // 6. Return Metadata Only (strip messages)
-    const metadataOnly = newFullSessions.map(s => (
-      s.messages
-      && s.messages.length > 0
-      && !shouldRetainRuntimeMessages(s.id, activeSessionId, loadingSessionIds)
+    const metadataOnly = newFullSessions.map((s) =>
+      s.messages && s.messages.length > 0 && !shouldRetainRuntimeMessages(s.id, activeSessionId, loadingSessionIds)
         ? { ...s, messages: [] }
-        : s
-    ));
+        : s,
+    );
 
     set({ savedSessions: metadataOnly });
   },
@@ -508,21 +499,18 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   updateAndPersistGroups: (updater) => {
     const { savedGroups } = get();
     const newGroups = updater(savedGroups);
-    dbService.setAllGroups(newGroups)
+    dbService
+      .setAllGroups(newGroups)
       .then(() => broadcast({ type: 'GROUPS_UPDATED' }))
-      .catch(e => logService.error('Failed to persist group updates', { error: e }));
+      .catch((e) => logService.error('Failed to persist group updates', { error: e }));
     set({ savedGroups: newGroups });
   },
 
   setCurrentChatSettings: (updater) => {
     const { activeSessionId } = get();
     if (!activeSessionId) return;
-    get().updateAndPersistSessions(prevSessions =>
-      prevSessions.map(s =>
-        s.id === activeSessionId
-          ? { ...s, settings: updater(s.settings) }
-          : s
-      )
+    get().updateAndPersistSessions((prevSessions) =>
+      prevSessions.map((s) => (s.id === activeSessionId ? { ...s, settings: updater(s.settings) } : s)),
     );
   },
 }));
@@ -565,13 +553,15 @@ if (typeof BroadcastChannel !== 'undefined') {
         }
         const { activeSessionId } = store.getState();
         if (msg.sessionId === activeSessionId) {
-          dbService.getSession(msg.sessionId).then(s => {
+          dbService.getSession(msg.sessionId).then((s) => {
             if (s) {
               const rehydrated = rehydrateSessionFiles(s);
               store.getState().setActiveMessages(rehydrated.messages);
-              store.getState().setSavedSessions(prev =>
-                prev.map(old => old.id === msg.sessionId ? { ...rehydrated, messages: [] } : old)
-              );
+              store
+                .getState()
+                .setSavedSessions((prev) =>
+                  prev.map((old) => (old.id === msg.sessionId ? { ...rehydrated, messages: [] } : old)),
+                );
             }
           });
         } else {
@@ -580,7 +570,7 @@ if (typeof BroadcastChannel !== 'undefined') {
         break;
       }
       case 'SESSION_LOADING': {
-        store.getState().setLoadingSessionIds(prev => {
+        store.getState().setLoadingSessionIds((prev) => {
           const next = new Set(prev);
           if (msg.isLoading) next.add(msg.sessionId);
           else next.delete(msg.sessionId);
