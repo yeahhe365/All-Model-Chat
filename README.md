@@ -31,7 +31,7 @@
 ## 界面预览
 
 <p align="center">
-  <img src="./docs/screenshots/app-desktop-20260424.png" alt="AMC WebUI 桌面端界面预览" width="100%">
+  <img src="./docs/screenshots/app-desktop-20260426.png" alt="AMC WebUI 桌面端界面预览" width="100%">
 </p>
 
 ## 项目简介
