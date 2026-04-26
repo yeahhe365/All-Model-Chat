@@ -279,6 +279,24 @@ export const useAppPromptModes = ({
     async (type: 'homepage' | 'organize' | 'follow-up', text: string) => {
       const { isAutoSendOnSuggestionClick } = appSettings;
 
+      if (type === 'organize' && isCanvasPromptActive) {
+        setPendingCanvasPromptActivation(null);
+        setCanvasPromptOverrideState({
+          active: false,
+          targetSessionId: currentCanvasPromptTargetSessionId,
+        });
+        setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
+        if (activeSessionId) {
+          setCurrentChatSettings((prev) => ({
+            ...prev,
+            systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
+          }));
+        }
+        setCommandedInput({ text: '', id: Date.now(), mode: 'replace' });
+        focusChatInput(0);
+        return;
+      }
+
       if (type === 'organize' && !isCanvasSystemInstruction(currentChatSettings.systemInstruction)) {
         await activateCanvasPrompt(activeSessionId);
       }
@@ -295,9 +313,13 @@ export const useAppPromptModes = ({
       activeSessionId,
       activateCanvasPrompt,
       appSettings,
+      currentCanvasPromptTargetSessionId,
       currentChatSettings.systemInstruction,
       handleSendMessage,
+      isCanvasPromptActive,
       setCommandedInput,
+      setAppSettings,
+      setCurrentChatSettings,
     ],
   );
 

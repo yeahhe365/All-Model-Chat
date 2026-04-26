@@ -444,4 +444,59 @@ describe('useAppPromptModes', () => {
 
     unmount();
   });
+
+  it('turns off canvas prompt and clears only the text input when smart board is clicked while active', async () => {
+    const setAppSettings = vi.fn();
+    const setCurrentChatSettings = vi.fn();
+    const setCommandedInput = vi.fn() as unknown as (command: InputCommand) => void;
+
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: {
+          systemInstruction: CANVAS_PROMPT,
+        } as AppSettings,
+        setAppSettings,
+        activeChat: {
+          id: 'session-1',
+          title: 'Session 1',
+          timestamp: Date.now(),
+          messages: [],
+          settings: {
+            modelId: 'gemini-3-flash-preview',
+            systemInstruction: CANVAS_PROMPT,
+          } as ChatSettings,
+        } as SavedChatSession,
+        activeSessionId: 'session-1',
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: CANVAS_PROMPT,
+        } as ChatSettings,
+        setCurrentChatSettings,
+        handleSendMessage: vi.fn(),
+        setCommandedInput,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSuggestionClick('organize', 'Create interactive HTML board.');
+    });
+
+    expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
+    expect(setCurrentChatSettings).toHaveBeenCalledWith(expect.any(Function));
+
+    const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
+    const chatSettingsUpdater = setCurrentChatSettings.mock.calls.at(-1)?.[0] as (
+      prev: ChatSettings,
+    ) => ChatSettings;
+    expect(appSettingsUpdater({ systemInstruction: CANVAS_PROMPT } as AppSettings).systemInstruction).toBe('');
+    expect(chatSettingsUpdater({ systemInstruction: CANVAS_PROMPT } as ChatSettings).systemInstruction).toBe('');
+    expect(setCommandedInput).toHaveBeenCalledWith({
+      text: '',
+      id: expect.any(Number),
+      mode: 'replace',
+    });
+    expect(mockLoadCanvasSystemPrompt).not.toHaveBeenCalled();
+
+    unmount();
+  });
 });
