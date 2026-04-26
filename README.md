@@ -220,6 +220,20 @@ RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-
 ```
 4. 在后端环境设置 `GEMINI_API_KEY`，并按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。
 
+#### 可选：使用 AIStudioToAPI 作为 Gemini 兼容后端
+
+如果你希望通过 Google AI Studio 网页端账号提供 API 来源，也可以尝试将 [AIStudioToAPI](https://github.com/iBUHub/AIStudioToAPI) 部署为第三方 Gemini 兼容后端。它提供 Gemini Native API 格式的 `/v1beta/*` 接口，可作为 AMC WebUI 的自定义 API 代理地址。
+
+示例：
+
+```text
+RUNTIME_API_PROXY_URL=https://your-aistudio-to-api.example.com/v1beta
+```
+
+在界面中也可以进入 **设置 -> API 配置**，启用“自定义 API 配置 / API 代理”，并填入 AIStudioToAPI 的 Gemini 兼容 Base URL（例如 `http://localhost:7860/v1beta`）。AMC WebUI 中填写的 API Key 应与 AIStudioToAPI 部署时配置的 `API_KEYS` 对应。
+
+注意：AIStudioToAPI 属于第三方项目，请自行评估账号登录、鉴权、限流与公网暴露风险；它可替代 Gemini API 代理来源，但不提供 AMC WebUI 自带的 `/api/live-token` 端点，实时 Live API 如需服务端临时 token 仍需保留兼容实现。
+
 ### 构建与预览
 
 ```bash

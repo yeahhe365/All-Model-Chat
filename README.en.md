@@ -215,6 +215,20 @@ RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-
 
 4. Set `GEMINI_API_KEY` in the backend environment and optionally set `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`.
 
+#### Optional: Use AIStudioToAPI as a Gemini-Compatible Backend
+
+If you want to use a Google AI Studio web account as the API source, you can also try deploying [AIStudioToAPI](https://github.com/iBUHub/AIStudioToAPI) as a third-party Gemini-compatible backend. It exposes Gemini Native API style `/v1beta/*` endpoints and can be used as the custom API proxy for AMC WebUI.
+
+Example:
+
+```text
+RUNTIME_API_PROXY_URL=https://your-aistudio-to-api.example.com/v1beta
+```
+
+You can also open **Settings -> API Configuration**, enable custom API configuration and API proxy, then enter the AIStudioToAPI Gemini-compatible Base URL, such as `http://localhost:7860/v1beta`. The API key entered in AMC WebUI should match one of the `API_KEYS` configured for the AIStudioToAPI deployment.
+
+Note: AIStudioToAPI is a third-party project, so review its account login, authentication, rate limiting, and public exposure risks before use. It can replace the Gemini API proxy source, but it does not provide AMC WebUI's built-in `/api/live-token` endpoint. Realtime Live API flows that need server-issued ephemeral tokens still require a compatible implementation.
+
 ### Build and Preview
 
 ```bash
