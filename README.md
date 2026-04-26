@@ -1,5 +1,9 @@
 # AMC WebUI
 
+<p align="center">
+  <a href="./README.md">中文</a> | <a href="./README.en.md">English</a>
+</p>
+
 <div align="center">
 
   <p>
@@ -7,7 +11,7 @@
   </p>
 
   <p>
-    <a href="https://amc-webui.pages.dev/" target="_blank">
+    <a href="https://all-model-chat.pages.dev/" target="_blank">
       <img src="https://img.shields.io/badge/在线演示-Live_Demo-6366f1?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Online Demo">
     </a>
     <a href="https://github.com/yeahhe365/AMC-WebUI/releases" target="_blank">
@@ -344,7 +348,7 @@ AMC-WebUI/
 
 ## 友链
 
-- [Linux.do](https://linux.do/)：也称 L 站，是一个活跃的中文技术社区，围绕 AI、软件开发、资源分享与前沿资讯展开讨论，社区口号是 “Where possible begins”。
+- [Linux.do](https://linux.do/)：也称 L 站，是一个活跃的中文技术社区，围绕 AI、软件开发、资源分享与前沿资讯展开讨论；社区愿景是“新的理想型社区”，社区文化是“真诚、友善、团结、专业，共建你我引以为荣之社区”。
 
 ---
 
