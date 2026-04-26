@@ -28,7 +28,7 @@ export const useDataExport = ({
             const jsonString = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const date = new Date().toISOString().slice(0, 10);
-            triggerDownload(URL.createObjectURL(blob), `all-model-chat-settings-${date}.json`);
+            triggerDownload(URL.createObjectURL(blob), `amc-webui-settings-${date}.json`);
         } catch (error) {
             logService.error('Failed to export settings', { error });
             alert(t('export_failed_title'));
@@ -49,7 +49,7 @@ export const useDataExport = ({
             const jsonString = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const date = new Date().toISOString().slice(0, 10);
-            triggerDownload(URL.createObjectURL(blob), `all-model-chat-history-${date}.json`);
+            triggerDownload(URL.createObjectURL(blob), `amc-webui-history-${date}.json`);
         } catch (error) {
             logService.error('Failed to export history', { error });
             alert(t('export_failed_title'));
@@ -63,7 +63,7 @@ export const useDataExport = ({
             const jsonString = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const date = new Date().toISOString().slice(0, 10);
-            triggerDownload(URL.createObjectURL(blob), `all-model-chat-scenarios-${date}.json`);
+            triggerDownload(URL.createObjectURL(blob), `amc-webui-scenarios-${date}.json`);
         } catch (error) {
             logService.error('Failed to export scenarios', { error });
             alert(t('export_failed_title'));

@@ -60,7 +60,7 @@ export const useAppTitle = ({
             : `Generating${timeDisplay}... | `;
       }
 
-      const suffix = sessionTitle === 'All Model Chat' ? '' : ' • All Model Chat';
+      const suffix = sessionTitle === 'AMC WebUI' ? '' : ' • AMC WebUI';
       const cleanTitle = sessionTitle || 'New Chat';
       document.title = `${statusPrefix}${cleanTitle}${suffix}`;
     };

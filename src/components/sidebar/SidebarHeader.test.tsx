@@ -28,10 +28,10 @@ describe('SidebarHeader', () => {
       root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="pearl" />);
     });
 
-    const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="All Model Chat"]');
+    const logo = container.querySelector('a[href="https://amc-webui.pages.dev/"] img[alt="AMC WebUI"]');
 
     expect(logo?.getAttribute('src')).toBe('/sidebar-logo.png');
-    expect(container.querySelector('a[href="https://all-model-chat.pages.dev/"] svg')).toBeNull();
+    expect(container.querySelector('a[href="https://amc-webui.pages.dev/"] svg')).toBeNull();
   });
 
   it('uses the dark sidebar logo for the onyx theme', () => {
@@ -39,7 +39,7 @@ describe('SidebarHeader', () => {
       root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="onyx" />);
     });
 
-    const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="All Model Chat"]');
+    const logo = container.querySelector('a[href="https://amc-webui.pages.dev/"] img[alt="AMC WebUI"]');
 
     expect(logo?.getAttribute('src')).toBe('/sidebar-logo-dark.png');
   });

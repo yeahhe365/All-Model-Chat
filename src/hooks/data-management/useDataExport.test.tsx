@@ -164,7 +164,7 @@ describe('useDataExport history roundtrip', () => {
 
     act(() => {
       importHook.result.current.handleImportHistory(
-        new File(['history'], 'all-model-chat-history.json', { type: 'application/json' }),
+        new File(['history'], 'amc-webui-history.json', { type: 'application/json' }),
       );
     });
 

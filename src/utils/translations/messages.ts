@@ -55,7 +55,7 @@ export const messagesTranslations = {
     },
     suggestion_html_short: { en: 'Create interactive HTML board.', zh: '创建交互式 HTML 看板。' },
 
-    welcome_title: { en: 'Welcome to All Model Chat', zh: '欢迎使用 All Model Chat' },
+    welcome_title: { en: 'Welcome to AMC WebUI', zh: '欢迎使用 AMC WebUI' },
     welcome_p1: { en: 'Start a conversation by typing below. You can also attach files, load scenarios via the', zh: '在下方输入文字开始对话。您也可以附加文件，或通过' },
     welcome_p2: { en: 'Preset Scenarios', zh: '预设场景' },
     welcome_p3: { en: 'button, or configure settings.', zh: '按钮加载场景，或进行设置。' },

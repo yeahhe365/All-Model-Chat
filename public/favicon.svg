@@ -1,5 +1,5 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">All Model Chat icon</title>
+  <title id="title">AMC WebUI icon</title>
   <desc id="desc">An Android-style app icon with a blue to teal rounded-square background and two overlapping chat bubbles.</desc>
   <defs>
     <linearGradient id="bg" x1="76" y1="68" x2="438" y2="444" gradientUnits="userSpaceOnUse">

@@ -49,7 +49,7 @@ const MiniSidebarButton = ({ onClick, icon: Icon, title, href }: { onClick: () =
                     onClick();
                   }
                 }}
-                className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] no-underline"
+                className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] no-underline cursor-pointer"
                 title={title}
                 aria-label={title}
             >
@@ -63,7 +63,7 @@ const MiniSidebarButton = ({ onClick, icon: Icon, title, href }: { onClick: () =
               e.stopPropagation();
               onClick();
             }}
-            className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
+            className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] cursor-pointer"
             title={title}
             aria-label={title}
         >
@@ -183,11 +183,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
             newChatShortcut={newChatShortcut}
         />
         <div 
-            className="flex-grow overflow-y-auto custom-scrollbar p-2"
+            className="flex-grow overflow-y-auto custom-scrollbar p-2 cursor-ew-resize"
             onClick={handleEmptySpaceClick}
         >
             {sessions.length === 0 && !searchQuery ? (
-            <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
+            <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)] cursor-auto">{t('history_empty')}</p>
             ) : (
             <div 
                 ref={listParentRef}
@@ -195,7 +195,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                 onDrop={(e) => handleDrop(e, 'all-conversations')} 
                 onDragEnter={() => setDragOverId('all-conversations')} 
                 onDragLeave={handleMainDragLeave} 
-                className={`rounded-lg transition-colors min-h-[50px] ${dragOverId === 'all-conversations' ? 'bg-[var(--theme-bg-accent)] bg-opacity-10 ring-2 ring-[var(--theme-bg-accent)] ring-inset ring-opacity-50' : ''}`}
+                className={`rounded-lg transition-colors min-h-[50px] cursor-auto ${dragOverId === 'all-conversations' ? 'bg-[var(--theme-bg-accent)] bg-opacity-10 ring-2 ring-[var(--theme-bg-accent)] ring-inset ring-opacity-50' : ''}`}
             >
                 {sortedGroups.map(group => (
                 <GroupItem 
@@ -246,7 +246,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
 
       <div 
         aria-hidden={isOpen}
-        className={`hidden md:flex absolute inset-0 flex-col items-center py-4 h-full gap-[0.56rem] w-full min-w-[52.2px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors transition-opacity duration-200 ${
+        className={`hidden md:flex absolute inset-0 flex-col items-center py-4 h-full gap-[0.56rem] w-full min-w-[52.2px] cursor-ew-resize hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors transition-opacity duration-200 ${
           isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
         onClick={onToggle}

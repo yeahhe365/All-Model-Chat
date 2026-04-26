@@ -4,7 +4,7 @@ import React, { useId } from 'react';
 export const AppLogo: React.FC<{ className?: string; style?: React.CSSProperties; ariaLabel?: string }> = ({
   className,
   style,
-  ariaLabel = 'All Model Chat Logo',
+  ariaLabel = 'AMC WebUI Logo',
 }) => {
   const idPrefix = useId();
   const gradientId = `techGradient-${idPrefix.replace(/:/g, '')}`;

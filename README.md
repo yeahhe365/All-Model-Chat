@@ -1,17 +1,17 @@
-# All Model Chat
+# AMC WebUI
 
 <div align="center">
 
   <p>
-    <strong>基于 Google Gemini API 的全能 AI 交互工作台</strong>
+    <strong>All-in-one Model Console WebUI，基于 Google Gemini API 的全能 AI 交互工作台</strong>
   </p>
 
   <p>
-    <a href="https://all-model-chat.pages.dev/" target="_blank">
+    <a href="https://amc-webui.pages.dev/" target="_blank">
       <img src="https://img.shields.io/badge/在线演示-Live_Demo-6366f1?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Online Demo">
     </a>
-    <a href="https://github.com/yeahhe365/All-Model-Chat/releases" target="_blank">
-      <img src="https://img.shields.io/github/v/release/yeahhe365/All-Model-Chat?style=for-the-badge&color=3b82f6" alt="Release">
+    <a href="https://github.com/yeahhe365/AMC-WebUI/releases" target="_blank">
+      <img src="https://img.shields.io/github/v/release/yeahhe365/AMC-WebUI?style=for-the-badge&color=3b82f6" alt="Release">
     </a>
     <img src="https://img.shields.io/badge/许可证-MIT-green?style=for-the-badge" alt="License">
   </p>
@@ -31,12 +31,12 @@
 ## 界面预览
 
 <p align="center">
-  <img src="./docs/screenshots/app-desktop-20260424.png" alt="All Model Chat 桌面端界面预览" width="100%">
+  <img src="./docs/screenshots/app-desktop-20260424.png" alt="AMC WebUI 桌面端界面预览" width="100%">
 </p>
 
 ## 项目简介
 
-**All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据默认存储于浏览器 IndexedDB，在保障隐私的同时提供流畅体验；同时支持新增的独立后端部署模式，用于服务端托管 Gemini 密钥与代理请求。
+**AMC WebUI** 是一款基于 React 18 的 All-in-one Model Console WebUI，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据默认存储于浏览器 IndexedDB，在保障隐私的同时提供流畅体验；同时支持新增的独立后端部署模式，用于服务端托管 Gemini 密钥与代理请求。
 
 当前仓库围绕 **Vite + React SPA** 作为唯一主线构建形态：
 - **标准模式**：本地通过 Vite 开发 / 构建，适合日常开发与静态部署
@@ -132,8 +132,8 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yeahhe365/All-Model-Chat.git
-cd All-Model-Chat
+git clone https://github.com/yeahhe365/AMC-WebUI.git
+cd AMC-WebUI
 
 # 安装依赖
 npm install
@@ -288,7 +288,7 @@ GEMINI_API_KEY=your_key_here npm run verify:code-execution:api
 ## 项目结构
 
 ```
-All-Model-Chat/
+AMC-WebUI/
 ├── src/                        # 前端应用源码（Vite SPA）
 │   ├── components/             # UI 组件（chat / message / layout / settings / modals 等）
 │   ├── hooks/                  # 业务 hooks（app / chat / chat-input / data-management / live-api / ui）
@@ -336,9 +336,15 @@ All-Model-Chat/
 
 我们欢迎任何形式的贡献！
 
-1. **报告问题**：提交 [GitHub Issue](https://github.com/yeahhe365/All-Model-Chat/issues)
+1. **报告问题**：提交 [GitHub Issue](https://github.com/yeahhe365/AMC-WebUI/issues)
 2. **代码贡献**：Fork 仓库 -> 创建特性分支 -> 提交 Pull Request
 3. **支持作者**：点个 **Star** 或前往 [爱发电](https://afdian.com/a/gemini-nexus) 支持持续开发
+
+---
+
+## 友链
+
+- [Linux.do](https://linux.do/)：也称 L 站，是一个活跃的中文技术社区，围绕 AI、软件开发、资源分享与前沿资讯展开讨论，社区口号是 “Where possible begins”。
 
 ---
 

@@ -1,7 +1,7 @@
 {
-  "name": "All Model Chat",
-  "short_name": "All Model Chat",
-  "description": "A React-based chatbot interface that interacts with the Gemini API, featuring system message configuration, streaming responses, context management, and model selection.",
+  "name": "AMC WebUI",
+  "short_name": "AMC WebUI",
+  "description": "A local-first WebUI for Gemini and AI workflows, featuring multimodal chat, Canvas previews, file processing, streaming responses, and model selection.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

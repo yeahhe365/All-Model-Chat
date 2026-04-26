@@ -70,7 +70,7 @@ export const CreateFilePdfExportSurface: React.FC<CreateFilePdfExportSurfaceProp
           />
         </div>
         <div className="mt-8 border-t border-[var(--theme-border-secondary)] pt-4 text-center text-xs text-[var(--theme-text-tertiary)]">
-          Generated with Markflow AI (All Model Chat)
+          Generated with AMC WebUI
         </div>
       </div>
     </div>

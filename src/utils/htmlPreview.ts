@@ -1,4 +1,4 @@
-export const HTML_PREVIEW_MESSAGE_CHANNEL = 'all-model-chat-html-preview';
+export const HTML_PREVIEW_MESSAGE_CHANNEL = 'amc-webui-html-preview';
 
 const PREVIEW_BRIDGE_SCRIPT = `<script>
 (() => {

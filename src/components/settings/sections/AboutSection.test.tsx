@@ -79,10 +79,10 @@ describe('AboutSection', () => {
       );
     });
 
-    const logo = container.querySelector('img[alt="All Model Chat 标志"]');
+    const logo = container.querySelector('img[alt="AMC WebUI 标志"]');
 
     expect(logo?.getAttribute('src')).toBe('/about-logo.png');
-    expect(container.querySelector('svg[aria-label="All Model Chat 标志"]')).toBeNull();
+    expect(container.querySelector('svg[aria-label="AMC WebUI 标志"]')).toBeNull();
   });
 
   it('uses the dark about logo for the resolved onyx theme', async () => {
@@ -99,7 +99,7 @@ describe('AboutSection', () => {
       );
     });
 
-    const logo = container.querySelector('img[alt="All Model Chat 标志"]');
+    const logo = container.querySelector('img[alt="AMC WebUI 标志"]');
 
     expect(logo?.getAttribute('src')).toBe('/about-logo-dark.png');
   });
@@ -115,7 +115,7 @@ describe('AboutSection', () => {
     });
 
     expect(container.querySelector('h3')).toBeNull();
-    expect(container.textContent).not.toContain('All Model Chat');
+    expect(container.textContent).not.toContain('AMC WebUI');
   });
 
   it('localizes release status copy and mirrors the package version', async () => {
@@ -138,7 +138,7 @@ describe('AboutSection', () => {
       );
     });
 
-    const releaseLink = container.querySelector('a[href="https://github.com/yeahhe365/All-Model-Chat/releases"]');
+    const releaseLink = container.querySelector('a[href="https://github.com/yeahhe365/AMC-WebUI/releases"]');
 
     expect(container.textContent).toContain(`v${packageVersion}`);
     expect(container.textContent).toContain('测试版');
@@ -166,7 +166,7 @@ describe('AboutSection', () => {
       );
     });
 
-    const releaseLink = container.querySelector('a[href="https://github.com/yeahhe365/All-Model-Chat/releases"]');
+    const releaseLink = container.querySelector('a[href="https://github.com/yeahhe365/AMC-WebUI/releases"]');
 
     expect(releaseLink?.getAttribute('title')).toBe('有新版本：1.8.9');
   });

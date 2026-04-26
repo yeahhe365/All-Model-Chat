@@ -68,7 +68,7 @@ export const showNotification = async (title: string, options?: NotificationOpti
     // The 'renotify' property ensures that even with the same tag, the user is alerted.
     const notification = new Notification(title, {
       ...options,
-      tag: 'all-model-chat-response',
+      tag: 'amc-webui-response',
       renotify: true,
     } as NotificationOptionsWithTag);
 
