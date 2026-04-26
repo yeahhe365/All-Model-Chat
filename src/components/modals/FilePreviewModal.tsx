@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { useI18n } from '../../contexts/I18nContext';
 import { Modal } from '../shared/Modal';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
-import { FilePreviewHeader } from '../shared/file-preview/FilePreviewHeader';
+import { FilePreviewHeader, type FilePreviewHeaderHandle } from '../shared/file-preview/FilePreviewHeader';
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
 import { IconYoutube } from '../icons/CustomIcons';
@@ -58,51 +58,17 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
           : null,
   );
   const [isDocxPreviewLoading, setIsDocxPreviewLoading] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const copyFeedbackTimeoutRef = useRef<number | null>(null);
-
-  const showCopyFeedback = useCallback(() => {
-      setIsCopied(true);
-
-      if (copyFeedbackTimeoutRef.current !== null) {
-          window.clearTimeout(copyFeedbackTimeoutRef.current);
-      }
-
-      copyFeedbackTimeoutRef.current = window.setTimeout(() => {
-          setIsCopied(false);
-          copyFeedbackTimeoutRef.current = null;
-      }, 2000);
-  }, []);
-
-  useEffect(() => {
-      return () => {
-          if (copyFeedbackTimeoutRef.current !== null) {
-              window.clearTimeout(copyFeedbackTimeoutRef.current);
-          }
-      };
-  }, []);
-
-  const handleCopyFile = useCallback(async (showFailureAlert: boolean) => {
-      if (!file.dataUrl) return;
-
-      try {
-          await copyFileToClipboard(file);
-          showCopyFeedback();
-      } catch (err) {
-          console.error('Failed to copy content:', err);
-          if (showFailureAlert) {
-              alert(t('filePreview_copy_failed'));
-          }
-      }
-  }, [file, showCopyFeedback, t]);
-
-  const handleCopyButton = useCallback(() => {
-      void handleCopyFile(true);
-  }, [handleCopyFile]);
+  const filePreviewHeaderRef = useRef<FilePreviewHeaderHandle>(null);
 
   const handleCopyShortcut = useCallback(async () => {
-      await handleCopyFile(false);
-  }, [handleCopyFile]);
+      if (!file.dataUrl) return;
+      try {
+          await copyFileToClipboard(file);
+          filePreviewHeaderRef.current?.showCopyFeedback();
+      } catch (err) {
+          console.error('Failed to copy content:', err);
+      }
+  }, [file]);
 
   useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
@@ -234,10 +200,9 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
         </h2>
 
         <FilePreviewHeader
+          ref={filePreviewHeaderRef}
           file={file}
           onClose={onClose}
-          isCopied={isCopied}
-          onCopy={handleCopyButton}
           isEditable={isEditing}
           onToggleEdit={isText && onSaveText ? handleToggleEdit : undefined}
           onSave={handleSave}

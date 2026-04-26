@@ -57,24 +57,32 @@ vi.mock('../shared/Modal', () => ({
   Modal: ({ children }: { children: React.ReactNode }) => <div data-testid="modal-shell">{children}</div>,
 }));
 
-vi.mock('../shared/file-preview/FilePreviewHeader', () => ({
-  FilePreviewHeader: ({
-    isCopied = false,
-    onCopy,
-  }: {
-    isCopied?: boolean;
-    onCopy?: () => void;
-  }) => (
-    <button
-      type="button"
-      data-testid="file-preview-copy-button"
-      data-copied={isCopied ? 'true' : 'false'}
-      onClick={onCopy}
-    >
-      {isCopied ? 'Copied' : 'Copy'}
-    </button>
-  ),
-}));
+vi.mock('../shared/file-preview/FilePreviewHeader', async () => {
+  const React = await import('react');
+
+  const FilePreviewHeader = React.forwardRef<{ showCopyFeedback: () => void }>((_, ref) => {
+    const [isCopied, setIsCopied] = React.useState(false);
+
+    React.useImperativeHandle(ref, () => ({
+      showCopyFeedback: () => setIsCopied(true),
+    }), []);
+
+    return (
+      <button
+        type="button"
+        data-testid="file-preview-copy-button"
+        data-copied={isCopied ? 'true' : 'false'}
+        onClick={() => setIsCopied(true)}
+      >
+        {isCopied ? 'Copied' : 'Copy'}
+      </button>
+    );
+  });
+
+  FilePreviewHeader.displayName = 'MockFilePreviewHeader';
+
+  return { FilePreviewHeader };
+});
 
 vi.mock('../shared/file-preview/TextFileViewer', () => ({
   TextFileViewer: mockTextFileViewer,
