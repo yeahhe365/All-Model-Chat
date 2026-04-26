@@ -27,5 +27,5 @@ export const generalSettings = {
     usageRequestsColumn: { en: 'Requests', zh: '请求次数' },
     usagePriceColumn: { en: 'Price', zh: '价格' },
     usagePriceUnavailable: { en: 'Unavailable', zh: '不可用' },
-    usagePricingNote: { en: 'Strict official mode: price is shown only when the app has exact billing evidence, either from provider modality details or from proven local text-only request/response structure. Older records created before exact billing metadata was captured may still show unavailable. Explicit cache storage charges are excluded because cache TTL is not stored.', zh: '严格官方模式：仅当应用拥有精确定价证据时才显示价格，这些证据要么来自官方返回的模态明细，要么来自本地可证明的纯文本请求/响应结构。在补齐精确定价元数据之前产生的旧记录，仍可能显示不可用。由于没有保存缓存 TTL，显式缓存的存储费用不会计入。' },
+    usagePricingNote: { en: 'Strict official mode: prices include only records with exact billing evidence, either from provider modality details or from proven local text-only request/response structure. Rows may show a partial amount with an unavailable-record count when older or unsupported records cannot be priced. Explicit cache storage charges are excluded because cache TTL is not stored.', zh: '严格官方模式：价格仅汇总拥有精确定价证据的记录，这些证据要么来自官方返回的模态明细，要么来自本地可证明的纯文本请求/响应结构。当旧记录或不支持的记录无法定价时，行内会显示部分金额以及不可定价记录数。由于没有保存缓存 TTL，显式缓存的存储费用不会计入。' },
 };

@@ -126,8 +126,9 @@ describe('UsageOverviewTab', () => {
     expect(container.textContent).toContain('530,020');
     expect(container.textContent).toContain('2,085,030');
     expect(container.textContent).toContain('Cached Tokens');
-    expect(container.textContent).toContain('—');
     expect(container.textContent).toContain('$2.48');
+    expect(container.textContent).toContain('2 unavailable');
+    expect(container.textContent).toContain('—');
     expect(container.textContent).toContain('gemini-3.1-pro-preview');
     expect(container.textContent).toContain('gemini-3-flash-preview');
     expect(container.textContent).toContain('imagen-4.0-generate-001');

@@ -14,7 +14,7 @@ const RANGE_OPTIONS: Array<{ value: UsageTimeRange; labelKey: string }> = [
 
 const StatCard: React.FC<{
   title: string;
-  value: string;
+  value: React.ReactNode;
   icon: React.ReactNode;
 }> = ({ title, value, icon }) => (
   <div className="rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-4 shadow-sm">
@@ -26,8 +26,31 @@ const StatCard: React.FC<{
   </div>
 );
 
+const getUnavailablePriceLabel = (count: number, language: 'en' | 'zh') =>
+  language === 'zh' ? `${count.toLocaleString()} 条不可定价` : `${count.toLocaleString()} unavailable`;
+
+const PriceValue: React.FC<{
+  amount: number;
+  pricedRequests: number;
+  unavailableRequests: number;
+  language: 'en' | 'zh';
+}> = ({ amount, pricedRequests, unavailableRequests, language }) => {
+  const hasPricedAmount = pricedRequests > 0;
+
+  return (
+    <span className="inline-flex flex-col items-end gap-0.5">
+      <span>{hasPricedAmount ? formatPriceUsd(amount) : '—'}</span>
+      {unavailableRequests > 0 && (
+        <span className="text-[11px] font-medium text-[var(--theme-text-tertiary)]">
+          {getUnavailablePriceLabel(unavailableRequests, language)}
+        </span>
+      )}
+    </span>
+  );
+};
+
 export const UsageOverviewTab: React.FC = () => {
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const { timeRange, setTimeRange, isLoading, summary, byModel } = useUsageStats();
 
   return (
@@ -73,7 +96,18 @@ export const UsageOverviewTab: React.FC = () => {
               <StatCard title={t('usageCachedTokens')} value={summary.totalCachedPromptTokens.toLocaleString()} icon={<Coins size={14} />} />
               <StatCard title={t('usageCompletionTokens')} value={summary.totalCompletionTokens.toLocaleString()} icon={<Coins size={14} />} />
               <StatCard title={t('usageTotalTokens')} value={summary.totalTokens.toLocaleString()} icon={<Coins size={14} />} />
-              <StatCard title={t('usageEstimatedCost')} value={summary.estimatedCostUsdAvailable ? formatPriceUsd(summary.estimatedCostUsd) : '—'} icon={<Coins size={14} />} />
+              <StatCard
+                title={t('usageEstimatedCost')}
+                value={(
+                  <PriceValue
+                    amount={summary.estimatedCostUsd}
+                    pricedRequests={summary.estimatedCostPricedRequests}
+                    unavailableRequests={summary.estimatedCostUnavailableRequests}
+                    language={language}
+                  />
+                )}
+                icon={<Coins size={14} />}
+              />
             </div>
 
             <div className="rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-5 shadow-sm">
@@ -135,7 +169,12 @@ export const UsageOverviewTab: React.FC = () => {
                             {item.totalTokens.toLocaleString()}
                           </td>
                           <td className="px-4 py-3 text-right text-sm font-mono font-semibold text-[var(--theme-text-primary)]">
-                            {item.estimatedCostUsdAvailable ? formatPriceUsd(item.estimatedCostUsd) : '—'}
+                            <PriceValue
+                              amount={item.estimatedCostUsd}
+                              pricedRequests={item.estimatedCostPricedRequests}
+                              unavailableRequests={item.estimatedCostUnavailableRequests}
+                              language={language}
+                            />
                           </td>
                         </tr>
                       ))}

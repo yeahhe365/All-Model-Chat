@@ -11,7 +11,8 @@ interface UsageSummary {
   totalCompletionTokens: number;
   totalTokens: number;
   estimatedCostUsd: number;
-  estimatedCostUsdAvailable: boolean;
+  estimatedCostPricedRequests: number;
+  estimatedCostUnavailableRequests: number;
 }
 
 interface UsageModelBreakdown extends UsageSummary {
@@ -25,7 +26,8 @@ const EMPTY_SUMMARY: UsageSummary = {
   totalCompletionTokens: 0,
   totalTokens: 0,
   estimatedCostUsd: 0,
-  estimatedCostUsdAvailable: true,
+  estimatedCostPricedRequests: 0,
+  estimatedCostUnavailableRequests: 0,
 };
 
 const getRangeBounds = (range: UsageTimeRange) => {
@@ -61,7 +63,8 @@ const buildSummary = (records: ApiUsageRecord[]): UsageSummary =>
         totalCompletionTokens: summary.totalCompletionTokens + outputTokens,
         totalTokens: summary.totalTokens + totalTokens,
         estimatedCostUsd: summary.estimatedCostUsd + (estimatedCost ?? 0),
-        estimatedCostUsdAvailable: summary.estimatedCostUsdAvailable && estimatedCost !== null,
+        estimatedCostPricedRequests: summary.estimatedCostPricedRequests + (estimatedCost === null ? 0 : 1),
+        estimatedCostUnavailableRequests: summary.estimatedCostUnavailableRequests + (estimatedCost === null ? 1 : 0),
       };
     },
     EMPTY_SUMMARY,
@@ -78,7 +81,6 @@ const buildBreakdown = (records: ApiUsageRecord[]): UsageModelBreakdown[] => {
     const current = grouped.get(record.modelId) ?? {
       modelId: record.modelId,
       ...EMPTY_SUMMARY,
-      estimatedCostUsdAvailable: true,
     };
 
     const estimatedCost = calculateApiUsageRecordPriceUsd(record);
@@ -89,7 +91,8 @@ const buildBreakdown = (records: ApiUsageRecord[]): UsageModelBreakdown[] => {
     current.totalCompletionTokens += outputTokens;
     current.totalTokens += totalTokens;
     current.estimatedCostUsd += estimatedCost ?? 0;
-    current.estimatedCostUsdAvailable = current.estimatedCostUsdAvailable && estimatedCost !== null;
+    current.estimatedCostPricedRequests += estimatedCost === null ? 0 : 1;
+    current.estimatedCostUnavailableRequests += estimatedCost === null ? 1 : 0;
     grouped.set(record.modelId, current);
   });
 
