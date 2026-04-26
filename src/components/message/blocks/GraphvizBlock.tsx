@@ -13,7 +13,12 @@ let vizInstancePromise: Promise<VizInstance> | null = null;
 
 const loadVizInstance = async () => {
   if (!vizInstancePromise) {
-    vizInstancePromise = import('@viz-js/viz').then(({ instance }) => instance());
+    vizInstancePromise = import('@viz-js/viz')
+      .then(({ instance }) => instance())
+      .catch((error) => {
+        vizInstancePromise = null;
+        throw error;
+      });
   }
   return vizInstancePromise;
 };
@@ -92,15 +97,20 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         return;
     }
 
-    if (!code) return;
-
-    if (!vizInstanceRef.current) {
-        vizInstanceRef.current = await loadVizInstance();
-    }
-    
     setIsRendering(true);
 
     try {
+      if (!code) {
+        setSvgContent('');
+        setError('');
+        setIsRendering(false);
+        return;
+      }
+
+      if (!vizInstanceRef.current) {
+          vizInstanceRef.current = await loadVizInstance();
+      }
+
       let processedCode = code;
       
       const rankdirRegex = /(rankdir\s*=\s*)(["']?)(LR|TB|RL|BT)\2/gi;
