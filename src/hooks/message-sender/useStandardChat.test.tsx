@@ -13,6 +13,7 @@ const {
   mockCreateStandardClientFunctions,
   mockSendMessageStream,
   mockSendMessageNonStream,
+  mockModelCapabilities,
 } = vi.hoisted(() => ({
   mockBuildContentParts: vi.fn(),
   mockCreateChatHistoryForApi: vi.fn(),
@@ -23,6 +24,10 @@ const {
   mockCreateStandardClientFunctions: vi.fn(),
   mockSendMessageStream: vi.fn(),
   mockSendMessageNonStream: vi.fn(),
+  mockModelCapabilities: vi.fn((id: string) => ({
+    isGemini3: id.includes('gemini-3'),
+    supportsRawReasoningPrefill: false,
+  })),
 }));
 
 vi.mock('../../services/logService', () => ({
@@ -63,11 +68,11 @@ vi.mock('../../utils/modelHelpers', () => ({
   isGemini3Model: vi.fn((id: string) => id.includes('gemini-3')),
   isImageModel: vi.fn((id: string) => id.includes('image')),
   shouldStripThinkingFromContext: vi.fn(() => false),
+  getModelCapabilities: mockModelCapabilities,
 }));
 
 vi.mock('../../constants/appConstants', () => ({
   DEFAULT_CHAT_SETTINGS: {},
-  MODELS_SUPPORTING_RAW_MODE: [],
 }));
 
 vi.mock('../../services/api/generationConfig', () => ({
@@ -168,6 +173,10 @@ describe('useStandardChat', () => {
     });
     mockSendMessageStream.mockResolvedValue(undefined);
     mockSendMessageNonStream.mockResolvedValue(undefined);
+    mockModelCapabilities.mockImplementation((id: string) => ({
+      isGemini3: id.includes('gemini-3'),
+      supportsRawReasoningPrefill: false,
+    }));
   });
 
   it('passes the local-python flag into generation config when the client tool is enabled', async () => {
@@ -531,6 +540,122 @@ describe('useStandardChat', () => {
       { totalTokenCount: 7 },
       { citations: [{ uri: 'https://example.com/grounding' }] },
       { visitedUrls: ['https://example.com/article'] },
+    );
+
+    unmount();
+  });
+
+  it('sends raw reasoning non-stream turns as model-prefill continuations', async () => {
+    const streamOnError = vi.fn();
+    const streamOnComplete = vi.fn();
+    const streamOnPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete,
+      streamOnPart,
+      onThoughtChunk,
+    }));
+
+    mockModelCapabilities.mockImplementation((id: string) => ({
+      isGemini3: id.includes('gemini-3'),
+      supportsRawReasoningPrefill: id === 'gemini-3-flash-preview',
+    }));
+    mockCreateStandardClientFunctions.mockReturnValue({});
+    mockSendMessageNonStream.mockImplementation(
+      async (
+        _apiKey,
+        _modelId,
+        _history,
+        _parts,
+        _config,
+        _signal,
+        _onError,
+        onComplete,
+      ) => {
+        onComplete([{ text: 'raw answer' }]);
+      },
+    );
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          hideThinkingInContext: false,
+          isRawModeEnabled: true,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: false,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: false,
+          isCodeExecutionEnabled: false,
+          isLocalPythonEnabled: false,
+          isUrlContextEnabled: false,
+          isDeepSearchEnabled: false,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          isRawModeEnabled: true,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.sendStandardMessage(
+        'show raw reasoning',
+        [],
+        null,
+        'gemini-3-flash-preview',
+      );
+    });
+
+    expect(mockCreateChatHistoryForApi).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: 'temp-raw-user',
+          role: 'user',
+          content: 'show raw reasoning',
+        }),
+      ],
+      false,
+      'gemini-3-flash-preview',
+      false,
+    );
+    expect(mockSendMessageNonStream).toHaveBeenCalledWith(
+      'api-key',
+      'gemini-3-flash-preview',
+      [],
+      [{ text: '<thinking>' }],
+      expect.any(Object),
+      expect.any(AbortSignal),
+      streamOnError,
+      expect.any(Function),
+      'model',
     );
 
     unmount();

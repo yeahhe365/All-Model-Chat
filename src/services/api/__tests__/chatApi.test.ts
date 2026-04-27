@@ -117,6 +117,39 @@ describe('chatApi media resolution routing', () => {
     });
   });
 
+  it('uses the provided role for non-stream prefilled model turns', async () => {
+    mockGenerateContent.mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'done' }],
+          },
+        },
+      ],
+    });
+
+    await sendStatelessMessageNonStreamApi(
+      'key',
+      'gemini-3-flash-preview',
+      [{ role: 'user', parts: [{ text: 'Question' }] }],
+      [{ text: '<thinking>' }],
+      {},
+      new AbortController().signal,
+      vi.fn(),
+      vi.fn(),
+      'model',
+    );
+
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contents: [
+          { role: 'user', parts: [{ text: 'Question' }] },
+          { role: 'model', parts: [{ text: '<thinking>' }] },
+        ],
+      }),
+    );
+  });
+
   it('accumulates streamed grounding metadata across chunks', async () => {
     mockGenerateContentStream.mockResolvedValue(
       (async function* () {

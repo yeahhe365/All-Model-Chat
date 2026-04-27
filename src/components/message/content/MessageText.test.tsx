@@ -3,6 +3,13 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageText } from './MessageText';
 
+const { mockUseMessageStream } = vi.hoisted(() => ({
+  mockUseMessageStream: vi.fn(() => ({
+    streamContent: '',
+    streamThoughts: '',
+  })),
+}));
+
 vi.mock('../../../contexts/I18nContext', () => ({
   useI18n: () => ({
     t: (key: string) => key,
@@ -14,7 +21,9 @@ vi.mock('../GroundedResponse', () => ({
 }));
 
 vi.mock('../LazyMarkdownRenderer', () => ({
-  LazyMarkdownRenderer: () => <div data-testid="markdown-renderer" />,
+  LazyMarkdownRenderer: ({ content }: { content: string }) => (
+    <div data-testid="markdown-renderer">{content}</div>
+  ),
 }));
 
 vi.mock('../../icons/GoogleSpinner', () => ({
@@ -26,15 +35,16 @@ vi.mock('../../../hooks/ui/useSmoothStreaming', () => ({
 }));
 
 vi.mock('../../../hooks/ui/useMessageStream', () => ({
-  useMessageStream: () => ({
-    streamContent: '',
-    streamThoughts: '',
-  }),
+  useMessageStream: mockUseMessageStream,
 }));
 
 describe('MessageText', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    mockUseMessageStream.mockReturnValue({
+      streamContent: '',
+      streamThoughts: '',
+    });
   });
 
   afterEach(() => {
@@ -146,5 +156,85 @@ describe('MessageText', () => {
     });
 
     expect(onOpenHtmlPreview).not.toHaveBeenCalled();
+  });
+
+  it('omits live raw reasoning markup from the visible answer body', () => {
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    mockUseMessageStream.mockReturnValue({
+      streamContent: 'drafting the answer',
+      streamThoughts: '',
+    });
+
+    act(() => {
+      root.render(
+        <MessageText
+          message={{
+            id: 'message-raw',
+            role: 'model',
+            content: '<thinking>',
+            isLoading: true,
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={false}
+          appSettings={{
+            autoFullscreenHtml: false,
+            hideThinkingInContext: true,
+          } as any}
+          themeId="pearl"
+          baseFontSize={16}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="markdown-renderer"]')).toBeNull();
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('renders only the answer body when raw thinking is embedded in content', () => {
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    act(() => {
+      root.render(
+        <MessageText
+          message={{
+            id: 'message-raw-complete',
+            role: 'model',
+            content: '<thinking>Plan carefully.</thinking>\nFinal answer.',
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={true}
+          appSettings={{
+            autoFullscreenHtml: false,
+            hideThinkingInContext: false,
+          } as any}
+          themeId="pearl"
+          baseFontSize={16}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe('Final answer.');
+
+    act(() => {
+      root.unmount();
+    });
   });
 });

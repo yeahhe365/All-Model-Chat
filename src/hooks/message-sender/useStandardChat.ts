@@ -5,8 +5,8 @@ import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { performOptimisticSessionUpdate, generateSessionTitle, createMessage } from '../../utils/chat/session';
-import { isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '../../utils/modelHelpers';
-import { DEFAULT_CHAT_SETTINGS, MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
+import { getModelCapabilities, isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '../../utils/modelHelpers';
+import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { StandardChatProps } from './types';
 import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/generationConfig';
@@ -451,7 +451,8 @@ export const useStandardChat = ({
             onThoughtChunk(thoughts);
           }
           streamOnComplete(usage, grounding, urlContext);
-        }
+        },
+        finalRole
       );
     },
     [
@@ -552,7 +553,7 @@ export const useStandardChat = ({
       const isRawMode = Boolean(
         (settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled) &&
           !isContinueMode &&
-          MODELS_SUPPORTING_RAW_MODE.some((model) => activeModelId.includes(model))
+          getModelCapabilities(activeModelId).supportsRawReasoningPrefill
       );
 
       updateSessionState({

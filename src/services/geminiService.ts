@@ -149,10 +149,11 @@ class GeminiServiceImpl implements GeminiService {
         config,
         abortSignal,
         onError,
-        onComplete
+        onComplete,
+        role = 'user'
     ) => {
         return sendStatelessMessageNonStreamApi(
-            apiKey, modelId, history, parts, config, abortSignal, onError, onComplete
+            apiKey, modelId, history, parts, config, abortSignal, onError, onComplete, role
         );
     };
 }

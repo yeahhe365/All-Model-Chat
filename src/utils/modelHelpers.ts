@@ -1,6 +1,6 @@
 
 import { ModelOption } from '../types';
-import { GEMINI_3_RO_MODELS, THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../constants/appConstants';
+import { GEMINI_3_RO_MODELS, THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING, MODELS_SUPPORTING_RAW_MODE } from '../constants/appConstants';
 import { MediaResolution } from '../types/settings';
 import type { UsageMetadata } from '@google/genai';
 
@@ -146,6 +146,7 @@ export const getModelCapabilities = (modelId: string) => {
 
     return {
         isGemini3,
+        supportsRawReasoningPrefill: MODELS_SUPPORTING_RAW_MODE.some((model) => modelId.includes(model)),
         supportsThinkingLevel: supportsThinkingLevelSelection,
         isGemmaModel: isGemmaModel(modelId),
         isGemini3ImageModel: gemini3ImageModel,
