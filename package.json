@@ -76,7 +76,7 @@
     "unified": "^11.0.5",
     "vite": "^5.3.3",
     "vite-plugin-pwa": "^1.2.0",
-    "vite-plugin-static-copy": "^1.0.0",
+    "vite-plugin-static-copy": "^2.3.2",
     "vitest": "^4.1.2",
     "workbox-core": "^7.4.0",
     "workbox-precaching": "^7.4.0",
