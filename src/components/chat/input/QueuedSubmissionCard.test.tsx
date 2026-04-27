@@ -30,13 +30,7 @@ describe('QueuedSubmissionCard', () => {
   it('localizes attachment counts and action labels', async () => {
     await act(async () => {
       root.render(
-        <QueuedSubmissionCard
-          title="queued"
-          previewText="preview"
-          fileCount={2}
-          onEdit={vi.fn()}
-          onRemove={vi.fn()}
-        />,
+        <QueuedSubmissionCard title="queued" previewText="preview" fileCount={2} onEdit={vi.fn()} onRemove={vi.fn()} />,
       );
     });
 

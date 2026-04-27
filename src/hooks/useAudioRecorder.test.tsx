@@ -2,11 +2,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  mockUseRecorder,
-  mockCreateObjectURL,
-  mockRevokeObjectURL,
-} = vi.hoisted(() => ({
+const { mockUseRecorder, mockCreateObjectURL, mockRevokeObjectURL } = vi.hoisted(() => ({
   mockUseRecorder: vi.fn(),
   mockCreateObjectURL: vi.fn(() => 'blob:recording-url'),
   mockRevokeObjectURL: vi.fn(),

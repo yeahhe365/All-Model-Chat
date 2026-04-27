@@ -32,29 +32,20 @@ vi.mock('../../utils/chat/parsing', () => ({
 }));
 
 vi.mock('../../utils/translations', () => ({
-  getTranslator: () => ((key: string) => key),
+  getTranslator: () => (key: string) => key,
 }));
 
 import { appendApiPart, finalizeMessages, updateMessagesWithBatch } from './processors';
 
 describe('appendApiPart', () => {
   it('preserves signature-only text parts instead of merging them into the previous text part', () => {
-    const parts = appendApiPart(
-      [{ text: 'final answer' } as Part],
-      { text: '', thoughtSignature: 'sig-123' } as Part,
-    );
+    const parts = appendApiPart([{ text: 'final answer' } as Part], { text: '', thoughtSignature: 'sig-123' } as Part);
 
-    expect(parts).toEqual([
-      { text: 'final answer' },
-      { text: '', thoughtSignature: 'sig-123' },
-    ]);
+    expect(parts).toEqual([{ text: 'final answer' }, { text: '', thoughtSignature: 'sig-123' }]);
   });
 
   it('still merges plain text chunks without metadata', () => {
-    const parts = appendApiPart(
-      [{ text: 'hello' } as Part],
-      { text: ' world' } as Part,
-    );
+    const parts = appendApiPart([{ text: 'hello' } as Part], { text: ' world' } as Part);
 
     expect(parts).toEqual([{ text: 'hello world' }]);
   });

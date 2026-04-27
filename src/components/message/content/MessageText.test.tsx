@@ -21,9 +21,7 @@ vi.mock('../GroundedResponse', () => ({
 }));
 
 vi.mock('../LazyMarkdownRenderer', () => ({
-  LazyMarkdownRenderer: ({ content }: { content: string }) => (
-    <div data-testid="markdown-renderer">{content}</div>
-  ),
+  LazyMarkdownRenderer: ({ content }: { content: string }) => <div data-testid="markdown-renderer">{content}</div>,
 }));
 
 vi.mock('../../icons/GoogleSpinner', () => ({
@@ -84,10 +82,12 @@ describe('MessageText', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={false}
-          appSettings={{
-            autoFullscreenHtml: false,
-            hideThinkingInContext: false,
-          } as any}
+          appSettings={
+            {
+              autoFullscreenHtml: false,
+              hideThinkingInContext: false,
+            } as any
+          }
           themeId="pearl"
           baseFontSize={16}
           onImageClick={vi.fn()}
@@ -127,10 +127,12 @@ describe('MessageText', () => {
       <MessageText
         message={message}
         showThoughts={false}
-        appSettings={{
-          autoFullscreenHtml: true,
-          hideThinkingInContext: false,
-        } as any}
+        appSettings={
+          {
+            autoFullscreenHtml: true,
+            hideThinkingInContext: false,
+          } as any
+        }
         themeId="pearl"
         baseFontSize={16}
         onImageClick={vi.fn()}
@@ -178,10 +180,12 @@ describe('MessageText', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={false}
-          appSettings={{
-            autoFullscreenHtml: false,
-            hideThinkingInContext: true,
-          } as any}
+          appSettings={
+            {
+              autoFullscreenHtml: false,
+              hideThinkingInContext: true,
+            } as any
+          }
           themeId="pearl"
           baseFontSize={16}
           onImageClick={vi.fn()}
@@ -215,10 +219,12 @@ describe('MessageText', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={true}
-          appSettings={{
-            autoFullscreenHtml: false,
-            hideThinkingInContext: false,
-          } as any}
+          appSettings={
+            {
+              autoFullscreenHtml: false,
+              hideThinkingInContext: false,
+            } as any
+          }
           themeId="pearl"
           baseFontSize={16}
           onImageClick={vi.fn()}

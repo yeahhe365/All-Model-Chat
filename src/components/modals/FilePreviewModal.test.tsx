@@ -3,45 +3,37 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
-const {
-  mockCopyFileToClipboard,
-  mockExtractDocxText,
-  mockSettingsState,
-  mockT,
-  mockTextFileViewer,
-} = vi.hoisted(() => ({
-  mockCopyFileToClipboard: vi.fn(),
-  mockExtractDocxText: vi.fn(),
-  mockSettingsState: {
-    appSettings: {
-      customShortcuts: {},
+const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockT, mockTextFileViewer } = vi.hoisted(
+  () => ({
+    mockCopyFileToClipboard: vi.fn(),
+    mockExtractDocxText: vi.fn(),
+    mockSettingsState: {
+      appSettings: {
+        customShortcuts: {},
+      },
+      currentTheme: {
+        id: 'pearl',
+      },
     },
-    currentTheme: {
-      id: 'pearl',
-    },
-  },
-  mockT: vi.fn((key: string) => {
-    const messages: Record<string, string> = {
-      imageZoom_title: 'Preview {filename}',
-      filePreview_loading_word: 'Loading Word preview...',
-      filePreview_word_unavailable: 'Unable to preview this Word document.',
-      filePreview_previous: 'Previous',
-      filePreview_next: 'Next',
-    };
-    return messages[key] ?? key;
-  }),
-  mockTextFileViewer: vi.fn(
-    ({ content, renderMode, themeId }: { content?: string | null; renderMode?: string; themeId?: string }) => (
-      <div
-        data-testid="text-file-viewer"
-        data-render-mode={renderMode}
-        data-theme-id={themeId}
-      >
-        {content ?? 'Preview text content'}
-      </div>
+    mockT: vi.fn((key: string) => {
+      const messages: Record<string, string> = {
+        imageZoom_title: 'Preview {filename}',
+        filePreview_loading_word: 'Loading Word preview...',
+        filePreview_word_unavailable: 'Unable to preview this Word document.',
+        filePreview_previous: 'Previous',
+        filePreview_next: 'Next',
+      };
+      return messages[key] ?? key;
+    }),
+    mockTextFileViewer: vi.fn(
+      ({ content, renderMode, themeId }: { content?: string | null; renderMode?: string; themeId?: string }) => (
+        <div data-testid="text-file-viewer" data-render-mode={renderMode} data-theme-id={themeId}>
+          {content ?? 'Preview text content'}
+        </div>
+      ),
     ),
-  ),
-}));
+  }),
+);
 
 vi.mock('../../contexts/I18nContext', () => ({
   useI18n: () => ({
@@ -63,9 +55,13 @@ vi.mock('../shared/file-preview/FilePreviewHeader', async () => {
   const FilePreviewHeader = React.forwardRef<{ showCopyFeedback: () => void }>((_, ref) => {
     const [isCopied, setIsCopied] = React.useState(false);
 
-    React.useImperativeHandle(ref, () => ({
-      showCopyFeedback: () => setIsCopied(true),
-    }), []);
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        showCopyFeedback: () => setIsCopied(true),
+      }),
+      [],
+    );
 
     return (
       <button
@@ -91,19 +87,18 @@ vi.mock('../shared/file-preview/TextFileViewer', () => ({
 vi.mock('../../utils/fileHelpers', () => ({
   copyFileToClipboard: mockCopyFileToClipboard,
   isMarkdownFile: (file: { name: string; type: string }) =>
-    file.type === 'text/markdown'
-    || file.name.toLowerCase().endsWith('.md')
-    || file.name.toLowerCase().endsWith('.markdown'),
+    file.type === 'text/markdown' ||
+    file.name.toLowerCase().endsWith('.md') ||
+    file.name.toLowerCase().endsWith('.markdown'),
   isTextFile: (file: { name: string; type: string }) =>
-    file.type.startsWith('text/')
-    || /\.(md|markdown|txt|json|js|ts|tsx|jsx|css|html)$/i.test(file.name),
+    file.type.startsWith('text/') || /\.(md|markdown|txt|json|js|ts|tsx|jsx|css|html)$/i.test(file.name),
 }));
 
 vi.mock('../../utils/docxPreview', () => ({
   extractDocxText: mockExtractDocxText,
   isDocxFile: (file: { name: string; type: string }) =>
-    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    || file.name.toLowerCase().endsWith('.docx'),
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    file.name.toLowerCase().endsWith('.docx'),
 }));
 
 import { FilePreviewModal } from './FilePreviewModal';
@@ -155,12 +150,7 @@ describe('FilePreviewModal', () => {
     });
 
     await act(async () => {
-      root.render(
-        <FilePreviewModal
-          file={createDocxFile()}
-          onClose={() => {}}
-        />,
-      );
+      root.render(<FilePreviewModal file={createDocxFile()} onClose={() => {}} />);
     });
 
     await vi.waitFor(() => {
@@ -175,12 +165,7 @@ describe('FilePreviewModal', () => {
     mockExtractDocxText.mockRejectedValue(new Error('preview failed'));
 
     await act(async () => {
-      root.render(
-        <FilePreviewModal
-          file={createDocxFile()}
-          onClose={() => {}}
-        />,
-      );
+      root.render(<FilePreviewModal file={createDocxFile()} onClose={() => {}} />);
     });
 
     await vi.waitFor(() => {
@@ -199,14 +184,7 @@ describe('FilePreviewModal', () => {
 
     await act(async () => {
       root.render(
-        <FilePreviewModal
-          file={createDocxFile()}
-          onClose={() => {}}
-          onPrev={onPrev}
-          onNext={onNext}
-          hasPrev
-          hasNext
-        />,
+        <FilePreviewModal file={createDocxFile()} onClose={() => {}} onPrev={onPrev} onNext={onNext} hasPrev hasNext />,
       );
     });
 
@@ -221,12 +199,7 @@ describe('FilePreviewModal', () => {
 
   it('routes .md uploads into markdown preview mode with the active theme id', async () => {
     await act(async () => {
-      root.render(
-        <FilePreviewModal
-          file={createMarkdownFile()}
-          onClose={() => {}}
-        />,
-      );
+      root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
     });
 
     const viewer = document.querySelector('[data-testid="text-file-viewer"]');
@@ -238,12 +211,7 @@ describe('FilePreviewModal', () => {
 
   it('does not hijack copy shortcuts when the user has selected preview text', async () => {
     await act(async () => {
-      root.render(
-        <FilePreviewModal
-          file={createMarkdownFile()}
-          onClose={() => {}}
-        />,
-      );
+      root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
     });
 
     const previewNode = document.querySelector('[data-testid="text-file-viewer"]');
@@ -259,11 +227,13 @@ describe('FilePreviewModal', () => {
     selection?.addRange(range);
 
     await act(async () => {
-      window.dispatchEvent(new KeyboardEvent('keydown', {
-        key: 'c',
-        ctrlKey: true,
-        bubbles: true,
-      }));
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'c',
+          ctrlKey: true,
+          bubbles: true,
+        }),
+      );
     });
 
     expect(mockCopyFileToClipboard).not.toHaveBeenCalled();
@@ -271,28 +241,29 @@ describe('FilePreviewModal', () => {
 
   it('shows copy button feedback when the file is copied with the keyboard shortcut', async () => {
     await act(async () => {
-      root.render(
-        <FilePreviewModal
-          file={createMarkdownFile()}
-          onClose={() => {}}
-        />,
-      );
+      root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
     });
 
-    expect(document.querySelector('[data-testid="file-preview-copy-button"]')?.getAttribute('data-copied')).toBe('false');
+    expect(document.querySelector('[data-testid="file-preview-copy-button"]')?.getAttribute('data-copied')).toBe(
+      'false',
+    );
 
     await act(async () => {
-      window.dispatchEvent(new KeyboardEvent('keydown', {
-        key: 'c',
-        ctrlKey: true,
-        bubbles: true,
-      }));
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'c',
+          ctrlKey: true,
+          bubbles: true,
+        }),
+      );
     });
 
     expect(mockCopyFileToClipboard).toHaveBeenCalledTimes(1);
 
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-testid="file-preview-copy-button"]')?.getAttribute('data-copied')).toBe('true');
+      expect(document.querySelector('[data-testid="file-preview-copy-button"]')?.getAttribute('data-copied')).toBe(
+        'true',
+      );
     });
   });
 });

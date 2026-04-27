@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { ChatMessage } from '../../../types';
@@ -8,51 +7,54 @@ import { useResponsiveValue } from '../../../hooks/useDevice';
 import { ExportModal } from './export/ExportModal';
 
 interface ExportMessageButtonProps {
-    message: ChatMessage;
-    sessionTitle?: string;
-    messageIndex?: number;
-    themeId: string;
-    className?: string;
-    t: (key: keyof typeof translations, fallback?: string) => string;
-    iconSize?: number;
+  message: ChatMessage;
+  sessionTitle?: string;
+  messageIndex?: number;
+  themeId: string;
+  className?: string;
+  t: (key: keyof typeof translations, fallback?: string) => string;
+  iconSize?: number;
 }
 
-export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ message, sessionTitle, messageIndex, themeId, className, t, iconSize: propIconSize }) => {
+export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({
+  message,
+  sessionTitle,
+  messageIndex,
+  themeId,
+  className,
+  t,
+  iconSize: propIconSize,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const responsiveIconSize = useResponsiveValue(14, 16);
   const iconSize = propIconSize ?? responsiveIconSize;
 
   const { exportingType, handleExport } = useMessageExport({
-      message,
-      sessionTitle,
-      messageIndex,
-      themeId
+    message,
+    sessionTitle,
+    messageIndex,
+    themeId,
   });
 
   const onExportSelect = (type: 'png' | 'html' | 'txt' | 'json') => {
-      handleExport(type, () => setIsOpen(false));
+    handleExport(type, () => setIsOpen(false));
   };
 
   return (
     <>
-        <button 
-            onClick={() => setIsOpen(true)} 
-            className={`${className}`} 
-            aria-label={t('export')} 
-            title={t('export')}
-        >
-            <Download size={iconSize} strokeWidth={1.5} />
-        </button>
+      <button onClick={() => setIsOpen(true)} className={`${className}`} aria-label={t('export')} title={t('export')}>
+        <Download size={iconSize} strokeWidth={1.5} />
+      </button>
 
-        {isOpen && (
-            <ExportModal 
-                isOpen={isOpen}
-                onClose={() => setIsOpen(false)}
-                onExport={onExportSelect}
-                exportingType={exportingType}
-                t={t}
-            />
-        )}
+      {isOpen && (
+        <ExportModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onExport={onExportSelect}
+          exportingType={exportingType}
+          t={t}
+        />
+      )}
     </>
   );
 };

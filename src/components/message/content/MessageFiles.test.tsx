@@ -35,10 +35,7 @@ describe('MessageFiles', () => {
     act(() => {
       root.render(
         <MessageFiles
-          files={[
-            createImageFile('image-1', 'first.png'),
-            createImageFile('image-2', 'second.png'),
-          ]}
+          files={[createImageFile('image-1', 'first.png'), createImageFile('image-2', 'second.png')]}
           onImageClick={() => {}}
           messageId="message-1"
           hasContentOrAudio={false}

@@ -82,11 +82,7 @@ describe('ModelVoiceSettings interactions', () => {
     await act(async () => {
       root.render(
         <I18nProvider>
-          <ModelVoiceSettings
-            {...baseProps}
-            setModelId={setModelId}
-            setSystemInstruction={setSystemInstruction}
-          />
+          <ModelVoiceSettings {...baseProps} setModelId={setModelId} setSystemInstruction={setSystemInstruction} />
         </I18nProvider>,
       );
     });
@@ -96,10 +92,7 @@ describe('ModelVoiceSettings interactions', () => {
 
     await act(async () => {
       textarea?.focus();
-      const descriptor = Object.getOwnPropertyDescriptor(
-        HTMLTextAreaElement.prototype,
-        'value',
-      );
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
       descriptor?.set?.call(textarea, 'Persist this prompt');
       textarea?.dispatchEvent(new Event('input', { bubbles: true }));
       textarea?.dispatchEvent(new Event('change', { bubbles: true }));

@@ -46,7 +46,9 @@ describe('focus ring helper classes', () => {
 
   it('provides per-surface offset helpers', () => {
     expect(FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS).toContain('focus-visible:ring-offset-[var(--theme-bg-primary)]');
-    expect(FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS).toContain('focus-visible:ring-offset-[var(--theme-bg-secondary)]');
+    expect(FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS).toContain(
+      'focus-visible:ring-offset-[var(--theme-bg-secondary)]',
+    );
     expect(FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS).toContain('focus-visible:ring-offset-[var(--theme-bg-input)]');
   });
 });

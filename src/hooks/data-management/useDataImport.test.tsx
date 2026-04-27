@@ -102,9 +102,7 @@ describe('useDataImport', () => {
     );
 
     act(() => {
-      result.current.handleImportHistory(
-        new File(['history'], 'history.json', { type: 'application/json' }),
-      );
+      result.current.handleImportHistory(new File(['history'], 'history.json', { type: 'application/json' }));
     });
 
     expect(typeof sessions[0].timestamp).toBe('number');
@@ -155,9 +153,7 @@ describe('useDataImport', () => {
     );
 
     act(() => {
-      result.current.handleImportHistory(
-        new File(['history'], 'history.json', { type: 'application/json' }),
-      );
+      result.current.handleImportHistory(new File(['history'], 'history.json', { type: 'application/json' }));
     });
 
     expect(sessions[0].messages[0].timestamp).toBeInstanceOf(Date);
@@ -206,8 +202,7 @@ describe('useDataImport', () => {
       useDataImport({
         setAppSettings: vi.fn((value: AppSettings | ((prev: AppSettings) => AppSettings)) => {
           didImportSettings = true;
-          importedSettings =
-            typeof value === 'function' ? value(DEFAULT_APP_SETTINGS) : value;
+          importedSettings = typeof value === 'function' ? value(DEFAULT_APP_SETTINGS) : value;
         }),
         updateAndPersistSessions: vi.fn(),
         updateAndPersistGroups: vi.fn(),
@@ -218,9 +213,7 @@ describe('useDataImport', () => {
     );
 
     act(() => {
-      result.current.handleImportSettings(
-        new File(['settings'], 'settings.json', { type: 'application/json' }),
-      );
+      result.current.handleImportSettings(new File(['settings'], 'settings.json', { type: 'application/json' }));
     });
 
     expect(didImportSettings).toBe(true);
@@ -269,12 +262,7 @@ describe('useDataImport', () => {
           openSettings: 'Cmd+,',
           newChat: 'Cmd+Shift+O',
         },
-        tabModelCycleIds: [
-          ' gemini-3.1-pro-preview ',
-          'gemini-3-flash-preview',
-          'gemini-3-flash-preview',
-          42,
-        ],
+        tabModelCycleIds: [' gemini-3.1-pro-preview ', 'gemini-3-flash-preview', 'gemini-3-flash-preview', 42],
       },
     });
 
@@ -282,8 +270,7 @@ describe('useDataImport', () => {
       useDataImport({
         setAppSettings: vi.fn((value: AppSettings | ((prev: AppSettings) => AppSettings)) => {
           didImportSettings = true;
-          importedSettings =
-            typeof value === 'function' ? value(DEFAULT_APP_SETTINGS) : value;
+          importedSettings = typeof value === 'function' ? value(DEFAULT_APP_SETTINGS) : value;
         }),
         updateAndPersistSessions: vi.fn(),
         updateAndPersistGroups: vi.fn(),
@@ -294,9 +281,7 @@ describe('useDataImport', () => {
     );
 
     act(() => {
-      result.current.handleImportSettings(
-        new File(['settings'], 'settings.json', { type: 'application/json' }),
-      );
+      result.current.handleImportSettings(new File(['settings'], 'settings.json', { type: 'application/json' }));
     });
 
     expect(didImportSettings).toBe(true);
@@ -321,10 +306,7 @@ describe('useDataImport', () => {
       openSettings: 'Cmd+,',
       newChat: 'Cmd+Shift+O',
     });
-    expect(importedSettings.tabModelCycleIds).toEqual([
-      'gemini-3.1-pro-preview',
-      'gemini-3-flash-preview',
-    ]);
+    expect(importedSettings.tabModelCycleIds).toEqual(['gemini-3.1-pro-preview', 'gemini-3-flash-preview']);
 
     unmount();
   });

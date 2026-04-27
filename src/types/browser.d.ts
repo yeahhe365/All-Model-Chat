@@ -33,17 +33,11 @@ interface FileSystemEntry {
 }
 
 interface FileSystemFileEntry extends FileSystemEntry {
-  file(
-    successCallback: (file: File) => void,
-    errorCallback?: (err: DOMException) => void,
-  ): void;
+  file(successCallback: (file: File) => void, errorCallback?: (err: DOMException) => void): void;
 }
 
 interface FileSystemDirectoryReader {
-  readEntries(
-    successCallback: (entries: FileSystemEntry[]) => void,
-    errorCallback?: (err: DOMException) => void,
-  ): void;
+  readEntries(successCallback: (entries: FileSystemEntry[]) => void, errorCallback?: (err: DOMException) => void): void;
 }
 
 interface FileSystemDirectoryEntry extends FileSystemEntry {
@@ -74,8 +68,5 @@ interface FileSystemFileHandle extends FileSystemHandle {
 }
 
 interface Window {
-  showDirectoryPicker?: (options?: {
-    id?: string;
-    mode?: 'read' | 'readwrite';
-  }) => Promise<FileSystemDirectoryHandle>;
+  showDirectoryPicker?: (options?: { id?: string; mode?: 'read' | 'readwrite' }) => Promise<FileSystemDirectoryHandle>;
 }

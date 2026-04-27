@@ -34,7 +34,13 @@ async function readDirectory(
       }
 
       sawAnySupportedEntries = true;
-      await readDirectory(directoryEntry, `${relativePath}/${directoryEntry.name}`, files, emptyDirectoryPaths, options);
+      await readDirectory(
+        directoryEntry,
+        `${relativePath}/${directoryEntry.name}`,
+        files,
+        emptyDirectoryPaths,
+        options,
+      );
       continue;
     }
 

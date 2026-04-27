@@ -1,4 +1,3 @@
-
 export interface ModelOption {
   id: string;
   name: string;
@@ -31,18 +30,27 @@ export enum MediaResolution {
 
 export type ImageOutputMode = 'IMAGE_TEXT' | 'IMAGE_ONLY';
 export type ImagePersonGeneration = 'ALLOW_ADULT' | 'ALLOW_ALL' | 'DONT_ALLOW';
+export type TranslationTargetLanguage =
+  | 'English'
+  | 'Simplified Chinese'
+  | 'Traditional Chinese'
+  | 'Japanese'
+  | 'Korean'
+  | 'Spanish'
+  | 'French'
+  | 'German';
 
 export interface SafetySetting {
-    category: HarmCategory;
-    threshold: HarmBlockThreshold;
+  category: HarmCategory;
+  threshold: HarmBlockThreshold;
 }
 
 export interface FilesApiConfig {
-    images: boolean;
-    pdfs: boolean;
-    audio: boolean;
-    video: boolean;
-    text: boolean;
+  images: boolean;
+  pdfs: boolean;
+  audio: boolean;
+  video: boolean;
+  text: boolean;
 }
 
 export interface ChatSettings {
@@ -68,37 +76,38 @@ export interface ChatSettings {
 }
 
 export interface AppSettings extends ChatSettings {
- themeId: 'system' | 'onyx' | 'pearl';
- baseFontSize: number;
- useCustomApiConfig: boolean;
- serverManagedApi?: boolean;
- apiKey: string | null;
- apiProxyUrl: string | null;
- useApiProxy?: boolean;
- liveApiEphemeralTokenEndpoint?: string | null;
- language: 'en' | 'zh' | 'system';
- isStreamingEnabled: boolean;
- transcriptionModelId: string;
- filesApiConfig: FilesApiConfig;
- expandCodeBlocksByDefault: boolean;
- isAutoTitleEnabled: boolean;
- isMermaidRenderingEnabled: boolean;
- isGraphvizRenderingEnabled?: boolean;
- isCompletionNotificationEnabled: boolean;
- isCompletionSoundEnabled?: boolean;
- isSuggestionsEnabled: boolean;
- isAutoScrollOnSendEnabled?: boolean;
- isAutoSendOnSuggestionClick?: boolean;
- generateQuadImages?: boolean;
- autoFullscreenHtml?: boolean;
- showWelcomeSuggestions?: boolean;
- isAudioCompressionEnabled: boolean;
- autoCanvasVisualization?: boolean;
- autoCanvasModelId: string;
- isPasteRichTextAsMarkdownEnabled?: boolean;
- isPasteAsTextFileEnabled?: boolean;
- isCopySelectionFormattingEnabled?: boolean;
- isSystemAudioRecordingEnabled?: boolean;
- customShortcuts: Record<string, string>; // ID -> Key Combination String
- tabModelCycleIds?: string[];
+  themeId: 'system' | 'onyx' | 'pearl';
+  baseFontSize: number;
+  useCustomApiConfig: boolean;
+  serverManagedApi?: boolean;
+  apiKey: string | null;
+  apiProxyUrl: string | null;
+  useApiProxy?: boolean;
+  liveApiEphemeralTokenEndpoint?: string | null;
+  language: 'en' | 'zh' | 'system';
+  translationTargetLanguage: TranslationTargetLanguage;
+  isStreamingEnabled: boolean;
+  transcriptionModelId: string;
+  filesApiConfig: FilesApiConfig;
+  expandCodeBlocksByDefault: boolean;
+  isAutoTitleEnabled: boolean;
+  isMermaidRenderingEnabled: boolean;
+  isGraphvizRenderingEnabled?: boolean;
+  isCompletionNotificationEnabled: boolean;
+  isCompletionSoundEnabled?: boolean;
+  isSuggestionsEnabled: boolean;
+  isAutoScrollOnSendEnabled?: boolean;
+  isAutoSendOnSuggestionClick?: boolean;
+  generateQuadImages?: boolean;
+  autoFullscreenHtml?: boolean;
+  showWelcomeSuggestions?: boolean;
+  isAudioCompressionEnabled: boolean;
+  autoCanvasVisualization?: boolean;
+  autoCanvasModelId: string;
+  isPasteRichTextAsMarkdownEnabled?: boolean;
+  isPasteAsTextFileEnabled?: boolean;
+  isCopySelectionFormattingEnabled?: boolean;
+  isSystemAudioRecordingEnabled?: boolean;
+  customShortcuts: Record<string, string>; // ID -> Key Combination String
+  tabModelCycleIds?: string[];
 }

@@ -34,18 +34,14 @@ describe('ModelListEditor', () => {
     act(() => {
       root.render(
         <I18nProvider>
-          <ModelListEditor
-            availableModels={[]}
-            onSave={onSave}
-            setIsEditingList={setIsEditingList}
-          />
+          <ModelListEditor availableModels={[]} onSave={onSave} setIsEditingList={setIsEditingList} />
         </I18nProvider>,
       );
     });
 
     act(() => {
-      const saveButton = Array.from(container.querySelectorAll('button')).find(
-        (button) => button.textContent?.includes('Save List'),
+      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Save List'),
       );
       saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
@@ -71,22 +67,20 @@ describe('ModelListEditor', () => {
     });
 
     act(() => {
-      const pinButton = Array.from(container.querySelectorAll('button')).find(
-        (button) => button.getAttribute('title')?.includes('Pinned'),
+      const pinButton = Array.from(container.querySelectorAll('button')).find((button) =>
+        button.getAttribute('title')?.includes('Pinned'),
       );
       pinButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     act(() => {
-      const saveButton = Array.from(container.querySelectorAll('button')).find(
-        (button) => button.textContent?.includes('Save List'),
+      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Save List'),
       );
       saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(onSave).toHaveBeenCalledWith([
-      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: false },
-    ]);
+    expect(onSave).toHaveBeenCalledWith([{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: false }]);
   });
 
   it('blocks saving duplicate model ids after trimming whitespace', () => {
@@ -108,8 +102,8 @@ describe('ModelListEditor', () => {
     });
 
     act(() => {
-      const saveButton = Array.from(container.querySelectorAll('button')).find(
-        (button) => button.textContent?.includes('Save List'),
+      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Save List'),
       );
       saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });

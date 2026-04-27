@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  appendFunctionDeclarationsToTools,
-  buildGenerationConfig,
-  toCountTokensConfig,
-} from '../baseApi';
+import { appendFunctionDeclarationsToTools, buildGenerationConfig, toCountTokensConfig } from '../baseApi';
 import { MediaResolution } from '../../../types/settings';
 
 type MockGoogleGenAIConfig = {
@@ -18,7 +14,7 @@ type StoredAppSettings = NonNullable<Awaited<ReturnType<typeof import('../../../
 
 // Mock @google/genai - must use function syntax for constructor mock
 vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn(function(this: { config: MockGoogleGenAIConfig }, config: MockGoogleGenAIConfig) {
+  GoogleGenAI: vi.fn(function (this: { config: MockGoogleGenAIConfig }, config: MockGoogleGenAIConfig) {
     this.config = config;
   }),
 }));
@@ -43,12 +39,7 @@ vi.mock('../../../utils/appUtils', () => ({
 }));
 
 import { GoogleGenAI } from '@google/genai';
-import {
-  getClient,
-  getApiClient,
-  getConfiguredApiClient,
-  getLiveApiClient,
-} from '../baseApi';
+import { getClient, getApiClient, getConfiguredApiClient, getLiveApiClient } from '../baseApi';
 import { dbService } from '../../../utils/db';
 
 // ── getClient ──
@@ -64,7 +55,7 @@ describe('getClient', () => {
   });
 
   it('sanitizes smart quotes and dashes in API key', async () => {
-    await getClient("test\u2019s-key\u2014value");
+    await getClient('test\u2019s-key\u2014value');
     expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey: "test's-key-value" });
   });
 
@@ -78,16 +69,20 @@ describe('getClient', () => {
 
   it('strips trailing slash from proxy baseUrl', async () => {
     await getClient('key', 'https://proxy.example.com/');
-    expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      httpOptions: { baseUrl: 'https://proxy.example.com' },
-    }));
+    expect(GoogleGenAI).toHaveBeenCalledWith(
+      expect.objectContaining({
+        httpOptions: { baseUrl: 'https://proxy.example.com' },
+      }),
+    );
   });
 
   it('normalizes version-suffixed proxy baseUrls before passing them to the SDK', async () => {
     await getClient('key', 'https://proxy.example.com/gemini/v1beta/');
-    expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      httpOptions: { baseUrl: 'https://proxy.example.com/gemini' },
-    }));
+    expect(GoogleGenAI).toHaveBeenCalledWith(
+      expect.objectContaining({
+        httpOptions: { baseUrl: 'https://proxy.example.com/gemini' },
+      }),
+    );
   });
 
   it('merges proxy baseUrl into existing httpOptions', async () => {
@@ -102,7 +97,9 @@ describe('getClient', () => {
   });
 
   it('throws on invalid initialization', async () => {
-    vi.mocked(GoogleGenAI).mockImplementationOnce(() => { throw new Error('bad'); });
+    vi.mocked(GoogleGenAI).mockImplementationOnce(() => {
+      throw new Error('bad');
+    });
     await expect(getClient('key')).rejects.toThrow('bad');
   });
 });
@@ -136,9 +133,11 @@ describe('getConfiguredApiClient', () => {
       apiProxyUrl: 'https://proxy.example.com',
     } as StoredAppSettings);
     await getConfiguredApiClient('key');
-    expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      httpOptions: { baseUrl: 'https://proxy.example.com' },
-    }));
+    expect(GoogleGenAI).toHaveBeenCalledWith(
+      expect.objectContaining({
+        httpOptions: { baseUrl: 'https://proxy.example.com' },
+      }),
+    );
   });
 
   it('skips proxy when useApiProxy is false', async () => {
@@ -148,9 +147,11 @@ describe('getConfiguredApiClient', () => {
       apiProxyUrl: 'https://proxy.example.com',
     } as StoredAppSettings);
     await getConfiguredApiClient('key');
-    expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      apiKey: 'key',
-    }));
+    expect(GoogleGenAI).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiKey: 'key',
+      }),
+    );
     // baseUrl should not be in the config
     const callArgs = vi.mocked(GoogleGenAI).mock.calls[0][0] as MockGoogleGenAIConfig;
     expect(callArgs.httpOptions?.baseUrl).toBeUndefined();
@@ -404,28 +405,49 @@ describe('buildGenerationConfig', () => {
       thinkingLevel: 'LOW',
     });
 
-    expect(config).toEqual(expect.objectContaining({
-      temperature: 1,
-      topP: 0.95,
-      topK: 64,
-      systemInstruction: 'sys',
-      thinkingConfig: { includeThoughts: true, thinkingLevel: 'LOW' },
-      tools: [{ googleSearch: {} }, { urlContext: {} }],
-    }));
+    expect(config).toEqual(
+      expect.objectContaining({
+        temperature: 1,
+        topP: 0.95,
+        topK: 64,
+        systemInstruction: 'sys',
+        thinkingConfig: { includeThoughts: true, thinkingLevel: 'LOW' },
+        tools: [{ googleSearch: {} }, { urlContext: {} }],
+      }),
+    );
   });
 
   it('returns image config for gemini-2.5-flash-image-preview', async () => {
     const config = await buildGenerationConfig(
-      'gemini-2.5-flash-image-preview', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, '1:1', false
+      'gemini-2.5-flash-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '1:1',
+      false,
     );
     expect(config.responseModalities).toEqual(['IMAGE', 'TEXT']);
   });
 
   it('returns image config with imageSize for gemini-3-pro-image-preview', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-pro-image-preview', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, '1:1', false, '2K'
+      'gemini-3-pro-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '1:1',
+      false,
+      '2K',
     );
     expect(config.responseModalities).toEqual(['IMAGE', 'TEXT']);
     expect(config.imageConfig!.imageSize).toBe('2K');
@@ -433,24 +455,42 @@ describe('buildGenerationConfig', () => {
 
   it('normalizes stale imageSize values for gemini-3-pro-image-preview', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-pro-image-preview', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, '1:1', false, '512'
+      'gemini-3-pro-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '1:1',
+      false,
+      '512',
     );
 
     expect(config.imageConfig!.imageSize).toBe('1K');
   });
 
   it('defaults imageSize to 1K for gemini-3-pro-image-preview', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-3-pro-image-preview', 'sys', baseConfig, false, 0,
-    );
+    const config = await buildGenerationConfig('gemini-3-pro-image-preview', 'sys', baseConfig, false, 0);
     expect(config.imageConfig!.imageSize).toBe('1K');
   });
 
   it('includes thinkingConfig for gemini-3.1-flash-image-preview', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
-      false, false, false, 'HIGH', '1:1', false, '2K'
+      'gemini-3.1-flash-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      'HIGH',
+      '1:1',
+      false,
+      '2K',
     );
     expect(config.thinkingConfig).toEqual({
       includeThoughts: true,
@@ -460,8 +500,18 @@ describe('buildGenerationConfig', () => {
 
   it('defaults gemini-3.1-flash-image-preview to MINIMAL thinking', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, '1:1', false, '2K'
+      'gemini-3.1-flash-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '1:1',
+      false,
+      '2K',
     );
     expect(config.thinkingConfig).toEqual({
       includeThoughts: true,
@@ -471,8 +521,18 @@ describe('buildGenerationConfig', () => {
 
   it('uses image search grounding for gemini-3.1-flash-image-preview when search is enabled', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
-      true, false, false, undefined, '1:1', false, '2K'
+      'gemini-3.1-flash-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      true,
+      false,
+      false,
+      undefined,
+      '1:1',
+      false,
+      '2K',
     );
 
     expect(config.tools).toEqual([
@@ -489,33 +549,45 @@ describe('buildGenerationConfig', () => {
 
   it('does not enable search for Gemini image models when only deep search is enabled', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, '1:1', true, '2K'
+      'gemini-3.1-flash-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '1:1',
+      true,
+      '2K',
     );
 
     expect(config.tools).toBeUndefined();
   });
 
   it('supports image-only output mode for Gemini image models', async () => {
-    const config = await (buildGenerationConfig as unknown as (
-      modelId: string,
-      systemInstruction: string,
-      config: typeof baseConfig,
-      showThoughts: boolean,
-      thinkingBudget: number,
-      isGoogleSearchEnabled?: boolean,
-      isCodeExecutionEnabled?: boolean,
-      isUrlContextEnabled?: boolean,
-      thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
-      aspectRatio?: string,
-      isDeepSearchEnabled?: boolean,
-      imageSize?: string,
-      safetySettings?: unknown,
-      mediaResolution?: unknown,
-      isLocalPythonEnabled?: boolean,
-      imageOutputMode?: string,
-      personGeneration?: string,
-    ) => Promise<any>)(
+    const config = await (
+      buildGenerationConfig as unknown as (
+        modelId: string,
+        systemInstruction: string,
+        config: typeof baseConfig,
+        showThoughts: boolean,
+        thinkingBudget: number,
+        isGoogleSearchEnabled?: boolean,
+        isCodeExecutionEnabled?: boolean,
+        isUrlContextEnabled?: boolean,
+        thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
+        aspectRatio?: string,
+        isDeepSearchEnabled?: boolean,
+        imageSize?: string,
+        safetySettings?: unknown,
+        mediaResolution?: unknown,
+        isLocalPythonEnabled?: boolean,
+        imageOutputMode?: string,
+        personGeneration?: string,
+      ) => Promise<any>
+    )(
       'gemini-3.1-flash-image-preview',
       'sys',
       baseConfig,
@@ -561,25 +633,27 @@ describe('buildGenerationConfig', () => {
   });
 
   it('omits unsupported personGeneration for Gemini 2.5 image config', async () => {
-    const config = await (buildGenerationConfig as unknown as (
-      modelId: string,
-      systemInstruction: string,
-      config: typeof baseConfig,
-      showThoughts: boolean,
-      thinkingBudget: number,
-      isGoogleSearchEnabled?: boolean,
-      isCodeExecutionEnabled?: boolean,
-      isUrlContextEnabled?: boolean,
-      thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
-      aspectRatio?: string,
-      isDeepSearchEnabled?: boolean,
-      imageSize?: string,
-      safetySettings?: unknown,
-      mediaResolution?: unknown,
-      isLocalPythonEnabled?: boolean,
-      imageOutputMode?: string,
-      personGeneration?: string,
-    ) => Promise<any>)(
+    const config = await (
+      buildGenerationConfig as unknown as (
+        modelId: string,
+        systemInstruction: string,
+        config: typeof baseConfig,
+        showThoughts: boolean,
+        thinkingBudget: number,
+        isGoogleSearchEnabled?: boolean,
+        isCodeExecutionEnabled?: boolean,
+        isUrlContextEnabled?: boolean,
+        thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
+        aspectRatio?: string,
+        isDeepSearchEnabled?: boolean,
+        imageSize?: string,
+        safetySettings?: unknown,
+        mediaResolution?: unknown,
+        isLocalPythonEnabled?: boolean,
+        imageOutputMode?: string,
+        personGeneration?: string,
+      ) => Promise<any>
+    )(
       'gemini-2.5-flash-image',
       'sys',
       baseConfig,
@@ -606,32 +680,33 @@ describe('buildGenerationConfig', () => {
   });
 
   it('includes thinkingConfig for Gemini 3 models', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
-    );
+    const config = await buildGenerationConfig('gemini-3-flash-preview', 'sys', baseConfig, false, 0);
     expect(config.thinkingConfig).toBeDefined();
     expect(config.thinkingConfig!.includeThoughts).toBe(true);
   });
 
   it('uses thinkingBudget when > 0 for Gemini 3', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 8000,
-    );
+    const config = await buildGenerationConfig('gemini-3-flash-preview', 'sys', baseConfig, false, 8000);
     expect(config.thinkingConfig!.thinkingBudget).toBe(8000);
   });
 
   it('uses thinkingLevel when budget is 0 for Gemini 3', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
-      false, false, false, 'LOW'
+      'gemini-3-flash-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      'LOW',
     );
     expect(config.thinkingConfig!.thinkingLevel).toBe('LOW');
   });
 
   it('defaults thinkingLevel to HIGH for Gemini 3', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
-    );
+    const config = await buildGenerationConfig('gemini-3-flash-preview', 'sys', baseConfig, false, 0);
     expect(config.thinkingConfig!.thinkingLevel).toBe('HIGH');
   });
 
@@ -657,17 +732,13 @@ describe('buildGenerationConfig', () => {
   });
 
   it('includes thinkingConfig for gemini-2.5 models', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-2.5-flash', 'sys', baseConfig, false, 8000,
-    );
+    const config = await buildGenerationConfig('gemini-2.5-flash', 'sys', baseConfig, false, 8000);
     expect(config.thinkingConfig!.thinkingBudget).toBe(8000);
     expect(config.thinkingConfig!.includeThoughts).toBe(true);
   });
 
   it('includes thinkingBudget config for Gemini Robotics-ER 1.6', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, 1024,
-    );
+    const config = await buildGenerationConfig('gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, 1024);
     expect(config.thinkingConfig).toEqual({
       thinkingBudget: 1024,
       includeThoughts: true,
@@ -675,9 +746,7 @@ describe('buildGenerationConfig', () => {
   });
 
   it('preserves auto thinking for Gemini Robotics-ER 1.6', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, -1,
-    );
+    const config = await buildGenerationConfig('gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, -1);
     expect(config.thinkingConfig).toEqual({
       includeThoughts: true,
       thinkingLevel: 'HIGH',
@@ -686,8 +755,15 @@ describe('buildGenerationConfig', () => {
 
   it('uses thinkingLevel when budget is 0 for Gemini Robotics-ER 1.6', async () => {
     const config = await buildGenerationConfig(
-      'gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, 0,
-      false, false, false, 'LOW',
+      'gemini-robotics-er-1.6-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      'LOW',
     );
     expect(config.thinkingConfig).toEqual({
       includeThoughts: true,
@@ -696,33 +772,43 @@ describe('buildGenerationConfig', () => {
   });
 
   it('adds googleSearch tool when enabled', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
-      true
-    );
+    const config = await buildGenerationConfig('gemini-3-flash-preview', 'sys', baseConfig, false, 0, true);
     expect(config.tools).toContainEqual({ googleSearch: {} });
   });
 
   it('adds googleSearch tool when deepSearch is enabled', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, undefined, true
+      'gemini-3-flash-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      undefined,
+      true,
     );
     expect(config.tools).toContainEqual({ googleSearch: {} });
   });
 
   it('adds codeExecution tool when enabled and localPython not passed', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-2.5-flash', 'sys', baseConfig, false, 0,
-      false, true
-    );
+    const config = await buildGenerationConfig('gemini-2.5-flash', 'sys', baseConfig, false, 0, false, true);
     expect(config.tools).toContainEqual({ codeExecution: {} });
   });
 
   it('does not add codeExecution tool for Gemini image-generation models when enabled', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3.1-flash-image-preview', 'sys', baseConfig, true, 0,
-      false, true, false, 'HIGH'
+      'gemini-3.1-flash-image-preview',
+      'sys',
+      baseConfig,
+      true,
+      0,
+      false,
+      true,
+      false,
+      'HIGH',
     );
 
     expect(config.tools?.some((tool) => 'codeExecution' in tool)).toBeFalsy();
@@ -736,8 +822,21 @@ describe('buildGenerationConfig', () => {
     // gemini-2.5-flash is a non-G3 model that hits the standard path
     // isCodeExecutionEnabled=true at param 6, isLocalPythonEnabled=true at param 14
     const config = await buildGenerationConfig(
-      'gemini-2.5-flash', 'sys', baseConfig, false, 0,
-      false, true, false, undefined, undefined, false, undefined, undefined, undefined, true
+      'gemini-2.5-flash',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      true,
+      false,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      undefined,
+      undefined,
+      true,
     );
     const hasCodeExec = config.tools?.some((tool) => 'codeExecution' in tool);
     expect(hasCodeExec).toBeFalsy();
@@ -745,16 +844,31 @@ describe('buildGenerationConfig', () => {
 
   it('adds urlContext tool when enabled', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
-      false, false, true
+      'gemini-3-flash-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      true,
     );
     expect(config.tools).toContainEqual({ urlContext: {} });
   });
 
   it('appends deep search prompt to systemInstruction', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'Original', baseConfig, false, 0,
-      false, false, false, undefined, undefined, true
+      'gemini-3-flash-preview',
+      'Original',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      undefined,
+      true,
     );
     expect(config.systemInstruction).toContain('Original');
     expect(config.systemInstruction).not.toBe('Original');
@@ -762,8 +876,21 @@ describe('buildGenerationConfig', () => {
 
   it('appends local python prompt to systemInstruction when enabled', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'Original', baseConfig, false, 0,
-      false, false, false, undefined, undefined, false, undefined, undefined, undefined, true
+      'gemini-3-flash-preview',
+      'Original',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      undefined,
+      undefined,
+      true,
     );
     expect(config.systemInstruction).toContain('Original');
     expect(config.systemInstruction).toContain('Call the `run_local_python` tool');
@@ -771,9 +898,7 @@ describe('buildGenerationConfig', () => {
   });
 
   it('uses HIGH thinking level for Gemma reasoning mode', async () => {
-    const config = await buildGenerationConfig(
-      'gemma-4-31b-it', 'sys', baseConfig, true, 0,
-    );
+    const config = await buildGenerationConfig('gemma-4-31b-it', 'sys', baseConfig, true, 0);
     expect(config.systemInstruction).toBe('sys');
     expect(config.thinkingConfig).toEqual({
       includeThoughts: true,
@@ -782,9 +907,7 @@ describe('buildGenerationConfig', () => {
   });
 
   it('uses MINIMAL thinking level for Gemma fast mode', async () => {
-    const config = await buildGenerationConfig(
-      'gemma-4-31b-it', 'sys', baseConfig, false, 0,
-    );
+    const config = await buildGenerationConfig('gemma-4-31b-it', 'sys', baseConfig, false, 0);
     expect(config.systemInstruction).toBe('sys');
     expect(config.thinkingConfig).toEqual({
       includeThoughts: true,
@@ -814,56 +937,60 @@ describe('buildGenerationConfig', () => {
   });
 
   it('does not add codeExecution for Gemma models', async () => {
-    const config = await buildGenerationConfig(
-      'gemma-4-31b-it',
-      'sys',
-      baseConfig,
-      false,
-      0,
-      false,
-      true,
-      false,
-    );
+    const config = await buildGenerationConfig('gemma-4-31b-it', 'sys', baseConfig, false, 0, false, true, false);
 
     const hasCodeExec = config.tools?.some((tool) => 'codeExecution' in tool);
     expect(hasCodeExec).toBeFalsy();
   });
 
   it('does not add urlContext for Gemma models', async () => {
-    const config = await buildGenerationConfig(
-      'gemma-4-31b-it',
-      'sys',
-      baseConfig,
-      false,
-      0,
-      false,
-      false,
-      true,
-    );
+    const config = await buildGenerationConfig('gemma-4-31b-it', 'sys', baseConfig, false, 0, false, false, true);
 
     const hasUrlContext = config.tools?.some((tool) => 'urlContext' in tool);
     expect(hasUrlContext).toBeFalsy();
   });
 
   it('sets systemInstruction to undefined when empty', async () => {
-    const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', '', baseConfig, false, 0,
-    );
+    const config = await buildGenerationConfig('gemini-3-flash-preview', '', baseConfig, false, 0);
     expect(config.systemInstruction).toBeUndefined();
   });
 
   it('applies global mediaResolution for non-Gemini-3 non-Gemma models', async () => {
     const config = await buildGenerationConfig(
-      'gemini-2.5-flash', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, undefined, false, undefined, undefined, MediaResolution.MEDIA_RESOLUTION_HIGH,
+      'gemini-2.5-flash',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      undefined,
+      MediaResolution.MEDIA_RESOLUTION_HIGH,
     );
     expect(config.mediaResolution).toBe(MediaResolution.MEDIA_RESOLUTION_HIGH);
   });
 
   it('does not set global mediaResolution for Gemini 3 models', async () => {
     const config = await buildGenerationConfig(
-      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
-      false, false, false, undefined, undefined, false, undefined, undefined, MediaResolution.MEDIA_RESOLUTION_HIGH,
+      'gemini-3-flash-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      undefined,
+      MediaResolution.MEDIA_RESOLUTION_HIGH,
     );
     expect(config.mediaResolution).toBeUndefined();
   });
@@ -884,7 +1011,7 @@ describe('buildGenerationConfig', () => {
       },
       false,
       0,
-      true
+      true,
     );
     expect(config.responseMimeType).toBe('application/json');
     expect(config.responseSchema).toEqual({
@@ -929,16 +1056,12 @@ describe('appendFunctionDeclarationsToTools', () => {
   });
 
   it('keeps custom function declarations alongside built-in tools for Gemini 3 models', () => {
-    const config = appendFunctionDeclarationsToTools(
-      'gemini-3-flash-preview',
-      { tools: [{ googleSearch: {} }] },
-      [
-        {
-          name: 'run_local_python',
-          description: 'Execute Python locally.',
-        },
-      ],
-    );
+    const config = appendFunctionDeclarationsToTools('gemini-3-flash-preview', { tools: [{ googleSearch: {} }] }, [
+      {
+        name: 'run_local_python',
+        description: 'Execute Python locally.',
+      },
+    ]);
 
     expect(config.tools).toEqual([
       { googleSearch: {} },
@@ -985,16 +1108,12 @@ describe('appendFunctionDeclarationsToTools', () => {
   });
 
   it('does not enable server-side tool invocation circulation for function-only Gemini 3 configs', () => {
-    const config = appendFunctionDeclarationsToTools(
-      'gemini-3-flash-preview',
-      {},
-      [
-        {
-          name: 'run_local_python',
-          description: 'Execute Python locally.',
-        },
-      ],
-    );
+    const config = appendFunctionDeclarationsToTools('gemini-3-flash-preview', {}, [
+      {
+        name: 'run_local_python',
+        description: 'Execute Python locally.',
+      },
+    ]);
 
     expect(config.tools).toEqual([
       {

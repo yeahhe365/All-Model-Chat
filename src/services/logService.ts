@@ -1,6 +1,5 @@
-
-import { dbService, type ApiUsageExactPricing } from "../utils/db";
-import type { LogCategory, LogEntry, LogLevel, TokenUsageStats } from "../types/logging";
+import { dbService, type ApiUsageExactPricing } from '../utils/db';
+import type { LogCategory, LogEntry, LogLevel, TokenUsageStats } from '../types/logging';
 
 type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;
@@ -25,10 +24,10 @@ class LogServiceImpl {
   private listeners: Set<LogListener> = new Set();
   private apiKeyUsage: Map<string, number> = new Map();
   private apiKeyListeners: Set<ApiKeyListener> = new Set();
-  
+
   private tokenUsage: Map<string, TokenUsageStats> = new Map();
   private tokenUsageListeners: Set<TokenUsageListener> = new Set();
-  
+
   // Batching Buffer
   private logBuffer: LogEntry[] = [];
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -59,20 +58,22 @@ class LogServiceImpl {
     try {
       // Simple circular reference handler
       const seen = new WeakSet<object>();
-      return JSON.parse(JSON.stringify(data, (_key: string, value: unknown) => {
-        if (value instanceof Error) {
-          return this.serializeError(value);
-        }
-        if (typeof value === 'object' && value !== null) {
-          if (seen.has(value)) return '[Circular]';
-          seen.add(value);
-        }
-        // Truncate extremely long strings to save DB space
-        if (typeof value === 'string' && value.length > 5000) {
+      return JSON.parse(
+        JSON.stringify(data, (_key: string, value: unknown) => {
+          if (value instanceof Error) {
+            return this.serializeError(value);
+          }
+          if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) return '[Circular]';
+            seen.add(value);
+          }
+          // Truncate extremely long strings to save DB space
+          if (typeof value === 'string' && value.length > 5000) {
             return value.substring(0, 5000) + '...[TRUNCATED]';
-        }
-        return value;
-      }));
+          }
+          return value;
+        }),
+      );
     } catch {
       return '[Serialization Failed]';
     }
@@ -87,30 +88,49 @@ class LogServiceImpl {
   }
 
   private inferCategory(message: string, data?: unknown): LogCategory {
-    const dataText =
-      typeof data === 'string'
-        ? data
-        : data instanceof Error
-          ? `${data.name} ${data.message}`
-          : '';
+    const dataText = typeof data === 'string' ? data : data instanceof Error ? `${data.name} ${data.message}` : '';
     const haystack = `${message} ${dataText}`.toLowerCase();
 
-    if (/\buser\b|\bclearing\b|\bdeleting\b|\brenaming\b|\bmoving\b|\bretrying\b|\brequested\b|\bcancelled\b|\bstopped\b|\bstarting new chat\b|\bmessage edit\b|\btoggling pin\b|\badding new group\b/.test(haystack)) {
+    if (
+      /\buser\b|\bclearing\b|\bdeleting\b|\brenaming\b|\bmoving\b|\bretrying\b|\brequested\b|\bcancelled\b|\bstopped\b|\bstarting new chat\b|\bmessage edit\b|\btoggling pin\b|\badding new group\b/.test(
+        haystack,
+      )
+    ) {
       return 'USER';
     }
-    if (/\bapi key\b|\bauth\b|\bcredential\b|\bproxy\b|\btoken endpoint\b|\bephemeral token\b|\blocked key\b/.test(haystack)) {
+    if (
+      /\bapi key\b|\bauth\b|\bcredential\b|\bproxy\b|\btoken endpoint\b|\bephemeral token\b|\blocked key\b/.test(
+        haystack,
+      )
+    ) {
       return 'AUTH';
     }
-    if (/\bfile\b|\bupload\b|\bdownload\b|\bexport\b|\bimport\b|\bpdf\b|\bdocx\b|\bzip\b|\baudio\b|\bimage\b|\bpreview\b/.test(haystack)) {
+    if (
+      /\bfile\b|\bupload\b|\bdownload\b|\bexport\b|\bimport\b|\bpdf\b|\bdocx\b|\bzip\b|\baudio\b|\bimage\b|\bpreview\b/.test(
+        haystack,
+      )
+    ) {
       return 'FILE';
     }
-    if (/\bindexeddb\b|\bdb\b|\bdatabase\b|\bpersist\b|\bstorage\b|\bsession\b|\bhistory\b|\bgroup\b|\bscenario\b|\bsettings\b|\bsync\b/.test(haystack)) {
+    if (
+      /\bindexeddb\b|\bdb\b|\bdatabase\b|\bpersist\b|\bstorage\b|\bsession\b|\bhistory\b|\bgroup\b|\bscenario\b|\bsettings\b|\bsync\b/.test(
+        haystack,
+      )
+    ) {
       return 'DB';
     }
-    if (/\bstream(?:ing)?\b|\bconnect(?:ed|ion)?\b|\breconnect(?:ing|ion)?\b|\bdisconnect(?:ed|ion)?\b|\bfetch\b|\bnetwork\b|\bpoll(?:ing)?\b|\blive api\b|\bwebsocket\b|\bhttp\b/.test(haystack)) {
+    if (
+      /\bstream(?:ing)?\b|\bconnect(?:ed|ion)?\b|\breconnect(?:ing|ion)?\b|\bdisconnect(?:ed|ion)?\b|\bfetch\b|\bnetwork\b|\bpoll(?:ing)?\b|\blive api\b|\bwebsocket\b|\bhttp\b/.test(
+        haystack,
+      )
+    ) {
       return 'NETWORK';
     }
-    if (/\bmodel\b|\btoken(?:s)?\b|\btranslate|translation\b|\bsuggestions?\b|\btitle generation\b|\btts\b|\bspeech\b|\btranscrib(?:e|ing|ed)\b|\bgeneratecontent\b|\bgemini\b|\bimagen\b|\bpyodide\b|\blocalpython\b|\bcanvas visualization\b/.test(haystack)) {
+    if (
+      /\bmodel\b|\btoken(?:s)?\b|\btranslate|translation\b|\bsuggestions?\b|\btitle generation\b|\btts\b|\bspeech\b|\btranscrib(?:e|ing|ed)\b|\bgeneratecontent\b|\bgemini\b|\bimagen\b|\bpyodide\b|\blocalpython\b|\bcanvas visualization\b/.test(
+        haystack,
+      )
+    ) {
       return 'MODEL';
     }
 
@@ -140,7 +160,7 @@ class LogServiceImpl {
     if (this.isClearing) return;
 
     this.logBuffer.push(entry);
-    
+
     // Notify listeners immediately for "live" feeling, even if not persisted yet
     this.notifyListeners([entry]);
 
@@ -158,7 +178,7 @@ class LogServiceImpl {
       await this.activeFlushPromise;
       if (this.logBuffer.length === 0) return;
     }
-    
+
     if (this.flushTimer) {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
@@ -174,7 +194,7 @@ class LogServiceImpl {
         await dbService.addLogs(logsToSave);
         flushSucceeded = true;
       } catch (e) {
-        console.error("Failed to flush logs to DB:", e);
+        console.error('Failed to flush logs to DB:', e);
         if (!this.isClearing) {
           this.logBuffer = [...logsToSave, ...this.logBuffer];
           this.scheduleFlush();
@@ -206,31 +226,33 @@ class LogServiceImpl {
       const cutoff = Date.now() - LOG_RETENTION_MS;
       await dbService.pruneLogs(cutoff);
     } catch (e) {
-      console.error("Failed to prune old logs:", e);
+      console.error('Failed to prune old logs:', e);
     }
   }
 
   // --- API Usage Tracking (Kept in LocalStorage for speed/simplicity) ---
 
   private loadApiKeyUsage() {
-      try {
-          const storedUsage = localStorage.getItem(API_USAGE_STORAGE_KEY);
-          if (storedUsage) {
-              const parsed = JSON.parse(storedUsage);
-              if (Array.isArray(parsed)) {
-                  this.apiKeyUsage = new Map(parsed);
-              }
-          }
-      } catch (e) {
-          console.error("Failed to load API key usage:", e);
+    try {
+      const storedUsage = localStorage.getItem(API_USAGE_STORAGE_KEY);
+      if (storedUsage) {
+        const parsed = JSON.parse(storedUsage);
+        if (Array.isArray(parsed)) {
+          this.apiKeyUsage = new Map(parsed);
+        }
       }
+    } catch (e) {
+      console.error('Failed to load API key usage:', e);
+    }
   }
 
   private saveApiKeyUsage() {
-      try {
-          const usageArray = Array.from(this.apiKeyUsage.entries());
-          localStorage.setItem(API_USAGE_STORAGE_KEY, JSON.stringify(usageArray));
-      } catch (e) { console.error(e); }
+    try {
+      const usageArray = Array.from(this.apiKeyUsage.entries());
+      localStorage.setItem(API_USAGE_STORAGE_KEY, JSON.stringify(usageArray));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private notifyApiKeyListeners() {
@@ -243,44 +265,44 @@ class LogServiceImpl {
   // --- Token Usage Tracking ---
 
   private normalizeTokenUsageStats(stats: unknown): TokenUsageStats {
-      if (!stats || typeof stats !== 'object') {
-          return { input: 0, output: 0 };
-      }
+    if (!stats || typeof stats !== 'object') {
+      return { input: 0, output: 0 };
+    }
 
-      const usage = stats as {
-          input?: number;
-          output?: number;
-          prompt?: number;
-          completion?: number;
-      };
+    const usage = stats as {
+      input?: number;
+      output?: number;
+      prompt?: number;
+      completion?: number;
+    };
 
-      return {
-          input: usage.input ?? usage.prompt ?? 0,
-          output: usage.output ?? usage.completion ?? 0,
-      };
+    return {
+      input: usage.input ?? usage.prompt ?? 0,
+      output: usage.output ?? usage.completion ?? 0,
+    };
   }
 
   private loadTokenUsage() {
-      try {
-          const storedUsage = localStorage.getItem(TOKEN_USAGE_STORAGE_KEY);
-          if (storedUsage) {
-              const parsed = JSON.parse(storedUsage);
-              if (Array.isArray(parsed)) {
-                  this.tokenUsage = new Map(
-                    parsed.map(([modelId, stats]) => [modelId, this.normalizeTokenUsageStats(stats)]),
-                  );
-              }
-          }
-      } catch (e) {
-          console.error("Failed to load token usage:", e);
+    try {
+      const storedUsage = localStorage.getItem(TOKEN_USAGE_STORAGE_KEY);
+      if (storedUsage) {
+        const parsed = JSON.parse(storedUsage);
+        if (Array.isArray(parsed)) {
+          this.tokenUsage = new Map(parsed.map(([modelId, stats]) => [modelId, this.normalizeTokenUsageStats(stats)]));
+        }
       }
+    } catch (e) {
+      console.error('Failed to load token usage:', e);
+    }
   }
 
   private saveTokenUsage() {
-      try {
-          const usageArray = Array.from(this.tokenUsage.entries());
-          localStorage.setItem(TOKEN_USAGE_STORAGE_KEY, JSON.stringify(usageArray));
-      } catch (e) { console.error(e); }
+    try {
+      const usageArray = Array.from(this.tokenUsage.entries());
+      localStorage.setItem(TOKEN_USAGE_STORAGE_KEY, JSON.stringify(usageArray));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private notifyTokenUsageListeners() {
@@ -304,34 +326,37 @@ class LogServiceImpl {
   ) {
     if (!modelId) return;
     const current = this.tokenUsage.get(modelId) || { input: 0, output: 0 };
-    const inputTokens = Math.max(usage.promptTokens - (usage.cachedPromptTokens ?? 0), 0) + (usage.toolUsePromptTokens ?? 0);
+    const inputTokens =
+      Math.max(usage.promptTokens - (usage.cachedPromptTokens ?? 0), 0) + (usage.toolUsePromptTokens ?? 0);
     const outputTokens = usage.completionTokens + (usage.thoughtTokens ?? 0);
     this.tokenUsage.set(modelId, {
-        input: current.input + inputTokens,
-        output: current.output + outputTokens,
+      input: current.input + inputTokens,
+      output: current.output + outputTokens,
     });
     this.saveTokenUsage();
     this.notifyTokenUsageListeners();
-    void dbService.addApiUsageRecord({
-      timestamp: Date.now(),
-      modelId,
-      promptTokens: usage.promptTokens,
-      cachedPromptTokens: usage.cachedPromptTokens ?? 0,
-      completionTokens: usage.completionTokens,
-      thoughtTokens: usage.thoughtTokens ?? 0,
-      toolUsePromptTokens: usage.toolUsePromptTokens ?? 0,
-      totalTokens: usage.totalTokens ?? (inputTokens + outputTokens),
-      ...(exactPricing ? { exactPricing } : {}),
-    }).catch((error) => {
-      console.error('Failed to persist API usage record:', error);
-    });
+    void dbService
+      .addApiUsageRecord({
+        timestamp: Date.now(),
+        modelId,
+        promptTokens: usage.promptTokens,
+        cachedPromptTokens: usage.cachedPromptTokens ?? 0,
+        completionTokens: usage.completionTokens,
+        thoughtTokens: usage.thoughtTokens ?? 0,
+        toolUsePromptTokens: usage.toolUsePromptTokens ?? 0,
+        totalTokens: usage.totalTokens ?? inputTokens + outputTokens,
+        ...(exactPricing ? { exactPricing } : {}),
+      })
+      .catch((error) => {
+        console.error('Failed to persist API usage record:', error);
+      });
   }
 
   // --- Public Interface ---
 
   /**
-   * Standard log methods. 
-   * Data argument is optional. 
+   * Standard log methods.
+   * Data argument is optional.
    * Category defaults to SYSTEM if not specified in options or inferred.
    */
   public info(message: string, options?: LogOptions | unknown) {
@@ -353,11 +378,11 @@ class LogServiceImpl {
     let data = dataCandidate instanceof Error ? this.serializeError(dataCandidate) : dataCandidate;
 
     if (this.isErrorLogOptions(options) && options.error !== undefined) {
-        const serializedError = this.serializeError(options.error);
-        data =
-          typeof data === 'object' && data !== null && !Array.isArray(data)
-            ? { ...(data as Record<string, unknown>), error: serializedError }
-            : { error: serializedError, data };
+      const serializedError = this.serializeError(options.error);
+      data =
+        typeof data === 'object' && data !== null && !Array.isArray(data)
+          ? { ...(data as Record<string, unknown>), error: serializedError }
+          : { error: serializedError, data };
     }
     this.queueLog(this.createLogEntry('ERROR', category, message, data));
   }
@@ -370,16 +395,16 @@ class LogServiceImpl {
 
   // Helper to extract stack traces
   private serializeError(error: unknown): unknown {
-      if (error instanceof Error) {
-          const normalizedError = error as Error & { cause?: unknown };
-          return {
-              message: error.message,
-              name: error.name,
-              stack: error.stack,
-              cause: normalizedError.cause
-          };
-      }
-      return error;
+    if (error instanceof Error) {
+      const normalizedError = error as Error & { cause?: unknown };
+      return {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        cause: normalizedError.cause,
+      };
+    }
+    return error;
   }
 
   public recordApiKeyUsage(apiKey: string) {
@@ -417,7 +442,7 @@ class LogServiceImpl {
    */
   public async getRecentLogs(limit = 200, offset = 0): Promise<LogEntry[]> {
     // Ensure buffer is flushed before reading to get latest state
-    await this.flush(); 
+    await this.flush();
     return dbService.getLogs(limit, offset);
   }
 

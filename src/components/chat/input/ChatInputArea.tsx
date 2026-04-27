@@ -1,4 +1,3 @@
-
 /* eslint-disable react-hooks/refs */
 import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
@@ -14,156 +13,193 @@ import { QueuedSubmissionCard } from './QueuedSubmissionCard';
 import { useChatInputView } from './ChatInputViewContext';
 
 export const ChatInputArea: React.FC = () => {
-    const {
-        toolbarProps,
-        actionsProps,
-        slashCommandProps,
-        fileDisplayProps,
-        inputProps,
-        quoteProps,
-        queuedSubmissionProps,
-        layoutProps,
-        fileInputs,
-        formProps,
-        suggestionsProps,
-        liveStatusProps,
-        themeId,
-    } = useChatInputView();
-    const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
-    const { isRecording } = actionsProps;
+  const {
+    toolbarProps,
+    actionsProps,
+    slashCommandProps,
+    fileDisplayProps,
+    inputProps,
+    quoteProps,
+    queuedSubmissionProps,
+    layoutProps,
+    fileInputs,
+    formProps,
+    suggestionsProps,
+    liveStatusProps,
+    themeId,
+  } = useChatInputView();
+  const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
+  const { isRecording } = actionsProps;
 
-    const isUIBlocked = inputProps.disabled && !isAnimatingSend && !isRecording;
+  const isUIBlocked = inputProps.disabled && !isAnimatingSend && !isRecording;
 
-    const wrapperClass = isFullscreen 
-        ? "fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-6 flex flex-col fullscreen-enter-animation" 
-        : `bg-transparent ${isUIBlocked ? 'opacity-30 pointer-events-none' : ''}`;
+  const wrapperClass = isFullscreen
+    ? 'fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-6 flex flex-col fullscreen-enter-animation'
+    : `bg-transparent ${isUIBlocked ? 'opacity-30 pointer-events-none' : ''}`;
 
-    const innerContainerClass = isFullscreen
-        ? "w-full max-w-6xl mx-auto flex flex-col h-full"
-        : `mx-auto w-full ${!isPipActive ? 'max-w-[44.8rem]' : ''} px-2 sm:px-3 pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]`;
+  const innerContainerClass = isFullscreen
+    ? 'w-full max-w-6xl mx-auto flex flex-col h-full'
+    : `mx-auto w-full ${!isPipActive ? 'max-w-[44.8rem]' : ''} px-2 sm:px-3 pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]`;
 
-    const formClass = isFullscreen
-        ? "flex-grow flex flex-col relative min-h-0"
-        : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
+  const formClass = isFullscreen
+    ? 'flex-grow flex flex-col relative min-h-0'
+    : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
 
-    const inputContainerClass = isFullscreen
-        ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 pb-[calc(3.5rem+0.72rem)] shadow-none h-full transition-all duration-200 relative"
-        : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-3 py-[0.486rem] pb-[calc(3.15rem+0.486rem)] sm:px-4 sm:py-[0.648rem] sm:pb-[calc(3.15rem+0.648rem)] shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative z-20";
-    const queuedSubmissionContainerClass = isFullscreen
-        ? "mb-2 flex-shrink-0"
-        : "relative z-10 mx-5 mb-[-22px] -translate-y-1.5";
+  const inputContainerClass = isFullscreen
+    ? 'flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 pb-[calc(3.5rem+0.72rem)] shadow-none h-full transition-all duration-200 relative'
+    : 'flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-3 py-[0.486rem] pb-[calc(3.15rem+0.486rem)] sm:px-4 sm:py-[0.648rem] sm:pb-[calc(3.15rem+0.648rem)] shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative z-20';
+  const queuedSubmissionContainerClass = isFullscreen
+    ? 'mb-2 flex-shrink-0'
+    : 'relative z-10 mx-5 mb-[-22px] -translate-y-1.5';
 
-    const actionsContainerClass = "absolute bottom-[0.486rem] left-3 right-3 sm:bottom-[0.648rem] sm:left-4 sm:right-4 flex items-center justify-between z-10";
-    const focusBlockingSelector = 'button, a, input, textarea, select, label, summary, audio, video, [role="button"], [role="menuitem"], [contenteditable="true"]';
+  const actionsContainerClass =
+    'absolute bottom-[0.486rem] left-3 right-3 sm:bottom-[0.648rem] sm:left-4 sm:right-4 flex items-center justify-between z-10';
+  const focusBlockingSelector =
+    'button, a, input, textarea, select, label, summary, audio, video, [role="button"], [role="menuitem"], [contenteditable="true"]';
 
-    const handleInputShellClick = (event: React.MouseEvent<HTMLDivElement>) => {
-        const target = event.target;
-        if (target instanceof Element && target.closest(focusBlockingSelector)) {
-            return;
-        }
+  const handleInputShellClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest(focusBlockingSelector)) {
+      return;
+    }
 
-        inputProps.textareaRef.current?.focus();
-    };
+    inputProps.textareaRef.current?.focus();
+  };
 
-    const hiddenFileInputs = (
-        <>
-            <input type="file" ref={fileInputs.fileInputRef} onChange={fileInputs.handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-            <input type="file" ref={fileInputs.imageInputRef} onChange={fileInputs.handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-            <input type="file" ref={fileInputs.folderInputRef} onChange={fileInputs.handleFolderChange} className="hidden" aria-hidden="true" {...({ webkitdirectory: "", directory: "" } as { webkitdirectory: string; directory: string })} multiple />
-            <input type="file" ref={fileInputs.zipInputRef} onChange={fileInputs.handleZipChange} accept=".zip" className="hidden" aria-hidden="true" />
-            <input type="file" ref={fileInputs.cameraInputRef} onChange={fileInputs.handleFileChange} accept="image/*" capture="environment" className="hidden" aria-hidden="true" />
-        </>
-    );
+  const hiddenFileInputs = (
+    <>
+      <input
+        type="file"
+        ref={fileInputs.fileInputRef}
+        onChange={fileInputs.handleFileChange}
+        accept={ALL_SUPPORTED_MIME_TYPES.join(',')}
+        className="hidden"
+        aria-hidden="true"
+        multiple
+      />
+      <input
+        type="file"
+        ref={fileInputs.imageInputRef}
+        onChange={fileInputs.handleFileChange}
+        accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')}
+        className="hidden"
+        aria-hidden="true"
+        multiple
+      />
+      <input
+        type="file"
+        ref={fileInputs.folderInputRef}
+        onChange={fileInputs.handleFolderChange}
+        className="hidden"
+        aria-hidden="true"
+        {...({ webkitdirectory: '', directory: '' } as { webkitdirectory: string; directory: string })}
+        multiple
+      />
+      <input
+        type="file"
+        ref={fileInputs.zipInputRef}
+        onChange={fileInputs.handleZipChange}
+        accept=".zip"
+        className="hidden"
+        aria-hidden="true"
+      />
+      <input
+        type="file"
+        ref={fileInputs.cameraInputRef}
+        onChange={fileInputs.handleFileChange}
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        aria-hidden="true"
+      />
+    </>
+  );
 
-    return (
-        <div className={wrapperClass} aria-hidden={isUIBlocked}>
-            <div className="mx-auto w-full max-w-[44.8rem] px-2 sm:px-3">
-                 {suggestionsProps && !isFullscreen && (
-                    <ChatSuggestions 
-                        show={suggestionsProps.show}
-                        onSuggestionClick={suggestionsProps.onSuggestionClick}
-                        onOrganizeInfoClick={suggestionsProps.onOrganizeInfoClick}
-                        onToggleBBox={suggestionsProps.onToggleBBox}
-                        isBBoxModeActive={suggestionsProps.isBBoxModeActive}
-                        onToggleGuide={suggestionsProps.onToggleGuide}
-                        isGuideModeActive={suggestionsProps.isGuideModeActive}
-                        isFullscreen={isFullscreen}
-                    />
-                )}
-            </div>
+  return (
+    <div className={wrapperClass} aria-hidden={isUIBlocked}>
+      <div className="mx-auto w-full max-w-[44.8rem] px-2 sm:px-3">
+        {suggestionsProps && !isFullscreen && (
+          <ChatSuggestions
+            show={suggestionsProps.show}
+            onSuggestionClick={suggestionsProps.onSuggestionClick}
+            onOrganizeInfoClick={suggestionsProps.onOrganizeInfoClick}
+            onToggleBBox={suggestionsProps.onToggleBBox}
+            isBBoxModeActive={suggestionsProps.isBBoxModeActive}
+            onToggleGuide={suggestionsProps.onToggleGuide}
+            isGuideModeActive={suggestionsProps.isGuideModeActive}
+            isFullscreen={isFullscreen}
+          />
+        )}
+      </div>
 
-            <div className={innerContainerClass}>
-                {/* Wrap toolbar in z-indexed container to ensure dropdowns render above status banner */}
-                <div className="relative z-50">
-                    <ChatInputToolbar {...toolbarProps} />
-                </div>
-                
-                {liveStatusProps && (
-                    <LiveStatusBanner {...liveStatusProps} />
-                )}
-                
-                <form onSubmit={formProps.onSubmit} className={formClass}>
-                    <SlashCommandMenu
-                        isOpen={slashCommandProps.isOpen}
-                        commands={slashCommandProps.commands}
-                        onSelect={slashCommandProps.onSelect}
-                        selectedIndex={slashCommandProps.selectedIndex}
-                        className={isFullscreen ? "absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20" : undefined}
-                    />
-                    {queuedSubmissionProps && (
-                        <div className={queuedSubmissionContainerClass}>
-                            <QueuedSubmissionCard
-                                title={queuedSubmissionProps.title}
-                                previewText={queuedSubmissionProps.previewText}
-                                fileCount={queuedSubmissionProps.fileCount}
-                                onEdit={queuedSubmissionProps.onEdit}
-                                onRemove={queuedSubmissionProps.onRemove}
-                            />
-                        </div>
-                    )}
-                    <div className={inputContainerClass} onClick={handleInputShellClick}>
-                        <ChatFilePreviewList 
-                            selectedFiles={fileDisplayProps.selectedFiles}
-                            onRemove={fileDisplayProps.onRemove}
-                            onCancelUpload={fileDisplayProps.onCancelUpload}
-                            onConfigure={fileDisplayProps.onConfigure}
-                            onMoveTextToInput={fileDisplayProps.onMoveTextToInput}
-                            onPreview={fileDisplayProps.onPreview}
-                            isGemini3={fileDisplayProps.isGemini3}
-                        />
-
-                        {quoteProps && (
-                            <ChatQuoteDisplay 
-                                quotes={quoteProps.quotes}
-                                onRemoveQuote={quoteProps.onRemoveQuote}
-                                themeId={themeId}
-                            />
-                        )}
-                        
-                        <ChatTextArea 
-                            textareaRef={inputProps.textareaRef}
-                            value={inputProps.value}
-                            onChange={inputProps.onChange}
-                            onKeyDown={inputProps.onKeyDown}
-                            onPaste={inputProps.onPaste}
-                            onCompositionStart={inputProps.onCompositionStart}
-                            onCompositionEnd={inputProps.onCompositionEnd}
-                            onFocus={inputProps.onFocus}
-                            placeholder={inputProps.placeholder}
-                            disabled={inputProps.disabled}
-                            isFullscreen={isFullscreen}
-                            isMobile={isMobile}
-                            initialTextareaHeight={initialTextareaHeight}
-                            isConverting={isConverting}
-                        />
-
-                        <div className={actionsContainerClass}>
-                            <ChatInputActions {...actionsProps} />
-                            {hiddenFileInputs}
-                        </div>
-                    </div>
-                </form>
-            </div>
+      <div className={innerContainerClass}>
+        {/* Wrap toolbar in z-indexed container to ensure dropdowns render above status banner */}
+        <div className="relative z-50">
+          <ChatInputToolbar {...toolbarProps} />
         </div>
-    );
+
+        {liveStatusProps && <LiveStatusBanner {...liveStatusProps} />}
+
+        <form onSubmit={formProps.onSubmit} className={formClass}>
+          <SlashCommandMenu
+            isOpen={slashCommandProps.isOpen}
+            commands={slashCommandProps.commands}
+            onSelect={slashCommandProps.onSelect}
+            selectedIndex={slashCommandProps.selectedIndex}
+            className={
+              isFullscreen ? 'absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20' : undefined
+            }
+          />
+          {queuedSubmissionProps && (
+            <div className={queuedSubmissionContainerClass}>
+              <QueuedSubmissionCard
+                title={queuedSubmissionProps.title}
+                previewText={queuedSubmissionProps.previewText}
+                fileCount={queuedSubmissionProps.fileCount}
+                onEdit={queuedSubmissionProps.onEdit}
+                onRemove={queuedSubmissionProps.onRemove}
+              />
+            </div>
+          )}
+          <div className={inputContainerClass} onClick={handleInputShellClick}>
+            <ChatFilePreviewList
+              selectedFiles={fileDisplayProps.selectedFiles}
+              onRemove={fileDisplayProps.onRemove}
+              onCancelUpload={fileDisplayProps.onCancelUpload}
+              onConfigure={fileDisplayProps.onConfigure}
+              onMoveTextToInput={fileDisplayProps.onMoveTextToInput}
+              onPreview={fileDisplayProps.onPreview}
+              isGemini3={fileDisplayProps.isGemini3}
+            />
+
+            {quoteProps && (
+              <ChatQuoteDisplay quotes={quoteProps.quotes} onRemoveQuote={quoteProps.onRemoveQuote} themeId={themeId} />
+            )}
+
+            <ChatTextArea
+              textareaRef={inputProps.textareaRef}
+              value={inputProps.value}
+              onChange={inputProps.onChange}
+              onKeyDown={inputProps.onKeyDown}
+              onPaste={inputProps.onPaste}
+              onCompositionStart={inputProps.onCompositionStart}
+              onCompositionEnd={inputProps.onCompositionEnd}
+              onFocus={inputProps.onFocus}
+              placeholder={inputProps.placeholder}
+              disabled={inputProps.disabled}
+              isFullscreen={isFullscreen}
+              isMobile={isMobile}
+              initialTextareaHeight={initialTextareaHeight}
+              isConverting={isConverting}
+            />
+
+            <div className={actionsContainerClass}>
+              <ChatInputActions {...actionsProps} />
+              {hiddenFileInputs}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };

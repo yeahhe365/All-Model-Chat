@@ -4,9 +4,7 @@ import { runStandardToolLoop } from './standardToolLoop';
 
 describe('runStandardToolLoop', () => {
   it('returns immediately when the model responds without function calls', async () => {
-    const initialContents: ChatHistoryItem[] = [
-      { role: 'user', parts: [{ text: 'Hello' }] },
-    ];
+    const initialContents: ChatHistoryItem[] = [{ role: 'user', parts: [{ text: 'Hello' }] }];
     const runTurn = vi.fn().mockResolvedValue({
       modelContent: { role: 'model', parts: [{ text: 'Hi there' }] },
       parts: [{ text: 'Hi there' }],
@@ -30,9 +28,7 @@ describe('runStandardToolLoop', () => {
   });
 
   it('executes tool calls, appends function responses, and continues until a final model answer is returned', async () => {
-    const initialContents: ChatHistoryItem[] = [
-      { role: 'user', parts: [{ text: 'Calculate 6 * 7' }] },
-    ];
+    const initialContents: ChatHistoryItem[] = [{ role: 'user', parts: [{ text: 'Calculate 6 * 7' }] }];
     const toolCallMessage = {
       role: 'model' as const,
       parts: [
@@ -130,9 +126,7 @@ describe('runStandardToolLoop', () => {
   });
 
   it('aggregates usage and metadata from earlier tool turns into the returned final turn', async () => {
-    const initialContents: ChatHistoryItem[] = [
-      { role: 'user', parts: [{ text: 'Research and calculate.' }] },
-    ];
+    const initialContents: ChatHistoryItem[] = [{ role: 'user', parts: [{ text: 'Research and calculate.' }] }];
     const toolCallMessage = {
       role: 'model' as const,
       parts: [
@@ -219,24 +213,16 @@ describe('runStandardToolLoop', () => {
       responseTokensDetails: [{ modality: 'TEXT', tokenCount: 12 }],
     });
     expect(result.finalTurn.grounding).toEqual({
-      citations: [
-        { uri: 'https://example.com/final' },
-        { uri: 'https://example.com/search' },
-      ],
+      citations: [{ uri: 'https://example.com/final' }, { uri: 'https://example.com/search' }],
       webSearchQueries: ['latest weather'],
     });
     expect(result.finalTurn.urlContext).toEqual({
-      urlMetadata: [
-        { retrievedUrl: 'https://example.com/doc-a' },
-        { retrievedUrl: 'https://example.com/doc-b' },
-      ],
+      urlMetadata: [{ retrievedUrl: 'https://example.com/doc-a' }, { retrievedUrl: 'https://example.com/doc-b' }],
     });
   });
 
   it('preserves earlier grounding sources without merging prior support offsets into the final turn', async () => {
-    const initialContents: ChatHistoryItem[] = [
-      { role: 'user', parts: [{ text: 'Search and then answer.' }] },
-    ];
+    const initialContents: ChatHistoryItem[] = [{ role: 'user', parts: [{ text: 'Search and then answer.' }] }];
     const toolCallMessage = {
       role: 'model' as const,
       parts: [
@@ -351,9 +337,7 @@ describe('runStandardToolLoop', () => {
   });
 
   it('keeps only the latest url-context status for a repeated URL across tool turns', async () => {
-    const initialContents: ChatHistoryItem[] = [
-      { role: 'user', parts: [{ text: 'Follow this URL.' }] },
-    ];
+    const initialContents: ChatHistoryItem[] = [{ role: 'user', parts: [{ text: 'Follow this URL.' }] }];
     const toolCallMessage = {
       role: 'model' as const,
       parts: [
@@ -435,9 +419,7 @@ describe('runStandardToolLoop', () => {
   });
 
   it('uses the latest available search entry point across grounded tool turns', async () => {
-    const initialContents: ChatHistoryItem[] = [
-      { role: 'user', parts: [{ text: 'Search twice and answer.' }] },
-    ];
+    const initialContents: ChatHistoryItem[] = [{ role: 'user', parts: [{ text: 'Search twice and answer.' }] }];
     const toolCallMessage = {
       role: 'model' as const,
       parts: [

@@ -1,4 +1,3 @@
-
 import { triggerDownload } from './core';
 import { createSnapshotContainer, createExportDOMHeader, sanitizeDocumentStylesForPngExport } from './dom';
 
@@ -9,93 +8,94 @@ import { createSnapshotContainer, createExportDOMHeader, sanitizeDocumentStylesF
  * @param options Configuration options for html2canvas.
  */
 export const exportElementAsPng = async (
-    element: HTMLElement, 
-    filename: string,
-    options?: { backgroundColor?: string | null, scale?: number }
+  element: HTMLElement,
+  filename: string,
+  options?: { backgroundColor?: string | null; scale?: number },
 ) => {
-    const html2canvas = (await import('html2canvas')).default;
+  const html2canvas = (await import('html2canvas')).default;
 
-    // 1. Pre-load images to ensure they render
-    const images = Array.from(element.querySelectorAll('img'));
-    await Promise.all(images.map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise(resolve => {
-            img.onload = resolve;
-            img.onerror = resolve; // Don't block export on broken image
-        });
-    }));
+  // 1. Pre-load images to ensure they render
+  const images = Array.from(element.querySelectorAll('img'));
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve; // Don't block export on broken image
+      });
+    }),
+  );
 
-    // Force a layout recalc/paint wait to ensure styles are applied in the detached container
-    await new Promise(resolve => setTimeout(resolve, 500));
+  // Force a layout recalc/paint wait to ensure styles are applied in the detached container
+  await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // 2. Smart Scale Calculation
-    // Chrome/Safari canvas limits are around 32767px height or 268MP area.
-    // We set safe thresholds to avoid crashes or empty results.
-    const MAX_CANVAS_HEIGHT = 30000; 
-    const MAX_CANVAS_AREA = 100 * 1000 * 1000; // ~100MP safe limit
+  // 2. Smart Scale Calculation
+  // Chrome/Safari canvas limits are around 32767px height or 268MP area.
+  // We set safe thresholds to avoid crashes or empty results.
+  const MAX_CANVAS_HEIGHT = 30000;
+  const MAX_CANVAS_AREA = 100 * 1000 * 1000; // ~100MP safe limit
 
-    const width = element.scrollWidth;
-    const height = element.scrollHeight;
-    let targetScale = options?.scale ?? 2;
+  const width = element.scrollWidth;
+  const height = element.scrollHeight;
+  let targetScale = options?.scale ?? 2;
 
-    // Reduce scale if height is too large
-    if ((height * targetScale) > MAX_CANVAS_HEIGHT) {
-        targetScale = MAX_CANVAS_HEIGHT / height;
-        console.warn(`[Export] Content too tall, reducing scale to ${targetScale.toFixed(2)}`);
-    }
-    
-    // Reduce scale if total area is too large
-    if ((width * targetScale) * (height * targetScale) > MAX_CANVAS_AREA) {
-        const areaRatio = MAX_CANVAS_AREA / (width * height);
-        targetScale = Math.min(targetScale, Math.sqrt(areaRatio));
-        console.warn(`[Export] Area too large, reducing scale to ${targetScale.toFixed(2)}`);
-    }
-    
-    // Minimum scale floor
-    targetScale = Math.max(targetScale, 0.5);
+  // Reduce scale if height is too large
+  if (height * targetScale > MAX_CANVAS_HEIGHT) {
+    targetScale = MAX_CANVAS_HEIGHT / height;
+    console.warn(`[Export] Content too tall, reducing scale to ${targetScale.toFixed(2)}`);
+  }
 
-    try {
-        const canvas = await html2canvas(element, {
-            height: height,
-            width: width,
-            useCORS: true, // Important for cross-origin images
-            allowTaint: false, // Must be false to allow export
-            logging: false,
-            backgroundColor: options?.backgroundColor ?? null,
-            scale: targetScale, 
-            ignoreElements: (el) => {
-                // Fallback check for ignoring elements if CSS fails
-                return el.classList.contains('no-export'); 
-            },
-            // Stability settings
-            imageTimeout: 15000,
-            onclone: (clonedDoc) => {
-                sanitizeDocumentStylesForPngExport(clonedDoc);
+  // Reduce scale if total area is too large
+  if (width * targetScale * (height * targetScale) > MAX_CANVAS_AREA) {
+    const areaRatio = MAX_CANVAS_AREA / (width * height);
+    targetScale = Math.min(targetScale, Math.sqrt(areaRatio));
+    console.warn(`[Export] Area too large, reducing scale to ${targetScale.toFixed(2)}`);
+  }
 
-                // Ensure the cloned container is visible for rendering
-                const clonedElement = clonedDoc.querySelector('.is-exporting-png') as HTMLElement;
-                if (clonedElement) {
-                    clonedElement.style.transform = 'none';
-                    clonedElement.style.maxHeight = 'none';
-                }
-            }
-        });
-        
-        // Convert to Blob to handle larger images better than data URI
-        canvas.toBlob((blob) => {
-            if (blob) {
-                const url = URL.createObjectURL(blob);
-                triggerDownload(url, filename);
-            } else {
-                console.error("Canvas to Blob conversion failed (Result is null). The chat may be too long.");
-                alert("Export failed: The image is too large for the browser to handle. Please try exporting as HTML or Text.");
-            }
-        }, 'image/png');
+  // Minimum scale floor
+  targetScale = Math.max(targetScale, 0.5);
 
-    } catch (error) {
-        console.error("html2canvas error:", error);
-        alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
+  try {
+    const canvas = await html2canvas(element, {
+      height: height,
+      width: width,
+      useCORS: true, // Important for cross-origin images
+      allowTaint: false, // Must be false to allow export
+      logging: false,
+      backgroundColor: options?.backgroundColor ?? null,
+      scale: targetScale,
+      ignoreElements: (el) => {
+        // Fallback check for ignoring elements if CSS fails
+        return el.classList.contains('no-export');
+      },
+      // Stability settings
+      imageTimeout: 15000,
+      onclone: (clonedDoc) => {
+        sanitizeDocumentStylesForPngExport(clonedDoc);
+
+        // Ensure the cloned container is visible for rendering
+        const clonedElement = clonedDoc.querySelector('.is-exporting-png') as HTMLElement;
+        if (clonedElement) {
+          clonedElement.style.transform = 'none';
+          clonedElement.style.maxHeight = 'none';
+        }
+      },
+    });
+
+    // Convert to Blob to handle larger images better than data URI
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, filename);
+      } else {
+        console.error('Canvas to Blob conversion failed (Result is null). The chat may be too long.');
+        alert('Export failed: The image is too large for the browser to handle. Please try exporting as HTML or Text.');
+      }
+    }, 'image/png');
+  } catch (error) {
+    console.error('html2canvas error:', error);
+    alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 };
 
 /**
@@ -103,47 +103,46 @@ export const exportElementAsPng = async (
  * capturing the content, and downloading the PNG.
  */
 export const generateSnapshotPng = async (
-    contentElement: HTMLElement,
-    filename: string,
-    themeId: string,
-    headerConfig: { title: string; metaLeft: string; metaRight: string },
-    options: { width?: string; scale?: number } = {}
+  contentElement: HTMLElement,
+  filename: string,
+  themeId: string,
+  headerConfig: { title: string; metaLeft: string; metaRight: string },
+  options: { width?: string; scale?: number } = {},
 ) => {
-    let cleanup = () => { };
-    try {
-        const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
-            themeId,
-            options.width || '800px'
-        );
-        cleanup = remove;
+  let cleanup = () => {};
+  try {
+    const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
+      themeId,
+      options.width || '800px',
+    );
+    cleanup = remove;
 
-        // Create header using shared helper
-        const headerDiv = createExportDOMHeader(headerConfig.title, headerConfig.metaLeft, headerConfig.metaRight);
-        innerContent.appendChild(headerDiv);
+    // Create header using shared helper
+    const headerDiv = createExportDOMHeader(headerConfig.title, headerConfig.metaLeft, headerConfig.metaRight);
+    innerContent.appendChild(headerDiv);
 
-        const bodyDiv = document.createElement('div');
-        bodyDiv.style.padding = '0 2rem 2rem 2rem';
-        bodyDiv.appendChild(contentElement);
-        innerContent.appendChild(bodyDiv);
-        
-        // Wait for rendering
-        await new Promise(resolve => setTimeout(resolve, 800)); 
+    const bodyDiv = document.createElement('div');
+    bodyDiv.style.padding = '0 2rem 2rem 2rem';
+    bodyDiv.appendChild(contentElement);
+    innerContent.appendChild(bodyDiv);
 
-        await exportElementAsPng(container, filename, {
-            backgroundColor: rootBgColor,
-            scale: options.scale || 2, 
-        });
+    // Wait for rendering
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
-    } finally {
-        cleanup();
-    }
+    await exportElementAsPng(container, filename, {
+      backgroundColor: rootBgColor,
+      scale: options.scale || 2,
+    });
+  } finally {
+    cleanup();
+  }
 };
 
 /**
  * Converts an SVG string to an image data URL and triggers a download.
  * Enhanced logic parses the SVG, calculates dimensions from viewBox/attributes,
  * and explicitly sets high-res attributes on the SVG node to ensure crisp rasterization.
- * 
+ *
  * @param svgString The string content of the SVG.
  * @param filename The desired filename for the downloaded image.
  * @param scale The resolution scale factor for the output image.
@@ -151,100 +150,100 @@ export const generateSnapshotPng = async (
  * @param backgroundColor Optional background color (e.g., '#FFFFFF'). Defaults to white for JPEG, transparent for PNG.
  */
 export const exportSvgAsImage = async (
-    svgString: string, 
-    filename: string, 
-    scale: number = 3,
-    mimeType: string = 'image/png',
-    backgroundColor?: string
+  svgString: string,
+  filename: string,
+  scale: number = 3,
+  mimeType: string = 'image/png',
+  backgroundColor?: string,
 ): Promise<void> => {
-    // 1. Parse SVG to modify dimensions
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svgString, "image/svg+xml");
-    const svgElement = doc.documentElement;
+  // 1. Parse SVG to modify dimensions
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svgElement = doc.documentElement;
 
-    if (svgElement.tagName.toLowerCase() !== 'svg') {
-        throw new Error("Invalid SVG string");
+  if (svgElement.tagName.toLowerCase() !== 'svg') {
+    throw new Error('Invalid SVG string');
+  }
+
+  // 2. Determine base dimensions
+  // Priority: explicit width/height -> viewBox -> default fallback
+  let width = parseFloat(svgElement.getAttribute('width') || '0');
+  let height = parseFloat(svgElement.getAttribute('height') || '0');
+  const viewBox = svgElement.getAttribute('viewBox');
+
+  if ((!width || !height) && viewBox) {
+    const parts = viewBox.split(/\s+|,/).filter(Boolean).map(parseFloat);
+    if (parts.length === 4) {
+      width = parts[2];
+      height = parts[3];
     }
+  }
 
-    // 2. Determine base dimensions
-    // Priority: explicit width/height -> viewBox -> default fallback
-    let width = parseFloat(svgElement.getAttribute('width') || '0');
-    let height = parseFloat(svgElement.getAttribute('height') || '0');
-    const viewBox = svgElement.getAttribute('viewBox');
+  // Fallback if no dimensions found
+  if (!width || !height) {
+    width = 300;
+    height = 150;
+  }
 
-    if ((!width || !height) && viewBox) {
-        const parts = viewBox.split(/\s+|,/).filter(Boolean).map(parseFloat);
-        if (parts.length === 4) {
-            width = parts[2];
-            height = parts[3];
+  // 3. Set scaled dimensions on the SVG element
+  // This forces the browser to rasterize the SVG at high resolution when loading the Image
+  const scaledWidth = Math.ceil(width * scale);
+  const scaledHeight = Math.ceil(height * scale);
+
+  svgElement.setAttribute('width', scaledWidth.toString());
+  svgElement.setAttribute('height', scaledHeight.toString());
+
+  // Reset CSS constraints that might interfere with intrinsic sizing
+  svgElement.style.width = '';
+  svgElement.style.height = '';
+  svgElement.style.maxWidth = '';
+  svgElement.style.maxHeight = '';
+
+  // 4. Serialize back to string
+  const serializer = new XMLSerializer();
+  const scaledSvgString = serializer.serializeToString(svgElement);
+
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(scaledSvgString)}`;
+  const img = new Image();
+
+  // 5. Draw to canvas
+  return new Promise((resolve, reject) => {
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = scaledWidth;
+      canvas.height = scaledHeight;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        // Handle background color
+        if (backgroundColor) {
+          ctx.fillStyle = backgroundColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (mimeType === 'image/jpeg') {
+          // Force white background for JPG to prevent black transparent areas
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-    }
 
-    // Fallback if no dimensions found
-    if (!width || !height) {
-        width = 300; 
-        height = 150;
-    }
+        // Draw at 1:1 of the scaled image
+        ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
 
-    // 3. Set scaled dimensions on the SVG element
-    // This forces the browser to rasterize the SVG at high resolution when loading the Image
-    const scaledWidth = Math.ceil(width * scale);
-    const scaledHeight = Math.ceil(height * scale);
+        try {
+          const dataUrl = canvas.toDataURL(mimeType);
+          triggerDownload(dataUrl, filename);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      } else {
+        reject(new Error('Could not get canvas context.'));
+      }
+    };
 
-    svgElement.setAttribute('width', scaledWidth.toString());
-    svgElement.setAttribute('height', scaledHeight.toString());
-    
-    // Reset CSS constraints that might interfere with intrinsic sizing
-    svgElement.style.width = '';
-    svgElement.style.height = '';
-    svgElement.style.maxWidth = '';
-    svgElement.style.maxHeight = '';
+    img.onerror = () => {
+      reject(new Error('Failed to load SVG into image element.'));
+    };
 
-    // 4. Serialize back to string
-    const serializer = new XMLSerializer();
-    const scaledSvgString = serializer.serializeToString(svgElement);
-
-    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(scaledSvgString)}`;
-    const img = new Image();
-
-    // 5. Draw to canvas
-    return new Promise((resolve, reject) => {
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = scaledWidth;
-            canvas.height = scaledHeight;
-            const ctx = canvas.getContext('2d');
-
-            if (ctx) {
-                // Handle background color
-                if (backgroundColor) {
-                    ctx.fillStyle = backgroundColor;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                } else if (mimeType === 'image/jpeg') {
-                    // Force white background for JPG to prevent black transparent areas
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                }
-
-                // Draw at 1:1 of the scaled image
-                ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
-                
-                try {
-                    const dataUrl = canvas.toDataURL(mimeType);
-                    triggerDownload(dataUrl, filename);
-                    resolve();
-                } catch (e) {
-                    reject(e);
-                }
-            } else {
-                reject(new Error("Could not get canvas context."));
-            }
-        };
-
-        img.onerror = () => {
-            reject(new Error("Failed to load SVG into image element."));
-        };
-
-        img.src = svgDataUrl;
-    });
+    img.src = svgDataUrl;
+  });
 };

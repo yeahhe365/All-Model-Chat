@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Paperclip } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';

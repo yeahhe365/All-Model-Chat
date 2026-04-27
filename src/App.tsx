@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from './hooks/app/useApp';
@@ -21,39 +20,34 @@ const App: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const app = useApp();
-  const {
-    currentTheme,
-    eventsState,
-    pipState,
-    uiState,
-  } = app;
+  const { currentTheme, eventsState, pipState, uiState } = app;
 
   return (
-    <div 
+    <div
       className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id} overflow-hidden`}
       onTouchStart={uiState.handleTouchStart}
       onTouchEnd={uiState.handleTouchEnd}
     >
       {pipState.isPipActive && pipState.pipContainer && pipState.pipWindow ? (
-          <>
-              {createPortal(
-                  <WindowProvider window={pipState.pipWindow} document={pipState.pipWindow.document}>
-                    <div 
-                        className={`theme-${currentTheme.id} h-full w-full flex relative bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]`}
-                        onTouchStart={uiState.handleTouchStart}
-                        onTouchEnd={uiState.handleTouchEnd}
-                    >
-                        <MainContent app={app} />
-                    </div>
-                  </WindowProvider>,
-                  pipState.pipContainer
-              )}
-              <PiPPlaceholder onClosePip={pipState.togglePip} />
-          </>
+        <>
+          {createPortal(
+            <WindowProvider window={pipState.pipWindow} document={pipState.pipWindow.document}>
+              <div
+                className={`theme-${currentTheme.id} h-full w-full flex relative bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]`}
+                onTouchStart={uiState.handleTouchStart}
+                onTouchEnd={uiState.handleTouchEnd}
+              >
+                <MainContent app={app} />
+              </div>
+            </WindowProvider>,
+            pipState.pipContainer,
+          )}
+          <PiPPlaceholder onClosePip={pipState.togglePip} />
+        </>
       ) : (
-              <WindowProvider>
-            <MainContent app={app} />
-          </WindowProvider>
+        <WindowProvider>
+          <MainContent app={app} />
+        </WindowProvider>
       )}
       {eventsState.needRefresh && !eventsState.updateDismissed ? (
         <PwaUpdateBanner

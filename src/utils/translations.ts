@@ -18,27 +18,29 @@ import { shortcutsSettings } from './translations/settings/shortcuts';
 import { aboutSettings } from './translations/settings/about';
 
 export const translations = {
-    ...appTranslations,
-    ...headerTranslations,
-    ...chatInputTranslations,
-    ...messagesTranslations,
-    ...scenariosTranslations,
-    ...historyTranslations,
-    ...commonTranslations,
-    ...logViewerTranslations,
-    
-    // 直接在此处展开 Settings 的翻译
-    ...generalSettings,
-    ...appearanceSettings,
-    ...apiSettings,
-    ...modelSettings,
-    ...dataSettings,
-    ...safetySettings,
-    ...shortcutsSettings,
-    ...aboutSettings,
+  ...appTranslations,
+  ...headerTranslations,
+  ...chatInputTranslations,
+  ...messagesTranslations,
+  ...scenariosTranslations,
+  ...historyTranslations,
+  ...commonTranslations,
+  ...logViewerTranslations,
+
+  // 直接在此处展开 Settings 的翻译
+  ...generalSettings,
+  ...appearanceSettings,
+  ...apiSettings,
+  ...modelSettings,
+  ...dataSettings,
+  ...safetySettings,
+  ...shortcutsSettings,
+  ...aboutSettings,
 };
 
-export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations | string, fallback?: string): string => {
+export const getTranslator =
+  (lang: 'en' | 'zh') =>
+  (key: keyof typeof translations | string, fallback?: string): string => {
     const translationSet = translations as Record<string, Partial<Record<'en' | 'zh', string>>>;
     return translationSet[key]?.[lang] ?? fallback ?? translationSet[key]?.['en'] ?? key;
-};
+  };

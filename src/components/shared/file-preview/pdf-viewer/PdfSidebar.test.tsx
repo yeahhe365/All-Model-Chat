@@ -9,9 +9,7 @@ const pageRenderSpy = vi.fn(({ pageNumber }: { pageNumber: number }) => (
 ));
 
 vi.mock('react-pdf', () => ({
-  Document: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="pdf-document">{children}</div>
-  ),
+  Document: ({ children }: { children: React.ReactNode }) => <div data-testid="pdf-document">{children}</div>,
   Page: (props: { pageNumber: number }) => pageRenderSpy(props),
 }));
 
@@ -43,7 +41,7 @@ describe('PdfSidebar', () => {
           showSidebar
           onPageClick={() => {}}
           sidebarRef={{ current: null }}
-        />
+        />,
       );
     });
 

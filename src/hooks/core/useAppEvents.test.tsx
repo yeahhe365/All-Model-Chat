@@ -11,7 +11,7 @@ const toggleFullscreenMock = vi.fn();
 const createRegistrationMock = (): ServiceWorkerRegistration =>
   ({
     update: updateRegistrationMock,
-  } as unknown as ServiceWorkerRegistration);
+  }) as unknown as ServiceWorkerRegistration;
 
 vi.mock('../../pwa/register', () => ({
   registerPwa: (...args: unknown[]) => registerPwaMock(...args),
@@ -88,10 +88,12 @@ describe('useAppEvents manual update checks', () => {
     vi.clearAllMocks();
     vi.stubEnv('PROD', true);
     updateRegistrationMock.mockResolvedValue(undefined);
-    registerPwaMock.mockImplementation(({ onRegisteredSW }: { onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
-      onRegisteredSW?.('/sw.js', createRegistrationMock());
-      return vi.fn(async () => undefined);
-    });
+    registerPwaMock.mockImplementation(
+      ({ onRegisteredSW }: { onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
+        onRegisteredSW?.('/sw.js', createRegistrationMock());
+        return vi.fn(async () => undefined);
+      },
+    );
 
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
@@ -140,11 +142,16 @@ describe('useAppEvents manual update checks', () => {
 
   it('marks an update as available when the registration signals refresh is needed', async () => {
     let onNeedRefresh: (() => void) | undefined;
-    registerPwaMock.mockImplementation((options: { onNeedRefresh?: () => void; onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
-      onNeedRefresh = options.onNeedRefresh;
-      options.onRegisteredSW?.('/sw.js', createRegistrationMock());
-      return vi.fn(async () => undefined);
-    });
+    registerPwaMock.mockImplementation(
+      (options: {
+        onNeedRefresh?: () => void;
+        onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void;
+      }) => {
+        onNeedRefresh = options.onNeedRefresh;
+        options.onRegisteredSW?.('/sw.js', createRegistrationMock());
+        return vi.fn(async () => undefined);
+      },
+    );
 
     const { result, unmount } = renderHook(() =>
       useAppEvents({

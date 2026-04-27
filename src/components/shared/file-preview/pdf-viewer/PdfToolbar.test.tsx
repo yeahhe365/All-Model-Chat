@@ -52,11 +52,7 @@ const PdfToolbarHarnessInner: React.FC<{ file: UploadedFile }> = ({ file }) => {
         {Array.from({ length: 5 }, (_, index) => {
           const pageNumber = index + 1;
           return (
-            <div
-              key={pageNumber}
-              data-testid={`page-${pageNumber}`}
-              ref={(element) => setPageRef(pageNumber, element)}
-            >
+            <div key={pageNumber} data-testid={`page-${pageNumber}`} ref={(element) => setPageRef(pageNumber, element)}>
               Page {pageNumber}
             </div>
           );
@@ -125,8 +121,8 @@ describe('PdfToolbar', () => {
     });
 
     const input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
-    const jumpButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('Jump to page 4'),
+    const jumpButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Jump to page 4'),
     );
 
     expect(input).toBeTruthy();
@@ -134,10 +130,7 @@ describe('PdfToolbar', () => {
 
     await act(async () => {
       input!.focus();
-      const valueSetter = Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        'value',
-      )?.set;
+      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
       valueSetter?.call(input, '12');
       input!.dispatchEvent(new Event('input', { bubbles: true }));
       input!.dispatchEvent(new Event('change', { bubbles: true }));
@@ -157,8 +150,8 @@ describe('PdfToolbar', () => {
       root.render(<PdfToolbarHarness file={file} />);
     });
 
-    const jumpButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('Jump to page 4'),
+    const jumpButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Jump to page 4'),
     );
 
     expect(jumpButton).toBeTruthy();

@@ -9,11 +9,7 @@ vi.mock('../utils/appUtils', () => ({
   },
 }));
 
-import {
-  buildPyodideWorkerScript,
-  PyodideService,
-  type ExecutionResult,
-} from './pyodideService';
+import { buildPyodideWorkerScript, PyodideService, type ExecutionResult } from './pyodideService';
 
 class FakeWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
@@ -65,9 +61,7 @@ const waitForWorkerPost = async () => {
 
 describe('buildPyodideWorkerScript', () => {
   it('injects the resolved pyodide base URL into the worker code', () => {
-    const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript(
-      'https://example.com/nested/app/index.html',
-    );
+    const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript('https://example.com/nested/app/index.html');
 
     expect(pyodideBaseUrl).toBe('https://example.com/nested/app/pyodide/');
     expect(workerCode).toContain('https://example.com/nested/app/pyodide/');

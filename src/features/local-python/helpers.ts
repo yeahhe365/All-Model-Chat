@@ -40,10 +40,7 @@ export const getLatestLocalPythonExecutionCandidate = ({
   return { code, signature };
 };
 
-export const collectLocalPythonInputFiles = (
-  messages: ChatMessage[],
-  targetMessageId: string,
-) => {
+export const collectLocalPythonInputFiles = (messages: ChatMessage[], targetMessageId: string) => {
   const targetIndex = messages.findIndex((message) => message.id === targetMessageId);
   const contextMessages = targetIndex === -1 ? messages : messages.slice(0, targetIndex);
   const inputFiles = new Map<string, UploadedFile>();
@@ -54,8 +51,7 @@ export const collectLocalPythonInputFiles = (
     }
 
     for (const file of message.files) {
-      const isGeneratedOutput =
-        file.name.startsWith('generated-') || file.name.startsWith('edited-');
+      const isGeneratedOutput = file.name.startsWith('generated-') || file.name.startsWith('edited-');
       const isActive = file.uploadState === undefined || file.uploadState === 'active';
       if (!file.rawFile || !isActive || file.error || isGeneratedOutput) {
         continue;
@@ -68,6 +64,5 @@ export const collectLocalPythonInputFiles = (
   return Array.from(inputFiles.values());
 };
 
-export const hasGeneratedImageFile = (
-  files: Array<{ type: string }>,
-) => files.some((file) => file.type.startsWith('image/'));
+export const hasGeneratedImageFile = (files: Array<{ type: string }>) =>
+  files.some((file) => file.type.startsWith('image/'));

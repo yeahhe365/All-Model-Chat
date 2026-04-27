@@ -132,10 +132,7 @@ describe('useCanvasGenerator', () => {
       'api-key',
       'gemini-canvas-default',
       [],
-      [
-        { text: 'Canvas instruction: preserve all information:' },
-        { text: sourceContent },
-      ],
+      [{ text: 'Canvas instruction: preserve all information:' }, { text: sourceContent }],
       { systemInstruction: 'canvas system prompt' },
       expect.any(AbortSignal),
       expect.any(Function),

@@ -17,12 +17,7 @@ export const TextEditorModalShell: React.FC<TextEditorModalShellProps> = ({
   footer,
 }) => {
   return (
-    <Modal
-      isOpen={true}
-      onClose={onClose}
-      noPadding
-      contentClassName={contentClassName}
-    >
+    <Modal isOpen={true} onClose={onClose} noPadding contentClassName={contentClassName}>
       {header}
       {body}
       {footer}

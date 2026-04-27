@@ -21,14 +21,10 @@ export const loadCanvasSystemPrompt = async (language: PromptLanguage = 'zh') =>
   return language === 'en' ? prompts.CANVAS_SYSTEM_PROMPT_EN : prompts.CANVAS_SYSTEM_PROMPT_ZH;
 };
 
-export const loadDeepSearchSystemPrompt = async () =>
-  (await import('./prompts/deepSearch')).DEEP_SEARCH_SYSTEM_PROMPT;
+export const loadDeepSearchSystemPrompt = async () => (await import('./prompts/deepSearch')).DEEP_SEARCH_SYSTEM_PROMPT;
 
-export const loadLocalPythonSystemPrompt = async () =>
-  (await import('./promptConstants')).LOCAL_PYTHON_SYSTEM_PROMPT;
+export const loadLocalPythonSystemPrompt = async () => (await import('./promptConstants')).LOCAL_PYTHON_SYSTEM_PROMPT;
 
-export const loadBboxSystemPrompt = async () =>
-  (await import('./promptConstants')).BBOX_SYSTEM_PROMPT;
+export const loadBboxSystemPrompt = async () => (await import('./promptConstants')).BBOX_SYSTEM_PROMPT;
 
-export const loadHdGuideSystemPrompt = async () =>
-  (await import('./promptConstants')).HD_GUIDE_SYSTEM_PROMPT;
+export const loadHdGuideSystemPrompt = async () => (await import('./promptConstants')).HD_GUIDE_SYSTEM_PROMPT;

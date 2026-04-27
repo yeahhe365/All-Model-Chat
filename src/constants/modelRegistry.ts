@@ -1,12 +1,6 @@
 import type { ModelOption } from '../types';
 
-type ModelRegistryGroup =
-  | 'defaultPinned'
-  | 'tts'
-  | 'image'
-  | 'canvas'
-  | 'connectionTest'
-  | 'transcription';
+type ModelRegistryGroup = 'defaultPinned' | 'tts' | 'image' | 'canvas' | 'connectionTest' | 'transcription';
 
 interface RegisteredModel {
   id: string;
@@ -107,10 +101,7 @@ const MODEL_REGISTRY: RegisteredModel[] = [
 const getRegisteredModels = (group: ModelRegistryGroup) =>
   MODEL_REGISTRY.filter((model) => model.groups.includes(group));
 
-export const getModelOptionsForGroup = (
-  group: ModelRegistryGroup,
-  options: { pinned?: boolean } = {},
-): ModelOption[] =>
+export const getModelOptionsForGroup = (group: ModelRegistryGroup, options: { pinned?: boolean } = {}): ModelOption[] =>
   getRegisteredModels(group).map((model) => ({
     id: model.id,
     name: model.groupLabels?.[group] || model.name,

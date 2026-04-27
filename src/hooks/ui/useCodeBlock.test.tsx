@@ -32,9 +32,7 @@ const TestCodeBlock = ({
       data-show-preview={String(showPreview)}
       data-language={finalLanguage}
       ref={(node) => {
-        (
-          preRef as MutableRefObject<HTMLPreElement | null>
-        ).current = node;
+        (preRef as MutableRefObject<HTMLPreElement | null>).current = node;
 
         if (node && !(node as HTMLPreElement & { __measured?: boolean }).__measured) {
           Object.defineProperties(node, {
@@ -147,11 +145,7 @@ describe('useCodeBlock', () => {
   it('does not treat generic xml blocks as previewable html', () => {
     act(() => {
       root.render(
-        <TestCodeBlock
-          text={'<note><to>Jane</to></note>'}
-          measurements={measurements}
-          className="language-xml"
-        />,
+        <TestCodeBlock text={'<note><to>Jane</to></note>'} measurements={measurements} className="language-xml" />,
       );
     });
 

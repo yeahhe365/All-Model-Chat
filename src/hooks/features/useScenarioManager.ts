@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { SavedScenario } from '../../types';
 import { translations } from '../../utils/translations';
@@ -27,14 +26,14 @@ export const useScenarioManager = ({
   savedScenarios,
   onSaveAllScenarios,
   onClose,
-  t
+  t,
 }: UseScenarioManagerProps) => {
   const [scenarios, setScenarios] = useState<SavedScenario[]>(savedScenarios);
   const [view, setView] = useState<ModalView>('list');
   const [editingScenario, setEditingScenario] = useState<SavedScenario | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-  
+
   const importInputRef = useRef<HTMLInputElement>(null);
 
   // Reset state when modal opens
@@ -50,7 +49,8 @@ export const useScenarioManager = ({
 
   const hasUnsavedChanges = useMemo(
     () =>
-      JSON.stringify(getExportableUserScenarios(scenarios)) !== JSON.stringify(getExportableUserScenarios(savedScenarios)),
+      JSON.stringify(getExportableUserScenarios(scenarios)) !==
+      JSON.stringify(getExportableUserScenarios(savedScenarios)),
     [savedScenarios, scenarios],
   );
 
@@ -69,47 +69,54 @@ export const useScenarioManager = ({
     setView('editor');
   }, []);
 
-  const handleDuplicateScenario = useCallback((scenario: SavedScenario) => {
-    const newScenario: SavedScenario = {
-      ...scenario,
-      id: generateUniqueId(),
-      title: `${scenario.title} (Copy)`,
-      messages: scenario.messages.map(m => ({ ...m, id: generateUniqueId() })) // Deep copy messages with new IDs
-    };
-    
-    setScenarios(prev => buildSavedScenarios([newScenario, ...getExportableUserScenarios(prev)]));
-    showFeedback('success', t('scenarios_feedback_duplicated'));
-  }, [showFeedback, t]);
+  const handleDuplicateScenario = useCallback(
+    (scenario: SavedScenario) => {
+      const newScenario: SavedScenario = {
+        ...scenario,
+        id: generateUniqueId(),
+        title: `${scenario.title} (Copy)`,
+        messages: scenario.messages.map((m) => ({ ...m, id: generateUniqueId() })), // Deep copy messages with new IDs
+      };
+
+      setScenarios((prev) => buildSavedScenarios([newScenario, ...getExportableUserScenarios(prev)]));
+      showFeedback('success', t('scenarios_feedback_duplicated'));
+    },
+    [showFeedback, t],
+  );
 
   const handleCancelEdit = useCallback(() => {
     setEditingScenario(null);
     setView('list');
   }, []);
 
-  const handleSaveScenario = useCallback((scenarioToSave: SavedScenario) => {
-    if (!scenarioToSave.title.trim()) {
-      showFeedback('error', 'Scenario title cannot be empty.');
-      return;
-    }
-    setScenarios(prev => {
-      const nextUserScenarios = getExportableUserScenarios(prev);
-      const existing = nextUserScenarios.find(s => s.id === scenarioToSave.id);
-      if (existing) {
-        return buildSavedScenarios(
-          nextUserScenarios.map(s => s.id === scenarioToSave.id ? scenarioToSave : s),
-        );
+  const handleSaveScenario = useCallback(
+    (scenarioToSave: SavedScenario) => {
+      if (!scenarioToSave.title.trim()) {
+        showFeedback('error', 'Scenario title cannot be empty.');
+        return;
       }
-      return buildSavedScenarios([...nextUserScenarios, scenarioToSave]);
-    });
-    showFeedback('success', t('scenarios_feedback_saved'));
-    setView('list');
-    setEditingScenario(null);
-  }, [showFeedback, t]);
+      setScenarios((prev) => {
+        const nextUserScenarios = getExportableUserScenarios(prev);
+        const existing = nextUserScenarios.find((s) => s.id === scenarioToSave.id);
+        if (existing) {
+          return buildSavedScenarios(nextUserScenarios.map((s) => (s.id === scenarioToSave.id ? scenarioToSave : s)));
+        }
+        return buildSavedScenarios([...nextUserScenarios, scenarioToSave]);
+      });
+      showFeedback('success', t('scenarios_feedback_saved'));
+      setView('list');
+      setEditingScenario(null);
+    },
+    [showFeedback, t],
+  );
 
-  const handleDeleteScenario = useCallback((id: string) => {
-    setScenarios(prev => buildSavedScenarios(getExportableUserScenarios(prev).filter(s => s.id !== id)));
-    showFeedback('info', t('scenarios_feedback_cleared', 'Scenario deleted.'));
-  }, [showFeedback, t]);
+  const handleDeleteScenario = useCallback(
+    (id: string) => {
+      setScenarios((prev) => buildSavedScenarios(getExportableUserScenarios(prev).filter((s) => s.id !== id)));
+      showFeedback('info', t('scenarios_feedback_cleared', 'Scenario deleted.'));
+    },
+    [showFeedback, t],
+  );
 
   const handleSaveAllAndClose = useCallback(() => {
     onSaveAllScenarios(scenarios);
@@ -118,7 +125,7 @@ export const useScenarioManager = ({
 
   const handleExportScenarios = useCallback(() => {
     const scenariosToExport = getExportableUserScenarios(scenarios);
-    
+
     if (scenariosToExport.length === 0) {
       showFeedback('info', t('scenarios_feedback_emptyExport'));
       return;
@@ -132,53 +139,59 @@ export const useScenarioManager = ({
     showFeedback('success', t('scenarios_feedback_exported'));
   }, [scenarios, showFeedback, t]);
 
-  const handleExportSingleScenario = useCallback((scenario: SavedScenario) => {
-    const dataToExport = {
-      type: 'AllModelChat-Scenarios',
-      version: 1,
-      scenarios: [scenario]
-    };
-    const safeTitle = sanitizeFilename(scenario.title);
-    const jsonString = JSON.stringify(dataToExport, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    triggerDownload(URL.createObjectURL(blob), `scenario-${safeTitle}.json`);
-    showFeedback('success', t('scenarios_feedback_exported'));
-  }, [showFeedback, t]);
+  const handleExportSingleScenario = useCallback(
+    (scenario: SavedScenario) => {
+      const dataToExport = {
+        type: 'AllModelChat-Scenarios',
+        version: 1,
+        scenarios: [scenario],
+      };
+      const safeTitle = sanitizeFilename(scenario.title);
+      const jsonString = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      triggerDownload(URL.createObjectURL(blob), `scenario-${safeTitle}.json`);
+      showFeedback('success', t('scenarios_feedback_exported'));
+    },
+    [showFeedback, t],
+  );
 
-  const handleImportScenarios = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportScenarios = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const text = event.target?.result as string;
-        const data = JSON.parse(text);
-        
-        if (data && data.type === 'AllModelChat-Scenarios' && Array.isArray(data.scenarios)) {
-          const importedScenarios = data.scenarios as SavedScenario[];
-          setScenarios(prev =>
-            buildSavedScenarios(
-              mergeImportedScenarios({
-                existingScenarios: prev,
-                importedScenarios,
-                createId: generateUniqueId,
-              }),
-            ),
-          );
-          showFeedback('success', t('scenarios_feedback_imported'));
-        } else {
-          throw new Error("Invalid format");
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = event.target?.result as string;
+          const data = JSON.parse(text);
+
+          if (data && data.type === 'AllModelChat-Scenarios' && Array.isArray(data.scenarios)) {
+            const importedScenarios = data.scenarios as SavedScenario[];
+            setScenarios((prev) =>
+              buildSavedScenarios(
+                mergeImportedScenarios({
+                  existingScenarios: prev,
+                  importedScenarios,
+                  createId: generateUniqueId,
+                }),
+              ),
+            );
+            showFeedback('success', t('scenarios_feedback_imported'));
+          } else {
+            throw new Error('Invalid format');
+          }
+        } catch (error) {
+          console.error('Import failed', error);
+          showFeedback('error', t('scenarios_feedback_importFailed'));
+        } finally {
+          if (importInputRef.current) importInputRef.current.value = '';
         }
-      } catch (error) {
-        console.error("Import failed", error);
-        showFeedback('error', t('scenarios_feedback_importFailed'));
-      } finally {
-        if (importInputRef.current) importInputRef.current.value = '';
-      }
-    };
-    reader.readAsText(file);
-  }, [showFeedback, t]);
+      };
+      reader.readAsText(file);
+    },
+    [showFeedback, t],
+  );
 
   return {
     scenarios,
@@ -202,6 +215,6 @@ export const useScenarioManager = ({
       handleExportScenarios,
       handleExportSingleScenario,
       handleImportScenarios,
-    }
+    },
   };
 };

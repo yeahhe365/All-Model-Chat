@@ -20,19 +20,21 @@ vi.mock('react-virtuoso', async () => {
   const { forwardRef: reactForwardRef } = await import('react');
 
   return {
-    Virtuoso: reactForwardRef<HTMLDivElement, VirtuosoMockProps<ChatMessage> & Record<string, unknown>>((props, ref) => {
-      const typedProps = props as VirtuosoMockProps<ChatMessage> & Record<string, unknown>;
+    Virtuoso: reactForwardRef<HTMLDivElement, VirtuosoMockProps<ChatMessage> & Record<string, unknown>>(
+      (props, ref) => {
+        const typedProps = props as VirtuosoMockProps<ChatMessage> & Record<string, unknown>;
 
-      virtuosoPropsSpy(typedProps);
+        virtuosoPropsSpy(typedProps);
 
-      return (
-        <div ref={ref} data-testid="virtuoso">
-          {typedProps.data.map((item: ChatMessage, index: number) => (
-            <div key={item.id}>{typedProps.itemContent(index, item)}</div>
-          ))}
-        </div>
-      );
-    }),
+        return (
+          <div ref={ref} data-testid="virtuoso">
+            {typedProps.data.map((item: ChatMessage, index: number) => (
+              <div key={item.id}>{typedProps.itemContent(index, item)}</div>
+            ))}
+          </div>
+        );
+      },
+    ),
   };
 });
 

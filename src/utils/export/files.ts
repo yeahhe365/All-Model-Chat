@@ -5,9 +5,9 @@ import { triggerDownload } from './core';
  * @param htmlContent The full HTML document string.
  * @param filename The desired filename.
  */
-export const exportHtmlStringAsFile = (htmlContent: string, filename:string) => {
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    triggerDownload(URL.createObjectURL(blob), filename);
+export const exportHtmlStringAsFile = (htmlContent: string, filename: string) => {
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  triggerDownload(URL.createObjectURL(blob), filename);
 };
 
 /**
@@ -16,6 +16,6 @@ export const exportHtmlStringAsFile = (htmlContent: string, filename:string) => 
  * @param filename The desired filename.
  */
 export const exportTextStringAsFile = (textContent: string, filename: string) => {
-    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-    triggerDownload(URL.createObjectURL(blob), filename);
+  const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+  triggerDownload(URL.createObjectURL(blob), filename);
 };

@@ -1,20 +1,29 @@
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 /* Lightweight fade that avoids blur-driven repaints on large surfaces. */
-@keyframes fadeInUp { 
-  0% { opacity: 0; transform: translate3d(0, 16px, 0); } 
-  100% { opacity: 1; transform: translate3d(0, 0, 0); } 
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes uiEnter {
   from {
     opacity: var(--enter-opacity-from, 1);
-    transform: translate3d(
-      var(--enter-translate-x-from, 0),
-      var(--enter-translate-y-from, 0),
-      0
-    ) scale(var(--enter-scale-from, 1));
+    transform: translate3d(var(--enter-translate-x-from, 0), var(--enter-translate-y-from, 0), 0)
+      scale(var(--enter-scale-from, 1));
   }
   to {
     opacity: 1;
@@ -74,58 +83,119 @@
 
 /* Side Panel Slide In */
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(100%); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Smoother modal entry with scale and slight vertical slide */
-@keyframes modalEnter { 
-  from { opacity: 0; transform: scale(0.95) translateY(10px); } 
-  to { opacity: 1; transform: scale(1) translateY(0); } 
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-@keyframes modalExit { 
-  from { opacity: 1; transform: scale(1); } 
-  to { opacity: 0; transform: scale(0.98); } 
+@keyframes modalExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
 }
 
-@keyframes fullscreenEnter { 
-  from { opacity: 0; transform: scale(0.98); } 
-  to { opacity: 1; transform: scale(1); } 
+@keyframes fullscreenEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-@keyframes micPulse { 
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 
-  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } 
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
 }
 
-@keyframes newTitlePulse { 
-  0% { background-color: var(--theme-bg-accent-hover); } 
-  100% { background-color: inherit; } 
+@keyframes newTitlePulse {
+  0% {
+    background-color: var(--theme-bg-accent-hover);
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 
-@keyframes formSendPulse { 
-  0% { transform: scale(1); } 
-  50% { transform: scale(0.995); } 
-  100% { transform: scale(1); } 
+@keyframes formSendPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.995);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
-@keyframes fileSuccessRing { 
-  from { box-shadow: 0 0 0 0px var(--theme-text-success); } 
-  to { box-shadow: 0 0 0 8px transparent; } 
+@keyframes fileSuccessRing {
+  from {
+    box-shadow: 0 0 0 0px var(--theme-text-success);
+  }
+  to {
+    box-shadow: 0 0 0 8px transparent;
+  }
 }
 
-@keyframes loading-dots-pulse { 
-  0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 
-  40% { transform: scale(1.0); opacity: 1; } 
+@keyframes loading-dots-pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Icon Pop Animation for Copy/Success states */
 @keyframes iconPop {
-  0% { transform: scale(0.5); opacity: 0; }
-  50% { transform: scale(1.25); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .icon-animate-pop {
@@ -134,8 +204,13 @@
 
 /* Authentic Terminal Blink */
 @keyframes cursorBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .animate-cursor-blink {
@@ -160,18 +235,36 @@
   stroke-dasharray: 47.1 141.4;
 }
 
-.google-c-red { stroke: #EA4335; stroke-dashoffset: 0; }
-.google-c-blue { stroke: #4285F4; stroke-dashoffset: -47.1; }
-.google-c-green { stroke: #34A853; stroke-dashoffset: -94.2; }
-.google-c-yellow { stroke: #FBBC05; stroke-dashoffset: -141.3; }
+.google-c-red {
+  stroke: #ea4335;
+  stroke-dashoffset: 0;
+}
+.google-c-blue {
+  stroke: #4285f4;
+  stroke-dashoffset: -47.1;
+}
+.google-c-green {
+  stroke: #34a853;
+  stroke-dashoffset: -94.2;
+}
+.google-c-yellow {
+  stroke: #fbbc05;
+  stroke-dashoffset: -141.3;
+}
 
 @keyframes google-rotator {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(270deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(270deg);
+  }
 }
 
 @keyframes google-dash {
-  0% { stroke-dashoffset: 187; }
+  0% {
+    stroke-dashoffset: 187;
+  }
   50% {
     stroke-dashoffset: 46.75;
     transform: rotate(135deg);
@@ -183,29 +276,73 @@
 }
 
 /* Utility Classes */
-.mic-recording-animate { animation: micPulse 2s infinite; background-color: var(--theme-bg-danger); color: var(--theme-icon-stop); }
-.title-update-animate { animation: newTitlePulse 1.5s ease-out; }
+.mic-recording-animate {
+  animation: micPulse 2s infinite;
+  background-color: var(--theme-bg-danger);
+  color: var(--theme-icon-stop);
+}
+.title-update-animate {
+  animation: newTitlePulse 1.5s ease-out;
+}
 
-.welcome-message-animate { animation: fadeInUp 0.8s 0.1s var(--ease-out-expo) both; }
-.slide-in-right-animate { animation: slideInRight 0.4s var(--ease-out-expo) both; }
+.welcome-message-animate {
+  animation: fadeInUp 0.8s 0.1s var(--ease-out-expo) both;
+}
+.slide-in-right-animate {
+  animation: slideInRight 0.4s var(--ease-out-expo) both;
+}
 
-.drag-overlay-animate { animation: fadeIn 0.2s ease-out both; }
-.modal-enter-animation { animation: modalEnter 0.4s var(--ease-spring) both; }
-.modal-exit-animation { animation: modalExit 0.2s ease-in both; }
-.fullscreen-enter-animation { animation: fullscreenEnter 0.4s var(--ease-out-expo) both; }
-.form-send-animate { animation: formSendPulse 0.3s cubic-bezier(0.2, 0, 0, 1); }
-.newly-active-file-animate .file-preview-box { animation: fileSuccessRing 0.6s ease-out; border-color: var(--theme-text-success); transition: border-color 0.3s; }
+.drag-overlay-animate {
+  animation: fadeIn 0.2s ease-out both;
+}
+.modal-enter-animation {
+  animation: modalEnter 0.4s var(--ease-spring) both;
+}
+.modal-exit-animation {
+  animation: modalExit 0.2s ease-in both;
+}
+.fullscreen-enter-animation {
+  animation: fullscreenEnter 0.4s var(--ease-out-expo) both;
+}
+.form-send-animate {
+  animation: formSendPulse 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+.newly-active-file-animate .file-preview-box {
+  animation: fileSuccessRing 0.6s ease-out;
+  border-color: var(--theme-text-success);
+  transition: border-color 0.3s;
+}
 
 /* Sidebar Loading Dots */
-.loading-dots-container { display: flex; gap: 3px; padding: 2px; }
-.loading-dot { width: 4px; height: 4px; background-color: var(--theme-text-secondary); border-radius: 50%; animation: loading-dots-pulse 1.4s infinite ease-in-out both; }
-.loading-dot:nth-child(1) { animation-delay: -0.32s; }
-.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots-container {
+  display: flex;
+  gap: 3px;
+  padding: 2px;
+}
+.loading-dot {
+  width: 4px;
+  height: 4px;
+  background-color: var(--theme-text-secondary);
+  border-radius: 50%;
+  animation: loading-dots-pulse 1.4s infinite ease-in-out both;
+}
+.loading-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.loading-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
 
 /* Ripple Effect */
 @keyframes ripple {
-  0% { transform: scale(0); opacity: 0.5; }
-  100% { transform: scale(4); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
 
 .animate-ripple {
@@ -214,14 +351,27 @@
 
 /* Progress Stripe Animation */
 .bg-progress-stripe {
-    background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
-    background-size: 1rem 1rem;
-    animation: progress-stripe 1s linear infinite;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progress-stripe 1s linear infinite;
 }
 
 @keyframes progress-stripe {
-    0% { background-position: 1rem 0; }
-    100% { background-position: 0 0; }
+  0% {
+    background-position: 1rem 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

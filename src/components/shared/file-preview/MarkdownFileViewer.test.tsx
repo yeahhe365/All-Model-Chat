@@ -58,8 +58,8 @@ describe('MarkdownFileViewer', () => {
 
     expect(container.querySelector('[data-testid="markdown-renderer"]')).not.toBeNull();
 
-    const sourceButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('markdownPreview_source'),
+    const sourceButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('markdownPreview_source'),
     );
     expect(sourceButton).toBeDefined();
 

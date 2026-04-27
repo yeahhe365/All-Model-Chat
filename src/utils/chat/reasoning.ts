@@ -1,6 +1,5 @@
 const GEMMA_THOUGHT_CHANNEL_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/gi;
-const GEMMA_THOUGHT_CHANNEL_PRESENCE_REGEX =
-  /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/i;
+const GEMMA_THOUGHT_CHANNEL_PRESENCE_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/i;
 const THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/gi;
 const THINKING_BLOCK_PRESENCE_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/i;
 const RAW_THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/thinking>/gi;
@@ -75,9 +74,7 @@ const splitMarkdownSegments = (value: string): MarkdownSegment[] => {
   return segments.filter((segment) => segment.value.length > 0);
 };
 
-export const extractGemmaThoughtChannel = (
-  text: string,
-): { content: string; thoughts?: string } => {
+export const extractGemmaThoughtChannel = (text: string): { content: string; thoughts?: string } => {
   if (!text) {
     return { content: '' };
   }

@@ -14,11 +14,7 @@ function createFileEntry(fullPath: string, file: File): FileSystemFileEntry {
   } as unknown as FileSystemFileEntry;
 }
 
-function createDirectoryEntry(
-  name: string,
-  fullPath: string,
-  children: FileSystemEntry[],
-): FileSystemDirectoryEntry {
+function createDirectoryEntry(name: string, fullPath: string, children: FileSystemEntry[]): FileSystemDirectoryEntry {
   return {
     isFile: false,
     isDirectory: true,
@@ -62,9 +58,7 @@ describe('processDroppedItems', () => {
 
   it('returns empty directories discovered during drag and drop', async () => {
     const appFile = new File(['export const app = true;\n'], 'app.ts', { type: 'text/plain' });
-    const srcEntry = createDirectoryEntry('src', '/demo/src', [
-      createFileEntry('/demo/src/app.ts', appFile),
-    ]);
+    const srcEntry = createDirectoryEntry('src', '/demo/src', [createFileEntry('/demo/src/app.ts', appFile)]);
     const emptyEntry = createDirectoryEntry('empty', '/demo/empty', []);
     const rootEntry = createDirectoryEntry('demo', '/demo', [srcEntry, emptyEntry]);
     const items = createDataTransferItems([rootEntry]);

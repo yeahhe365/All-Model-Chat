@@ -77,9 +77,7 @@ describe('GroundedResponse', () => {
     const surface = container.querySelector('.search-entry-surface') as HTMLDivElement | null;
     expect(surface).not.toBeNull();
     expect(surface?.shadowRoot).not.toBeNull();
-    expect(
-      surface?.shadowRoot?.querySelector('[data-testid="search-entry-widget"]')?.textContent,
-    ).toContain(
+    expect(surface?.shadowRoot?.querySelector('[data-testid="search-entry-widget"]')?.textContent).toContain(
       'Suggested follow-up search',
     );
     expect(container.querySelector('[data-testid="search-entry-google-logo"]')).not.toBeNull();
@@ -101,8 +99,7 @@ describe('GroundedResponse', () => {
           metadata={{
             webSearchQueries: ['latest world news April 18 2026'],
             searchEntryPoint: {
-              renderedContent:
-                '<div data-testid="search-entry-widget">Suggested follow-up search</div>',
+              renderedContent: '<div data-testid="search-entry-widget">Suggested follow-up search</div>',
             },
           }}
           urlContextMetadata={undefined}

@@ -143,8 +143,8 @@ describe('DataManagementSection', () => {
       expect(container.textContent).toContain('2.0 KB');
     });
 
-    const refreshButtons = Array.from(container.querySelectorAll('button')).filter(
-      (button) => button.textContent?.includes('Refresh'),
+    const refreshButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
+      button.textContent?.includes('Refresh'),
     );
 
     expect(refreshButtons).toHaveLength(1);

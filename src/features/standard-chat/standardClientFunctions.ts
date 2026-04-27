@@ -6,15 +6,10 @@ import { hasGeneratedImageFile } from '../local-python/helpers';
 interface CreateStandardClientFunctionsOptions {
   isLocalPythonEnabled: boolean;
   inputFiles: UploadedFile[];
-  runPython: (
-    code: string,
-    options?: { files?: UploadedFile[] },
-  ) => Promise<Omit<ExecutionResult, 'status'>>;
+  runPython: (code: string, options?: { files?: UploadedFile[] }) => Promise<Omit<ExecutionResult, 'status'>>;
 }
 
-type FunctionParameterType = NonNullable<
-  NonNullable<StandardClientFunction['declaration']['parameters']>['type']
->;
+type FunctionParameterType = NonNullable<NonNullable<StandardClientFunction['declaration']['parameters']>['type']>;
 
 const FUNCTION_PARAMETER_TYPE = {
   OBJECT: 'OBJECT' as FunctionParameterType,
@@ -64,11 +59,7 @@ export const createStandardClientFunctions = ({
 
         if (result.image && !hasGeneratedImageFile(outputFiles)) {
           generatedFiles.unshift(
-            createUploadedFileFromBase64(
-              result.image,
-              'image/png',
-              `generated-plot-${Date.now()}`,
-            ),
+            createUploadedFileFromBase64(result.image, 'image/png', `generated-plot-${Date.now()}`),
           );
         }
 

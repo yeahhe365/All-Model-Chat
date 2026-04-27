@@ -1,42 +1,41 @@
-
-export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview'; 
+export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview';
 
 export const GEMINI_3_RO_MODELS: string[] = [
-    'gemini-3.1-pro-preview',
-    'models/gemini-3.1-pro-preview',
-    'gemini-3-flash-preview',
-    'models/gemini-3-flash-preview',
-    'gemini-3.1-flash-lite-preview',
-    'models/gemini-3.1-flash-lite-preview',
+  'gemini-3.1-pro-preview',
+  'models/gemini-3.1-pro-preview',
+  'gemini-3-flash-preview',
+  'models/gemini-3-flash-preview',
+  'gemini-3.1-flash-lite-preview',
+  'models/gemini-3.1-flash-lite-preview',
 ];
 
 export const MODELS_MANDATORY_THINKING = [
-    'gemini-3.1-pro-preview',
-    'models/gemini-3.1-pro-preview',
-    'gemini-3-flash-preview',
-    'models/gemini-3-flash-preview',
-    'gemini-3.1-flash-lite-preview',
-    'models/gemini-3.1-flash-lite-preview',
+  'gemini-3.1-pro-preview',
+  'models/gemini-3.1-pro-preview',
+  'gemini-3-flash-preview',
+  'models/gemini-3-flash-preview',
+  'gemini-3.1-flash-lite-preview',
+  'models/gemini-3.1-flash-lite-preview',
 ];
 
 export const MODELS_SUPPORTING_RAW_MODE = [
-    'gemini-3-flash-preview',
-    'gemini-3.1-flash-lite-preview',
-    'gemini-3.1-pro-preview',
-    'gemini-robotics-er-1.6-preview',
+  'gemini-3-flash-preview',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-3.1-pro-preview',
+  'gemini-robotics-er-1.6-preview',
 ];
 
 export const DEFAULT_THINKING_LEVEL = 'HIGH';
 
 export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = {
-    'gemini-3.1-pro-preview': { min: 128, max: 32768 },
-    'models/gemini-3.1-pro-preview': { min: 128, max: 32768 },
-    'gemini-3-flash-preview': { min: 128, max: 32768 },
-    'models/gemini-3-flash-preview': { min: 128, max: 32768 },
-    'gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
-    'models/gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
-    'gemini-robotics-er-1.6-preview': { min: 128, max: 24576 },
-    'models/gemini-robotics-er-1.6-preview': { min: 128, max: 24576 },
+  'gemini-3.1-pro-preview': { min: 128, max: 32768 },
+  'models/gemini-3.1-pro-preview': { min: 128, max: 32768 },
+  'gemini-3-flash-preview': { min: 128, max: 32768 },
+  'models/gemini-3-flash-preview': { min: 128, max: 32768 },
+  'gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
+  'models/gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
+  'gemini-robotics-er-1.6-preview': { min: 128, max: 24576 },
+  'models/gemini-robotics-er-1.6-preview': { min: 128, max: 24576 },
 };
 
 export const DEFAULT_TEMPERATURE = 1.0;

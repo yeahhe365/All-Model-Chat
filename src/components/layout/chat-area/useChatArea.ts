@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { useChatInputHeight } from '../../../hooks/chat-input/useChatInputHeight';
 import { useChatStore } from '../../../stores/chatStore';
@@ -11,7 +10,7 @@ interface UseChatAreaParams {
 export const useChatArea = (params: UseChatAreaParams) => {
   const { currentChatSettings } = params;
 
-  const setCommandedInput = useChatStore(s => s.setCommandedInput);
+  const setCommandedInput = useChatStore((s) => s.setCommandedInput);
 
   // Extract logic to custom hook
   const { chatInputHeight, chatInputContainerRef } = useChatInputHeight();
@@ -19,19 +18,25 @@ export const useChatArea = (params: UseChatAreaParams) => {
   // Helper to determine model capabilities for UI logic
   const isImagenModel = currentChatSettings.modelId ? isImageModel(currentChatSettings.modelId) : false;
 
-  const handleQuote = useCallback((text: string) => {
+  const handleQuote = useCallback(
+    (text: string) => {
       setCommandedInput({ text: text, id: Date.now(), mode: 'quote' });
-  }, [setCommandedInput]);
+    },
+    [setCommandedInput],
+  );
 
-  const handleInsert = useCallback((text: string) => {
+  const handleInsert = useCallback(
+    (text: string) => {
       setCommandedInput({ text: text, id: Date.now(), mode: 'insert' });
-  }, [setCommandedInput]);
+    },
+    [setCommandedInput],
+  );
 
   return {
     chatInputHeight,
     chatInputContainerRef,
     isImagenModel,
     handleQuote,
-    handleInsert
+    handleInsert,
   };
 };

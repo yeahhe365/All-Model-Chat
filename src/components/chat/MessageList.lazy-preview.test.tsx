@@ -162,11 +162,7 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
 
   vi.doMock('../message/Message', () => ({
     Message: ({ message, onImageClick }: MessageMockProps) => (
-      <button
-        type="button"
-        data-testid={`open-preview-${message.id}`}
-        onClick={() => onImageClick(message.files![0])}
-      >
+      <button type="button" data-testid={`open-preview-${message.id}`} onClick={() => onImageClick(message.files![0])}>
         Open preview
       </button>
     ),
@@ -263,7 +259,7 @@ describe('MessageList preview chunking', () => {
           <ChatAreaProvider value={createProviderValue()}>
             <MessageList />
           </ChatAreaProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 

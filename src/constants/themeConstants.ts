@@ -1,4 +1,3 @@
-
 import { Theme, ThemeColors } from '../types/theme';
 
 const ONYX_THEME_COLORS: ThemeColors = {
@@ -88,8 +87,8 @@ const PEARL_THEME_COLORS: ThemeColors = {
   textDanger: '#DF3434', // Red (was #FFFFFF, which is invisible on light backgrounds)
   textLink: '#2563eb', // Blue 600 (was #000000)
   textCode: '#000000', // Black (was #40414f)
-  bgUserMessageText: '#000000', 
-  bgModelMessageText: '#000000', 
+  bgUserMessageText: '#000000',
+  bgModelMessageText: '#000000',
   bgErrorMessageText: '#DF3434',
 
   // Borders

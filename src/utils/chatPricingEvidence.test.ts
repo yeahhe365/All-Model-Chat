@@ -27,10 +27,7 @@ describe('buildPureTextChatExactPricing', () => {
   });
 
   it('returns undefined when the request contains non-text parts', () => {
-    const requestParts: Part[] = [
-      { text: 'hello' },
-      { inlineData: { mimeType: 'image/png', data: 'base64' } },
-    ];
+    const requestParts: Part[] = [{ text: 'hello' }, { inlineData: { mimeType: 'image/png', data: 'base64' } }];
     const responseParts: Part[] = [{ text: 'world' }];
 
     expect(

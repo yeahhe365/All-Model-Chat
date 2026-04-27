@@ -35,14 +35,8 @@ describe('FileConfigurationModal', () => {
     act(() => {
       root.render(
         <I18nProvider>
-          <FileConfigurationModal
-            isOpen
-            onClose={onClose}
-            file={file}
-            onSave={onSave}
-            isGemini3={false}
-          />
-        </I18nProvider>
+          <FileConfigurationModal isOpen onClose={onClose} file={file} onSave={onSave} isGemini3={false} />
+        </I18nProvider>,
       );
     });
 
@@ -50,16 +44,13 @@ describe('FileConfigurationModal', () => {
   };
 
   const getButtonByText = (text: string) => {
-    return Array.from(document.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes(text)
-    ) as HTMLButtonElement | undefined;
+    return Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.includes(text)) as
+      | HTMLButtonElement
+      | undefined;
   };
 
   const setInputValue = (input: HTMLInputElement, value: string) => {
-    const descriptor = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      'value'
-    );
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
 
     descriptor?.set?.call(input, value);
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -144,8 +135,8 @@ describe('FileConfigurationModal', () => {
 
     renderModal(file);
 
-    const closeButton = Array.from(document.querySelectorAll('button')).find(
-      (button) => button.className.includes('rounded-full'),
+    const closeButton = Array.from(document.querySelectorAll('button')).find((button) =>
+      button.className.includes('rounded-full'),
     );
     const saveButton = getButtonByText('Save');
 

@@ -1,9 +1,5 @@
 import type { SavedChatSession } from '../types';
-import {
-  sanitizeSessionModel,
-  shouldRetainRuntimeMessages,
-  sortSessionsInPlace,
-} from './sessionModels';
+import { sanitizeSessionModel, shouldRetainRuntimeMessages, sortSessionsInPlace } from './sessionModels';
 
 interface MergeSessionMetadataOptions {
   activeSessionId: string | null;

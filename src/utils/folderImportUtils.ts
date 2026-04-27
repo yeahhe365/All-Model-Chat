@@ -10,7 +10,5 @@ export const generateFolderContext = async (
   options: ImportContextBuildOptions = {},
 ): Promise<File> => buildImportContextFile(files, options);
 
-export const generateZipContext = async (
-  zipFile: File,
-  options: ImportContextBuildOptions = {},
-): Promise<File> => generateZipImportContext(zipFile, options);
+export const generateZipContext = async (zipFile: File, options: ImportContextBuildOptions = {}): Promise<File> =>
+  generateZipImportContext(zipFile, options);

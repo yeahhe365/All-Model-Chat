@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  MODELS_SUPPORTING_RAW_MODE,
-} from '../../constants/appConstants';
+import { MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
 import {
   sortModels,
   isGemini3Model,
@@ -49,7 +47,7 @@ describe('sortModels', () => {
       { id: 'gemini-native-audio', name: 'Audio', isPinned: true },
     ];
     const result = sortModels(models);
-    expect(result.map(m => m.id)).toEqual([
+    expect(result.map((m) => m.id)).toEqual([
       'gemini-flash',
       'gemini-native-audio',
       'gemini-tts',
@@ -150,12 +148,8 @@ describe('getModelCapabilities', () => {
   it('exposes the latest Gemini 3.1 Flash Image ratios and sizes', () => {
     const capabilities = getModelCapabilities('gemini-3.1-flash-image-preview');
 
-    expect(capabilities.supportedAspectRatios).toEqual(
-      expect.arrayContaining(['1:4', '4:1', '1:8', '8:1']),
-    );
-    expect(capabilities.supportedImageSizes).toEqual(
-      expect.arrayContaining(['512', '1K', '2K', '4K']),
-    );
+    expect(capabilities.supportedAspectRatios).toEqual(expect.arrayContaining(['1:4', '4:1', '1:8', '8:1']));
+    expect(capabilities.supportedImageSizes).toEqual(expect.arrayContaining(['512', '1K', '2K', '4K']));
   });
 });
 

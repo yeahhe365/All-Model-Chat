@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useMemo, useRef } from 'react';
 import { UploadedFile, SideViewContent } from '../../types';
 import { LazyMarkdownRenderer } from './LazyMarkdownRenderer';
@@ -126,13 +124,7 @@ const SearchEntryPointWidget: React.FC<{ renderedContent: string }> = ({ rendere
         return true;
       }
 
-      return (
-        !isInteractive &&
-        !hasInteractiveDescendants &&
-        !hasIconContent &&
-        !hasMeaningfulText &&
-        !isLogoLike
-      );
+      return !isInteractive && !hasInteractiveDescendants && !hasIconContent && !hasMeaningfulText && !isLogoLike;
     };
 
     let removedAny = true;
@@ -162,23 +154,22 @@ const SearchEntryPointWidget: React.FC<{ renderedContent: string }> = ({ rendere
   );
 };
 
-export const GroundedResponse: React.FC<GroundedResponseProps> = ({ 
-    messageId,
-    text, 
-    metadata, 
-    urlContextMetadata, 
-    isLoading, 
-    onOpenHtmlPreview, 
-    expandCodeBlocksByDefault, 
-    onImageClick, 
-    isMermaidRenderingEnabled, 
-    isGraphvizRenderingEnabled, 
-    t, 
-    themeId, 
-    onOpenSidePanel,
-    files
+export const GroundedResponse: React.FC<GroundedResponseProps> = ({
+  messageId,
+  text,
+  metadata,
+  urlContextMetadata,
+  isLoading,
+  onOpenHtmlPreview,
+  expandCodeBlocksByDefault,
+  onImageClick,
+  isMermaidRenderingEnabled,
+  isGraphvizRenderingEnabled,
+  t,
+  themeId,
+  onOpenSidePanel,
+  files,
 }) => {
-  
   const content = useMemo(() => insertCitations(text, metadata), [text, metadata]);
   const sources = useMemo(() => extractSources(metadata), [metadata]);
   const searchEntryPointContent = useMemo(() => {
@@ -192,9 +183,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
 
   return (
     <div className="space-y-4">
-      {searchEntryPointContent ? (
-        <SearchEntryPointWidget renderedContent={searchEntryPointContent} />
-      ) : null}
+      {searchEntryPointContent ? <SearchEntryPointWidget renderedContent={searchEntryPointContent} /> : null}
 
       {/* Main Content */}
       <div className="markdown-body">
@@ -214,7 +203,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
           files={files}
         />
       </div>
-      
+
       {/* URL Context Metadata */}
       <ContextUrls metadata={urlContextMetadata} />
 

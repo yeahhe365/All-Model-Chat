@@ -66,13 +66,8 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
     const viewportHeight = targetWindow.innerHeight;
     const leftCandidate = buttonRect.right + PANEL_GAP;
     const fitsRight = leftCandidate + PANEL_WIDTH <= viewportWidth - PANEL_MARGIN;
-    const left = fitsRight
-      ? leftCandidate
-      : Math.max(PANEL_MARGIN, buttonRect.left - PANEL_WIDTH - PANEL_GAP);
-    const top = Math.min(
-      Math.max(PANEL_MARGIN, buttonRect.top),
-      viewportHeight - PANEL_MARGIN * 2,
-    );
+    const left = fitsRight ? leftCandidate : Math.max(PANEL_MARGIN, buttonRect.left - PANEL_WIDTH - PANEL_GAP);
+    const top = Math.min(Math.max(PANEL_MARGIN, buttonRect.top), viewportHeight - PANEL_MARGIN * 2);
 
     return {
       position: 'fixed',
@@ -84,18 +79,21 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
     };
   }, [targetWindow]);
 
-  const openPopover = useCallback((mode: PopoverOpenMode) => {
-    clearCloseTimer();
-    setPanelPosition(computePanelPosition());
-    setIsOpen(true);
-    setOpenMode((currentMode) => {
-      if (currentMode === 'click' && mode !== 'click') {
-        return currentMode;
-      }
+  const openPopover = useCallback(
+    (mode: PopoverOpenMode) => {
+      clearCloseTimer();
+      setPanelPosition(computePanelPosition());
+      setIsOpen(true);
+      setOpenMode((currentMode) => {
+        if (currentMode === 'click' && mode !== 'click') {
+          return currentMode;
+        }
 
-      return mode;
-    });
-  }, [clearCloseTimer, computePanelPosition]);
+        return mode;
+      });
+    },
+    [clearCloseTimer, computePanelPosition],
+  );
 
   const scheduleClose = useCallback(() => {
     if (openMode === 'click') {
@@ -261,9 +259,7 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
                   </a>
                 ))
               ) : (
-                <p className="px-4 py-3 text-sm text-[var(--theme-text-tertiary)]">
-                  {t('history_empty')}
-                </p>
+                <p className="px-4 py-3 text-sm text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
               )}
             </div>
           </div>,

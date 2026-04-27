@@ -11,9 +11,9 @@ describe('chatSyncChannel', () => {
     const postMessage = vi.fn();
     const BroadcastChannelMock = vi.fn(function () {
       return {
-      postMessage,
-      onmessage: null,
-      close: vi.fn(),
+        postMessage,
+        onmessage: null,
+        close: vi.fn(),
       };
     });
     vi.stubGlobal('BroadcastChannel', BroadcastChannelMock);
@@ -31,13 +31,16 @@ describe('chatSyncChannel', () => {
     const postMessage = vi.fn(() => {
       throw new Error('blocked');
     });
-    vi.stubGlobal('BroadcastChannel', vi.fn(function () {
-      return {
-        postMessage,
-        onmessage: null,
-        close: vi.fn(),
-      };
-    }));
+    vi.stubGlobal(
+      'BroadcastChannel',
+      vi.fn(function () {
+        return {
+          postMessage,
+          onmessage: null,
+          close: vi.fn(),
+        };
+      }),
+    );
 
     const { broadcastSyncMessage } = await import('../chatSyncChannel');
 

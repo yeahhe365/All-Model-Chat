@@ -5,21 +5,12 @@ import { mathRemarkPlugins, getMathRehypePlugins } from '../../utils/markdownMat
 import 'katex/dist/katex.min.css';
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo((props) => {
-  const rehypePlugins = useMemo(() => [
-    ...getBaseRehypePlugins(props.allowHtml ?? false),
-    ...getMathRehypePlugins(),
-  ], [props.allowHtml]);
-
-  const remarkPlugins = useMemo(() => [
-    ...mathRemarkPlugins,
-    ...baseRemarkPlugins,
-  ], []);
-
-  return (
-    <BaseMarkdownRenderer
-      {...props}
-      remarkPlugins={remarkPlugins}
-      rehypePlugins={rehypePlugins}
-    />
+  const rehypePlugins = useMemo(
+    () => [...getBaseRehypePlugins(props.allowHtml ?? false), ...getMathRehypePlugins()],
+    [props.allowHtml],
   );
+
+  const remarkPlugins = useMemo(() => [...mathRemarkPlugins, ...baseRemarkPlugins], []);
+
+  return <BaseMarkdownRenderer {...props} remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins} />;
 });

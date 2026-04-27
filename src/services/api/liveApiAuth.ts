@@ -35,17 +35,16 @@ const extractLiveApiToken = (payload: unknown): string | null => {
   }
 
   const tokenPayload = payload as Record<string, unknown>;
-  const token =
-    tokenPayload.name ??
-    tokenPayload.token ??
-    tokenPayload.ephemeralToken ??
-    tokenPayload.authToken;
+  const token = tokenPayload.name ?? tokenPayload.token ?? tokenPayload.ephemeralToken ?? tokenPayload.authToken;
 
   return typeof token === 'string' && token.trim().length > 0 ? token.trim() : null;
 };
 
 export const getLiveApiClient = async (
-  appSettings: Pick<AppSettings, 'liveApiEphemeralTokenEndpoint' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>,
+  appSettings: Pick<
+    AppSettings,
+    'liveApiEphemeralTokenEndpoint' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'
+  >,
   httpOptions?: ClientHttpOptions,
   apiKeyForTokenCreation?: string | null,
 ): Promise<GoogleGenAI> => {

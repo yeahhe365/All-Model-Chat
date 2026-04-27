@@ -73,10 +73,7 @@ describe('useModels', () => {
       ]);
     });
 
-    expect(result.current.apiModels.map((model) => model.id)).toEqual([
-      'gemini-3-flash-preview',
-      'gemma-4-31b-it',
-    ]);
+    expect(result.current.apiModels.map((model) => model.id)).toEqual(['gemini-3-flash-preview', 'gemma-4-31b-it']);
     expect(JSON.parse(localStorage.getItem('custom_model_list_v1') || '[]')).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
       { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
@@ -100,9 +97,7 @@ describe('useModels', () => {
       );
     });
 
-    expect(result.current.apiModels).toEqual([
-      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' },
-    ]);
+    expect(result.current.apiModels).toEqual([{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }]);
     unmount();
   });
 });

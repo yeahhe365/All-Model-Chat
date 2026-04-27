@@ -2,19 +2,15 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  getKeyForRequestMock,
-  pcmBase64ToWavUrlMock,
-  logInfoMock,
-  logErrorMock,
-  generateSpeechMock,
-} = vi.hoisted(() => ({
-  getKeyForRequestMock: vi.fn(),
-  pcmBase64ToWavUrlMock: vi.fn(),
-  logInfoMock: vi.fn(),
-  logErrorMock: vi.fn(),
-  generateSpeechMock: vi.fn(),
-}));
+const { getKeyForRequestMock, pcmBase64ToWavUrlMock, logInfoMock, logErrorMock, generateSpeechMock } = vi.hoisted(
+  () => ({
+    getKeyForRequestMock: vi.fn(),
+    pcmBase64ToWavUrlMock: vi.fn(),
+    logInfoMock: vi.fn(),
+    logErrorMock: vi.fn(),
+    generateSpeechMock: vi.fn(),
+  }),
+);
 
 vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: getKeyForRequestMock,

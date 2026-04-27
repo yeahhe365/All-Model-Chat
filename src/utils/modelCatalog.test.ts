@@ -62,15 +62,9 @@ describe('filterModelCatalog', () => {
   ]);
 
   it('matches name, id, and capability tags', () => {
-    expect(filterModelCatalog(entries, 'tts').map((entry) => entry.id)).toEqual([
-      'gemini-3.1-flash-tts-preview',
-    ]);
-    expect(filterModelCatalog(entries, 'live').map((entry) => entry.id)).toEqual([
-      'gemini-3.1-flash-live-preview',
-    ]);
-    expect(filterModelCatalog(entries, 'imagen').map((entry) => entry.id)).toEqual([
-      'imagen-4.0-generate-001',
-    ]);
+    expect(filterModelCatalog(entries, 'tts').map((entry) => entry.id)).toEqual(['gemini-3.1-flash-tts-preview']);
+    expect(filterModelCatalog(entries, 'live').map((entry) => entry.id)).toEqual(['gemini-3.1-flash-live-preview']);
+    expect(filterModelCatalog(entries, 'imagen').map((entry) => entry.id)).toEqual(['imagen-4.0-generate-001']);
   });
 });
 
@@ -101,17 +95,11 @@ describe('getTabCycleModelIds', () => {
   ];
 
   it('falls back to the default quick-switch order when no manual selection is set', () => {
-    expect(getTabCycleModelIds(models)).toEqual([
-      'gemini-3.1-pro-preview',
-      'gemini-3-flash-preview',
-    ]);
+    expect(getTabCycleModelIds(models)).toEqual(['gemini-3.1-pro-preview', 'gemini-3-flash-preview']);
   });
 
   it('filters the cycle order down to the manually selected models while preserving picker order', () => {
-    expect(getTabCycleModelIds(models, [
-      'gemini-3.1-flash-lite-preview',
-      'gemini-3.1-pro-preview',
-    ])).toEqual([
+    expect(getTabCycleModelIds(models, ['gemini-3.1-flash-lite-preview', 'gemini-3.1-pro-preview'])).toEqual([
       'gemini-3.1-pro-preview',
       'gemini-3.1-flash-lite-preview',
     ]);

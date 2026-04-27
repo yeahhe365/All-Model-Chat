@@ -51,9 +51,7 @@ describe('useMessageStream', () => {
   it('returns live store snapshots while streaming and resets when streaming stops', () => {
     let isStreaming = true;
 
-    const { result, rerender, unmount } = renderHook(() =>
-      useMessageStream('message-stream', isStreaming),
-    );
+    const { result, rerender, unmount } = renderHook(() => useMessageStream('message-stream', isStreaming));
 
     expect(result.current.streamContent).toBe('');
     expect(result.current.streamThoughts).toBe('');

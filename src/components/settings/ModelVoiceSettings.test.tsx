@@ -106,24 +106,18 @@ describe('ModelVoiceSettings media resolution options', () => {
   it('hides ULTRA_HIGH in global settings for non-Gemini 3 models', () => {
     renderSettings('gemini-2.5-flash');
 
-    expect(
-      document.querySelector('option[value="MEDIA_RESOLUTION_ULTRA_HIGH"]')
-    ).toBeNull();
+    expect(document.querySelector('option[value="MEDIA_RESOLUTION_ULTRA_HIGH"]')).toBeNull();
   });
 
   it('keeps ULTRA_HIGH available for Gemini 3 models', () => {
     renderSettings('gemini-3-flash-preview');
 
-    expect(
-      document.querySelector('option[value="MEDIA_RESOLUTION_ULTRA_HIGH"]')
-    ).not.toBeNull();
+    expect(document.querySelector('option[value="MEDIA_RESOLUTION_ULTRA_HIGH"]')).not.toBeNull();
   });
 
   it('keeps ULTRA_HIGH available for Gemini Robotics models', () => {
     renderSettings('gemini-robotics-er-1.6-preview');
 
-    expect(
-      document.querySelector('option[value="MEDIA_RESOLUTION_ULTRA_HIGH"]')
-    ).not.toBeNull();
+    expect(document.querySelector('option[value="MEDIA_RESOLUTION_ULTRA_HIGH"]')).not.toBeNull();
   });
 });

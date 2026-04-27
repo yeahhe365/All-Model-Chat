@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { AudioRecorder } from '../../modals/AudioRecorder';
@@ -63,7 +60,7 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   showTtsContextEditor,
   onCloseTtsContextEditor,
   ttsContext,
-  setTtsContext
+  setTtsContext,
 }) => {
   const { t } = useI18n();
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen && !showTtsContextEditor) {
@@ -73,37 +70,39 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   return (
     <>
       {showRecorder && (
-          <AudioRecorder 
-            onRecord={onAudioRecord} 
-            onCancel={onRecorderCancel} 
-            isSystemAudioRecordingEnabled={isSystemAudioRecordingEnabled}
-          />
-      )}
-      {showCreateTextFileEditor && (
-        <CreateTextFileEditor 
-            onConfirm={onConfirmCreateTextFile} 
-            onCancel={onCreateTextFileCancel} 
-            isProcessing={isProcessingFile} 
-            isLoading={isLoading} 
-            t={t as (key: string) => string} 
-            initialContent={initialContent}
-            initialFilename={initialFilename}
-            themeId={themeId}
-            isPasteRichTextAsMarkdownEnabled={isPasteRichTextAsMarkdownEnabled}
+        <AudioRecorder
+          onRecord={onAudioRecord}
+          onCancel={onRecorderCancel}
+          isSystemAudioRecordingEnabled={isSystemAudioRecordingEnabled}
         />
       )}
-      {isHelpModalOpen && <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />}
-      
+      {showCreateTextFileEditor && (
+        <CreateTextFileEditor
+          onConfirm={onConfirmCreateTextFile}
+          onCancel={onCreateTextFileCancel}
+          isProcessing={isProcessingFile}
+          isLoading={isLoading}
+          t={t as (key: string) => string}
+          initialContent={initialContent}
+          initialFilename={initialFilename}
+          themeId={themeId}
+          isPasteRichTextAsMarkdownEnabled={isPasteRichTextAsMarkdownEnabled}
+        />
+      )}
+      {isHelpModalOpen && (
+        <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />
+      )}
+
       {showTtsContextEditor && onCloseTtsContextEditor && setTtsContext && (
-          <TextEditorModal 
-            isOpen={showTtsContextEditor} 
-            onClose={onCloseTtsContextEditor} 
-            title="TTS Director's Notes"
-            value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
-            onChange={setTtsContext}
-            placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}
-            t={t as (key: string) => string}
-          />
+        <TextEditorModal
+          isOpen={showTtsContextEditor}
+          onClose={onCloseTtsContextEditor}
+          title="TTS Director's Notes"
+          value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
+          onChange={setTtsContext}
+          placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}
+          t={t as (key: string) => string}
+        />
       )}
     </>
   );

@@ -235,33 +235,30 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage(
-        'analyze the csv',
-        [],
-        null,
-        'gemini-3-flash-preview',
-      );
+      await result.current.sendStandardMessage('analyze the csv', [], null, 'gemini-3-flash-preview');
     });
 
-    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(expect.objectContaining({
-      modelId: 'gemini-3-flash-preview',
-      systemInstruction: 'Custom system instruction',
-      config: expect.any(Object),
-      showThoughts: true,
-      thinkingBudget: 0,
-      isGoogleSearchEnabled: false,
-      isCodeExecutionEnabled: false,
-      isUrlContextEnabled: false,
-      thinkingLevel: 'LOW',
-      aspectRatio: '1:1',
-      isDeepSearchEnabled: false,
-      imageSize: '1K',
-      safetySettings: [],
-      mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-      isLocalPythonEnabled: true,
-      imageOutputMode: 'IMAGE_TEXT',
-      personGeneration: 'ALLOW_ADULT',
-    }));
+    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: 'Custom system instruction',
+        config: expect.any(Object),
+        showThoughts: true,
+        thinkingBudget: 0,
+        isGoogleSearchEnabled: false,
+        isCodeExecutionEnabled: false,
+        isUrlContextEnabled: false,
+        thinkingLevel: 'LOW',
+        aspectRatio: '1:1',
+        isDeepSearchEnabled: false,
+        imageSize: '1K',
+        safetySettings: [],
+        mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+        isLocalPythonEnabled: true,
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+      }),
+    );
 
     unmount();
   });
@@ -322,12 +319,7 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage(
-        'make it cinematic',
-        [],
-        null,
-        'gemini-3-pro-image-preview',
-      );
+      await result.current.sendStandardMessage('make it cinematic', [], null, 'gemini-3-pro-image-preview');
     });
 
     expect(mockCreateStandardClientFunctions).toHaveBeenCalledWith(
@@ -413,33 +405,30 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage(
-        'analyze the csv',
-        [],
-        null,
-        'gemini-2.5-flash',
-      );
+      await result.current.sendStandardMessage('analyze the csv', [], null, 'gemini-2.5-flash');
     });
 
-    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(expect.objectContaining({
-      modelId: 'gemini-2.5-flash',
-      systemInstruction: 'Custom system instruction',
-      config: expect.any(Object),
-      showThoughts: true,
-      thinkingBudget: 0,
-      isGoogleSearchEnabled: true,
-      isCodeExecutionEnabled: false,
-      isUrlContextEnabled: false,
-      thinkingLevel: 'LOW',
-      aspectRatio: '1:1',
-      isDeepSearchEnabled: false,
-      imageSize: '1K',
-      safetySettings: [],
-      mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-      isLocalPythonEnabled: false,
-      imageOutputMode: 'IMAGE_TEXT',
-      personGeneration: 'ALLOW_ADULT',
-    }));
+    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: 'gemini-2.5-flash',
+        systemInstruction: 'Custom system instruction',
+        config: expect.any(Object),
+        showThoughts: true,
+        thinkingBudget: 0,
+        isGoogleSearchEnabled: true,
+        isCodeExecutionEnabled: false,
+        isUrlContextEnabled: false,
+        thinkingLevel: 'LOW',
+        aspectRatio: '1:1',
+        isDeepSearchEnabled: false,
+        imageSize: '1K',
+        safetySettings: [],
+        mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+        isLocalPythonEnabled: false,
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+      }),
+    );
     expect(mockRunStandardToolLoop).not.toHaveBeenCalled();
     expect(mockSendMessageStream).toHaveBeenCalledOnce();
 
@@ -460,16 +449,7 @@ describe('useStandardChat', () => {
 
     mockCreateStandardClientFunctions.mockReturnValue({});
     mockSendMessageNonStream.mockImplementation(
-      async (
-        _apiKey,
-        _modelId,
-        _history,
-        _parts,
-        _config,
-        _signal,
-        _onError,
-        onComplete,
-      ) => {
+      async (_apiKey, _modelId, _history, _parts, _config, _signal, _onError, onComplete) => {
         onComplete(
           [{ text: 'done' }],
           undefined,
@@ -528,12 +508,7 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage(
-        'summarize this url',
-        [],
-        null,
-        'gemini-2.5-flash',
-      );
+      await result.current.sendStandardMessage('summarize this url', [], null, 'gemini-2.5-flash');
     });
 
     expect(streamOnComplete).toHaveBeenCalledWith(
@@ -563,16 +538,7 @@ describe('useStandardChat', () => {
     }));
     mockCreateStandardClientFunctions.mockReturnValue({});
     mockSendMessageNonStream.mockImplementation(
-      async (
-        _apiKey,
-        _modelId,
-        _history,
-        _parts,
-        _config,
-        _signal,
-        _onError,
-        onComplete,
-      ) => {
+      async (_apiKey, _modelId, _history, _parts, _config, _signal, _onError, onComplete) => {
         onComplete([{ text: 'raw answer' }]);
       },
     );
@@ -626,12 +592,7 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage(
-        'show raw reasoning',
-        [],
-        null,
-        'gemini-3-flash-preview',
-      );
+      await result.current.sendStandardMessage('show raw reasoning', [], null, 'gemini-3-flash-preview');
     });
 
     expect(mockCreateChatHistoryForApi).toHaveBeenCalledWith(
@@ -747,20 +708,10 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage(
-        '用 Python 画图',
-        [],
-        null,
-        'gemini-3-flash-preview',
-      );
+      await result.current.sendStandardMessage('用 Python 画图', [], null, 'gemini-3-flash-preview');
     });
 
-    expect(streamOnComplete).toHaveBeenCalledWith(
-      undefined,
-      undefined,
-      undefined,
-      [generatedFile],
-    );
+    expect(streamOnComplete).toHaveBeenCalledWith(undefined, undefined, undefined, [generatedFile]);
 
     unmount();
   });

@@ -5,8 +5,7 @@ import { getTranslator, translations } from '../translations';
 
 const projectRoot = path.resolve(__dirname, '../../..');
 
-const readProjectFile = (relativePath: string) =>
-  fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
+const readProjectFile = (relativePath: string) => fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
 
 describe('translation coverage for protected UI surfaces', () => {
   it('uses real Chinese copy for protected translation keys', () => {
@@ -62,18 +61,11 @@ describe('translation coverage for protected UI surfaces', () => {
       },
       {
         file: 'src/components/log-viewer/ApiUsageTab.tsx',
-        snippets: [
-          "'API Key Usage Statistics'",
-          "'Active'",
-          "'requests'",
-        ],
+        snippets: ["'API Key Usage Statistics'", "'Active'", "'requests'"],
       },
       {
         file: 'src/components/message/buttons/export/ExportModal.tsx',
-        snippets: [
-          'Close export dialog',
-          'Processing message content...',
-        ],
+        snippets: ['Close export dialog', 'Processing message content...'],
       },
       {
         file: 'src/components/message/buttons/export/ExportOptions.tsx',
@@ -90,44 +82,23 @@ describe('translation coverage for protected UI surfaces', () => {
       },
       {
         file: 'src/components/message/blocks/parts/DiagramWrapper.tsx',
-        snippets: [
-          'Hide Source',
-          'Show Source',
-          'Open in Side Panel',
-          'Zoom Diagram',
-          'Download as JPG',
-          'Copy Code',
-        ],
+        snippets: ['Hide Source', 'Show Source', 'Open in Side Panel', 'Zoom Diagram', 'Download as JPG', 'Copy Code'],
       },
       {
         file: 'src/components/scenarios/editor/ScenarioMessageList.tsx',
-        snippets: [
-          'No messages yet.',
-          'Add messages below to script the conversation flow.',
-          'Press Enter to save',
-        ],
+        snippets: ['No messages yet.', 'Add messages below to script the conversation flow.', 'Press Enter to save'],
       },
       {
         file: 'src/components/scenarios/editor/ScenarioMessageInput.tsx',
-        snippets: [
-          'Add Message As',
-          '> User<',
-          '> Model<',
-        ],
+        snippets: ['Add Message As', '> User<', '> Model<'],
       },
       {
         file: 'src/components/scenarios/editor/ScenarioSystemPrompt.tsx',
-        snippets: [
-          "'Expand'",
-          'Define the persona, style, and rules for the AI.',
-        ],
+        snippets: ["'Expand'", 'Define the persona, style, and rules for the AI.'],
       },
       {
         file: 'src/components/scenarios/ScenarioList.tsx',
-        snippets: [
-          'No scenarios found.',
-          'Clear search query',
-        ],
+        snippets: ['No scenarios found.', 'Clear search query'],
       },
       {
         file: 'src/components/shared/file-preview/FilePreviewHeader.tsx',
@@ -144,34 +115,19 @@ describe('translation coverage for protected UI surfaces', () => {
       },
       {
         file: 'src/components/shared/file-preview/TextFileViewer.tsx',
-        snippets: [
-          'Failed to load file content.',
-          'Loading content...',
-        ],
+        snippets: ['Failed to load file content.', 'Loading content...'],
       },
       {
         file: 'src/components/shared/file-preview/ImageViewer.tsx',
-        snippets: [
-          "'Zoom Out'",
-          "'Zoom In'",
-          "'Reset View'",
-        ],
+        snippets: ["'Zoom Out'", "'Zoom In'", "'Reset View'"],
       },
       {
         file: 'src/components/shared/file-preview/pdf-viewer/PdfToolbar.tsx',
-        snippets: [
-          "'Toggle Thumbnails'",
-          "'Previous Page'",
-          "'Next Page'",
-          "'Page number'",
-          "'Rotate'",
-        ],
+        snippets: ["'Toggle Thumbnails'", "'Previous Page'", "'Next Page'", "'Page number'", "'Rotate'"],
       },
       {
         file: 'src/components/shared/file-preview/pdf-viewer/PdfMainContent.tsx',
-        snippets: [
-          'Loading PDF...',
-        ],
+        snippets: ['Loading PDF...'],
       },
       {
         file: 'src/components/modals/FilePreviewModal.tsx',
@@ -203,16 +159,11 @@ describe('translation coverage for protected UI surfaces', () => {
       },
       {
         file: 'src/components/modals/html-preview/HtmlPreviewContent.tsx',
-        snippets: [
-          '"HTML Content Preview"',
-        ],
+        snippets: ['"HTML Content Preview"'],
       },
       {
         file: 'src/components/header/Header.tsx',
-        snippets: [
-          "'Exit Picture-in-Picture'",
-          "'Enter Picture-in-Picture'",
-        ],
+        snippets: ["'Exit Picture-in-Picture'", "'Enter Picture-in-Picture'"],
       },
       {
         file: 'src/components/header/HeaderModelSelector.tsx',
@@ -226,28 +177,15 @@ describe('translation coverage for protected UI surfaces', () => {
       },
       {
         file: 'src/components/modals/HelpModal.tsx',
-        snippets: [
-          '"Search commands..."',
-          '"Click to copy"',
-          'No commands found matching',
-          'Tip: Type',
-        ],
+        snippets: ['"Search commands..."', '"Click to copy"', 'No commands found matching', 'Tip: Type'],
       },
       {
         file: 'src/components/chat/input/QueuedSubmissionCard.tsx',
-        snippets: [
-          'Edit queued message',
-          'Remove queued message',
-        ],
+        snippets: ['Edit queued message', 'Remove queued message'],
       },
       {
         file: 'src/components/shared/AudioPlayer.tsx',
-        snippets: [
-          '"Pause"',
-          '"Play"',
-          '"Playback Speed"',
-          '"Download Audio"',
-        ],
+        snippets: ['"Pause"', '"Play"', '"Playback Speed"', '"Download Audio"'],
       },
       {
         file: 'src/hooks/useMessageSender.ts',
@@ -261,12 +199,7 @@ describe('translation coverage for protected UI surfaces', () => {
       },
       {
         file: 'src/hooks/file-upload/useFileIdAdder.ts',
-        snippets: [
-          "'File API processing failed'",
-          "'File not found.'",
-          "'API key not configured.'",
-          "'Fetch error'",
-        ],
+        snippets: ["'File API processing failed'", "'File not found.'", "'API key not configured.'", "'Fetch error'"],
       },
     ];
 
@@ -280,11 +213,7 @@ describe('translation coverage for protected UI surfaces', () => {
   });
 
   it('defines translations for every t() key used in source files', () => {
-    const sourceFiles = [
-      'src/components',
-      'src/hooks',
-      'src/utils',
-    ];
+    const sourceFiles = ['src/components', 'src/hooks', 'src/utils'];
 
     const collectFiles = (dir: string): string[] =>
       fs.readdirSync(path.join(projectRoot, dir), { withFileTypes: true }).flatMap((entry) => {

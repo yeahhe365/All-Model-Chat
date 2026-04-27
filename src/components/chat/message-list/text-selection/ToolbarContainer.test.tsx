@@ -50,7 +50,9 @@ describe('ToolbarContainer', () => {
       );
     });
 
-    const quoteButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Quote');
+    const quoteButton = Array.from(document.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Quote',
+    );
     const toolbar = quoteButton?.parentElement as HTMLDivElement | null;
 
     expect(toolbar).not.toBeNull();

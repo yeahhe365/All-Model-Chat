@@ -31,10 +31,7 @@ describe('image pricing usage logging', () => {
       },
     });
     generateImagesMock.mockResolvedValue({
-      generatedImages: [
-        { image: { imageBytes: 'base64-image-1' } },
-        { image: { imageBytes: 'base64-image-2' } },
-      ],
+      generatedImages: [{ image: { imageBytes: 'base64-image-1' } }, { image: { imageBytes: 'base64-image-2' } }],
     });
   });
 

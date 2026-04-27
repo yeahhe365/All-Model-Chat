@@ -170,9 +170,7 @@ describe('ToolsMenu', () => {
       );
     });
 
-    expect(document.body.textContent).toContain(
-      "This model can't combine built-in tools with Pyodide in one request.",
-    );
+    expect(document.body.textContent).toContain("This model can't combine built-in tools with Pyodide in one request.");
   });
 
   it('does not show a combination notice for Gemini 3 models', () => {

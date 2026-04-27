@@ -16,8 +16,7 @@ interface LazyMarkdownRendererProps extends MarkdownRendererProps {
 }
 
 const containsMathMarkdown = (content: string) => {
-  return /(^|[^\\])\$\$[\s\S]+?(^|[^\\])\$\$/m.test(content)
-    || /(^|[^\\])\$[^$\n]+?[^\\]\$/m.test(content);
+  return /(^|[^\\])\$\$[\s\S]+?(^|[^\\])\$\$/m.test(content) || /(^|[^\\])\$[^$\n]+?[^\\]\$/m.test(content);
 };
 
 export const LazyMarkdownRenderer: React.FC<LazyMarkdownRendererProps> = ({
@@ -26,13 +25,10 @@ export const LazyMarkdownRenderer: React.FC<LazyMarkdownRendererProps> = ({
   ...props
 }) => {
   const shouldLoadMathRenderer = containsMathMarkdown(content);
-  const fallback = fallbackMode === 'raw'
-    ? (
-        <div className="whitespace-pre-wrap break-words text-[var(--theme-text-secondary)]">
-          {content}
-        </div>
-      )
-    : null;
+  const fallback =
+    fallbackMode === 'raw' ? (
+      <div className="whitespace-pre-wrap break-words text-[var(--theme-text-secondary)]">{content}</div>
+    ) : null;
 
   if (!shouldLoadMathRenderer) {
     return (

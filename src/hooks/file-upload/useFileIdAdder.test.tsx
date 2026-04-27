@@ -5,11 +5,7 @@ import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { UploadedFile } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
-const {
-  generateUniqueIdMock,
-  getKeyForRequestMock,
-  getFileMetadataMock,
-} = vi.hoisted(() => ({
+const { generateUniqueIdMock, getKeyForRequestMock, getFileMetadataMock } = vi.hoisted(() => ({
   generateUniqueIdMock: vi.fn(),
   getKeyForRequestMock: vi.fn(),
   getFileMetadataMock: vi.fn(),
@@ -22,7 +18,7 @@ vi.mock('../../utils/chat/ids', () => ({
 vi.mock('../../utils/apiUtils', () => ({
   getKeyForRequest: getKeyForRequestMock,
   getApiKeyErrorTranslationKey: vi.fn((error: string) =>
-    error === 'API Key not configured.' ? 'apiRuntime_keyNotConfigured' : null
+    error === 'API Key not configured.' ? 'apiRuntime_keyNotConfigured' : null,
   ),
 }));
 

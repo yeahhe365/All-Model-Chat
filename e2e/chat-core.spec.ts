@@ -1,9 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mockGeminiTextResponses, seedAppState } from './helpers/appHarness';
 
-test('sends a non-streaming chat prompt and renders markdown from a mocked API response', async ({
-  page,
-}) => {
+test('sends a non-streaming chat prompt and renders markdown from a mocked API response', async ({ page }) => {
   await mockGeminiTextResponses(page, {
     nonStreamText: '## Mocked heading\n\n**Bold reply**',
   });
@@ -58,9 +56,7 @@ test('renders a streamed chat response from intercepted API chunks', async ({ pa
   const messageList = page.locator('[data-testid="virtuoso-item-list"]');
   await expect(messageList).toBeVisible();
 
-  await expect(
-    page.getByRole('link', { name: 'Stream this answer', exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Stream this answer', exact: true })).toBeVisible();
   await expect(messageList.getByText('Streamed markdown reply')).toBeVisible();
   await expect(page.locator('strong', { hasText: 'markdown' })).toBeVisible();
 });

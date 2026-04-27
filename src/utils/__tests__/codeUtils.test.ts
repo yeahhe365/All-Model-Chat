@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  extractPreviewableCodeBlock,
-  getPreviewMarkupType,
-} from '../codeUtils';
+import { extractPreviewableCodeBlock, getPreviewMarkupType } from '../codeUtils';
 
 describe('codeUtils preview detection', () => {
   it('only treats standalone html documents as previewable html by content', () => {

@@ -66,10 +66,7 @@ describe('sessionRefresh', () => {
         makeSession({ id: 'loading', messages: [loadingMessage], timestamp: 1 }),
         makeSession({ id: 'inactive', messages: [inactiveMessage], timestamp: 2 }),
       ],
-      [
-        makeSession({ id: 'inactive', timestamp: 2 }),
-        makeSession({ id: 'loading', timestamp: 1 }),
-      ],
+      [makeSession({ id: 'inactive', timestamp: 2 }), makeSession({ id: 'loading', timestamp: 1 })],
       {
         activeSessionId: null,
         loadingSessionIds: new Set(['loading']),
@@ -82,13 +79,8 @@ describe('sessionRefresh', () => {
 
   it('sorts merged sessions and preserves local sessions absent from refreshed metadata', () => {
     const merged = mergeSessionMetadata(
-      [
-        makeSession({ id: 'local-only', timestamp: 3 }),
-      ],
-      [
-        makeSession({ id: 'old', timestamp: 1 }),
-        makeSession({ id: 'pinned', timestamp: 2, isPinned: true }),
-      ],
+      [makeSession({ id: 'local-only', timestamp: 3 })],
+      [makeSession({ id: 'old', timestamp: 1 }), makeSession({ id: 'pinned', timestamp: 2, isPinned: true })],
       {
         activeSessionId: null,
         loadingSessionIds: new Set(),

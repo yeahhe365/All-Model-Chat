@@ -33,12 +33,7 @@ interface InitializeScenarioStateResult {
 
 const DEPRECATED_SCENARIO_IDS = ['cyberpunk-rpg-scenario'];
 
-const SYSTEM_SCENARIOS: SavedScenario[] = [
-  reasonerScenario,
-  succinctScenario,
-  socraticScenario,
-  formalScenario,
-];
+const SYSTEM_SCENARIOS: SavedScenario[] = [reasonerScenario, succinctScenario, socraticScenario, formalScenario];
 
 const USER_SCENARIO_SEEDS: UserScenarioSeed[] = [
   {
@@ -67,9 +62,10 @@ const getScenarioFingerprint = (scenario: SavedScenario): string =>
   JSON.stringify({
     title: scenario.title.trim(),
     systemInstruction: scenario.systemInstruction?.trim() ?? '',
-    messages: scenario.messages.map(
-      ({ role, content }: { role: 'user' | 'model'; content: string }) => ({ role, content }),
-    ),
+    messages: scenario.messages.map(({ role, content }: { role: 'user' | 'model'; content: string }) => ({
+      role,
+      content,
+    })),
   });
 
 export const getExportableUserScenarios = (scenarios: SavedScenario[]): SavedScenario[] =>

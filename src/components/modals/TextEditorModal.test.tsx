@@ -24,10 +24,7 @@ describe('TextEditorModal', () => {
   });
 
   const setTextareaValue = (textarea: HTMLTextAreaElement, value: string) => {
-    const descriptor = Object.getOwnPropertyDescriptor(
-      HTMLTextAreaElement.prototype,
-      'value',
-    );
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
 
     descriptor?.set?.call(textarea, value);
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -60,8 +57,8 @@ describe('TextEditorModal', () => {
       setTextareaValue(textarea!, 'Updated text');
     });
 
-    const doneButton = Array.from(document.body.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('Done'),
+    const doneButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Done'),
     ) as HTMLButtonElement | undefined;
 
     expect(doneButton).toBeDefined();

@@ -194,7 +194,9 @@ describe('BaseMarkdownRendererEntry', () => {
     act(() => {
       root.render(
         <BaseMarkdownRendererEntry
-          content={'<table><caption>Monthly totals</caption><thead><tr><th>Name</th><th>Total</th></tr></thead><tbody><tr><td>Alice</td><td>42</td></tr></tbody></table>'}
+          content={
+            '<table><caption>Monthly totals</caption><thead><tr><th>Name</th><th>Total</th></tr></thead><tbody><tr><td>Alice</td><td>42</td></tr></tbody></table>'
+          }
           isLoading={false}
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -219,7 +221,9 @@ describe('BaseMarkdownRendererEntry', () => {
     act(() => {
       root.render(
         <BaseMarkdownRendererEntry
-          content={'<div class="tool-result outcome-ok"><strong>Execution Result (OK):</strong><pre><code>plot saved</code></pre></div>'}
+          content={
+            '<div class="tool-result outcome-ok"><strong>Execution Result (OK):</strong><pre><code>plot saved</code></pre></div>'
+          }
           isLoading={false}
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -255,7 +259,9 @@ describe('BaseMarkdownRendererEntry', () => {
     act(() => {
       root.render(
         <BaseMarkdownRendererEntry
-          content={'<section id="danger-zone" class="fixed inset-0 z-[9999]" style="position:fixed;inset:0">Safe text</section>'}
+          content={
+            '<section id="danger-zone" class="fixed inset-0 z-[9999]" style="position:fixed;inset:0">Safe text</section>'
+          }
           isLoading={false}
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}

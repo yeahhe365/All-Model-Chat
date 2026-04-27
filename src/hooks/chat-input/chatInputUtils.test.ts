@@ -9,7 +9,7 @@ describe('buildChatInputSubmitText', () => {
         quotes: [],
         modelId: 'gemini-3.1-flash-tts-preview',
         ttsContext: 'Use a calm narrator voice.',
-      })
+      }),
     ).toBe('Use a calm narrator voice.\n\n#### TRANSCRIPT\nhello world');
   });
 
@@ -19,10 +19,8 @@ describe('buildChatInputSubmitText', () => {
         inputText: 'Summarize this.',
         quotes: ['first line\nsecond line', 'third line'],
         modelId: 'gemini-3.1-pro-preview',
-      })
-    ).toBe(
-      '**Quote 1**:\n> first line\n> second line\n\n**Quote 2**:\n> third line\n\nSummarize this.'
-    );
+      }),
+    ).toBe('**Quote 1**:\n> first line\n> second line\n\n**Quote 2**:\n> third line\n\nSummarize this.');
   });
 });
 

@@ -93,9 +93,7 @@ describe('SettingsContent', () => {
             ...DEFAULT_APP_SETTINGS,
             modelId: 'removed-model',
           }}
-          availableModels={[
-            { id: 'removed-model', name: 'Removed Model', isPinned: true },
-          ]}
+          availableModels={[{ id: 'removed-model', name: 'Removed Model', isPinned: true }]}
           updateSetting={updateSetting}
           handleModelChange={handleModelChange}
           setAvailableModels={setAvailableModels}
@@ -118,9 +116,9 @@ describe('SettingsContent', () => {
     });
 
     act(() => {
-      container.querySelector('[data-testid="save-model-list"]')?.dispatchEvent(
-        new MouseEvent('click', { bubbles: true }),
-      );
+      container
+        .querySelector('[data-testid="save-model-list"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(setAvailableModels).toHaveBeenCalledWith([
@@ -129,6 +127,48 @@ describe('SettingsContent', () => {
     ]);
     expect(handleModelChange).toHaveBeenCalledWith('fallback-model');
     expect(updateSetting).not.toHaveBeenCalledWith('modelId', 'fallback-model');
+  });
+
+  it('passes the input translation target setting into chat behavior settings', () => {
+    const updateSetting = vi.fn();
+
+    act(() => {
+      root.render(
+        <SettingsContent
+          activeTab="model"
+          currentSettings={{
+            ...DEFAULT_APP_SETTINGS,
+            translationTargetLanguage: 'Japanese',
+          }}
+          availableModels={[]}
+          updateSetting={updateSetting}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(mockChatBehaviorSection.lastProps.translationTargetLanguage).toBe('Japanese');
+
+    act(() => {
+      mockChatBehaviorSection.lastProps.setTranslationTargetLanguage('Korean');
+    });
+
+    expect(updateSetting).toHaveBeenCalledWith('translationTargetLanguage', 'Korean');
   });
 
   it('does not apply zoom-based enter animation to the active settings panel', () => {

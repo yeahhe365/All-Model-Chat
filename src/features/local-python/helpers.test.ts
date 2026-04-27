@@ -15,12 +15,7 @@ const makeFile = (id: string, name: string): UploadedFile => ({
   uploadState: 'active',
 });
 
-const makeMessage = (
-  id: string,
-  role: 'user' | 'model',
-  content: string,
-  files?: UploadedFile[],
-): ChatMessage => ({
+const makeMessage = (id: string, role: 'user' | 'model', content: string, files?: UploadedFile[]): ChatMessage => ({
   id,
   role,
   content,
@@ -33,9 +28,7 @@ describe('local-python helpers', () => {
     const firstCode = 'print("first")';
     const secondCode = 'print("second")';
     const messageId = 'model-1';
-    const processed = new Map<string, string>([
-      [messageId, createLocalPythonExecutionSignature(firstCode)],
-    ]);
+    const processed = new Map<string, string>([[messageId, createLocalPythonExecutionSignature(firstCode)]]);
 
     const candidate = getLatestLocalPythonExecutionCandidate({
       messageId,

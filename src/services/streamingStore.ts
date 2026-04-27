@@ -1,4 +1,3 @@
-
 type Listener = () => void;
 
 const STREAM_ENTRY_TTL_MS = 5 * 60_000;
@@ -60,7 +59,7 @@ class StreamingStore {
   }
 
   private notify(id: string) {
-    this.listeners.get(id)?.forEach(l => l());
+    this.listeners.get(id)?.forEach((l) => l());
   }
 
   clear(id: string) {

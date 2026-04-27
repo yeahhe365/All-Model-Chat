@@ -228,10 +228,7 @@ export async function mockGeminiTextResponses(
       return;
     }
 
-    if (
-      normalizedUrl.includes('streamgeneratecontent') ||
-      normalizedUrl.includes('generatecontentstream')
-    ) {
+    if (normalizedUrl.includes('streamgeneratecontent') || normalizedUrl.includes('generatecontentstream')) {
       const chunks = options.streamedChunks ?? ['Streamed ', 'response'];
       const body = `${chunks
         .map(

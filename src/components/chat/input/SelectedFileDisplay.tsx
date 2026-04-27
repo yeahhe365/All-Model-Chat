@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
-import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, FileText, Ellipsis } from 'lucide-react';
+import {
+  Ban,
+  X,
+  Loader2,
+  CheckCircle,
+  Copy,
+  Check,
+  Scissors,
+  SlidersHorizontal,
+  FileText,
+  Ellipsis,
+} from 'lucide-react';
 import { CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { formatFileSize, isTextFile } from '../../../utils/fileHelpers';

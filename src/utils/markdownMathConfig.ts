@@ -4,6 +4,4 @@ import type { PluggableList } from 'unified';
 
 export const mathRemarkPlugins: PluggableList = [remarkMath];
 
-export const getMathRehypePlugins = (): PluggableList => ([
-  [rehypeKatex, { throwOnError: false, strict: false }],
-]);
+export const getMathRehypePlugins = (): PluggableList => [[rehypeKatex, { throwOnError: false, strict: false }]];

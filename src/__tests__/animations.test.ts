@@ -38,18 +38,21 @@ describe('animation utility coverage', () => {
 });
 
 describe('motion-sensitive UI behavior', () => {
-  it('lets the welcome screen opt out of the typewriter effect for reduced-motion users', () => {
+  it('keeps the welcome easter egg on explicit activation instead of hover timing', () => {
     const source = fs.readFileSync(welcomeScreenPath, 'utf8');
 
-    expect(source).toContain('prefers-reduced-motion: reduce');
-    expect(source).toContain('if (prefersReducedMotion) {');
+    expect(source).toContain("window.matchMedia('(hover: hover) and (pointer: fine)').matches");
+    expect(source).toContain('onClick={handleClick}');
+    expect(source).toContain('onMouseEnter={handleMouseEnter}');
+    expect(source).toContain("event.key === 'Enter'");
+    expect(source).toContain('setTimeout');
   });
 
-  it('does not synchronously transition the welcome typewriter state inside effect bodies', () => {
+  it('gives the welcome easter egg keyboard and live-region affordances', () => {
     const source = fs.readFileSync(welcomeScreenPath, 'utf8');
 
-    expect(source).not.toMatch(/if \(!isHovering && targetPhrase !== text\) {\s*setTargetPhrase\(text\);\s*[\s\S]*setStatus\('deleting'\);/s);
-    expect(source).not.toMatch(/if \(displayedText === targetPhrase\) {\s*setStatus\('paused'\);/s);
+    expect(source).toContain('type="button"');
+    expect(source).toContain('aria-live="polite"');
   });
 });
 
@@ -81,8 +84,8 @@ describe('layout animation guardrails', () => {
   it('keeps desktop full and mini sidebar shells mounted so opacity can animate between them', () => {
     const source = fs.readFileSync(historySidebarPath, 'utf8');
 
-    expect(source).toContain("md:absolute md:inset-0 transition-opacity");
-    expect(source).toContain("hidden md:flex absolute inset-0");
+    expect(source).toContain('md:absolute md:inset-0 transition-opacity');
+    expect(source).toContain('hidden md:flex absolute inset-0');
     expect(source).not.toContain('{isOpen ? (');
   });
 
@@ -123,8 +126,8 @@ describe('sidebar backdrop behavior', () => {
     const mainContentPath = path.join(projectRoot, 'src/components/layout/MainContent.tsx');
     const source = fs.readFileSync(mainContentPath, 'utf8');
 
-    expect(source).toContain("opacity-100 pointer-events-auto");
-    expect(source).toContain("opacity-0 pointer-events-none");
+    expect(source).toContain('opacity-100 pointer-events-auto');
+    expect(source).toContain('opacity-0 pointer-events-none');
     expect(source).not.toContain('uiState.isHistorySidebarOpen && (');
   });
 });

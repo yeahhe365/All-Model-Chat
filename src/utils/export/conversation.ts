@@ -7,12 +7,10 @@ import { I18nProvider } from '../../contexts/I18nContext';
 import { MessageContent } from '../../components/message/MessageContent';
 import { getVisibleChatMessages } from '../chat/visibility';
 
-const noop = () => { };
+const noop = () => {};
 
 const normalizeThemeId = (themeId: string): AppSettings['themeId'] =>
-  themeId === 'system' || themeId === 'onyx' || themeId === 'pearl'
-    ? themeId
-    : DEFAULT_APP_SETTINGS.themeId;
+  themeId === 'system' || themeId === 'onyx' || themeId === 'pearl' ? themeId : DEFAULT_APP_SETTINGS.themeId;
 
 const createExportAppSettings = (session: SavedChatSession, themeId: string): AppSettings => ({
   ...DEFAULT_APP_SETTINGS,
@@ -68,12 +66,8 @@ export const createChatExportElement = async (
                   className: 'message-content-container',
                   style: {
                     maxWidth: '100%',
-                    color: message.role === 'user'
-                      ? 'var(--theme-bg-user-message-text)'
-                      : 'var(--theme-text-primary)',
-                    background: message.role === 'user'
-                      ? 'var(--theme-bg-user-message)'
-                      : 'transparent',
+                    color: message.role === 'user' ? 'var(--theme-bg-user-message-text)' : 'var(--theme-text-primary)',
+                    background: message.role === 'user' ? 'var(--theme-bg-user-message)' : 'transparent',
                     borderRadius: message.role === 'user' ? '1rem 0.25rem 1rem 1rem' : '0',
                     padding: message.role === 'user' ? '0.75rem 1rem' : '0',
                   },

@@ -65,33 +65,32 @@ export const useAppUI = () => {
     }
   }, []);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (window.innerWidth >= DESKTOP_BREAKPOINT) {
-      return;
-    }
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (window.innerWidth >= DESKTOP_BREAKPOINT) {
+        return;
+      }
 
-    const lastTouch = e.changedTouches[0];
-    if (!lastTouch) return;
+      const lastTouch = e.changedTouches[0];
+      if (!lastTouch) return;
 
-    const deltaX = lastTouch.clientX - touchStartRef.current.x;
-    const deltaY = lastTouch.clientY - touchStartRef.current.y;
-    const swipeThreshold = 50;
-    const edgeThreshold = 40;
+      const deltaX = lastTouch.clientX - touchStartRef.current.x;
+      const deltaY = lastTouch.clientY - touchStartRef.current.y;
+      const swipeThreshold = 50;
+      const edgeThreshold = 40;
 
-    if (Math.abs(deltaX) < Math.abs(deltaY)) {
-      return;
-    }
+      if (Math.abs(deltaX) < Math.abs(deltaY)) {
+        return;
+      }
 
-    if (deltaX > swipeThreshold && !isHistorySidebarOpen && touchStartRef.current.x < edgeThreshold) {
-      setIsHistorySidebarOpen(true);
-    } else if (
-      deltaX < -swipeThreshold &&
-      isHistorySidebarOpen &&
-      touchStartRef.current.startedInSidebar
-    ) {
-      setIsHistorySidebarOpen(false);
-    }
-  }, [isHistorySidebarOpen, setIsHistorySidebarOpen]);
+      if (deltaX > swipeThreshold && !isHistorySidebarOpen && touchStartRef.current.x < edgeThreshold) {
+        setIsHistorySidebarOpen(true);
+      } else if (deltaX < -swipeThreshold && isHistorySidebarOpen && touchStartRef.current.startedInSidebar) {
+        setIsHistorySidebarOpen(false);
+      }
+    },
+    [isHistorySidebarOpen, setIsHistorySidebarOpen],
+  );
 
   return {
     isSettingsModalOpen,

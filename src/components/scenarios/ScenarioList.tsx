@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { SavedScenario } from '../../types';
 import { Search, Layers, User, Shield, Inbox } from 'lucide-react';
@@ -32,44 +31,44 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
   onDuplicate,
   onExport,
   onView,
-  t
+  t,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
   const filteredScenarios = useMemo(() => {
     let list = scenarios;
-    
+
     // Filter by Tab
     if (activeTab === 'mine') {
-        list = list.filter(s => !systemScenarioIds.includes(s.id));
+      list = list.filter((s) => !systemScenarioIds.includes(s.id));
     } else if (activeTab === 'system') {
-        list = list.filter(s => systemScenarioIds.includes(s.id));
+      list = list.filter((s) => systemScenarioIds.includes(s.id));
     }
 
     // Filter by Search
     if (searchQuery.trim()) {
       const lowerQuery = searchQuery.toLowerCase();
-      list = list.filter(s =>
-        s.title.toLowerCase().includes(lowerQuery) ||
-        s.messages.some(m => m.content.toLowerCase().includes(lowerQuery)) ||
-        (s.systemInstruction && s.systemInstruction.toLowerCase().includes(lowerQuery))
+      list = list.filter(
+        (s) =>
+          s.title.toLowerCase().includes(lowerQuery) ||
+          s.messages.some((m) => m.content.toLowerCase().includes(lowerQuery)) ||
+          (s.systemInstruction && s.systemInstruction.toLowerCase().includes(lowerQuery)),
       );
     }
-    
+
     return list;
   }, [scenarios, searchQuery, activeTab, systemScenarioIds]);
 
   const tabs: { id: TabType; labelKey: string; icon: React.ElementType }[] = [
-      { id: 'all', labelKey: 'scenarios_tab_all', icon: Layers },
-      { id: 'mine', labelKey: 'scenarios_tab_mine', icon: User },
-      { id: 'system', labelKey: 'scenarios_tab_system', icon: Shield },
+    { id: 'all', labelKey: 'scenarios_tab_all', icon: Layers },
+    { id: 'mine', labelKey: 'scenarios_tab_mine', icon: User },
+    { id: 'system', labelKey: 'scenarios_tab_system', icon: Shield },
   ];
 
   return (
     <div className="flex flex-col h-full space-y-4 sm:space-y-6">
       {/* Controls Container */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-shrink-0">
-        
         {/* Search Bar */}
         <div className="relative flex-grow group">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--theme-text-tertiary)] group-focus-within:text-[var(--theme-text-primary)] transition-colors">
@@ -86,26 +85,31 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
 
         {/* Tabs - Segmented Control */}
         <div className="flex p-1 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-xl sm:w-auto w-full self-start sm:self-auto overflow-x-auto no-scrollbar">
-            {tabs.map(tab => {
-                const isActive = activeTab === tab.id;
-                const Icon = tab.icon;
-                return (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
                             flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap
-                            ${isActive 
-                                ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm text-[var(--theme-text-link)]' 
+                            ${
+                              isActive
+                                ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm text-[var(--theme-text-link)]'
                                 : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]'
                             }
                         `}
-                    >
-                        <Icon size={16} strokeWidth={isActive ? 2 : 1.5} className={isActive ? "text-[var(--theme-text-link)]" : ""} />
-                        <span>{t(tab.labelKey)}</span>
-                    </button>
-                );
-            })}
+              >
+                <Icon
+                  size={16}
+                  strokeWidth={isActive ? 2 : 1.5}
+                  className={isActive ? 'text-[var(--theme-text-link)]' : ''}
+                />
+                <span>{t(tab.labelKey)}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -114,36 +118,36 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
         {filteredScenarios.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-[var(--theme-text-tertiary)]">
             <div className="p-4 rounded-full bg-[var(--theme-bg-input)] mb-4">
-                <Inbox size={48} className="opacity-30" strokeWidth={1} />
+              <Inbox size={48} className="opacity-30" strokeWidth={1} />
             </div>
             <p className="text-base font-medium text-[var(--theme-text-secondary)]">{t('scenarios_empty_search')}</p>
             {searchQuery && (
-                <button 
-                    onClick={() => setSearchQuery('')} 
-                    className="mt-2 text-[var(--theme-text-link)] hover:underline text-sm"
-                >
-                    {t('scenarios_clear_search')}
-                </button>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-2 text-[var(--theme-text-link)] hover:underline text-sm"
+              >
+                {t('scenarios_clear_search')}
+              </button>
             )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-20 sm:pb-0">
-            {filteredScenarios.map(s => {
-                const isSystem = systemScenarioIds.includes(s.id);
-                return (
-                  <ScenarioItem
-                    key={s.id}
-                    scenario={s}
-                    isSystem={isSystem}
-                    onLoad={onLoad}
-                    onEdit={isSystem ? undefined : onEdit}
-                    onDelete={isSystem ? undefined : onDelete}
-                    onDuplicate={onDuplicate}
-                    onExport={onExport}
-                    onView={isSystem ? onView : undefined}
-                    t={t}
-                  />
-                );
+            {filteredScenarios.map((s) => {
+              const isSystem = systemScenarioIds.includes(s.id);
+              return (
+                <ScenarioItem
+                  key={s.id}
+                  scenario={s}
+                  isSystem={isSystem}
+                  onLoad={onLoad}
+                  onEdit={isSystem ? undefined : onEdit}
+                  onDelete={isSystem ? undefined : onDelete}
+                  onDuplicate={onDuplicate}
+                  onExport={onExport}
+                  onView={isSystem ? onView : undefined}
+                  t={t}
+                />
+              );
             })}
           </div>
         )}

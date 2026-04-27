@@ -46,7 +46,7 @@ const createRect = (overrides: Partial<DOMRect> = {}): DOMRect =>
     y: 100,
     toJSON: () => ({}),
     ...overrides,
-  } as DOMRect);
+  }) as DOMRect;
 
 const createToolbarRef = () => {
   const toolbarRef = { current: document.createElement('div') } as React.RefObject<HTMLDivElement>;

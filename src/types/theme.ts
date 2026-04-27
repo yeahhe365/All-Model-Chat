@@ -1,4 +1,3 @@
-
 export interface ThemeColors {
   // Backgrounds
   bgPrimary: string;
@@ -25,8 +24,8 @@ export interface ThemeColors {
   textPrimary: string;
   textSecondary: string;
   textTertiary: string;
-  textAccent: string; 
-  textDanger: string; 
+  textAccent: string;
+  textDanger: string;
   textLink: string;
   textCode: string;
   bgUserMessageText: string;
@@ -46,14 +45,14 @@ export interface ThemeColors {
   iconUser: string;
   iconModel: string;
   iconError: string;
-  iconThought: string; 
-  iconSettings: string; 
-  iconClearChat: string; 
-  iconSend: string; 
-  iconAttach: string; 
-  iconStop: string; 
-  iconEdit: string; 
-  iconHistory: string; 
+  iconThought: string;
+  iconSettings: string;
+  iconClearChat: string;
+  iconSend: string;
+  iconAttach: string;
+  iconStop: string;
+  iconEdit: string;
+  iconHistory: string;
 }
 
 export interface Theme {

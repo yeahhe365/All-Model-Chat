@@ -3,12 +3,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import type { AppSettings, ChatSettings } from '../../../types';
-import {
-  ChatAreaProvider,
-  ChatAreaProviderValue,
-  useChatAreaInput,
-  useChatAreaMessageList,
-} from './ChatAreaContext';
+import { ChatAreaProvider, ChatAreaProviderValue, useChatAreaInput, useChatAreaMessageList } from './ChatAreaContext';
 
 const createProviderValue = (): ChatAreaProviderValue => ({
   messageList: {
@@ -143,17 +138,15 @@ const OutsideProviderProbe = () => {
   return null;
 };
 
-const MessageListRenderProbe = React.memo(
-  ({ onRender }: { onRender: () => void }) => {
-    React.useEffect(() => {
-      onRender();
-    }, [onRender]);
+const MessageListRenderProbe = React.memo(({ onRender }: { onRender: () => void }) => {
+  React.useEffect(() => {
+    onRender();
+  }, [onRender]);
 
-    const { messages } = useChatAreaMessageList();
+  const { messages } = useChatAreaMessageList();
 
-    return <div data-testid="render-probe">{messages.length}</div>;
-  }
-);
+  return <div data-testid="render-probe">{messages.length}</div>;
+});
 
 describe('ChatAreaContext', () => {
   let container: HTMLDivElement;
@@ -208,14 +201,12 @@ describe('ChatAreaContext', () => {
           <ChatAreaProvider value={value}>
             <HookProbe />
           </ChatAreaProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
     expect(container.querySelector('[data-testid="message-count"]')?.textContent).toBe('2');
-    expect(container.querySelector('[data-testid="input-model"]')?.textContent).toBe(
-      'gemini-3.1-pro-preview'
-    );
+    expect(container.querySelector('[data-testid="input-model"]')?.textContent).toBe('gemini-3.1-pro-preview');
   });
 
   it('does not re-render message-list consumers when only the input slice changes', () => {
@@ -228,7 +219,7 @@ describe('ChatAreaContext', () => {
           <ChatAreaProvider value={initialValue}>
             <MessageListRenderProbe onRender={onRender} />
           </ChatAreaProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
@@ -248,7 +239,7 @@ describe('ChatAreaContext', () => {
           <ChatAreaProvider value={updatedValue}>
             <MessageListRenderProbe onRender={onRender} />
           </ChatAreaProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 

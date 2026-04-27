@@ -129,18 +129,27 @@ const calculateFromExactPricing = (modelId: string, exactPricing: ApiUsageExactP
     }
 
     const promptTokens =
-      (exactPricing.promptTokensDetails?.reduce((sum, detail) => sum + detail.tokenCount, 0) ?? 0)
-      + (exactPricing.cacheTokensDetails?.reduce((sum, detail) => sum + detail.tokenCount, 0) ?? 0);
+      (exactPricing.promptTokensDetails?.reduce((sum, detail) => sum + detail.tokenCount, 0) ?? 0) +
+      (exactPricing.cacheTokensDetails?.reduce((sum, detail) => sum + detail.tokenCount, 0) ?? 0);
 
     return promptTokens > modalityPricing.thresholdTokens;
   })();
 
-  const promptRates = useAboveThreshold ? modalityPricing.promptAboveThreshold ?? modalityPricing.prompt : modalityPricing.prompt;
-  const cacheRates = useAboveThreshold ? modalityPricing.cacheAboveThreshold ?? modalityPricing.cache : modalityPricing.cache;
-  const responseRates = useAboveThreshold ? modalityPricing.responseAboveThreshold ?? modalityPricing.response : modalityPricing.response;
+  const promptRates = useAboveThreshold
+    ? (modalityPricing.promptAboveThreshold ?? modalityPricing.prompt)
+    : modalityPricing.prompt;
+  const cacheRates = useAboveThreshold
+    ? (modalityPricing.cacheAboveThreshold ?? modalityPricing.cache)
+    : modalityPricing.cache;
+  const responseRates = useAboveThreshold
+    ? (modalityPricing.responseAboveThreshold ?? modalityPricing.response)
+    : modalityPricing.response;
   const toolRates = useAboveThreshold
-    ? modalityPricing.toolAboveThreshold ?? modalityPricing.tool ?? modalityPricing.promptAboveThreshold ?? modalityPricing.prompt
-    : modalityPricing.tool ?? modalityPricing.prompt;
+    ? (modalityPricing.toolAboveThreshold ??
+      modalityPricing.tool ??
+      modalityPricing.promptAboveThreshold ??
+      modalityPricing.prompt)
+    : (modalityPricing.tool ?? modalityPricing.prompt);
 
   const promptCost = sumTokensByRate(exactPricing.promptTokensDetails, promptRates);
   const cacheCost = sumTokensByRate(exactPricing.cacheTokensDetails, cacheRates);

@@ -20,7 +20,9 @@ export const QueuedSubmissionCard: React.FC<QueuedSubmissionCardProps> = ({
 }) => {
   const { t } = useI18n();
   const attachmentLabel =
-    fileCount > 0 ? `${fileCount} ${t(fileCount > 1 ? 'queuedSubmission_attachments' : 'queuedSubmission_attachment')}` : null;
+    fileCount > 0
+      ? `${fileCount} ${t(fileCount > 1 ? 'queuedSubmission_attachments' : 'queuedSubmission_attachment')}`
+      : null;
 
   return (
     <div

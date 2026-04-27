@@ -138,10 +138,7 @@ const splitMarkdownSegments = (value: string): MarkdownSegment[] => {
   return segments.filter((segment) => segment.value.length > 0);
 };
 
-const transformMarkdownTextSegments = (
-  value: string,
-  transform: (segment: string) => string,
-): string =>
+const transformMarkdownTextSegments = (value: string, transform: (segment: string) => string): string =>
   splitMarkdownSegments(value)
     .map((segment) => (segment.type === 'literal' ? segment.value : transform(segment.value)))
     .join('');
@@ -162,9 +159,9 @@ const isLikelyMathExpression = (value: string): boolean => {
   }
 
   return (
-    INLINE_MATH_MARKER_REGEX.test(trimmedValue)
-    || INLINE_MATH_OPERATOR_REGEX.test(trimmedValue)
-    || trimmedValue.includes('\n')
+    INLINE_MATH_MARKER_REGEX.test(trimmedValue) ||
+    INLINE_MATH_OPERATOR_REGEX.test(trimmedValue) ||
+    trimmedValue.includes('\n')
   );
 };
 
@@ -205,201 +202,229 @@ const wrapReasoningMarkup = (value: string, isLoading: boolean): string => {
   return nextValue;
 };
 
-const stripGemmaThoughtMarkup = (value: string): string =>
-  value.replace(GEMMA_THOUGHT_CHANNEL_REGEX, ' ');
+const stripGemmaThoughtMarkup = (value: string): string => value.replace(GEMMA_THOUGHT_CHANNEL_REGEX, ' ');
 
-export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.memo(({
-  content,
-  messageId,
-  isLoading,
-  onImageClick,
-  onOpenHtmlPreview,
-  expandCodeBlocksByDefault,
-  isMermaidRenderingEnabled,
-  isGraphvizRenderingEnabled,
-  t,
-  themeId,
-  onOpenSidePanel,
-  hideThinkingInContext,
-  files,
-  diagramLoadMode = 'deferred',
-  diagramRenderDelayMs = 500,
-  interactiveMode = 'enabled',
-  remarkPlugins,
-  rehypePlugins,
-}) => {
-  const isInteractive = interactiveMode !== 'disabled';
+export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.memo(
+  ({
+    content,
+    messageId,
+    isLoading,
+    onImageClick,
+    onOpenHtmlPreview,
+    expandCodeBlocksByDefault,
+    isMermaidRenderingEnabled,
+    isGraphvizRenderingEnabled,
+    t,
+    themeId,
+    onOpenSidePanel,
+    hideThinkingInContext,
+    files,
+    diagramLoadMode = 'deferred',
+    diagramRenderDelayMs = 500,
+    interactiveMode = 'enabled',
+    remarkPlugins,
+    rehypePlugins,
+  }) => {
+    const isInteractive = interactiveMode !== 'disabled';
 
-  const components = useMemo(() => ({
-    code: (props: MarkdownCodeProps) => {
-      return <InlineCode {...props} />;
-    },
-    img: (props: MarkdownImageProps) => {
-      const { src, alt, className, ...rest } = props;
+    const components = useMemo(
+      () => ({
+        code: (props: MarkdownCodeProps) => {
+          return <InlineCode {...props} />;
+        },
+        img: (props: MarkdownImageProps) => {
+          const { src, alt, className, ...rest } = props;
 
-      const imageClassName = isInteractive
-        ? `${className || ''} cursor-pointer hover:opacity-90 transition-opacity`
-        : (className || '');
+          const imageClassName = isInteractive
+            ? `${className || ''} cursor-pointer hover:opacity-90 transition-opacity`
+            : className || '';
 
-      return (
-        <img
-          src={src}
-          alt={alt}
-          className={imageClassName}
-          onClick={(e) => {
-            if (!isInteractive) return;
-            e.stopPropagation();
-            if (src && src.startsWith('data:image/')) {
-              const mimeType = src.split(';')[0].split(':')[1];
-              const file: UploadedFile = {
-                id: `inline-img-${Date.now()}`,
-                name: alt || 'generated-plot.png',
-                type: mimeType,
-                size: 0,
-                dataUrl: src,
-                uploadState: 'active'
-              };
-              onImageClick(file);
-            } else if (src) {
-              const file: UploadedFile = {
-                id: `inline-img-${Date.now()}`,
-                name: alt || 'image',
-                type: 'image/jpeg',
-                size: 0,
-                dataUrl: src,
-                uploadState: 'active'
-              };
-              onImageClick(file);
-            }
-          }}
-          {...rest}
-        />
-      );
-    },
-    table: (props: MarkdownTableProps) => <TableBlock {...props} t={t} />,
-    a: (props: MarkdownAnchorProps) => {
-      const { href, children, ...rest } = props;
-      const isInternal = href && (href.startsWith('#') || href.startsWith('/'));
-
-      return (
-        <a
-          href={href}
-          target={isInternal ? undefined : '_blank'}
-          rel={isInternal ? undefined : 'noopener noreferrer'}
-          {...rest}
-        >
-          {children}
-        </a>
-      );
-    },
-    div: (props: MarkdownDivProps) => {
-      const { className, children, ...rest } = props;
-      if (className?.includes('tool-result')) {
-        return <ToolResultBlock className={className} files={files} onImageClick={onImageClick} {...rest}>{children}</ToolResultBlock>;
-      }
-      return <div className={className} {...rest}>{children}</div>;
-    },
-    pre: (props: MarkdownPreProps) => {
-      const { children, node, ...rest } = props;
-
-      const codeElement = React.Children.toArray(children).find(
-        (child): child is React.ReactElement<CodeElementProps> => {
-          return React.isValidElement<CodeElementProps>(child) && (
-            child.type === 'code' ||
-            Boolean(child.props.className?.includes('language-'))
+          return (
+            <img
+              src={src}
+              alt={alt}
+              className={imageClassName}
+              onClick={(e) => {
+                if (!isInteractive) return;
+                e.stopPropagation();
+                if (src && src.startsWith('data:image/')) {
+                  const mimeType = src.split(';')[0].split(':')[1];
+                  const file: UploadedFile = {
+                    id: `inline-img-${Date.now()}`,
+                    name: alt || 'generated-plot.png',
+                    type: mimeType,
+                    size: 0,
+                    dataUrl: src,
+                    uploadState: 'active',
+                  };
+                  onImageClick(file);
+                } else if (src) {
+                  const file: UploadedFile = {
+                    id: `inline-img-${Date.now()}`,
+                    name: alt || 'image',
+                    type: 'image/jpeg',
+                    size: 0,
+                    dataUrl: src,
+                    uploadState: 'active',
+                  };
+                  onImageClick(file);
+                }
+              }}
+              {...rest}
+            />
           );
-        }
-      );
+        },
+        table: (props: MarkdownTableProps) => <TableBlock {...props} t={t} />,
+        a: (props: MarkdownAnchorProps) => {
+          const { href, children, ...rest } = props;
+          const isInternal = href && (href.startsWith('#') || href.startsWith('/'));
 
-      const codeClassName = codeElement?.props.className || '';
-      const codeContent = codeElement?.props.children;
+          return (
+            <a
+              href={href}
+              target={isInternal ? undefined : '_blank'}
+              rel={isInternal ? undefined : 'noopener noreferrer'}
+              {...rest}
+            >
+              {children}
+            </a>
+          );
+        },
+        div: (props: MarkdownDivProps) => {
+          const { className, children, ...rest } = props;
+          if (className?.includes('tool-result')) {
+            return (
+              <ToolResultBlock className={className} files={files} onImageClick={onImageClick} {...rest}>
+                {children}
+              </ToolResultBlock>
+            );
+          }
+          return (
+            <div className={className} {...rest}>
+              {children}
+            </div>
+          );
+        },
+        pre: (props: MarkdownPreProps) => {
+          const { children, node, ...rest } = props;
 
-      const rawCode = extractTextFromNode(codeContent);
+          const codeElement = React.Children.toArray(children).find(
+            (child): child is React.ReactElement<CodeElementProps> => {
+              return (
+                React.isValidElement<CodeElementProps>(child) &&
+                (child.type === 'code' || Boolean(child.props.className?.includes('language-')))
+              );
+            },
+          );
 
-      const langMatch = codeClassName.match(/language-(\S+)/);
-      const language = langMatch ? langMatch[1] : '';
-      const isGraphviz = language === 'graphviz' || language === 'dot';
+          const codeClassName = codeElement?.props.className || '';
+          const codeContent = codeElement?.props.children;
 
-      if (isMermaidRenderingEnabled && language === 'mermaid' && typeof rawCode === 'string') {
-        return (
-          <DeferredDiagramBlock
-            label={`Mermaid ${t('preview')}`}
-            load={loadMermaidBlock}
-            componentProps={{
-              code: rawCode,
-                onImageClick,
-                isLoading,
-                renderDelayMs: diagramRenderDelayMs,
-              themeId,
-                onOpenSidePanel,
-            }}
-            eager={diagramLoadMode === 'eager'}
-          />
-        );
-      }
+          const rawCode = extractTextFromNode(codeContent);
 
-      if (isGraphvizRenderingEnabled && isGraphviz && typeof rawCode === 'string') {
-        return (
-          <DeferredDiagramBlock
-            label={`Graphviz ${t('preview')}`}
-            load={loadGraphvizBlock}
-            componentProps={{
-              code: rawCode,
-              onImageClick,
-              isLoading,
-              renderDelayMs: diagramRenderDelayMs,
-              themeId,
-                onOpenSidePanel,
-            }}
-            eager={diagramLoadMode === 'eager'}
-          />
-        );
-      }
+          const langMatch = codeClassName.match(/language-(\S+)/);
+          const language = langMatch ? langMatch[1] : '';
+          const isGraphviz = language === 'graphviz' || language === 'dot';
 
-      return (
-        <CodeBlock
-          {...rest}
-          cacheKey={messageId && node?.position?.start?.offset !== undefined ? `${messageId}:${node.position.start.offset}` : undefined}
-          className={codeClassName}
-          onOpenHtmlPreview={onOpenHtmlPreview}
-          expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-          showPreviewControls={isInteractive}
-          t={t}
-          onOpenSidePanel={onOpenSidePanel}
-        >
-          {codeElement || children}
-        </CodeBlock>
-      );
-    }
-  }), [diagramLoadMode, diagramRenderDelayMs, expandCodeBlocksByDefault, files, isGraphvizRenderingEnabled, isInteractive, isLoading, isMermaidRenderingEnabled, messageId, onImageClick, onOpenHtmlPreview, onOpenSidePanel, t, themeId]);
+          if (isMermaidRenderingEnabled && language === 'mermaid' && typeof rawCode === 'string') {
+            return (
+              <DeferredDiagramBlock
+                label={`Mermaid ${t('preview')}`}
+                load={loadMermaidBlock}
+                componentProps={{
+                  code: rawCode,
+                  onImageClick,
+                  isLoading,
+                  renderDelayMs: diagramRenderDelayMs,
+                  themeId,
+                  onOpenSidePanel,
+                }}
+                eager={diagramLoadMode === 'eager'}
+              />
+            );
+          }
 
-  const processedContent = useMemo(() => {
-    if (!content) return '';
+          if (isGraphvizRenderingEnabled && isGraphviz && typeof rawCode === 'string') {
+            return (
+              <DeferredDiagramBlock
+                label={`Graphviz ${t('preview')}`}
+                load={loadGraphvizBlock}
+                componentProps={{
+                  code: rawCode,
+                  onImageClick,
+                  isLoading,
+                  renderDelayMs: diagramRenderDelayMs,
+                  themeId,
+                  onOpenSidePanel,
+                }}
+                eager={diagramLoadMode === 'eager'}
+              />
+            );
+          }
 
-    const contentWithNormalizedMath = transformMarkdownTextSegments(
-      content,
-      normalizeEscapedMathDelimiters,
+          return (
+            <CodeBlock
+              {...rest}
+              cacheKey={
+                messageId && node?.position?.start?.offset !== undefined
+                  ? `${messageId}:${node.position.start.offset}`
+                  : undefined
+              }
+              className={codeClassName}
+              onOpenHtmlPreview={onOpenHtmlPreview}
+              expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+              showPreviewControls={isInteractive}
+              t={t}
+              onOpenSidePanel={onOpenSidePanel}
+            >
+              {codeElement || children}
+            </CodeBlock>
+          );
+        },
+      }),
+      [
+        diagramLoadMode,
+        diagramRenderDelayMs,
+        expandCodeBlocksByDefault,
+        files,
+        isGraphvizRenderingEnabled,
+        isInteractive,
+        isLoading,
+        isMermaidRenderingEnabled,
+        messageId,
+        onImageClick,
+        onOpenHtmlPreview,
+        onOpenSidePanel,
+        t,
+        themeId,
+      ],
     );
 
-    if (hideThinkingInContext) {
-      return transformMarkdownTextSegments(contentWithNormalizedMath, (segment) =>
-        wrapReasoningMarkup(segment, isLoading),
-      );
-    }
+    const processedContent = useMemo(() => {
+      if (!content) return '';
 
-    return transformMarkdownTextSegments(contentWithNormalizedMath, stripGemmaThoughtMarkup);
-  }, [content, hideThinkingInContext, isLoading]);
+      const contentWithNormalizedMath = transformMarkdownTextSegments(content, normalizeEscapedMathDelimiters);
 
-  return (
-    <div className={isLoading ? 'is-loading' : ''}>
-      <ReactMarkdown
-        remarkPlugins={remarkPlugins}
-        rehypePlugins={rehypePlugins}
-        components={components}
-        urlTransform={(url) => url}
-      >
-        {processedContent}
-      </ReactMarkdown>
-    </div>
-  );
-});
+      if (hideThinkingInContext) {
+        return transformMarkdownTextSegments(contentWithNormalizedMath, (segment) =>
+          wrapReasoningMarkup(segment, isLoading),
+        );
+      }
+
+      return transformMarkdownTextSegments(contentWithNormalizedMath, stripGemmaThoughtMarkup);
+    }, [content, hideThinkingInContext, isLoading]);
+
+    return (
+      <div className={isLoading ? 'is-loading' : ''}>
+        <ReactMarkdown
+          remarkPlugins={remarkPlugins}
+          rehypePlugins={rehypePlugins}
+          components={components}
+          urlTransform={(url) => url}
+        >
+          {processedContent}
+        </ReactMarkdown>
+      </div>
+    );
+  },
+);

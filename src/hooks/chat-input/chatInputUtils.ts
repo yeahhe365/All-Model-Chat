@@ -31,9 +31,7 @@ export const buildChatInputSubmitText = ({
   const isTtsModel = modelId.includes('tts');
   const trimmedTtsContext = ttsContext?.trim();
   const formattedQuotes =
-    quotes.length > 0
-      ? quotes.map((quote, index) => formatQuoteBlock(quote, index, quotes.length)).join('\n\n')
-      : '';
+    quotes.length > 0 ? quotes.map((quote, index) => formatQuoteBlock(quote, index, quotes.length)).join('\n\n') : '';
 
   if (formattedQuotes) {
     if (isTtsModel && trimmedTtsContext) {

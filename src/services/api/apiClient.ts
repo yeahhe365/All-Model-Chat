@@ -93,10 +93,7 @@ export const resolveLiveClientBaseUrl = (
   return isAbsoluteHttpUrl(normalizedConfiguredBaseUrl) ? normalizedConfiguredBaseUrl : null;
 };
 
-export const getConfiguredApiClient = async (
-  apiKey: string,
-  httpOptions?: ClientHttpOptions,
-): Promise<GoogleGenAI> => {
+export const getConfiguredApiClient = async (apiKey: string, httpOptions?: ClientHttpOptions): Promise<GoogleGenAI> => {
   const settings = await dbService.getAppSettings();
 
   const shouldUseProxy = !!(settings?.useCustomApiConfig && settings?.useApiProxy);

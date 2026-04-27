@@ -153,7 +153,6 @@ function useRequiredContext<T>(context: React.Context<T | null>, name: string): 
   return value;
 }
 
-export const useChatAreaMessageList = () =>
-  useRequiredContext(ChatAreaMessageListContext, 'useChatAreaMessageList');
+export const useChatAreaMessageList = () => useRequiredContext(ChatAreaMessageListContext, 'useChatAreaMessageList');
 
 export const useChatAreaInput = () => useRequiredContext(ChatAreaInputContext, 'useChatAreaInput');

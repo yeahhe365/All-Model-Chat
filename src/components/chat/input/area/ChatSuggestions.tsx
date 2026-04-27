@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
@@ -7,73 +6,82 @@ import { SuggestionIcon } from './SuggestionIcon';
 import { translations } from '../../../../utils/translations';
 
 interface ChatSuggestionsProps {
-    show: boolean;
-    onSuggestionClick?: (suggestion: string) => void;
-    onOrganizeInfoClick?: (suggestion: string) => void;
-    onToggleBBox?: () => void;
-    isBBoxModeActive?: boolean;
-    onToggleGuide?: () => void;
-    isGuideModeActive?: boolean;
-    isFullscreen: boolean;
+  show: boolean;
+  onSuggestionClick?: (suggestion: string) => void;
+  onOrganizeInfoClick?: (suggestion: string) => void;
+  onToggleBBox?: () => void;
+  isBBoxModeActive?: boolean;
+  onToggleGuide?: () => void;
+  isGuideModeActive?: boolean;
+  isFullscreen: boolean;
 }
 
-export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSuggestionClick, onOrganizeInfoClick, onToggleBBox, isBBoxModeActive, onToggleGuide, isGuideModeActive, isFullscreen }) => {
-    const { t } = useI18n();
-    const suggestionsRef = useRef<HTMLDivElement>(null);
-    const [showLeftArrow, setShowLeftArrow] = useState(false);
-    const [showRightArrow, setShowRightArrow] = useState(false);
-    const [isSuggestionsHovered, setIsSuggestionsHovered] = useState(false);
+export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
+  show,
+  onSuggestionClick,
+  onOrganizeInfoClick,
+  onToggleBBox,
+  isBBoxModeActive,
+  onToggleGuide,
+  isGuideModeActive,
+  isFullscreen,
+}) => {
+  const { t } = useI18n();
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+  const [isSuggestionsHovered, setIsSuggestionsHovered] = useState(false);
 
-    const checkScroll = useCallback(() => {
-        if (suggestionsRef.current) {
-            const { scrollLeft, scrollWidth, clientWidth } = suggestionsRef.current;
-            setShowLeftArrow(scrollLeft > 5); // Small threshold
-            setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 5);
-        }
-    }, []);
+  const checkScroll = useCallback(() => {
+    if (suggestionsRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = suggestionsRef.current;
+      setShowLeftArrow(scrollLeft > 5); // Small threshold
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  }, []);
 
-    useEffect(() => {
-        checkScroll();
-        window.addEventListener('resize', checkScroll);
-        return () => window.removeEventListener('resize', checkScroll);
-    }, [checkScroll, show]);
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [checkScroll, show]);
 
-    const handleScroll = (direction: 'left' | 'right') => {
-        if (suggestionsRef.current) {
-            const scrollAmount = suggestionsRef.current.clientWidth * 0.6;
-            suggestionsRef.current.scrollBy({
-                left: direction === 'left' ? -scrollAmount : scrollAmount,
-                behavior: 'smooth'
-            });
-        }
-    };
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (suggestionsRef.current) {
+      const scrollAmount = suggestionsRef.current.clientWidth * 0.6;
+      suggestionsRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
 
-    if (!show || isFullscreen) return null;
+  if (!show || isFullscreen) return null;
 
-    return (
-        <div 
-            className="relative group/suggestions mb-1"
-            onMouseEnter={() => setIsSuggestionsHovered(true)}
-            onMouseLeave={() => setIsSuggestionsHovered(false)}
-        >
-            <div 
-                ref={suggestionsRef}
-                onScroll={checkScroll}
-                className="flex gap-2 overflow-x-auto pb-1 px-1 no-scrollbar fade-mask-x scroll-smooth"
-            >
-                {SUGGESTIONS_KEYS.map((s, i) => (
-                    <React.Fragment key={i}>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                const text = t(s.descKey as keyof typeof translations);
-                                if (s.specialAction === 'organize' && onOrganizeInfoClick) {
-                                    onOrganizeInfoClick(text);
-                                } else if (onSuggestionClick) {
-                                    onSuggestionClick(text);
-                                }
-                            }}
-                            className="
+  return (
+    <div
+      className="relative group/suggestions mb-1"
+      onMouseEnter={() => setIsSuggestionsHovered(true)}
+      onMouseLeave={() => setIsSuggestionsHovered(false)}
+    >
+      <div
+        ref={suggestionsRef}
+        onScroll={checkScroll}
+        className="flex gap-2 overflow-x-auto pb-1 px-1 no-scrollbar fade-mask-x scroll-smooth"
+      >
+        {SUGGESTIONS_KEYS.map((s, i) => (
+          <React.Fragment key={i}>
+            <button
+              type="button"
+              onClick={() => {
+                const text = t(s.descKey as keyof typeof translations);
+                if (s.specialAction === 'organize' && onOrganizeInfoClick) {
+                  onOrganizeInfoClick(text);
+                } else if (onSuggestionClick) {
+                  onSuggestionClick(text);
+                }
+              }}
+              className="
                                 flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
                                 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]
                                 border border-[var(--theme-border-secondary)]
@@ -81,81 +89,85 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                 text-xs sm:text-sm font-medium whitespace-nowrap
                                 transition-all shadow-sm
                             "
-                        >
-                            <SuggestionIcon iconName={s.icon} />
-                            <span>{t(s.titleKey as keyof typeof translations)}</span>
-                        </button>
-                        
-                        {/* Insert BBox and Guide Buttons after "Smart Board" (organize action) if available */}
-                        {s.specialAction === 'organize' && (
-                            <>
-                                {onToggleBBox && (
-                                    <button
-                                        type="button"
-                                        onClick={onToggleBBox}
-                                        className={`
-                                            flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
-                                            border border-[var(--theme-border-secondary)]
-                                            text-xs sm:text-sm font-medium whitespace-nowrap
-                                            transition-all shadow-sm
-                                            ${isBBoxModeActive 
-                                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 
-                                                : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}
-                                        `}
-                                        aria-label={t('bbox_button_title')}
-                                        title={t('bbox_button_title')}
-                                    >
-                                        <SuggestionIcon iconName="Scan" />
-                                        <span>Bbox</span>
-                                    </button>
-                                )}
-                                {onToggleGuide && (
-                                    <button
-                                        type="button"
-                                        onClick={onToggleGuide}
-                                        className={`
-                                            flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
-                                            border border-[var(--theme-border-secondary)]
-                                            text-xs sm:text-sm font-medium whitespace-nowrap
-                                            transition-all shadow-sm
-                                            ${isGuideModeActive 
-                                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 
-                                                : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}
-                                        `}
-                                        aria-label={t('guide_button_title')}
-                                        title={t('guide_button_title')}
-                                    >
-                                        <MousePointer2 size={13} />
-                                        <span>Guide</span>
-                                    </button>
-                                )}
-                            </>
-                        )}
-                    </React.Fragment>
-                ))}
-            </div>
+            >
+              <SuggestionIcon iconName={s.icon} />
+              <span>{t(s.titleKey as keyof typeof translations)}</span>
+            </button>
 
-            {/* Navigation Arrows (Visible on Hover) */}
-            {showLeftArrow && (
-                <button
+            {/* Insert BBox and Guide Buttons after "Smart Board" (organize action) if available */}
+            {s.specialAction === 'organize' && (
+              <>
+                {onToggleBBox && (
+                  <button
                     type="button"
-                    onClick={() => handleScroll('left')}
-                    className={`absolute left-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                    aria-label="Scroll left"
-                >
-                    <ChevronLeft size={16} strokeWidth={2} />
-                </button>
-            )}
-            {showRightArrow && (
-                <button
+                    onClick={onToggleBBox}
+                    className={`
+                                            flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
+                                            border border-[var(--theme-border-secondary)]
+                                            text-xs sm:text-sm font-medium whitespace-nowrap
+                                            transition-all shadow-sm
+                                            ${
+                                              isBBoxModeActive
+                                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]'
+                                                : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'
+                                            }
+                                        `}
+                    aria-label={t('bbox_button_title')}
+                    title={t('bbox_button_title')}
+                  >
+                    <SuggestionIcon iconName="Scan" />
+                    <span>Bbox</span>
+                  </button>
+                )}
+                {onToggleGuide && (
+                  <button
                     type="button"
-                    onClick={() => handleScroll('right')}
-                    className={`absolute right-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                    aria-label="Scroll right"
-                >
-                    <ChevronRight size={16} strokeWidth={2} />
-                </button>
+                    onClick={onToggleGuide}
+                    className={`
+                                            flex items-center gap-[0.3rem] sm:gap-[0.4rem] px-[0.6rem] py-[0.4rem] sm:px-[0.8rem] sm:py-[0.5rem] rounded-lg sm:rounded-xl
+                                            border border-[var(--theme-border-secondary)]
+                                            text-xs sm:text-sm font-medium whitespace-nowrap
+                                            transition-all shadow-sm
+                                            ${
+                                              isGuideModeActive
+                                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]'
+                                                : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'
+                                            }
+                                        `}
+                    aria-label={t('guide_button_title')}
+                    title={t('guide_button_title')}
+                  >
+                    <MousePointer2 size={13} />
+                    <span>Guide</span>
+                  </button>
+                )}
+              </>
             )}
-        </div>
-    );
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Navigation Arrows (Visible on Hover) */}
+      {showLeftArrow && (
+        <button
+          type="button"
+          onClick={() => handleScroll('left')}
+          className={`absolute left-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          aria-label="Scroll left"
+        >
+          <ChevronLeft size={16} strokeWidth={2} />
+        </button>
+      )}
+      {showRightArrow && (
+        <button
+          type="button"
+          onClick={() => handleScroll('right')}
+          className={`absolute right-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          aria-label="Scroll right"
+        >
+          <ChevronRight size={16} strokeWidth={2} />
+        </button>
+      )}
+    </div>
+  );
 };

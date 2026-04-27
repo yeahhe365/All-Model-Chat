@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { ChatSettings } from '../../types';
-import {
-  getKeyForRequest,
-  isServerManagedApiEnabledForProxyRequests,
-  SERVER_MANAGED_API_KEY,
-} from '../apiUtils';
+import { getKeyForRequest, isServerManagedApiEnabledForProxyRequests, SERVER_MANAGED_API_KEY } from '../apiUtils';
 import { logService } from '../../services/logService';
 
 vi.mock('../../services/logService', () => ({
@@ -42,7 +38,7 @@ describe('getKeyForRequest', () => {
         apiProxyUrl: 'https://proxy.example.com/v1beta',
         apiKey: null,
       },
-      chatSettings
+      chatSettings,
     );
 
     expect(result).toEqual({
@@ -61,7 +57,7 @@ describe('getKeyForRequest', () => {
         apiProxyUrl: 'https://proxy.example.com/v1beta',
         apiKey: null,
       },
-      chatSettings
+      chatSettings,
     );
 
     expect(result).toEqual({ error: 'API Key not configured.' });
@@ -77,7 +73,7 @@ describe('getKeyForRequest', () => {
         apiProxyUrl: 'https://proxy.example.com/v1beta',
         apiKey: 'real-browser-key',
       },
-      chatSettings
+      chatSettings,
     );
 
     expect(result).toEqual({
@@ -114,7 +110,7 @@ describe('isServerManagedApiEnabledForProxyRequests', () => {
         useCustomApiConfig: true,
         useApiProxy: true,
         apiProxyUrl: 'https://proxy.example.com/v1beta',
-      })
+      }),
     ).toBe(true);
 
     expect(
@@ -124,7 +120,7 @@ describe('isServerManagedApiEnabledForProxyRequests', () => {
         useCustomApiConfig: true,
         useApiProxy: true,
         apiProxyUrl: '   ',
-      })
+      }),
     ).toBe(false);
   });
 });

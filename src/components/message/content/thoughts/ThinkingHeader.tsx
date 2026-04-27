@@ -5,91 +5,93 @@ import { ThinkingTimer } from '../../ThinkingTimer';
 import { formatDuration } from '../../../../utils/dateHelpers';
 
 interface ThinkingHeaderProps {
-    isLoading: boolean;
-    lastThought: { title: string; content: string; isFallback: boolean } | null;
-    thinkingTimeMs?: number;
-    generationStartTime?: Date;
-    firstTokenTimeMs?: number;
-    t: (key: string, fallback?: string) => string;
-    isExpanded: boolean;
+  isLoading: boolean;
+  lastThought: { title: string; content: string; isFallback: boolean } | null;
+  thinkingTimeMs?: number;
+  generationStartTime?: Date;
+  firstTokenTimeMs?: number;
+  t: (key: string, fallback?: string) => string;
+  isExpanded: boolean;
 }
 
 export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
-    isLoading,
-    lastThought,
-    thinkingTimeMs,
-    generationStartTime,
-    firstTokenTimeMs,
-    t,
-    isExpanded
+  isLoading,
+  lastThought,
+  thinkingTimeMs,
+  generationStartTime,
+  firstTokenTimeMs,
+  t,
+  isExpanded,
 }) => {
-    // Determine the effective start time for the timer
-    // If firstTokenTimeMs is available, we start counting from (Start + TTFT) to show "Pure Thinking Time" (excluding latency)
-    // If NOT available yet (during initial connection), we count from generationStartTime (Total Time)
-    const effectiveTimerStart = generationStartTime
-        ? new Date(new Date(generationStartTime).getTime() + (firstTokenTimeMs || 0))
-        : null;
+  // Determine the effective start time for the timer
+  // If firstTokenTimeMs is available, we start counting from (Start + TTFT) to show "Pure Thinking Time" (excluding latency)
+  // If NOT available yet (during initial connection), we count from generationStartTime (Total Time)
+  const effectiveTimerStart = generationStartTime
+    ? new Date(new Date(generationStartTime).getTime() + (firstTokenTimeMs || 0))
+    : null;
 
-    // Calculate final duration excluding TTFT if thinkingTimeMs is set (completed)
-    const finalDuration = thinkingTimeMs !== undefined
-        ? Math.max(0, thinkingTimeMs - (firstTokenTimeMs || 0))
-        : 0;
+  // Calculate final duration excluding TTFT if thinkingTimeMs is set (completed)
+  const finalDuration = thinkingTimeMs !== undefined ? Math.max(0, thinkingTimeMs - (firstTokenTimeMs || 0)) : 0;
 
-    return (
-        <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-grow">
-            {/* Icon Area */}
-            {isLoading && (
-                <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 transition-colors duration-300">
-                    <GoogleSpinner size={20} />
-                </div>
-            )}
-
-            {/* Text Area + Integrated Chevron */}
-            <div className="flex items-center gap-2 min-w-0">
-                <div className="flex flex-col min-w-0 justify-center min-h-[1.75rem] sm:min-h-[2rem]">
-                    {isLoading ? (
-                        <>
-                            <span className="text-base font-bold uppercase tracking-wider text-[var(--theme-text-secondary)] truncate opacity-90">
-                                {lastThought && !lastThought.isFallback ? lastThought.title : t('thinking_text')}
-                            </span>
-                            <div className="flex items-baseline gap-2 mt-0.5 min-w-0">
-                                <span className="text-sm text-[var(--theme-text-tertiary)] truncate font-mono">
-                                    {thinkingTimeMs !== undefined ? (
-                                        t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
-                                    ) : (
-                                        effectiveTimerStart 
-                                            ? <ThinkingTimer startTime={effectiveTimerStart} t={t} /> 
-                                            : <span className="animate-pulse">{t('thinking_text')}</span>
-                                    )}
-                                </span>
-                                {firstTokenTimeMs !== undefined && (
-                                    <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
-                                        {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
-                                    </span>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="flex items-baseline gap-2 min-w-0">
-                            <span className="text-base text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
-                                {thinkingTimeMs !== undefined
-                                    ? t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
-                                    : 'Thought Process'}
-                            </span>
-                            {firstTokenTimeMs !== undefined && (
-                                <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
-                                    {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
-                                </span>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {/* Chevron */}
-                <div className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-[var(--theme-bg-input)] transition-colors flex-shrink-0">
-                    <ChevronDown size={14} className={`text-[var(--theme-text-tertiary)] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} strokeWidth={2.5}/>
-                </div>
-            </div>
+  return (
+    <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-grow">
+      {/* Icon Area */}
+      {isLoading && (
+        <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 transition-colors duration-300">
+          <GoogleSpinner size={20} />
         </div>
-    );
+      )}
+
+      {/* Text Area + Integrated Chevron */}
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-col min-w-0 justify-center min-h-[1.75rem] sm:min-h-[2rem]">
+          {isLoading ? (
+            <>
+              <span className="text-base font-bold uppercase tracking-wider text-[var(--theme-text-secondary)] truncate opacity-90">
+                {lastThought && !lastThought.isFallback ? lastThought.title : t('thinking_text')}
+              </span>
+              <div className="flex items-baseline gap-2 mt-0.5 min-w-0">
+                <span className="text-sm text-[var(--theme-text-tertiary)] truncate font-mono">
+                  {thinkingTimeMs !== undefined ? (
+                    t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
+                  ) : effectiveTimerStart ? (
+                    <ThinkingTimer startTime={effectiveTimerStart} t={t} />
+                  ) : (
+                    <span className="animate-pulse">{t('thinking_text')}</span>
+                  )}
+                </span>
+                {firstTokenTimeMs !== undefined && (
+                  <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
+                    {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-baseline gap-2 min-w-0">
+              <span className="text-base text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
+                {thinkingTimeMs !== undefined
+                  ? t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
+                  : 'Thought Process'}
+              </span>
+              {firstTokenTimeMs !== undefined && (
+                <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
+                  {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Chevron */}
+        <div className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-[var(--theme-bg-input)] transition-colors flex-shrink-0">
+          <ChevronDown
+            size={14}
+            className={`text-[var(--theme-text-tertiary)] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+            strokeWidth={2.5}
+          />
+        </div>
+      </div>
+    </div>
+  );
 };

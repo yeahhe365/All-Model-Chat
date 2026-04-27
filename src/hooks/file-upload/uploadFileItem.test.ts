@@ -2,11 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { UploadedFile } from '../../types';
 
-const {
-  uploadFileMock,
-  generateUniqueIdMock,
-  fileToBlobUrlMock,
-} = vi.hoisted(() => ({
+const { uploadFileMock, generateUniqueIdMock, fileToBlobUrlMock } = vi.hoisted(() => ({
   uploadFileMock: vi.fn(),
   generateUniqueIdMock: vi.fn(),
   fileToBlobUrlMock: vi.fn(),

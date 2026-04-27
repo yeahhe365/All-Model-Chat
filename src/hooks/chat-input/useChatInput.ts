@@ -701,7 +701,11 @@ export const useChatInput = () => {
     }
 
     try {
-      const translatedText = await geminiServiceInstance.translateText(keyResult.key, inputState.inputText);
+      const translatedText = await geminiServiceInstance.translateText(
+        keyResult.key,
+        inputState.inputText,
+        appSettings.translationTargetLanguage ?? 'English',
+      );
       inputState.setInputText(translatedText);
     } catch (error) {
       setAppFileError(error instanceof Error ? error.message : 'Translation failed.');

@@ -1,9 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { seedAppState } from './helpers/appHarness';
 
-test('stopping generation with a queued draft does not crash or repeatedly flush the queue', async ({
-  page,
-}) => {
+test('stopping generation with a queued draft does not crash or repeatedly flush the queue', async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
   let generateRequestCount = 0;

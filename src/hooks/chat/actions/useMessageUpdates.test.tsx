@@ -39,13 +39,13 @@ describe('useMessageUpdates', () => {
       },
     ];
 
-    const updateAndPersistSessions = vi.fn((updater: typeof sessions | ((prev: typeof sessions) => typeof sessions)) => {
-      sessions =
-        typeof updater === 'function'
-          ? (updater as (prev: typeof sessions) => typeof sessions)(sessions)
-          : updater;
-      return sessions;
-    });
+    const updateAndPersistSessions = vi.fn(
+      (updater: typeof sessions | ((prev: typeof sessions) => typeof sessions)) => {
+        sessions =
+          typeof updater === 'function' ? (updater as (prev: typeof sessions) => typeof sessions)(sessions) : updater;
+        return sessions;
+      },
+    );
 
     const { result, unmount } = renderHook(() =>
       useMessageUpdates({
@@ -99,13 +99,13 @@ describe('useMessageUpdates', () => {
   it('creates a new live session when generated files arrive before any transcript text', () => {
     let sessions: any[] = [];
 
-    const updateAndPersistSessions = vi.fn((updater: typeof sessions | ((prev: typeof sessions) => typeof sessions)) => {
-      sessions =
-        typeof updater === 'function'
-          ? (updater as (prev: typeof sessions) => typeof sessions)(sessions)
-          : updater;
-      return sessions;
-    });
+    const updateAndPersistSessions = vi.fn(
+      (updater: typeof sessions | ((prev: typeof sessions) => typeof sessions)) => {
+        sessions =
+          typeof updater === 'function' ? (updater as (prev: typeof sessions) => typeof sessions)(sessions) : updater;
+        return sessions;
+      },
+    );
     const setActiveSessionId = vi.fn();
 
     const { result, unmount } = renderHook(() =>

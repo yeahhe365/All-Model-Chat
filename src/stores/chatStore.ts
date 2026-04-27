@@ -6,10 +6,7 @@ import { logService } from '../services/logService';
 import { rehydrateSessionFiles } from '../utils/chat/session';
 import { syncActiveSessionRoute, type SessionHistoryMode } from './sessionRouteSync';
 import { broadcastSyncMessage } from './chatSyncChannel';
-import {
-  sanitizeSessionModel,
-  sortSessionsInPlace,
-} from './sessionModels';
+import { sanitizeSessionModel, sortSessionsInPlace } from './sessionModels';
 import { mergeSessionMetadata } from './sessionRefresh';
 import {
   createVirtualFullSessions,

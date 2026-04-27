@@ -73,10 +73,12 @@ describe('useHtmlPreviewModal', () => {
     expect(result.current.isPreviewReady).toBe(false);
 
     act(() => {
-      window.dispatchEvent(new MessageEvent('message', {
-        data: { channel: HTML_PREVIEW_MESSAGE_CHANNEL, event: 'ready' },
-        source: contentWindowStub,
-      }));
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { channel: HTML_PREVIEW_MESSAGE_CHANNEL, event: 'ready' },
+          source: contentWindowStub,
+        }),
+      );
     });
 
     expect(result.current.isPreviewReady).toBe(true);
@@ -104,10 +106,12 @@ describe('useHtmlPreviewModal', () => {
     );
 
     act(() => {
-      window.dispatchEvent(new MessageEvent('message', {
-        data: { channel: HTML_PREVIEW_MESSAGE_CHANNEL, event: 'escape' },
-        source: contentWindowStub,
-      }));
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { channel: HTML_PREVIEW_MESSAGE_CHANNEL, event: 'escape' },
+          source: contentWindowStub,
+        }),
+      );
     });
 
     expect(onClose).toHaveBeenCalledTimes(1);

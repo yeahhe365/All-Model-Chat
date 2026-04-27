@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
 import { translations } from '../utils/translations';
 import { AttachmentAction, ModelOption } from '../types';
@@ -48,14 +47,29 @@ const INPUT_POPULATING_COMMANDS = new Set(['model', 'edit']);
 
 export const useSlashCommands = ({
   t,
-  onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext,
-  onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt,
-  onTogglePinCurrentSession, onRetryLastTurn, onAttachmentAction,
-  availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen,
-  textareaRef, onEditLastUserMessage, onTogglePip, setInputText,
-  currentModelId, onSetThinkingLevel, thinkingLevel
+  onToggleGoogleSearch,
+  onToggleDeepSearch,
+  onToggleCodeExecution,
+  onToggleUrlContext,
+  onClearChat,
+  onNewChat,
+  onOpenSettings,
+  onToggleCanvasPrompt,
+  onTogglePinCurrentSession,
+  onRetryLastTurn,
+  onAttachmentAction,
+  availableModels,
+  onSelectModel,
+  onMessageSent,
+  setIsHelpModalOpen,
+  textareaRef,
+  onEditLastUserMessage,
+  onTogglePip,
+  setInputText,
+  currentModelId,
+  onSetThinkingLevel,
+  thinkingLevel,
 }: UseSlashCommandsProps) => {
-  
   const [slashCommandState, setSlashCommandState] = useState<SlashCommandState>(CLOSED_SLASH_COMMAND_STATE);
 
   const commandDefinitions = useMemo(
@@ -137,7 +151,7 @@ export const useSlashCommands = ({
               action: () => {
                 const isGemini3Flash = currentModelId.includes('gemini-3') && currentModelId.includes('flash');
                 const isGeminiRobotics = currentModelId.includes('gemini-robotics-er');
-                const targetLevel = (isGemini3Flash || isGeminiRobotics) ? 'MINIMAL' : 'LOW';
+                const targetLevel = isGemini3Flash || isGeminiRobotics ? 'MINIMAL' : 'LOW';
                 onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
               },
             };
@@ -189,10 +203,10 @@ export const useSlashCommands = ({
   }, []);
 
   const openModelCommandList = useCallback(() => {
-    const modelCommands: Command[] = availableModels.map(model => ({
+    const modelCommands: Command[] = availableModels.map((model) => ({
       name: model.name,
       description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
-      icon: model.id.includes('imagen') ? 'image' : (model.isPinned ? 'pin' : 'bot'),
+      icon: model.id.includes('imagen') ? 'image' : model.isPinned ? 'pin' : 'bot',
       action: () => {
         onSelectModel(model.id);
         setInputText('');
@@ -208,110 +222,127 @@ export const useSlashCommands = ({
     });
   }, [availableModels, onMessageSent, onSelectModel, setInputText]);
 
-  const handleCommandSelect = useCallback((command: Command) => {
-    if (!command) return;
-    
-    // Execute the command action immediately
-    command.action();
-    
-    if (command.name === 'model') {
-      openModelCommandList();
-      return;
-    }
+  const handleCommandSelect = useCallback(
+    (command: Command) => {
+      if (!command) return;
 
-    resetSlashCommandState();
+      // Execute the command action immediately
+      command.action();
 
-    const isDynamicModelCommand = availableModels.some(m => m.name === command.name);
+      if (command.name === 'model') {
+        openModelCommandList();
+        return;
+      }
 
-    // If the command is meant to clear the input (i.e. not a template command or dynamic model selection)
-    // we explicitly clear the text.
-    // Dynamic model commands handle their own clearing in their action definition (see handleInputChange).
-    if (!INPUT_POPULATING_COMMANDS.has(command.name) && !isDynamicModelCommand) {
+      resetSlashCommandState();
+
+      const isDynamicModelCommand = availableModels.some((m) => m.name === command.name);
+
+      // If the command is meant to clear the input (i.e. not a template command or dynamic model selection)
+      // we explicitly clear the text.
+      // Dynamic model commands handle their own clearing in their action definition (see handleInputChange).
+      if (!INPUT_POPULATING_COMMANDS.has(command.name) && !isDynamicModelCommand) {
         // Use setTimeout to ensure the input clear happens after the event loop tick
         // This solves issues where Enter key press might interfere with state updates
         setTimeout(() => {
-            setInputText('');
-        }, 0);
-    }
-  }, [availableModels, openModelCommandList, resetSlashCommandState, setInputText]);
-  
-  const handleInputChange = useCallback((value: string) => {
-    setInputText(value);
-  
-    if (!value.startsWith('/')) {
-      resetSlashCommandState();
-      return;
-    }
-  
-    const [commandPart, ...args] = value.split(' ');
-    const commandName = commandPart.substring(1).toLowerCase();
-  
-    if (commandName === 'model') {
-      const keyword = args.join(' ').toLowerCase();
-      const filteredModels = availableModels.filter(m => m.name.toLowerCase().includes(keyword));
-      const modelCommands: Command[] = filteredModels.map(model => ({
-        name: model.name,
-        description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
-        icon: model.id.includes('imagen') ? 'image' : (model.isPinned ? 'pin' : 'bot'),
-        action: () => {
-          onSelectModel(model.id);
           setInputText('');
-          onMessageSent();
-        },
-      }));
-  
-      setSlashCommandState({
-        isOpen: modelCommands.length > 0 || !keyword.trim(),
-        query: 'model',
-        filteredCommands: modelCommands,
-        selectedIndex: 0,
-      });
-    } else {
-      const query = commandPart.substring(1).toLowerCase();
-      const filtered = commands.filter(cmd => cmd.name.toLowerCase().startsWith(query));
-      setSlashCommandState({
-        isOpen: filtered.length > 0 && !value.includes(' '),
-        query: query,
-        filteredCommands: filtered,
-        selectedIndex: 0,
-      });
-    }
-  }, [availableModels, commands, onMessageSent, onSelectModel, resetSlashCommandState, setInputText]);
-  
-  const handleSlashCommandExecution = useCallback((text: string) => {
-    const exactCommandMatch = text.match(/^\/(\S+)$/);
-    if (exactCommandMatch) {
-      const commandName = exactCommandMatch[1].toLowerCase();
-      const command = commands.find(cmd => cmd.name === commandName);
-      if (!command) {
+        }, 0);
+      }
+    },
+    [availableModels, openModelCommandList, resetSlashCommandState, setInputText],
+  );
+
+  const handleInputChange = useCallback(
+    (value: string) => {
+      setInputText(value);
+
+      if (!value.startsWith('/')) {
+        resetSlashCommandState();
+        return;
+      }
+
+      const [commandPart, ...args] = value.split(' ');
+      const commandName = commandPart.substring(1).toLowerCase();
+
+      if (commandName === 'model') {
+        const keyword = args.join(' ').toLowerCase();
+        const filteredModels = availableModels.filter((m) => m.name.toLowerCase().includes(keyword));
+        const modelCommands: Command[] = filteredModels.map((model) => ({
+          name: model.name,
+          description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
+          icon: model.id.includes('imagen') ? 'image' : model.isPinned ? 'pin' : 'bot',
+          action: () => {
+            onSelectModel(model.id);
+            setInputText('');
+            onMessageSent();
+          },
+        }));
+
+        setSlashCommandState({
+          isOpen: modelCommands.length > 0 || !keyword.trim(),
+          query: 'model',
+          filteredCommands: modelCommands,
+          selectedIndex: 0,
+        });
+      } else {
+        const query = commandPart.substring(1).toLowerCase();
+        const filtered = commands.filter((cmd) => cmd.name.toLowerCase().startsWith(query));
+        setSlashCommandState({
+          isOpen: filtered.length > 0 && !value.includes(' '),
+          query: query,
+          filteredCommands: filtered,
+          selectedIndex: 0,
+        });
+      }
+    },
+    [availableModels, commands, onMessageSent, onSelectModel, resetSlashCommandState, setInputText],
+  );
+
+  const handleSlashCommandExecution = useCallback(
+    (text: string) => {
+      const exactCommandMatch = text.match(/^\/(\S+)$/);
+      if (exactCommandMatch) {
+        const commandName = exactCommandMatch[1].toLowerCase();
+        const command = commands.find((cmd) => cmd.name === commandName);
+        if (!command) {
+          return false;
+        }
+
+        handleCommandSelect(command);
+        return true;
+      }
+
+      const modelCommandMatch = text.match(/^\/model\s+(.+)$/i);
+      if (!modelCommandMatch) {
         return false;
       }
 
-      handleCommandSelect(command);
+      const keyword = modelCommandMatch[1].trim().toLowerCase();
+      if (!keyword) {
+        return false;
+      }
+
+      const model = availableModels.find((m) => m.name.toLowerCase().includes(keyword));
+      if (!model) {
+        return false;
+      }
+
+      onSelectModel(model.id);
+      setInputText('');
+      onMessageSent();
+      resetSlashCommandState();
       return true;
-    }
-
-    const modelCommandMatch = text.match(/^\/model\s+(.+)$/i);
-    if (!modelCommandMatch) {
-      return false;
-    }
-
-    const keyword = modelCommandMatch[1].trim().toLowerCase();
-    if (!keyword) {
-      return false;
-    }
-
-    const model = availableModels.find(m => m.name.toLowerCase().includes(keyword));
-    if (!model) {
-      return false;
-    }
-
-    onSelectModel(model.id);
-    setInputText('');
-    onMessageSent();
-    resetSlashCommandState();
-    return true;
-  }, [availableModels, commands, handleCommandSelect, onMessageSent, onSelectModel, resetSlashCommandState, setInputText]);
+    },
+    [
+      availableModels,
+      commands,
+      handleCommandSelect,
+      onMessageSent,
+      onSelectModel,
+      resetSlashCommandState,
+      setInputText,
+    ],
+  );
 
   return {
     slashCommandState,

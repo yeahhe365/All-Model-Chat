@@ -49,9 +49,7 @@ describe('useMessageActions', () => {
   it('does not abort unrelated active jobs when the current session has no loading message', () => {
     const otherAbort = vi.fn();
     const activeJobs = {
-      current: new Map<string, AbortController>([
-        ['job-other', { abort: otherAbort } as unknown as AbortController],
-      ]),
+      current: new Map<string, AbortController>([['job-other', { abort: otherAbort } as unknown as AbortController]]),
     };
     const setSessionLoading = vi.fn();
 

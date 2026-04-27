@@ -48,27 +48,24 @@ const getRangeBounds = (range: UsageTimeRange) => {
 };
 
 const buildSummary = (records: ApiUsageRecord[]): UsageSummary =>
-  records.reduce<UsageSummary>(
-    (summary, record) => {
-      const cachedTokens = record.cachedPromptTokens ?? 0;
-      const inputTokens = Math.max(record.promptTokens - cachedTokens, 0) + (record.toolUsePromptTokens ?? 0);
-      const outputTokens = record.completionTokens + (record.thoughtTokens ?? 0);
-      const totalTokens = inputTokens + cachedTokens + outputTokens;
-      const estimatedCost = calculateApiUsageRecordPriceUsd(record);
+  records.reduce<UsageSummary>((summary, record) => {
+    const cachedTokens = record.cachedPromptTokens ?? 0;
+    const inputTokens = Math.max(record.promptTokens - cachedTokens, 0) + (record.toolUsePromptTokens ?? 0);
+    const outputTokens = record.completionTokens + (record.thoughtTokens ?? 0);
+    const totalTokens = inputTokens + cachedTokens + outputTokens;
+    const estimatedCost = calculateApiUsageRecordPriceUsd(record);
 
-      return {
-        totalRequests: summary.totalRequests + 1,
-        totalPromptTokens: summary.totalPromptTokens + inputTokens,
-        totalCachedPromptTokens: summary.totalCachedPromptTokens + cachedTokens,
-        totalCompletionTokens: summary.totalCompletionTokens + outputTokens,
-        totalTokens: summary.totalTokens + totalTokens,
-        estimatedCostUsd: summary.estimatedCostUsd + (estimatedCost ?? 0),
-        estimatedCostPricedRequests: summary.estimatedCostPricedRequests + (estimatedCost === null ? 0 : 1),
-        estimatedCostUnavailableRequests: summary.estimatedCostUnavailableRequests + (estimatedCost === null ? 1 : 0),
-      };
-    },
-    EMPTY_SUMMARY,
-  );
+    return {
+      totalRequests: summary.totalRequests + 1,
+      totalPromptTokens: summary.totalPromptTokens + inputTokens,
+      totalCachedPromptTokens: summary.totalCachedPromptTokens + cachedTokens,
+      totalCompletionTokens: summary.totalCompletionTokens + outputTokens,
+      totalTokens: summary.totalTokens + totalTokens,
+      estimatedCostUsd: summary.estimatedCostUsd + (estimatedCost ?? 0),
+      estimatedCostPricedRequests: summary.estimatedCostPricedRequests + (estimatedCost === null ? 0 : 1),
+      estimatedCostUnavailableRequests: summary.estimatedCostUnavailableRequests + (estimatedCost === null ? 1 : 0),
+    };
+  }, EMPTY_SUMMARY);
 
 const buildBreakdown = (records: ApiUsageRecord[]): UsageModelBreakdown[] => {
   const grouped = new Map<string, UsageModelBreakdown>();
@@ -96,7 +93,9 @@ const buildBreakdown = (records: ApiUsageRecord[]): UsageModelBreakdown[] => {
     grouped.set(record.modelId, current);
   });
 
-  return Array.from(grouped.values()).sort((a, b) => b.totalTokens - a.totalTokens || b.totalRequests - a.totalRequests);
+  return Array.from(grouped.values()).sort(
+    (a, b) => b.totalTokens - a.totalTokens || b.totalRequests - a.totalRequests,
+  );
 };
 
 export const useUsageStats = () => {

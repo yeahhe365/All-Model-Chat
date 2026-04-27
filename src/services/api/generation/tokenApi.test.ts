@@ -78,12 +78,7 @@ describe('countTokensApi', () => {
       },
     };
 
-    await countTokensApi(
-      'key',
-      'gemini-3.1-pro-preview',
-      [{ text: 'How many tokens?' } as Part],
-      config,
-    );
+    await countTokensApi('key', 'gemini-3.1-pro-preview', [{ text: 'How many tokens?' } as Part], config);
 
     expect(mockCountTokens).toHaveBeenCalledWith({
       model: 'gemini-3.1-pro-preview',
@@ -106,15 +101,10 @@ describe('countTokensApi', () => {
       .mockResolvedValueOnce({ totalTokens: 17 });
 
     await expect(
-      countTokensApi(
-        'key',
-        'gemini-3.1-pro-preview',
-        [{ text: 'How many tokens?' } as Part],
-        {
-          systemInstruction: 'You are concise.',
-          tools: [{ googleSearch: {} }],
-        },
-      ),
+      countTokensApi('key', 'gemini-3.1-pro-preview', [{ text: 'How many tokens?' } as Part], {
+        systemInstruction: 'You are concise.',
+        tools: [{ googleSearch: {} }],
+      }),
     ).resolves.toBe(17);
 
     expect(mockCountTokens).toHaveBeenNthCalledWith(1, {
@@ -147,13 +137,7 @@ describe('countTokensApi', () => {
       .mockRejectedValueOnce(new Error('Request contains an invalid argument.'))
       .mockResolvedValueOnce({ totalTokens: 9 });
 
-    await expect(
-      countTokensApi(
-        'key',
-        'gemini-3-flash-preview',
-        [{ text: 'screenshot' } as Part],
-      ),
-    ).resolves.toBe(9);
+    await expect(countTokensApi('key', 'gemini-3-flash-preview', [{ text: 'screenshot' } as Part])).resolves.toBe(9);
 
     expect(mockCountTokens).toHaveBeenNthCalledWith(1, {
       model: 'gemini-3-flash-preview',

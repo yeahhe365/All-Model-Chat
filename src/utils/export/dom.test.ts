@@ -28,10 +28,11 @@ describe('sanitizeCssColorFunctionsForPngExport', () => {
     `;
 
     const sanitized = sanitizeCssColorFunctionsForPngExport(css, {
-      resolveCssVariable: (name) => ({
-        '--theme-bg-tertiary': '#18181b',
-        '--theme-border-secondary': '#27272a',
-      })[name] ?? '',
+      resolveCssVariable: (name) =>
+        ({
+          '--theme-bg-tertiary': '#18181b',
+          '--theme-border-secondary': '#27272a',
+        })[name] ?? '',
     });
 
     expect(sanitized).not.toContain('oklab');

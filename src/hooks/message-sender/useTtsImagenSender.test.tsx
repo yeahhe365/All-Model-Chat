@@ -2,22 +2,18 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  handleApiErrorMock,
-  generateImagesMock,
-  performOptimisticSessionUpdateMock,
-  createUploadedFileFromBase64Mock,
-} = vi.hoisted(() => ({
-  handleApiErrorMock: vi.fn(),
-  generateImagesMock: vi.fn(),
-  performOptimisticSessionUpdateMock: vi.fn((prev: unknown) => prev),
-  createUploadedFileFromBase64Mock: vi.fn((data: string, type: string, name: string) => ({
-    id: `${name}-id`,
-    name,
-    type,
-    size: data.length,
-  })),
-}));
+const { handleApiErrorMock, generateImagesMock, performOptimisticSessionUpdateMock, createUploadedFileFromBase64Mock } =
+  vi.hoisted(() => ({
+    handleApiErrorMock: vi.fn(),
+    generateImagesMock: vi.fn(),
+    performOptimisticSessionUpdateMock: vi.fn((prev: unknown) => prev),
+    createUploadedFileFromBase64Mock: vi.fn((data: string, type: string, name: string) => ({
+      id: `${name}-id`,
+      name,
+      type,
+      size: data.length,
+    })),
+  }));
 
 vi.mock('./useApiErrorHandler', () => ({
   useApiErrorHandler: () => ({

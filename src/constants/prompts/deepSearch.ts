@@ -1,4 +1,3 @@
-
 export const DEEP_SEARCH_SYSTEM_PROMPT = `[DEEP SEARCH MODE ACTIVATED]
 You are an expert researcher engaged in "Deep Search" mode. Your goal is to provide a comprehensive, highly accurate, and well-sourced answer customized to the user's linguistic context.
 

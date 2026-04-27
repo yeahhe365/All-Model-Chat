@@ -1,11 +1,15 @@
-
 import { useCallback } from 'react';
 import { logService } from '../../services/logService';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { performOptimisticSessionUpdate, generateSessionTitle, createMessage } from '../../utils/chat/session';
-import { getModelCapabilities, isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '../../utils/modelHelpers';
+import {
+  getModelCapabilities,
+  isGemini3Model,
+  isImageModel,
+  shouldStripThinkingFromContext,
+} from '../../utils/modelHelpers';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { StandardChatProps } from './types';
@@ -83,7 +87,7 @@ export const useStandardChat = ({
                       generationEndTime: undefined,
                       stoppedByUser: false,
                     }
-                  : message
+                  : message,
               ),
             };
           });
@@ -134,14 +138,7 @@ export const useStandardChat = ({
         setEditingMessageId(null);
       }
     },
-    [
-      activeSessionId,
-      appSettings,
-      sessionKeyMapRef,
-      setActiveSessionId,
-      setEditingMessageId,
-      updateAndPersistSessions,
-    ]
+    [activeSessionId, appSettings, sessionKeyMapRef, setActiveSessionId, setEditingMessageId, updateAndPersistSessions],
   );
 
   const performApiCall = useCallback(
@@ -195,9 +192,7 @@ export const useStandardChat = ({
 
         let prefillContent = currentContent;
         if (!prefillContent.trim()) {
-          prefillContent = isGemini3
-            ? '<thinking>I have finished reasoning</thinking>'
-            : ' ';
+          prefillContent = isGemini3 ? '<thinking>I have finished reasoning</thinking>' : ' ';
         }
         finalParts = [{ text: prefillContent }];
       } else if (isRawMode) {
@@ -225,7 +220,7 @@ export const useStandardChat = ({
         baseMessagesForApi,
         shouldStripThinking,
         activeModelId,
-        !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled
+        !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled,
       );
 
       const localPythonContextMessages =
@@ -243,10 +238,7 @@ export const useStandardChat = ({
           : baseMessagesForApi;
       const standardClientFunctions = createStandardClientFunctions({
         isLocalPythonEnabled:
-          !!sessionToUpdate.isLocalPythonEnabled
-          && finalRole === 'user'
-          && !isRawMode
-          && !isImageModel(activeModelId),
+          !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode && !isImageModel(activeModelId),
         inputFiles: collectLocalPythonInputFiles(
           [
             ...localPythonContextMessages,
@@ -257,26 +249,21 @@ export const useStandardChat = ({
               timestamp: new Date(),
             },
           ],
-          'temp-standard-tool-target'
+          'temp-standard-tool-target',
         ),
         runPython: async (code, options) => {
           const pyodideService = await getPyodideService();
           return pyodideService.runPython(code, options);
         },
       });
-      const standardFunctionDeclarations = Object.values(standardClientFunctions).map(
-        ({ declaration }) => declaration
-      );
+      const standardFunctionDeclarations = Object.values(standardClientFunctions).map(({ declaration }) => declaration);
       const hasRequestedServerSideToolThatNeedsCombination =
-        !!sessionToUpdate.isGoogleSearchEnabled
-        || !!sessionToUpdate.isDeepSearchEnabled
-        || !!sessionToUpdate.isUrlContextEnabled;
+        !!sessionToUpdate.isGoogleSearchEnabled ||
+        !!sessionToUpdate.isDeepSearchEnabled ||
+        !!sessionToUpdate.isUrlContextEnabled;
       const isLocalPythonEnabledForTurn =
-        standardFunctionDeclarations.length > 0
-        && (
-          isGemini3Model(activeModelId)
-          || !hasRequestedServerSideToolThatNeedsCombination
-        );
+        standardFunctionDeclarations.length > 0 &&
+        (isGemini3Model(activeModelId) || !hasRequestedServerSideToolThatNeedsCombination);
 
       const config = await buildGenerationConfig({
         modelId: activeModelId,
@@ -307,37 +294,34 @@ export const useStandardChat = ({
         config,
         isLocalPythonEnabledForTurn ? standardFunctionDeclarations : [],
       );
-      const hasFunctionDeclarationsInRequest = !!requestConfig.tools?.some(
-        (tool) => 'functionDeclarations' in tool,
-      );
+      const hasFunctionDeclarationsInRequest = !!requestConfig.tools?.some((tool) => 'functionDeclarations' in tool);
 
-      const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } =
-        getStreamHandlers(
-          finalSessionId,
-          generationId,
-          newAbortController,
-          generationStartTime,
-          sessionToUpdate,
-          finalParts,
-          (messageId, content) => {
-            if (
-              !isContinueMode &&
-              appSettings.autoCanvasVisualization &&
-              content &&
-              content.length > 50 &&
-              !isLikelyHtml(content)
-            ) {
-              const trimmed = content.trim();
-              if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
-                return;
-              }
-              logService.info('Auto-triggering Canvas visualization for message', {
-                msgId: messageId,
-              });
-              handleGenerateCanvas(messageId, content);
+      const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
+        finalSessionId,
+        generationId,
+        newAbortController,
+        generationStartTime,
+        sessionToUpdate,
+        finalParts,
+        (messageId, content) => {
+          if (
+            !isContinueMode &&
+            appSettings.autoCanvasVisualization &&
+            content &&
+            content.length > 50 &&
+            !isLikelyHtml(content)
+          ) {
+            const trimmed = content.trim();
+            if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
+              return;
             }
+            logService.info('Auto-triggering Canvas visualization for message', {
+              msgId: messageId,
+            });
+            handleGenerateCanvas(messageId, content);
           }
-        );
+        },
+      );
 
       setSessionLoading(finalSessionId, true);
       activeJobs.current.set(generationId, newAbortController);
@@ -348,30 +332,22 @@ export const useStandardChat = ({
             initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
             clientFunctions: standardClientFunctions,
             runTurn: (contents) =>
-              generateContentTurnApi(
-                keyToUse,
-                activeModelId,
-                contents,
-                requestConfig,
-                newAbortController.signal
-              ),
+              generateContentTurnApi(keyToUse, activeModelId, contents, requestConfig, newAbortController.signal),
           });
 
           if (toolLoopResult.toolMessages.length > 0) {
-            const internalMessages = toolLoopResult.toolMessages.flatMap(
-              ({ modelContent, functionResponseParts }) => [
-                createMessage('model', '', {
-                  apiParts: modelContent.parts,
-                  isInternalToolMessage: true,
-                  toolParentMessageId: generationId,
-                }),
-                createMessage('user', '', {
-                  apiParts: functionResponseParts,
-                  isInternalToolMessage: true,
-                  toolParentMessageId: generationId,
-                }),
-              ]
-            );
+            const internalMessages = toolLoopResult.toolMessages.flatMap(({ modelContent, functionResponseParts }) => [
+              createMessage('model', '', {
+                apiParts: modelContent.parts,
+                isInternalToolMessage: true,
+                toolParentMessageId: generationId,
+              }),
+              createMessage('user', '', {
+                apiParts: functionResponseParts,
+                isInternalToolMessage: true,
+                toolParentMessageId: generationId,
+              }),
+            ]);
 
             updateAndPersistSessions(
               (prev) =>
@@ -396,7 +372,7 @@ export const useStandardChat = ({
                     }),
                   };
                 }),
-              { persist: false }
+              { persist: false },
             );
           }
 
@@ -410,7 +386,7 @@ export const useStandardChat = ({
             toolLoopResult.finalTurn.usage,
             toolLoopResult.finalTurn.grounding,
             toolLoopResult.finalTurn.urlContext,
-            toolLoopResult.generatedFiles
+            toolLoopResult.generatedFiles,
           );
         } catch (error) {
           streamOnError(error instanceof Error ? error : new Error(String(error)));
@@ -430,7 +406,7 @@ export const useStandardChat = ({
           onThoughtChunk,
           streamOnError,
           streamOnComplete,
-          finalRole
+          finalRole,
         );
         return;
       }
@@ -452,7 +428,7 @@ export const useStandardChat = ({
           }
           streamOnComplete(usage, grounding, urlContext);
         },
-        finalRole
+        finalRole,
       );
     },
     [
@@ -467,7 +443,7 @@ export const useStandardChat = ({
       personGeneration,
       setSessionLoading,
       updateAndPersistSessions,
-    ]
+    ],
   );
 
   const sendStandardMessage = useCallback(
@@ -477,21 +453,18 @@ export const useStandardChat = ({
       effectiveEditingId: string | null,
       activeModelId: string,
       isContinueMode = false,
-      isFastMode = false
+      isFastMode = false,
     ) => {
       const settingsForPersistence = { ...currentChatSettings };
       const settingsForApi = { ...currentChatSettings };
 
       if (isFastMode) {
-        const isGemini3Flash =
-          activeModelId.includes('gemini-3') && activeModelId.includes('flash');
+        const isGemini3Flash = activeModelId.includes('gemini-3') && activeModelId.includes('flash');
         const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
 
         settingsForApi.thinkingLevel = targetLevel;
         settingsForApi.thinkingBudget = 0;
-        logService.info(
-          `Fast Mode activated (One-off): Overriding thinking level to ${targetLevel}.`
-        );
+        logService.info(`Fast Mode activated (One-off): Overriding thinking level to ${targetLevel}.`);
       }
 
       const keyResult = getKeyForRequest(appSettings, settingsForApi);
@@ -512,15 +485,14 @@ export const useStandardChat = ({
             newMessages: [errorMessage],
             settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
             title: 'API Key Error',
-          })
+          }),
         );
         setActiveSessionId(newSessionId);
         return;
       }
 
       const { key: keyToUse, isNewKey } = keyResult;
-      const shouldLockKey =
-        isNewKey && filesToUse.some((file) => file.fileUri && file.uploadState === 'active');
+      const shouldLockKey = isNewKey && filesToUse.some((file) => file.fileUri && file.uploadState === 'active');
 
       const newAbortController = new AbortController();
 
@@ -536,7 +508,7 @@ export const useStandardChat = ({
       }
 
       const successfullyProcessedFiles = filesToUse.filter(
-        (file) => file.uploadState === 'active' && !file.error && !file.isProcessing
+        (file) => file.uploadState === 'active' && !file.error && !file.isProcessing,
       );
       const preferCodeExecutionFileInputs =
         !!settingsForApi.isCodeExecutionEnabled && !settingsForApi.isLocalPythonEnabled;
@@ -546,14 +518,14 @@ export const useStandardChat = ({
         successfullyProcessedFiles,
         activeModelId,
         settingsForApi.mediaResolution,
-        preferCodeExecutionFileInputs
+        preferCodeExecutionFileInputs,
       );
 
       const finalSessionId = activeSessionId || generateUniqueId();
       const isRawMode = Boolean(
         (settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled) &&
-          !isContinueMode &&
-          getModelCapabilities(activeModelId).supportsRawReasoningPrefill
+        !isContinueMode &&
+        getModelCapabilities(activeModelId).supportsRawReasoningPrefill,
       );
 
       updateSessionState({
@@ -598,7 +570,7 @@ export const useStandardChat = ({
       updateAndPersistSessions,
       updateSessionState,
       userScrolledUpRef,
-    ]
+    ],
   );
 
   return { sendStandardMessage };

@@ -41,10 +41,7 @@ describe('scenarioLibrary', () => {
 
     expect(result.didChange).toBe(true);
     expect(result.userScenarios).toEqual([voxelScenario]);
-    expect(result.savedScenarios.map((scenario) => scenario.id)).toEqual([
-      ...SYSTEM_SCENARIO_IDS,
-      voxelScenario.id,
-    ]);
+    expect(result.savedScenarios.map((scenario) => scenario.id)).toEqual([...SYSTEM_SCENARIO_IDS, voxelScenario.id]);
     expect(storage.setItem).toHaveBeenCalledWith('hasSeededPlayablePresets_v1', 'true');
   });
 

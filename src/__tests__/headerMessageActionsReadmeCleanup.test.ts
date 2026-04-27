@@ -4,8 +4,7 @@ import path from 'path';
 
 const projectRoot = path.resolve(__dirname, '../..');
 
-const readProjectFile = (relativePath: string) =>
-  fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
+const readProjectFile = (relativePath: string) => fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
 
 describe('header, message actions, and readme cleanup guards', () => {
   it('removes dead Header prop references', () => {

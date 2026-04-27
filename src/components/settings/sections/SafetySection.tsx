@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { SafetySetting, HarmCategory, HarmBlockThreshold } from '../../../types/settings';
 import { translations } from '../../../utils/translations';
@@ -103,12 +102,12 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
 
       setSliderValues((prev) => {
         const nextSliderValues = { ...prev, [category]: nextIndex };
-        
+
         // Reconstruct the entire settings array from the authoritative local state
         // to prevent race conditions where rapid updates might be lost if we relied on the 'safetySettings' prop.
         const updatedSettings = ALL_CATEGORIES.map((cat) => ({
-            category: cat,
-            threshold: thresholdSteps[nextSliderValues[cat] ?? 3] ?? HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+          category: cat,
+          threshold: thresholdSteps[nextSliderValues[cat] ?? 3] ?? HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
         }));
 
         setSafetySettings(updatedSettings);
@@ -116,7 +115,7 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
         return nextSliderValues;
       });
     },
-    [setSafetySettings]
+    [setSafetySettings],
   );
 
   return (
@@ -144,7 +143,9 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
               className="space-y-3 pb-4 border-b border-[var(--theme-border-secondary)]/50 last:border-0"
             >
               <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-[var(--theme-text-primary)]">{t(categoryMap[category])}</label>
+                <label className="text-sm font-medium text-[var(--theme-text-primary)]">
+                  {t(categoryMap[category])}
+                </label>
                 <span
                   className={`text-xs font-bold uppercase tracking-wider ${
                     stepTextColors[sliderValue] || 'text-[var(--theme-text-primary)]'
@@ -172,7 +173,9 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
                   <div key={step} className="flex flex-col items-center w-8">
                     <div
                       className={`w-1 h-2 rounded-full mb-1 ${
-                        idx === sliderValue ? 'bg-[var(--theme-text-primary)] h-3' : 'bg-[var(--theme-border-secondary)]'
+                        idx === sliderValue
+                          ? 'bg-[var(--theme-text-primary)] h-3'
+                          : 'bg-[var(--theme-border-secondary)]'
                       }`}
                     />
                   </div>

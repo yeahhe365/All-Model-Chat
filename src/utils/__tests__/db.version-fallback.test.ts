@@ -14,7 +14,7 @@ interface MutableOpenRequest extends MutableRequest<IDBDatabase | undefined> {
   onupgradeneeded: ((event: IDBVersionChangeEvent) => void) | null;
 }
 
-const createRequest = <T,>() => {
+const createRequest = <T>() => {
   const request: MutableRequest<T | undefined> = {
     result: undefined,
     error: null as DOMException | null,
@@ -65,7 +65,7 @@ describe('dbService IndexedDB version fallback', () => {
     const existingDb = createMockDb();
     const versionError = new DOMException(
       'The requested version (4) is less than the existing version (5).',
-      'VersionError'
+      'VersionError',
     );
 
     const openMock = vi.fn((_name: string, version?: number) => {

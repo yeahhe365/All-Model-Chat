@@ -31,9 +31,7 @@ describe('HelpModal', () => {
     const t = (key: string) => key;
 
     await act(async () => {
-      root.render(
-        <HelpModal isOpen onClose={vi.fn()} commands={[]} t={t as any} />,
-      );
+      root.render(<HelpModal isOpen onClose={vi.fn()} commands={[]} t={t as any} />);
     });
 
     const searchInput = document.querySelector('input');

@@ -154,8 +154,8 @@ describe('ThinkingControl image model behavior', () => {
 
     expect(container.textContent).toContain('settingsGemmaReasoningToggle_disabledDesc');
 
-    const highButton = Array.from(container.querySelectorAll('button')).find(
-      (node) => node.textContent?.includes('High'),
+    const highButton = Array.from(container.querySelectorAll('button')).find((node) =>
+      node.textContent?.includes('High'),
     );
     expect(highButton).not.toBeNull();
 

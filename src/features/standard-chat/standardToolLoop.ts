@@ -1,9 +1,5 @@
 import type { FunctionCall, ModalityTokenCount, Part, UsageMetadata } from '@google/genai';
-import type {
-  ChatHistoryItem,
-  StandardClientFunctions,
-  UploadedFile,
-} from '../../types';
+import type { ChatHistoryItem, StandardClientFunctions, UploadedFile } from '../../types';
 
 interface StandardToolTurnResult {
   modelContent: ChatHistoryItem;
@@ -56,8 +52,7 @@ interface UrlContextItem {
   url_retrieval_status?: string;
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 const dedupeArray = (values: unknown[]): unknown[] => {
   const seen = new Set<string>();
@@ -197,18 +192,12 @@ const mergeGroundingCarryover = (
   return {
     ...(existing.webSearchQueries || incomingCarryover.webSearchQueries
       ? {
-          webSearchQueries: mergeUniqueStrings(
-            existing.webSearchQueries,
-            incomingCarryover.webSearchQueries,
-          ),
+          webSearchQueries: mergeUniqueStrings(existing.webSearchQueries, incomingCarryover.webSearchQueries),
         }
       : {}),
     ...(existing.imageSearchQueries || incomingCarryover.imageSearchQueries
       ? {
-          imageSearchQueries: mergeUniqueStrings(
-            existing.imageSearchQueries,
-            incomingCarryover.imageSearchQueries,
-          ),
+          imageSearchQueries: mergeUniqueStrings(existing.imageSearchQueries, incomingCarryover.imageSearchQueries),
         }
       : {}),
     ...(existing.citations || incomingCarryover.citations
@@ -220,10 +209,7 @@ const mergeGroundingCarryover = (
   };
 };
 
-const mergeGroundingForFinalTurn = (
-  finalGrounding: unknown,
-  carryover: GroundingCarryover | undefined,
-): unknown => {
+const mergeGroundingForFinalTurn = (finalGrounding: unknown, carryover: GroundingCarryover | undefined): unknown => {
   if (!carryover) {
     return finalGrounding;
   }
@@ -251,18 +237,12 @@ const mergeGroundingForFinalTurn = (
     ...finalGrounding,
     ...(carryover.webSearchQueries?.length || currentWebSearchQueries.length
       ? {
-          webSearchQueries: mergeUniqueStrings(
-            carryover.webSearchQueries,
-            currentWebSearchQueries,
-          ),
+          webSearchQueries: mergeUniqueStrings(carryover.webSearchQueries, currentWebSearchQueries),
         }
       : {}),
     ...(carryover.imageSearchQueries?.length || currentImageSearchQueries.length
       ? {
-          imageSearchQueries: mergeUniqueStrings(
-            carryover.imageSearchQueries,
-            currentImageSearchQueries,
-          ),
+          imageSearchQueries: mergeUniqueStrings(carryover.imageSearchQueries, currentImageSearchQueries),
         }
       : {}),
     ...(carryover.citations?.length || currentCitations.length
@@ -363,10 +343,7 @@ const sumTokenDetails = (details: ModalityTokenCount[] | undefined): number | un
   return total > 0 ? total : undefined;
 };
 
-const mergeOptionalCounts = (
-  existing?: number,
-  incoming?: number,
-): number | undefined => {
+const mergeOptionalCounts = (existing?: number, incoming?: number): number | undefined => {
   const hasExisting = typeof existing === 'number' && existing > 0;
   const hasIncoming = typeof incoming === 'number' && incoming > 0;
 
@@ -389,18 +366,9 @@ const mergeUsage = (
     return incoming;
   }
 
-  const promptTokensDetails = mergeTokenDetails(
-    existing.promptTokensDetails,
-    incoming.promptTokensDetails,
-  );
-  const cacheTokensDetails = mergeTokenDetails(
-    existing.cacheTokensDetails,
-    incoming.cacheTokensDetails,
-  );
-  const responseTokensDetails = mergeTokenDetails(
-    existing.responseTokensDetails,
-    incoming.responseTokensDetails,
-  );
+  const promptTokensDetails = mergeTokenDetails(existing.promptTokensDetails, incoming.promptTokensDetails);
+  const cacheTokensDetails = mergeTokenDetails(existing.cacheTokensDetails, incoming.cacheTokensDetails);
+  const responseTokensDetails = mergeTokenDetails(existing.responseTokensDetails, incoming.responseTokensDetails);
   const toolUsePromptTokensDetails = mergeTokenDetails(
     existing.toolUsePromptTokensDetails,
     incoming.toolUsePromptTokensDetails,
@@ -423,10 +391,7 @@ const mergeUsage = (
       existing.toolUsePromptTokenCount ?? sumTokenDetails(existing.toolUsePromptTokensDetails),
       incoming.toolUsePromptTokenCount ?? sumTokenDetails(incoming.toolUsePromptTokensDetails),
     ),
-    thoughtsTokenCount: mergeOptionalCounts(
-      existing.thoughtsTokenCount,
-      incoming.thoughtsTokenCount,
-    ),
+    thoughtsTokenCount: mergeOptionalCounts(existing.thoughtsTokenCount, incoming.thoughtsTokenCount),
     totalTokenCount: mergeOptionalCounts(existing.totalTokenCount, incoming.totalTokenCount),
     promptTokensDetails,
     cacheTokensDetails,

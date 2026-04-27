@@ -6,10 +6,7 @@ interface PwaUpdateBannerProps {
   onDismiss: () => void;
 }
 
-export const PwaUpdateBanner: React.FC<PwaUpdateBannerProps> = ({
-  onRefresh,
-  onDismiss,
-}) => {
+export const PwaUpdateBanner: React.FC<PwaUpdateBannerProps> = ({ onRefresh, onDismiss }) => {
   const { t } = useI18n();
 
   return (

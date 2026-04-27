@@ -87,7 +87,10 @@ const setRelativePath = (file: File, relativePath: string) => {
 describe('buildImportContextFile', () => {
   it('matches the Structure Insight plain TXT layout for a folder import', async () => {
     const readme = setRelativePath(new File(['# Demo\n'], 'README.md', { type: 'text/markdown' }), 'demo/README.md');
-    const appFile = setRelativePath(new File(['export const value = 1;\n'], 'app.ts', { type: 'text/plain' }), 'demo/src/app.ts');
+    const appFile = setRelativePath(
+      new File(['export const value = 1;\n'], 'app.ts', { type: 'text/plain' }),
+      'demo/src/app.ts',
+    );
     const logo = setRelativePath(new File(['png'], 'logo.png', { type: 'image/png' }), 'demo/assets/logo.png');
 
     const contextFile = await buildImportContextFile([readme, appFile, logo]);
@@ -96,8 +99,14 @@ describe('buildImportContextFile', () => {
   });
 
   it('keeps nested zip files in the directory structure without expanding them', async () => {
-    const appFile = setRelativePath(new File(['export const value = 1;\n'], 'app.ts', { type: 'text/plain' }), 'demo/src/app.ts');
-    const nestedZip = setRelativePath(new File(['fake zip'], 'docs.zip', { type: 'application/zip' }), 'demo/downloads/docs.zip');
+    const appFile = setRelativePath(
+      new File(['export const value = 1;\n'], 'app.ts', { type: 'text/plain' }),
+      'demo/src/app.ts',
+    );
+    const nestedZip = setRelativePath(
+      new File(['fake zip'], 'docs.zip', { type: 'application/zip' }),
+      'demo/downloads/docs.zip',
+    );
 
     const contextFile = await buildImportContextFile([appFile, nestedZip]);
     const output = await contextFile.text();
@@ -108,7 +117,10 @@ describe('buildImportContextFile', () => {
   });
 
   it('includes empty directories when requested', async () => {
-    const appFile = setRelativePath(new File(['export const value = 1;\n'], 'app.ts', { type: 'text/plain' }), 'demo/src/app.ts');
+    const appFile = setRelativePath(
+      new File(['export const value = 1;\n'], 'app.ts', { type: 'text/plain' }),
+      'demo/src/app.ts',
+    );
 
     const contextFile = await buildImportContextFile([appFile], {
       emptyDirectoryPaths: ['demo/empty'],

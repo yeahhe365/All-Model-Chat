@@ -9,10 +9,7 @@ vi.mock('../../../utils/fileHelpers', () => ({
   fileToString: vi.fn().mockResolvedValue('file text content'),
   isTextFile: vi.fn((file: { name: string; type: string }) => {
     return (
-      file.type === 'text/plain' ||
-      file.type === 'text/csv' ||
-      file.name.endsWith('.txt') ||
-      file.name.endsWith('.csv')
+      file.type === 'text/plain' || file.type === 'text/csv' || file.name.endsWith('.txt') || file.name.endsWith('.csv')
     );
   }),
   getExtensionFromMimeType: vi.fn((mimeType: string) => {
@@ -208,7 +205,7 @@ describe('buildContentParts', () => {
         data: 'base64data',
       },
     });
-    expect(contentParts.find(p => p.text?.includes('START OF FILE'))).toBeUndefined();
+    expect(contentParts.find((p) => p.text?.includes('START OF FILE'))).toBeUndefined();
     expect(contentParts[1]).toEqual({ text: 'Analyze this file' });
   });
 
@@ -219,7 +216,7 @@ describe('buildContentParts', () => {
       rawFile: new Blob(['data'], { type: 'application/vnd.ms-excel' }),
     });
     const { contentParts } = await buildContentParts('Hello', [file]);
-    const fallback = contentParts.find(p => p.text?.includes('Binary content not supported'));
+    const fallback = contentParts.find((p) => p.text?.includes('Binary content not supported'));
     expect(fallback).toBeTruthy();
   });
 });
@@ -252,10 +249,7 @@ describe('createChatHistoryForApi', () => {
   });
 
   it('merges consecutive messages of the same role', async () => {
-    const msgs = [
-      makeMessage('user', 'First'),
-      makeMessage('user', 'Second'),
-    ];
+    const msgs = [makeMessage('user', 'First'), makeMessage('user', 'Second')];
     const history = await createChatHistoryForApi(msgs);
     expect(history).toHaveLength(1);
     expect(history[0].parts).toHaveLength(2);
@@ -265,10 +259,7 @@ describe('createChatHistoryForApi', () => {
     const msgs = [
       makeMessage('model', '', {
         thoughtSignatures: ['sig-1'],
-        apiParts: [
-          { text: 'First', thoughtSignature: 'sig-1' },
-          { text: 'Second' },
-        ],
+        apiParts: [{ text: 'First', thoughtSignature: 'sig-1' }, { text: 'Second' }],
       }),
     ];
     const history = await createChatHistoryForApi(msgs);
@@ -278,22 +269,18 @@ describe('createChatHistoryForApi', () => {
   });
 
   it('strips thinking blocks when stripThinking is true', async () => {
-    const msgs = [
-      makeMessage('model', 'Hello <thinking>secret thoughts</thinking> world'),
-    ];
+    const msgs = [makeMessage('model', 'Hello <thinking>secret thoughts</thinking> world')];
     const history = await createChatHistoryForApi(msgs, true);
-    const textPart = history[0].parts.find(p => p.text);
+    const textPart = history[0].parts.find((p) => p.text);
     expect(textPart?.text).not.toContain('thinking');
     expect(textPart?.text).toContain('Hello');
     expect(textPart?.text).toContain('world');
   });
 
   it('strips official Gemma thought channels when stripThinking is true', async () => {
-    const msgs = [
-      makeMessage('model', 'Hello <|channel>thought\nsecret thoughts\n<channel|> world'),
-    ];
+    const msgs = [makeMessage('model', 'Hello <|channel>thought\nsecret thoughts\n<channel|> world')];
     const history = await createChatHistoryForApi(msgs, true);
-    const textPart = history[0].parts.find(p => p.text);
+    const textPart = history[0].parts.find((p) => p.text);
     expect(textPart?.text).not.toContain('<|channel>thought');
     expect(textPart?.text).not.toContain('secret thoughts');
     expect(textPart?.text).toContain('Hello');
@@ -301,11 +288,9 @@ describe('createChatHistoryForApi', () => {
   });
 
   it('strips legacy Gemma thought channels when stripThinking is true', async () => {
-    const msgs = [
-      makeMessage('model', 'Hello <|channel|thought>secret thoughts<channel|> world'),
-    ];
+    const msgs = [makeMessage('model', 'Hello <|channel|thought>secret thoughts<channel|> world')];
     const history = await createChatHistoryForApi(msgs, true);
-    const textPart = history[0].parts.find(p => p.text);
+    const textPart = history[0].parts.find((p) => p.text);
     expect(textPart?.text).not.toContain('<|channel|thought>');
     expect(textPart?.text).not.toContain('secret thoughts');
     expect(textPart?.text).toContain('Hello');
@@ -315,17 +300,14 @@ describe('createChatHistoryForApi', () => {
   it('handles apiParts for model messages with inlineData', async () => {
     const msgs = [
       makeMessage('model', '', {
-        apiParts: [
-          { text: 'Some code' },
-          { inlineData: { mimeType: 'image/png', data: 'base64...' } },
-        ],
+        apiParts: [{ text: 'Some code' }, { inlineData: { mimeType: 'image/png', data: 'base64...' } }],
       }),
     ];
     const history = await createChatHistoryForApi(msgs);
     // inlineData should be replaced with text note
-    const inlinePart = history[0].parts.find(p => p.text?.includes('media file'));
+    const inlinePart = history[0].parts.find((p) => p.text?.includes('media file'));
     expect(inlinePart).toBeTruthy();
-    const codePart = history[0].parts.find(p => p.text === 'Some code');
+    const codePart = history[0].parts.find((p) => p.text === 'Some code');
     expect(codePart).toBeTruthy();
   });
 
@@ -360,10 +342,7 @@ describe('createChatHistoryForApi', () => {
   it('filters out thought parts from apiParts when stripThinking is true', async () => {
     const msgs = [
       makeMessage('model', '', {
-        apiParts: [
-          { thought: true, text: 'secret' },
-          { text: 'visible' },
-        ],
+        apiParts: [{ thought: true, text: 'secret' }, { text: 'visible' }],
       }),
     ];
     const history = await createChatHistoryForApi(msgs, true);
@@ -405,11 +384,7 @@ describe('createChatHistoryForApi', () => {
       }),
     ];
 
-    const history = await (createChatHistoryForApi as any)(
-      msgs,
-      false,
-      'gemini-3.1-pro-preview'
-    );
+    const history = await (createChatHistoryForApi as any)(msgs, false, 'gemini-3.1-pro-preview');
 
     expect(history[0].parts[0]).toEqual({
       fileData: { mimeType: 'image/png', fileUri: 'files/abc123' },
@@ -484,10 +459,7 @@ describe('createChatHistoryForApi', () => {
     const msgs = [
       makeMessage('model', '', {
         files: [generatedImage],
-        apiParts: [
-          { text: 'Here is an image model result.' },
-          { inlineData: { mimeType: 'image/png', data: '' } },
-        ],
+        apiParts: [{ text: 'Here is an image model result.' }, { inlineData: { mimeType: 'image/png', data: '' } }],
       }),
     ];
 
@@ -543,12 +515,7 @@ describe('createChatHistoryForApi', () => {
       }),
     ];
 
-    const history = await createChatHistoryForApi(
-      msgs,
-      false,
-      'gemini-3.1-pro-preview',
-      true,
-    );
+    const history = await createChatHistoryForApi(msgs, false, 'gemini-3.1-pro-preview', true);
 
     expect(history[0].parts[0]).toEqual({
       inlineData: {

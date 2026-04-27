@@ -1,4 +1,3 @@
-
 export const LOCAL_PYTHON_SYSTEM_PROMPT = `[LOCAL PYTHON ENVIRONMENT ACTIVATED]
 You can execute Python locally in the user's browser through the \`run_local_python\` tool.
 

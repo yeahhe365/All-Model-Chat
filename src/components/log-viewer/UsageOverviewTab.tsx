@@ -62,9 +62,7 @@ export const UsageOverviewTab: React.FC = () => {
               <Activity size={20} />
               <span>{t('usageTitle')}</span>
             </div>
-            <p className="max-w-2xl text-sm text-[var(--theme-text-secondary)]">
-              {t('usageDescription')}
-            </p>
+            <p className="max-w-2xl text-sm text-[var(--theme-text-secondary)]">{t('usageDescription')}</p>
           </div>
 
           <label className="flex min-w-[180px] flex-col gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
@@ -91,21 +89,41 @@ export const UsageOverviewTab: React.FC = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
-              <StatCard title={t('usageTotalRequests')} value={summary.totalRequests.toLocaleString()} icon={<Activity size={14} />} />
-              <StatCard title={t('usagePromptTokens')} value={summary.totalPromptTokens.toLocaleString()} icon={<BarChart3 size={14} />} />
-              <StatCard title={t('usageCachedTokens')} value={summary.totalCachedPromptTokens.toLocaleString()} icon={<Coins size={14} />} />
-              <StatCard title={t('usageCompletionTokens')} value={summary.totalCompletionTokens.toLocaleString()} icon={<Coins size={14} />} />
-              <StatCard title={t('usageTotalTokens')} value={summary.totalTokens.toLocaleString()} icon={<Coins size={14} />} />
+              <StatCard
+                title={t('usageTotalRequests')}
+                value={summary.totalRequests.toLocaleString()}
+                icon={<Activity size={14} />}
+              />
+              <StatCard
+                title={t('usagePromptTokens')}
+                value={summary.totalPromptTokens.toLocaleString()}
+                icon={<BarChart3 size={14} />}
+              />
+              <StatCard
+                title={t('usageCachedTokens')}
+                value={summary.totalCachedPromptTokens.toLocaleString()}
+                icon={<Coins size={14} />}
+              />
+              <StatCard
+                title={t('usageCompletionTokens')}
+                value={summary.totalCompletionTokens.toLocaleString()}
+                icon={<Coins size={14} />}
+              />
+              <StatCard
+                title={t('usageTotalTokens')}
+                value={summary.totalTokens.toLocaleString()}
+                icon={<Coins size={14} />}
+              />
               <StatCard
                 title={t('usageEstimatedCost')}
-                value={(
+                value={
                   <PriceValue
                     amount={summary.estimatedCostUsd}
                     pricedRequests={summary.estimatedCostPricedRequests}
                     unavailableRequests={summary.estimatedCostUnavailableRequests}
                     language={language}
                   />
-                )}
+                }
                 icon={<Coins size={14} />}
               />
             </div>
@@ -183,9 +201,7 @@ export const UsageOverviewTab: React.FC = () => {
                 </div>
               )}
 
-              <p className="mt-3 text-xs text-[var(--theme-text-tertiary)]">
-                {t('usagePricingNote')}
-              </p>
+              <p className="mt-3 text-xs text-[var(--theme-text-tertiary)]">{t('usagePricingNote')}</p>
             </div>
           </>
         )}

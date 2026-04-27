@@ -6,20 +6,8 @@ import { TextFileViewer } from './TextFileViewer';
 
 const { mockLazyMarkdownRenderer } = vi.hoisted(() => ({
   mockLazyMarkdownRenderer: vi.fn(
-    ({
-      content,
-      themeId,
-      interactiveMode,
-    }: {
-      content: string;
-      themeId: string;
-      interactiveMode?: string;
-    }) => (
-      <div
-        data-testid="markdown-renderer"
-        data-theme-id={themeId}
-        data-interactive-mode={interactiveMode}
-      >
+    ({ content, themeId, interactiveMode }: { content: string; themeId: string; interactiveMode?: string }) => (
+      <div data-testid="markdown-renderer" data-theme-id={themeId} data-interactive-mode={interactiveMode}>
         {content}
       </div>
     ),
@@ -65,12 +53,7 @@ describe('TextFileViewer', () => {
   it('renders markdown content inside a theme-aware preview surface', () => {
     act(() => {
       root.render(
-        <TextFileViewer
-          file={createMarkdownFile()}
-          content="# Preview title"
-          renderMode="markdown"
-          themeId="pearl"
-        />,
+        <TextFileViewer file={createMarkdownFile()} content="# Preview title" renderMode="markdown" themeId="pearl" />,
       );
     });
 
@@ -88,12 +71,7 @@ describe('TextFileViewer', () => {
 
     act(() => {
       root.render(
-        <TextFileViewer
-          file={createMarkdownFile()}
-          content={largeMarkdown}
-          renderMode="markdown"
-          themeId="pearl"
-        />,
+        <TextFileViewer file={createMarkdownFile()} content={largeMarkdown} renderMode="markdown" themeId="pearl" />,
       );
     });
 
@@ -102,8 +80,8 @@ describe('TextFileViewer', () => {
     expect(container.textContent).toContain('filePreview_render_markdown_anyway');
     expect(container.textContent).toContain('# Heading');
 
-    const button = Array.from(container.querySelectorAll('button')).find(
-      (candidate) => candidate.textContent?.includes('filePreview_render_markdown_anyway'),
+    const button = Array.from(container.querySelectorAll('button')).find((candidate) =>
+      candidate.textContent?.includes('filePreview_render_markdown_anyway'),
     );
 
     expect(button).not.toBeUndefined();

@@ -18,9 +18,7 @@ describe('useSmoothStreaming', () => {
   let currentTime: number;
 
   const flushNextFrame = () => {
-    const nextFrame = scheduledFrames.entries().next().value as
-      | [number, FrameRequestCallback]
-      | undefined;
+    const nextFrame = scheduledFrames.entries().next().value as [number, FrameRequestCallback] | undefined;
 
     if (!nextFrame) {
       return false;
@@ -69,14 +67,14 @@ describe('useSmoothStreaming', () => {
         const frameId = ++nextAnimationFrameId;
         scheduledFrames.set(frameId, callback);
         return frameId;
-      })
+      }),
     );
 
     vi.stubGlobal(
       'cancelAnimationFrame',
       vi.fn((frameId: number) => {
         scheduledFrames.delete(frameId);
-      })
+      }),
     );
   });
 

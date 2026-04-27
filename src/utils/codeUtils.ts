@@ -28,10 +28,7 @@ export const getPreviewMarkupType = (textContent: string): PreviewMarkupType | n
   return null;
 };
 
-export const getCodeBlockPreviewType = (
-  textContent: string,
-  language?: string,
-): PreviewMarkupType | null => {
+export const getCodeBlockPreviewType = (textContent: string, language?: string): PreviewMarkupType | null => {
   const normalizedLanguage = normalizeLanguage(language);
 
   if (HTML_LANGUAGE_ALIASES.has(normalizedLanguage)) {

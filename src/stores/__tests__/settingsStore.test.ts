@@ -103,6 +103,14 @@ describe('settingsStore', () => {
   });
 
   describe('loadSettings', () => {
+    it('provides English as the default input translation target language', async () => {
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
+
+      await useSettingsStore.getState().loadSettings();
+
+      expect(useSettingsStore.getState().appSettings.translationTargetLanguage).toBe('English');
+    });
+
     it('preserves user edits made before settings finish loading', async () => {
       const canvasPrompt = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
       vi.mocked(dbService.getAppSettings).mockResolvedValue({

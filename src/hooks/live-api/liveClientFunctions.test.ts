@@ -100,10 +100,7 @@ describe('createLiveClientFunctions', () => {
 
     const abortController = new AbortController();
 
-    await functions.run_local_python.handler(
-      { code: 'print(42)' },
-      { abortSignal: abortController.signal },
-    );
+    await functions.run_local_python.handler({ code: 'print(42)' }, { abortSignal: abortController.signal });
 
     expect(runPython).toHaveBeenCalledWith('print(42)', {
       files: [],

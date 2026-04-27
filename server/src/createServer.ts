@@ -25,11 +25,7 @@ const STRIPPED_PROXY_REQUEST_HEADERS = new Set([
   'cookie',
   'host',
 ]);
-const STRIPPED_PROXY_RESPONSE_HEADERS = new Set([
-  ...HOP_BY_HOP_HEADERS,
-  'content-encoding',
-  'content-length',
-]);
+const STRIPPED_PROXY_RESPONSE_HEADERS = new Set([...HOP_BY_HOP_HEADERS, 'content-encoding', 'content-length']);
 
 interface LiveTokenPayload {
   name?: string;
@@ -78,10 +74,7 @@ function resolveServerReachableApiBaseUrl(apiBaseUrl: string): string | undefine
   return normalizedBaseUrl;
 }
 
-export async function createLiveTokenWithGemini(
-  apiKey: string,
-  apiBaseUrl?: string,
-): Promise<LiveTokenPayload> {
+export async function createLiveTokenWithGemini(apiKey: string, apiBaseUrl?: string): Promise<LiveTokenPayload> {
   const httpOptions: { apiVersion: 'v1alpha'; baseUrl?: string } = { apiVersion: 'v1alpha' };
   if (apiBaseUrl?.trim()) {
     const resolvedApiBaseUrl = resolveServerReachableApiBaseUrl(apiBaseUrl);
@@ -140,9 +133,7 @@ function sendJson(
   response.end(JSON.stringify(body));
 }
 
-async function readJsonBody<T extends Record<string, unknown>>(
-  request: IncomingMessage,
-): Promise<T | null> {
+async function readJsonBody<T extends Record<string, unknown>>(request: IncomingMessage): Promise<T | null> {
   const chunks: Buffer[] = [];
 
   for await (const chunk of request) {
@@ -155,9 +146,7 @@ async function readJsonBody<T extends Record<string, unknown>>(
   }
 
   const parsed = JSON.parse(rawBody);
-  return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-    ? parsed as T
-    : null;
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as T) : null;
 }
 
 function getConnectionManagedHeaders(value: string | null | undefined): Set<string> {
@@ -199,10 +188,7 @@ function buildProxyHeaders(request: IncomingMessage, apiKey: string): Headers {
     }
 
     const normalizedName = name.toLowerCase();
-    if (
-      STRIPPED_PROXY_REQUEST_HEADERS.has(normalizedName) ||
-      connectionManagedHeaders.has(normalizedName)
-    ) {
+    if (STRIPPED_PROXY_REQUEST_HEADERS.has(normalizedName) || connectionManagedHeaders.has(normalizedName)) {
       continue;
     }
 
@@ -228,10 +214,7 @@ function buildProxyResponseHeaders(
 
   upstreamResponse.headers.forEach((value, key) => {
     const normalizedName = key.toLowerCase();
-    if (
-      STRIPPED_PROXY_RESPONSE_HEADERS.has(normalizedName) ||
-      connectionManagedHeaders.has(normalizedName)
-    ) {
+    if (STRIPPED_PROXY_RESPONSE_HEADERS.has(normalizedName) || connectionManagedHeaders.has(normalizedName)) {
       return;
     }
 
@@ -324,10 +307,7 @@ async function proxyGeminiRequest(
   }
 }
 
-export function createServer(
-  config: CreateServerConfig,
-  dependencies: CreateServerDependencies = {},
-): http.Server {
+export function createServer(config: CreateServerConfig, dependencies: CreateServerDependencies = {}): http.Server {
   const resolvedConfig: ResolvedServerConfig = {
     ...config,
     allowedOrigins: config.allowedOrigins ?? [],
@@ -388,7 +368,13 @@ export function createServer(
               apiBaseUrlForToken = resolveServerReachableApiBaseUrl(bodyApiBaseUrl);
             }
           } catch {
-            sendJson(request, response, 400, { error: 'Live token request body must be valid JSON.' }, resolvedConfig.allowedOrigins);
+            sendJson(
+              request,
+              response,
+              400,
+              { error: 'Live token request body must be valid JSON.' },
+              resolvedConfig.allowedOrigins,
+            );
             return;
           }
         }
@@ -399,9 +385,10 @@ export function createServer(
             response,
             method === 'GET' ? 500 : 400,
             {
-              error: method === 'GET'
-                ? 'GEMINI_API_KEY is not configured.'
-                : 'API key is required to create a Live API token.',
+              error:
+                method === 'GET'
+                  ? 'GEMINI_API_KEY is not configured.'
+                  : 'API key is required to create a Live API token.',
             },
             resolvedConfig.allowedOrigins,
           );

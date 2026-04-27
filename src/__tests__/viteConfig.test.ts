@@ -41,10 +41,12 @@ describe('vite.config runtime ownership', () => {
     expect(config).toMatch(/chunkSizeWarningLimit:\s*1500/);
   });
 
-  it('copies the PDF worker from react-pdf\'s pinned pdfjs-dist version', () => {
+  it("copies the PDF worker from react-pdf's pinned pdfjs-dist version", () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
 
-    expect(config).toContain("const PDF_WORKER_COPY_SOURCE = 'node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs'");
+    expect(config).toContain(
+      "const PDF_WORKER_COPY_SOURCE = 'node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs'",
+    );
     expect(config).toContain('src: PDF_WORKER_COPY_SOURCE');
     expect(config).not.toContain("src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'");
   });
@@ -70,7 +72,9 @@ describe('Runtime loading boundaries', () => {
     expect(fs.existsSync(baseMarkdownRendererEntryPath)).toBe(true);
     expect(lazyMarkdownSource).toContain("import('./BaseMarkdownRendererEntry')");
     expect(lazyMarkdownSource).toContain("import('./MarkdownRenderer')");
-    expect(createFilePdfExportSurfaceSource).toContain("import { MarkdownRenderer } from '../../message/MarkdownRenderer'");
+    expect(createFilePdfExportSurfaceSource).toContain(
+      "import { MarkdownRenderer } from '../../message/MarkdownRenderer'",
+    );
   });
 
   it('moves KaTeX and PDF viewer CSS ownership out of the global app entry', () => {
@@ -101,8 +105,8 @@ describe('Runtime loading boundaries', () => {
     const standardClientFunctionsSource = fs.readFileSync(standardClientFunctionsPath, 'utf8');
     const liveClientFunctionsSource = fs.readFileSync(liveClientFunctionsPath, 'utf8');
 
-    expect(standardClientFunctionsSource).not.toContain("@google/genai");
-    expect(liveClientFunctionsSource).not.toContain("@google/genai");
+    expect(standardClientFunctionsSource).not.toContain('@google/genai');
+    expect(liveClientFunctionsSource).not.toContain('@google/genai');
   });
 
   it('keeps TTS voice options on a single static import path to avoid mixed-import build warnings', () => {

@@ -26,7 +26,7 @@ describe('Modal', () => {
       root.render(
         <Modal isOpen onClose={() => {}}>
           <div>Content</div>
-        </Modal>
+        </Modal>,
       );
     });
 
@@ -43,7 +43,7 @@ describe('Modal', () => {
       root.render(
         <Modal isOpen onClose={onClose}>
           <div>Content</div>
-        </Modal>
+        </Modal>,
       );
     });
 
@@ -53,7 +53,7 @@ describe('Modal', () => {
       root.render(
         <Modal isOpen={false} onClose={onClose}>
           <div>Content</div>
-        </Modal>
+        </Modal>,
       );
     });
 

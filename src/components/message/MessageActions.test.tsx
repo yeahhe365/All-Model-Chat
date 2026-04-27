@@ -66,7 +66,7 @@ describe('MessageActions', () => {
               themeId="pearl"
             />
           </WindowProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
@@ -93,7 +93,7 @@ describe('MessageActions', () => {
               themeId="pearl"
             />
           </WindowProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
@@ -121,7 +121,7 @@ describe('MessageActions', () => {
               themeId="pearl"
             />
           </WindowProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
@@ -168,13 +168,11 @@ describe('MessageActions', () => {
               />
             </>
           </WindowProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
-    const assistantAvatar = container.querySelector<HTMLImageElement>(
-      'img[alt="Assistant avatar"]',
-    );
+    const assistantAvatar = container.querySelector<HTMLImageElement>('img[alt="Assistant avatar"]');
 
     expect(assistantAvatar).toBeInTheDocument();
     expect(assistantAvatar?.getAttribute('src')).toBe('/assets/assistant-avatar.png');

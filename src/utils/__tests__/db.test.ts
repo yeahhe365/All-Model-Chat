@@ -12,12 +12,12 @@ function createIDBMock() {
   };
 
   return {
-      stores,
-      objectStoreNames: {
-        contains(name: string) {
+    stores,
+    objectStoreNames: {
+      contains(name: string) {
         return Object.prototype.hasOwnProperty.call(stores, name);
-        },
       },
+    },
     createObjectStore,
   };
 }
@@ -83,9 +83,7 @@ describe('IndexedDB Service Patterns', () => {
       const results: string[] = [];
       store.forEach((session: any) => {
         const titleMatch = session.title?.toLowerCase().includes(lowerQuery);
-        const contentMatch = session.messages?.some(
-          (m: any) => m.content?.toLowerCase().includes(lowerQuery),
-        );
+        const contentMatch = session.messages?.some((m: any) => m.content?.toLowerCase().includes(lowerQuery));
         if (titleMatch || contentMatch) results.push(session.id);
       });
       return results;

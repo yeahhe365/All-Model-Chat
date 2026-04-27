@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { compressAudioToMp3 } from '../utils/audioCompression';
 import { useRecorder } from './core/useRecorder';
@@ -22,45 +21,42 @@ export const useVoiceInput = ({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const insertText = useTextAreaInsert(textareaRef, setInputText);
 
-  const handleRecordingComplete = useCallback(async (audioBlob: Blob) => {
-    if (audioBlob.size > 0) {
+  const handleRecordingComplete = useCallback(
+    async (audioBlob: Blob) => {
+      if (audioBlob.size > 0) {
         setIsTranscribing(true);
         try {
-            let fileToTranscribe: File;
-            
-            if (isAudioCompressionEnabled) {
-                try {
-                    fileToTranscribe = await compressAudioToMp3(audioBlob);
-                } catch (error) {
-                    console.error("Error compressing audio, falling back to original:", error);
-                    fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
-                }
-            } else {
-                fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
-            }
+          let fileToTranscribe: File;
 
-            const transcribedText = await onTranscribeAudio(fileToTranscribe);
-            
-            if (transcribedText) {
-                // Use the shared hook with padding enabled for voice input
-                insertText(transcribedText.trim(), { ensurePadding: true });
+          if (isAudioCompressionEnabled) {
+            try {
+              fileToTranscribe = await compressAudioToMp3(audioBlob);
+            } catch (error) {
+              console.error('Error compressing audio, falling back to original:', error);
+              fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
             }
+          } else {
+            fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
+          }
+
+          const transcribedText = await onTranscribeAudio(fileToTranscribe);
+
+          if (transcribedText) {
+            // Use the shared hook with padding enabled for voice input
+            insertText(transcribedText.trim(), { ensurePadding: true });
+          }
         } catch (error) {
-            console.error("Error processing/transcribing audio:", error);
+          console.error('Error processing/transcribing audio:', error);
         } finally {
-            setIsTranscribing(false);
+          setIsTranscribing(false);
         }
-    }
-  }, [onTranscribeAudio, isAudioCompressionEnabled, insertText]);
+      }
+    },
+    [onTranscribeAudio, isAudioCompressionEnabled, insertText],
+  );
 
-  const { 
-      status, 
-      isInitializing, 
-      startRecording, 
-      stopRecording, 
-      cancelRecording 
-  } = useRecorder({
-      onStop: handleRecordingComplete
+  const { status, isInitializing, startRecording, stopRecording, cancelRecording } = useRecorder({
+    onStop: handleRecordingComplete,
   });
 
   const isRecording = status === 'recording';

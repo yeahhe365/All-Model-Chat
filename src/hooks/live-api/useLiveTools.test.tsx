@@ -94,9 +94,7 @@ describe('useLiveTools', () => {
 
   it('does not send tool responses for cancelled calls that finish later', async () => {
     const sendToolResponse = vi.fn();
-    let resolveHandler:
-      | ((value: { response: { output: string }; generatedFiles: [] }) => void)
-      | null = null;
+    let resolveHandler: ((value: { response: { output: string }; generatedFiles: [] }) => void) | null = null;
 
     const { result, unmount } = renderHook(() =>
       useLiveTools({

@@ -13,8 +13,7 @@ const DEFAULT_HISTORY_SIDEBAR_PREFERENCES: HistorySidebarPreferences = {
   mobileOpen: false,
 };
 
-const isDesktopViewport = () =>
-  typeof window !== 'undefined' ? window.innerWidth >= DESKTOP_BREAKPOINT : true;
+const isDesktopViewport = () => (typeof window !== 'undefined' ? window.innerWidth >= DESKTOP_BREAKPOINT : true);
 
 const readHistorySidebarPreferences = (): HistorySidebarPreferences => {
   if (typeof localStorage === 'undefined') {
@@ -30,13 +29,9 @@ const readHistorySidebarPreferences = (): HistorySidebarPreferences => {
     const parsed = JSON.parse(raw) as Partial<HistorySidebarPreferences>;
     return {
       desktopOpen:
-        typeof parsed.desktopOpen === 'boolean'
-          ? parsed.desktopOpen
-          : DEFAULT_HISTORY_SIDEBAR_PREFERENCES.desktopOpen,
+        typeof parsed.desktopOpen === 'boolean' ? parsed.desktopOpen : DEFAULT_HISTORY_SIDEBAR_PREFERENCES.desktopOpen,
       mobileOpen:
-        typeof parsed.mobileOpen === 'boolean'
-          ? parsed.mobileOpen
-          : DEFAULT_HISTORY_SIDEBAR_PREFERENCES.mobileOpen,
+        typeof parsed.mobileOpen === 'boolean' ? parsed.mobileOpen : DEFAULT_HISTORY_SIDEBAR_PREFERENCES.mobileOpen,
     };
   } catch {
     return DEFAULT_HISTORY_SIDEBAR_PREFERENCES;
@@ -56,9 +51,7 @@ const buildInitialHistorySidebarState = () => {
   return {
     desktopHistorySidebarOpen: preferences.desktopOpen,
     mobileHistorySidebarOpen: preferences.mobileOpen,
-    isHistorySidebarOpen: isDesktopViewport()
-      ? preferences.desktopOpen
-      : preferences.mobileOpen,
+    isHistorySidebarOpen: isDesktopViewport() ? preferences.desktopOpen : preferences.mobileOpen,
   };
 };
 
@@ -93,13 +86,11 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     })),
   setIsPreloadedMessagesModalOpen: (v) =>
     set((s) => ({
-      isPreloadedMessagesModalOpen:
-        typeof v === 'function' ? v(s.isPreloadedMessagesModalOpen) : v,
+      isPreloadedMessagesModalOpen: typeof v === 'function' ? v(s.isPreloadedMessagesModalOpen) : v,
     })),
   setIsHistorySidebarOpen: (v) =>
     set((s) => {
-      const nextIsOpen =
-        typeof v === 'function' ? v(s.isHistorySidebarOpen) : v;
+      const nextIsOpen = typeof v === 'function' ? v(s.isHistorySidebarOpen) : v;
       const isDesktop = isDesktopViewport();
       const nextDesktopOpen = isDesktop ? nextIsOpen : s.desktopHistorySidebarOpen;
       const nextMobileOpen = isDesktop ? s.mobileHistorySidebarOpen : nextIsOpen;
@@ -122,19 +113,15 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     }),
   setIsHistorySidebarOpenTransient: (v) =>
     set((s) => ({
-      isHistorySidebarOpen:
-        typeof v === 'function' ? v(s.isHistorySidebarOpen) : v,
+      isHistorySidebarOpen: typeof v === 'function' ? v(s.isHistorySidebarOpen) : v,
     })),
   syncHistorySidebarForViewport: () =>
     set((s) => ({
-      isHistorySidebarOpen: isDesktopViewport()
-        ? s.desktopHistorySidebarOpen
-        : s.mobileHistorySidebarOpen,
+      isHistorySidebarOpen: isDesktopViewport() ? s.desktopHistorySidebarOpen : s.mobileHistorySidebarOpen,
     })),
   setIsLogViewerOpen: (v) =>
     set((s) => ({
       isLogViewerOpen: typeof v === 'function' ? v(s.isLogViewerOpen) : v,
     })),
-  toggleHistorySidebar: () =>
-    get().setIsHistorySidebarOpen((s) => !s),
+  toggleHistorySidebar: () => get().setIsHistorySidebarOpen((s) => !s),
 }));

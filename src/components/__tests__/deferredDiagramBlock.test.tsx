@@ -11,7 +11,7 @@ const deferredDiagramBlockPath = path.join(projectRoot, 'src/components/message/
 describe('DeferredDiagramBlock', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;
- 
+
   afterEach(() => {
     act(() => {
       root?.unmount();
@@ -31,14 +31,7 @@ describe('DeferredDiagramBlock', () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
     await act(async () => {
-      root!.render(
-        <DeferredDiagramBlock
-          eager
-          load={load}
-          componentProps={{}}
-          label="Mermaid preview"
-        />,
-      );
+      root!.render(<DeferredDiagramBlock eager load={load} componentProps={{}} label="Mermaid preview" />);
       await Promise.resolve();
       await Promise.resolve();
     });

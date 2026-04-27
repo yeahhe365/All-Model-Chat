@@ -3,7 +3,8 @@ import { compareTreeNodes } from './shared';
 
 const PLAIN_SEPARATOR = '='.repeat(16);
 const PLAIN_LONG_SEPARATOR = '='.repeat(64);
-const GENERATION_HEADER = 'This file is a merged representation of the current codebase, prepared by Structure Insight.';
+const GENERATION_HEADER =
+  'This file is a merged representation of the current codebase, prepared by Structure Insight.';
 const SUMMARY_PURPOSE = [
   "This file contains a packed representation of the entire repository's contents.",
   'It is designed to be easily consumable by AI systems for analysis, code review,',
@@ -153,10 +154,7 @@ function getSecurityFindings(processedData: ProcessedFiles, activeFiles: FileCon
   return processedData.securityFindings ?? activeFiles.flatMap((file) => file.securityFindings ?? []);
 }
 
-export function generateRepomixPlainOutput(
-  processedData: ProcessedFiles,
-  options: RepomixPlainOutputOptions,
-): string {
+export function generateRepomixPlainOutput(processedData: ProcessedFiles, options: RepomixPlainOutputOptions): string {
   const activeFiles = getActiveFiles(processedData.fileContents);
   const securityFindings = getSecurityFindings(processedData, activeFiles);
   const hasSectionAfterFiles = securityFindings.length > 0 || Boolean(options.instruction?.trim());
@@ -206,22 +204,11 @@ export function generateRepomixPlainOutput(
   if (options.includeDirectoryStructure) {
     const directoryStructure = buildRepomixDirectoryStructure(processedData);
 
-    lines.push(
-      PLAIN_LONG_SEPARATOR,
-      'Directory Structure',
-      PLAIN_LONG_SEPARATOR,
-      directoryStructure,
-      '',
-    );
+    lines.push(PLAIN_LONG_SEPARATOR, 'Directory Structure', PLAIN_LONG_SEPARATOR, directoryStructure, '');
   }
 
   if (options.includeFiles) {
-    lines.push(
-      PLAIN_LONG_SEPARATOR,
-      'Files',
-      PLAIN_LONG_SEPARATOR,
-      '',
-    );
+    lines.push(PLAIN_LONG_SEPARATOR, 'Files', PLAIN_LONG_SEPARATOR, '');
 
     for (const file of activeFiles) {
       lines.push(
@@ -247,21 +234,10 @@ export function generateRepomixPlainOutput(
   }
 
   if (options.instruction?.trim()) {
-    lines.push(
-      PLAIN_LONG_SEPARATOR,
-      'Instruction',
-      PLAIN_LONG_SEPARATOR,
-      options.instruction.trim(),
-      '',
-    );
+    lines.push(PLAIN_LONG_SEPARATOR, 'Instruction', PLAIN_LONG_SEPARATOR, options.instruction.trim(), '');
   }
 
-  lines.push(
-    PLAIN_LONG_SEPARATOR,
-    'End of Codebase',
-    PLAIN_LONG_SEPARATOR,
-    '',
-  );
+  lines.push(PLAIN_LONG_SEPARATOR, 'End of Codebase', PLAIN_LONG_SEPARATOR, '');
 
   return lines.join('\n');
 }

@@ -5,7 +5,15 @@ import type { UploadedFile } from '../../types';
 
 const { mockMarkdownFileViewer, mockSettingsState } = vi.hoisted(() => ({
   mockMarkdownFileViewer: vi.fn(
-    ({ content, isEditable, onChange }: { content?: string | null; isEditable?: boolean; onChange?: (value: string) => void }) => (
+    ({
+      content,
+      isEditable,
+      onChange,
+    }: {
+      content?: string | null;
+      isEditable?: boolean;
+      onChange?: (value: string) => void;
+    }) => (
       <div data-testid="markdown-file-viewer" data-editable={String(isEditable)}>
         <span data-testid="viewer-content">{content ?? 'loaded markdown'}</span>
         {isEditable && (
@@ -80,17 +88,12 @@ describe('MarkdownPreviewModal', () => {
 
     act(() => {
       root.render(
-        <MarkdownPreviewModal
-          file={createMarkdownFile()}
-          onClose={onClose}
-          onSaveText={vi.fn()}
-          initialEditMode
-        />,
+        <MarkdownPreviewModal file={createMarkdownFile()} onClose={onClose} onSaveText={vi.fn()} initialEditMode />,
       );
     });
 
-    const changeButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('change content'),
+    const changeButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('change content'),
     );
     expect(changeButton).toBeDefined();
 

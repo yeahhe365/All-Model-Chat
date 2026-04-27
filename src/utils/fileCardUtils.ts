@@ -37,23 +37,13 @@ export const getFileCardMeta = (
   const isPdf = category === 'pdf';
   const isText = category === 'code';
 
-  const supportsConfiguration =
-    isVideo || (isGemini3 && (isImage || isPdf)) || (includeTextEditing && isText);
+  const supportsConfiguration = isVideo || (isGemini3 && (isImage || isPdf)) || (includeTextEditing && isText);
 
   const isConfigurable =
-    canConfigure &&
-    !file.error &&
-    (!requireActiveForConfigure || isActive) &&
-    supportsConfiguration;
+    canConfigure && !file.error && (!requireActiveForConfigure || isActive) && supportsConfiguration;
 
   const ConfigIcon =
-    includeTextEditing && isText
-      ? Edit3
-      : isGemini3
-        ? SlidersHorizontal
-        : isVideo
-          ? Scissors
-          : Settings2;
+    includeTextEditing && isText ? Edit3 : isGemini3 ? SlidersHorizontal : isVideo ? Scissors : Settings2;
 
   return {
     category,

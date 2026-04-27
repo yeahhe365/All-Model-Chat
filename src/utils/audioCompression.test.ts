@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  compressAudioToMp3,
-  createAudioCompressionWorkerCode,
-  encodeMp3WithWorker,
-} from './audioCompression';
+import { compressAudioToMp3, createAudioCompressionWorkerCode, encodeMp3WithWorker } from './audioCompression';
 
 class FakeWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
@@ -61,10 +57,7 @@ describe('encodeMp3WithWorker', () => {
       revokeObjectUrl,
     });
 
-    expect(worker.postMessage).toHaveBeenCalledWith(
-      { pcmData, sampleRate: 16_000, kbps: 64 },
-      [pcmData.buffer],
-    );
+    expect(worker.postMessage).toHaveBeenCalledWith({ pcmData, sampleRate: 16_000, kbps: 64 }, [pcmData.buffer]);
 
     worker.emitSuccess([new Uint8Array([7, 8, 9])]);
 

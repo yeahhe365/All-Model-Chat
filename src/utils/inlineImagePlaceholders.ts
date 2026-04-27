@@ -7,14 +7,11 @@ export const extractInlineImagePlaceholders = (content: string) => {
   const placeholders = new Map<string, string>();
   let nextIndex = 1;
 
-  const editorContent = content.replace(
-    INLINE_IMAGE_DATA_URL_PATTERN,
-    (_match, alt: string, dataUrl: string) => {
-      const placeholder = createInlineImagePlaceholder(nextIndex++);
-      placeholders.set(placeholder, dataUrl);
-      return `![${alt}](${placeholder})`;
-    },
-  );
+  const editorContent = content.replace(INLINE_IMAGE_DATA_URL_PATTERN, (_match, alt: string, dataUrl: string) => {
+    const placeholder = createInlineImagePlaceholder(nextIndex++);
+    placeholders.set(placeholder, dataUrl);
+    return `![${alt}](${placeholder})`;
+  });
 
   return {
     editorContent,
@@ -23,18 +20,12 @@ export const extractInlineImagePlaceholders = (content: string) => {
   };
 };
 
-export const resolveInlineImagePlaceholders = (
-  content: string,
-  placeholders: Map<string, string>,
-) =>
-  content.replace(
-    INLINE_IMAGE_PLACEHOLDER_PATTERN,
-    (match, alt: string, placeholder: string) => {
-      const dataUrl = placeholders.get(placeholder);
-      if (!dataUrl) {
-        return match;
-      }
+export const resolveInlineImagePlaceholders = (content: string, placeholders: Map<string, string>) =>
+  content.replace(INLINE_IMAGE_PLACEHOLDER_PATTERN, (match, alt: string, placeholder: string) => {
+    const dataUrl = placeholders.get(placeholder);
+    if (!dataUrl) {
+      return match;
+    }
 
-      return `![${alt}](${dataUrl})`;
-    },
-  );
+    return `![${alt}](${dataUrl})`;
+  });

@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Part } from '@google/genai';
 
-const {
-  mockGetConfiguredApiClient,
-  mockGenerateContent,
-  mockGenerateContentStream,
-} = vi.hoisted(() => ({
+const { mockGetConfiguredApiClient, mockGenerateContent, mockGenerateContentStream } = vi.hoisted(() => ({
   mockGetConfiguredApiClient: vi.fn(),
   mockGenerateContent: vi.fn(),
   mockGenerateContentStream: vi.fn(),
@@ -23,10 +19,7 @@ vi.mock('../../logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
-import {
-  sendStatelessMessageNonStreamApi,
-  sendStatelessMessageStreamApi,
-} from '../chatApi';
+import { sendStatelessMessageNonStreamApi, sendStatelessMessageStreamApi } from '../chatApi';
 
 describe('chatApi media resolution routing', () => {
   beforeEach(() => {

@@ -36,6 +36,7 @@ registerRoute(
 );
 
 registerRoute(
-  ({ url }) => url.origin === self.location.origin && (url.pathname === '/runtime-config.js' || url.pathname.startsWith('/api/')),
+  ({ url }) =>
+    url.origin === self.location.origin && (url.pathname === '/runtime-config.js' || url.pathname.startsWith('/api/')),
   new NetworkOnly(),
 );

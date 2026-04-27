@@ -77,7 +77,7 @@ export const chatInputTranslations = {
   tools_token_count_label: { en: 'Token Calculator', zh: 'Token 计算器' },
   token_count_result: { en: 'Estimated Tokens: {count}', zh: '预估 Token 数: {count}' },
   token_count_error: { en: 'Failed to count tokens.', zh: '计算 Token 失败。' },
-  translate_button_title: { en: 'Translate to English', zh: '翻译成英文' },
+  translate_button_title: { en: 'Translate input', zh: '翻译输入内容' },
   translating_button_title: { en: 'Translating...', zh: '翻译中...' },
   bbox_button_title: { en: 'Object Detection (BBox)', zh: '目标检测 (BBox)' },
   guide_button_title: { en: 'HD Guide (Arrow)', zh: '高清引导 (箭头)' },

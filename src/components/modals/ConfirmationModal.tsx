@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Modal } from '../shared/Modal';
 import { AlertTriangle, Info } from 'lucide-react';
@@ -38,16 +37,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     >
       <div className="p-6 flex flex-col gap-4">
         <div className="flex items-start gap-4">
-          <div className={`p-3 rounded-full flex-shrink-0 ${isDanger ? 'bg-[var(--theme-bg-danger)]/10 text-[var(--theme-icon-error)]' : 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-bg-accent)]'}`}>
+          <div
+            className={`p-3 rounded-full flex-shrink-0 ${isDanger ? 'bg-[var(--theme-bg-danger)]/10 text-[var(--theme-icon-error)]' : 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-bg-accent)]'}`}
+          >
             {isDanger ? <AlertTriangle size={24} strokeWidth={2} /> : <Info size={24} strokeWidth={2} />}
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-bold text-[var(--theme-text-primary)] mb-2 leading-tight">
-              {title}
-            </h3>
-            <p className="text-sm text-[var(--theme-text-secondary)] leading-relaxed">
-              {message}
-            </p>
+            <h3 className="text-lg font-bold text-[var(--theme-text-primary)] mb-2 leading-tight">{title}</h3>
+            <p className="text-sm text-[var(--theme-text-secondary)] leading-relaxed">{message}</p>
           </div>
         </div>
 
@@ -61,8 +58,8 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <button
             onClick={handleConfirm}
             className={`px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-colors flex items-center gap-2 ${
-              isDanger 
-                ? 'bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)]' 
+              isDanger
+                ? 'bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)]'
                 : 'bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]'
             }`}
           >

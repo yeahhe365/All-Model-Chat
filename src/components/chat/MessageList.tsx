@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { useI18n } from '../../contexts/I18nContext';
@@ -46,8 +45,6 @@ const MessageListComponent: React.FC = () => {
     expandCodeBlocksByDefault,
     isMermaidRenderingEnabled,
     isGraphvizRenderingEnabled,
-    onSuggestionClick,
-    onOrganizeInfoClick,
     onFollowUpSuggestionClick,
     onGenerateCanvas,
     onContinueGeneration,
@@ -63,36 +60,36 @@ const MessageListComponent: React.FC = () => {
   const visibleMessages = useMemo(() => getVisibleChatMessages(messages), [messages]);
   // UI Logic (Modals, Previews, Configuration)
   const {
-      previewFile,
-      isHtmlPreviewModalOpen,
-      htmlToPreview,
-      initialTrueFullscreenRequest,
-      configuringFile,
-      setConfiguringFile,
-      handleFileClick,
-      closeFilePreviewModal,
-      allImages,
-      currentImageIndex,
-      handlePrevImage,
-      handleNextImage,
-      handleOpenHtmlPreview,
-      handleCloseHtmlPreview,
-      handleConfigureFile,
-      handleSaveFileConfig,
+    previewFile,
+    isHtmlPreviewModalOpen,
+    htmlToPreview,
+    initialTrueFullscreenRequest,
+    configuringFile,
+    setConfiguringFile,
+    handleFileClick,
+    closeFilePreviewModal,
+    allImages,
+    currentImageIndex,
+    handlePrevImage,
+    handleNextImage,
+    handleOpenHtmlPreview,
+    handleCloseHtmlPreview,
+    handleConfigureFile,
+    handleSaveFileConfig,
   } = useMessageListUI({ messages: visibleMessages, onUpdateMessageFile });
 
   // Scroll Logic
   const {
-      virtuosoRef,
-      handleScrollerRef,
-      setAtBottom,
-      onRangeChanged,
-      scrollToPrevTurn,
-      scrollToNextTurn,
-      showScrollDown,
-      showScrollUp,
-      scrollerRef,
-      handleScroll,
+    virtuosoRef,
+    handleScrollerRef,
+    setAtBottom,
+    onRangeChanged,
+    scrollToPrevTurn,
+    scrollToNextTurn,
+    showScrollDown,
+    showScrollUp,
+    scrollerRef,
+    handleScroll,
   } = useMessageListScroll({ messages: visibleMessages, setScrollContainerRef, activeSessionId });
 
   // Determine if current model is Gemini 3 to enable per-part resolution
@@ -102,15 +99,11 @@ const MessageListComponent: React.FC = () => {
 
   return (
     <>
-      <div className={`relative flex-grow h-full ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}>
+      <div
+        className={`relative flex-grow h-full ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
+      >
         {visibleMessages.length === 0 ? (
-          <WelcomeScreen 
-              t={t}
-              onSuggestionClick={onSuggestionClick}
-              onOrganizeInfoClick={onOrganizeInfoClick}
-              showSuggestions={appSettings.showWelcomeSuggestions ?? true}
-              themeId={themeId}
-          />
+          <WelcomeScreen t={t} />
         ) : (
           <Virtuoso
             ref={virtuosoRef}
@@ -125,50 +118,50 @@ const MessageListComponent: React.FC = () => {
             className="custom-scrollbar"
             onScroll={handleScroll}
             components={{
-                Footer: () => <MessageListFooter messages={visibleMessages} chatInputHeight={chatInputHeight} />
+              Footer: () => <MessageListFooter messages={visibleMessages} chatInputHeight={chatInputHeight} />,
             }}
             itemContent={(index, msg) => (
-                <div className="px-1.5 sm:px-2 md:px-3 max-w-7xl mx-auto w-full">
-                    <Message
-                        key={msg.id}
-                        message={msg}
-                        sessionTitle={sessionTitle}
-                        prevMessage={index > 0 ? visibleMessages[index - 1] : undefined}
-                        messageIndex={index}
-                        onEditMessage={onEditMessage}
-                        onDeleteMessage={onDeleteMessage}
-                        onRetryMessage={onRetryMessage}
-                        onImageClick={handleFileClick} 
-                        onOpenHtmlPreview={handleOpenHtmlPreview}
-                        showThoughts={showThoughts}
-                        themeId={themeId}
-                        baseFontSize={baseFontSize}
-                        expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-                        isMermaidRenderingEnabled={isMermaidRenderingEnabled}
-                        isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-                        onGenerateCanvas={onGenerateCanvas}
-                        onContinueGeneration={onContinueGeneration}
-                        onSuggestionClick={onFollowUpSuggestionClick}
-                        appSettings={appSettings}
-                        onOpenSidePanel={onOpenSidePanel}
-                        onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
-                        isGemini3={isGemini3}
-                    />
-                </div>
+              <div className="px-1.5 sm:px-2 md:px-3 max-w-7xl mx-auto w-full">
+                <Message
+                  key={msg.id}
+                  message={msg}
+                  sessionTitle={sessionTitle}
+                  prevMessage={index > 0 ? visibleMessages[index - 1] : undefined}
+                  messageIndex={index}
+                  onEditMessage={onEditMessage}
+                  onDeleteMessage={onDeleteMessage}
+                  onRetryMessage={onRetryMessage}
+                  onImageClick={handleFileClick}
+                  onOpenHtmlPreview={handleOpenHtmlPreview}
+                  showThoughts={showThoughts}
+                  themeId={themeId}
+                  baseFontSize={baseFontSize}
+                  expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+                  isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+                  isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+                  onGenerateCanvas={onGenerateCanvas}
+                  onContinueGeneration={onContinueGeneration}
+                  onSuggestionClick={onFollowUpSuggestionClick}
+                  appSettings={appSettings}
+                  onOpenSidePanel={onOpenSidePanel}
+                  onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
+                  isGemini3={isGemini3}
+                />
+              </div>
             )}
           />
         )}
-        
+
         {/* Floating Toolbars & Navigation */}
-        <TextSelectionToolbar 
-            onQuote={onQuote} 
-            onInsert={onInsert} 
-            onTTS={onQuickTTS} 
-            containerRef={scrollerRef} 
-            t={t} 
+        <TextSelectionToolbar
+          onQuote={onQuote}
+          onInsert={onInsert}
+          onTTS={onQuickTTS}
+          containerRef={scrollerRef}
+          t={t}
         />
 
-        <ScrollNavigation 
+        <ScrollNavigation
           showUp={showScrollUp}
           showDown={showScrollDown}
           onScrollToPrev={scrollToPrevTurn}
@@ -176,27 +169,24 @@ const MessageListComponent: React.FC = () => {
           bottomOffset={chatInputHeight}
         />
       </div>
-    
+
       {/* Modals */}
       {genericPreviewFile && (
         <Suspense fallback={null}>
-          <LazyFilePreviewModal 
-              file={genericPreviewFile} 
-              onClose={closeFilePreviewModal} 
-              onPrev={handlePrevImage} 
-              onNext={handleNextImage} 
-              hasPrev={currentImageIndex > 0}
-              hasNext={currentImageIndex !== -1 && currentImageIndex < allImages.length - 1}
+          <LazyFilePreviewModal
+            file={genericPreviewFile}
+            onClose={closeFilePreviewModal}
+            onPrev={handlePrevImage}
+            onNext={handleNextImage}
+            hasPrev={currentImageIndex > 0}
+            hasNext={currentImageIndex !== -1 && currentImageIndex < allImages.length - 1}
           />
         </Suspense>
       )}
 
       {markdownPreviewFile && (
         <Suspense fallback={null}>
-          <LazyMarkdownPreviewModal
-            file={markdownPreviewFile}
-            onClose={closeFilePreviewModal}
-          />
+          <LazyMarkdownPreviewModal file={markdownPreviewFile} onClose={closeFilePreviewModal} />
         </Suspense>
       )}
 
@@ -211,12 +201,12 @@ const MessageListComponent: React.FC = () => {
         </Suspense>
       )}
 
-      <FileConfigurationModal 
-          isOpen={!!configuringFile} 
-          onClose={() => setConfiguringFile(null)} 
-          file={configuringFile?.file || null}
-          onSave={handleSaveFileConfig}
-          isGemini3={isGemini3}
+      <FileConfigurationModal
+        isOpen={!!configuringFile}
+        onClose={() => setConfiguringFile(null)}
+        file={configuringFile?.file || null}
+        onSave={handleSaveFileConfig}
+        isGemini3={isGemini3}
       />
     </>
   );

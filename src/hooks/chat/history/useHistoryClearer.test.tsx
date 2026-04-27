@@ -271,9 +271,7 @@ describe('useHistoryClearer', () => {
       clear: vi.fn(),
     };
     const unregisterMock = vi.fn().mockResolvedValue(true);
-    const getRegistrationsMock = vi.fn().mockResolvedValue([
-      { unregister: unregisterMock },
-    ]);
+    const getRegistrationsMock = vi.fn().mockResolvedValue([{ unregister: unregisterMock }]);
     const deleteCacheMock = vi.fn().mockResolvedValue(true);
     const cacheKeysMock = vi.fn().mockResolvedValue(['static-assets', 'workbox-precache-v1']);
     const reloadMock = vi.fn();

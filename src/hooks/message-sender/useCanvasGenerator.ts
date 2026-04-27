@@ -1,6 +1,3 @@
-
-
-
 import { useCallback } from 'react';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { generateUniqueId } from '../../utils/chat/ids';
@@ -13,111 +10,125 @@ import { CanvasGeneratorProps } from './types';
 import { loadCanvasSystemPrompt } from '../../constants/promptHelpers';
 
 export const useCanvasGenerator = ({
-    appSettings,
-    currentChatSettings,
-    activeSessionId,
-    updateAndPersistSessions,
-    setSessionLoading,
-    activeJobs,
-    getStreamHandlers,
-    setAppFileError,
-    aspectRatio,
-    language
+  appSettings,
+  currentChatSettings,
+  activeSessionId,
+  updateAndPersistSessions,
+  setSessionLoading,
+  activeJobs,
+  getStreamHandlers,
+  setAppFileError,
+  aspectRatio,
+  language,
 }: CanvasGeneratorProps) => {
+  const handleGenerateCanvas = useCallback(
+    async (sourceMessageId: string, content: string) => {
+      if (!activeSessionId) return;
 
-    const handleGenerateCanvas = useCallback(async (sourceMessageId: string, content: string) => {
-        if (!activeSessionId) return;
+      const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
+      if ('error' in keyResult) {
+        setAppFileError(keyResult.error);
+        return;
+      }
+      const { key: keyToUse } = keyResult;
 
-        const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
-        if ('error' in keyResult) {
-            setAppFileError(keyResult.error);
-            return;
-        }
-        const { key: keyToUse } = keyResult;
+      const generationId = generateUniqueId();
+      const generationStartTime = new Date();
+      const newAbortController = new AbortController();
 
-        const generationId = generateUniqueId();
-        const generationStartTime = new Date();
-        const newAbortController = new AbortController();
+      updateAndPersistSessions((prev) =>
+        prev.map((s) => {
+          if (s.id === activeSessionId) {
+            const sourceIndex = s.messages.findIndex((m) => m.id === sourceMessageId);
+            const insertIndex = sourceIndex !== -1 ? sourceIndex + 1 : s.messages.length;
 
-        updateAndPersistSessions(prev => prev.map(s => {
-            if (s.id === activeSessionId) {
-                const sourceIndex = s.messages.findIndex(m => m.id === sourceMessageId);
-                const insertIndex = sourceIndex !== -1 ? sourceIndex + 1 : s.messages.length;
+            const newMsg = createMessage('model', '', {
+              id: generationId,
+              isLoading: true,
+              generationStartTime,
+              excludeFromContext: true,
+            });
 
-                const newMsg = createMessage('model', '', {
-                    id: generationId,
-                    isLoading: true,
-                    generationStartTime,
-                    excludeFromContext: true 
-                });
-                
-                const newMessages = [...s.messages];
-                newMessages.splice(insertIndex, 0, newMsg);
-                
-                return { ...s, messages: newMessages };
-            }
-            return s;
-        }));
+            const newMessages = [...s.messages];
+            newMessages.splice(insertIndex, 0, newMsg);
 
-        setSessionLoading(activeSessionId, true);
-        activeJobs.current.set(generationId, newAbortController);
+            return { ...s, messages: newMessages };
+          }
+          return s;
+        }),
+      );
 
-        const canvasModelId = appSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
-        const canvasThinkingLevel = 'HIGH';
-        const canvasSystemPrompt = await loadCanvasSystemPrompt();
-        
-        const canvasSettings = {
-            ...currentChatSettings,
-            modelId: canvasModelId,
-            thinkingLevel: canvasThinkingLevel as 'HIGH',
-            thinkingBudget: 0,
-            showThoughts: true,
-        };
+      setSessionLoading(activeSessionId, true);
+      activeJobs.current.set(generationId, newAbortController);
 
-        const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
-            activeSessionId, 
-            generationId, 
-            newAbortController, 
-            generationStartTime, 
-            canvasSettings
+      const canvasModelId = appSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
+      const canvasThinkingLevel = 'HIGH';
+      const canvasSystemPrompt = await loadCanvasSystemPrompt();
+
+      const canvasSettings = {
+        ...currentChatSettings,
+        modelId: canvasModelId,
+        thinkingLevel: canvasThinkingLevel as 'HIGH',
+        thinkingBudget: 0,
+        showThoughts: true,
+      };
+
+      const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
+        activeSessionId,
+        generationId,
+        newAbortController,
+        generationStartTime,
+        canvasSettings,
+      );
+
+      const config = await buildGenerationConfig({
+        modelId: canvasModelId,
+        systemInstruction: canvasSystemPrompt,
+        config: { temperature: 0.7, topP: 0.95 },
+        showThoughts: true,
+        thinkingBudget: 0,
+        isGoogleSearchEnabled: false,
+        isCodeExecutionEnabled: false,
+        isUrlContextEnabled: false,
+        thinkingLevel: canvasThinkingLevel,
+        aspectRatio,
+        isDeepSearchEnabled: false,
+        isLocalPythonEnabled: false,
+      });
+
+      const t = getTranslator(language);
+      const promptInstruction = t('suggestion_html_desc');
+
+      try {
+        await geminiServiceInstance.sendMessageStream(
+          keyToUse,
+          canvasModelId,
+          [],
+          [{ text: promptInstruction }, { text: content }],
+          config,
+          newAbortController.signal,
+          streamOnPart,
+          onThoughtChunk,
+          streamOnError,
+          streamOnComplete,
         );
+      } catch (error) {
+        streamOnError(error instanceof Error ? error : new Error(String(error)));
+      }
+    },
+    [
+      appSettings,
+      currentChatSettings,
+      activeSessionId,
+      updateAndPersistSessions,
+      setSessionLoading,
+      activeJobs,
+      getStreamHandlers,
+      setAppFileError,
+      aspectRatio,
+      language,
+    ],
+  );
 
-        const config = await buildGenerationConfig({
-            modelId: canvasModelId,
-            systemInstruction: canvasSystemPrompt,
-            config: { temperature: 0.7, topP: 0.95 },
-            showThoughts: true,
-            thinkingBudget: 0,
-            isGoogleSearchEnabled: false,
-            isCodeExecutionEnabled: false,
-            isUrlContextEnabled: false,
-            thinkingLevel: canvasThinkingLevel,
-            aspectRatio,
-            isDeepSearchEnabled: false,
-            isLocalPythonEnabled: false,
-        });
-
-        const t = getTranslator(language);
-        const promptInstruction = t('suggestion_html_desc');
-
-        try {
-            await geminiServiceInstance.sendMessageStream(
-                keyToUse,
-                canvasModelId,
-                [],
-                [{ text: promptInstruction }, { text: content }],
-                config,
-                newAbortController.signal,
-                streamOnPart,
-                onThoughtChunk,
-                streamOnError,
-                streamOnComplete
-            );
-        } catch (error) {
-            streamOnError(error instanceof Error ? error : new Error(String(error)));
-        }
-
-    }, [appSettings, currentChatSettings, activeSessionId, updateAndPersistSessions, setSessionLoading, activeJobs, getStreamHandlers, setAppFileError, aspectRatio, language]);
-
-    return { handleGenerateCanvas };
+  return { handleGenerateCanvas };
 };

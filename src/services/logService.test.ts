@@ -1,20 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  mockAddApiUsageRecord,
-  mockAddLogs,
-  mockPruneLogs,
-  mockClearLogs,
-  mockClearApiUsage,
-  mockGetLogs,
-} = vi.hoisted(() => ({
-  mockAddApiUsageRecord: vi.fn(),
-  mockAddLogs: vi.fn(),
-  mockPruneLogs: vi.fn(),
-  mockClearLogs: vi.fn(),
-  mockClearApiUsage: vi.fn(),
-  mockGetLogs: vi.fn(),
-}));
+const { mockAddApiUsageRecord, mockAddLogs, mockPruneLogs, mockClearLogs, mockClearApiUsage, mockGetLogs } = vi.hoisted(
+  () => ({
+    mockAddApiUsageRecord: vi.fn(),
+    mockAddLogs: vi.fn(),
+    mockPruneLogs: vi.fn(),
+    mockClearLogs: vi.fn(),
+    mockClearApiUsage: vi.fn(),
+    mockGetLogs: vi.fn(),
+  }),
+);
 
 vi.mock('../utils/db', () => ({
   dbService: {
@@ -160,9 +155,7 @@ describe('logService', () => {
     await logService.getRecentLogs();
     mockAddLogs.mockReset();
     mockGetLogs.mockResolvedValue([]);
-    mockAddLogs
-      .mockRejectedValueOnce(new Error('db unavailable'))
-      .mockResolvedValueOnce(undefined);
+    mockAddLogs.mockRejectedValueOnce(new Error('db unavailable')).mockResolvedValueOnce(undefined);
 
     logService.info('Retry me');
     await logService.getRecentLogs();

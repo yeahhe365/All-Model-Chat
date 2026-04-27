@@ -3,15 +3,7 @@ import { getModelCapabilities, isGeminiRoboticsModel, sortModels } from './model
 
 export type ModelCatalogGroup = 'pinned' | 'standard';
 export type ModelCatalogCategory = 'text' | 'live' | 'tts' | 'image' | 'robotics' | 'other';
-export type ModelBadgeKey =
-  | 'pinned'
-  | 'live'
-  | 'tts'
-  | 'image'
-  | 'robotics'
-  | 'gemma'
-  | 'flash'
-  | 'pro';
+export type ModelBadgeKey = 'pinned' | 'live' | 'tts' | 'image' | 'robotics' | 'gemma' | 'flash' | 'pro';
 
 export interface ModelCatalogEntry {
   badgeKeys: ModelBadgeKey[];
@@ -85,9 +77,7 @@ const getBadgeKeys = (model: ModelOption): ModelBadgeKey[] => {
 };
 
 const buildSearchText = (model: ModelOption, category: ModelCatalogCategory, badgeKeys: ModelBadgeKey[]) => {
-  return [model.name, model.id, category, ...badgeKeys]
-    .join(' ')
-    .toLowerCase();
+  return [model.name, model.id, category, ...badgeKeys].join(' ').toLowerCase();
 };
 
 export const buildModelCatalog = (models: ModelOption[]): ModelCatalogEntry[] => {
@@ -118,17 +108,13 @@ export const filterModelCatalog = (entries: ModelCatalogEntry[], query: string):
 export const getQuickSwitchModelIds = (models: ModelOption[]): string[] =>
   buildModelCatalog(models).map((entry) => entry.id);
 
-const DEFAULT_TAB_CYCLE_MODEL_IDS = [
-  'gemini-3.1-pro-preview',
-  'gemini-3-flash-preview',
-] as const;
+const DEFAULT_TAB_CYCLE_MODEL_IDS = ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const;
 
-export const getTabCycleModelIds = (
-  models: ModelOption[],
-  configuredIds?: string[],
-): string[] => {
+export const getTabCycleModelIds = (models: ModelOption[], configuredIds?: string[]): string[] => {
   const orderedIds = getQuickSwitchModelIds(models);
-  const defaultIds = orderedIds.filter((id) => DEFAULT_TAB_CYCLE_MODEL_IDS.includes(id as typeof DEFAULT_TAB_CYCLE_MODEL_IDS[number]));
+  const defaultIds = orderedIds.filter((id) =>
+    DEFAULT_TAB_CYCLE_MODEL_IDS.includes(id as (typeof DEFAULT_TAB_CYCLE_MODEL_IDS)[number]),
+  );
 
   if (!configuredIds || configuredIds.length === 0) {
     return defaultIds.length > 0 ? defaultIds : orderedIds;
@@ -137,5 +123,5 @@ export const getTabCycleModelIds = (
   const configuredSet = new Set(configuredIds);
   const filteredIds = orderedIds.filter((id) => configuredSet.has(id));
 
-  return filteredIds.length > 0 ? filteredIds : (defaultIds.length > 0 ? defaultIds : orderedIds);
+  return filteredIds.length > 0 ? filteredIds : defaultIds.length > 0 ? defaultIds : orderedIds;
 };

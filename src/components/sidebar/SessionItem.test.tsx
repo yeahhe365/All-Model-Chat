@@ -3,6 +3,7 @@ import path from 'path';
 import { describe, expect, it } from 'vitest';
 
 const sessionItemPath = path.resolve(__dirname, './SessionItem.tsx');
+const normalizeSource = (source: string) => source.replace(/\s+/g, ' ');
 
 describe('SessionItem spacing', () => {
   it('adds a little more left padding so history titles do not sit against the sidebar edge', () => {
@@ -17,13 +18,15 @@ describe('SessionItem spacing', () => {
 
     expect(source).not.toContain('GripVertical');
     expect(source).not.toContain('draggable="true"');
-    expect(source).not.toContain("history_drag_session");
+    expect(source).not.toContain('history_drag_session');
   });
 
   it('delegates export session selection to the export opener to avoid opening the dialog before async load completes', () => {
-    const source = fs.readFileSync(sessionItemPath, 'utf8');
+    const source = normalizeSource(fs.readFileSync(sessionItemPath, 'utf8'));
 
     expect(source).toContain('onExport={() => { onOpenExportModal(session.id); setActiveMenu(null); }}');
-    expect(source).not.toContain('onExport={() => { onSelectSession(session.id); onOpenExportModal(); setActiveMenu(null); }}');
+    expect(source).not.toContain(
+      'onExport={() => { onSelectSession(session.id); onOpenExportModal(); setActiveMenu(null); }}',
+    );
   });
 });

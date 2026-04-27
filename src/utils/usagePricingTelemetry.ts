@@ -35,7 +35,12 @@ export const buildExactPricingFromUsageMetadata = (
   const responseTokensDetails = normalizeDetails(usageMetadata.responseTokensDetails);
   const toolUsePromptTokensDetails = normalizeDetails(usageMetadata.toolUsePromptTokensDetails);
 
-  if (!promptTokensDetails?.length && !cacheTokensDetails?.length && !responseTokensDetails?.length && !toolUsePromptTokensDetails?.length) {
+  if (
+    !promptTokensDetails?.length &&
+    !cacheTokensDetails?.length &&
+    !responseTokensDetails?.length &&
+    !toolUsePromptTokensDetails?.length
+  ) {
     return undefined;
   }
 

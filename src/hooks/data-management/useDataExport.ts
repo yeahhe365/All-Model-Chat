@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { AppSettings, SavedScenario, ChatGroup } from '../../types';
 import { logService } from '../../services/logService';
@@ -8,71 +7,70 @@ import { dbService } from '../../utils/db';
 import { buildScenarioExportPayload } from '../../features/scenarios/scenarioLibrary';
 
 interface UseDataExportProps {
-    appSettings: AppSettings;
-    savedGroups: ChatGroup[];
-    savedScenarios: SavedScenario[];
-    t: (key: string) => string;
+  appSettings: AppSettings;
+  savedGroups: ChatGroup[];
+  savedScenarios: SavedScenario[];
+  t: (key: string) => string;
 }
 
-export const useDataExport = ({
-    appSettings,
-    savedGroups,
-    savedScenarios,
-    t
-}: UseDataExportProps) => {
+export const useDataExport = ({ appSettings, savedGroups, savedScenarios, t }: UseDataExportProps) => {
+  const handleExportSettings = useCallback(() => {
+    logService.info(`Exporting settings.`);
+    try {
+      const dataToExport = { type: 'AllModelChat-Settings', version: 1, settings: appSettings };
+      const jsonString = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const date = new Date().toISOString().slice(0, 10);
+      triggerDownload(URL.createObjectURL(blob), `amc-webui-settings-${date}.json`);
+    } catch (error) {
+      logService.error('Failed to export settings', { error });
+      alert(t('export_failed_title'));
+    }
+  }, [appSettings, t]);
 
-    const handleExportSettings = useCallback(() => {
-        logService.info(`Exporting settings.`);
-        try {
-            const dataToExport = { type: 'AllModelChat-Settings', version: 1, settings: appSettings };
-            const jsonString = JSON.stringify(dataToExport, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const date = new Date().toISOString().slice(0, 10);
-            triggerDownload(URL.createObjectURL(blob), `amc-webui-settings-${date}.json`);
-        } catch (error) {
-            logService.error('Failed to export settings', { error });
-            alert(t('export_failed_title'));
-        }
-    }, [appSettings, t]);
+  const handleExportHistory = useCallback(async () => {
+    logService.info(`Exporting chat history.`);
+    try {
+      // Fetch full sessions from DB to ensure messages are included
+      // The state 'savedSessions' only contains metadata
+      const fullSessions = await dbService.getAllSessions();
 
-    const handleExportHistory = useCallback(async () => {
-        logService.info(`Exporting chat history.`);
-        try {
-            // Fetch full sessions from DB to ensure messages are included
-            // The state 'savedSessions' only contains metadata
-            const fullSessions = await dbService.getAllSessions();
-            
-            // Sanitize all sessions before export to remove rawFile/Blobs/AbortControllers
-            const sanitizedSessions = await Promise.all(fullSessions.map(serializeSessionForPortableExport));
-            
-            const dataToExport = { type: 'AllModelChat-History', version: 1, history: sanitizedSessions, groups: savedGroups };
-            const jsonString = JSON.stringify(dataToExport, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const date = new Date().toISOString().slice(0, 10);
-            triggerDownload(URL.createObjectURL(blob), `amc-webui-history-${date}.json`);
-        } catch (error) {
-            logService.error('Failed to export history', { error });
-            alert(t('export_failed_title'));
-        }
-    }, [savedGroups, t]);
+      // Sanitize all sessions before export to remove rawFile/Blobs/AbortControllers
+      const sanitizedSessions = await Promise.all(fullSessions.map(serializeSessionForPortableExport));
 
-    const handleExportAllScenarios = useCallback(() => {
-        logService.info(`Exporting all scenarios.`);
-        try {
-            const dataToExport = buildScenarioExportPayload(savedScenarios);
-            const jsonString = JSON.stringify(dataToExport, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const date = new Date().toISOString().slice(0, 10);
-            triggerDownload(URL.createObjectURL(blob), `amc-webui-scenarios-${date}.json`);
-        } catch (error) {
-            logService.error('Failed to export scenarios', { error });
-            alert(t('export_failed_title'));
-        }
-    }, [savedScenarios, t]);
+      const dataToExport = {
+        type: 'AllModelChat-History',
+        version: 1,
+        history: sanitizedSessions,
+        groups: savedGroups,
+      };
+      const jsonString = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const date = new Date().toISOString().slice(0, 10);
+      triggerDownload(URL.createObjectURL(blob), `amc-webui-history-${date}.json`);
+    } catch (error) {
+      logService.error('Failed to export history', { error });
+      alert(t('export_failed_title'));
+    }
+  }, [savedGroups, t]);
 
-    return {
-        handleExportSettings,
-        handleExportHistory,
-        handleExportAllScenarios,
-    };
+  const handleExportAllScenarios = useCallback(() => {
+    logService.info(`Exporting all scenarios.`);
+    try {
+      const dataToExport = buildScenarioExportPayload(savedScenarios);
+      const jsonString = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const date = new Date().toISOString().slice(0, 10);
+      triggerDownload(URL.createObjectURL(blob), `amc-webui-scenarios-${date}.json`);
+    } catch (error) {
+      logService.error('Failed to export scenarios', { error });
+      alert(t('export_failed_title'));
+    }
+  }, [savedScenarios, t]);
+
+  return {
+    handleExportSettings,
+    handleExportHistory,
+    handleExportAllScenarios,
+  };
 };

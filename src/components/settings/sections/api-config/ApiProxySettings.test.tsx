@@ -32,12 +32,12 @@ describe('ApiProxySettings', () => {
             apiProxyUrl="https://api-proxy.de/gemini/v1beta"
             setApiProxyUrl={vi.fn()}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
     expect(document.body).toHaveTextContent(
-      'https://api-proxy.de/gemini/v1beta/models/gemini-3-flash-preview:generateContent'
+      'https://api-proxy.de/gemini/v1beta/models/gemini-3-flash-preview:generateContent',
     );
   });
 });

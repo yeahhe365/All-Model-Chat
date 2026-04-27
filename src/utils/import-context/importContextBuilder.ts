@@ -285,9 +285,7 @@ async function buildRootGitignoreMatchers(files: File[]): Promise<IgnoreMatcher[
     });
   }
 
-  matchers.sort(
-    (a, b) => a.basePath.split('/').filter(Boolean).length - b.basePath.split('/').filter(Boolean).length,
-  );
+  matchers.sort((a, b) => a.basePath.split('/').filter(Boolean).length - b.basePath.split('/').filter(Boolean).length);
   return matchers;
 }
 
@@ -368,7 +366,10 @@ function ensureDirectoryPath(path: string, nodeMap: Map<string, FileNode>, roots
   }
 }
 
-async function filterDirectoryPaths(directoryPaths: string[], rootGitignoreMatchers: IgnoreMatcher[]): Promise<string[]> {
+async function filterDirectoryPaths(
+  directoryPaths: string[],
+  rootGitignoreMatchers: IgnoreMatcher[],
+): Promise<string[]> {
   const results = await Promise.all(
     directoryPaths.map(async (path) => {
       const defaultIgnored = path.split('/').some((part) => IGNORED_DIRS.has(part));
@@ -618,9 +619,6 @@ export async function buildImportContextFile(
   return new File([output], `${processed.rootName}-context-${timestamp}.txt`, { type: 'text/plain' });
 }
 
-export async function generateZipContext(
-  zipFile: File,
-  options: ImportContextBuildOptions = {},
-): Promise<File> {
+export async function generateZipContext(zipFile: File, options: ImportContextBuildOptions = {}): Promise<File> {
   return buildImportContextFile([zipFile], options);
 }

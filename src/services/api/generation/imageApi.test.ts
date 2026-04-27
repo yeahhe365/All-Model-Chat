@@ -80,26 +80,20 @@ describe('generateImagesApi', () => {
   });
 
   it('maps Imagen-specific generation options to API parameter values', async () => {
-    await (generateImagesApi as unknown as (
-      apiKey: string,
-      modelId: string,
-      prompt: string,
-      aspectRatio: string,
-      imageSize: string | undefined,
-      abortSignal: AbortSignal,
-      options: { numberOfImages: number; personGeneration: string },
-    ) => Promise<string[]>)(
-      'api-key',
-      'imagen-4.0-generate-001',
-      'draw a family portrait',
-      '16:9',
-      '2K',
-      new AbortController().signal,
-      {
-        numberOfImages: 4,
-        personGeneration: 'ALLOW_ALL',
-      },
-    );
+    await (
+      generateImagesApi as unknown as (
+        apiKey: string,
+        modelId: string,
+        prompt: string,
+        aspectRatio: string,
+        imageSize: string | undefined,
+        abortSignal: AbortSignal,
+        options: { numberOfImages: number; personGeneration: string },
+      ) => Promise<string[]>
+    )('api-key', 'imagen-4.0-generate-001', 'draw a family portrait', '16:9', '2K', new AbortController().signal, {
+      numberOfImages: 4,
+      personGeneration: 'ALLOW_ALL',
+    });
 
     expect(generateImagesMock).toHaveBeenCalledWith({
       model: 'imagen-4.0-generate-001',

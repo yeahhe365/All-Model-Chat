@@ -133,14 +133,12 @@ const getDb = (): Promise<IDBDatabase> => {
       };
 
       const openDatabase = (version?: number, allowVersionFallback: boolean = false) => {
-        const request = version === undefined
-          ? indexedDB.open(DB_NAME)
-          : indexedDB.open(DB_NAME, version);
+        const request = version === undefined ? indexedDB.open(DB_NAME) : indexedDB.open(DB_NAME, version);
 
         request.onerror = () => {
           if (allowVersionFallback && isVersionConflictError(request.error)) {
             console.warn(
-              `IndexedDB version ${DB_VERSION} is older than the stored schema. Reopening ${DB_NAME} with the browser's current version.`
+              `IndexedDB version ${DB_VERSION} is older than the stored schema. Reopening ${DB_NAME} with the browser's current version.`,
             );
             openDatabase(undefined, false);
             return;
@@ -272,10 +270,10 @@ const estimateStoreBytes = async (db: IDBDatabase, storeName: string): Promise<n
  * Ensures that write operations across tabs do not interleave and cause data loss.
  */
 async function withWriteLock<T>(callback: () => Promise<T>): Promise<T> {
-    if ('locks' in navigator) {
-        return navigator.locks.request(LOCK_NAME, { mode: 'exclusive' }, callback);
-    }
-    return callback();
+  if ('locks' in navigator) {
+    return navigator.locks.request(LOCK_NAME, { mode: 'exclusive' }, callback);
+  }
+  return callback();
 }
 
 async function getItem<T>(storeName: string, key: string): Promise<T | undefined> {
@@ -294,7 +292,7 @@ async function setAll<T>(storeName: string, values: T[]): Promise<void> {
     const tx = db.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
     store.clear();
-    values.forEach(value => store.put(value));
+    values.forEach((value) => store.put(value));
     return transactionToPromise(tx);
   });
 }
@@ -399,10 +397,10 @@ async function getKeyValue<T>(key: string): Promise<T | undefined> {
 
 async function setKeyValue<T>(key: string, value: T): Promise<void> {
   return withWriteLock(async () => {
-      const db = await getDb();
-      const tx = db.transaction(KEY_VALUE_STORE, 'readwrite');
-      tx.objectStore(KEY_VALUE_STORE).put(value, key);
-      return transactionToPromise(tx);
+    const db = await getDb();
+    const tx = db.transaction(KEY_VALUE_STORE, 'readwrite');
+    tx.objectStore(KEY_VALUE_STORE).put(value, key);
+    return transactionToPromise(tx);
   });
 }
 
@@ -413,138 +411,151 @@ export const dbService = {
       results.filter((session): session is SavedChatSession => !!session),
     );
   },
-  
+
   // New method: Fetches a single session by ID
   getSession: async (id: string) => {
-      const session = await getItem<SavedChatSession>(SESSIONS_STORE, id);
-      if (!session) {
-        return session;
-      }
+    const session = await getItem<SavedChatSession>(SESSIONS_STORE, id);
+    if (!session) {
+      return session;
+    }
 
-      const persistedRecords = await getSessionFileRecords(id);
-      const inlineRecords = extractPersistedSessionFileRecords(session);
-      const combinedRecords = new Map<string, PersistedSessionFileRecord>();
+    const persistedRecords = await getSessionFileRecords(id);
+    const inlineRecords = extractPersistedSessionFileRecords(session);
+    const combinedRecords = new Map<string, PersistedSessionFileRecord>();
 
-      persistedRecords.forEach((record) => combinedRecords.set(record.id, record));
-      inlineRecords.forEach((record) => combinedRecords.set(record.id, record));
+    persistedRecords.forEach((record) => combinedRecords.set(record.id, record));
+    inlineRecords.forEach((record) => combinedRecords.set(record.id, record));
 
-      const hydratedSession = attachPersistedSessionFiles(stripSessionFilePayloads(session), combinedRecords);
+    const hydratedSession = attachPersistedSessionFiles(stripSessionFilePayloads(session), combinedRecords);
 
-      if (inlineRecords.length > 0) {
-        await persistSessionRecord(hydratedSession);
-      }
+    if (inlineRecords.length > 0) {
+      await persistSessionRecord(hydratedSession);
+    }
 
-      return hydratedSession;
+    return hydratedSession;
   },
 
   // New method: Fetches all sessions but excludes the heavy 'messages' array
   getAllSessionMetadata: async (): Promise<SavedChatSession[]> => {
-      const db = await getDb();
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(SESSIONS_STORE, 'readonly');
-        const store = tx.objectStore(SESSIONS_STORE);
-        const request = store.openCursor();
-        const results: SavedChatSession[] = [];
-        
-        request.onsuccess = (event) => {
-          const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-          if (cursor) {
-            // Return with empty messages to save memory
-            results.push({ ...cursor.value, messages: [] });
-            cursor.continue();
-          } else {
-            resolve(results);
-          }
-        };
-        request.onerror = () => reject(request.error);
-      });
+    const db = await getDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SESSIONS_STORE, 'readonly');
+      const store = tx.objectStore(SESSIONS_STORE);
+      const request = store.openCursor();
+      const results: SavedChatSession[] = [];
+
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          // Return with empty messages to save memory
+          results.push({ ...cursor.value, messages: [] });
+          cursor.continue();
+        } else {
+          resolve(results);
+        }
+      };
+      request.onerror = () => reject(request.error);
+    });
   },
 
   searchSessions: async (query: string): Promise<string[]> => {
-      const db = await getDb();
-      const lowerQuery = query.toLowerCase();
-      return new Promise((resolve, reject) => {
-          const tx = db.transaction(SESSIONS_STORE, 'readonly');
-          const store = tx.objectStore(SESSIONS_STORE);
-          const request = store.openCursor();
-          const results: string[] = [];
+    const db = await getDb();
+    const lowerQuery = query.toLowerCase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(SESSIONS_STORE, 'readonly');
+      const store = tx.objectStore(SESSIONS_STORE);
+      const request = store.openCursor();
+      const results: string[] = [];
 
-          request.onsuccess = (event) => {
-              const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-              if (cursor) {
-                  const session = cursor.value as SavedChatSession;
-                  // Fast path: check title first (cheap), then content (expensive for long messages)
-                  const titleMatch = session.title?.toLowerCase().includes(lowerQuery);
-                  let contentMatch = false;
-                  if (!titleMatch && session.messages) {
-                      for (const m of session.messages) {
-                          if (m.content?.toLowerCase().includes(lowerQuery) ||
-                              m.thoughts?.toLowerCase().includes(lowerQuery)) {
-                              contentMatch = true;
-                              break; // Stop at first match, no need to scan all messages
-                          }
-                      }
-                  }
-
-                  if (titleMatch || contentMatch) {
-                      results.push(session.id);
-                  }
-                  cursor.continue();
-              } else {
-                  resolve(results);
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          const session = cursor.value as SavedChatSession;
+          // Fast path: check title first (cheap), then content (expensive for long messages)
+          const titleMatch = session.title?.toLowerCase().includes(lowerQuery);
+          let contentMatch = false;
+          if (!titleMatch && session.messages) {
+            for (const m of session.messages) {
+              if (m.content?.toLowerCase().includes(lowerQuery) || m.thoughts?.toLowerCase().includes(lowerQuery)) {
+                contentMatch = true;
+                break; // Stop at first match, no need to scan all messages
               }
-          };
-          request.onerror = () => reject(request.error);
-      });
+            }
+          }
+
+          if (titleMatch || contentMatch) {
+            results.push(session.id);
+          }
+          cursor.continue();
+        } else {
+          resolve(results);
+        }
+      };
+      request.onerror = () => reject(request.error);
+    });
   },
 
   setAllSessions: (sessions: SavedChatSession[]) => persistAllSessionRecords(sessions),
   saveSession: (session: SavedChatSession) => persistSessionRecord(session),
   deleteSession: (id: string) => deleteSessionRecord(id),
-  
+
   getAllGroups: () => getAll<ChatGroup>(GROUPS_STORE),
   setAllGroups: (groups: ChatGroup[]) => setAll<ChatGroup>(GROUPS_STORE, groups),
-  
+
   getAllScenarios: () => getAll<SavedScenario>(SCENARIOS_STORE),
   setAllScenarios: (scenarios: SavedScenario[]) => setAll<SavedScenario>(SCENARIOS_STORE, scenarios),
-  
+
   getAppSettings: () => getKeyValue<AppSettings>('appSettings'),
   setAppSettings: (settings: AppSettings) => setKeyValue<AppSettings>('appSettings', settings),
-  
+
   getActiveSessionId: () => getKeyValue<string | null>('activeSessionId'),
   setActiveSessionId: (id: string | null) => setKeyValue<string | null>('activeSessionId', id),
-  
-  addLogs: (logs: LogEntry[]) => withWriteLock(async () => {
+
+  addLogs: (logs: LogEntry[]) =>
+    withWriteLock(async () => {
       const db = await getDb();
       const tx = db.transaction(LOGS_STORE, 'readwrite');
       const store = tx.objectStore(LOGS_STORE);
-      logs.forEach(log => store.add(log));
+      logs.forEach((log) => store.add(log));
       return transactionToPromise(tx);
-  }),
-  getLogs: (limit = 500, offset = 0): Promise<LogEntry[]> => getDb().then(db => new Promise((resolve, reject) => {
-      const tx = db.transaction(LOGS_STORE, 'readonly');
-      const store = tx.objectStore(LOGS_STORE);
-      const index = store.index('timestamp');
-      const request = index.openCursor(null, 'prev');
-      const results: LogEntry[] = [];
-      let hasAdvanced = false;
-      request.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-        if (!cursor) { resolve(results); return; }
-        if (offset > 0 && !hasAdvanced) { hasAdvanced = true; cursor.advance(offset); return; }
-        results.push(cursor.value);
-        if (results.length < limit) cursor.continue();
-        else resolve(results);
-      };
-      request.onerror = () => reject(request.error);
-  })),
-  clearLogs: () => withWriteLock(async () => {
+    }),
+  getLogs: (limit = 500, offset = 0): Promise<LogEntry[]> =>
+    getDb().then(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(LOGS_STORE, 'readonly');
+          const store = tx.objectStore(LOGS_STORE);
+          const index = store.index('timestamp');
+          const request = index.openCursor(null, 'prev');
+          const results: LogEntry[] = [];
+          let hasAdvanced = false;
+          request.onsuccess = (event) => {
+            const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+            if (!cursor) {
+              resolve(results);
+              return;
+            }
+            if (offset > 0 && !hasAdvanced) {
+              hasAdvanced = true;
+              cursor.advance(offset);
+              return;
+            }
+            results.push(cursor.value);
+            if (results.length < limit) cursor.continue();
+            else resolve(results);
+          };
+          request.onerror = () => reject(request.error);
+        }),
+    ),
+  clearLogs: () =>
+    withWriteLock(async () => {
       const db = await getDb();
       const tx = db.transaction(LOGS_STORE, 'readwrite');
       tx.objectStore(LOGS_STORE).clear();
       return transactionToPromise(tx);
-  }),
-  pruneLogs: (olderThan: number) => withWriteLock(async () => {
+    }),
+  pruneLogs: (olderThan: number) =>
+    withWriteLock(async () => {
       const db = await getDb();
       const tx = db.transaction(LOGS_STORE, 'readwrite');
       const store = tx.objectStore(LOGS_STORE);
@@ -552,17 +563,21 @@ export const dbService = {
       const range = IDBKeyRange.upperBound(new Date(olderThan));
       const request = index.openKeyCursor(range);
       request.onsuccess = () => {
-          const cursor = request.result;
-          if (cursor) { store.delete(cursor.primaryKey); cursor.continue(); }
+        const cursor = request.result;
+        if (cursor) {
+          store.delete(cursor.primaryKey);
+          cursor.continue();
+        }
       };
       return transactionToPromise(tx);
-  }),
-  addApiUsageRecord: (record: ApiUsageRecord) => withWriteLock(async () => {
+    }),
+  addApiUsageRecord: (record: ApiUsageRecord) =>
+    withWriteLock(async () => {
       const db = await getDb();
       const tx = db.transaction(API_USAGE_STORE, 'readwrite');
       tx.objectStore(API_USAGE_STORE).add(record);
       return transactionToPromise(tx);
-  }),
+    }),
   getApiUsageByTimeRange: (startTime: number, endTime: number): Promise<ApiUsageRecord[]> =>
     getDb().then(
       (db) =>
@@ -576,31 +591,50 @@ export const dbService = {
           request.onerror = () => reject(request.error);
         }),
     ),
-  clearApiUsage: () => withWriteLock(async () => {
+  clearApiUsage: () =>
+    withWriteLock(async () => {
       const db = await getDb();
       const tx = db.transaction(API_USAGE_STORE, 'readwrite');
       tx.objectStore(API_USAGE_STORE).clear();
       return transactionToPromise(tx);
-  }),
+    }),
   estimateAppDataSize: async (): Promise<AppDataSizeEstimate> => {
-      const db = await getDb();
-      const storeNames = [SESSIONS_STORE, FILES_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE, API_USAGE_STORE];
-      const indexedDbBytes = (
-        await Promise.all(storeNames.map((storeName) => estimateStoreBytes(db, storeName)))
-      ).reduce((total, storeBytes) => total + storeBytes, 0);
-      const localStorageBytes = estimateLocalStorageBytes();
+    const db = await getDb();
+    const storeNames = [
+      SESSIONS_STORE,
+      FILES_STORE,
+      GROUPS_STORE,
+      SCENARIOS_STORE,
+      KEY_VALUE_STORE,
+      LOGS_STORE,
+      API_USAGE_STORE,
+    ];
+    const indexedDbBytes = (await Promise.all(storeNames.map((storeName) => estimateStoreBytes(db, storeName)))).reduce(
+      (total, storeBytes) => total + storeBytes,
+      0,
+    );
+    const localStorageBytes = estimateLocalStorageBytes();
 
-      return {
-        totalBytes: indexedDbBytes + localStorageBytes,
-        indexedDbBytes,
-        localStorageBytes,
-      };
+    return {
+      totalBytes: indexedDbBytes + localStorageBytes,
+      indexedDbBytes,
+      localStorageBytes,
+    };
   },
-  clearAllData: () => withWriteLock(async () => {
+  clearAllData: () =>
+    withWriteLock(async () => {
       const db = await getDb();
-      const storeNames = [SESSIONS_STORE, FILES_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE, API_USAGE_STORE];
+      const storeNames = [
+        SESSIONS_STORE,
+        FILES_STORE,
+        GROUPS_STORE,
+        SCENARIOS_STORE,
+        KEY_VALUE_STORE,
+        LOGS_STORE,
+        API_USAGE_STORE,
+      ];
       const tx = db.transaction(storeNames, 'readwrite');
       for (const storeName of storeNames) tx.objectStore(storeName).clear();
       return transactionToPromise(tx);
-  }),
+    }),
 };

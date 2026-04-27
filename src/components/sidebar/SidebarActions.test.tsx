@@ -23,17 +23,14 @@ const render = (node: React.ReactNode) => {
 };
 
 const setInputValue = (input: HTMLInputElement, value: string) => {
-  const descriptor = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
-    'value',
-  );
+  const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
   descriptor?.set?.call(input, value);
   input.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
 const t = (key: string) =>
   (
-    {
+    ({
       newChat: 'New Chat',
       headerNewChat_aria: 'Start a new chat',
       history_search_button: '搜索聊天',
@@ -42,7 +39,7 @@ const t = (key: string) =>
       history_search_placeholder: '搜索历史...',
       newGroup_button: '新建分组',
       newGroup_aria: '创建分组',
-    } satisfies Record<string, string>
+    }) satisfies Record<string, string>
   )[key] ?? key;
 
 const SidebarActionsHarness = ({
@@ -102,9 +99,7 @@ describe('SidebarActions', () => {
     expect(folderIcon?.querySelector('path')?.getAttribute('d')).toBe(
       'M3 7.5C3 6.67 3.67 6 4.5 6H9l2 2h8.5c.83 0 1.5.67 1.5 1.5V12',
     );
-    expect(folderIcon?.querySelectorAll('path')[1]?.getAttribute('d')).toBe(
-      'M3 7.5V18c0 .83.67 1.5 1.5 1.5h8',
-    );
+    expect(folderIcon?.querySelectorAll('path')[1]?.getAttribute('d')).toBe('M3 7.5V18c0 .83.67 1.5 1.5 1.5h8');
     expect(folderIcon?.querySelectorAll('path')[2]?.getAttribute('d')).toBe('M18 15v6M15 18h6');
     expect(container.querySelector('[data-testid="new-group-icon"]')).toBeNull();
 
@@ -202,10 +197,7 @@ describe('SidebarActions', () => {
     const onNewChat = vi.fn();
     const onCloseSidebar = vi.fn();
     const { container, unmount } = render(
-      <SidebarActionsHarness
-        onNewChat={onNewChat}
-        onCloseSidebar={onCloseSidebar}
-      />,
+      <SidebarActionsHarness onNewChat={onNewChat} onCloseSidebar={onCloseSidebar} />,
     );
 
     const newChatLink = container.querySelector('a');

@@ -1,122 +1,121 @@
-
-
 import React, { useMemo } from 'react';
 import { UploadedFile } from '../../../types';
 import { FileDisplay } from '../FileDisplay';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 
 interface MessageFilesProps {
-    files: UploadedFile[];
-    content?: string;
-    onImageClick: (file: UploadedFile) => void;
-    onConfigureFile?: (file: UploadedFile, messageId: string) => void;
-    messageId: string;
-    isGemini3?: boolean;
-    hasContentOrAudio: boolean;
+  files: UploadedFile[];
+  content?: string;
+  onImageClick: (file: UploadedFile) => void;
+  onConfigureFile?: (file: UploadedFile, messageId: string) => void;
+  messageId: string;
+  isGemini3?: boolean;
+  hasContentOrAudio: boolean;
 }
 
-export const MessageFiles: React.FC<MessageFilesProps> = ({ 
-    files, 
-    content,
-    onImageClick, 
-    onConfigureFile, 
-    messageId,
-    isGemini3,
-    hasContentOrAudio 
+export const MessageFiles: React.FC<MessageFilesProps> = ({
+  files,
+  content,
+  onImageClick,
+  onConfigureFile,
+  messageId,
+  isGemini3,
+  hasContentOrAudio,
 }) => {
-    // Check if the message contains a tool execution result block
-    const hasToolResult = /\btool-result\b/.test(content || '');
+  // Check if the message contains a tool execution result block
+  const hasToolResult = /\btool-result\b/.test(content || '');
 
-    // Separate images from other documents to handle layouts differently
-    const { imageFiles, documentFiles } = useMemo(() => {
-        if (!files || files.length === 0) {
-            return { imageFiles: [], documentFiles: [] };
-        }
+  // Separate images from other documents to handle layouts differently
+  const { imageFiles, documentFiles } = useMemo(() => {
+    if (!files || files.length === 0) {
+      return { imageFiles: [], documentFiles: [] };
+    }
 
-        const imgs: UploadedFile[] = [];
-        const docs: UploadedFile[] = [];
-        files.forEach(f => {
-            // Tool result blocks already render generated outputs inline.
-            // Hide any generated attachments from the top strip to avoid duplicate previews.
-            if (hasToolResult && f.name.startsWith('generated-')) {
-                return;
-            }
+    const imgs: UploadedFile[] = [];
+    const docs: UploadedFile[] = [];
+    files.forEach((f) => {
+      // Tool result blocks already render generated outputs inline.
+      // Hide any generated attachments from the top strip to avoid duplicate previews.
+      if (hasToolResult && f.name.startsWith('generated-')) {
+        return;
+      }
 
-            const isImg = SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) || f.type === 'image/svg+xml';
-            if (isImg) imgs.push(f);
-            else docs.push(f);
-        });
-        return { imageFiles: imgs, documentFiles: docs };
-    }, [files, hasToolResult]);
+      const isImg = SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) || f.type === 'image/svg+xml';
+      if (isImg) imgs.push(f);
+      else docs.push(f);
+    });
+    return { imageFiles: imgs, documentFiles: docs };
+  }, [files, hasToolResult]);
 
-    if (!files || files.length === 0) return null;
+  if (!files || files.length === 0) return null;
 
-    const isQuadImageView = imageFiles.length === 4 && imageFiles.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
-    const isStripImageView = imageFiles.length > 1 && !isQuadImageView;
-    const marginClass = hasContentOrAudio ? 'mb-2' : '';
-    
-    // Only enable scrolling if there are enough files to form multiple columns (more than 4)
-    // This prevents scrollbars from appearing on single-column layouts where they aren't needed
-    const showDocScroll = documentFiles.length > 4;
+  const isQuadImageView =
+    imageFiles.length === 4 &&
+    imageFiles.every((f) => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
+  const isStripImageView = imageFiles.length > 1 && !isQuadImageView;
+  const marginClass = hasContentOrAudio ? 'mb-2' : '';
 
-    if (imageFiles.length === 0 && documentFiles.length === 0) return null;
+  // Only enable scrolling if there are enough files to form multiple columns (more than 4)
+  // This prevents scrollbars from appearing on single-column layouts where they aren't needed
+  const showDocScroll = documentFiles.length > 4;
 
-    return (
-        <div className={`flex flex-col gap-2 ${marginClass}`}>
-            {/* 1. Images Section (Retain existing horizontal/grid layout) */}
-            {imageFiles.length > 0 && (
-                isQuadImageView ? (
-                    <div className="grid grid-cols-2 gap-2">
-                        {imageFiles.map((file) => (
-                            <FileDisplay 
-                                key={file.id} 
-                                file={file} 
-                                onFileClick={onImageClick} 
-                                isFromMessageList={true} 
-                                isGridView={true} 
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-row gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar">
-                        {imageFiles.map((file) => (
-                            <div key={file.id} className={isStripImageView ? 'flex-shrink-0 h-40 w-40 sm:w-48' : 'flex-shrink-0'}>
-                                <FileDisplay 
-                                    file={file} 
-                                    onFileClick={onImageClick} 
-                                    isFromMessageList={true}
-                                    isStripView={isStripImageView}
-                                    onConfigure={onConfigureFile ? () => onConfigureFile(file, messageId) : undefined}
-                                    isGemini3={isGemini3}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )
-            )}
+  if (imageFiles.length === 0 && documentFiles.length === 0) return null;
 
-            {/* 2. Documents/Other Files Section (Columnar Layout: Max 4 rows, flow col) */}
-            {documentFiles.length > 0 && (
-                <div 
-                    className={`grid grid-flow-col gap-2 ${showDocScroll ? 'overflow-x-auto pb-2' : ''} -mx-1 px-1 custom-scrollbar w-fit max-w-full`}
-                    style={{
-                        // Limit to 4 rows max, or fewer if not enough files to fill 4 rows
-                        gridTemplateRows: `repeat(${Math.min(documentFiles.length, 4)}, min-content)`
-                    }}
-                >
-                    {documentFiles.map((file) => (
-                        <div key={file.id} className="flex-shrink-0 w-full min-w-[240px] max-w-[320px]">
-                            <FileDisplay 
-                                file={file} 
-                                onFileClick={onImageClick} 
-                                isFromMessageList={true}
-                                onConfigure={onConfigureFile ? () => onConfigureFile(file, messageId) : undefined}
-                                isGemini3={isGemini3}
-                            />
-                        </div>
-                    ))}
-                </div>
-            )}
+  return (
+    <div className={`flex flex-col gap-2 ${marginClass}`}>
+      {/* 1. Images Section (Retain existing horizontal/grid layout) */}
+      {imageFiles.length > 0 &&
+        (isQuadImageView ? (
+          <div className="grid grid-cols-2 gap-2">
+            {imageFiles.map((file) => (
+              <FileDisplay
+                key={file.id}
+                file={file}
+                onFileClick={onImageClick}
+                isFromMessageList={true}
+                isGridView={true}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-row gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar">
+            {imageFiles.map((file) => (
+              <div key={file.id} className={isStripImageView ? 'flex-shrink-0 h-40 w-40 sm:w-48' : 'flex-shrink-0'}>
+                <FileDisplay
+                  file={file}
+                  onFileClick={onImageClick}
+                  isFromMessageList={true}
+                  isStripView={isStripImageView}
+                  onConfigure={onConfigureFile ? () => onConfigureFile(file, messageId) : undefined}
+                  isGemini3={isGemini3}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+
+      {/* 2. Documents/Other Files Section (Columnar Layout: Max 4 rows, flow col) */}
+      {documentFiles.length > 0 && (
+        <div
+          className={`grid grid-flow-col gap-2 ${showDocScroll ? 'overflow-x-auto pb-2' : ''} -mx-1 px-1 custom-scrollbar w-fit max-w-full`}
+          style={{
+            // Limit to 4 rows max, or fewer if not enough files to fill 4 rows
+            gridTemplateRows: `repeat(${Math.min(documentFiles.length, 4)}, min-content)`,
+          }}
+        >
+          {documentFiles.map((file) => (
+            <div key={file.id} className="flex-shrink-0 w-full min-w-[240px] max-w-[320px]">
+              <FileDisplay
+                file={file}
+                onFileClick={onImageClick}
+                isFromMessageList={true}
+                onConfigure={onConfigureFile ? () => onConfigureFile(file, messageId) : undefined}
+                isGemini3={isGemini3}
+              />
+            </div>
+          ))}
         </div>
-    );
+      )}
+    </div>
+  );
 };

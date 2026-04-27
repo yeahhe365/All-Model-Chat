@@ -78,9 +78,7 @@ describe('verify-code-execution helpers', () => {
       parts: [{ text: 'first answer' }],
     };
 
-    expect(
-      buildCodeExecutionFollowUpContents(initialUserContent, modelContent, 'follow-up'),
-    ).toEqual([
+    expect(buildCodeExecutionFollowUpContents(initialUserContent, modelContent, 'follow-up')).toEqual([
       initialUserContent,
       modelContent,
       {

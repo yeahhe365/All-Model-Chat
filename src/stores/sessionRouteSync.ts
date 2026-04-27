@@ -2,10 +2,7 @@ import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
 
 export type SessionHistoryMode = 'auto' | 'push' | 'replace' | 'none';
 
-export const syncActiveSessionRoute = (
-  activeSessionId: string | null,
-  historyMode: SessionHistoryMode = 'auto',
-) => {
+export const syncActiveSessionRoute = (activeSessionId: string | null, historyMode: SessionHistoryMode = 'auto') => {
   if (activeSessionId) {
     try {
       sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);

@@ -4,9 +4,7 @@ import { seedAppState } from './helpers/appHarness';
 
 const SESSION_ID = 'settings-model-selector-session';
 
-test('selecting a model still works when the system prompt textarea has pending edits', async ({
-  page,
-}) => {
+test('selecting a model still works when the system prompt textarea has pending edits', async ({ page }) => {
   await seedAppState(page, {
     session: {
       id: SESSION_ID,
@@ -87,7 +85,5 @@ test('workspace settings content does not expose a horizontal scrollbar', async 
 
   const settingsScroller = page.locator('main > div').first();
 
-  await expect
-    .poll(() => settingsScroller.evaluate((element) => getComputedStyle(element).overflowX))
-    .toBe('hidden');
+  await expect.poll(() => settingsScroller.evaluate((element) => getComputedStyle(element).overflowX)).toBe('hidden');
 });

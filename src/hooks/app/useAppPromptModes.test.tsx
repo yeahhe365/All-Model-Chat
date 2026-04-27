@@ -485,9 +485,7 @@ describe('useAppPromptModes', () => {
     expect(setCurrentChatSettings).toHaveBeenCalledWith(expect.any(Function));
 
     const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
-    const chatSettingsUpdater = setCurrentChatSettings.mock.calls.at(-1)?.[0] as (
-      prev: ChatSettings,
-    ) => ChatSettings;
+    const chatSettingsUpdater = setCurrentChatSettings.mock.calls.at(-1)?.[0] as (prev: ChatSettings) => ChatSettings;
     expect(appSettingsUpdater({ systemInstruction: CANVAS_PROMPT } as AppSettings).systemInstruction).toBe('');
     expect(chatSettingsUpdater({ systemInstruction: CANVAS_PROMPT } as ChatSettings).systemInstruction).toBe('');
     expect(setCommandedInput).toHaveBeenCalledWith({

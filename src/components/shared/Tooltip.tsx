@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (

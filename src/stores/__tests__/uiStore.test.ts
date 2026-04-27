@@ -21,10 +21,7 @@ describe('uiStore history sidebar preferences', () => {
   });
 
   it('hydrates the current sidebar state from the desktop preference', async () => {
-    localStorage.setItem(
-      HISTORY_SIDEBAR_STORAGE_KEY,
-      JSON.stringify({ desktopOpen: false, mobileOpen: true }),
-    );
+    localStorage.setItem(HISTORY_SIDEBAR_STORAGE_KEY, JSON.stringify({ desktopOpen: false, mobileOpen: true }));
     setViewportWidth(1024);
 
     const { useUIStore } = await importFreshUIStore();
@@ -35,10 +32,7 @@ describe('uiStore history sidebar preferences', () => {
   });
 
   it('hydrates the current sidebar state from the mobile preference', async () => {
-    localStorage.setItem(
-      HISTORY_SIDEBAR_STORAGE_KEY,
-      JSON.stringify({ desktopOpen: true, mobileOpen: true }),
-    );
+    localStorage.setItem(HISTORY_SIDEBAR_STORAGE_KEY, JSON.stringify({ desktopOpen: true, mobileOpen: true }));
     setViewportWidth(375);
 
     const { useUIStore } = await importFreshUIStore();

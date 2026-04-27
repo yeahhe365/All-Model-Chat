@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { ChatMessage } from '../../../types';
@@ -6,35 +5,32 @@ import { PerformanceMetrics } from '../PerformanceMetrics';
 import { AudioPlayer } from '../../shared/AudioPlayer';
 
 interface MessageFooterProps {
-    message: ChatMessage;
-    onSuggestionClick?: (suggestion: string) => void;
+  message: ChatMessage;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 export const MessageFooter: React.FC<MessageFooterProps> = ({ message, onSuggestionClick }) => {
-    const { audioSrc, audioAutoplay, suggestions, isGeneratingSuggestions, role, generationStartTime } = message;
+  const { audioSrc, audioAutoplay, suggestions, isGeneratingSuggestions, role, generationStartTime } = message;
 
-    return (
-        <>
-            {audioSrc && (
-                <div className="mt-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    <AudioPlayer src={audioSrc} autoPlay={audioAutoplay ?? false} />
-                </div>
-            )}
-            
-            {(role === 'model' || (role === 'error' && generationStartTime)) && (
-                <PerformanceMetrics 
-                    message={message} 
-                    hideTimer={message.isLoading}
-                />
-            )}
+  return (
+    <>
+      {audioSrc && (
+        <div className="mt-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
+          <AudioPlayer src={audioSrc} autoPlay={audioAutoplay ?? false} />
+        </div>
+      )}
 
-            {(suggestions && suggestions.length > 0) && (
-                <div className="mt-3 flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    {suggestions.map((suggestion, index) => (
-                        <button
-                            key={index}
-                            onClick={() => onSuggestionClick && onSuggestionClick(suggestion)}
-                            className="
+      {(role === 'model' || (role === 'error' && generationStartTime)) && (
+        <PerformanceMetrics message={message} hideTimer={message.isLoading} />
+      )}
+
+      {suggestions && suggestions.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              onClick={() => onSuggestionClick && onSuggestionClick(suggestion)}
+              className="
                                 group relative
                                 text-xs sm:text-sm font-medium
                                 px-3 py-2 sm:px-3.5 sm:py-2 rounded-xl
@@ -46,19 +42,19 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({ message, onSuggest
                                 transition-all duration-200 ease-out
                                 text-left shadow-sm hover:shadow-md
                             "
-                        >
-                            <span className="line-clamp-2">{suggestion}</span>
-                        </button>
-                    ))}
-                </div>
-            )}
-            
-            {isGeneratingSuggestions && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)] animate-pulse opacity-70 px-1">
-                    <Loader2 size={12} className="animate-spin" strokeWidth={1.5} />
-                    <span>Generating suggestions...</span>
-                </div>
-            )}
-        </>
-    );
+            >
+              <span className="line-clamp-2">{suggestion}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isGeneratingSuggestions && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)] animate-pulse opacity-70 px-1">
+          <Loader2 size={12} className="animate-spin" strokeWidth={1.5} />
+          <span>Generating suggestions...</span>
+        </div>
+      )}
+    </>
+  );
 };

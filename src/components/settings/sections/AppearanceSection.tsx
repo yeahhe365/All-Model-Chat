@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AppSettings } from '../../../types';
 import { ThemeLanguageSelector } from './appearance/ThemeLanguageSelector';
@@ -14,25 +13,13 @@ interface AppearanceSectionProps {
 export const AppearanceSection: React.FC<AppearanceSectionProps> = ({ settings, onUpdate }) => {
   return (
     <div className="space-y-6">
-      <ThemeLanguageSelector
-        settings={settings}
-        onUpdate={onUpdate}
-      />
+      <ThemeLanguageSelector settings={settings} onUpdate={onUpdate} />
 
-      <FontSizeControl
-        settings={settings}
-        onUpdate={onUpdate}
-      />
+      <FontSizeControl settings={settings} onUpdate={onUpdate} />
 
-      <FileStrategyControl
-        settings={settings}
-        onUpdate={onUpdate}
-      />
+      <FileStrategyControl settings={settings} onUpdate={onUpdate} />
 
-      <InterfaceToggles
-        settings={settings}
-        onUpdate={onUpdate}
-      />
+      <InterfaceToggles settings={settings} onUpdate={onUpdate} />
     </div>
   );
 };

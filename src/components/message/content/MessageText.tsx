@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
@@ -12,134 +10,129 @@ import { useMessageStream } from '../../../hooks/ui/useMessageStream';
 import { extractRawThinkingBlocks } from '../../../utils/chat/reasoning';
 
 interface MessageTextProps {
-    message: ChatMessage;
-    showThoughts: boolean;
-    appSettings: AppSettings;
-    themeId: string;
-    baseFontSize: number;
-    onImageClick: (file: UploadedFile) => void;
-    onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
-    expandCodeBlocksByDefault: boolean;
-    isMermaidRenderingEnabled: boolean;
-    isGraphvizRenderingEnabled: boolean;
-    onOpenSidePanel: (content: SideViewContent) => void;
+  message: ChatMessage;
+  showThoughts: boolean;
+  appSettings: AppSettings;
+  themeId: string;
+  baseFontSize: number;
+  onImageClick: (file: UploadedFile) => void;
+  onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+  expandCodeBlocksByDefault: boolean;
+  isMermaidRenderingEnabled: boolean;
+  isGraphvizRenderingEnabled: boolean;
+  onOpenSidePanel: (content: SideViewContent) => void;
 }
 
 export const MessageText: React.FC<MessageTextProps> = ({
-    message,
-    showThoughts,
-    appSettings,
-    themeId,
-    baseFontSize,
-    onImageClick,
-    onOpenHtmlPreview,
-    expandCodeBlocksByDefault,
-    isMermaidRenderingEnabled,
-    isGraphvizRenderingEnabled,
-    onOpenSidePanel
+  message,
+  showThoughts,
+  appSettings,
+  themeId,
+  baseFontSize,
+  onImageClick,
+  onOpenHtmlPreview,
+  expandCodeBlocksByDefault,
+  isMermaidRenderingEnabled,
+  isGraphvizRenderingEnabled,
+  onOpenSidePanel,
 }) => {
-    const { t } = useI18n();
-    const { content, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
-    const isLoading = message.isLoading ?? false;
-    
-    // Subscribe to live stream updates if loading
-    const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
-    
-    // Use streamed content if available, otherwise fall back to persisted content
-    const rawThinkingExtraction = extractRawThinkingBlocks(
-        streamContent ? `${content || ''}${streamContent}` : content,
-    );
-    const effectiveContent = rawThinkingExtraction.content;
-    const effectiveThoughts = [
-        thoughts,
-        streamThoughts,
-        rawThinkingExtraction.thoughts,
-    ].filter(Boolean).join('\n\n');
+  const { t } = useI18n();
+  const { content, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
+  const isLoading = message.isLoading ?? false;
 
-    // Apply smooth streaming effect only when loading and for model messages
-    const shouldSmooth = isLoading && message.role === 'model';
-    const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
+  // Subscribe to live stream updates if loading
+  const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
 
-    // Auto Fullscreen HTML Logic
-    const prevIsLoadingRef = useRef(isLoading);
-    useEffect(() => {
-        let previewTimeout: number | null = null;
+  // Use streamed content if available, otherwise fall back to persisted content
+  const rawThinkingExtraction = extractRawThinkingBlocks(streamContent ? `${content || ''}${streamContent}` : content);
+  const effectiveContent = rawThinkingExtraction.content;
+  const effectiveThoughts = [thoughts, streamThoughts, rawThinkingExtraction.thoughts].filter(Boolean).join('\n\n');
 
-        if (prevIsLoadingRef.current && !isLoading) {
-            if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
-                const previewableBlock = extractPreviewableCodeBlock(effectiveContent);
-                if (previewableBlock) {
-                    previewTimeout = window.setTimeout(() => {
-                        onOpenHtmlPreview(previewableBlock.content, { initialTrueFullscreen: false });
-                    }, 100);
-                }
-            }
+  // Apply smooth streaming effect only when loading and for model messages
+  const shouldSmooth = isLoading && message.role === 'model';
+  const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
+
+  // Auto Fullscreen HTML Logic
+  const prevIsLoadingRef = useRef(isLoading);
+  useEffect(() => {
+    let previewTimeout: number | null = null;
+
+    if (prevIsLoadingRef.current && !isLoading) {
+      if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
+        const previewableBlock = extractPreviewableCodeBlock(effectiveContent);
+        if (previewableBlock) {
+          previewTimeout = window.setTimeout(() => {
+            onOpenHtmlPreview(previewableBlock.content, { initialTrueFullscreen: false });
+          }, 100);
         }
-        prevIsLoadingRef.current = isLoading;
+      }
+    }
+    prevIsLoadingRef.current = isLoading;
 
-        return () => {
-            if (previewTimeout !== null) {
-                clearTimeout(previewTimeout);
-            }
-        };
-    }, [isLoading, appSettings.autoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
+    return () => {
+      if (previewTimeout !== null) {
+        clearTimeout(previewTimeout);
+      }
+    };
+  }, [isLoading, appSettings.autoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
 
-    // Only show the primary thinking indicator (spinner) if:
-    // 1. It is loading
-    // 2. There is no content yet
-    // 3. There is no audio yet
-    // 4. AND either thoughts are disabled OR there are no thoughts (even streamed ones) yet.
-    // This prevents showing the spinner here when the MessageThoughts component is already showing it.
-    const showPrimaryThinkingIndicator = isLoading && !effectiveContent && !audioSrc && (!showThoughts || !effectiveThoughts);
+  // Only show the primary thinking indicator (spinner) if:
+  // 1. It is loading
+  // 2. There is no content yet
+  // 3. There is no audio yet
+  // 4. AND either thoughts are disabled OR there are no thoughts (even streamed ones) yet.
+  // This prevents showing the spinner here when the MessageThoughts component is already showing it.
+  const showPrimaryThinkingIndicator =
+    isLoading && !effectiveContent && !audioSrc && (!showThoughts || !effectiveThoughts);
 
-    return (
-        <>
-            {showPrimaryThinkingIndicator && (
-                <div className="flex items-center text-sm text-[var(--theme-bg-model-message-text)] py-1 px-1 opacity-80 animate-pulse">
-                    <div className="mr-2.5 flex-shrink-0">
-                        <GoogleSpinner size={14} />
-                    </div>
-                    <span className="font-medium">{t('thinking_text')}</span>
-                </div>
-            )}
+  return (
+    <>
+      {showPrimaryThinkingIndicator && (
+        <div className="flex items-center text-sm text-[var(--theme-bg-model-message-text)] py-1 px-1 opacity-80 animate-pulse">
+          <div className="mr-2.5 flex-shrink-0">
+            <GoogleSpinner size={14} />
+          </div>
+          <span className="font-medium">{t('thinking_text')}</span>
+        </div>
+      )}
 
-            {(groundingMetadata || urlContextMetadata) ? (
-              <GroundedResponse 
-                messageId={message.id}
-                text={displayedContent || ''} // Use smoothed text when available
-                metadata={groundingMetadata} 
-                urlContextMetadata={urlContextMetadata}
-                isLoading={isLoading} 
-                onOpenHtmlPreview={onOpenHtmlPreview} 
-                expandCodeBlocksByDefault={expandCodeBlocksByDefault} 
-                onImageClick={onImageClick} 
-                isMermaidRenderingEnabled={isMermaidRenderingEnabled} 
-                isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} 
-                t={t} 
-                themeId={themeId} 
-                onOpenSidePanel={onOpenSidePanel}
-                files={message.files}
-              />
-            ) : effectiveContent ? (
-                <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
-                    <LazyMarkdownRenderer
-                        messageId={message.id}
-                        content={displayedContent} // Use smoothed text
-                        isLoading={isLoading}
-                        onImageClick={onImageClick}
-                        onOpenHtmlPreview={onOpenHtmlPreview}
-                        expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-                        isMermaidRenderingEnabled={isMermaidRenderingEnabled}
-                        isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-                        allowHtml={true}
-                        t={t}
-                        themeId={themeId}
-                        onOpenSidePanel={onOpenSidePanel}
-                        hideThinkingInContext={appSettings.hideThinkingInContext}
-                        files={message.files}
-                    />
-                </div>
-            ) : null}
-        </>
-    );
+      {groundingMetadata || urlContextMetadata ? (
+        <GroundedResponse
+          messageId={message.id}
+          text={displayedContent || ''} // Use smoothed text when available
+          metadata={groundingMetadata}
+          urlContextMetadata={urlContextMetadata}
+          isLoading={isLoading}
+          onOpenHtmlPreview={onOpenHtmlPreview}
+          expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+          onImageClick={onImageClick}
+          isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+          isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+          t={t}
+          themeId={themeId}
+          onOpenSidePanel={onOpenSidePanel}
+          files={message.files}
+        />
+      ) : effectiveContent ? (
+        <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}>
+          <LazyMarkdownRenderer
+            messageId={message.id}
+            content={displayedContent} // Use smoothed text
+            isLoading={isLoading}
+            onImageClick={onImageClick}
+            onOpenHtmlPreview={onOpenHtmlPreview}
+            expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+            isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+            isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+            allowHtml={true}
+            t={t}
+            themeId={themeId}
+            onOpenSidePanel={onOpenSidePanel}
+            hideThinkingInContext={appSettings.hideThinkingInContext}
+            files={message.files}
+          />
+        </div>
+      ) : null}
+    </>
+  );
 };

@@ -65,17 +65,19 @@ const buildChatState = () => ({
 });
 
 let currentChatState: MockChatState;
-const mockSetCurrentChatSettings = vi.fn((updater: (prev: SavedChatSession['settings']) => SavedChatSession['settings']) => {
-  if (!currentChatState.activeChat) {
-    return;
-  }
+const mockSetCurrentChatSettings = vi.fn(
+  (updater: (prev: SavedChatSession['settings']) => SavedChatSession['settings']) => {
+    if (!currentChatState.activeChat) {
+      return;
+    }
 
-  const nextSettings = updater(currentChatState.activeChat.settings);
-  currentChatState.activeChat = {
-    ...currentChatState.activeChat,
-    settings: nextSettings,
-  };
-});
+    const nextSettings = updater(currentChatState.activeChat.settings);
+    currentChatState.activeChat = {
+      ...currentChatState.activeChat,
+      settings: nextSettings,
+    };
+  },
+);
 
 vi.mock('../core/useAppSettings', () => ({
   useAppSettings: () => ({
@@ -151,7 +153,12 @@ vi.mock('../data-management/useChatSessionExport', () => ({
 }));
 
 vi.mock('../../stores/uiStore', () => ({
-  useUIStore: (selector: (state: { setIsHistorySidebarOpen: typeof mockSetIsHistorySidebarOpen; setIsLogViewerOpen: typeof mockSetIsLogViewerOpen }) => unknown) =>
+  useUIStore: (
+    selector: (state: {
+      setIsHistorySidebarOpen: typeof mockSetIsHistorySidebarOpen;
+      setIsLogViewerOpen: typeof mockSetIsLogViewerOpen;
+    }) => unknown,
+  ) =>
     selector({
       setIsHistorySidebarOpen: mockSetIsHistorySidebarOpen,
       setIsLogViewerOpen: mockSetIsLogViewerOpen,
@@ -211,8 +218,7 @@ describe('useApp', () => {
       systemInstruction: '',
     } as AppSettings;
     mockSetAppSettings.mockImplementation((updater: AppSettings | ((prev: AppSettings) => AppSettings)) => {
-      currentAppSettings =
-        typeof updater === 'function' ? updater(currentAppSettings) : updater;
+      currentAppSettings = typeof updater === 'function' ? updater(currentAppSettings) : updater;
     });
     currentChatState = buildChatState();
     mockSetCurrentChatSettings.mockClear();

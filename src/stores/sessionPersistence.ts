@@ -61,7 +61,9 @@ export function stripStoredSessionMessages(
   loadingSessionIds: Set<string>,
 ): SavedChatSession[] {
   return sessions.map((session) =>
-    session.messages && session.messages.length > 0 && !shouldRetainRuntimeMessages(session.id, activeSessionId, loadingSessionIds)
+    session.messages &&
+    session.messages.length > 0 &&
+    !shouldRetainRuntimeMessages(session.id, activeSessionId, loadingSessionIds)
       ? { ...session, messages: [] }
       : session,
   );

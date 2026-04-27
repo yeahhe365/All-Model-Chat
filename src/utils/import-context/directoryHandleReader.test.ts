@@ -28,12 +28,8 @@ function createDirectoryHandle(
 describe('readDirectoryHandle', () => {
   it('skips default ignored directories by default', async () => {
     const handle = createDirectoryHandle('demo', [
-      createDirectoryHandle('node_modules', [
-        createFileHandle('index.ts', 'export const pkg = true;\n'),
-      ]),
-      createDirectoryHandle('src', [
-        createFileHandle('app.ts', 'export const app = true;\n'),
-      ]),
+      createDirectoryHandle('node_modules', [createFileHandle('index.ts', 'export const pkg = true;\n')]),
+      createDirectoryHandle('src', [createFileHandle('app.ts', 'export const app = true;\n')]),
     ]);
 
     const result = await readDirectoryHandle(handle);
@@ -44,9 +40,7 @@ describe('readDirectoryHandle', () => {
   it('keeps empty directories in the result', async () => {
     const handle = createDirectoryHandle('demo', [
       createDirectoryHandle('empty', []),
-      createDirectoryHandle('src', [
-        createFileHandle('app.ts', 'export const app = true;\n'),
-      ]),
+      createDirectoryHandle('src', [createFileHandle('app.ts', 'export const app = true;\n')]),
     ]);
 
     const result = await readDirectoryHandle(handle);

@@ -20,11 +20,15 @@ describe('settingsModelOptions', () => {
 
   it('does not expose removed Gemini 2.5 Flash preview models for transcription', () => {
     expect(AVAILABLE_TRANSCRIPTION_MODELS.some((model) => model.id === 'gemini-2.5-flash-preview-09-2025')).toBe(false);
-    expect(AVAILABLE_TRANSCRIPTION_MODELS.some((model) => model.id === 'gemini-2.5-flash-lite-preview-09-2025')).toBe(false);
+    expect(AVAILABLE_TRANSCRIPTION_MODELS.some((model) => model.id === 'gemini-2.5-flash-lite-preview-09-2025')).toBe(
+      false,
+    );
   });
 
   it('does not expose live-only native audio models for file transcription', () => {
-    expect(AVAILABLE_TRANSCRIPTION_MODELS.some((model) => model.id === 'gemini-2.5-flash-native-audio-preview-12-2025')).toBe(false);
+    expect(
+      AVAILABLE_TRANSCRIPTION_MODELS.some((model) => model.id === 'gemini-2.5-flash-native-audio-preview-12-2025'),
+    ).toBe(false);
   });
 
   it('keeps transcription models aligned with the supported list', () => {

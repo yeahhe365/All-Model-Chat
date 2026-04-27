@@ -48,9 +48,7 @@ vi.mock('./thoughts/ThinkingActions', () => ({
 }));
 
 vi.mock('./thoughts/ThoughtContent', () => ({
-  ThoughtContent: ({ content }: { content: string }) => (
-    <div data-testid="thought-content">{content}</div>
-  ),
+  ThoughtContent: ({ content }: { content: string }) => <div data-testid="thought-content">{content}</div>,
 }));
 
 describe('MessageThoughts', () => {

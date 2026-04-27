@@ -1,5 +1,11 @@
-
-import type { Content, CountTokensConfig, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
+import type {
+  Content,
+  CountTokensConfig,
+  Part,
+  UsageMetadata,
+  File as GeminiFile,
+  FunctionDeclaration,
+} from '@google/genai';
 import type { ImageOutputMode, ImagePersonGeneration, SafetySetting } from './settings';
 import type { UploadedFile } from './chat';
 
@@ -11,7 +17,7 @@ export type ChatHistoryItem = Content & {
 export type StreamMessageCompleteHandler = (
   usageMetadata?: UsageMetadata,
   groundingMetadata?: unknown,
-  urlContextMetadata?: unknown
+  urlContextMetadata?: unknown,
 ) => void;
 
 export type NonStreamMessageCompleteHandler = (
@@ -19,7 +25,7 @@ export type NonStreamMessageCompleteHandler = (
   thoughtsText?: string,
   usageMetadata?: UsageMetadata,
   groundingMetadata?: unknown,
-  urlContextMetadata?: unknown
+  urlContextMetadata?: unknown,
 ) => void;
 
 export type StreamMessageSender = (
@@ -33,7 +39,7 @@ export type StreamMessageSender = (
   onThoughtChunk: (chunk: string) => void,
   onError: (error: Error) => void,
   onComplete: StreamMessageCompleteHandler,
-  role?: 'user' | 'model'
+  role?: 'user' | 'model',
 ) => Promise<void>;
 
 export type NonStreamMessageSender = (
@@ -45,15 +51,12 @@ export type NonStreamMessageSender = (
   abortSignal: AbortSignal,
   onError: (error: Error) => void,
   onComplete: NonStreamMessageCompleteHandler,
-  role?: 'user' | 'model'
+  role?: 'user' | 'model',
 ) => Promise<void>;
 
 export interface LiveClientFunction {
   declaration: FunctionDeclaration;
-  handler: (
-    args: unknown,
-    options?: { abortSignal?: AbortSignal },
-  ) => Promise<LiveClientFunctionExecutionResult>;
+  handler: (args: unknown, options?: { abortSignal?: AbortSignal }) => Promise<LiveClientFunctionExecutionResult>;
 }
 
 export type LiveClientFunctions = Record<string, LiveClientFunction>;
@@ -94,15 +97,15 @@ export interface GenerateImagesRequestOptions {
 
 export interface GeminiService {
   uploadFile: (
-    apiKey: string, 
-    file: File, 
-    mimeType: string, 
-    displayName: string, 
+    apiKey: string,
+    file: File,
+    mimeType: string,
+    displayName: string,
     signal: AbortSignal,
-    onProgress?: (loaded: number, total: number) => void
+    onProgress?: (loaded: number, total: number) => void,
   ) => Promise<GeminiFile>;
   getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;
-  
+
   // Stateless Message Sending
   sendMessageStream: StreamMessageSender;
   sendMessageNonStream: NonStreamMessageSender;
@@ -116,11 +119,22 @@ export interface GeminiService {
     abortSignal: AbortSignal,
     options?: GenerateImagesRequestOptions,
   ) => Promise<string[]>;
-  generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
+  generateSpeech: (
+    apiKey: string,
+    modelId: string,
+    text: string,
+    voice: string,
+    abortSignal: AbortSignal,
+  ) => Promise<string>;
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string) => Promise<string>;
   translateText(apiKey: string, text: string, targetLanguage?: string): Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
-  generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
+  generateSuggestions(
+    apiKey: string,
+    userContent: string,
+    modelContent: string,
+    language: 'en' | 'zh',
+  ): Promise<string[]>;
   editImage: (
     apiKey: string,
     modelId: string,
@@ -135,5 +149,5 @@ export interface GeminiService {
 }
 
 export interface ThoughtSupportingPart extends Part {
-    thought?: boolean;
+  thought?: boolean;
 }

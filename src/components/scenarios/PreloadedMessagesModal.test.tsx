@@ -112,8 +112,8 @@ describe('PreloadedMessagesModal', () => {
       );
     });
 
-    const saveButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent?.includes('scenarios_save_and_close'),
+    const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('scenarios_save_and_close'),
     );
 
     expect(saveButton).not.toBeUndefined();

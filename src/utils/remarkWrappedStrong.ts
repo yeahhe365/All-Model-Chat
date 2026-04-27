@@ -45,10 +45,10 @@ const isPartOfLongerDelimiterRun = (
   const closingEnd = matchIndex + fullMatch.length;
 
   return (
-    value[openingStart - 1] === delimiterCharacter
-    || value[openingEnd] === delimiterCharacter
-    || value[closingStart - 1] === delimiterCharacter
-    || value[closingEnd] === delimiterCharacter
+    value[openingStart - 1] === delimiterCharacter ||
+    value[openingEnd] === delimiterCharacter ||
+    value[closingStart - 1] === delimiterCharacter ||
+    value[closingEnd] === delimiterCharacter
   );
 };
 
@@ -59,11 +59,7 @@ const hasUnclosedLeadingWrapper = (innerContent: string): boolean => {
   return Boolean(closingWrapper && !innerContent.slice(1).includes(closingWrapper));
 };
 
-const isUnsafeUnderscoreFallback = (
-  value: string,
-  matchIndex: number,
-  fullMatch: string,
-): boolean => {
+const isUnsafeUnderscoreFallback = (value: string, matchIndex: number, fullMatch: string): boolean => {
   const previousCharacter = value[matchIndex - 1] ?? '';
   const nextCharacter = value[matchIndex + fullMatch.length] ?? '';
 
@@ -103,14 +99,15 @@ const createStrongNode = (value: string): MarkdownNode => ({
   children: [createTextNode(value)],
 });
 
-const isValidStrongFallbackInner = (innerContent: string): boolean => (
-  innerContent.length > 0
-  && !/^\s|\s$/u.test(innerContent)
-  && LETTERLIKE_CONTENT.test(innerContent)
-  && !hasUnclosedLeadingWrapper(innerContent)
-);
+const isValidStrongFallbackInner = (innerContent: string): boolean =>
+  innerContent.length > 0 &&
+  !/^\s|\s$/u.test(innerContent) &&
+  LETTERLIKE_CONTENT.test(innerContent) &&
+  !hasUnclosedLeadingWrapper(innerContent);
 
-const findTrailingFallbackOpening = (value: string): {
+const findTrailingFallbackOpening = (
+  value: string,
+): {
   prefix: string;
   delimiter: string;
   innerContent: string;
@@ -148,7 +145,10 @@ const findTrailingFallbackOpening = (value: string): {
   return null;
 };
 
-const findLeadingFallbackClosing = (value: string, delimiter: string): {
+const findLeadingFallbackClosing = (
+  value: string,
+  delimiter: string,
+): {
   innerContent: string;
   suffix: string;
 } | null => {
@@ -206,8 +206,8 @@ const shouldRepairSplitUnderscoreFallback = (
   const rightNextCharacter = rightSuffix[0] ?? '';
 
   return !(
-    (ASCII_WORD_CHARACTER.test(leftPreviousCharacter) && ASCII_WORD_CHARACTER.test(leftNextCharacter))
-    || (ASCII_WORD_CHARACTER.test(rightPreviousCharacter) && ASCII_WORD_CHARACTER.test(rightNextCharacter))
+    (ASCII_WORD_CHARACTER.test(leftPreviousCharacter) && ASCII_WORD_CHARACTER.test(leftNextCharacter)) ||
+    (ASCII_WORD_CHARACTER.test(rightPreviousCharacter) && ASCII_WORD_CHARACTER.test(rightNextCharacter))
   );
 };
 
@@ -221,10 +221,10 @@ const repairSplitStrongFallbackNodes = (children: MarkdownNode[]): MarkdownNode[
     const rightNode = children[index + 2];
 
     if (
-      leftNode?.type === 'text'
-      && typeof leftNode.value === 'string'
-      && rightNode?.type === 'text'
-      && typeof rightNode.value === 'string'
+      leftNode?.type === 'text' &&
+      typeof leftNode.value === 'string' &&
+      rightNode?.type === 'text' &&
+      typeof rightNode.value === 'string'
     ) {
       const middleText = middleNode ? getPlainStrongText(middleNode) : null;
       const leftSplit = findTrailingFallbackOpening(leftNode.value);
@@ -236,12 +236,9 @@ const repairSplitStrongFallbackNodes = (children: MarkdownNode[]): MarkdownNode[
           continue;
         }
 
-        const canRepairUnderscore = leftSplit.delimiter !== '__' || shouldRepairSplitUnderscoreFallback(
-          leftNode.value,
-          leftSplit.matchIndex,
-          middleText,
-          rightSplit.suffix,
-        );
+        const canRepairUnderscore =
+          leftSplit.delimiter !== '__' ||
+          shouldRepairSplitUnderscoreFallback(leftNode.value, leftSplit.matchIndex, middleText, rightSplit.suffix);
 
         if (canRepairUnderscore) {
           if (leftSplit.prefix) {

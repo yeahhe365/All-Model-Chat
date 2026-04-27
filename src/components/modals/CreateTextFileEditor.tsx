@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useCreateFileEditor } from '../../hooks/useCreateFileEditor';
 import { CreateFileHeader } from './create-file/CreateFileHeader';
@@ -28,15 +27,19 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
     initialContent = '',
     initialFilename = '',
     themeId,
-    isPasteRichTextAsMarkdownEnabled = true
+    isPasteRichTextAsMarkdownEnabled = true,
   } = props;
 
   const {
-    textContent, setTextContent,
+    textContent,
+    setTextContent,
     debouncedContent,
-    filenameBase, setFilenameBase,
-    extension, setExtension,
-    isPreviewMode, setIsPreviewMode,
+    filenameBase,
+    setFilenameBase,
+    extension,
+    setExtension,
+    isPreviewMode,
+    setIsPreviewMode,
     isExportingPdf,
     isPdfPreviewReady,
     setIsPdfPreviewReady,
@@ -48,21 +51,21 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
     handleSave,
     handleDownloadPdf,
     handlePaste,
-    handleDrop
+    handleDrop,
   } = useCreateFileEditor({
-      initialContent,
-      initialFilename,
-      onConfirm,
-      themeId,
-      isPasteRichTextAsMarkdownEnabled
+    initialContent,
+    initialFilename,
+    onConfirm,
+    themeId,
+    isPasteRichTextAsMarkdownEnabled,
   });
 
   return (
     <TextEditorModalShell
       onClose={onCancel}
       contentClassName="w-full h-full max-w-none bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-none flex flex-col overflow-hidden"
-      header={(
-        <CreateFileHeader 
+      header={
+        <CreateFileHeader
           isEditing={isEditing}
           isPdf={isPdf}
           isExportingPdf={isExportingPdf}
@@ -74,9 +77,9 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           onClose={onCancel}
           t={t}
         />
-      )}
-      body={(
-        <CreateFileBody 
+      }
+      body={
+        <CreateFileBody
           textContent={textContent}
           setTextContent={setTextContent}
           debouncedContent={debouncedContent}
@@ -91,9 +94,9 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           themeId={themeId}
           t={t}
         />
-      )}
-      footer={(
-        <CreateFileFooter 
+      }
+      footer={
+        <CreateFileFooter
           filenameBase={filenameBase}
           setFilenameBase={setFilenameBase}
           extension={extension}
@@ -108,7 +111,7 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           hasContent={!!textContent.trim()}
           t={t}
         />
-      )}
+      }
     />
   );
 };

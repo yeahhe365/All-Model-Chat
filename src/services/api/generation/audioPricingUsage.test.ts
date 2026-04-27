@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  generateContentMock,
-  getConfiguredApiClientMock,
-  recordTokenUsageMock,
-  blobToBase64Mock,
-} = vi.hoisted(() => ({
+const { generateContentMock, getConfiguredApiClientMock, recordTokenUsageMock, blobToBase64Mock } = vi.hoisted(() => ({
   generateContentMock: vi.fn(),
   getConfiguredApiClientMock: vi.fn(),
   recordTokenUsageMock: vi.fn(),

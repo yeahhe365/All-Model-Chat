@@ -34,14 +34,16 @@ vi.mock('../../services/logService', () => ({
 import { LogViewer } from './LogViewer';
 
 const findButton = (label: string) =>
-  Array.from(document.body.querySelectorAll('button')).find((button) =>
-    button.textContent?.includes(label),
-  ) as HTMLButtonElement | undefined;
+  Array.from(document.body.querySelectorAll('button')).find((button) => button.textContent?.includes(label)) as
+    | HTMLButtonElement
+    | undefined;
 
 describe('LogViewer', () => {
   let container: HTMLDivElement;
   let root: Root;
-  let emitLiveLogs: ((logs: Array<{ timestamp: Date; level: string; category: string; message: string }>) => void) | null;
+  let emitLiveLogs:
+    | ((logs: Array<{ timestamp: Date; level: string; category: string; message: string }>) => void)
+    | null;
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -55,10 +57,12 @@ describe('LogViewer', () => {
       return () => {};
     });
     mockSubscribeToApiKeys.mockImplementation((listener: (usage: Map<string, number>) => void) => {
-      listener(new Map([
-        ['key-a', 3],
-        ['key-b', 1],
-      ]));
+      listener(
+        new Map([
+          ['key-a', 3],
+          ['key-b', 1],
+        ]),
+      );
       return () => {};
     });
     mockSubscribeToTokenUsage.mockImplementation(

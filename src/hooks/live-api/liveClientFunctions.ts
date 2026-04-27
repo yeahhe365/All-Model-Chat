@@ -12,9 +12,7 @@ interface CreateLiveClientFunctionsOptions {
   ) => Promise<Omit<ExecutionResult, 'status'>>;
 }
 
-type FunctionParameterType = NonNullable<
-  NonNullable<LiveClientFunction['declaration']['parameters']>['type']
->;
+type FunctionParameterType = NonNullable<NonNullable<LiveClientFunction['declaration']['parameters']>['type']>;
 
 const FUNCTION_PARAMETER_TYPE = {
   OBJECT: 'OBJECT' as FunctionParameterType,
@@ -65,11 +63,7 @@ export const createLiveClientFunctions = ({
 
         if (result.image && !hasGeneratedImageFile(outputFiles)) {
           generatedFiles.unshift(
-            createUploadedFileFromBase64(
-              result.image,
-              'image/png',
-              `generated-plot-${Date.now()}`,
-            ),
+            createUploadedFileFromBase64(result.image, 'image/png', `generated-plot-${Date.now()}`),
           );
         }
 

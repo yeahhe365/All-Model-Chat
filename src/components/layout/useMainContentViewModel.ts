@@ -5,10 +5,7 @@ import type { AppViewModel } from '../../hooks/app/useApp';
 import { useUIStore } from '../../stores/uiStore';
 import { useChatStore } from '../../stores/chatStore';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
-import {
-  isBboxSystemInstruction,
-  isHdGuideSystemInstruction,
-} from '../../constants/promptHelpers';
+import { isBboxSystemInstruction, isHdGuideSystemInstruction } from '../../constants/promptHelpers';
 import type { ChatAreaProps } from './chat-area/ChatAreaProps';
 import { buildSettingsForModal, buildSidePanelKey } from './mainContentModels';
 
@@ -82,12 +79,15 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
     [loadChatSession],
   );
 
-  const openExportModal = useCallback(async (sessionId?: string) => {
-    if (sessionId && sessionId !== chatState.activeSessionId) {
-      await loadChatSession(sessionId);
-    }
-    setIsExportModalOpen(true);
-  }, [chatState.activeSessionId, loadChatSession, setIsExportModalOpen]);
+  const openExportModal = useCallback(
+    async (sessionId?: string) => {
+      if (sessionId && sessionId !== chatState.activeSessionId) {
+        await loadChatSession(sessionId);
+      }
+      setIsExportModalOpen(true);
+    },
+    [chatState.activeSessionId, loadChatSession, setIsExportModalOpen],
+  );
 
   const onSuggestionClick = useCallback(
     (text: string) => {

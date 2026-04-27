@@ -34,13 +34,7 @@ describe('FileDisplay', () => {
 
   it('uses a tighter max height for standalone message images', () => {
     act(() => {
-      root.render(
-        <FileDisplay
-          file={createImageFile()}
-          onFileClick={() => {}}
-          isFromMessageList
-        />,
-      );
+      root.render(<FileDisplay file={createImageFile()} onFileClick={() => {}} isFromMessageList />);
     });
 
     const image = container.querySelector('img');

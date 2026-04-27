@@ -117,9 +117,7 @@ describe('TableBlock', () => {
       excelButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(createObjectUrl).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'application/vnd.ms-excel' }),
-    );
+    expect(createObjectUrl).toHaveBeenCalledWith(expect.objectContaining({ type: 'application/vnd.ms-excel' }));
     expect(triggerDownloadMock).toHaveBeenCalledWith(
       'blob:table-export',
       expect.stringMatching(/^table-export-\d+\.xls$/),

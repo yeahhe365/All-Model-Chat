@@ -55,7 +55,7 @@ export interface ChatAreaMessageActionsModel {
   onUpdateMessageFile: (
     messageId: string,
     fileId: string,
-    updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution }
+    updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution },
   ) => void;
   onSuggestionClick: (suggestion: string) => void;
   onOrganizeInfoClick: (suggestion: string) => void;

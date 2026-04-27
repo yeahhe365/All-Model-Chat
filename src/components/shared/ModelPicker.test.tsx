@@ -21,9 +21,7 @@ describe('getModelIcon', () => {
   });
 
   it('uses a layers icon for Gemma models', () => {
-    const gemmaMarkup = renderToStaticMarkup(
-      getModelIcon({ id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' }),
-    );
+    const gemmaMarkup = renderToStaticMarkup(getModelIcon({ id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' }));
 
     expect(gemmaMarkup).toContain('lucide-layers3');
   });
@@ -45,9 +43,7 @@ describe('getModelIcon', () => {
   });
 
   it('uses an image icon for Imagen models', () => {
-    const imagenMarkup = renderToStaticMarkup(
-      getModelIcon({ id: 'imagen-4.0-generate-001', name: 'Imagen 4.0' }),
-    );
+    const imagenMarkup = renderToStaticMarkup(getModelIcon({ id: 'imagen-4.0-generate-001', name: 'Imagen 4.0' }));
 
     expect(imagenMarkup).toContain('lucide-image');
     expect(imagenMarkup).not.toContain('lucide-image-plus');

@@ -48,19 +48,13 @@ function sanitizeAppSettings(settings: AppSettings): AppSettings {
   return {
     ...settings,
     modelId: resolveSupportedModelId(settings.modelId, defaultSettings.modelId),
-    transcriptionModelId: resolveSupportedModelId(
-      settings.transcriptionModelId,
-      defaultSettings.transcriptionModelId,
-    ),
+    transcriptionModelId: resolveSupportedModelId(settings.transcriptionModelId, defaultSettings.transcriptionModelId),
   };
 }
 
 let settingsChannel: BroadcastChannel | null = null;
 
-function collectChangedSettings(
-  previous: AppSettings,
-  next: AppSettings,
-): Partial<AppSettings> {
+function collectChangedSettings(previous: AppSettings, next: AppSettings): Partial<AppSettings> {
   const changedEntries = Object.keys(next)
     .filter((key) => !Object.is(previous[key as keyof AppSettings], next[key as keyof AppSettings]))
     .map((key) => [key, next[key as keyof AppSettings]]);
@@ -102,7 +96,8 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
       const language = resolveLanguage(sanitizedNext.language);
 
       if (state.isSettingsLoaded) {
-        dbService.setAppSettings(sanitizedNext)
+        dbService
+          .setAppSettings(sanitizedNext)
           .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
           .catch((e) => logService.error('Failed to save settings', { error: e }));
         return {
@@ -155,7 +150,8 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
           pendingPreloadSettingsOverrides: null,
         });
         if (preloadOverrides) {
-          dbService.setAppSettings(newSettings)
+          dbService
+            .setAppSettings(newSettings)
             .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
             .catch((e) => logService.error('Failed to save settings', { error: e }));
         }
@@ -178,7 +174,8 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
           pendingPreloadSettingsOverrides: null,
         });
         if (preloadOverrides) {
-          dbService.setAppSettings(newSettings)
+          dbService
+            .setAppSettings(newSettings)
             .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
             .catch((e) => logService.error('Failed to save settings', { error: e }));
         }

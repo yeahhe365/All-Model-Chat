@@ -2,11 +2,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  ChatInputViewProvider,
-  useChatInputActionsView,
-  useChatInputLayoutView,
-} from './ChatInputViewContext';
+import { ChatInputViewProvider, useChatInputActionsView, useChatInputLayoutView } from './ChatInputViewContext';
 
 const render = (node: React.ReactNode) => {
   const container = document.createElement('div');

@@ -77,9 +77,7 @@ interface BuildGenerationConfigOptions {
   personGeneration?: ImagePersonGeneration;
 }
 
-const isBuildGenerationConfigOptions = (
-  value: unknown,
-): value is BuildGenerationConfigOptions =>
+const isBuildGenerationConfigOptions = (value: unknown): value is BuildGenerationConfigOptions =>
   typeof value === 'object' && value !== null && 'modelId' in value;
 
 async function buildGenerationConfigFromOptions({
@@ -352,9 +350,7 @@ export const appendFunctionDeclarationsToTools = (
   };
 };
 
-export const toCountTokensConfig = (
-  generationConfig?: GenerationConfig,
-): CountTokensConfig | undefined => {
+export const toCountTokensConfig = (generationConfig?: GenerationConfig): CountTokensConfig | undefined => {
   if (!generationConfig) {
     return undefined;
   }

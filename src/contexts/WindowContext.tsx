@@ -1,4 +1,3 @@
-
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, ReactNode } from 'react';
 
@@ -8,8 +7,8 @@ interface WindowContextType {
 }
 
 const WindowContext = createContext<WindowContextType>({
-  window: typeof window !== 'undefined' ? window : {} as Window,
-  document: typeof document !== 'undefined' ? document : {} as Document,
+  window: typeof window !== 'undefined' ? window : ({} as Window),
+  document: typeof document !== 'undefined' ? document : ({} as Document),
 });
 
 export const useWindowContext = () => useContext(WindowContext);
@@ -26,13 +25,9 @@ export const WindowProvider: React.FC<WindowProviderProps> = ({
   children,
 }) => {
   const value = {
-    window: propWindow || (typeof window !== 'undefined' ? window : {} as Window),
-    document: propDocument || (typeof document !== 'undefined' ? document : {} as Document),
+    window: propWindow || (typeof window !== 'undefined' ? window : ({} as Window)),
+    document: propDocument || (typeof document !== 'undefined' ? document : ({} as Document)),
   };
 
-  return (
-    <WindowContext.Provider value={value}>
-      {children}
-    </WindowContext.Provider>
-  );
+  return <WindowContext.Provider value={value}>{children}</WindowContext.Provider>;
 };

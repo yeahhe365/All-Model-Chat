@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useWindowContext } from '../../contexts/WindowContext';
@@ -74,7 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only close if the click is on the backdrop itself, not on any of its children
     if (e.target === e.currentTarget) {
-        onClose();
+      onClose();
     }
   };
 
@@ -97,6 +96,6 @@ export const Modal: React.FC<ModalProps> = ({
         {children}
       </div>
     </div>,
-    targetDocument.body
+    targetDocument.body,
   );
 };

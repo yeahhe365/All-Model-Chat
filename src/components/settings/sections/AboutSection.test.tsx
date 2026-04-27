@@ -12,9 +12,8 @@ describe('AboutSection', () => {
   let root: Root;
   const initialState = useSettingsStore.getState();
   const fetchMock = vi.fn();
-  const packageVersion = JSON.parse(
-    readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8'),
-  ).version as string;
+  const packageVersion = JSON.parse(readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8'))
+    .version as string;
   const nextPatchVersion = (() => {
     const [major = 0, minor = 0, patch = 0] = packageVersion.split('.').map(Number);
     return `${major}.${minor}.${patch + 1}`;

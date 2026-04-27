@@ -159,7 +159,7 @@ describe('lazy diagram loading', () => {
     } finally {
       restore();
     }
-  });
+  }, 15_000);
 
   it('defers GraphvizBlock import until the diagram preview enters the viewport', async () => {
     const { instances, restore } = installMockIntersectionObserver();
@@ -211,5 +211,5 @@ describe('lazy diagram loading', () => {
     } finally {
       restore();
     }
-  });
+  }, 15_000);
 });

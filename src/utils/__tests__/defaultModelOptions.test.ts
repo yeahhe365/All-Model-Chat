@@ -21,9 +21,7 @@ describe('getDefaultModelOptions', () => {
       .map((model) => model.id)
       .sort();
 
-    expect(ttsIds).toEqual([
-      'gemini-3.1-flash-tts-preview',
-    ]);
+    expect(ttsIds).toEqual(['gemini-3.1-flash-tts-preview']);
   });
 
   it('does not include removed Gemini 2.5 Flash preview models', () => {

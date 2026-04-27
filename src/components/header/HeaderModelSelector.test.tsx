@@ -177,9 +177,7 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const label = Array.from(container.querySelectorAll('span')).find(
-      (node) => node.textContent === 'Robotics-ER 1.6',
-    );
+    const label = Array.from(container.querySelectorAll('span')).find((node) => node.textContent === 'Robotics-ER 1.6');
     expect(label?.className).toContain('font-semibold');
   });
 

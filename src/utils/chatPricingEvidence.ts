@@ -2,7 +2,9 @@ import type { Part } from '@google/genai';
 import type { ApiUsageExactPricing } from './db';
 
 const isPlainTextPart = (part: Part) => {
-  const keys = Object.keys(part).filter((key) => key !== 'thought' && key !== 'thoughtSignature' && key !== 'thought_signature');
+  const keys = Object.keys(part).filter(
+    (key) => key !== 'thought' && key !== 'thoughtSignature' && key !== 'thought_signature',
+  );
   return keys.length === 1 && keys[0] === 'text' && typeof (part as { text?: unknown }).text === 'string';
 };
 
@@ -34,19 +36,23 @@ export const buildPureTextChatExactPricing = ({
   return {
     version: 1,
     requestKind: 'chat',
-    ...(uncachedPromptTokens > 0 ? { promptTokensDetails: [{ modality: 'TEXT', tokenCount: uncachedPromptTokens }] } : {}),
+    ...(uncachedPromptTokens > 0
+      ? { promptTokensDetails: [{ modality: 'TEXT', tokenCount: uncachedPromptTokens }] }
+      : {}),
     ...(cachedPromptTokens > 0 ? { cacheTokensDetails: [{ modality: 'TEXT', tokenCount: cachedPromptTokens }] } : {}),
-    ...(toolUsePromptTokens > 0 ? { toolUsePromptTokensDetails: [{ modality: 'TEXT', tokenCount: toolUsePromptTokens }] } : {}),
+    ...(toolUsePromptTokens > 0
+      ? { toolUsePromptTokensDetails: [{ modality: 'TEXT', tokenCount: toolUsePromptTokens }] }
+      : {}),
     ...(outputTokens > 0 ? { responseTokensDetails: [{ modality: 'TEXT', tokenCount: outputTokens }] } : {}),
   };
 };
 
 const hasCompleteChatEvidence = (exactPricing: ApiUsageExactPricing | undefined) =>
   Boolean(
-    exactPricing
-    && exactPricing.requestKind === 'chat'
-    && exactPricing.promptTokensDetails?.length
-    && exactPricing.responseTokensDetails?.length,
+    exactPricing &&
+    exactPricing.requestKind === 'chat' &&
+    exactPricing.promptTokensDetails?.length &&
+    exactPricing.responseTokensDetails?.length,
   );
 
 export const resolveChatExactPricing = ({

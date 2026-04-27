@@ -50,8 +50,7 @@ const sanitizeElementTree = (root: ParentNode) => {
   });
 };
 
-const cloneIntoDocument = (node: Node, targetDocument: Document): Node =>
-  targetDocument.importNode(node, true);
+const cloneIntoDocument = (node: Node, targetDocument: Document): Node => targetDocument.importNode(node, true);
 
 export const buildHtmlPreviewSrcDoc = (htmlContent: string): string => {
   if (!htmlContent) {

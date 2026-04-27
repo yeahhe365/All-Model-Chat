@@ -33,7 +33,7 @@ export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({
   const [editedName, setEditedName] = useState(file?.name ?? '');
   const [isCopied, setIsCopied] = useState(false);
 
-  const contentForActions = isEditing ? editedContent : (loadedContent || file?.textContent || '');
+  const contentForActions = isEditing ? editedContent : loadedContent || file?.textContent || '';
   const savedContent = loadedContent || file?.textContent || '';
   const savedName = file?.name || '';
   const hasUnsavedChanges = isEditing && (editedContent !== savedContent || editedName !== savedName);
@@ -122,21 +122,44 @@ export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({
 
           <div className="flex shrink-0 items-center gap-1.5">
             {isEditing && onSaveText ? (
-              <button type="button" onClick={handleSave} className="rounded-lg bg-[var(--theme-bg-accent)] px-3 py-2 text-sm font-medium text-white hover:opacity-90">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="rounded-lg bg-[var(--theme-bg-accent)] px-3 py-2 text-sm font-medium text-white hover:opacity-90"
+              >
                 <Save size={16} className="mr-1.5 inline" /> {t('filePreview_save_changes')}
               </button>
             ) : onSaveText ? (
-              <button type="button" onClick={handleToggleEdit} className="rounded-lg border border-[var(--theme-border-secondary)] px-3 py-2 text-sm text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]">
+              <button
+                type="button"
+                onClick={handleToggleEdit}
+                className="rounded-lg border border-[var(--theme-border-secondary)] px-3 py-2 text-sm text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]"
+              >
                 <Edit3 size={16} className="mr-1.5 inline" /> {t('filePreview_edit_file')}
               </button>
             ) : null}
-            <button type="button" onClick={handleCopy} className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]" title={t('filePreview_copy_content')}>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]"
+              title={t('filePreview_copy_content')}
+            >
               {isCopied ? <Check size={18} className="text-green-500" /> : <ClipboardCopy size={18} />}
             </button>
-            <button type="button" onClick={handleDownload} className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]" title={t('filePreview_download_file')}>
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]"
+              title={t('filePreview_download_file')}
+            >
               <Download size={18} />
             </button>
-            <button type="button" onClick={isEditing ? handleToggleEdit : handleClose} className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:border-red-400/60 hover:text-red-500" title={isEditing ? t('filePreview_cancel_edit') : t('imageZoom_close_title')}>
+            <button
+              type="button"
+              onClick={isEditing ? handleToggleEdit : handleClose}
+              className="rounded-lg border border-[var(--theme-border-secondary)] p-2 text-[var(--theme-text-secondary)] hover:border-red-400/60 hover:text-red-500"
+              title={isEditing ? t('filePreview_cancel_edit') : t('imageZoom_close_title')}
+            >
               <X size={18} />
             </button>
           </div>

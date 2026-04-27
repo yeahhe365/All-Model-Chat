@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { ToggleItem } from '../../../shared/ToggleItem';
@@ -11,10 +8,7 @@ interface InterfaceTogglesProps {
   onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
 
-export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
-  settings,
-  onUpdate,
-}) => {
+export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({ settings, onUpdate }) => {
   const { t } = useI18n();
   const handleNotificationToggle = async (enabled: boolean) => {
     if (enabled) {
@@ -22,9 +16,11 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
         alert('Desktop notifications are not supported by your browser.');
         return;
       }
-      
+
       if (Notification.permission === 'denied') {
-        alert('Notifications are blocked by your browser. Please enable them in your browser settings to use this feature.');
+        alert(
+          'Notifications are blocked by your browser. Please enable them in your browser settings to use this feature.',
+        );
         return;
       }
 
@@ -38,39 +34,125 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
     onUpdate('isCompletionNotificationEnabled', enabled);
   };
 
-    return (
+  return (
     <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-2">
-            {t('settingsBehaviorDisplay')}
-        </label>
-        <div className="grid grid-cols-1 gap-1">
-            <ToggleItem label={t('headerStream')} checked={settings.isStreamingEnabled} onChange={(v) => onUpdate('isStreamingEnabled', v)} />
-            <ToggleItem label={t('settings_rawMode_label')} checked={settings.isRawModeEnabled ?? false} onChange={(v) => onUpdate('isRawModeEnabled', v)} tooltip={t('settings_rawMode_tooltip')} />
-            <ToggleItem label={t('settings_hideThinkingInContext_label')} checked={settings.hideThinkingInContext ?? false} onChange={(v) => onUpdate('hideThinkingInContext', v)} tooltip={t('settings_hideThinkingInContext_tooltip')} />
-            <ToggleItem label={t('settings_pasteRichTextAsMarkdown_label')} checked={settings.isPasteRichTextAsMarkdownEnabled ?? true} onChange={(v) => onUpdate('isPasteRichTextAsMarkdownEnabled', v)} tooltip={t('settings_pasteRichTextAsMarkdown_tooltip')} />
-            <ToggleItem label={t('settings_pasteAsTextFile_label')} checked={settings.isPasteAsTextFileEnabled ?? true} onChange={(v) => onUpdate('isPasteAsTextFileEnabled', v)} tooltip={t('settings_pasteAsTextFile_tooltip')} />
-            <ToggleItem label={t('settings_copySelectionFormatting_label')} checked={settings.isCopySelectionFormattingEnabled ?? true} onChange={(v) => onUpdate('isCopySelectionFormattingEnabled', v)} tooltip={t('settings_copySelectionFormatting_tooltip')} />
-            <ToggleItem label={t('settings_systemAudioRecording_label')} checked={settings.isSystemAudioRecordingEnabled ?? false} onChange={(v) => onUpdate('isSystemAudioRecordingEnabled', v)} tooltip={t('settings_systemAudioRecording_tooltip')} />
-            
-            <ToggleItem label={t('isAutoTitleEnabled')} checked={settings.isAutoTitleEnabled} onChange={(v) => onUpdate('isAutoTitleEnabled', v)} />
+      <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-2">
+        {t('settingsBehaviorDisplay')}
+      </label>
+      <div className="grid grid-cols-1 gap-1">
+        <ToggleItem
+          label={t('headerStream')}
+          checked={settings.isStreamingEnabled}
+          onChange={(v) => onUpdate('isStreamingEnabled', v)}
+        />
+        <ToggleItem
+          label={t('settings_rawMode_label')}
+          checked={settings.isRawModeEnabled ?? false}
+          onChange={(v) => onUpdate('isRawModeEnabled', v)}
+          tooltip={t('settings_rawMode_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_hideThinkingInContext_label')}
+          checked={settings.hideThinkingInContext ?? false}
+          onChange={(v) => onUpdate('hideThinkingInContext', v)}
+          tooltip={t('settings_hideThinkingInContext_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_pasteRichTextAsMarkdown_label')}
+          checked={settings.isPasteRichTextAsMarkdownEnabled ?? true}
+          onChange={(v) => onUpdate('isPasteRichTextAsMarkdownEnabled', v)}
+          tooltip={t('settings_pasteRichTextAsMarkdown_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_pasteAsTextFile_label')}
+          checked={settings.isPasteAsTextFileEnabled ?? true}
+          onChange={(v) => onUpdate('isPasteAsTextFileEnabled', v)}
+          tooltip={t('settings_pasteAsTextFile_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_copySelectionFormatting_label')}
+          checked={settings.isCopySelectionFormattingEnabled ?? true}
+          onChange={(v) => onUpdate('isCopySelectionFormattingEnabled', v)}
+          tooltip={t('settings_copySelectionFormatting_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_systemAudioRecording_label')}
+          checked={settings.isSystemAudioRecordingEnabled ?? false}
+          onChange={(v) => onUpdate('isSystemAudioRecordingEnabled', v)}
+          tooltip={t('settings_systemAudioRecording_tooltip')}
+        />
 
-            <ToggleItem label={t('settings_enableSuggestions_label')} checked={settings.isSuggestionsEnabled} onChange={(v) => onUpdate('isSuggestionsEnabled', v)} tooltip={t('settings_enableSuggestions_tooltip')} />
-            
-            {settings.isSuggestionsEnabled && (
-                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                    <ToggleItem label={t('settings_autoSendOnSuggestionClick_label')} checked={settings.isAutoSendOnSuggestionClick ?? true} onChange={(v) => onUpdate('isAutoSendOnSuggestionClick', v)} tooltip={t('settings_autoSendOnSuggestionClick_tooltip')} />
-                </div>
-            )}
+        <ToggleItem
+          label={t('isAutoTitleEnabled')}
+          checked={settings.isAutoTitleEnabled}
+          onChange={(v) => onUpdate('isAutoTitleEnabled', v)}
+        />
 
-            <ToggleItem label={t('settings_autoScrollOnSend_label')} checked={settings.isAutoScrollOnSendEnabled ?? true} onChange={(v) => onUpdate('isAutoScrollOnSendEnabled', v)} />
-            <ToggleItem label={t('settings_enableCompletionNotification_label')} checked={settings.isCompletionNotificationEnabled} onChange={handleNotificationToggle} tooltip={t('settings_enableCompletionNotification_tooltip')} />
-            <ToggleItem label={t('settings_enableCompletionSound_label')} checked={settings.isCompletionSoundEnabled ?? false} onChange={(v) => onUpdate('isCompletionSoundEnabled', v)} tooltip={t('settings_enableCompletionSound_tooltip')} />
-            <ToggleItem label={t('settings_expandCodeBlocksByDefault_label')} checked={settings.expandCodeBlocksByDefault} onChange={(v) => onUpdate('expandCodeBlocksByDefault', v)} />
-            <ToggleItem label={t('settings_autoFullscreenHtml_label')} checked={settings.autoFullscreenHtml ?? true} onChange={(v) => onUpdate('autoFullscreenHtml', v)} tooltip={t('settings_autoFullscreenHtml_tooltip')} />
-            <ToggleItem label={t('settings_enableMermaidRendering_label')} checked={settings.isMermaidRenderingEnabled} onChange={(v) => onUpdate('isMermaidRenderingEnabled', v)} tooltip={t('settings_enableMermaidRendering_tooltip')} />
-            <ToggleItem label={t('settings_enableGraphvizRendering_label')} checked={settings.isGraphvizRenderingEnabled ?? true} onChange={(v) => onUpdate('isGraphvizRenderingEnabled', v)} tooltip={t('settings_enableGraphvizRendering_tooltip')} />
-            <ToggleItem label={t('settings_audioCompression_label')} checked={settings.isAudioCompressionEnabled} onChange={(v) => onUpdate('isAudioCompressionEnabled', v)} tooltip={t('settings_audioCompression_tooltip')} />
-        </div>
+        <ToggleItem
+          label={t('settings_enableSuggestions_label')}
+          checked={settings.isSuggestionsEnabled}
+          onChange={(v) => onUpdate('isSuggestionsEnabled', v)}
+          tooltip={t('settings_enableSuggestions_tooltip')}
+        />
+
+        {settings.isSuggestionsEnabled && (
+          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+            <ToggleItem
+              label={t('settings_autoSendOnSuggestionClick_label')}
+              checked={settings.isAutoSendOnSuggestionClick ?? true}
+              onChange={(v) => onUpdate('isAutoSendOnSuggestionClick', v)}
+              tooltip={t('settings_autoSendOnSuggestionClick_tooltip')}
+            />
+          </div>
+        )}
+
+        <ToggleItem
+          label={t('settings_autoScrollOnSend_label')}
+          checked={settings.isAutoScrollOnSendEnabled ?? true}
+          onChange={(v) => onUpdate('isAutoScrollOnSendEnabled', v)}
+        />
+        <ToggleItem
+          label={t('settings_enableCompletionNotification_label')}
+          checked={settings.isCompletionNotificationEnabled}
+          onChange={handleNotificationToggle}
+          tooltip={t('settings_enableCompletionNotification_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_enableCompletionSound_label')}
+          checked={settings.isCompletionSoundEnabled ?? false}
+          onChange={(v) => onUpdate('isCompletionSoundEnabled', v)}
+          tooltip={t('settings_enableCompletionSound_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_expandCodeBlocksByDefault_label')}
+          checked={settings.expandCodeBlocksByDefault}
+          onChange={(v) => onUpdate('expandCodeBlocksByDefault', v)}
+        />
+        <ToggleItem
+          label={t('settings_autoFullscreenHtml_label')}
+          checked={settings.autoFullscreenHtml ?? true}
+          onChange={(v) => onUpdate('autoFullscreenHtml', v)}
+          tooltip={t('settings_autoFullscreenHtml_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_enableMermaidRendering_label')}
+          checked={settings.isMermaidRenderingEnabled}
+          onChange={(v) => onUpdate('isMermaidRenderingEnabled', v)}
+          tooltip={t('settings_enableMermaidRendering_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_enableGraphvizRendering_label')}
+          checked={settings.isGraphvizRenderingEnabled ?? true}
+          onChange={(v) => onUpdate('isGraphvizRenderingEnabled', v)}
+          tooltip={t('settings_enableGraphvizRendering_tooltip')}
+        />
+        <ToggleItem
+          label={t('settings_audioCompression_label')}
+          checked={settings.isAudioCompressionEnabled}
+          onChange={(v) => onUpdate('isAudioCompressionEnabled', v)}
+          tooltip={t('settings_audioCompression_tooltip')}
+        />
+      </div>
     </div>
   );
 };

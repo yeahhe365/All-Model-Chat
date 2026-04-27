@@ -1,40 +1,40 @@
 const escapeHtml = (value: string): string =>
-    value
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 export const generateExportHtmlTemplate = ({
-    title,
-    date,
-    model,
-    contentHtml,
-    styles,
-    themeId,
-    language,
-    rootBgColor,
-    bodyClasses
+  title,
+  date,
+  model,
+  contentHtml,
+  styles,
+  themeId,
+  language,
+  rootBgColor,
+  bodyClasses,
 }: {
-    title: string,
-    date: string,
-    model: string,
-    contentHtml: string,
-    styles: string,
-    themeId: string,
-    language: string,
-    rootBgColor: string,
-    bodyClasses: string
+  title: string;
+  date: string;
+  model: string;
+  contentHtml: string;
+  styles: string;
+  themeId: string;
+  language: string;
+  rootBgColor: string;
+  bodyClasses: string;
 }) => {
-    const safeTitle = escapeHtml(title);
-    const safeDate = escapeHtml(date);
-    const safeModel = escapeHtml(model);
-    const safeLanguage = escapeHtml(language);
-    const safeThemeId = escapeHtml(themeId);
-    const safeBodyClasses = escapeHtml(bodyClasses);
+  const safeTitle = escapeHtml(title);
+  const safeDate = escapeHtml(date);
+  const safeModel = escapeHtml(model);
+  const safeLanguage = escapeHtml(language);
+  const safeThemeId = escapeHtml(themeId);
+  const safeBodyClasses = escapeHtml(bodyClasses);
 
-    return `
+  return `
         <!DOCTYPE html>
         <html lang="${safeLanguage}">
         <head>
@@ -138,40 +138,36 @@ export const generateExportHtmlTemplate = ({
 };
 
 export const generateExportTxtTemplate = ({
-    title,
-    date,
-    model,
-    messages
+  title,
+  date,
+  model,
+  messages,
 }: {
-    title: string,
-    date: string,
-    model: string,
-    messages: Array<{ role: string, timestamp: Date, content: string, files?: Array<{name: string}> }>
+  title: string;
+  date: string;
+  model: string;
+  messages: Array<{ role: string; timestamp: Date; content: string; files?: Array<{ name: string }> }>;
 }) => {
-    const separator = '-'.repeat(40);
-    
-    const header = [
-        `Chat: ${title}`,
-        `Date: ${date}`,
-        `Model: ${model}`,
-        '='.repeat(40),
-        ''
-    ].join('\n');
+  const separator = '-'.repeat(40);
 
-    const body = messages.map(msg => {
-        const roleTitle = msg.role.toUpperCase();
-        const timeStr = new Date(msg.timestamp).toLocaleString();
-        let text = `### ${roleTitle} [${timeStr}]\n`;
-        
-        if (msg.files && msg.files.length > 0) {
-            msg.files.forEach(f => {
-                text += `[Attachment: ${f.name}]\n`;
-            });
-        }
-        
-        text += msg.content;
-        return text;
-    }).join(`\n\n${separator}\n\n`);
+  const header = [`Chat: ${title}`, `Date: ${date}`, `Model: ${model}`, '='.repeat(40), ''].join('\n');
 
-    return header + body;
+  const body = messages
+    .map((msg) => {
+      const roleTitle = msg.role.toUpperCase();
+      const timeStr = new Date(msg.timestamp).toLocaleString();
+      let text = `### ${roleTitle} [${timeStr}]\n`;
+
+      if (msg.files && msg.files.length > 0) {
+        msg.files.forEach((f) => {
+          text += `[Attachment: ${f.name}]\n`;
+        });
+      }
+
+      text += msg.content;
+      return text;
+    })
+    .join(`\n\n${separator}\n\n`);
+
+  return header + body;
 };

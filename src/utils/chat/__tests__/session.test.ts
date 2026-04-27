@@ -248,15 +248,19 @@ describe('performOptimisticSessionUpdate', () => {
 describe('sanitizeSessionForExport', () => {
   it('removes rawFile from files', () => {
     const session = makeSession({
-      messages: [makeMessage('user', 'Hi', {
-        files: [{
-          id: 'f1',
-          name: 'test.png',
-          type: 'image/png',
-          size: 100,
-          rawFile: new Blob(['data']),
-        } as any],
-      })],
+      messages: [
+        makeMessage('user', 'Hi', {
+          files: [
+            {
+              id: 'f1',
+              name: 'test.png',
+              type: 'image/png',
+              size: 100,
+              rawFile: new Blob(['data']),
+            } as any,
+          ],
+        }),
+      ],
     });
     const result = sanitizeSessionForExport(session);
     expect(result.messages[0].files![0].rawFile).toBeUndefined();
@@ -264,15 +268,19 @@ describe('sanitizeSessionForExport', () => {
 
   it('removes blob: dataUrl from files', () => {
     const session = makeSession({
-      messages: [makeMessage('user', 'Hi', {
-        files: [{
-          id: 'f1',
-          name: 'test.png',
-          type: 'image/png',
-          size: 100,
-          dataUrl: 'blob:http://localhost/abc',
-        } as any],
-      })],
+      messages: [
+        makeMessage('user', 'Hi', {
+          files: [
+            {
+              id: 'f1',
+              name: 'test.png',
+              type: 'image/png',
+              size: 100,
+              dataUrl: 'blob:http://localhost/abc',
+            } as any,
+          ],
+        }),
+      ],
     });
     const result = sanitizeSessionForExport(session);
     expect(result.messages[0].files![0].dataUrl).toBeUndefined();
@@ -280,15 +288,19 @@ describe('sanitizeSessionForExport', () => {
 
   it('removes inline base64 dataUrl because it is persisted separately', () => {
     const session = makeSession({
-      messages: [makeMessage('user', 'Hi', {
-        files: [{
-          id: 'f1',
-          name: 'test.png',
-          type: 'image/png',
-          size: 100,
-          dataUrl: 'data:image/png;base64,abc123',
-        } as any],
-      })],
+      messages: [
+        makeMessage('user', 'Hi', {
+          files: [
+            {
+              id: 'f1',
+              name: 'test.png',
+              type: 'image/png',
+              size: 100,
+              dataUrl: 'data:image/png;base64,abc123',
+            } as any,
+          ],
+        }),
+      ],
     });
     const result = sanitizeSessionForExport(session);
     expect(result.messages[0].files![0].dataUrl).toBeUndefined();
@@ -296,15 +308,19 @@ describe('sanitizeSessionForExport', () => {
 
   it('removes abortController from files', () => {
     const session = makeSession({
-      messages: [makeMessage('user', 'Hi', {
-        files: [{
-          id: 'f1',
-          name: 'test.png',
-          type: 'image/png',
-          size: 100,
-          abortController: new AbortController(),
-        } as any],
-      })],
+      messages: [
+        makeMessage('user', 'Hi', {
+          files: [
+            {
+              id: 'f1',
+              name: 'test.png',
+              type: 'image/png',
+              size: 100,
+              abortController: new AbortController(),
+            } as any,
+          ],
+        }),
+      ],
     });
     const result = sanitizeSessionForExport(session);
     expect(result.messages[0].files![0].abortController).toBeUndefined();

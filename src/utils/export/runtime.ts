@@ -56,16 +56,16 @@ export const buildMessageExportFilenameBase = ({
     return `${safeTitle}${indexStr}`;
   }
 
-  const contentSnippet = markdownContent.replace(/[^\w\s]/gi, '').split(' ').slice(0, 5).join('_');
+  const contentSnippet = markdownContent
+    .replace(/[^\w\s]/gi, '')
+    .split(' ')
+    .slice(0, 5)
+    .join('_');
   const safeSnippet = sanitizeFilename(contentSnippet) || 'message';
   return `${safeSnippet}-${shortId}`;
 };
 
-export const buildChatExportFilename = ({
-  title,
-  format,
-  date = new Date(),
-}: BuildChatExportFilenameArgs) => {
+export const buildChatExportFilename = ({ title, format, date = new Date() }: BuildChatExportFilenameArgs) => {
   const safeTitle = sanitizeFilename(title);
   const { isoDate } = createExportDateMeta(date);
   return `chat-${safeTitle}-${isoDate}.${format}`;
@@ -82,14 +82,7 @@ export const loadExportRuntime = async () => {
     generateExportTxtTemplate,
   } = await loadExportModules();
 
-  const buildHtmlDocument = async ({
-    title,
-    date,
-    model,
-    contentHtml,
-    themeId,
-    language,
-  }: BuildHtmlDocumentArgs) => {
+  const buildHtmlDocument = async ({ title, date, model, contentHtml, themeId, language }: BuildHtmlDocumentArgs) => {
     const styles = await gatherPageStyles();
     const bodyClasses = document.body.className;
     const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');

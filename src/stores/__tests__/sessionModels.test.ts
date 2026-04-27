@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_MODEL_ID } from '../../constants/modelConstants';
 import type { SavedChatSession } from '../../types';
-import {
-  sanitizeSessionModel,
-  shouldRetainRuntimeMessages,
-  sortSessionsInPlace,
-} from '../sessionModels';
+import { sanitizeSessionModel, shouldRetainRuntimeMessages, sortSessionsInPlace } from '../sessionModels';
 
 const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSession => ({
   id: 'session',
@@ -28,12 +24,7 @@ describe('sessionModels', () => {
     const sorted = sortSessionsInPlace(sessions);
 
     expect(sorted).toBe(sessions);
-    expect(sorted.map((session) => session.id)).toEqual([
-      'pinned-new',
-      'pinned-old',
-      'new',
-      'old',
-    ]);
+    expect(sorted.map((session) => session.id)).toEqual(['pinned-new', 'pinned-old', 'new', 'old']);
   });
 
   it('keeps runtime messages for the active session and loading sessions only', () => {
@@ -45,11 +36,13 @@ describe('sessionModels', () => {
   });
 
   it('sanitizes missing model IDs to the default supported model', () => {
-    const sanitized = sanitizeSessionModel(makeSession({
-      settings: {
-        temperature: 1,
-      } as SavedChatSession['settings'],
-    }));
+    const sanitized = sanitizeSessionModel(
+      makeSession({
+        settings: {
+          temperature: 1,
+        } as SavedChatSession['settings'],
+      }),
+    );
 
     expect(sanitized.settings.modelId).toBe(DEFAULT_MODEL_ID);
   });

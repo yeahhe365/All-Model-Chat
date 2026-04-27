@@ -4,8 +4,7 @@ import path from 'path';
 
 const projectRoot = path.resolve(__dirname, '../..');
 
-const readProjectFile = (relativePath: string) =>
-  fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
+const readProjectFile = (relativePath: string) => fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
 
 describe('certain redundancy cleanup guards', () => {
   it('does not keep identity wrapper exports in mainContentModels', () => {
@@ -86,7 +85,9 @@ describe('certain redundancy cleanup guards', () => {
   it('reuses stripSessionFilePayloads for sanitizeSessionForExport', () => {
     const source = readProjectFile('src/utils/chat/session.ts');
 
-    expect(source).toContain('export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession =>');
+    expect(source).toContain(
+      'export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession =>',
+    );
     expect(source).toContain('stripSessionFilePayloads(session);');
   });
 

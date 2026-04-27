@@ -5,15 +5,15 @@
  * @param revokeBlob Whether to revoke the object URL after download (if it is a blob URL). Defaults to true.
  */
 export const triggerDownload = (href: string, filename: string, revokeBlob: boolean = true): void => {
-    const link = document.createElement('a');
-    link.href = href;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    if (revokeBlob && href.startsWith('blob:')) {
-        URL.revokeObjectURL(href);
-    }
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  if (revokeBlob && href.startsWith('blob:')) {
+    URL.revokeObjectURL(href);
+  }
 };
 
 /**
@@ -23,7 +23,7 @@ export const triggerDownload = (href: string, filename: string, revokeBlob: bool
  */
 export const sanitizeFilename = (name: string): string => {
   if (!name || typeof name !== 'string') {
-    return "export";
+    return 'export';
   }
   // Remove illegal characters for filenames and control characters
   let saneName = Array.from(name.trim(), (char) => {
@@ -36,8 +36,7 @@ export const sanitizeFilename = (name: string): string => {
   if (saneName.length > 100) {
     saneName = saneName.substring(0, 100);
   }
-  return saneName || "export";
+  return saneName || 'export';
 };
 
-export const formatExportDateTime = (date: Date): string =>
-  `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+export const formatExportDateTime = (date: Date): string => `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;

@@ -43,41 +43,41 @@ const createSession = (id: string, title: string, timestamp: number) => ({
 });
 
 async function addSessions(page: Page, sessions: Array<ReturnType<typeof createSession>>) {
-  await page.evaluate(async ({ nextSessions, dbName, dbVersion }) => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(dbName, dbVersion);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(['sessions'], 'readwrite');
-      const store = tx.objectStore('sessions');
-
-      nextSessions.forEach((session) => {
-        store.put({
-          ...session,
-          messages: session.messages.map((message) => ({
-            ...message,
-            timestamp: new Date(message.timestamp),
-          })),
-        });
+  await page.evaluate(
+    async ({ nextSessions, dbName, dbVersion }) => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open(dbName, dbVersion);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
       });
 
-      tx.oncomplete = () => {
-        db.close();
-        resolve();
-      };
-      tx.onerror = () => reject(tx.error);
-      tx.onabort = () => reject(tx.error);
-    });
-  }, { nextSessions: sessions, dbName: DB_NAME, dbVersion: DB_VERSION });
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(['sessions'], 'readwrite');
+        const store = tx.objectStore('sessions');
+
+        nextSessions.forEach((session) => {
+          store.put({
+            ...session,
+            messages: session.messages.map((message) => ({
+              ...message,
+              timestamp: new Date(message.timestamp),
+            })),
+          });
+        });
+
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    },
+    { nextSessions: sessions, dbName: DB_NAME, dbVersion: DB_VERSION },
+  );
 }
 
-async function seedSidebarFixture(
-  page: Page,
-  options?: { collapsed?: boolean; mobileOpen?: boolean },
-) {
+async function seedSidebarFixture(page: Page, options?: { collapsed?: boolean; mobileOpen?: boolean }) {
   const now = Date.now();
   const activeSession = createSession('sidebar-active', 'Active session', now);
   const targetSession = createSession('sidebar-target', 'Target session', now - 1_000);
@@ -93,19 +93,22 @@ async function seedSidebarFixture(
     },
   });
 
-  await page.evaluate(({ collapsed, mobileOpen, storageKey }) => {
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        desktopOpen: !collapsed,
-        mobileOpen,
-      }),
-    );
-  }, {
-    collapsed: options?.collapsed ?? false,
-    mobileOpen: options?.mobileOpen ?? false,
-    storageKey: HISTORY_SIDEBAR_STORAGE_KEY,
-  });
+  await page.evaluate(
+    ({ collapsed, mobileOpen, storageKey }) => {
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          desktopOpen: !collapsed,
+          mobileOpen,
+        }),
+      );
+    },
+    {
+      collapsed: options?.collapsed ?? false,
+      mobileOpen: options?.mobileOpen ?? false,
+      storageKey: HISTORY_SIDEBAR_STORAGE_KEY,
+    },
+  );
 
   await addSessions(page, [targetSession, extraSession]);
 
@@ -165,9 +168,7 @@ test('sidebar session menu still opens after a slight pointer move', async ({ pa
   await expect(sessionRow.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
 });
 
-test('collapsed recent chats popover stays open while traversing from button to panel', async ({
-  page,
-}) => {
+test('collapsed recent chats popover stays open while traversing from button to panel', async ({ page }) => {
   const { activeSession } = await seedSidebarFixture(page, { collapsed: true });
 
   await page.goto(`/chat/${activeSession.id}`);
@@ -201,9 +202,7 @@ test('collapsed recent chats popover stays open while traversing from button to 
   await expect(panel).toBeVisible();
 });
 
-test('collapsed recent chats popover opened by click stays open until explicit dismissal', async ({
-  page,
-}) => {
+test('collapsed recent chats popover opened by click stays open until explicit dismissal', async ({ page }) => {
   const { activeSession } = await seedSidebarFixture(page, { collapsed: true });
 
   await page.goto(`/chat/${activeSession.id}`);
@@ -237,9 +236,7 @@ test.describe('mobile sidebar tap targets', () => {
 
   test.use(mobileDevice);
 
-  test('mobile tap on the right edge of a session row still opens that session', async ({
-    page,
-  }) => {
+  test('mobile tap on the right edge of a session row still opens that session', async ({ page }) => {
     const { activeSession, targetSession } = await seedSidebarFixture(page, {
       mobileOpen: true,
     });

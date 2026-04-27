@@ -76,14 +76,14 @@ describe('ApiConfigSection', () => {
             setLiveApiEphemeralTokenEndpoint={vi.fn()}
             availableModels={[]}
           />
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
     expect(container.textContent).toContain('API & Connections');
 
     const testButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Test Connection')
+      button.textContent?.includes('Test Connection'),
     );
 
     expect(testButton).toBeDefined();
@@ -96,10 +96,7 @@ describe('ApiConfigSection', () => {
     await vi.waitFor(() => {
       expect(getClientMock).toHaveBeenCalled();
     });
-    expect(getClientMock).toHaveBeenCalledWith(
-      SERVER_MANAGED_API_KEY,
-      'https://proxy.example.com/v1beta'
-    );
+    expect(getClientMock).toHaveBeenCalledWith(SERVER_MANAGED_API_KEY, 'https://proxy.example.com/v1beta');
 
     await vi.waitFor(() => {
       expect(generateContentMock).toHaveBeenCalledWith({
@@ -197,7 +194,7 @@ describe('ApiConfigSection', () => {
     });
 
     const advancedButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Advanced Live Settings')
+      button.textContent?.includes('Advanced Live Settings'),
     );
     expect(advancedButton).toBeDefined();
 

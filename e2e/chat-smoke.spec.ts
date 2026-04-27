@@ -7,9 +7,7 @@ test.beforeEach(async ({ page }) => {
   await installMockPyodideWorker(page);
 });
 
-test('loads the chat shell and executes a python code block through the browser UI', async ({
-  page,
-}) => {
+test('loads the chat shell and executes a python code block through the browser UI', async ({ page }) => {
   await seedAppState(page, {
     session: {
       id: SESSION_ID,

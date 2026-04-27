@@ -12,8 +12,7 @@ const nextAnimationFrame = () =>
     window.requestAnimationFrame(() => resolve());
   });
 
-const getWindowHtml2Pdf = () =>
-  (window as Window & { html2pdf?: Html2PdfFactory }).html2pdf;
+const getWindowHtml2Pdf = () => (window as Window & { html2pdf?: Html2PdfFactory }).html2pdf;
 
 const waitForImages = async (root: HTMLElement) => {
   const images = Array.from(root.querySelectorAll('img'));

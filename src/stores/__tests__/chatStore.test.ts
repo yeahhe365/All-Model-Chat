@@ -11,8 +11,12 @@ globalThis.BroadcastChannel = vi.fn(() => ({
 const sessionStore: Record<string, string> = {};
 const mockSessionStorage = {
   getItem: vi.fn((key: string) => sessionStore[key] ?? null),
-  setItem: vi.fn((key: string, val: string) => { sessionStore[key] = val; }),
-  removeItem: vi.fn((key: string) => { delete sessionStore[key]; }),
+  setItem: vi.fn((key: string, val: string) => {
+    sessionStore[key] = val;
+  }),
+  removeItem: vi.fn((key: string) => {
+    delete sessionStore[key];
+  }),
 };
 Object.defineProperty(window, 'sessionStorage', { value: mockSessionStorage });
 
@@ -40,9 +44,7 @@ vi.mock('../../utils/appUtils', () => ({
   rehydrateSessionFiles: vi.fn((session: any) => session),
   getTranslator: vi.fn(),
   applyThemeToDocument: vi.fn(),
-  resolveSupportedModelId: vi.fn((modelId: string | null | undefined, fallback: string) =>
-    modelId || fallback
-  ),
+  resolveSupportedModelId: vi.fn((modelId: string | null | undefined, fallback: string) => modelId || fallback),
 }));
 
 import { useChatStore } from '../chatStore';
@@ -103,11 +105,7 @@ describe('chatStore', () => {
 
       useChatStore.getState().setActiveSessionId('sess-2', { history: 'push' });
 
-      expect(window.history.pushState).toHaveBeenCalledWith(
-        { sessionId: 'sess-2' },
-        '',
-        '/chat/sess-2',
-      );
+      expect(window.history.pushState).toHaveBeenCalledWith({ sessionId: 'sess-2' }, '', '/chat/sess-2');
       expect(window.history.replaceState).not.toHaveBeenCalled();
     });
 
@@ -147,7 +145,7 @@ describe('chatStore', () => {
 
     it('updates sessions with updater function', () => {
       useChatStore.getState().setSavedSessions([makeSession({ id: 's1' })]);
-      useChatStore.getState().setSavedSessions(prev => [...prev, makeSession({ id: 's2' })]);
+      useChatStore.getState().setSavedSessions((prev) => [...prev, makeSession({ id: 's2' })]);
       expect(useChatStore.getState().savedSessions).toHaveLength(2);
     });
   });
@@ -329,10 +327,17 @@ describe('chatStore', () => {
       useChatStore.getState().setActiveSessionId('s1');
       useChatStore.getState().setSavedSessions([makeSession({ id: 's1', messages: [] })]);
 
-      useChatStore.getState().updateAndPersistSessions(prev =>
-        prev.map(s => s.id === 's1' ? { ...s, messages: [{ id: 'm1', role: 'user', content: 'Hi', timestamp: new Date() }] } : s),
-        { persist: false },
-      );
+      useChatStore
+        .getState()
+        .updateAndPersistSessions(
+          (prev) =>
+            prev.map((s) =>
+              s.id === 's1'
+                ? { ...s, messages: [{ id: 'm1', role: 'user', content: 'Hi', timestamp: new Date() }] }
+                : s,
+            ),
+          { persist: false },
+        );
 
       expect(useChatStore.getState().activeMessages).toHaveLength(1);
     });
@@ -352,10 +357,12 @@ describe('chatStore', () => {
         timestamp: new Date(),
       };
 
-      useChatStore.getState().setSavedSessions([
-        makeSession({ id: 's1', messages: [backgroundMessage], title: 'Background' }),
-        makeSession({ id: 's2', messages: [], title: 'Active' }),
-      ]);
+      useChatStore
+        .getState()
+        .setSavedSessions([
+          makeSession({ id: 's1', messages: [backgroundMessage], title: 'Background' }),
+          makeSession({ id: 's2', messages: [], title: 'Active' }),
+        ]);
       useChatStore.getState().setActiveSessionId('s2');
       useChatStore.getState().setActiveMessages([activeMessage]);
       useChatStore.getState().setSessionLoading('s1', true);
@@ -367,9 +374,7 @@ describe('chatStore', () => {
               ? {
                   ...session,
                   messages: session.messages.map((message) =>
-                    message.id === 'm-background'
-                      ? { ...message, content: 'partial response' }
-                      : message,
+                    message.id === 'm-background' ? { ...message, content: 'partial response' } : message,
                   ),
                 }
               : session,
@@ -377,9 +382,7 @@ describe('chatStore', () => {
         { persist: false },
       );
 
-      const backgroundSession = useChatStore
-        .getState()
-        .savedSessions.find((session) => session.id === 's1');
+      const backgroundSession = useChatStore.getState().savedSessions.find((session) => session.id === 's1');
 
       expect(backgroundSession?.messages).toHaveLength(1);
       expect(backgroundSession?.messages[0].content).toBe('partial response');
@@ -389,9 +392,9 @@ describe('chatStore', () => {
       const session = makeSession({ id: 's1' });
       useChatStore.getState().setSavedSessions([session]);
 
-      useChatStore.getState().updateAndPersistSessions(prev =>
-        prev.map(s => s.id === 's1' ? { ...s, title: 'Updated' } : s),
-      );
+      useChatStore
+        .getState()
+        .updateAndPersistSessions((prev) => prev.map((s) => (s.id === 's1' ? { ...s, title: 'Updated' } : s)));
 
       await vi.waitFor(() => {
         expect(dbService.saveSession).toHaveBeenCalled();
@@ -424,22 +427,18 @@ describe('chatStore', () => {
         return undefined;
       });
 
-      useChatStore.getState().updateAndPersistSessions((prev) =>
-        prev.map((session) =>
-          session.id === 's2' ? { ...session, title: 'Archive Updated' } : session,
-        ),
-      );
+      useChatStore
+        .getState()
+        .updateAndPersistSessions((prev) =>
+          prev.map((session) => (session.id === 's2' ? { ...session, title: 'Archive Updated' } : session)),
+        );
 
       await vi.waitFor(() => {
-        const archivedSave = vi
-          .mocked(dbService.saveSession)
-          .mock.calls.find(([session]) => session.id === 's2');
+        const archivedSave = vi.mocked(dbService.saveSession).mock.calls.find(([session]) => session.id === 's2');
         expect(archivedSave).toBeDefined();
       });
 
-      const archivedSave = vi
-        .mocked(dbService.saveSession)
-        .mock.calls.find(([session]) => session.id === 's2');
+      const archivedSave = vi.mocked(dbService.saveSession).mock.calls.find(([session]) => session.id === 's2');
       const savedArg = archivedSave?.[0];
 
       expect(savedArg?.title).toBe('Archive Updated');
@@ -459,10 +458,11 @@ describe('chatStore', () => {
     it('skips persist when persist option is false', () => {
       useChatStore.getState().setSavedSessions([makeSession({ id: 's1' })]);
 
-      useChatStore.getState().updateAndPersistSessions(
-        prev => prev.map(s => s.id === 's1' ? { ...s, title: 'No Persist' } : s),
-        { persist: false },
-      );
+      useChatStore
+        .getState()
+        .updateAndPersistSessions((prev) => prev.map((s) => (s.id === 's1' ? { ...s, title: 'No Persist' } : s)), {
+          persist: false,
+        });
 
       expect(dbService.saveSession).not.toHaveBeenCalled();
       expect(useChatStore.getState().savedSessions[0].title).toBe('No Persist');
@@ -475,9 +475,9 @@ describe('chatStore', () => {
     it('updates groups and persists to DB', async () => {
       useChatStore.getState().setSavedGroups([makeGroup({ id: 'g1' })]);
 
-      useChatStore.getState().updateAndPersistGroups(prev =>
-        prev.map(g => g.id === 'g1' ? { ...g, title: 'Renamed' } : g),
-      );
+      useChatStore
+        .getState()
+        .updateAndPersistGroups((prev) => prev.map((g) => (g.id === 'g1' ? { ...g, title: 'Renamed' } : g)));
 
       expect(useChatStore.getState().savedGroups[0].title).toBe('Renamed');
       await vi.waitFor(() => {
@@ -491,12 +491,14 @@ describe('chatStore', () => {
   describe('setCurrentChatSettings', () => {
     it('updates settings for active session', () => {
       useChatStore.getState().setActiveSessionId('s1');
-      useChatStore.getState().setSavedSessions([makeSession({
-        id: 's1',
-        settings: { modelId: 'old-model' } as any,
-      })]);
+      useChatStore.getState().setSavedSessions([
+        makeSession({
+          id: 's1',
+          settings: { modelId: 'old-model' } as any,
+        }),
+      ]);
 
-      useChatStore.getState().setCurrentChatSettings(prev => ({
+      useChatStore.getState().setCurrentChatSettings((prev) => ({
         ...prev,
         modelId: 'new-model',
       }));
@@ -509,7 +511,7 @@ describe('chatStore', () => {
 
     it('does nothing when no active session', () => {
       useChatStore.getState().setSavedSessions([makeSession({ id: 's1' })]);
-      useChatStore.getState().setCurrentChatSettings(prev => ({
+      useChatStore.getState().setCurrentChatSettings((prev) => ({
         ...prev,
         modelId: 'new-model',
       }));

@@ -31,11 +31,7 @@ vi.mock('react-virtuoso', () => ({
 
 vi.mock('../message/Message', () => ({
   Message: ({ message, onImageClick }: MessageMockProps) => (
-    <button
-      type="button"
-      data-testid={`open-preview-${message.id}`}
-      onClick={() => onImageClick(message.files![0])}
-    >
+    <button type="button" data-testid={`open-preview-${message.id}`} onClick={() => onImageClick(message.files![0])}>
       Open preview
     </button>
   ),
@@ -118,11 +114,11 @@ describe('MessageList image preview', () => {
       themeId: 'pearl',
       baseFontSize: 14,
       expandCodeBlocksByDefault: false,
-    isMermaidRenderingEnabled: false,
-    isGraphvizRenderingEnabled: false,
-    onGenerateCanvas: () => {},
-    onContinueGeneration: () => {},
-    onQuickTTS: async () => null,
+      isMermaidRenderingEnabled: false,
+      isGraphvizRenderingEnabled: false,
+      onGenerateCanvas: () => {},
+      onContinueGeneration: () => {},
+      onQuickTTS: async () => null,
       chatInputHeight: 0,
       appSettings: { showWelcomeSuggestions: true } as AppSettings,
       currentModelId: 'gemini-2.5-flash',
@@ -226,7 +222,7 @@ describe('MessageList image preview', () => {
           <ChatAreaProvider value={createProviderValue()}>
             <MessageList />
           </ChatAreaProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 
@@ -259,7 +255,7 @@ describe('MessageList image preview', () => {
           <ChatAreaProvider value={createProviderValue([markdownFile])}>
             <MessageList />
           </ChatAreaProvider>
-        </I18nProvider>
+        </I18nProvider>,
       );
     });
 

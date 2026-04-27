@@ -16,37 +16,30 @@ import { useUIStore } from '../../stores/uiStore';
 export type { ChatAreaProps };
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
-  const {
-    session,
-    shell,
-    header,
-    messageActions,
-    inputActions,
-    features,
-  } = chatArea;
+  const { session, shell, header, messageActions, inputActions, features } = chatArea;
 
   // Read values from stores directly (no longer passed as props)
-  const appSettings = useSettingsStore(s => s.appSettings);
-  const themeId = useSettingsStore(s => s.currentTheme.id);
-  const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
-  const isHistorySidebarOpen = useUIStore(s => s.isHistorySidebarOpen);
-  const commandedInput = useChatStore(s => s.commandedInput);
-  const selectedFiles = useChatStore(s => s.selectedFiles);
-  const setSelectedFiles = useChatStore(s => s.setSelectedFiles);
-  const editingMessageId = useChatStore(s => s.editingMessageId);
-  const setEditingMessageId = useChatStore(s => s.setEditingMessageId);
-  const editMode = useChatStore(s => s.editMode);
-  const isProcessingFile = useChatStore(s => s.isAppProcessingFile);
-  const fileError = useChatStore(s => s.appFileError);
-  const setAppFileError = useChatStore(s => s.setAppFileError);
-  const aspectRatio = useChatStore(s => s.aspectRatio);
-  const setAspectRatio = useChatStore(s => s.setAspectRatio);
-  const imageSize = useChatStore(s => s.imageSize);
-  const setImageSize = useChatStore(s => s.setImageSize);
-  const imageOutputMode = useChatStore(s => s.imageOutputMode);
-  const setImageOutputMode = useChatStore(s => s.setImageOutputMode);
-  const personGeneration = useChatStore(s => s.personGeneration);
-  const setPersonGeneration = useChatStore(s => s.setPersonGeneration);
+  const appSettings = useSettingsStore((s) => s.appSettings);
+  const themeId = useSettingsStore((s) => s.currentTheme.id);
+  const isSwitchingModel = useChatStore((s) => s.isSwitchingModel);
+  const isHistorySidebarOpen = useUIStore((s) => s.isHistorySidebarOpen);
+  const commandedInput = useChatStore((s) => s.commandedInput);
+  const selectedFiles = useChatStore((s) => s.selectedFiles);
+  const setSelectedFiles = useChatStore((s) => s.setSelectedFiles);
+  const editingMessageId = useChatStore((s) => s.editingMessageId);
+  const setEditingMessageId = useChatStore((s) => s.setEditingMessageId);
+  const editMode = useChatStore((s) => s.editMode);
+  const isProcessingFile = useChatStore((s) => s.isAppProcessingFile);
+  const fileError = useChatStore((s) => s.appFileError);
+  const setAppFileError = useChatStore((s) => s.setAppFileError);
+  const aspectRatio = useChatStore((s) => s.aspectRatio);
+  const setAspectRatio = useChatStore((s) => s.setAspectRatio);
+  const imageSize = useChatStore((s) => s.imageSize);
+  const setImageSize = useChatStore((s) => s.setImageSize);
+  const imageOutputMode = useChatStore((s) => s.imageOutputMode);
+  const setImageOutputMode = useChatStore((s) => s.setImageOutputMode);
+  const personGeneration = useChatStore((s) => s.personGeneration);
+  const setPersonGeneration = useChatStore((s) => s.setPersonGeneration);
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea({
     currentChatSettings: session.currentChatSettings,
   });
@@ -95,7 +88,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       session.sessionTitle,
       session.showThoughts,
       themeId,
-    ]
+    ],
   );
 
   const inputValue = useMemo(

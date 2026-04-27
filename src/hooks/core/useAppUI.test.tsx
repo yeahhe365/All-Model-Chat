@@ -29,15 +29,12 @@ const renderHook = <T,>(callback: () => T) => {
   };
 };
 
-const createTouchEvent = (
-  target: EventTarget,
-  x: number,
-  y: number,
-): React.TouchEvent => ({
-  target,
-  touches: [{ clientX: x, clientY: y }],
-  changedTouches: [{ clientX: x, clientY: y }],
-} as unknown as React.TouchEvent);
+const createTouchEvent = (target: EventTarget, x: number, y: number): React.TouchEvent =>
+  ({
+    target,
+    touches: [{ clientX: x, clientY: y }],
+    changedTouches: [{ clientX: x, clientY: y }],
+  }) as unknown as React.TouchEvent;
 
 const flushRafCallbacks = () => {
   act(() => {

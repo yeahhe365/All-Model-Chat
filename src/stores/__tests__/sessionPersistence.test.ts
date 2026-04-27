@@ -48,10 +48,7 @@ describe('sessionPersistence', () => {
     const changedAfter = { ...changedBefore, title: 'After' };
     const removed = makeSession({ id: 'removed' });
 
-    const changes = getSessionPersistenceChanges(
-      [unchanged, changedBefore, removed],
-      [changedAfter, unchanged],
-    );
+    const changes = getSessionPersistenceChanges([unchanged, changedBefore, removed], [changedAfter, unchanged]);
 
     expect(changes.modifiedSessions).toEqual([changedAfter]);
     expect(changes.deletedSessionIds).toEqual(['removed']);

@@ -1,4 +1,3 @@
-
 export const audioWorkletCode = `
 class PCMProcessor extends AudioWorkletProcessor {
   constructor() {

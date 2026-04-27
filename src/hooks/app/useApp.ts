@@ -8,9 +8,7 @@ import { logService } from '../../services/logService';
 import { getTranslator } from '../../utils/translations';
 import { applyThemeToDocument } from '../../utils/uiUtils';
 import { useUIStore } from '../../stores/uiStore';
-import {
-  DEFAULT_CHAT_SETTINGS,
-} from '../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { AppSettings, ChatSettings, ModelOption, SideViewContent } from '../../types';
 import { useDataExport } from '../data-management/useDataExport';
 import { useDataImport } from '../data-management/useDataImport';
@@ -23,9 +21,7 @@ import { getModelCapabilities } from '../../utils/modelHelpers';
 
 const focusChatInput = () => {
   setTimeout(() => {
-    const textarea = document.querySelector(
-      'textarea[aria-label="Chat message input"]'
-    ) as HTMLTextAreaElement | null;
+    const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement | null;
     textarea?.focus();
   }, 50);
 };
@@ -71,17 +67,14 @@ export const useApp = () => {
         setIsHistorySidebarOpenTransient(false);
       }
     },
-    [setIsHistorySidebarOpenTransient]
+    [setIsHistorySidebarOpenTransient],
   );
 
   const handleCloseSidePanel = useCallback(() => {
     setSidePanelContent(null);
   }, []);
 
-  const pipState = usePictureInPicture(
-    uiState.isHistorySidebarOpen,
-    setIsHistorySidebarOpenTransient,
-  );
+  const pipState = usePictureInPicture(uiState.isHistorySidebarOpen, setIsHistorySidebarOpenTransient);
 
   useEffect(() => {
     if (pipState.pipWindow?.document) {
@@ -156,7 +149,7 @@ export const useApp = () => {
         setIsExportModalOpen(false);
       }
     },
-    [activeChat, exportChatLogic]
+    [activeChat, exportChatLogic],
   );
 
   const handleSaveSettings = useCallback(
@@ -173,14 +166,14 @@ export const useApp = () => {
             (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>)
               .filter(
                 (key) =>
-                  key !== 'lockedApiKey'
-                  && key !== 'modelId'
-                  && key !== 'thinkingBudget'
-                  && key !== 'thinkingLevel'
-                  && key !== 'mediaResolution'
-                  && key in newSettings,
+                  key !== 'lockedApiKey' &&
+                  key !== 'modelId' &&
+                  key !== 'thinkingBudget' &&
+                  key !== 'thinkingLevel' &&
+                  key !== 'mediaResolution' &&
+                  key in newSettings,
               )
-              .map((key) => [key, newSettings[key]])
+              .map((key) => [key, newSettings[key]]),
           ) as Partial<ChatSettings>;
 
           return {
@@ -191,7 +184,7 @@ export const useApp = () => {
         });
       }
     },
-    [activeSessionId, currentChatSettings.modelId, handleSelectModelInHeader, setAppSettings, setCurrentChatSettings]
+    [activeSessionId, currentChatSettings.modelId, handleSelectModelInHeader, setAppSettings, setCurrentChatSettings],
   );
 
   const {
@@ -232,7 +225,7 @@ export const useApp = () => {
       }
       focusChatInput();
     },
-    [activeSessionId, appSettings.modelId, currentChatSettings.modelId, setAppSettings, setCurrentChatSettings]
+    [activeSessionId, appSettings.modelId, currentChatSettings.modelId, setAppSettings, setCurrentChatSettings],
   );
 
   const getCurrentModelDisplayName = useCallback(() => {
@@ -241,16 +234,13 @@ export const useApp = () => {
       return t('appSwitchingModel');
     }
 
-    const model = apiModels.find(
-      (candidate: ModelOption) => candidate.id === modelIdToDisplay
-    );
+    const model = apiModels.find((candidate: ModelOption) => candidate.id === modelIdToDisplay);
     if (model) {
       return model.name;
     }
 
     if (modelIdToDisplay) {
-      const normalizedName =
-        modelIdToDisplay.split('/').pop()?.replace('gemini-', 'Gemini ') || modelIdToDisplay;
+      const normalizedName = modelIdToDisplay.split('/').pop()?.replace('gemini-', 'Gemini ') || modelIdToDisplay;
       return normalizedName
         .split('-')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -258,9 +248,7 @@ export const useApp = () => {
         .replace(' Preview ', ' Preview ');
     }
 
-    return apiModels.length === 0
-      ? t('appNoModelsAvailable')
-      : t('appNoModelSelected');
+    return apiModels.length === 0 ? t('appNoModelsAvailable') : t('appNoModelSelected');
   }, [apiModels, appSettings.modelId, currentChatSettings.modelId, isSwitchingModel, t]);
 
   return {

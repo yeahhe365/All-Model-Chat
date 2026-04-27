@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { TextEditorModalShell } from './TextEditorModalShell';
@@ -29,7 +28,7 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
   confirmLabel,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   // Use local state to decouple rendering from global app state during active typing
   const [localValue, setLocalValue] = useState(value);
 
@@ -39,22 +38,22 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
   }, []);
 
   const handleValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      if (readOnly) return;
-      setLocalValue(e.target.value);
+    if (readOnly) return;
+    setLocalValue(e.target.value);
   };
 
   const handleDone = () => {
-      if (!readOnly && localValue !== value) {
-          onChange(localValue);
-      }
-      onClose();
+    if (!readOnly && localValue !== value) {
+      onChange(localValue);
+    }
+    onClose();
   };
 
   return (
     <TextEditorModalShell
       onClose={handleDone}
       contentClassName="w-full h-full sm:h-[90vh] sm:w-[90vw] max-w-5xl bg-[var(--theme-bg-primary)] sm:rounded-xl shadow-2xl flex flex-col overflow-hidden border border-[var(--theme-border-primary)]"
-      header={(
+      header={
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/50">
           <h2 className="text-lg font-semibold text-[var(--theme-text-primary)]">{title}</h2>
           <button
@@ -64,8 +63,8 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
             <X size={20} />
           </button>
         </div>
-      )}
-      body={(
+      }
+      body={
         <div className="flex-grow p-4 flex flex-col min-h-0 bg-[var(--theme-bg-primary)]">
           <textarea
             ref={textareaRef}
@@ -77,8 +76,8 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
             spellCheck={false}
           />
         </div>
-      )}
-      footer={(
+      }
+      footer={
         <div className="px-4 py-3 border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/30 flex justify-end">
           <button
             onClick={handleDone}
@@ -87,7 +86,7 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
             <Check size={16} /> {confirmLabel || t('close') || 'Done'}
           </button>
         </div>
-      )}
+      }
     />
   );
 };

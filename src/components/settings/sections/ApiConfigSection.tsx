@@ -55,7 +55,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
   const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!viteEnv?.VITE_GEMINI_API_KEY;
-  const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
+  const inputBaseClasses =
+    'w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono';
   const canUseServerManagedTestKey = isServerManagedApiEnabledForProxyRequests({
     serverManagedApi,
     useCustomApiConfig,
@@ -161,7 +162,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           hasEnvKey={hasEnvKey}
         />
 
-        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[1000px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
+        <div
+          className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[1000px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}
+        >
           <div className="space-y-5">
             <ApiKeyInput
               apiKey={apiKey}
@@ -187,7 +190,11 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             <div className="space-y-3 pt-2">
               <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/20 p-3">
                 <div className="flex items-start gap-3">
-                  <RadioTower size={16} className="mt-0.5 flex-shrink-0 text-[var(--theme-text-link)]" strokeWidth={1.5} />
+                  <RadioTower
+                    size={16}
+                    className="mt-0.5 flex-shrink-0 text-[var(--theme-text-link)]"
+                    strokeWidth={1.5}
+                  />
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <p className="text-sm font-medium text-[var(--theme-text-primary)]">
@@ -217,12 +224,19 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 aria-controls="advanced-live-settings"
               >
                 <span>{t('settingsLiveAdvancedToggle')}</span>
-                {showAdvancedLiveSettings ? <ChevronDown size={14} strokeWidth={1.5} /> : <ChevronRight size={14} strokeWidth={1.5} />}
+                {showAdvancedLiveSettings ? (
+                  <ChevronDown size={14} strokeWidth={1.5} />
+                ) : (
+                  <ChevronRight size={14} strokeWidth={1.5} />
+                )}
               </button>
 
               {showAdvancedLiveSettings && (
                 <div id="advanced-live-settings" className="space-y-2">
-                  <label htmlFor="live-token-endpoint-input" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+                  <label
+                    htmlFor="live-token-endpoint-input"
+                    className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]"
+                  >
                     {t('settingsLiveTokenEndpoint')}
                   </label>
                   <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
@@ -248,7 +262,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
               onTest={handleTestConnection}
               testStatus={testStatus}
               testMessage={testMessage}
-              isTestDisabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig && !canUseServerManagedTestKey)}
+              isTestDisabled={
+                testStatus === 'testing' || (!apiKey && useCustomApiConfig && !canUseServerManagedTestKey)
+              }
               availableModels={CONNECTION_TEST_MODELS}
               testModelId={testModelId}
               onModelChange={setTestModelId}

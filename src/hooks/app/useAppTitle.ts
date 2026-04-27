@@ -8,12 +8,7 @@ interface UseAppTitleProps {
   sessionTitle: string;
 }
 
-export const useAppTitle = ({
-  isLoading,
-  messages,
-  language,
-  sessionTitle,
-}: UseAppTitleProps) => {
+export const useAppTitle = ({ isLoading, messages, language, sessionTitle }: UseAppTitleProps) => {
   const [generationTime, setGenerationTime] = useState(0);
 
   const currentGenerationStartTime = useMemo(() => {
@@ -24,9 +19,7 @@ export const useAppTitle = ({
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index];
       if ((message.role === 'model' || message.role === 'error') && message.isLoading) {
-        return message.generationStartTime
-          ? new Date(message.generationStartTime).getTime()
-          : null;
+        return message.generationStartTime ? new Date(message.generationStartTime).getTime() : null;
       }
     }
 
@@ -38,9 +31,7 @@ export const useAppTitle = ({
 
     if (currentGenerationStartTime) {
       const update = () => {
-        setGenerationTime(
-          Math.max(0, Math.floor((Date.now() - currentGenerationStartTime) / 1000))
-        );
+        setGenerationTime(Math.max(0, Math.floor((Date.now() - currentGenerationStartTime) / 1000)));
       };
       update();
       intervalId = window.setInterval(update, 1000);
@@ -54,10 +45,7 @@ export const useAppTitle = ({
       let statusPrefix = '';
       if (isLoading) {
         const timeDisplay = ` (${currentGenerationStartTime ? generationTime : 0}s)`;
-        statusPrefix =
-          language === 'zh'
-            ? `生成中${timeDisplay}... | `
-            : `Generating${timeDisplay}... | `;
+        statusPrefix = language === 'zh' ? `生成中${timeDisplay}... | ` : `Generating${timeDisplay}... | `;
       }
 
       const suffix = sessionTitle === 'AMC WebUI' ? '' : ' • AMC WebUI';

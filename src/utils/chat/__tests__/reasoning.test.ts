@@ -11,11 +11,7 @@ describe('extractGemmaThoughtChannel', () => {
   });
 
   it('extracts official Gemma thought channels without changing the final answer text', () => {
-    expect(
-      extractGemmaThoughtChannel(
-        '<|channel>thought\nPlan carefully.\n<channel|>Final answer.',
-      ),
-    ).toEqual({
+    expect(extractGemmaThoughtChannel('<|channel>thought\nPlan carefully.\n<channel|>Final answer.')).toEqual({
       content: 'Final answer.',
       thoughts: 'Plan carefully.',
     });
@@ -32,9 +28,7 @@ describe('stripReasoningMarkup', () => {
 
 describe('extractRawThinkingBlocks', () => {
   it('separates completed raw thinking blocks from visible content', () => {
-    expect(
-      extractRawThinkingBlocks('<thinking>Plan carefully.</thinking>\nFinal answer.'),
-    ).toEqual({
+    expect(extractRawThinkingBlocks('<thinking>Plan carefully.</thinking>\nFinal answer.')).toEqual({
       content: 'Final answer.',
       thoughts: 'Plan carefully.',
       hasOpenThinkingBlock: false,

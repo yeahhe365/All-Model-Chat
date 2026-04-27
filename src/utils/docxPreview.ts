@@ -18,43 +18,43 @@ self.onmessage = async function(e) {
 `;
 
 interface ExtractDocxTextResult {
-    text: string;
-    messages: string[];
+  text: string;
+  messages: string[];
 }
 
 export const isDocxFile = (file: { name: string; type: string }) => {
-    return file.type === DOCX_MIME_TYPE || file.name.toLowerCase().endsWith('.docx');
+  return file.type === DOCX_MIME_TYPE || file.name.toLowerCase().endsWith('.docx');
 };
 
 export const extractDocxText = async (file: Blob): Promise<ExtractDocxTextResult> => {
-    return new Promise<ExtractDocxTextResult>((resolve, reject) => {
-        const blob = new Blob([DOCX_WORKER_CODE], { type: 'application/javascript' });
-        const workerUrl = URL.createObjectURL(blob);
-        const worker = new Worker(workerUrl, { type: 'module' });
+  return new Promise<ExtractDocxTextResult>((resolve, reject) => {
+    const blob = new Blob([DOCX_WORKER_CODE], { type: 'application/javascript' });
+    const workerUrl = URL.createObjectURL(blob);
+    const worker = new Worker(workerUrl, { type: 'module' });
 
-        const cleanup = () => {
-            worker.terminate();
-            URL.revokeObjectURL(workerUrl);
-        };
+    const cleanup = () => {
+      worker.terminate();
+      URL.revokeObjectURL(workerUrl);
+    };
 
-        worker.onmessage = (event) => {
-            if (event.data.type === 'success') {
-                resolve({
-                    text: event.data.text,
-                    messages: Array.isArray(event.data.messages) ? event.data.messages : [],
-                });
-            } else {
-                reject(new Error(event.data.error));
-            }
+    worker.onmessage = (event) => {
+      if (event.data.type === 'success') {
+        resolve({
+          text: event.data.text,
+          messages: Array.isArray(event.data.messages) ? event.data.messages : [],
+        });
+      } else {
+        reject(new Error(event.data.error));
+      }
 
-            cleanup();
-        };
+      cleanup();
+    };
 
-        worker.onerror = (error) => {
-            reject(error);
-            cleanup();
-        };
+    worker.onerror = (error) => {
+      reject(error);
+      cleanup();
+    };
 
-        worker.postMessage(file);
-    });
+    worker.postMessage(file);
+  });
 };

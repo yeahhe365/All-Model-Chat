@@ -29,9 +29,7 @@ describe('categorizeSessionsByDate', () => {
 
   it('keeps previous 30 days separate from the new yesterday and previous 7 days buckets', () => {
     const { categoryOrder, categories } = categorizeSessionsByDate(
-      [
-        createSession('older', '2026-03-31T08:00:00.000Z'),
-      ],
+      [createSession('older', '2026-03-31T08:00:00.000Z')],
       'en',
       (_key, fallback) => fallback ?? '',
       new Date('2026-04-20T12:00:00.000Z'),

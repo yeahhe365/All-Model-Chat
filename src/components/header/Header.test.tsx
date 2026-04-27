@@ -96,9 +96,7 @@ describe('Header', () => {
       );
     });
 
-    const canvasButton = container.querySelector(
-      'button[aria-label="canvasHelperInactive_aria"]',
-    );
+    const canvasButton = container.querySelector('button[aria-label="canvasHelperInactive_aria"]');
 
     expect(canvasButton).not.toBeNull();
     expect(canvasButton?.className).toContain('w-9');

@@ -41,6 +41,12 @@ const mockLiveApiState = vi.hoisted(() => ({
   error: null as string | null,
   videoSource: null as 'camera' | 'screen' | null,
 }));
+const mockApiUtils = vi.hoisted(() => ({
+  getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
+}));
+const mockGeminiService = vi.hoisted(() => ({
+  translateText: vi.fn(async () => 'Translated text'),
+}));
 
 const mockChatStoreSubscribers = vi.hoisted(
   () => new Set<(state: typeof mockChatStoreState, previousState: typeof mockChatStoreState) => void>(),
@@ -75,6 +81,14 @@ vi.mock('../../../hooks/useVoiceInput', () => ({
 
 vi.mock('../../../hooks/useLiveAPI', () => ({
   useLiveAPI: () => mockLiveApiState,
+}));
+
+vi.mock('../../../utils/apiUtils', () => ({
+  getKeyForRequest: mockApiUtils.getKeyForRequest,
+}));
+
+vi.mock('../../../services/geminiService', () => ({
+  geminiServiceInstance: mockGeminiService,
 }));
 
 vi.mock('../../../hooks/ui/useFileModalState', () => ({
@@ -168,6 +182,9 @@ vi.mock('./ChatInputArea', async () => {
           disabled={!extendedActionsProps.canQueueMessage}
         >
           queue
+        </button>
+        <button type="button" data-testid="translate-button" onClick={actionsProps.onTranslate}>
+          translate
         </button>
         {fileDisplayProps.selectedFiles.map((file: { id: string; name: string }) => (
           <button
@@ -854,6 +871,48 @@ describe('ChatInput', () => {
 
     expect(removeConvertedFile).toBeTypeOf('function');
     expect(removeConvertedFile?.([{ id: 'text-file' }, { id: 'image-file' }])).toEqual([{ id: 'image-file' }]);
+  });
+
+  it('translates composer text using the configured target language', async () => {
+    mockGeminiService.translateText.mockResolvedValueOnce('Bonjour');
+    const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      translationTargetLanguage: 'French',
+    };
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const translateButton = container.querySelector<HTMLButtonElement>('[data-testid="translate-button"]');
+    expect(textarea).not.toBeNull();
+    expect(translateButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Hello');
+    });
+
+    await act(async () => {
+      translateButton?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockGeminiService.translateText).toHaveBeenCalledWith('api-key', 'Hello', 'French');
+    expect(textarea?.value).toBe('Bonjour');
   });
 
   it('does not auto-send a pending message when an attachment finishes as failed', async () => {
