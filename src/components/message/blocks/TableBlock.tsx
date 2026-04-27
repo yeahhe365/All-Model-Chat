@@ -62,29 +62,15 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
 
     const handleDownloadExcel = async () => {
         if (!tableRef.current) return;
-        
-        try {
-            // Dynamically import xlsx to avoid heavy bundle size if not used
-            const XLSX = await import('xlsx');
-            
-            if (XLSX && XLSX.utils && XLSX.writeFile) {
-                const wb = XLSX.utils.table_to_book(tableRef.current);
-                XLSX.writeFile(wb, `table-export-${Date.now()}.xlsx`);
-            } else {
-                console.error("XLSX library not loaded correctly.");
-                // Fallback to simple HTML table as XLS (XML compatible)
-                const tableHtml = tableRef.current.outerHTML;
-                const template = `
-                    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-                    <head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Sheet1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><meta charset="utf-8"></head>
-                    <body>${tableHtml}</body></html>`;
-                const blob = new Blob([template], { type: 'application/vnd.ms-excel' });
-                const url = URL.createObjectURL(blob);
-                triggerDownload(url, `table-export-${Date.now()}.xls`);
-            }
-        } catch (e) {
-            console.error("Failed to export Excel", e);
-        }
+
+        const tableHtml = tableRef.current.outerHTML;
+        const template = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Sheet1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><meta charset="utf-8"></head>
+            <body>${tableHtml}</body></html>`;
+        const blob = new Blob([template], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, `table-export-${Date.now()}.xls`);
         setShowDownloadMenu(false);
     };
 

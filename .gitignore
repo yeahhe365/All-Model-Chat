@@ -33,5 +33,9 @@ Thumbs.db
 # Coverage
 coverage/
 
+# Test artifacts
+playwright-report/
+test-results/
+
 # Local worktrees
 .worktrees/

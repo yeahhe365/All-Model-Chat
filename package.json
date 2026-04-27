@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.8.2",
-    "@google/genai": "^1.2.0",
+    "@google/genai": "^1.50.1",
     "@viz-js/viz": "^3.25.0",
     "highlight.js": "^11.9.0",
     "html2canvas": "^1.4.1",
@@ -35,7 +35,7 @@
     "katex": "^0.16.44",
     "lucide-react": "^0.417.0",
     "mermaid": "^10.9.1",
-    "pdfjs-dist": "4.4.168",
+    "pdfjs-dist": "^4.10.38",
     "pyodide": "^0.25.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -51,7 +51,6 @@
     "remark-math": "^6.0.0",
     "turndown": "^7.2.0",
     "turndown-plugin-gfm": "^1.0.2",
-    "xlsx": "^0.18.5",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -83,5 +82,10 @@
     "workbox-precaching": "^7.4.0",
     "workbox-routing": "^7.4.0",
     "workbox-strategies": "^7.4.0"
+  },
+  "overrides": {
+    "dompurify": "^3.4.1",
+    "protobufjs": "7.5.5",
+    "uuid": "14.0.0"
   }
 }
