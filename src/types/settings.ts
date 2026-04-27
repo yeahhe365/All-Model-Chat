@@ -83,7 +83,6 @@ export interface AppSettings extends ChatSettings {
   apiKey: string | null;
   apiProxyUrl: string | null;
   useApiProxy?: boolean;
-  liveApiEphemeralTokenEndpoint?: string | null;
   language: 'en' | 'zh' | 'system';
   translationTargetLanguage: TranslationTargetLanguage;
   isStreamingEnabled: boolean;

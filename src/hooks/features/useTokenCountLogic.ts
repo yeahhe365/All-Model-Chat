@@ -32,8 +32,6 @@ export const mergeTokenCountAppSettings = (
   apiKey: modalAppSettings.apiKey ?? latestStoredSettings.apiKey,
   apiProxyUrl: modalAppSettings.apiProxyUrl ?? latestStoredSettings.apiProxyUrl,
   useApiProxy: modalAppSettings.useApiProxy ?? latestStoredSettings.useApiProxy,
-  liveApiEphemeralTokenEndpoint:
-    modalAppSettings.liveApiEphemeralTokenEndpoint ?? latestStoredSettings.liveApiEphemeralTokenEndpoint,
 });
 
 export const resolveTokenCountRequestKey = (

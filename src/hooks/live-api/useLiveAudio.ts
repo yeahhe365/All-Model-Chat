@@ -17,6 +17,24 @@ export const useLiveAudio = () => {
   // Playback timing state
   const nextStartTimeRef = useRef<number>(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const outputAudioActiveRef = useRef(false);
+  const outputAudioTailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearOutputAudioTail = useCallback(() => {
+    if (outputAudioTailTimeoutRef.current) {
+      clearTimeout(outputAudioTailTimeoutRef.current);
+      outputAudioTailTimeoutRef.current = null;
+    }
+  }, []);
+
+  const markOutputAudioInactiveSoon = useCallback(() => {
+    clearOutputAudioTail();
+    outputAudioTailTimeoutRef.current = setTimeout(() => {
+      outputAudioActiveRef.current = false;
+      outputAudioTailTimeoutRef.current = null;
+      setIsSpeaking(false);
+    }, 300);
+  }, [clearOutputAudioTail]);
 
   const initializeAudio = useCallback(
     async (onAudioData: (data: Float32Array) => void) => {
@@ -30,13 +48,12 @@ export const useLiveAudio = () => {
       const inputCtx = new AudioContextClass({ sampleRate: 16000 });
       inputContextRef.current = inputCtx;
 
-      // Microphone Stream
-      // Disable browser processing to prevent crosstalk/system audio leak
+      // Keep browser echo processing enabled so model playback is not captured as fresh user input.
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         },
       });
       streamRef.current = stream;
@@ -78,6 +95,11 @@ export const useLiveAudio = () => {
 
         const inputData = e.data; // Float32Array
 
+        if (outputAudioActiveRef.current) {
+          setVolume(0);
+          return;
+        }
+
         // Calculate Volume
         let sum = 0;
         const sampleCount = inputData.length;
@@ -118,6 +140,8 @@ export const useLiveAudio = () => {
     const ctx = audioContextRef.current;
     if (!ctx) return;
 
+    clearOutputAudioTail();
+    outputAudioActiveRef.current = true;
     setIsSpeaking(true);
 
     try {
@@ -134,7 +158,7 @@ export const useLiveAudio = () => {
       source.onended = () => {
         sourcesRef.current.delete(source);
         if (sourcesRef.current.size === 0) {
-          setIsSpeaking(false);
+          markOutputAudioInactiveSoon();
         }
       };
 
@@ -144,9 +168,10 @@ export const useLiveAudio = () => {
     } catch (error) {
       logService.error('Failed to play audio chunk', error);
     }
-  }, []);
+  }, [clearOutputAudioTail, markOutputAudioInactiveSoon]);
 
   const stopAudioPlayback = useCallback(() => {
+    clearOutputAudioTail();
     sourcesRef.current.forEach((s) => {
       try {
         s.stop();
@@ -156,11 +181,14 @@ export const useLiveAudio = () => {
     });
     sourcesRef.current.clear();
     nextStartTimeRef.current = 0;
+    outputAudioActiveRef.current = false;
     setIsSpeaking(false);
-  }, []);
+  }, [clearOutputAudioTail]);
 
   const cleanupAudio = useCallback(() => {
     stopAudioPlayback();
+    clearOutputAudioTail();
+    outputAudioActiveRef.current = false;
 
     // Stop Microphone
     if (streamRef.current) {
@@ -190,7 +218,7 @@ export const useLiveAudio = () => {
 
     setVolume(0);
     setIsMuted(false); // Reset mute state on cleanup
-  }, [stopAudioPlayback]);
+  }, [clearOutputAudioTail, stopAudioPlayback]);
 
   return {
     volume,

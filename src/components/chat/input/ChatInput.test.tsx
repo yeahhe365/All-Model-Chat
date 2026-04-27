@@ -31,8 +31,8 @@ const mockLiveApiState = vi.hoisted(() => ({
   toggleMute: vi.fn(),
   sendText: vi.fn(async () => true),
   sendContent: vi.fn(async () => true),
-  startCamera: vi.fn(),
-  startScreenShare: vi.fn(),
+  startCamera: vi.fn(async () => true),
+  startScreenShare: vi.fn(async () => true),
   stopVideo: vi.fn(),
   isConnected: false,
   isMuted: false,
@@ -185,6 +185,12 @@ vi.mock('./ChatInputArea', async () => {
         </button>
         <button type="button" data-testid="translate-button" onClick={actionsProps.onTranslate}>
           translate
+        </button>
+        <button type="button" data-testid="live-camera-button" onClick={actionsProps.onStartLiveCamera}>
+          camera
+        </button>
+        <button type="button" data-testid="live-screen-button" onClick={actionsProps.onStartLiveScreenShare}>
+          screen
         </button>
         {fileDisplayProps.selectedFiles.map((file: { id: string; name: string }) => (
           <button
@@ -354,8 +360,8 @@ describe('ChatInput', () => {
       toggleMute: vi.fn(),
       sendText: vi.fn(async () => true),
       sendContent: vi.fn(async () => true),
-      startCamera: vi.fn(),
-      startScreenShare: vi.fn(),
+      startCamera: vi.fn(async () => true),
+      startScreenShare: vi.fn(async () => true),
       stopVideo: vi.fn(),
       isConnected: false,
       isMuted: false,
@@ -531,6 +537,59 @@ describe('ChatInput', () => {
     ]);
     expect(mockLiveApiState.sendText).not.toHaveBeenCalled();
     expect(onAddUserMessage).toHaveBeenCalledWith('Describe this', selectedFiles);
+  });
+
+  it('starts screen sharing and connects Live when the session is not connected', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.currentChatSettings.modelId = 'gemini-3.1-flash-live-preview';
+    mockModelCapabilities.value = {
+      ...mockModelCapabilities.value,
+      isNativeAudioModel: true,
+      isGemini3: true,
+    };
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-testid="live-screen-button"]')?.click();
+      await Promise.resolve();
+    });
+
+    expect(mockLiveApiState.startScreenShare).toHaveBeenCalledTimes(1);
+    expect(mockLiveApiState.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts the camera without reconnecting when Live is already connected', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.currentChatSettings.modelId = 'gemini-3.1-flash-live-preview';
+    mockLiveApiState.isConnected = true;
+    mockModelCapabilities.value = {
+      ...mockModelCapabilities.value,
+      isNativeAudioModel: true,
+      isGemini3: true,
+    };
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-testid="live-camera-button"]')?.click();
+      await Promise.resolve();
+    });
+
+    expect(mockLiveApiState.startCamera).toHaveBeenCalledTimes(1);
+    expect(mockLiveApiState.connect).not.toHaveBeenCalled();
   });
 
   it('queues the next draft while loading and auto-sends it after loading finishes', async () => {

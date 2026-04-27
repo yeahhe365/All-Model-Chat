@@ -26,6 +26,7 @@ export const ChatInputArea: React.FC = () => {
     formProps,
     suggestionsProps,
     liveStatusProps,
+    liveVideoProps,
     themeId,
   } = useChatInputView();
   const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
@@ -117,6 +118,16 @@ export const ChatInputArea: React.FC = () => {
 
   return (
     <div className={wrapperClass} aria-hidden={isUIBlocked}>
+      {liveVideoProps && (
+        <video
+          ref={liveVideoProps.videoRef}
+          autoPlay
+          muted
+          playsInline
+          aria-hidden="true"
+          className="fixed h-px w-px opacity-0 pointer-events-none"
+        />
+      )}
       <div className="mx-auto w-full max-w-[44.8rem] px-2 sm:px-3">
         {suggestionsProps && !isFullscreen && (
           <ChatSuggestions

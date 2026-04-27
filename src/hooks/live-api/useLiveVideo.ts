@@ -17,8 +17,8 @@ export const useLiveVideo = () => {
     }
   }, [videoStream]);
 
-  const startCamera = useCallback(async () => {
-    if (videoSource === 'camera') return;
+  const startCamera = useCallback(async (): Promise<boolean> => {
+    if (videoSource === 'camera') return true;
 
     // Stop existing stream if any (e.g. screen share)
     if (videoStream) {
@@ -35,13 +35,15 @@ export const useLiveVideo = () => {
       });
       setVideoStream(stream);
       setVideoSource('camera');
+      return true;
     } catch (err) {
       logService.error('Failed to start camera', err);
+      return false;
     }
   }, [videoStream, videoSource]);
 
-  const startScreenShare = useCallback(async () => {
-    if (videoSource === 'screen') return;
+  const startScreenShare = useCallback(async (): Promise<boolean> => {
+    if (videoSource === 'screen') return true;
 
     // Stop existing stream if any (e.g. camera)
     if (videoStream) {
@@ -64,8 +66,10 @@ export const useLiveVideo = () => {
         setVideoStream(null);
         setVideoSource(null);
       };
+      return true;
     } catch (err) {
       logService.error('Failed to start screen share', err);
+      return false;
     }
   }, [videoStream, videoSource]);
 
@@ -92,7 +96,11 @@ export const useLiveVideo = () => {
   // Sync video element with stream
   useEffect(() => {
     if (videoRef.current && videoStream) {
-      videoRef.current.srcObject = videoStream;
+      const videoEl = videoRef.current;
+      videoEl.srcObject = videoStream;
+      void videoEl.play().catch((err) => {
+        logService.error('Failed to play live video stream', err);
+      });
     }
   }, [videoStream]);
 

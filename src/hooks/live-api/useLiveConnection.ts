@@ -10,7 +10,7 @@ interface UseLiveConnectionProps {
   appSettings: AppSettings;
   modelId: string;
   liveConfig: unknown;
-  liveApiKeyForTokenCreation?: string | null;
+  liveApiKeyForConnection?: string | null;
   tools: Tool[];
   initializeAudio: (
     onAudioData: (data: Float32Array) => void,
@@ -36,7 +36,7 @@ export const useLiveConnection = ({
   appSettings,
   modelId,
   liveConfig,
-  liveApiKeyForTokenCreation,
+  liveApiKeyForConnection,
   tools,
   initializeAudio,
   cleanupAudio,
@@ -185,7 +185,7 @@ export const useLiveConnection = ({
 
     try {
       // Specify API version v1alpha for Live API support
-      const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' }, liveApiKeyForTokenCreation);
+      const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' }, liveApiKeyForConnection);
       const setupCompletePromise = new Promise<void>((resolve, reject) => {
         setupCompleteResolveRef.current = resolve;
         setupCompleteRejectRef.current = reject;
@@ -309,15 +309,8 @@ export const useLiveConnection = ({
       ) {
         setIsReconnecting(false);
         const authError = err as LiveApiAuthConfigurationError & { code?: string };
-        if (authError.code === 'MISSING_EPHEMERAL_TOKEN_ENDPOINT') {
-          setTranslationError('liveStatus_missing_token_endpoint', 'Live API requires an ephemeral token endpoint.');
-        } else if (authError.code === 'INVALID_EPHEMERAL_TOKEN_RESPONSE') {
-          setTranslationError('liveStatus_invalid_token_response', 'Live API token endpoint must return JSON.');
-        } else if (authError.code === 'MISSING_EPHEMERAL_TOKEN') {
-          setTranslationError(
-            'liveStatus_missing_token_in_response',
-            'Live API token endpoint response must include `name` or `token`.',
-          );
+        if (authError.code === 'MISSING_API_KEY') {
+          setTranslationError('liveStatus_missing_api_key', 'Live API requires a browser API key.');
         } else if (err.message) {
           setRawError(err.message);
         } else {
@@ -350,7 +343,7 @@ export const useLiveConnection = ({
     stopVideo,
     triggerReconnect,
     liveConfig,
-    liveApiKeyForTokenCreation,
+    liveApiKeyForConnection,
     tools,
     handleMessage,
     sessionRef,

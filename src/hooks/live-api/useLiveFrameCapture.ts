@@ -4,6 +4,7 @@ import type { Session as LiveSession } from '@google/genai';
 interface UseLiveFrameCaptureProps {
   isConnected: boolean;
   videoStream: MediaStream | null;
+  videoSource: 'camera' | 'screen' | null;
   volume: number;
   isMuted: boolean;
   captureFrame: () => string | null;
@@ -13,6 +14,7 @@ interface UseLiveFrameCaptureProps {
 export const useLiveFrameCapture = ({
   isConnected,
   videoStream,
+  videoSource,
   volume,
   isMuted,
   captureFrame,
@@ -40,10 +42,11 @@ export const useLiveFrameCapture = ({
     }
 
     const sendFrame = () => {
+      const isScreenShare = videoSource === 'screen';
       const hasRecentAudioActivity =
         !isMuted && Date.now() - lastAudioActivityAtRef.current <= AUDIO_ACTIVITY_WINDOW_MS;
 
-      if (!hasRecentAudioActivity) {
+      if (!isScreenShare && !hasRecentAudioActivity) {
         return;
       }
 
@@ -70,5 +73,5 @@ export const useLiveFrameCapture = ({
     return () => {
       if (frameIntervalRef.current) clearInterval(frameIntervalRef.current);
     };
-  }, [isConnected, videoStream, isMuted, captureFrame, sessionRef]);
+  }, [isConnected, videoStream, videoSource, isMuted, captureFrame, sessionRef]);
 };

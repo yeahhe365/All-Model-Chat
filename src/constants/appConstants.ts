@@ -118,7 +118,6 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   apiKey: null,
   apiProxyUrl: 'https://api-proxy.de/gemini',
   useApiProxy: false,
-  liveApiEphemeralTokenEndpoint: null,
   language: 'system',
   translationTargetLanguage: DEFAULT_TRANSLATION_TARGET_LANGUAGE,
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,

@@ -2,11 +2,9 @@ import http, { IncomingMessage, ServerResponse } from 'node:http';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
-import { GoogleGenAI } from '@google/genai';
 import type { ApiServerConfig } from './config.js';
 
 const GEMINI_PROXY_PREFIX = '/api/gemini';
-const GEMINI_API_VERSION_SUFFIX = /\/v\d+(?:(?:alpha|beta)\d*|\.\d+)?$/i;
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'keep-alive',
@@ -27,19 +25,8 @@ const STRIPPED_PROXY_REQUEST_HEADERS = new Set([
 ]);
 const STRIPPED_PROXY_RESPONSE_HEADERS = new Set([...HOP_BY_HOP_HEADERS, 'content-encoding', 'content-length']);
 
-interface LiveTokenPayload {
-  name?: string;
-  token?: string;
-}
-
 interface CreateServerDependencies {
   fetchImpl?: typeof fetch;
-  createLiveToken?: (apiKey: string, apiBaseUrl?: string) => Promise<LiveTokenPayload>;
-}
-
-interface LiveTokenRequestBody extends Record<string, unknown> {
-  apiKey?: unknown;
-  apiBaseUrl?: unknown;
 }
 
 type CreateServerConfig = Pick<ApiServerConfig, 'geminiApiBase' | 'geminiApiKey'> &
@@ -47,48 +34,6 @@ type CreateServerConfig = Pick<ApiServerConfig, 'geminiApiBase' | 'geminiApiKey'
 
 interface ResolvedServerConfig extends CreateServerConfig {
   allowedOrigins: string[];
-}
-
-function normalizeGeminiApiBaseUrl(baseUrl: string): string {
-  const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');
-  return trimmedBaseUrl.replace(GEMINI_API_VERSION_SUFFIX, '');
-}
-
-function resolveServerReachableApiBaseUrl(apiBaseUrl: string): string | undefined {
-  const normalizedBaseUrl = normalizeGeminiApiBaseUrl(apiBaseUrl);
-
-  try {
-    const url = new URL(normalizedBaseUrl);
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      return undefined;
-    }
-
-    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
-      url.hostname = 'host.docker.internal';
-      return url.toString().replace(/\/$/, '');
-    }
-  } catch {
-    return undefined;
-  }
-
-  return normalizedBaseUrl;
-}
-
-export async function createLiveTokenWithGemini(apiKey: string, apiBaseUrl?: string): Promise<LiveTokenPayload> {
-  const httpOptions: { apiVersion: 'v1alpha'; baseUrl?: string } = { apiVersion: 'v1alpha' };
-  if (apiBaseUrl?.trim()) {
-    const resolvedApiBaseUrl = resolveServerReachableApiBaseUrl(apiBaseUrl);
-    if (resolvedApiBaseUrl) {
-      httpOptions.baseUrl = resolvedApiBaseUrl;
-    }
-  }
-
-  const client = new GoogleGenAI({
-    apiKey,
-    httpOptions,
-  });
-
-  return client.authTokens.create({ config: { uses: 1 } });
 }
 
 function getCorsHeaders(request: IncomingMessage, allowedOrigins: string[]): Record<string, string> {
@@ -131,22 +76,6 @@ function sendJson(
     'content-type': 'application/json; charset=utf-8',
   });
   response.end(JSON.stringify(body));
-}
-
-async function readJsonBody<T extends Record<string, unknown>>(request: IncomingMessage): Promise<T | null> {
-  const chunks: Buffer[] = [];
-
-  for await (const chunk of request) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-
-  const rawBody = Buffer.concat(chunks).toString('utf8').trim();
-  if (!rawBody) {
-    return null;
-  }
-
-  const parsed = JSON.parse(rawBody);
-  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as T) : null;
 }
 
 function getConnectionManagedHeaders(value: string | null | undefined): Set<string> {
@@ -314,7 +243,6 @@ export function createServer(config: CreateServerConfig, dependencies: CreateSer
   };
 
   const fetchImpl = dependencies.fetchImpl ?? fetch;
-  const createLiveToken = dependencies.createLiveToken ?? createLiveTokenWithGemini;
 
   return http.createServer(async (request, response) => {
     try {
@@ -346,86 +274,6 @@ export function createServer(config: CreateServerConfig, dependencies: CreateSer
           },
           resolvedConfig.allowedOrigins,
         );
-        return;
-      }
-
-      if ((method === 'GET' || method === 'POST') && path === '/api/live-token') {
-        response.setHeader('cache-control', 'no-store');
-
-        let apiKeyForToken = resolvedConfig.geminiApiKey?.trim() ?? '';
-        let apiBaseUrlForToken: string | undefined;
-
-        if (method === 'POST') {
-          try {
-            const body = await readJsonBody<LiveTokenRequestBody>(request);
-            const bodyApiKey = typeof body?.apiKey === 'string' ? body.apiKey.trim() : '';
-            if (bodyApiKey) {
-              apiKeyForToken = bodyApiKey;
-            }
-
-            const bodyApiBaseUrl = typeof body?.apiBaseUrl === 'string' ? body.apiBaseUrl.trim() : '';
-            if (bodyApiBaseUrl) {
-              apiBaseUrlForToken = resolveServerReachableApiBaseUrl(bodyApiBaseUrl);
-            }
-          } catch {
-            sendJson(
-              request,
-              response,
-              400,
-              { error: 'Live token request body must be valid JSON.' },
-              resolvedConfig.allowedOrigins,
-            );
-            return;
-          }
-        }
-
-        if (!apiKeyForToken) {
-          sendJson(
-            request,
-            response,
-            method === 'GET' ? 500 : 400,
-            {
-              error:
-                method === 'GET'
-                  ? 'GEMINI_API_KEY is not configured.'
-                  : 'API key is required to create a Live API token.',
-            },
-            resolvedConfig.allowedOrigins,
-          );
-          return;
-        }
-
-        try {
-          const tokenPayload = apiBaseUrlForToken
-            ? await createLiveToken(apiKeyForToken, apiBaseUrlForToken)
-            : await createLiveToken(apiKeyForToken);
-          if (typeof tokenPayload.name === 'string' && tokenPayload.name.length > 0) {
-            sendJson(request, response, 200, { name: tokenPayload.name }, resolvedConfig.allowedOrigins);
-            return;
-          }
-
-          if (typeof tokenPayload.token === 'string' && tokenPayload.token.length > 0) {
-            sendJson(request, response, 200, { token: tokenPayload.token }, resolvedConfig.allowedOrigins);
-            return;
-          }
-
-          sendJson(
-            request,
-            response,
-            502,
-            { error: 'Live token service returned an unexpected payload.' },
-            resolvedConfig.allowedOrigins,
-          );
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error';
-          sendJson(
-            request,
-            response,
-            502,
-            { error: `Failed to create live token: ${message}` },
-            resolvedConfig.allowedOrigins,
-          );
-        }
         return;
       }
 

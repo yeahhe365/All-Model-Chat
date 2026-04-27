@@ -202,7 +202,7 @@ describe('useLiveConnection', () => {
         appSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
-        liveApiKeyForTokenCreation: 'browser-key',
+        liveApiKeyForConnection: 'browser-key',
         tools: [],
         initializeAudio: vi.fn(),
         cleanupAudio: vi.fn(),
@@ -323,11 +323,11 @@ describe('useLiveConnection', () => {
     unmount();
   });
 
-  it('surfaces a configuration error when no ephemeral token endpoint is configured', async () => {
+  it('surfaces a configuration error when no browser API key is available for Live', async () => {
     mockGetLiveApiClient.mockRejectedValue(
       Object.assign(new Error('custom backend message'), {
         name: 'LiveApiAuthConfigurationError',
-        code: 'MISSING_EPHEMERAL_TOKEN_ENDPOINT',
+        code: 'MISSING_API_KEY',
       }),
     );
 
@@ -355,8 +355,8 @@ describe('useLiveConnection', () => {
     expect(didConnect).toBe(false);
     expect(result.current.errorState).toEqual({
       kind: 'translation',
-      key: 'liveStatus_missing_token_endpoint',
-      fallback: 'Live API requires an ephemeral token endpoint.',
+      key: 'liveStatus_missing_api_key',
+      fallback: 'Live API requires a browser API key.',
     });
     expect(result.current.isReconnecting).toBe(false);
     unmount();

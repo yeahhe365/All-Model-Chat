@@ -92,17 +92,9 @@ export const chatInputTranslations = {
   liveStatus_connection_lost_retry_failed: { en: 'Connection lost. Please try again.', zh: '连接已断开，请重试。' },
   liveStatus_connection_error: { en: 'Connection error', zh: '连接错误' },
   liveStatus_failed_to_start: { en: 'Failed to start session', zh: '启动会话失败' },
-  liveStatus_missing_token_endpoint: {
-    en: 'Live API requires an ephemeral token endpoint.',
-    zh: 'Live API 需要配置临时令牌端点。',
-  },
-  liveStatus_invalid_token_response: {
-    en: 'Live API token endpoint must return JSON.',
-    zh: 'Live API 令牌端点必须返回 JSON。',
-  },
-  liveStatus_missing_token_in_response: {
-    en: 'Live API token endpoint response must include `name` or `token`.',
-    zh: 'Live API 令牌端点响应必须包含 `name` 或 `token`。',
+  liveStatus_missing_api_key: {
+    en: 'Live API requires a browser API key.',
+    zh: 'Live API 需要浏览器中的 API 密钥。',
   },
   liveStatus_end_call: { en: 'End Call', zh: '结束通话' },
   liveStatus_speaking: { en: 'Gemini is speaking...', zh: 'Gemini 正在说话...' },

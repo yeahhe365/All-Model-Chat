@@ -47,7 +47,7 @@
 
 当前仓库围绕 **Vite + React SPA** 作为唯一主线构建形态：
 - **标准模式**：本地通过 Vite 开发 / 构建，适合日常开发与静态部署
-- **Docker 部署模式**：`web + api` 双服务部署，前端走 `/api/gemini/*` 与 `/api/live-token`
+- **Docker 部署模式**：`web + api` 双服务部署，普通 Gemini 请求走 `/api/gemini/*`，Live API 由浏览器使用本地 key 直连
 - **静态前端 + 独立 API 模式**：前端部署到 Pages/CDN，后端单独托管 Node API 服务
 
 ---
@@ -161,7 +161,7 @@ GEMINI_API_KEY=your_api_key_here
 
 项目包含双容器部署：
 - `web`：Nginx 托管前端静态资源，并反向代理 `/api/*` 到 `api` 服务
-- `api`：Node 服务，提供 `/api/gemini/*` 代理与 `/api/live-token`
+- `api`：Node 服务，提供 `/api/gemini/*` 代理
 
 运行方式：
 
@@ -197,13 +197,13 @@ docker compose up -d --build
 | `RUNTIME_USE_CUSTOM_API_CONFIG` | 前端默认启用“自定义 API 配置” | 公开运行时配置 | `true` |
 | `RUNTIME_USE_API_PROXY` | 前端默认启用 API 代理 | 公开运行时配置 | `true` |
 | `RUNTIME_API_PROXY_URL` | 前端默认 Gemini 代理地址 | 公开运行时配置 | `/api/gemini` |
-| `RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT` | 前端默认 Live token 端点 | 公开运行时配置 | `/api/live-token` |
 
 说明：
 - 上述 `RUNTIME_*` 会在容器启动时写入 `runtime-config.js`，可被浏览器读取，因此只能放“可公开”信息。
-- 默认 BYOK 模式只需要在设置界面填写 API Key：普通 Gemini 代理会使用浏览器请求携带的 key，Live API 会临时把该 key POST 到 `/api/live-token` 用于生成短期 token，后端不保存。
-- 如需服务端统一托管 key，可配置 `GEMINI_API_KEY` 并将 `RUNTIME_SERVER_MANAGED_API=true`。
-- 前端在部署时默认依赖后端端点：`/api/gemini/*` 与 `/api/live-token`。
+- 默认 BYOK 模式只需要在设置界面填写 API Key：普通 Gemini 代理会使用浏览器请求携带的 key；Live API 会使用浏览器本地 key 直接建立官方 Live WebSocket 连接，不再经过 AMC 后端换取临时 token。
+- 如需服务端统一托管普通 Gemini 请求的 key，可配置 `GEMINI_API_KEY` 并将 `RUNTIME_SERVER_MANAGED_API=true`；Live API 仍需要浏览器中可用的 API Key。
+- 浏览器本地 key 适合自用/可信部署。它不会因为“保存在本地”而变成服务器密钥，同一浏览器上下文中的脚本、扩展、XSS 或设备风险仍可能读取它。
+- 前端在部署时默认只依赖后端端点：`/api/gemini/*`；Live API 从浏览器直连官方 Live 服务。
 
 ### 方式三：Cloudflare Pages（静态前端）+ 独立 API 服务
 
@@ -221,9 +221,8 @@ npm run start:api
 3. 在前端运行时配置中将以下值指向后端公开地址（示例）：
 ```text
 RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
-RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-token
 ```
-4. 如需服务端统一托管密钥，在后端环境设置 `GEMINI_API_KEY`；如果使用 BYOK，可不设置该变量。跨域部署时按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。
+4. 如需服务端统一托管普通 Gemini 请求的密钥，在后端环境设置 `GEMINI_API_KEY`；如果使用 BYOK，可不设置该变量。跨域部署时按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。Live API 不使用独立 API 服务的 token 端点，而是从浏览器直连。
 
 #### 可选：使用 AIStudioToAPI 作为 Gemini 兼容后端
 
@@ -237,7 +236,7 @@ RUNTIME_API_PROXY_URL=https://your-aistudio-to-api.example.com/v1beta
 
 在界面中也可以进入 **设置 -> API 配置**，启用“自定义 API 配置 / API 代理”，并填入 AIStudioToAPI 的 Gemini 兼容 Base URL（例如 `http://localhost:7860/v1beta`）。AMC WebUI 中填写的 API Key 应与 AIStudioToAPI 部署时配置的 `API_KEYS` 对应。
 
-注意：AIStudioToAPI 属于第三方项目，请自行评估账号登录、鉴权、限流与公网暴露风险；它可替代 Gemini API 代理来源，但不提供 AMC WebUI 自带的 `/api/live-token` 端点，实时 Live API 如需服务端临时 token 仍需保留兼容实现。
+注意：AIStudioToAPI 属于第三方项目，请自行评估账号登录、鉴权、限流与公网暴露风险；它可替代普通 Gemini API 代理来源。AMC WebUI 的 Live API 当前采用浏览器直连官方 Live 服务，不再依赖 AMC 后端 token 端点。
 
 ### 构建与预览
 
@@ -302,9 +301,10 @@ GEMINI_API_KEY=your_key_here npm run verify:code-execution:api
 | **API 代理** | 基于 `@google/genai` SDK `httpOptions.baseUrl` 的 Gemini API 代理配置 |
 | **PWA** | Web App Manifest + `beforeinstallprompt` / `appinstalled` 安装事件处理 |
 | **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API |
-生产部署若采用服务端托管 API，前端默认请求后端端点：
+生产部署若采用服务端托管普通 Gemini API，前端默认请求后端端点：
 - `/api/gemini/*`
-- `/api/live-token`
+
+Live API 默认由浏览器使用本地 API Key 直连官方 Live 服务。
 
 ---
 
@@ -325,7 +325,7 @@ AMC-WebUI/
 │   ├── styles/                 # 全局样式、动画、Markdown 样式
 │   ├── App.tsx                 # 应用入口组件
 │   └── index.tsx               # React 挂载入口
-├── server/                     # 独立 Node API（/api/gemini/* 与 /api/live-token）
+├── server/                     # 独立 Node API（/api/gemini/*）
 │   ├── src/
 │   └── tsconfig.json
 ├── public/                     # 静态资源与 runtime-config.js 模板

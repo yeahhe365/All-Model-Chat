@@ -93,7 +93,6 @@ const STRING_KEYS = [
 const NULLABLE_STRING_KEYS = [
   'apiKey',
   'apiProxyUrl',
-  'liveApiEphemeralTokenEndpoint',
   'lockedApiKey',
 ] as const satisfies ReadonlyArray<keyof AppSettings>;
 const BOOLEAN_KEYS = [

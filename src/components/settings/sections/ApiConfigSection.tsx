@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight, KeyRound, RadioTower } from 'lucide-react';
+import { KeyRound, RadioTower } from 'lucide-react';
 import type { ModelOption } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
-import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
+import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../../constants/appConstants';
 import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
 import { getClient } from '../../../services/api/apiClient';
 import {
@@ -27,8 +27,6 @@ interface ApiConfigSectionProps {
   setUseApiProxy: (value: boolean) => void;
   serverManagedApi: boolean;
   availableModels?: ModelOption[];
-  liveApiEphemeralTokenEndpoint: string | null;
-  setLiveApiEphemeralTokenEndpoint: (value: string | null) => void;
 }
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
@@ -41,22 +39,17 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   useApiProxy,
   setUseApiProxy,
   serverManagedApi,
-  liveApiEphemeralTokenEndpoint,
-  setLiveApiEphemeralTokenEndpoint,
 }) => {
   const { t } = useI18n();
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
-  const [showAdvancedLiveSettings, setShowAdvancedLiveSettings] = useState(false);
   const overflowTimerRef = useRef<number | null>(null);
   const viteEnv = (import.meta as ImportMeta & { env?: { VITE_GEMINI_API_KEY?: string } }).env;
 
   const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!viteEnv?.VITE_GEMINI_API_KEY;
-  const inputBaseClasses =
-    'w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono';
   const canUseServerManagedTestKey = isServerManagedApiEnabledForProxyRequests({
     serverManagedApi,
     useCustomApiConfig,
@@ -196,14 +189,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                     strokeWidth={1.5}
                   />
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <p className="text-sm font-medium text-[var(--theme-text-primary)]">
-                        {t('settingsLiveAutomaticTitle')}
-                      </p>
-                      <code className="rounded bg-[var(--theme-bg-secondary)] px-1.5 py-0.5 text-[11px] text-[var(--theme-text-secondary)]">
-                        {liveApiEphemeralTokenEndpoint || '/api/live-token'}
-                      </code>
-                    </div>
+                    <p className="text-sm font-medium text-[var(--theme-text-primary)]">
+                      {t('settingsLiveAutomaticTitle')}
+                    </p>
                     <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
                       {t('settingsLiveAutomaticHelp')}
                     </p>
@@ -215,47 +203,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                   </div>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setShowAdvancedLiveSettings((value) => !value)}
-                className="flex w-full items-center justify-between rounded-lg border border-transparent px-2 py-2 text-left text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] transition-colors hover:border-[var(--theme-border-secondary)] hover:bg-[var(--theme-bg-tertiary)]/40 hover:text-[var(--theme-text-primary)]"
-                aria-expanded={showAdvancedLiveSettings}
-                aria-controls="advanced-live-settings"
-              >
-                <span>{t('settingsLiveAdvancedToggle')}</span>
-                {showAdvancedLiveSettings ? (
-                  <ChevronDown size={14} strokeWidth={1.5} />
-                ) : (
-                  <ChevronRight size={14} strokeWidth={1.5} />
-                )}
-              </button>
-
-              {showAdvancedLiveSettings && (
-                <div id="advanced-live-settings" className="space-y-2">
-                  <label
-                    htmlFor="live-token-endpoint-input"
-                    className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]"
-                  >
-                    {t('settingsLiveTokenEndpoint')}
-                  </label>
-                  <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
-                    {t('settingsLiveTokenEndpointHelp')}
-                  </p>
-                  <input
-                    id="live-token-endpoint-input"
-                    type="text"
-                    value={liveApiEphemeralTokenEndpoint || ''}
-                    onChange={(e) => {
-                      const value = e.target.value.trim();
-                      setLiveApiEphemeralTokenEndpoint(value || null);
-                    }}
-                    className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
-                    placeholder={t('settingsLiveTokenEndpointPlaceholder')}
-                    aria-label={t('settingsLiveTokenEndpoint')}
-                  />
-                </div>
-              )}
             </div>
 
             <ApiConnectionTester

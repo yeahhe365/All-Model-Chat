@@ -4,8 +4,7 @@ type RuntimeConfigKey =
   | 'serverManagedApi'
   | 'useCustomApiConfig'
   | 'useApiProxy'
-  | 'apiProxyUrl'
-  | 'liveApiEphemeralTokenEndpoint';
+  | 'apiProxyUrl';
 
 type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
 
@@ -47,10 +46,7 @@ function readNullableString(value: unknown): string | null | undefined {
 }
 
 export function getRuntimeConfigAppSettingsOverrides(): Partial<
-  Pick<
-    AppSettings,
-    'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'liveApiEphemeralTokenEndpoint'
-  >
+  Pick<AppSettings, 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>
 > {
   const runtimeConfig = typeof window !== 'undefined' ? window.__AMC_RUNTIME_CONFIG__ : undefined;
 
@@ -58,12 +54,8 @@ export function getRuntimeConfigAppSettingsOverrides(): Partial<
     return {};
   }
 
-  const overrides: Partial<
-    Pick<
-      AppSettings,
-      'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'liveApiEphemeralTokenEndpoint'
-    >
-  > = {};
+  const overrides: Partial<Pick<AppSettings, 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>> =
+    {};
 
   const serverManagedApi = readBooleanValue(runtimeConfig.serverManagedApi);
   if (serverManagedApi !== undefined) {
@@ -83,11 +75,6 @@ export function getRuntimeConfigAppSettingsOverrides(): Partial<
   const apiProxyUrl = readNullableString(runtimeConfig.apiProxyUrl);
   if (apiProxyUrl !== undefined) {
     overrides.apiProxyUrl = apiProxyUrl;
-  }
-
-  const liveApiEphemeralTokenEndpoint = readNullableString(runtimeConfig.liveApiEphemeralTokenEndpoint);
-  if (liveApiEphemeralTokenEndpoint !== undefined) {
-    overrides.liveApiEphemeralTokenEndpoint = liveApiEphemeralTokenEndpoint;
   }
 
   return overrides;

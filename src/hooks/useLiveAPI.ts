@@ -63,7 +63,7 @@ export const useLiveAPI = ({
     sessionHandle,
     clientFunctions,
   });
-  const liveApiKeyForTokenCreation = useMemo(() => {
+  const liveApiKeyForConnection = useMemo(() => {
     const keyResult = getKeyForRequest(appSettings, chatSettings, {
       skipIncrement: true,
       skipUsageLogging: true,
@@ -94,7 +94,7 @@ export const useLiveAPI = ({
       appSettings,
       modelId,
       liveConfig,
-      liveApiKeyForTokenCreation,
+      liveApiKeyForConnection,
       tools,
       initializeAudio,
       cleanupAudio,
@@ -117,6 +117,7 @@ export const useLiveAPI = ({
   useLiveFrameCapture({
     isConnected,
     videoStream,
+    videoSource,
     volume,
     isMuted,
     captureFrame,

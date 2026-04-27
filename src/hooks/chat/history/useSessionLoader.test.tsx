@@ -407,7 +407,7 @@ describe('useSessionLoader', () => {
     unmount();
   });
 
-  it('refreshes reused empty chat settings from app defaults instead of keeping stale session settings', () => {
+  it('refreshes reused empty chat settings from app defaults without clearing the visible model', () => {
     const updateAndPersistSessions = vi.fn();
     const emptyActiveSession = {
       ...createSession('session-empty', 'Empty Session'),
@@ -453,9 +453,59 @@ describe('useSessionLoader', () => {
     expect(updateAndPersistSessions).toHaveBeenCalledTimes(1);
     const updater = updateAndPersistSessions.mock.calls[0][0];
     const updatedSessions = updater([emptyActiveSession]);
-    expect(updatedSessions[0].settings.modelId).toBe('global-model');
+    expect(updatedSessions[0].settings.modelId).toBe('stale-model');
     expect(updatedSessions[0].settings.lockedApiKey).toBeNull();
     expect(updatedSessions[0].settings.isGoogleSearchEnabled).toBe(false);
+
+    unmount();
+  });
+
+  it('keeps the manually selected model when reusing the current empty chat', () => {
+    const updateAndPersistSessions = vi.fn();
+    const emptyActiveSession = {
+      ...createSession('session-empty', 'Empty Session'),
+      messages: [],
+      timestamp: 2,
+      settings: {
+        ...createSession('session-empty', 'Empty Session').settings,
+        modelId: 'gemini-3.1-flash-live-preview',
+        lockedApiKey: null,
+        isGoogleSearchEnabled: false,
+      },
+    };
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: {
+          modelId: 'gemini-3-flash-preview',
+          isGoogleSearchEnabled: false,
+          lockedApiKey: null,
+        } as any,
+        setSavedSessions: vi.fn(),
+        setSavedGroups: vi.fn(),
+        setActiveSessionId: vi.fn(),
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions,
+        activeChat: emptyActiveSession,
+        userScrolledUpRef: { current: true },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-empty',
+        savedSessions: [emptyActiveSession] as SavedChatSession[],
+        setAppFileError: vi.fn(),
+      } as any),
+    );
+
+    act(() => {
+      result.current.startNewChat();
+    });
+
+    const updater = updateAndPersistSessions.mock.calls[0][0];
+    const updatedSessions = updater([emptyActiveSession]);
+    expect(updatedSessions[0].settings.modelId).toBe('gemini-3.1-flash-live-preview');
 
     unmount();
   });

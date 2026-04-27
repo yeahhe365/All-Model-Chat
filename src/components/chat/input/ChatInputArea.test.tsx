@@ -48,6 +48,17 @@ describe('ChatInputArea default spacing', () => {
     expect(source).toContain('onClick={handleInputShellClick}');
   });
 
+  it('mounts a hidden Live video element so screen and camera streams can be captured', () => {
+    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+
+    expect(source).toContain('liveVideoProps');
+    expect(source).toContain('<video');
+    expect(source).toContain('ref={liveVideoProps.videoRef}');
+    expect(source).toContain('autoPlay');
+    expect(source).toContain('playsInline');
+    expect(source).toContain('aria-hidden="true"');
+  });
+
   it('renders the queued submission strip above the input shell instead of inside it', () => {
     const source = fs.readFileSync(chatInputAreaPath, 'utf8');
 

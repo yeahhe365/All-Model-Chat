@@ -1,24 +1,8 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createServer, createLiveTokenWithGemini } from './createServer';
+import { createServer } from './createServer';
 import type { AddressInfo } from 'node:net';
 import http from 'node:http';
-
-const genAiMock = vi.hoisted(() => ({
-  authTokensCreate: vi.fn(),
-  constructorArgs: [] as unknown[],
-}));
-
-vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn(function GoogleGenAIMock(this: unknown, options: unknown) {
-    genAiMock.constructorArgs.push(options);
-    return {
-      authTokens: {
-        create: genAiMock.authTokensCreate,
-      },
-    };
-  }),
-}));
 
 async function startHttpServer(server: http.Server): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   await new Promise<void>((resolve, reject) => {
@@ -44,9 +28,6 @@ async function startHttpServer(server: http.Server): Promise<{ baseUrl: string; 
 const cleanupCallbacks: Array<() => Promise<void>> = [];
 
 afterEach(async () => {
-  genAiMock.authTokensCreate.mockReset();
-  genAiMock.constructorArgs.length = 0;
-
   while (cleanupCallbacks.length) {
     const close = cleanupCallbacks.pop();
     if (close) {
@@ -56,38 +37,6 @@ afterEach(async () => {
 });
 
 describe('createServer', () => {
-  it('creates a single-use Live API token with the server-side Gemini client', async () => {
-    genAiMock.authTokensCreate.mockResolvedValue({ name: 'tokens/mock-token' });
-
-    const token = await createLiveTokenWithGemini('server-key');
-
-    expect(token).toEqual({ name: 'tokens/mock-token' });
-    expect(genAiMock.constructorArgs).toEqual([
-      {
-        apiKey: 'server-key',
-        httpOptions: { apiVersion: 'v1alpha' },
-      },
-    ]);
-    expect(genAiMock.authTokensCreate).toHaveBeenCalledWith({ config: { uses: 1 } });
-  });
-
-  it('creates a Live API token through a configured proxy base URL', async () => {
-    genAiMock.authTokensCreate.mockResolvedValue({ name: 'tokens/mock-token' });
-
-    const token = await createLiveTokenWithGemini('server-key', 'http://localhost:7860/v1alpha/');
-
-    expect(token).toEqual({ name: 'tokens/mock-token' });
-    expect(genAiMock.constructorArgs).toEqual([
-      {
-        apiKey: 'server-key',
-        httpOptions: {
-          apiVersion: 'v1alpha',
-          baseUrl: 'http://host.docker.internal:7860',
-        },
-      },
-    ]);
-  });
-
   it('returns health details from GET /health', async () => {
     const app = createServer({
       geminiApiBase: 'https://generativelanguage.googleapis.com',
@@ -104,137 +53,19 @@ describe('createServer', () => {
     expect(typeof body.timestamp).toBe('string');
   });
 
-  it('returns a Live API token payload from GET /api/live-token', async () => {
-    const createLiveToken = vi.fn(async (apiKey: string) => ({ name: `tokens/${apiKey}` }));
-    const app = createServer(
-      {
-        geminiApiBase: 'https://generativelanguage.googleapis.com',
-        geminiApiKey: 'server-key',
-      },
-      { createLiveToken },
-    );
-
-    const started = await startHttpServer(app);
-    cleanupCallbacks.push(started.close);
-
-    const response = await fetch(`${started.baseUrl}/api/live-token`);
-    const body = (await response.json()) as Record<string, unknown>;
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(body).toEqual({ name: 'tokens/server-key' });
-    expect(createLiveToken).toHaveBeenCalledWith('server-key');
-  });
-
-  it('creates a Live API token from a posted browser API key when no server key is configured', async () => {
-    const createLiveToken = vi.fn(async (apiKey: string) => ({ name: `tokens/${apiKey}` }));
-    const app = createServer(
-      {
-        geminiApiBase: 'https://generativelanguage.googleapis.com',
-        geminiApiKey: '',
-      },
-      { createLiveToken },
-    );
-
-    const started = await startHttpServer(app);
-    cleanupCallbacks.push(started.close);
-
-    const response = await fetch(`${started.baseUrl}/api/live-token`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ apiKey: 'browser-key' }),
+  it('does not expose a Live API token endpoint', async () => {
+    const app = createServer({
+      geminiApiBase: 'https://generativelanguage.googleapis.com',
+      geminiApiKey: 'server-key',
     });
-    const body = (await response.json()) as Record<string, unknown>;
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(body).toEqual({ name: 'tokens/browser-key' });
-    expect(createLiveToken).toHaveBeenCalledWith('browser-key');
-  });
-
-  it('passes the posted proxy base URL to BYOK live token creation using a Docker host URL', async () => {
-    const createLiveToken = vi.fn(async (apiKey: string, apiBaseUrl?: string) => ({
-      name: `tokens/${apiKey}/${apiBaseUrl}`,
-    }));
-    const app = createServer(
-      {
-        geminiApiBase: 'https://generativelanguage.googleapis.com',
-        geminiApiKey: '',
-      },
-      { createLiveToken },
-    );
-
     const started = await startHttpServer(app);
     cleanupCallbacks.push(started.close);
 
-    const response = await fetch(`${started.baseUrl}/api/live-token`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        apiKey: 'browser-key',
-        apiBaseUrl: 'http://localhost:7860/v1alpha/',
-      }),
-    });
+    const response = await fetch(`${started.baseUrl}/api/live-token`, { method: 'POST' });
     const body = (await response.json()) as Record<string, unknown>;
 
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ name: 'tokens/browser-key/http://host.docker.internal:7860' });
-    expect(createLiveToken).toHaveBeenCalledWith('browser-key', 'http://host.docker.internal:7860');
-  });
-
-  it('ignores relative frontend proxy paths for BYOK live token creation', async () => {
-    const createLiveToken = vi.fn(async (apiKey: string, apiBaseUrl?: string) => ({
-      name: `tokens/${apiKey}/${apiBaseUrl}`,
-    }));
-    const app = createServer(
-      {
-        geminiApiBase: 'https://generativelanguage.googleapis.com',
-        geminiApiKey: '',
-      },
-      { createLiveToken },
-    );
-
-    const started = await startHttpServer(app);
-    cleanupCallbacks.push(started.close);
-
-    const response = await fetch(`${started.baseUrl}/api/live-token`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        apiKey: 'browser-key',
-        apiBaseUrl: '/api/gemini',
-      }),
-    });
-    const body = (await response.json()) as Record<string, unknown>;
-
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ name: 'tokens/browser-key/undefined' });
-    expect(createLiveToken).toHaveBeenCalledWith('browser-key');
-  });
-
-  it('rejects BYOK live token requests without a valid posted API key or server key', async () => {
-    const createLiveToken = vi.fn(async (apiKey: string) => ({ name: `tokens/${apiKey}` }));
-    const app = createServer(
-      {
-        geminiApiBase: 'https://generativelanguage.googleapis.com',
-        geminiApiKey: '',
-      },
-      { createLiveToken },
-    );
-
-    const started = await startHttpServer(app);
-    cleanupCallbacks.push(started.close);
-
-    const response = await fetch(`${started.baseUrl}/api/live-token`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ apiKey: '   ' }),
-    });
-    const body = (await response.json()) as Record<string, unknown>;
-
-    expect(response.status).toBe(400);
-    expect(body).toEqual({ error: 'API key is required to create a Live API token.' });
-    expect(createLiveToken).not.toHaveBeenCalled();
+    expect(response.status).toBe(404);
+    expect(body).toEqual({ error: 'Not found' });
   });
 
   it('proxies /api/gemini/* preserving method/path/query/body and streaming response', async () => {

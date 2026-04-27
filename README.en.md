@@ -48,7 +48,7 @@
 The project currently focuses on one main application shape: a **Vite + React SPA**.
 
 - **Standard mode**: local Vite development and static builds for day-to-day development or static hosting.
-- **Docker mode**: a `web + api` deployment where the frontend calls `/api/gemini/*` and `/api/live-token`.
+- **Docker mode**: a `web + api` deployment where regular Gemini requests call `/api/gemini/*`, while Live API connects directly from the browser with the local key.
 - **Static frontend + standalone API mode**: deploy the frontend to Pages/CDN and run the Node API service separately.
 
 ---
@@ -154,7 +154,7 @@ GEMINI_API_KEY=your_api_key_here
 The Docker deployment contains two services:
 
 - `web`: Nginx serves the frontend and proxies `/api/*` to the API service.
-- `api`: Node service for `/api/gemini/*` and `/api/live-token`.
+- `api`: Node service for `/api/gemini/*`.
 
 ```bash
 npm run build
@@ -189,9 +189,10 @@ Notes:
 | `RUNTIME_USE_CUSTOM_API_CONFIG` | Enables custom API configuration by default | Public runtime config | `true` |
 | `RUNTIME_USE_API_PROXY` | Enables API proxy mode by default | Public runtime config | `true` |
 | `RUNTIME_API_PROXY_URL` | Default Gemini proxy URL for the frontend | Public runtime config | `/api/gemini` |
-| `RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT` | Default Live API token endpoint | Public runtime config | `/api/live-token` |
 
-The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. Docker defaults to BYOK: after you enter an API key in Settings, Gemini proxy requests use the browser-provided key, and Live API temporarily POSTs that key to `/api/live-token` to mint a short-lived token. The backend does not store it. If you want server-managed credentials instead, set `GEMINI_API_KEY` and `RUNTIME_SERVER_MANAGED_API=true`.
+The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. Docker defaults to BYOK: after you enter an API key in Settings, regular Gemini proxy requests use the browser-provided key, and Live API uses the browser-local key directly to open the official Live WebSocket connection. AMC no longer mints a backend Live token.
+
+If you want server-managed credentials for regular Gemini requests, set `GEMINI_API_KEY` and `RUNTIME_SERVER_MANAGED_API=true`. Live API still requires an API key available in the browser. A browser-local key is suitable for personal or trusted deployments, but it is not a server secret: scripts running in the same browser context, extensions, XSS, or device compromise may still read it.
 
 ### Option 3: Cloudflare Pages + Standalone API
 
@@ -214,10 +215,9 @@ npm run start:api
 
 ```text
 RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
-RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-token
 ```
 
-4. Set `GEMINI_API_KEY` in the backend environment if you want server-managed credentials. For BYOK, you can omit it. For cross-origin deployments, optionally set `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`.
+4. Set `GEMINI_API_KEY` in the backend environment if you want server-managed credentials for regular Gemini requests. For BYOK, you can omit it. For cross-origin deployments, optionally set `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`. Live API does not use a standalone API token endpoint; it connects directly from the browser.
 
 #### Optional: Use AIStudioToAPI as a Gemini-Compatible Backend
 
@@ -231,7 +231,7 @@ RUNTIME_API_PROXY_URL=https://your-aistudio-to-api.example.com/v1beta
 
 You can also open **Settings -> API Configuration**, enable custom API configuration and API proxy, then enter the AIStudioToAPI Gemini-compatible Base URL, such as `http://localhost:7860/v1beta`. The API key entered in AMC WebUI should match one of the `API_KEYS` configured for the AIStudioToAPI deployment.
 
-Note: AIStudioToAPI is a third-party project, so review its account login, authentication, rate limiting, and public exposure risks before use. It can replace the Gemini API proxy source, but it does not provide AMC WebUI's built-in `/api/live-token` endpoint. Realtime Live API flows that need server-issued ephemeral tokens still require a compatible implementation.
+Note: AIStudioToAPI is a third-party project, so review its account login, authentication, rate limiting, and public exposure risks before use. It can replace the regular Gemini API proxy source. AMC WebUI's Live API currently connects directly from the browser to the official Live service and no longer depends on an AMC backend token endpoint.
 
 ### Build and Preview
 
@@ -293,10 +293,11 @@ Optional variable:
 | PWA | Web App Manifest + install/update event handling |
 | Deployment | Vite static build, Docker Compose (`web + api`), or Cloudflare Pages + standalone API |
 
-When using server-managed API mode in production, the frontend calls:
+When using server-managed mode for regular Gemini API requests in production, the frontend calls:
 
 - `/api/gemini/*`
-- `/api/live-token`
+
+Live API uses the browser-local API key to connect directly to the official Live service.
 
 ---
 
@@ -317,7 +318,7 @@ AMC-WebUI/
 │   ├── styles/                 # Global styles, animations, and Markdown styles
 │   ├── App.tsx                 # App root component
 │   └── index.tsx               # React mount entry
-├── server/                     # Standalone Node API for /api/gemini/* and /api/live-token
+├── server/                     # Standalone Node API for /api/gemini/*
 ├── public/                     # Static assets and runtime-config.js template
 ├── e2e/                        # Playwright tests
 ├── docs/                       # Plans, specs, and documentation

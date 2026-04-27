@@ -159,6 +159,14 @@ export const useSessionLoader = ({
         const settingsForReusedChat = createSettingsForNewChat(explicitTemplateSession, {
           excludeTemplateSessionId: activeSessionId,
         });
+        if (!explicitTemplateSession) {
+          const currentEmptyChatSettings = sanitizeSessionModel(activeChat).settings;
+          settingsForReusedChat.modelId = currentEmptyChatSettings.modelId;
+          settingsForReusedChat.thinkingBudget = currentEmptyChatSettings.thinkingBudget;
+          settingsForReusedChat.thinkingLevel = currentEmptyChatSettings.thinkingLevel;
+          settingsForReusedChat.ttsVoice = currentEmptyChatSettings.ttsVoice;
+          settingsForReusedChat.mediaResolution = currentEmptyChatSettings.mediaResolution;
+        }
 
         // Clear input text, files, and editing state to ensure a "fresh" start visual
         setCommandedInput({ text: '', id: Date.now(), mode: 'replace' });
@@ -237,6 +245,7 @@ export const useSessionLoader = ({
       setAppFileError,
       createSettingsForNewChat,
       retainOutgoingSessionRuntime,
+      sanitizeSessionModel,
     ],
   );
 

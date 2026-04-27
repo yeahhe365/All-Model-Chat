@@ -29,6 +29,20 @@ const ChatInputComponent: React.FC = () => {
     isAnyModalOpen,
   } = useChatInput();
 
+  const handleStartLiveCamera = React.useCallback(async () => {
+    const didStart = await liveAPI.startCamera();
+    if (didStart && !liveAPI.isConnected) {
+      await liveAPI.connect();
+    }
+  }, [liveAPI]);
+
+  const handleStartLiveScreenShare = React.useCallback(async () => {
+    const didStart = await liveAPI.startScreenShare();
+    if (didStart && !liveAPI.isConnected) {
+      await liveAPI.connect();
+    }
+  }, [liveAPI]);
+
   // 2. 组装 Toolbar 参数
   const toolbarProps: ChatInputToolbarProps = {
     isImagenModel: capabilities.isImagenModel || false,
@@ -128,8 +142,8 @@ const ChatInputComponent: React.FC = () => {
     isLiveConnected: liveAPI.isConnected,
     isLiveMuted: liveAPI.isMuted,
     onToggleLiveMute: liveAPI.toggleMute,
-    onStartLiveCamera: liveAPI.startCamera,
-    onStartLiveScreenShare: liveAPI.startScreenShare,
+    onStartLiveCamera: handleStartLiveCamera,
+    onStartLiveScreenShare: handleStartLiveScreenShare,
     onStopLiveVideo: liveAPI.stopVideo,
     liveVideoSource: liveAPI.videoSource,
     onFastSendMessage: handlers.handleFastSubmit,
@@ -234,6 +248,11 @@ const ChatInputComponent: React.FC = () => {
       error: liveAPI.error,
       onDisconnect: liveAPI.disconnect,
     },
+    liveVideoProps: capabilities.isNativeAudioModel
+      ? {
+          videoRef: liveAPI.videoRef,
+        }
+      : undefined,
     themeId: chatInput.themeId,
   };
 

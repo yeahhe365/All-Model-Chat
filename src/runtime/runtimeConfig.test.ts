@@ -18,7 +18,6 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: true,
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.runtime.example/v1beta',
-      liveApiEphemeralTokenEndpoint: '/api/live-token',
     };
 
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({
@@ -26,7 +25,6 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: true,
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.runtime.example/v1beta',
-      liveApiEphemeralTokenEndpoint: '/api/live-token',
     });
   });
 
@@ -36,7 +34,6 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: '1',
       useApiProxy: 'false',
       apiProxyUrl: '  ',
-      liveApiEphemeralTokenEndpoint: '   ',
     };
 
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({
@@ -44,14 +41,14 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: true,
       useApiProxy: false,
       apiProxyUrl: null,
-      liveApiEphemeralTokenEndpoint: null,
     });
   });
 
-  it('ships a default Live API token endpoint in the static runtime config', () => {
+  it('does not ship a Live API token endpoint in the static runtime config', () => {
     const runtimeConfigSource = fs.readFileSync(path.resolve(__dirname, '../../public/runtime-config.js'), 'utf8');
 
-    expect(runtimeConfigSource).toContain("liveApiEphemeralTokenEndpoint: '/api/live-token'");
+    expect(runtimeConfigSource).not.toContain('liveApiEphemeralTokenEndpoint');
+    expect(runtimeConfigSource).not.toContain('/api/live-token');
   });
 
   it('defaults Docker runtime config to BYOK instead of server-managed credentials', () => {

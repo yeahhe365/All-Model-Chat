@@ -82,6 +82,9 @@ export interface ChatInputViewModel {
     onDisconnect: () => void;
     error: string | null;
   };
+  liveVideoProps?: {
+    videoRef: React.RefObject<HTMLVideoElement>;
+  };
   themeId: string;
 }
 
