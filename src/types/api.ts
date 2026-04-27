@@ -44,7 +44,8 @@ export type NonStreamMessageSender = (
   config: unknown,
   abortSignal: AbortSignal,
   onError: (error: Error) => void,
-  onComplete: NonStreamMessageCompleteHandler
+  onComplete: NonStreamMessageCompleteHandler,
+  role?: 'user' | 'model'
 ) => Promise<void>;
 
 export interface LiveClientFunction {

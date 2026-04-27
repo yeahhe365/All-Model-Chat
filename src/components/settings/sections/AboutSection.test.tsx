@@ -15,6 +15,10 @@ describe('AboutSection', () => {
   const packageVersion = JSON.parse(
     readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8'),
   ).version as string;
+  const nextPatchVersion = (() => {
+    const [major = 0, minor = 0, patch = 0] = packageVersion.split('.').map(Number);
+    return `${major}.${minor}.${patch + 1}`;
+  })();
 
   beforeEach(() => {
     fetchMock.mockResolvedValue({
@@ -154,7 +158,7 @@ describe('AboutSection', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ tag_name: '1.8.9' }),
+        json: async () => ({ tag_name: nextPatchVersion }),
       });
 
     await act(async () => {
@@ -168,7 +172,7 @@ describe('AboutSection', () => {
 
     const releaseLink = container.querySelector('a[href="https://github.com/yeahhe365/AMC-WebUI/releases"]');
 
-    expect(releaseLink?.getAttribute('title')).toBe('有新版本：1.8.9');
+    expect(releaseLink?.getAttribute('title')).toBe(`有新版本：${nextPatchVersion}`);
   });
 
   it('does not render the manual update check controls in the about panel', async () => {

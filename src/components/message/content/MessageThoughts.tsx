@@ -11,6 +11,7 @@ import { ThinkingHeader } from './thoughts/ThinkingHeader';
 import { ThinkingActions } from './thoughts/ThinkingActions';
 import { ThoughtContent } from './thoughts/ThoughtContent';
 import { useMessageStream } from '../../../hooks/ui/useMessageStream';
+import { extractRawThinkingBlocks } from '../../../utils/chat/reasoning';
 
 interface MessageThoughtsProps {
     message: ChatMessage;
@@ -38,11 +39,18 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     onOpenSidePanel
 }) => {
     const { t } = useI18n();
-    const { thoughts, isLoading, role, id: messageId } = message;
+    const { content, thoughts, isLoading, role, id: messageId } = message;
     
     // Subscribe to live thoughts if loading to check visibility
-    const { streamThoughts } = useMessageStream(messageId, !!isLoading && role === 'model');
-    const effectiveThoughts = streamThoughts || thoughts;
+    const { streamContent, streamThoughts } = useMessageStream(messageId, !!isLoading && role === 'model');
+    const rawThinkingExtraction = extractRawThinkingBlocks(
+        streamContent ? `${content || ''}${streamContent}` : content,
+    );
+    const effectiveThoughts = [
+        thoughts,
+        streamThoughts,
+        rawThinkingExtraction.thoughts,
+    ].filter(Boolean).join('\n\n');
     
     const areThoughtsVisible = role === 'model' && effectiveThoughts && showThoughts;
     
@@ -147,7 +155,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
                             isLoading={!!isLoading}
                             lastThought={lastThought}
                             thinkingTimeMs={message.thinkingTimeMs}
-                            content={isShowingTranslation && translatedThoughts ? translatedThoughts : (thoughts || '')}
+                            content={isShowingTranslation && translatedThoughts ? translatedThoughts : effectiveThoughts}
                             onImageClick={onImageClick}
                             onOpenHtmlPreview={onOpenHtmlPreview}
                             expandCodeBlocksByDefault={expandCodeBlocksByDefault}

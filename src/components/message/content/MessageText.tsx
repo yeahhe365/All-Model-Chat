@@ -9,6 +9,7 @@ import { GoogleSpinner } from '../../icons/GoogleSpinner';
 import { extractPreviewableCodeBlock } from '../../../utils/codeUtils';
 import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
 import { useMessageStream } from '../../../hooks/ui/useMessageStream';
+import { extractRawThinkingBlocks } from '../../../utils/chat/reasoning';
 
 interface MessageTextProps {
     message: ChatMessage;
@@ -45,8 +46,15 @@ export const MessageText: React.FC<MessageTextProps> = ({
     const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
     
     // Use streamed content if available, otherwise fall back to persisted content
-    const effectiveContent = streamContent || content;
-    const effectiveThoughts = streamThoughts || thoughts;
+    const rawThinkingExtraction = extractRawThinkingBlocks(
+        streamContent ? `${content || ''}${streamContent}` : content,
+    );
+    const effectiveContent = rawThinkingExtraction.content;
+    const effectiveThoughts = [
+        thoughts,
+        streamThoughts,
+        rawThinkingExtraction.thoughts,
+    ].filter(Boolean).join('\n\n');
 
     // Apply smooth streaming effect only when loading and for model messages
     const shouldSmooth = isLoading && message.role === 'model';

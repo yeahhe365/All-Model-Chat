@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractGemmaThoughtChannel, stripReasoningMarkup } from '../reasoning';
+import { extractGemmaThoughtChannel, extractRawThinkingBlocks, stripReasoningMarkup } from '../reasoning';
 
 describe('extractGemmaThoughtChannel', () => {
   it('returns plain text unchanged when no Gemma thought channel markup is present', () => {
@@ -27,5 +27,34 @@ describe('stripReasoningMarkup', () => {
     const plainText = '\n\n- item 1\n- item 2\n';
 
     expect(stripReasoningMarkup(plainText)).toBe(plainText);
+  });
+});
+
+describe('extractRawThinkingBlocks', () => {
+  it('separates completed raw thinking blocks from visible content', () => {
+    expect(
+      extractRawThinkingBlocks('<thinking>Plan carefully.</thinking>\nFinal answer.'),
+    ).toEqual({
+      content: 'Final answer.',
+      thoughts: 'Plan carefully.',
+      hasOpenThinkingBlock: false,
+    });
+  });
+
+  it('treats an unclosed thinking block as live raw thoughts', () => {
+    expect(extractRawThinkingBlocks('<thinking>Drafting the answer')).toEqual({
+      content: '',
+      thoughts: 'Drafting the answer',
+      hasOpenThinkingBlock: true,
+    });
+  });
+
+  it('does not strip thinking examples inside fenced code blocks', () => {
+    const markdown = '```html\n<thinking>literal</thinking>\n```\n\nFinal answer.';
+
+    expect(extractRawThinkingBlocks(markdown)).toEqual({
+      content: markdown,
+      hasOpenThinkingBlock: false,
+    });
   });
 });

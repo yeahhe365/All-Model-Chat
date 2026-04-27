@@ -370,10 +370,11 @@ export const sendStatelessMessageNonStreamApi: NonStreamMessageSender = async (
     config,
     abortSignal,
     onError,
-    onComplete
+    onComplete,
+    role = 'user'
 ) => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
-    const contents = [...history, { role: 'user', parts }];
+    const contents = [...history, { role, parts }];
     
     try {
         const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));

@@ -142,6 +142,11 @@ describe('getModelCapabilities', () => {
     expect(capabilities.isGemini3).toBe(false);
   });
 
+  it('exposes raw reasoning prefill support as a model capability', () => {
+    expect(getModelCapabilities('gemini-3-flash-preview').supportsRawReasoningPrefill).toBe(true);
+    expect(getModelCapabilities('gemini-2.5-flash').supportsRawReasoningPrefill).toBe(false);
+  });
+
   it('exposes the latest Gemini 3.1 Flash Image ratios and sizes', () => {
     const capabilities = getModelCapabilities('gemini-3.1-flash-image-preview');
 
