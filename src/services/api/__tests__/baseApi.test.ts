@@ -391,6 +391,29 @@ describe('buildGenerationConfig', () => {
     topK: 64,
   };
 
+  it('accepts object options for generation config construction', async () => {
+    const config = await buildGenerationConfig({
+      modelId: 'gemini-3-flash-preview',
+      systemInstruction: 'sys',
+      config: baseConfig,
+      showThoughts: true,
+      thinkingBudget: 0,
+      isGoogleSearchEnabled: true,
+      isCodeExecutionEnabled: false,
+      isUrlContextEnabled: true,
+      thinkingLevel: 'LOW',
+    });
+
+    expect(config).toEqual(expect.objectContaining({
+      temperature: 1,
+      topP: 0.95,
+      topK: 64,
+      systemInstruction: 'sys',
+      thinkingConfig: { includeThoughts: true, thinkingLevel: 'LOW' },
+      tools: [{ googleSearch: {} }, { urlContext: {} }],
+    }));
+  });
+
   it('returns image config for gemini-2.5-flash-image-preview', async () => {
     const config = await buildGenerationConfig(
       'gemini-2.5-flash-image-preview', 'sys', baseConfig, false, 0,

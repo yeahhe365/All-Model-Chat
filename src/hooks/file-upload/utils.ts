@@ -141,7 +141,7 @@ export const checkBatchNeedsApiKey = (files: File[], appSettings: AppSettings): 
   return getFilesRequiringFileApi(files, appSettings).size > 0;
 };
 
-export interface FileUploadPreflightResult {
+interface FileUploadPreflightResult {
   filesToUpload: File[];
   notice: string | null;
 }

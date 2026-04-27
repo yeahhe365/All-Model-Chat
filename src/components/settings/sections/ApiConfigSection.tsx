@@ -5,7 +5,7 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
 import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
-import { getClient } from '../../../services/api/baseApi';
+import { getClient } from '../../../services/api/apiClient';
 import {
   isServerManagedApiEnabledForProxyRequests,
   parseApiKeys,

@@ -228,9 +228,14 @@ export interface ChatInputActionsProps {
   editMode?: 'update' | 'resend';
   isNativeAudioModel?: boolean;
   onStartLiveSession?: () => void;
+  onDisconnectLiveSession?: () => void;
   isLiveConnected?: boolean;
   isLiveMuted?: boolean;
   onToggleLiveMute?: () => void;
+  onStartLiveCamera?: () => void;
+  onStartLiveScreenShare?: () => void;
+  onStopLiveVideo?: () => void;
+  liveVideoSource?: 'camera' | 'screen' | null;
   onFastSendMessage?: () => void;
   canQueueMessage?: boolean;
   onQueueMessage?: () => void;

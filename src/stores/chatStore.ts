@@ -1,16 +1,26 @@
 import { create } from 'zustand';
 import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, InputCommand, ChatSettings } from '../types';
-import type { SyncMessage } from '../types/sync';
 import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 import { dbService } from '../utils/db';
 import { logService } from '../services/logService';
 import { rehydrateSessionFiles } from '../utils/chat/session';
-import { resolveSupportedModelId } from '../utils/modelHelpers';
-import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
-import { DEFAULT_MODEL_ID } from '../constants/modelConstants';
+import { syncActiveSessionRoute, type SessionHistoryMode } from './sessionRouteSync';
+import { broadcastSyncMessage } from './chatSyncChannel';
+import {
+  sanitizeSessionModel,
+  sortSessionsInPlace,
+} from './sessionModels';
+import { mergeSessionMetadata } from './sessionRefresh';
+import {
+  createVirtualFullSessions,
+  getSessionPersistenceChanges,
+  stripStoredSessionMessages,
+} from './sessionPersistence';
+import { persistSessionChanges } from './sessionPersistenceEffects';
+import { setupChatStoreSync } from './chatStoreSync';
 
 type UpdaterOrValue<T> = T | ((prev: T) => T);
-export type SessionHistoryMode = 'auto' | 'push' | 'replace' | 'none';
+export type { SessionHistoryMode };
 export interface SetActiveSessionOptions {
   history?: SessionHistoryMode;
 }
@@ -23,102 +33,6 @@ const _fileDrafts: { current: Record<string, UploadedFile[]> } = { current: {} }
 const _localLoadingSessionIds = new Set<string>();
 const _sessionPersistVersion = new Map<string, number>();
 let _fileOperationGeneration = 0;
-let _isDirty = false;
-
-// ── BroadcastChannel for multi-tab sync ──
-let syncChannel: BroadcastChannel | null = null;
-function getSyncChannel(): BroadcastChannel {
-  if (!syncChannel) {
-    syncChannel = new BroadcastChannel('all_model_chat_sync_v1');
-  }
-  return syncChannel;
-}
-
-function broadcast(msg: SyncMessage) {
-  try {
-    getSyncChannel().postMessage(msg);
-  } catch {
-    // Ignore sync failures in unsupported or restricted environments.
-  }
-}
-
-// ── Sort helper ──
-function sortSessions(sessions: SavedChatSession[]) {
-  sessions.sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return b.timestamp - a.timestamp;
-  });
-}
-
-function shouldRetainRuntimeMessages(
-  sessionId: string,
-  activeSessionId: string | null,
-  loadingSessionIds: Set<string>,
-) {
-  return sessionId === activeSessionId || loadingSessionIds.has(sessionId);
-}
-
-function sanitizeSessionModel(session: SavedChatSession): SavedChatSession {
-  return {
-    ...session,
-    settings: {
-      ...session.settings,
-      modelId: resolveSupportedModelId(session.settings?.modelId, DEFAULT_MODEL_ID),
-    },
-  };
-}
-
-// ── URL & sessionStorage sync ──
-function syncActiveSessionToUrl(activeSessionId: string | null, historyMode: SessionHistoryMode = 'auto') {
-  if (activeSessionId) {
-    try {
-      sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
-    } catch {
-      // Ignore sessionStorage sync failures.
-    }
-
-    if (historyMode === 'none') {
-      return;
-    }
-
-    const targetPath = `/chat/${activeSessionId}`;
-    try {
-      if (window.location.pathname !== targetPath) {
-        const method =
-          historyMode === 'push'
-            ? 'pushState'
-            : historyMode === 'replace'
-              ? 'replaceState'
-              : window.location.pathname.startsWith('/chat/')
-                ? 'replaceState'
-                : 'pushState';
-        window.history[method]({ sessionId: activeSessionId }, '', targetPath);
-      }
-    } catch {
-      // Ignore history sync failures.
-    }
-  } else {
-    try {
-      sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-    } catch {
-      // Ignore sessionStorage sync failures.
-    }
-
-    if (historyMode === 'none') {
-      return;
-    }
-
-    try {
-      if (window.location.pathname !== '/') {
-        const method = historyMode === 'replace' ? 'replaceState' : 'pushState';
-        window.history[method]({}, '', '/');
-      }
-    } catch {
-      // Ignore history sync failures.
-    }
-  }
-}
 
 // ── Store types ──
 interface ChatState {
@@ -226,7 +140,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   setActiveSessionId: (value, options) => {
     const nextValue = typeof value === 'function' ? value(get().activeSessionId) : value;
     set({ activeSessionId: nextValue });
-    syncActiveSessionToUrl(nextValue, options?.history ?? 'auto');
+    syncActiveSessionRoute(nextValue, options?.history ?? 'auto');
   },
 
   setActiveMessages: (v) =>
@@ -302,36 +216,12 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
         }
       }
 
-      const sanitizedMetadata = metadataList.map(sanitizeSessionModel);
-      sortSessions(sanitizedMetadata);
-      setSavedSessions((prev) => {
-        const prevById = new Map(prev.map((session) => [session.id, session]));
-        const merged = sanitizedMetadata.map((session) => {
-          const existing = prevById.get(session.id);
-
-          if (!existing) {
-            return session;
-          }
-
-          prevById.delete(session.id);
-
-          const keepRuntimeMessages = shouldRetainRuntimeMessages(session.id, activeSessionId, loadingSessionIds);
-
-          return {
-            ...session,
-            ...existing,
-            settings: {
-              ...session.settings,
-              ...existing.settings,
-            },
-            messages: keepRuntimeMessages ? existing.messages : [],
-          };
-        });
-
-        const nextSessions = [...merged, ...prevById.values()];
-        sortSessions(nextSessions);
-        return nextSessions;
-      });
+      setSavedSessions((prev) =>
+        mergeSessionMetadata(prev, metadataList, {
+          activeSessionId,
+          loadingSessionIds,
+        }),
+      );
     } catch (e) {
       logService.error('Failed to refresh sessions from DB', { error: e });
     }
@@ -371,7 +261,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       };
     });
 
-    broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
+    broadcastSyncMessage({ type: 'SESSION_LOADING', sessionId, isLoading });
   },
 
   getFileOperationGeneration: () => _fileOperationGeneration,
@@ -384,19 +274,13 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     const { persist = true } = options;
     const { savedSessions, activeSessionId, activeMessages, loadingSessionIds } = get();
 
-    // 1. Reconstruct "Virtual" Full State
-    const virtualFullSessions = savedSessions.map((s) => {
-      if (s.id === activeSessionId) {
-        return { ...s, messages: activeMessages };
-      }
-      return s;
-    });
+    const virtualFullSessions = createVirtualFullSessions(savedSessions, activeSessionId, activeMessages);
 
     // 2. Run Updater
     const newFullSessions = updater(virtualFullSessions);
 
     // 3. Sort
-    sortSessions(newFullSessions);
+    sortSessionsInPlace(newFullSessions);
 
     // 4. Update Active Messages if changed
     if (activeSessionId) {
@@ -408,90 +292,27 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
     // 5. Persist
     if (persist) {
-      const newSessionsMap = new Map(newFullSessions.map((s) => [s.id, s]));
-      const modifiedSessions = newFullSessions.filter((session) => {
-        const prevSession = virtualFullSessions.find((ps) => ps.id === session.id);
-        return prevSession !== session;
-      });
-      const deletedSessionIds = savedSessions
-        .filter((session) => !newSessionsMap.has(session.id))
-        .map((session) => session.id);
+      const { modifiedSessions, deletedSessionIds } = getSessionPersistenceChanges(
+        virtualFullSessions,
+        newFullSessions,
+      );
 
       if (modifiedSessions.length > 0 || deletedSessionIds.length > 0) {
-        const persistVersions = new Map<string, number>();
-        modifiedSessions.forEach((session) => {
-          const nextVersion = (_sessionPersistVersion.get(session.id) ?? 0) + 1;
-          _sessionPersistVersion.set(session.id, nextVersion);
-          persistVersions.set(session.id, nextVersion);
-        });
-
-        void (async () => {
-          const sessionsToPersist = await Promise.all(
-            modifiedSessions.map(async (session) => {
-              const version = persistVersions.get(session.id);
-              if (version !== undefined && _sessionPersistVersion.get(session.id) !== version) {
-                return null;
-              }
-
-              if (session.id === activeSessionId || session.messages.length > 0) {
-                return session;
-              }
-
-              const persistedSession = await dbService.getSession(session.id);
-              if (version !== undefined && _sessionPersistVersion.get(session.id) !== version) {
-                return null;
-              }
-              if (!persistedSession) {
-                return session;
-              }
-
-              return {
-                ...persistedSession,
-                ...session,
-                settings: { ...persistedSession.settings, ...session.settings },
-                messages: persistedSession.messages,
-              };
-            }),
-          );
-
-          const persistedSessionIds = new Set<string>();
-          await Promise.all([
-            ...sessionsToPersist.map(async (session) => {
-              if (!session) return;
-
-              const version = persistVersions.get(session.id);
-              if (version !== undefined && _sessionPersistVersion.get(session.id) !== version) {
-                return;
-              }
-
-              await dbService.saveSession(session);
-
-              if (version !== undefined && _sessionPersistVersion.get(session.id) === version) {
-                persistedSessionIds.add(session.id);
-              }
-            }),
-            ...deletedSessionIds.map((id) => dbService.deleteSession(id)),
-          ]);
-
-          if (
-            deletedSessionIds.length === 0 &&
-            modifiedSessions.length === 1 &&
-            persistedSessionIds.has(modifiedSessions[0].id)
-          ) {
-            broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessions[0].id });
-          } else {
-            broadcast({ type: 'SESSIONS_UPDATED' });
-          }
-        })().catch((e) => logService.error('Failed to persist session updates', { error: e }));
+        void persistSessionChanges({
+          modifiedSessions,
+          deletedSessionIds,
+          activeSessionId,
+          sessionPersistVersions: _sessionPersistVersion,
+          getSession: dbService.getSession.bind(dbService),
+          saveSession: dbService.saveSession.bind(dbService),
+          deleteSession: dbService.deleteSession.bind(dbService),
+          broadcastSyncMessage,
+        }).catch((e) => logService.error('Failed to persist session updates', { error: e }));
       }
     }
 
     // 6. Return Metadata Only (strip messages)
-    const metadataOnly = newFullSessions.map((s) =>
-      s.messages && s.messages.length > 0 && !shouldRetainRuntimeMessages(s.id, activeSessionId, loadingSessionIds)
-        ? { ...s, messages: [] }
-        : s,
-    );
+    const metadataOnly = stripStoredSessionMessages(newFullSessions, activeSessionId, loadingSessionIds);
 
     set({ savedSessions: metadataOnly });
   },
@@ -501,7 +322,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     const newGroups = updater(savedGroups);
     dbService
       .setAllGroups(newGroups)
-      .then(() => broadcast({ type: 'GROUPS_UPDATED' }))
+      .then(() => broadcastSyncMessage({ type: 'GROUPS_UPDATED' }))
       .catch((e) => logService.error('Failed to persist group updates', { error: e }));
     set({ savedGroups: newGroups });
   },
@@ -515,79 +336,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   },
 }));
 
-// ── Setup BroadcastChannel listener (once) ──
-if (typeof BroadcastChannel !== 'undefined') {
-  const channel = getSyncChannel();
-  const originalOnMessage = channel.onmessage;
-
-  channel.onmessage = (event: MessageEvent<SyncMessage>) => {
-    // Call original handler if it exists (from settings store or other)
-    if (originalOnMessage) {
-      originalOnMessage.call(channel, event);
-    }
-
-    const msg = event.data;
-    const store = useChatStore;
-
-    switch (msg.type) {
-      case 'SETTINGS_UPDATED':
-      case 'SESSIONS_UPDATED':
-        if (document.hidden) {
-          _isDirty = true;
-        } else {
-          store.getState().refreshSessions();
-        }
-        break;
-      case 'GROUPS_UPDATED':
-        if (document.hidden) {
-          _isDirty = true;
-        } else {
-          store.getState().refreshGroups();
-        }
-        break;
-      case 'SESSION_CONTENT_UPDATED': {
-        if (_localLoadingSessionIds.has(msg.sessionId)) return;
-        if (document.hidden) {
-          _isDirty = true;
-          return;
-        }
-        const { activeSessionId } = store.getState();
-        if (msg.sessionId === activeSessionId) {
-          dbService.getSession(msg.sessionId).then((s) => {
-            if (s) {
-              const rehydrated = rehydrateSessionFiles(s);
-              store.getState().setActiveMessages(rehydrated.messages);
-              store
-                .getState()
-                .setSavedSessions((prev) =>
-                  prev.map((old) => (old.id === msg.sessionId ? { ...rehydrated, messages: [] } : old)),
-                );
-            }
-          });
-        } else {
-          store.getState().refreshSessions();
-        }
-        break;
-      }
-      case 'SESSION_LOADING': {
-        store.getState().setLoadingSessionIds((prev) => {
-          const next = new Set(prev);
-          if (msg.isLoading) next.add(msg.sessionId);
-          else next.delete(msg.sessionId);
-          return next;
-        });
-        break;
-      }
-    }
-  };
-
-  // Visibility change handler
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && _isDirty) {
-      logService.info('[Sync] Tab visible, syncing pending updates from DB.');
-      useChatStore.getState().refreshSessions();
-      useChatStore.getState().refreshGroups();
-      _isDirty = false;
-    }
-  });
-}
+setupChatStoreSync({
+  store: useChatStore,
+  localLoadingSessionIds: _localLoadingSessionIds,
+});

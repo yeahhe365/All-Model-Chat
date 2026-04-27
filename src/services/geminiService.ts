@@ -8,7 +8,7 @@ import { generateSpeechApi, transcribeAudioApi } from './api/generation/audioApi
 import { generateTitleApi, generateSuggestionsApi, translateTextApi } from './api/generation/textApi';
 import { countTokensApi } from './api/generation/tokenApi';
 import { sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
-import { buildGenerationConfig } from './api/baseApi';
+import { buildGenerationConfig } from './api/generationConfig';
 import { logService } from "./logService";
 
 class GeminiServiceImpl implements GeminiService {
@@ -90,25 +90,23 @@ class GeminiServiceImpl implements GeminiService {
                 reject(error);
             };
 
-            buildGenerationConfig(
+            buildGenerationConfig({
                 modelId,
-                requestConfig?.systemInstruction || '',
-                {},
-                requestConfig?.showThoughts ?? false,
-                requestConfig?.thinkingBudget ?? 0,
-                !!requestConfig?.isGoogleSearchEnabled,
-                false,
-                false,
-                requestConfig?.thinkingLevel,
+                systemInstruction: requestConfig?.systemInstruction || '',
+                config: {},
+                showThoughts: requestConfig?.showThoughts ?? false,
+                thinkingBudget: requestConfig?.thinkingBudget ?? 0,
+                isGoogleSearchEnabled: !!requestConfig?.isGoogleSearchEnabled,
+                isCodeExecutionEnabled: false,
+                isUrlContextEnabled: false,
+                thinkingLevel: requestConfig?.thinkingLevel,
                 aspectRatio,
-                !!requestConfig?.isDeepSearchEnabled,
+                isDeepSearchEnabled: !!requestConfig?.isDeepSearchEnabled,
                 imageSize,
-                requestConfig?.safetySettings,
-                undefined,
-                undefined,
-                requestConfig?.imageOutputMode,
-                requestConfig?.personGeneration,
-            )
+                safetySettings: requestConfig?.safetySettings,
+                imageOutputMode: requestConfig?.imageOutputMode,
+                personGeneration: requestConfig?.personGeneration,
+            })
                 .then((config) =>
                     sendStatelessMessageNonStreamApi(
                         apiKey,

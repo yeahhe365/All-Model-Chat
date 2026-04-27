@@ -8,7 +8,7 @@ import { createMessage } from '../../utils/chat/session';
 import { getTranslator } from '../../utils/translations';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
-import { buildGenerationConfig } from '../../services/api/baseApi';
+import { buildGenerationConfig } from '../../services/api/generationConfig';
 import { CanvasGeneratorProps } from './types';
 import { loadCanvasSystemPrompt } from '../../constants/promptHelpers';
 
@@ -82,23 +82,20 @@ export const useCanvasGenerator = ({
             canvasSettings
         );
 
-        const config = await buildGenerationConfig(
-            canvasModelId,
-            canvasSystemPrompt,
-            { temperature: 0.7, topP: 0.95 },
-            true,
-            0,
-            false,
-            false,
-            false,
-            canvasThinkingLevel,
+        const config = await buildGenerationConfig({
+            modelId: canvasModelId,
+            systemInstruction: canvasSystemPrompt,
+            config: { temperature: 0.7, topP: 0.95 },
+            showThoughts: true,
+            thinkingBudget: 0,
+            isGoogleSearchEnabled: false,
+            isCodeExecutionEnabled: false,
+            isUrlContextEnabled: false,
+            thinkingLevel: canvasThinkingLevel,
             aspectRatio,
-            false,
-            undefined,
-            undefined,
-            undefined,
-            false // isLocalPythonEnabled explicitly false for Canvas
-        );
+            isDeepSearchEnabled: false,
+            isLocalPythonEnabled: false,
+        });
 
         const t = getTranslator(language);
         const promptInstruction = t('suggestion_html_desc');

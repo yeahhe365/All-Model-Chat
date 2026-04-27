@@ -6,7 +6,7 @@ const { generateImagesMock, getConfiguredApiClientMock, recordTokenUsageMock } =
   recordTokenUsageMock: vi.fn(),
 }));
 
-vi.mock('../baseApi', () => ({
+vi.mock('../apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 

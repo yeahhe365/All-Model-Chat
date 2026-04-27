@@ -9,7 +9,7 @@ import { isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '..
 import { DEFAULT_CHAT_SETTINGS, MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
 import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { StandardChatProps } from './types';
-import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/baseApi';
+import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/generationConfig';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { generateContentTurnApi } from '../../services/api/chatApi';
 import { isLikelyHtml } from '../../utils/codeUtils';
@@ -278,29 +278,29 @@ export const useStandardChat = ({
           || !hasRequestedServerSideToolThatNeedsCombination
         );
 
-      const config = await buildGenerationConfig(
-        activeModelId,
-        sessionToUpdate.systemInstruction,
-        {
+      const config = await buildGenerationConfig({
+        modelId: activeModelId,
+        systemInstruction: sessionToUpdate.systemInstruction,
+        config: {
           temperature: sessionToUpdate.temperature,
           topP: sessionToUpdate.topP,
           topK: sessionToUpdate.topK,
         },
-        sessionToUpdate.showThoughts,
-        sessionToUpdate.thinkingBudget,
-        !!sessionToUpdate.isGoogleSearchEnabled,
-        !!sessionToUpdate.isCodeExecutionEnabled,
-        !!sessionToUpdate.isUrlContextEnabled,
-        sessionToUpdate.thinkingLevel,
+        showThoughts: sessionToUpdate.showThoughts,
+        thinkingBudget: sessionToUpdate.thinkingBudget,
+        isGoogleSearchEnabled: !!sessionToUpdate.isGoogleSearchEnabled,
+        isCodeExecutionEnabled: !!sessionToUpdate.isCodeExecutionEnabled,
+        isUrlContextEnabled: !!sessionToUpdate.isUrlContextEnabled,
+        thinkingLevel: sessionToUpdate.thinkingLevel,
         aspectRatio,
-        sessionToUpdate.isDeepSearchEnabled,
+        isDeepSearchEnabled: sessionToUpdate.isDeepSearchEnabled,
         imageSize,
-        sessionToUpdate.safetySettings,
-        sessionToUpdate.mediaResolution,
-        isLocalPythonEnabledForTurn,
+        safetySettings: sessionToUpdate.safetySettings,
+        mediaResolution: sessionToUpdate.mediaResolution,
+        isLocalPythonEnabled: isLocalPythonEnabledForTurn,
         imageOutputMode,
         personGeneration,
-      );
+      });
 
       const requestConfig = appendFunctionDeclarationsToTools(
         activeModelId,

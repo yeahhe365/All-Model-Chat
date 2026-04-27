@@ -8,7 +8,7 @@ const {
   getConfiguredApiClientMock: vi.fn(),
 }));
 
-vi.mock('../baseApi', () => ({
+vi.mock('../apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 

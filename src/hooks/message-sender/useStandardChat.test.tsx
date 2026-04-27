@@ -70,7 +70,7 @@ vi.mock('../../constants/appConstants', () => ({
   MODELS_SUPPORTING_RAW_MODE: [],
 }));
 
-vi.mock('../../services/api/baseApi', () => ({
+vi.mock('../../services/api/generationConfig', () => ({
   buildGenerationConfig: mockBuildGenerationConfig,
   appendFunctionDeclarationsToTools: mockAppendFunctionDeclarationsToTools,
 }));
@@ -234,25 +234,25 @@ describe('useStandardChat', () => {
       );
     });
 
-    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
-      'gemini-3-flash-preview',
-      'Custom system instruction',
-      expect.any(Object),
-      true,
-      0,
-      false,
-      false,
-      false,
-      'LOW',
-      '1:1',
-      false,
-      '1K',
-      [],
-      'MEDIA_RESOLUTION_UNSPECIFIED',
-      true,
-      'IMAGE_TEXT',
-      'ALLOW_ADULT',
-    );
+    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(expect.objectContaining({
+      modelId: 'gemini-3-flash-preview',
+      systemInstruction: 'Custom system instruction',
+      config: expect.any(Object),
+      showThoughts: true,
+      thinkingBudget: 0,
+      isGoogleSearchEnabled: false,
+      isCodeExecutionEnabled: false,
+      isUrlContextEnabled: false,
+      thinkingLevel: 'LOW',
+      aspectRatio: '1:1',
+      isDeepSearchEnabled: false,
+      imageSize: '1K',
+      safetySettings: [],
+      mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+      isLocalPythonEnabled: true,
+      imageOutputMode: 'IMAGE_TEXT',
+      personGeneration: 'ALLOW_ADULT',
+    }));
 
     unmount();
   });
@@ -412,25 +412,25 @@ describe('useStandardChat', () => {
       );
     });
 
-    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
-      'gemini-2.5-flash',
-      'Custom system instruction',
-      expect.any(Object),
-      true,
-      0,
-      true,
-      false,
-      false,
-      'LOW',
-      '1:1',
-      false,
-      '1K',
-      [],
-      'MEDIA_RESOLUTION_UNSPECIFIED',
-      false,
-      'IMAGE_TEXT',
-      'ALLOW_ADULT',
-    );
+    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(expect.objectContaining({
+      modelId: 'gemini-2.5-flash',
+      systemInstruction: 'Custom system instruction',
+      config: expect.any(Object),
+      showThoughts: true,
+      thinkingBudget: 0,
+      isGoogleSearchEnabled: true,
+      isCodeExecutionEnabled: false,
+      isUrlContextEnabled: false,
+      thinkingLevel: 'LOW',
+      aspectRatio: '1:1',
+      isDeepSearchEnabled: false,
+      imageSize: '1K',
+      safetySettings: [],
+      mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+      isLocalPythonEnabled: false,
+      imageOutputMode: 'IMAGE_TEXT',
+      personGeneration: 'ALLOW_ADULT',
+    }));
     expect(mockRunStandardToolLoop).not.toHaveBeenCalled();
     expect(mockSendMessageStream).toHaveBeenCalledOnce();
 

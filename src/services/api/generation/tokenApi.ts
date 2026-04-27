@@ -1,5 +1,5 @@
 
-import { getConfiguredApiClient, getHttpOptionsForContents } from '../baseApi';
+import { getConfiguredApiClient, getHttpOptionsForContents } from '../apiClient';
 import { logService } from "../../logService";
 import type { ContentListUnion, CountTokensConfig, CountTokensResponse, Part } from "@google/genai";
 

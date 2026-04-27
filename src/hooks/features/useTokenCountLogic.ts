@@ -9,7 +9,7 @@ import {
     appendFunctionDeclarationsToTools,
     buildGenerationConfig,
     toCountTokensConfig,
-} from '../../services/api/baseApi';
+} from '../../services/api/generationConfig';
 import { createRunLocalPythonDeclaration } from '../../features/standard-chat/standardClientFunctions';
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
@@ -113,27 +113,25 @@ export const useTokenCountLogic = ({
                 return;
             }
 
-            const generationConfig = await buildGenerationConfig(
+            const generationConfig = await buildGenerationConfig({
                 modelId,
-                effectiveAppSettings.systemInstruction,
-                {
+                systemInstruction: effectiveAppSettings.systemInstruction,
+                config: {
                     temperature: effectiveAppSettings.temperature,
                     topP: effectiveAppSettings.topP,
                     topK: effectiveAppSettings.topK,
                 },
-                effectiveAppSettings.showThoughts,
-                effectiveAppSettings.thinkingBudget,
-                !!effectiveAppSettings.isGoogleSearchEnabled,
-                !!effectiveAppSettings.isCodeExecutionEnabled,
-                !!effectiveAppSettings.isUrlContextEnabled,
-                effectiveAppSettings.thinkingLevel,
-                undefined,
-                !!effectiveAppSettings.isDeepSearchEnabled,
-                undefined,
-                effectiveAppSettings.safetySettings,
-                effectiveAppSettings.mediaResolution,
-                false,
-            );
+                showThoughts: effectiveAppSettings.showThoughts,
+                thinkingBudget: effectiveAppSettings.thinkingBudget,
+                isGoogleSearchEnabled: !!effectiveAppSettings.isGoogleSearchEnabled,
+                isCodeExecutionEnabled: !!effectiveAppSettings.isCodeExecutionEnabled,
+                isUrlContextEnabled: !!effectiveAppSettings.isUrlContextEnabled,
+                thinkingLevel: effectiveAppSettings.thinkingLevel,
+                isDeepSearchEnabled: !!effectiveAppSettings.isDeepSearchEnabled,
+                safetySettings: effectiveAppSettings.safetySettings,
+                mediaResolution: effectiveAppSettings.mediaResolution,
+                isLocalPythonEnabled: false,
+            });
 
             const requestConfig = effectiveAppSettings.isLocalPythonEnabled
                 ? appendFunctionDeclarationsToTools(

@@ -15,7 +15,7 @@ vi.mock('../../../hooks/useDevice', () => ({
   useResponsiveValue: vi.fn(() => 18),
 }));
 
-vi.mock('../../../services/api/baseApi', () => ({
+vi.mock('../../../services/api/apiClient', () => ({
   getClient: getClientMock,
 }));
 

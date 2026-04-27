@@ -1,6 +1,6 @@
 import type { GenerateImagesConfig } from '@google/genai';
 import type { GenerateImagesRequestOptions } from '../../../types';
-import { getConfiguredApiClient } from '../baseApi';
+import { getConfiguredApiClient } from '../apiClient';
 import { logService } from "../../logService";
 import { buildExactImageGenerationPricing } from '../../../utils/usagePricingTelemetry';
 import { normalizeAspectRatioForModel, normalizeImageSizeForModel } from '../../../utils/modelHelpers';

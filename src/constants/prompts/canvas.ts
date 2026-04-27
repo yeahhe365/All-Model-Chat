@@ -600,5 +600,3 @@ const applyCanvasPromptTranslations = (prompt: string) =>
   );
 
 export const CANVAS_SYSTEM_PROMPT_EN = applyCanvasPromptTranslations(CANVAS_SYSTEM_PROMPT_ZH);
-
-export const CANVAS_SYSTEM_PROMPT = CANVAS_SYSTEM_PROMPT_ZH;

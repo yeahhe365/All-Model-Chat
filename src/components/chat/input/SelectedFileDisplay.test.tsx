@@ -78,8 +78,14 @@ const waitForAssertion = async (assertion: () => void) => {
 describe('SelectedFileDisplay', () => {
   let container: HTMLDivElement;
   let root: Root;
+  let originalIntersectionObserver: typeof IntersectionObserver | undefined;
 
   beforeEach(() => {
+    originalIntersectionObserver = globalThis.IntersectionObserver;
+    Object.defineProperty(globalThis, 'IntersectionObserver', {
+      configurable: true,
+      value: undefined,
+    });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -91,6 +97,14 @@ describe('SelectedFileDisplay', () => {
     });
     container.remove();
     document.body.innerHTML = '';
+    if (originalIntersectionObserver) {
+      Object.defineProperty(globalThis, 'IntersectionObserver', {
+        configurable: true,
+        value: originalIntersectionObserver,
+      });
+    } else {
+      delete (globalThis as Partial<typeof globalThis>).IntersectionObserver;
+    }
     vi.clearAllMocks();
   });
 

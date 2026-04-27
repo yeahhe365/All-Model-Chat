@@ -12,7 +12,7 @@ const {
   blobToBase64Mock: vi.fn(),
 }));
 
-vi.mock('../baseApi', () => ({
+vi.mock('../apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 

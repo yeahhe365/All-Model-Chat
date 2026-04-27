@@ -43,7 +43,7 @@ vi.mock('../../services/geminiService', () => ({
   },
 }));
 
-vi.mock('../../services/api/baseApi', () => ({
+vi.mock('../../services/api/generationConfig', () => ({
   buildGenerationConfig: mockBuildGenerationConfig,
 }));
 

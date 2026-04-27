@@ -2,10 +2,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  mockGetLiveApiClient,
-  mockFloat32ToPCM16Base64,
-} = vi.hoisted(() => ({
+const { mockGetLiveApiClient, mockFloat32ToPCM16Base64 } = vi.hoisted(() => ({
   mockGetLiveApiClient: vi.fn(),
   mockFloat32ToPCM16Base64: vi.fn(() => 'pcm-base64'),
 }));
@@ -125,6 +122,65 @@ describe('useLiveConnection', () => {
     unmount();
   });
 
+  it('sends multipart client content for live text turns with attachments', async () => {
+    const sendRealtimeInput = vi.fn();
+    const sendClientContent = vi.fn();
+    const sessionRef = { current: null as any };
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: vi.fn(({ callbacks }) => {
+          callbacks.onopen?.();
+          callbacks.onmessage?.({ setupComplete: {} });
+          return Promise.resolve({
+            sendRealtimeInput,
+            sendClientContent,
+            close: vi.fn(),
+          });
+        }),
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio: vi.fn(),
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+        sessionRef: sessionRef as any,
+      }),
+    );
+
+    let didSend: boolean | undefined;
+    await act(async () => {
+      await result.current.connect();
+      didSend = await result.current.sendContent([
+        { fileData: { mimeType: 'image/png', fileUri: 'files/image-1' } },
+        { text: 'Describe this attachment' },
+      ]);
+    });
+
+    expect(didSend).toBe(true);
+    expect(sendClientContent).toHaveBeenCalledWith({
+      turns: {
+        role: 'user',
+        parts: [
+          { fileData: { mimeType: 'image/png', fileUri: 'files/image-1' } },
+          { text: 'Describe this attachment' },
+        ],
+      },
+      turnComplete: true,
+    });
+    expect(sendRealtimeInput).not.toHaveBeenCalled();
+    unmount();
+  });
+
   it('passes a browser API key through for BYOK live token creation', async () => {
     const sendRealtimeInput = vi.fn();
 
@@ -162,11 +218,7 @@ describe('useLiveConnection', () => {
       await result.current.connect();
     });
 
-    expect(mockGetLiveApiClient).toHaveBeenCalledWith(
-      {},
-      { apiVersion: 'v1alpha' },
-      'browser-key',
-    );
+    expect(mockGetLiveApiClient).toHaveBeenCalledWith({}, { apiVersion: 'v1alpha' }, 'browser-key');
     unmount();
   });
 

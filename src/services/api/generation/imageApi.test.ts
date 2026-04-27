@@ -5,7 +5,7 @@ const { generateImagesMock, getConfiguredApiClientMock } = vi.hoisted(() => ({
   getConfiguredApiClientMock: vi.fn(),
 }));
 
-vi.mock('../baseApi', () => ({
+vi.mock('../apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 

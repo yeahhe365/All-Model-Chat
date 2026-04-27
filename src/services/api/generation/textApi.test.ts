@@ -5,8 +5,8 @@ const { mockGetConfiguredApiClient, mockGenerateContent } = vi.hoisted(() => ({
   mockGenerateContent: vi.fn(),
 }));
 
-vi.mock('../baseApi', async () => {
-  const actual = await vi.importActual<typeof import('../baseApi')>('../baseApi');
+vi.mock('../apiClient', async () => {
+  const actual = await vi.importActual<typeof import('../apiClient')>('../apiClient');
   return {
     ...actual,
     getConfiguredApiClient: mockGetConfiguredApiClient,

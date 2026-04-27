@@ -1,6 +1,6 @@
 
 import type { GenerateContentConfig, ThinkingConfig } from '@google/genai';
-import { getConfiguredApiClient } from '../baseApi';
+import { getConfiguredApiClient } from '../apiClient';
 import { logService } from "../../logService";
 import type { Part } from "@google/genai";
 import { blobToBase64 } from '../../../utils/fileHelpers';

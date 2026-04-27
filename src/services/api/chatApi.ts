@@ -7,7 +7,7 @@ import {
     NonStreamMessageSender,
 } from '../../types';
 import { logService } from "../logService";
-import { getConfiguredApiClient, getHttpOptionsForContents } from "./baseApi";
+import { getConfiguredApiClient, getHttpOptionsForContents } from "./apiClient";
 import { extractGemmaThoughtChannel } from "../../utils/chat/reasoning";
 
 type CandidateWithUrlContext = {

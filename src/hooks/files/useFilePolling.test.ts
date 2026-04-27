@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getFilePollingDelayMs } from './useFilePolling';
-import { POLLING_INTERVAL_MS } from '../../services/api/baseApi';
+import { POLLING_INTERVAL_MS } from '../../services/api/filePollingConfig';
 
 describe('getFilePollingDelayMs', () => {
   it('uses the base polling interval before failures', () => {

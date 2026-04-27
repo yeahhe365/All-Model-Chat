@@ -31,6 +31,7 @@ import {
 import { hasSendableChatInputContent } from './chatInputUtils';
 import { useChatInputFileUi } from './useChatInputFileUi';
 import { cleanupFilePreviewUrl } from '../../utils/fileHelpers';
+import { buildContentParts } from '../../utils/chat/builder';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
@@ -238,11 +239,7 @@ export const useChatInput = () => {
   });
 
   const canSend =
-    hasSendableContent &&
-    !isLoading &&
-    !inputState.isAddingById &&
-    !isModalOpen &&
-    !localFileState.isConverting;
+    hasSendableContent && !isLoading && !inputState.isAddingById && !isModalOpen && !localFileState.isConverting;
 
   const canQueueMessage =
     !capabilities.isNativeAudioModel &&
@@ -262,6 +259,7 @@ export const useChatInput = () => {
   const handleSmartSendMessage = useCallback(
     async (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => {
       if (capabilities.isNativeAudioModel) {
+        const filesToSend = options?.files ?? selectedFiles;
         let didConnect = liveAPI.isConnected;
         if (!liveAPI.isConnected) {
           try {
@@ -276,20 +274,43 @@ export const useChatInput = () => {
           return;
         }
 
-        const didSend = await liveAPI.sendText(text);
+        let enrichedFiles = filesToSend;
+        let didSend: boolean;
+        if (filesToSend.length > 0) {
+          const builtContent = await buildContentParts(
+            text,
+            filesToSend,
+            currentChatSettings.modelId,
+            currentChatSettings.mediaResolution,
+          );
+          enrichedFiles = builtContent.enrichedFiles;
+          didSend = await liveAPI.sendContent(builtContent.contentParts);
+        } else {
+          didSend = await liveAPI.sendText(text);
+        }
         if (!didSend) {
           return;
         }
 
         if (onAddUserMessage) {
-          onAddUserMessage(text);
+          onAddUserMessage(text, enrichedFiles);
         }
+        setSelectedFiles([]);
         return;
       }
 
       onSendMessage(text, options);
     },
-    [capabilities.isNativeAudioModel, liveAPI, onAddUserMessage, onSendMessage],
+    [
+      capabilities.isNativeAudioModel,
+      currentChatSettings.mediaResolution,
+      currentChatSettings.modelId,
+      liveAPI,
+      onAddUserMessage,
+      onSendMessage,
+      selectedFiles,
+      setSelectedFiles,
+    ],
   );
 
   const completeEditSubmission = useCallback(

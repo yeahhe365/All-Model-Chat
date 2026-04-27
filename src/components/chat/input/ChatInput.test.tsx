@@ -14,6 +14,33 @@ import { ChatInput } from './ChatInput';
 const mockChatStoreState = vi.hoisted(() => ({
   selectedFiles: [] as unknown[],
 }));
+const mockModelCapabilities = vi.hoisted(() => ({
+  value: {
+    isImagenModel: false,
+    isGemini3ImageModel: false,
+    isTtsModel: false,
+    isNativeAudioModel: false,
+    isGemini3: false,
+    supportedAspectRatios: [] as string[],
+    supportedImageSizes: [] as string[],
+  },
+}));
+const mockLiveApiState = vi.hoisted(() => ({
+  connect: vi.fn(async () => true),
+  disconnect: vi.fn(),
+  toggleMute: vi.fn(),
+  sendText: vi.fn(async () => true),
+  sendContent: vi.fn(async () => true),
+  startCamera: vi.fn(),
+  startScreenShare: vi.fn(),
+  stopVideo: vi.fn(),
+  isConnected: false,
+  isMuted: false,
+  isSpeaking: false,
+  volume: 0,
+  error: null as string | null,
+  videoSource: null as 'camera' | 'screen' | null,
+}));
 
 const mockChatStoreSubscribers = vi.hoisted(
   () => new Set<(state: typeof mockChatStoreState, previousState: typeof mockChatStoreState) => void>(),
@@ -47,17 +74,7 @@ vi.mock('../../../hooks/useVoiceInput', () => ({
 }));
 
 vi.mock('../../../hooks/useLiveAPI', () => ({
-  useLiveAPI: () => ({
-    connect: vi.fn(async () => {}),
-    disconnect: vi.fn(),
-    toggleMute: vi.fn(),
-    sendText: vi.fn(),
-    isConnected: false,
-    isMuted: false,
-    isSpeaking: false,
-    volume: 0,
-    error: null,
-  }),
+  useLiveAPI: () => mockLiveApiState,
 }));
 
 vi.mock('../../../hooks/ui/useFileModalState', () => ({
@@ -77,15 +94,8 @@ vi.mock('../../../hooks/ui/useFileModalState', () => ({
 }));
 
 vi.mock('../../../utils/modelHelpers', () => ({
-  getModelCapabilities: () => ({
-    isImagenModel: false,
-    isGemini3ImageModel: false,
-    isTtsModel: false,
-    isNativeAudioModel: false,
-    isGemini3: false,
-    supportedAspectRatios: [],
-    supportedImageSizes: [],
-  }),
+  getModelCapabilities: () => mockModelCapabilities.value,
+  isGemini3Model: (modelId: string) => modelId.includes('gemini-3'),
 }));
 
 vi.mock('../../../stores/chatStore', () => {
@@ -312,6 +322,31 @@ describe('ChatInput', () => {
     root = createRoot(container);
     mockChatStoreState.selectedFiles = [];
     mockChatStoreSubscribers.clear();
+    mockModelCapabilities.value = {
+      isImagenModel: false,
+      isGemini3ImageModel: false,
+      isTtsModel: false,
+      isNativeAudioModel: false,
+      isGemini3: false,
+      supportedAspectRatios: [],
+      supportedImageSizes: [],
+    };
+    Object.assign(mockLiveApiState, {
+      connect: vi.fn(async () => true),
+      disconnect: vi.fn(),
+      toggleMute: vi.fn(),
+      sendText: vi.fn(async () => true),
+      sendContent: vi.fn(async () => true),
+      startCamera: vi.fn(),
+      startScreenShare: vi.fn(),
+      stopVideo: vi.fn(),
+      isConnected: false,
+      isMuted: false,
+      isSpeaking: false,
+      volume: 0,
+      error: null,
+      videoSource: null,
+    });
   });
 
   afterEach(() => {
@@ -419,6 +454,66 @@ describe('ChatInput', () => {
 
     expect(onSendMessage).toHaveBeenCalledWith('/help ', { isFastMode: false, files: undefined });
     expect(providerValue.input.onClearChat).not.toHaveBeenCalled();
+  });
+
+  it('sends Live text turns with selected attachments through client content', async () => {
+    const onAddUserMessage = vi.fn();
+    const selectedFiles: UploadedFile[] = [
+      {
+        id: 'image-file',
+        name: 'diagram.png',
+        type: 'image/png',
+        size: 128,
+        uploadState: 'active',
+        fileUri: 'files/diagram',
+      },
+    ];
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = false;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.selectedFiles = selectedFiles;
+    providerValue.input.onAddUserMessage = onAddUserMessage;
+    providerValue.input.currentChatSettings.modelId = 'gemini-3.1-flash-live-preview';
+    mockModelCapabilities.value = {
+      ...mockModelCapabilities.value,
+      isNativeAudioModel: true,
+      isGemini3: true,
+    };
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Describe this');
+      dispatchKeyDown(textarea, 'Enter');
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockLiveApiState.connect).toHaveBeenCalled();
+    expect(mockLiveApiState.sendContent).toHaveBeenCalledWith([
+      {
+        fileData: { mimeType: 'image/png', fileUri: 'files/diagram' },
+        mediaResolution: { level: 'MEDIA_RESOLUTION_MEDIUM' },
+      },
+      { text: 'Describe this' },
+    ]);
+    expect(mockLiveApiState.sendText).not.toHaveBeenCalled();
+    expect(onAddUserMessage).toHaveBeenCalledWith('Describe this', selectedFiles);
   });
 
   it('queues the next draft while loading and auto-sends it after loading finishes', async () => {

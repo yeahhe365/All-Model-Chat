@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const attachmentMenuMock = vi.fn();
 const toolsMenuMock = vi.fn();
+const liveControlsMock = vi.fn();
 
 vi.mock('./AttachmentMenu', () => ({
   AttachmentMenu: (props: { disabled: boolean }) => {
@@ -24,7 +25,10 @@ vi.mock('./actions/WebSearchToggle', () => ({
 }));
 
 vi.mock('./actions/LiveControls', () => ({
-  LiveControls: () => null,
+  LiveControls: (props: unknown) => {
+    liveControlsMock(props);
+    return null;
+  },
 }));
 
 vi.mock('./actions/RecordControls', () => ({
@@ -79,6 +83,11 @@ const baseProps = {
   isLiveConnected: false,
   isLiveMuted: false,
   onToggleLiveMute: vi.fn(),
+  onDisconnectLiveSession: vi.fn(),
+  onStartLiveCamera: vi.fn(),
+  onStartLiveScreenShare: vi.fn(),
+  onStopLiveVideo: vi.fn(),
+  liveVideoSource: null,
   onFastSendMessage: vi.fn(),
   canQueueMessage: false,
   onQueueMessage: vi.fn(),
@@ -94,6 +103,7 @@ describe('ChatInputActions', () => {
     root = createRoot(container);
     attachmentMenuMock.mockClear();
     toolsMenuMock.mockClear();
+    liveControlsMock.mockClear();
   });
 
   afterEach(() => {
@@ -108,34 +118,40 @@ describe('ChatInputActions', () => {
       root.render(<ChatInputActions {...baseProps} isRealImagenModel />);
     });
 
-    expect(attachmentMenuMock).toHaveBeenCalledWith(
-      expect.objectContaining({ disabled: true }),
-    );
+    expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));
   });
 
   it('keeps attachments enabled for Gemini image models that support reference images', () => {
     act(() => {
-      root.render(
-        <ChatInputActions
-          {...baseProps}
-          isImageModel
-          isGemini3ImageModel
-        />,
-      );
+      root.render(<ChatInputActions {...baseProps} isImageModel isGemini3ImageModel />);
     });
 
-    expect(attachmentMenuMock).toHaveBeenCalledWith(
-      expect.objectContaining({ disabled: false }),
-    );
+    expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
   });
 
-  it('disables attachments for Live models because selected files are not sent through Live text turns', () => {
+  it('keeps attachments enabled for Live models because selected files are sent through Live text turns', () => {
     act(() => {
       root.render(<ChatInputActions {...baseProps} isNativeAudioModel />);
     });
 
-    expect(attachmentMenuMock).toHaveBeenCalledWith(
-      expect.objectContaining({ disabled: true }),
+    expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
+  });
+
+  it('forwards Live disconnect and video controls into the live controls', () => {
+    act(() => {
+      root.render(<ChatInputActions {...baseProps} isNativeAudioModel isLiveConnected liveVideoSource="camera" />);
+    });
+
+    expect(liveControlsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isLiveConnected: true,
+        onStartLiveSession: baseProps.onStartLiveSession,
+        onDisconnectLiveSession: baseProps.onDisconnectLiveSession,
+        onStartLiveCamera: baseProps.onStartLiveCamera,
+        onStartLiveScreenShare: baseProps.onStartLiveScreenShare,
+        onStopLiveVideo: baseProps.onStopLiveVideo,
+        liveVideoSource: 'camera',
+      }),
     );
   });
 
@@ -144,19 +160,12 @@ describe('ChatInputActions', () => {
       root.render(<ChatInputActions {...baseProps} isGemmaModel />);
     });
 
-    expect(toolsMenuMock).toHaveBeenCalledWith(
-      expect.objectContaining({ isGemmaModel: true }),
-    );
+    expect(toolsMenuMock).toHaveBeenCalledWith(expect.objectContaining({ isGemmaModel: true }));
   });
 
   it('forwards built-in/custom tool combination support into the tools menu', () => {
     act(() => {
-      root.render(
-        <ChatInputActions
-          {...baseProps}
-          supportsBuiltInCustomToolCombination={false}
-        />,
-      );
+      root.render(<ChatInputActions {...baseProps} supportsBuiltInCustomToolCombination={false} />);
     });
 
     expect(toolsMenuMock).toHaveBeenCalledWith(

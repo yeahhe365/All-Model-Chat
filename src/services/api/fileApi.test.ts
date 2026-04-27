@@ -33,7 +33,7 @@ const {
   getConfiguredProxyBaseUrlMock: vi.fn(),
 }));
 
-vi.mock('./baseApi', () => ({
+vi.mock('./apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
   getConfiguredApiBaseUrl: getConfiguredApiBaseUrlMock,
   getConfiguredProxyBaseUrl: getConfiguredProxyBaseUrlMock,

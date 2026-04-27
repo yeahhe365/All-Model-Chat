@@ -1,4 +1,4 @@
-import { getConfiguredApiClient } from '../baseApi';
+import { getConfiguredApiClient } from '../apiClient';
 import { logService } from "../../logService";
 
 const SCHEMA_TYPE = {
