@@ -37,8 +37,9 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-3.1-pro-preview',
     name: 'Gemini 3.1 Pro Preview',
-    groups: ['defaultPinned', 'transcription', 'connectionTest'],
+    groups: ['defaultPinned', 'canvas', 'transcription', 'connectionTest'],
     groupLabels: {
+      canvas: 'Gemini 3.1 Pro',
       connectionTest: 'Gemini 3.1 Pro',
       transcription: 'Gemini 3.1 Pro',
     },
@@ -46,20 +47,21 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-robotics-er-1.6-preview',
     name: 'Gemini Robotics-ER 1.6 Preview',
-    groups: ['defaultPinned', 'connectionTest'],
+    groups: ['defaultPinned', 'canvas', 'connectionTest'],
     groupLabels: {
+      canvas: 'Gemini Robotics-ER 1.6',
       connectionTest: 'Gemini Robotics-ER 1.6',
     },
   },
   {
     id: 'gemma-4-31b-it',
     name: 'Gemma 4 31B IT',
-    groups: ['defaultPinned', 'connectionTest'],
+    groups: ['defaultPinned', 'canvas', 'connectionTest'],
   },
   {
     id: 'gemma-4-26b-a4b-it',
     name: 'Gemma 4 26B A4B IT',
-    groups: ['defaultPinned', 'connectionTest'],
+    groups: ['defaultPinned', 'canvas', 'connectionTest'],
   },
   {
     id: 'gemini-3.1-flash-tts-preview',
