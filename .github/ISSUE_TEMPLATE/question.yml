@@ -1,0 +1,19 @@
+name: Question
+description: Ask about setup, usage, or configuration.
+title: 'question: '
+labels: ['question', 'needs-triage']
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Include deployment mode, provider, browser, or screenshots if relevant.
+    validations:
+      required: false

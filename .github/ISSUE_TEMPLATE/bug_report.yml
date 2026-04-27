@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a reproducible problem in AMC WebUI.
+title: 'bug: '
+labels: ['bug', 'needs-triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve AMC WebUI. Please include enough detail for maintainers to reproduce the problem.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect to happen?
+      placeholder: Describe the problem clearly.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, OS, deployment mode, and relevant model/provider settings.
+      placeholder: Chrome 124, macOS, Cloudflare Pages, Gemini proxy enabled...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Add console errors, network errors, screenshots, or screen recordings when useful.
+    validations:
+      required: false

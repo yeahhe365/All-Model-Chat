@@ -56,25 +56,6 @@ const createFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
   ...overrides,
 });
 
-const waitForAssertion = async (assertion: () => void) => {
-  let lastError: unknown;
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    try {
-      assertion();
-      return;
-    } catch (error) {
-      lastError = error;
-      await act(async () => {
-        await new Promise((resolve) => {
-          window.setTimeout(resolve, 0);
-        });
-      });
-    }
-  }
-
-  throw lastError;
-};
-
 describe('SelectedFileDisplay', () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -279,7 +260,7 @@ describe('SelectedFileDisplay', () => {
     });
 
     expect(container.querySelector('[data-thumbnail-kind="pdf"]')).not.toBeNull();
-    await waitForAssertion(() => {
+    await vi.waitFor(() => {
       expect(container.querySelector('[data-testid="mock-pdf-page"]')).not.toBeNull();
     });
   });
@@ -298,7 +279,7 @@ describe('SelectedFileDisplay', () => {
         />,
       );
     });
-    await waitForAssertion(() => {
+    await vi.waitFor(() => {
       expect(pdfjs.GlobalWorkerOptions.workerSrc).toBe('/pdf.worker.min.mjs');
     });
   });
