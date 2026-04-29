@@ -48,6 +48,7 @@ const MessageListComponent: React.FC = () => {
     onFollowUpSuggestionClick,
     onGenerateCanvas,
     onContinueGeneration,
+    onForkMessage,
     onQuickTTS,
     chatInputHeight,
     appSettings,
@@ -141,6 +142,7 @@ const MessageListComponent: React.FC = () => {
                   isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                   onGenerateCanvas={onGenerateCanvas}
                   onContinueGeneration={onContinueGeneration}
+                  onForkMessage={onForkMessage}
                   onSuggestionClick={onFollowUpSuggestionClick}
                   appSettings={appSettings}
                   onOpenSidePanel={onOpenSidePanel}

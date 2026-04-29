@@ -1,4 +1,5 @@
 import React from 'react';
+import { ClipboardPaste, Eraser } from 'lucide-react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
 import { ChatInputActionsProps } from '../../../types';
@@ -7,6 +8,9 @@ import { LiveControls } from './actions/LiveControls';
 import { RecordControls } from './actions/RecordControls';
 import { UtilityControls } from './actions/UtilityControls';
 import { SendControls } from './actions/SendControls';
+import { ComposerMoreMenu } from './actions/ComposerMoreMenu';
+import { useI18n } from '../../../contexts/I18nContext';
+import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 
 interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
   editMode?: 'update' | 'resend';
@@ -78,9 +82,57 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   canQueueMessage,
   onQueueMessage,
 }) => {
+  const { t } = useI18n();
+  const canTranslate = !!inputText.trim() && !isEditing && !isTranscribing && !isMicInitializing;
+  const canUseInputUtility = !disabled && !isLoading && !isWaitingForUpload;
+  const showClearButton = showInputClearButton && onClearInput;
+  const showPasteButton = showInputPasteButton && onPasteFromClipboard;
+  const hasComposerMoreActions =
+    (!isNativeAudioModel && (onToggleFullscreen || showInputTranslationButton)) || showClearButton || showPasteButton;
+
+  const renderDesktopPasteClearControls = () => (
+    <>
+      {showClearButton && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onClearInput();
+          }}
+          className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
+          aria-label={t('clearInput_aria')}
+          title={t('clearInput_title')}
+          data-testid="clear-input-button"
+          disabled={!canUseInputUtility}
+        >
+          <Eraser size={18} strokeWidth={2} />
+        </button>
+      )}
+
+      {showPasteButton && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onPasteFromClipboard();
+          }}
+          className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
+          aria-label={t('pasteClipboard_aria')}
+          title={t('pasteClipboard_title')}
+          data-testid="paste-button"
+          disabled={!canUseInputUtility}
+        >
+          <ClipboardPaste size={18} strokeWidth={2} />
+        </button>
+      )}
+    </>
+  );
+
   return (
-    <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-2">
+    <div className="flex w-full items-center justify-between gap-2 overflow-hidden">
+      <div className="flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <AttachmentMenu
           onAction={onAttachmentAction}
           disabled={disabled || !!isRealImagenModel}
@@ -117,7 +169,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
         />
       </div>
 
-      <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+      <div className="flex min-w-0 flex-shrink-0 items-center gap-1.5 sm:gap-3">
         {!isLiveConnected && !isNativeAudioModel && (
           <RecordControls
             isRecording={!!isRecording}
@@ -130,15 +182,42 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
         )}
 
         {!isNativeAudioModel && (
-          <UtilityControls
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={onToggleFullscreen}
-            isTranslating={isTranslating}
-            onTranslate={onTranslate}
-            showTranslateButton={showInputTranslationButton ?? false}
-            disabled={disabled}
-            canTranslate={!!inputText.trim() && !isEditing && !isTranscribing && !isMicInitializing}
-          />
+          <div className="hidden items-center gap-2 sm:flex sm:gap-3">
+            <UtilityControls
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={onToggleFullscreen}
+              isTranslating={isTranslating}
+              onTranslate={onTranslate}
+              showTranslateButton={showInputTranslationButton ?? false}
+              disabled={disabled}
+              canTranslate={canTranslate}
+            />
+          </div>
+        )}
+
+        {(showClearButton || showPasteButton) && (
+          <div className="hidden items-center gap-2 sm:flex sm:gap-3">{renderDesktopPasteClearControls()}</div>
+        )}
+
+        {hasComposerMoreActions && (
+          <div className="sm:hidden">
+            <ComposerMoreMenu
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={isNativeAudioModel ? undefined : onToggleFullscreen}
+              isTranslating={isTranslating}
+              onTranslate={onTranslate}
+              showTranslateButton={!isNativeAudioModel && (showInputTranslationButton ?? false)}
+              canTranslate={canTranslate}
+              onPasteFromClipboard={onPasteFromClipboard}
+              showInputPasteButton={showInputPasteButton ?? true}
+              onClearInput={onClearInput}
+              showInputClearButton={showInputClearButton ?? false}
+              disabled={disabled}
+              isLoading={isLoading}
+              isWaitingForUpload={isWaitingForUpload}
+              isInputDisabled={disabled}
+            />
+          </div>
         )}
 
         {isNativeAudioModel && onStartLiveSession && (
@@ -169,11 +248,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
           onFastSendMessage={onFastSendMessage}
           canQueueMessage={canQueueMessage}
           onQueueMessage={onQueueMessage}
-          onPasteFromClipboard={onPasteFromClipboard}
-          showInputPasteButton={showInputPasteButton ?? true}
-          onClearInput={onClearInput}
-          showInputClearButton={showInputClearButton ?? false}
-          isInputDisabled={disabled}
         />
       </div>
     </div>

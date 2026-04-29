@@ -63,6 +63,7 @@ describe('MessageActions', () => {
               onRetryMessage={() => {}}
               onGenerateCanvas={() => {}}
               onContinueGeneration={() => {}}
+              onForkMessage={() => {}}
               themeId="pearl"
             />
           </WindowProvider>
@@ -90,6 +91,7 @@ describe('MessageActions', () => {
               onRetryMessage={() => {}}
               onGenerateCanvas={() => {}}
               onContinueGeneration={() => {}}
+              onForkMessage={() => {}}
               themeId="pearl"
             />
           </WindowProvider>
@@ -118,6 +120,7 @@ describe('MessageActions', () => {
               onRetryMessage={() => {}}
               onGenerateCanvas={() => {}}
               onContinueGeneration={() => {}}
+              onForkMessage={() => {}}
               themeId="pearl"
             />
           </WindowProvider>
@@ -127,6 +130,89 @@ describe('MessageActions', () => {
 
     const deleteButton = container.querySelector('button[aria-label="Delete"]');
     expect(deleteButton?.className).not.toContain('scale');
+  });
+
+  it('collapses continue generation and canvas actions into the message overflow menu', () => {
+    const handleContinueGeneration = vi.fn();
+    const handleGenerateCanvas = vi.fn();
+    const handleForkMessage = vi.fn();
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <WindowProvider window={window} document={document}>
+            <MessageActions
+              message={message}
+              sessionTitle="Session"
+              messageIndex={0}
+              isGrouped={false}
+              onEditMessage={() => {}}
+              onDeleteMessage={() => {}}
+              onRetryMessage={() => {}}
+              onGenerateCanvas={handleGenerateCanvas}
+              onContinueGeneration={handleContinueGeneration}
+              onForkMessage={handleForkMessage}
+              themeId="pearl"
+            />
+          </WindowProvider>
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.querySelector('[aria-label="Continue Generating"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[aria-label="Visualize with Canvas"]')).not.toBeInTheDocument();
+
+    const moreButton = container.querySelector<HTMLButtonElement>('[aria-label="More message actions"]');
+    expect(moreButton).toBeInTheDocument();
+    expect(moreButton?.getAttribute('aria-expanded')).toBe('false');
+
+    act(() => {
+      moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(moreButton?.getAttribute('aria-expanded')).toBe('true');
+    const menu = container.querySelector('[role="menu"]');
+    expect(menu).toBeInTheDocument();
+
+    const continueItem = container.querySelector<HTMLButtonElement>('[role="menuitem"][aria-label="Continue Generating"]');
+    const canvasItem = container.querySelector<HTMLButtonElement>('[role="menuitem"][aria-label="Visualize with Canvas"]');
+    const forkItem = container.querySelector<HTMLButtonElement>('[role="menuitem"][aria-label="Fork from here"]');
+    expect(continueItem).toBeInTheDocument();
+    expect(canvasItem).toBeInTheDocument();
+    expect(forkItem).toBeInTheDocument();
+
+    act(() => {
+      forkItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(handleForkMessage).toHaveBeenCalledWith('message-1');
+    expect(container.querySelector('[role="menu"]')).not.toBeInTheDocument();
+
+    act(() => {
+      moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const reopenedContinueItem = container.querySelector<HTMLButtonElement>(
+      '[role="menuitem"][aria-label="Continue Generating"]',
+    );
+
+    act(() => {
+      reopenedContinueItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(handleContinueGeneration).toHaveBeenCalledWith('message-1');
+    expect(container.querySelector('[role="menu"]')).not.toBeInTheDocument();
+
+    act(() => {
+      moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    const reopenedCanvasItem = container.querySelector<HTMLButtonElement>(
+      '[role="menuitem"][aria-label="Visualize with Canvas"]',
+    );
+    act(() => {
+      reopenedCanvasItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(handleGenerateCanvas).toHaveBeenCalledWith('message-1', 'Hello from the model');
   });
 
   it('uses the custom assistant avatar image for model messages only', () => {
@@ -149,24 +235,26 @@ describe('MessageActions', () => {
                 isGrouped={false}
                 onEditMessage={() => {}}
                 onDeleteMessage={() => {}}
-                onRetryMessage={() => {}}
-                onGenerateCanvas={() => {}}
-                onContinueGeneration={() => {}}
-                themeId="pearl"
-              />
-              <MessageActions
+              onRetryMessage={() => {}}
+              onGenerateCanvas={() => {}}
+              onContinueGeneration={() => {}}
+              onForkMessage={() => {}}
+              themeId="pearl"
+            />
+            <MessageActions
                 message={userMessage}
                 sessionTitle="Session"
                 messageIndex={1}
                 isGrouped={false}
                 onEditMessage={() => {}}
                 onDeleteMessage={() => {}}
-                onRetryMessage={() => {}}
-                onGenerateCanvas={() => {}}
-                onContinueGeneration={() => {}}
-                themeId="pearl"
-              />
-            </>
+              onRetryMessage={() => {}}
+              onGenerateCanvas={() => {}}
+              onContinueGeneration={() => {}}
+              onForkMessage={() => {}}
+              themeId="pearl"
+            />
+          </>
           </WindowProvider>
         </I18nProvider>,
       );

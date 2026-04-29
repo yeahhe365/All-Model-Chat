@@ -21,6 +21,7 @@ interface MessageProps {
   isGraphvizRenderingEnabled: boolean;
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
+  onForkMessage: (messageId: string) => void;
   onSuggestionClick?: (suggestion: string) => void;
   appSettings: AppSettings;
   onOpenSidePanel: (content: SideViewContent) => void;
@@ -85,6 +86,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             onRetryMessage={props.onRetryMessage}
             onGenerateCanvas={props.onGenerateCanvas}
             onContinueGeneration={props.onContinueGeneration}
+            onForkMessage={props.onForkMessage}
             themeId={props.themeId}
           />
         )}
@@ -117,6 +119,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             onRetryMessage={props.onRetryMessage}
             onGenerateCanvas={props.onGenerateCanvas}
             onContinueGeneration={props.onContinueGeneration}
+            onForkMessage={props.onForkMessage}
             themeId={props.themeId}
           />
         )}

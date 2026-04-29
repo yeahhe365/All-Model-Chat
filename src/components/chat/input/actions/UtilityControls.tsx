@@ -48,6 +48,7 @@ export const UtilityControls: React.FC<UtilityControlsProps> = ({
           className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
           aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
           title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
+          data-testid="translate-button"
         >
           {isTranslating ? (
             <Loader2 size={iconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />

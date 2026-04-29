@@ -5,6 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const attachmentMenuMock = vi.fn();
 const toolsMenuMock = vi.fn();
 const liveControlsMock = vi.fn();
+const utilityControlsMock = vi.fn();
+const sendControlsMock = vi.fn();
+
+vi.mock('../../../contexts/I18nContext', () => ({
+  useI18n: () => ({
+    t: (key: string, fallback?: string) => fallback ?? key,
+  }),
+}));
 
 vi.mock('./AttachmentMenu', () => ({
   AttachmentMenu: (props: { disabled: boolean }) => {
@@ -36,11 +44,17 @@ vi.mock('./actions/RecordControls', () => ({
 }));
 
 vi.mock('./actions/UtilityControls', () => ({
-  UtilityControls: () => null,
+  UtilityControls: (props: unknown) => {
+    utilityControlsMock(props);
+    return <div data-testid="utility-controls" />;
+  },
 }));
 
 vi.mock('./actions/SendControls', () => ({
-  SendControls: () => null,
+  SendControls: (props: unknown) => {
+    sendControlsMock(props);
+    return <div data-testid="send-controls" />;
+  },
 }));
 
 import { ChatInputActions } from './ChatInputActions';
@@ -104,6 +118,8 @@ describe('ChatInputActions', () => {
     attachmentMenuMock.mockClear();
     toolsMenuMock.mockClear();
     liveControlsMock.mockClear();
+    utilityControlsMock.mockClear();
+    sendControlsMock.mockClear();
   });
 
   afterEach(() => {
@@ -171,5 +187,37 @@ describe('ChatInputActions', () => {
     expect(toolsMenuMock).toHaveBeenCalledWith(
       expect.objectContaining({ supportsBuiltInCustomToolCombination: false }),
     );
+  });
+
+  it('keeps auxiliary composer actions out of send controls so they can collapse into the compact menu', () => {
+    act(() => {
+      root.render(
+        <ChatInputActions
+          {...baseProps}
+          inputText="Translate or send this"
+          showInputTranslationButton
+          showInputPasteButton
+          showInputClearButton
+          canQueueMessage
+        />,
+      );
+    });
+
+    expect(utilityControlsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        showTranslateButton: true,
+        onToggleFullscreen: baseProps.onToggleFullscreen,
+      }),
+    );
+    expect(sendControlsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canQueueMessage: true,
+      }),
+    );
+    expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('onPasteFromClipboard');
+    expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('onClearInput');
+    expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('showInputPasteButton');
+    expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('showInputClearButton');
+    expect(container.querySelector('[data-testid="composer-more-menu"]')).not.toBeNull();
   });
 });

@@ -3,9 +3,12 @@ import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../..
 import { logService } from '../../../services/logService';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { getVisibleChatMessages } from '../../../utils/chat/visibility';
+import { createNewSession } from '../../../utils/chat/session';
+import { generateUniqueId } from '../../../utils/chat/ids';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type ActiveSessionSetter = (id: string | null, options?: { history?: 'push' | 'replace' | 'none' | 'auto' }) => void;
 type SendMessageFunc = (overrideOptions?: {
   text?: string;
   files?: UploadedFile[];
@@ -25,6 +28,7 @@ interface MessageActionsProps {
   setEditMode: (mode: 'update' | 'resend') => void;
   setAppFileError: (error: string | null) => void;
   updateAndPersistSessions: SessionsUpdater;
+  setActiveSessionId: ActiveSessionSetter;
   userScrolledUpRef: React.MutableRefObject<boolean>;
   handleSendMessage: SendMessageFunc;
   setSessionLoading: (sessionId: string, isLoading: boolean) => void;
@@ -42,6 +46,7 @@ export const useMessageActions = ({
   setEditMode,
   setAppFileError,
   updateAndPersistSessions,
+  setActiveSessionId,
   userScrolledUpRef,
   handleSendMessage,
   setSessionLoading,
@@ -281,6 +286,64 @@ export const useMessageActions = ({
     ],
   );
 
+  const handleForkMessage = useCallback(
+    (messageId: string) => {
+      if (!activeSessionId) return;
+
+      const visibleMessages = getVisibleChatMessages(messages);
+      const forkIndex = visibleMessages.findIndex((message) => message.id === messageId);
+      if (forkIndex === -1) return;
+
+      const sourceMessages = visibleMessages.slice(0, forkIndex + 1);
+      const idMap = new Map<string, string>();
+
+      const forkedMessages = sourceMessages.map((message) => {
+        const nextMessageId = generateUniqueId();
+        idMap.set(message.id, nextMessageId);
+
+        return {
+          ...message,
+          id: nextMessageId,
+          files: message.files?.map((file) => ({
+            ...file,
+            id: generateUniqueId(),
+          })),
+          isLoading: false,
+          generationStartTime: undefined,
+          generationEndTime: undefined,
+        };
+      });
+
+      const normalizedMessages = forkedMessages.map((message) => ({
+        ...message,
+        toolParentMessageId: message.toolParentMessageId ? idMap.get(message.toolParentMessageId) : undefined,
+      }));
+
+      let forkedSessionId: string | null = null;
+
+      updateAndPersistSessions((prev) => {
+        const sourceSession = prev.find((session) => session.id === activeSessionId);
+        if (!sourceSession) return prev;
+
+        const forkedSession = createNewSession(
+          sourceSession.settings,
+          normalizedMessages,
+          `${sourceSession.title} (Fork)`,
+          sourceSession.groupId ?? null,
+        );
+        forkedSessionId = forkedSession.id;
+        return [forkedSession, ...prev];
+      });
+
+      if (forkedSessionId) {
+        logService.info('User forked chat session from message', { messageId, sessionId: activeSessionId });
+        setActiveSessionId(forkedSessionId, { history: 'push' });
+        userScrolledUpRef.current = false;
+      }
+    },
+    [activeSessionId, messages, updateAndPersistSessions, setActiveSessionId, userScrolledUpRef],
+  );
+
   return {
     handleStopGenerating,
     handleEditMessage,
@@ -290,5 +353,6 @@ export const useMessageActions = ({
     handleRetryLastTurn,
     handleEditLastUserMessage,
     handleContinueGeneration,
+    handleForkMessage,
   };
 };

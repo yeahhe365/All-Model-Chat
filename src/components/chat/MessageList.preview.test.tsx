@@ -118,6 +118,7 @@ describe('MessageList image preview', () => {
       isGraphvizRenderingEnabled: false,
       onGenerateCanvas: () => {},
       onContinueGeneration: () => {},
+      onForkMessage: () => {},
       onQuickTTS: async () => null,
       chatInputHeight: 0,
       appSettings: { showWelcomeSuggestions: true } as AppSettings,

@@ -175,6 +175,7 @@ export const useChat = (
     setEditMode,
     setAppFileError,
     updateAndPersistSessions,
+    setActiveSessionId,
     userScrolledUpRef,
     handleSendMessage: messageSender.handleSendMessage,
     setSessionLoading,
@@ -321,6 +322,7 @@ export const useChat = (
     handleQuickTTS,
     handleEditLastUserMessage: messageActions.handleEditLastUserMessage,
     handleContinueGeneration: messageActions.handleContinueGeneration,
+    handleForkMessage: messageActions.handleForkMessage,
 
     // Scenarios
     savedScenarios: scenarioHandler.savedScenarios,

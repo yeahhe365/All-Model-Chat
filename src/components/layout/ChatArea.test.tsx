@@ -166,6 +166,7 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
       onFollowUpSuggestionClick: vi.fn(),
       onGenerateCanvas: vi.fn(),
       onContinueGeneration: vi.fn(),
+      onForkMessage: vi.fn(),
       onQuickTTS: vi.fn(async () => null),
       onOpenSidePanel: vi.fn(),
     },

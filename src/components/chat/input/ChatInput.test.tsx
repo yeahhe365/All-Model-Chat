@@ -242,6 +242,7 @@ const createProviderValue = (commandedInput: InputCommand | null) =>
       onFollowUpSuggestionClick: vi.fn(),
       onGenerateCanvas: vi.fn(),
       onContinueGeneration: vi.fn(),
+      onForkMessage: vi.fn(),
       onQuickTTS: vi.fn(async () => null),
       chatInputHeight: 0,
       appSettings: { showWelcomeSuggestions: false } as AppSettings,

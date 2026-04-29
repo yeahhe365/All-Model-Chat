@@ -36,6 +36,7 @@ interface ChatAreaMessageListContextValue {
   onFollowUpSuggestionClick?: (suggestion: string) => void;
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
+  onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
   chatInputHeight: number;
   appSettings: AppSettings;

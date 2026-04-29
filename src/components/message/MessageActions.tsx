@@ -1,5 +1,16 @@
-import React from 'react';
-import { User, AlertTriangle, Edit3, Trash2, RotateCw, Pencil, Wand2, CirclePlay } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  User,
+  AlertTriangle,
+  Edit3,
+  Trash2,
+  RotateCw,
+  Pencil,
+  Wand2,
+  CirclePlay,
+  MoreHorizontal,
+  GitBranch,
+} from 'lucide-react';
 import { ChatMessage } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
@@ -54,6 +65,7 @@ interface MessageActionsProps {
   onRetryMessage: (messageId: string) => void;
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
+  onForkMessage: (messageId: string) => void;
   themeId: string;
 }
 
@@ -67,19 +79,53 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   onRetryMessage,
   onGenerateCanvas,
   onContinueGeneration,
+  onForkMessage,
   themeId,
 }) => {
   const { t } = useI18n();
   const isMobile = useIsMobile();
+  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
+  const overflowRef = useRef<HTMLDivElement | null>(null);
   const actionIconSize = useResponsiveValue(15, 16);
   const showRetryButton = message.role === 'model' || (message.role === 'error' && message.generationStartTime);
+  const showContinueGenerationAction = message.role === 'model' && !message.isLoading;
+  const showForkAction = message.role === 'model' && !message.isLoading;
+  const showCanvasAction = Boolean(message.content && !message.isLoading && message.role === 'model' && !message.audioSrc);
+  const showOverflowActions = showContinueGenerationAction || showForkAction || showCanvasAction;
 
   // Enhanced button styling: lighter default, distinct hover, rounded corners
   const actionButtonClasses =
     'p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100';
+  const menuItemClasses =
+    'flex w-full items-center gap-2 px-3 py-2 text-left text-xs whitespace-nowrap text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] focus:outline-none focus-visible:bg-[var(--theme-bg-tertiary)] focus-visible:text-[var(--theme-text-primary)]';
   const actionsVisibilityClasses = isMobile
     ? 'opacity-100 translate-y-0 pointer-events-auto'
     : 'opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto';
+
+  useEffect(() => {
+    if (!isOverflowOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!overflowRef.current?.contains(event.target as Node)) {
+        setIsOverflowOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOverflowOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOverflowOpen]);
 
   return (
     <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10 h-full">
@@ -127,15 +173,78 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
           </button>
         )}
 
-        {message.role === 'model' && !message.isLoading && (
-          <button
-            onClick={() => onContinueGeneration(message.id)}
-            title="Continue Generating"
-            aria-label="Continue Generating"
-            className={actionButtonClasses}
-          >
-            <CirclePlay size={actionIconSize} strokeWidth={2} />
-          </button>
+        {showOverflowActions && (
+          <div ref={overflowRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsOverflowOpen((value) => !value)}
+              title={t('message_more_actions')}
+              aria-label={t('message_more_actions')}
+              aria-haspopup="menu"
+              aria-expanded={isOverflowOpen}
+              className={actionButtonClasses}
+            >
+              <MoreHorizontal size={actionIconSize} strokeWidth={2} />
+            </button>
+
+            {isOverflowOpen && (
+              <div
+                role="menu"
+                className="absolute left-full top-0 z-40 ml-1 min-w-40 overflow-hidden rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] py-1 shadow-lg"
+              >
+                {showContinueGenerationAction && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsOverflowOpen(false);
+                      onContinueGeneration(message.id);
+                    }}
+                    title={t('continue_generation_title')}
+                    aria-label={t('continue_generation_title')}
+                    className={menuItemClasses}
+                  >
+                    <CirclePlay size={14} strokeWidth={2} />
+                    <span>{t('continue_generation_title')}</span>
+                  </button>
+                )}
+
+                {showForkAction && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsOverflowOpen(false);
+                      onForkMessage(message.id);
+                    }}
+                    title={t('fork_message_title')}
+                    aria-label={t('fork_message_title')}
+                    className={menuItemClasses}
+                  >
+                    <GitBranch size={14} strokeWidth={2} />
+                    <span>{t('fork_message_title')}</span>
+                  </button>
+                )}
+
+                {showCanvasAction && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsOverflowOpen(false);
+                      onGenerateCanvas(message.id, message.content);
+                    }}
+                    title={t('generate_canvas_title')}
+                    aria-label={t('generate_canvas_title')}
+                    className={menuItemClasses}
+                  >
+                    <Wand2 size={14} strokeWidth={2} />
+                    <span>{t('generate_canvas_title')}</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {(message.content || message.thoughts) && !message.isLoading && (
@@ -149,15 +258,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 
         {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (
           <>
-            {/* Canvas Generation Button */}
-            <button
-              onClick={() => onGenerateCanvas(message.id, message.content)}
-              title={t('generate_canvas_title')}
-              aria-label={t('generate_canvas_title')}
-              className={actionButtonClasses}
-            >
-              <Wand2 size={actionIconSize} strokeWidth={2} />
-            </button>
             <ExportMessageButton
               message={message}
               sessionTitle={sessionTitle}

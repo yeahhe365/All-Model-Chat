@@ -67,6 +67,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       onFollowUpSuggestionClick: messageActions.onFollowUpSuggestionClick,
       onGenerateCanvas: messageActions.onGenerateCanvas,
       onContinueGeneration: messageActions.onContinueGeneration,
+      onForkMessage: messageActions.onForkMessage,
       onQuickTTS: messageActions.onQuickTTS,
       chatInputHeight,
       appSettings,
