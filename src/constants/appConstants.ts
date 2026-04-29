@@ -21,6 +21,7 @@ import {
   DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
 } from './modelConstants';
 import { getRuntimeConfigAppSettingsOverrides } from '../runtime/runtimeConfig';
+import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../utils/apiProxyUrl';
 
 const DEFAULT_IS_STREAMING_ENABLED = true;
 const DEFAULT_BASE_FONT_SIZE = 16;
@@ -115,10 +116,12 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   ...DEFAULT_CHAT_SETTINGS,
   themeId: 'pearl',
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
+  apiMode: 'gemini-native',
   useCustomApiConfig: false,
   serverManagedApi: false,
   apiKey: null,
   apiProxyUrl: 'https://api-proxy.de/gemini',
+  openaiCompatibleBaseUrl: DEFAULT_OPENAI_COMPATIBLE_BASE_URL,
   useApiProxy: false,
   language: 'system',
   translationTargetLanguage: DEFAULT_TRANSLATION_TARGET_LANGUAGE,

@@ -13,4 +13,8 @@ describe('SHORTCUT_REGISTRY', () => {
     expect(DEFAULT_SHORTCUTS['general.togglePip']).toBe('mod+alt+p');
     expect(DEFAULT_SHORTCUTS['general.toggleFullscreen']).toBe('mod+alt+f');
   });
+
+  it('uses Command/Ctrl K for chat history search', () => {
+    expect(DEFAULT_SHORTCUTS['general.searchChats']).toBe('mod+k');
+  });
 });

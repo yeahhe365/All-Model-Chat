@@ -13,6 +13,8 @@ const {
   mockCreateStandardClientFunctions,
   mockSendMessageStream,
   mockSendMessageNonStream,
+  mockSendOpenAICompatibleMessageStream,
+  mockSendOpenAICompatibleMessageNonStream,
   mockModelCapabilities,
 } = vi.hoisted(() => ({
   mockBuildContentParts: vi.fn(),
@@ -24,6 +26,8 @@ const {
   mockCreateStandardClientFunctions: vi.fn(),
   mockSendMessageStream: vi.fn(),
   mockSendMessageNonStream: vi.fn(),
+  mockSendOpenAICompatibleMessageStream: vi.fn(),
+  mockSendOpenAICompatibleMessageNonStream: vi.fn(),
   mockModelCapabilities: vi.fn((id: string) => ({
     isGemini3: id.includes('gemini-3'),
     supportsRawReasoningPrefill: false,
@@ -89,6 +93,11 @@ vi.mock('../../services/geminiService', () => ({
     sendMessageStream: mockSendMessageStream,
     sendMessageNonStream: mockSendMessageNonStream,
   },
+}));
+
+vi.mock('../../services/api/openaiCompatibleApi', () => ({
+  sendOpenAICompatibleMessageStream: mockSendOpenAICompatibleMessageStream,
+  sendOpenAICompatibleMessageNonStream: mockSendOpenAICompatibleMessageNonStream,
 }));
 
 vi.mock('../../utils/codeUtils', () => ({
@@ -173,6 +182,8 @@ describe('useStandardChat', () => {
     });
     mockSendMessageStream.mockResolvedValue(undefined);
     mockSendMessageNonStream.mockResolvedValue(undefined);
+    mockSendOpenAICompatibleMessageStream.mockResolvedValue(undefined);
+    mockSendOpenAICompatibleMessageNonStream.mockResolvedValue(undefined);
     mockModelCapabilities.mockImplementation((id: string) => ({
       isGemini3: id.includes('gemini-3'),
       supportsRawReasoningPrefill: false,
@@ -258,6 +269,96 @@ describe('useStandardChat', () => {
         imageOutputMode: 'IMAGE_TEXT',
         personGeneration: 'ALLOW_ADULT',
       }),
+    );
+
+    unmount();
+  });
+
+  it('routes standard chat through OpenAI-compatible streaming when the global mode is selected', async () => {
+    const streamOnError = vi.fn();
+    const streamOnComplete = vi.fn();
+    const streamOnPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete,
+      streamOnPart,
+      onThoughtChunk,
+    }));
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          apiMode: 'openai-compatible',
+          openaiCompatibleBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+          hideThinkingInContext: false,
+          isRawModeEnabled: false,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: true,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: true,
+          isCodeExecutionEnabled: true,
+          isLocalPythonEnabled: true,
+          isUrlContextEnabled: true,
+          isDeepSearchEnabled: true,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.sendStandardMessage('hello through compat', [], null, 'gemini-3-flash-preview');
+    });
+
+    expect(mockBuildGenerationConfig).not.toHaveBeenCalled();
+    expect(mockCreateStandardClientFunctions).not.toHaveBeenCalled();
+    expect(mockSendMessageStream).not.toHaveBeenCalled();
+    expect(mockSendOpenAICompatibleMessageStream).toHaveBeenCalledWith(
+      'api-key',
+      'gemini-3-flash-preview',
+      [],
+      [{ text: 'analyze the csv' }],
+      {
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        systemInstruction: 'Custom system instruction',
+        temperature: 1,
+        topP: 0.95,
+      },
+      expect.any(AbortSignal),
+      streamOnPart,
+      onThoughtChunk,
+      streamOnError,
+      streamOnComplete,
+      'user',
     );
 
     unmount();

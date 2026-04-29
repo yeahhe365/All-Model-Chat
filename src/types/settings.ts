@@ -30,6 +30,7 @@ export enum MediaResolution {
 
 export type ImageOutputMode = 'IMAGE_TEXT' | 'IMAGE_ONLY';
 export type ImagePersonGeneration = 'ALLOW_ADULT' | 'ALLOW_ALL' | 'DONT_ALLOW';
+export type ApiMode = 'gemini-native' | 'openai-compatible';
 export type TranslationTargetLanguage =
   | 'English'
   | 'Simplified Chinese'
@@ -78,10 +79,12 @@ export interface ChatSettings {
 export interface AppSettings extends ChatSettings {
   themeId: 'system' | 'onyx' | 'pearl';
   baseFontSize: number;
+  apiMode: ApiMode;
   useCustomApiConfig: boolean;
   serverManagedApi?: boolean;
   apiKey: string | null;
   apiProxyUrl: string | null;
+  openaiCompatibleBaseUrl: string | null;
   useApiProxy?: boolean;
   language: 'en' | 'zh' | 'system';
   translationTargetLanguage: TranslationTargetLanguage;

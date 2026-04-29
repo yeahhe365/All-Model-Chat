@@ -10,6 +10,7 @@ interface ShortcutDefinition {
 export const SHORTCUT_REGISTRY: ShortcutDefinition[] = [
   // General
   { id: 'general.newChat', labelKey: 'shortcuts_new_chat', defaultKey: 'mod+shift+o', category: 'general' },
+  { id: 'general.searchChats', labelKey: 'shortcuts_search_chats', defaultKey: 'mod+k', category: 'general' },
   { id: 'general.openLogs', labelKey: 'shortcuts_open_logs', defaultKey: 'mod+alt+l', category: 'general' },
   { id: 'general.togglePip', labelKey: 'shortcuts_toggle_pip', defaultKey: 'mod+alt+p', category: 'general' },
   {
@@ -40,3 +41,5 @@ export const DEFAULT_SHORTCUTS: Record<string, string> = SHORTCUT_REGISTRY.reduc
   },
   {} as Record<string, string>,
 );
+
+export const FOCUS_HISTORY_SEARCH_EVENT = 'amc:focus-history-search';

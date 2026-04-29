@@ -1,5 +1,13 @@
 export const apiSettings = {
   settingsApiConfig: { en: 'API & Connections', zh: 'API 与连接' },
+  settingsApiModeLabel: { en: 'API Mode', zh: 'API 模式' },
+  settingsApiModeGeminiNative: { en: 'Gemini Native', zh: 'Gemini 原生' },
+  settingsApiModeOpenAICompatible: { en: 'OpenAI Compatible', zh: 'OpenAI 兼容' },
+  settingsOpenAICompatibleBaseUrl: { en: 'OpenAI-Compatible Base URL', zh: 'OpenAI 兼容基础 URL' },
+  settingsOpenAICompatibleHelp: {
+    en: 'Used only when OpenAI Compatible mode is selected. Gemini Native requests keep using the existing Gemini API settings.',
+    zh: '仅在选择 OpenAI 兼容模式时使用。Gemini 原生请求仍使用现有 Gemini API 设置。',
+  },
   settingsUseCustomApi: { en: 'Use Custom API Settings', zh: '使用自定义 API 设置' },
   settingsApiKey: { en: 'Gemini API Keys', zh: 'Gemini API 密钥' },
   settingsApiKeyHelpText: {

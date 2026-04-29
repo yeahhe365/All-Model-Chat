@@ -3,10 +3,12 @@ import { SavedChatSession, ChatGroup } from '../types';
 import { useWindowContext } from '../contexts/WindowContext';
 import { useI18n } from '../contexts/I18nContext';
 import { dbService } from '../utils/db';
+import { FOCUS_HISTORY_SEARCH_EVENT } from '../constants/shortcuts';
 
 type HistoryTranslator = (key: string, fallback?: string) => string;
 
 interface UseHistorySidebarLogicProps {
+  isOpen: boolean;
   onToggle: () => void;
   onAutoClose: () => void;
   sessions: SavedChatSession[];
@@ -83,6 +85,7 @@ export const categorizeSessionsByDate = (
 };
 
 export const useHistorySidebarLogic = ({
+  isOpen,
   onToggle,
   onAutoClose,
   sessions,
@@ -104,9 +107,10 @@ export const useHistorySidebarLogic = ({
 
   const menuRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
 
-  const { document: targetDocument } = useWindowContext();
+  const { document: targetDocument, window: targetWindow } = useWindowContext();
 
   // --- Effects ---
 
@@ -123,6 +127,19 @@ export const useHistorySidebarLogic = ({
   useEffect(() => {
     if (editingItem) editInputRef.current?.focus();
   }, [editingItem]);
+
+  useEffect(() => {
+    const handleFocusHistorySearch = () => {
+      if (!isOpen) {
+        onToggle();
+      }
+      setIsSearching(true);
+      targetWindow.setTimeout(() => searchInputRef.current?.focus(), 0);
+    };
+
+    targetDocument.addEventListener(FOCUS_HISTORY_SEARCH_EVENT, handleFocusHistorySearch);
+    return () => targetDocument.removeEventListener(FOCUS_HISTORY_SEARCH_EVENT, handleFocusHistorySearch);
+  }, [isOpen, onToggle, targetDocument, targetWindow]);
 
   // Animation for newly titled sessions
   useEffect(() => {
@@ -290,6 +307,7 @@ export const useHistorySidebarLogic = ({
     newlyTitledSessionId,
     menuRef,
     editInputRef,
+    searchInputRef,
     filteredSessions,
     sessionsByGroupId,
     sortedGroups,

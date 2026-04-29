@@ -267,6 +267,7 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
       onOpenSettingsModal: openSettingsModal,
       themeId: currentTheme.id,
       newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
+      searchChatsShortcut: getShortcutDisplay('general.searchChats', appSettings),
     }),
     [
       appSettings,

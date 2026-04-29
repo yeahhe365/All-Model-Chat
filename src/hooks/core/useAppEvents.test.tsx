@@ -2,6 +2,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppSettings, ChatSettings, ModelOption } from '../../types';
+import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 import { useAppEvents } from './useAppEvents';
 
 const registerPwaMock = vi.fn();
@@ -213,6 +214,39 @@ describe('useAppEvents manual update checks', () => {
     expect(handleSelectModelInHeader).toHaveBeenCalledWith('gemini-3-flash-preview');
 
     textarea.remove();
+    unmount();
+  });
+
+  it('dispatches the history search focus event with Command/Ctrl K', async () => {
+    const focusSearchListener = vi.fn();
+    document.addEventListener(FOCUS_HISTORY_SEARCH_EVENT, focusSearchListener);
+
+    const { unmount } = renderHook(() =>
+      useAppEvents({
+        appSettings,
+        startNewChat: vi.fn(),
+        currentChatSettings,
+        availableModels,
+        handleSelectModelInHeader: vi.fn(),
+        setIsLogViewerOpen: vi.fn(),
+        onTogglePip: vi.fn(),
+        isPipSupported: false,
+        pipWindow: null,
+        isLoading: false,
+        onStopGenerating: vi.fn(),
+      }),
+    );
+
+    const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true, cancelable: true });
+
+    await act(async () => {
+      document.dispatchEvent(event);
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(focusSearchListener).toHaveBeenCalledTimes(1);
+
+    document.removeEventListener(FOCUS_HISTORY_SEARCH_EVENT, focusSearchListener);
     unmount();
   });
 

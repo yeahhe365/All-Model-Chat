@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { KeyRound, RadioTower } from 'lucide-react';
+import { KeyRound, RadioTower, ServerCog } from 'lucide-react';
 import type { AppSettings, ModelOption } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
-import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../../constants/appConstants';
+import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
 import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
 import { getClient } from '../../../services/api/apiClient';
+import { sendOpenAICompatibleMessageNonStream } from '../../../services/api/openaiCompatibleApi';
+import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../../../utils/apiProxyUrl';
 import {
   isServerManagedApiEnabledForProxyRequests,
   parseApiKeys,
@@ -61,6 +63,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     useApiProxy,
     apiProxyUrl,
   });
+  const apiMode = settings.apiMode ?? 'gemini-native';
+  const isOpenAICompatibleMode = apiMode === 'openai-compatible';
 
   useEffect(() => {
     return () => {
@@ -129,13 +133,37 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     setTestMessage(null);
 
     try {
-      const ai = await getClient(firstKey, effectiveUrl);
       const modelIdToUse = testModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
 
-      await ai.models.generateContent({
-        model: modelIdToUse,
-        contents: 'Hello',
-      });
+      if (isOpenAICompatibleMode) {
+        let compatibleError: Error | null = null;
+        await sendOpenAICompatibleMessageNonStream(
+          firstKey,
+          modelIdToUse,
+          [],
+          [{ text: 'Hello' }],
+          {
+            baseUrl: settings.openaiCompatibleBaseUrl,
+            temperature: 0,
+          },
+          new AbortController().signal,
+          (error) => {
+            compatibleError = error;
+          },
+          () => undefined,
+        );
+
+        if (compatibleError) {
+          throw compatibleError;
+        }
+      } else {
+        const ai = await getClient(firstKey, effectiveUrl);
+
+        await ai.models.generateContent({
+          model: modelIdToUse,
+          contents: 'Hello',
+        });
+      }
 
       setTestStatus('success');
     } catch (error) {
@@ -143,6 +171,13 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       setTestMessage(error instanceof Error ? error.message : String(error));
     }
   };
+
+  const modeButtonClass = (isActive: boolean) =>
+    `relative flex-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-secondary)] ${
+      isActive
+        ? 'bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+        : 'text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]/60 hover:text-[var(--theme-text-primary)]'
+    }`;
 
   return (
     <div className="space-y-6">
@@ -154,6 +189,59 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       </div>
 
       <div>
+        <div className="space-y-3 pb-4">
+          <div className="flex items-center gap-2">
+            <ServerCog size={15} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
+            <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+              {t('settingsApiModeLabel')}
+            </label>
+          </div>
+          <div
+            role="group"
+            aria-label={t('settingsApiModeLabel')}
+            className="grid grid-cols-2 gap-1 rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/35 p-1 shadow-sm"
+          >
+            <button
+              type="button"
+              className={modeButtonClass(apiMode === 'gemini-native')}
+              aria-pressed={apiMode === 'gemini-native'}
+              onClick={() => onUpdate('apiMode', 'gemini-native')}
+            >
+              {t('settingsApiModeGeminiNative')}
+            </button>
+            <button
+              type="button"
+              className={modeButtonClass(isOpenAICompatibleMode)}
+              aria-pressed={isOpenAICompatibleMode}
+              onClick={() => onUpdate('apiMode', 'openai-compatible')}
+            >
+              {t('settingsApiModeOpenAICompatible')}
+            </button>
+          </div>
+          {isOpenAICompatibleMode && (
+            <div className="space-y-2">
+              <label
+                htmlFor="openai-compatible-base-url-input"
+                className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]"
+              >
+                {t('settingsOpenAICompatibleBaseUrl')}
+              </label>
+              <input
+                id="openai-compatible-base-url-input"
+                type="text"
+                value={settings.openaiCompatibleBaseUrl || ''}
+                onChange={(event) => onUpdate('openaiCompatibleBaseUrl', event.target.value)}
+                className={`w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono ${SETTINGS_INPUT_CLASS}`}
+                placeholder={DEFAULT_OPENAI_COMPATIBLE_BASE_URL}
+                aria-label={t('settingsOpenAICompatibleBaseUrl')}
+              />
+              <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                {t('settingsOpenAICompatibleHelp')}
+              </p>
+            </div>
+          )}
+        </div>
+
         <ApiConfigToggle
           useCustomApiConfig={useCustomApiConfig}
           setUseCustomApiConfig={handleUseCustomApiConfigChange}

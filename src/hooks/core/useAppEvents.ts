@@ -7,6 +7,7 @@ import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';
 import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
 import { loadRegisterSW } from '../../pwa/loadRegisterSw';
 import { getTabCycleModelIds } from '../../utils/modelCatalog';
+import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 
 interface AppEventsProps {
   appSettings: AppSettings;
@@ -240,6 +241,12 @@ export const useAppEvents = ({
       if (isShortcutPressed(event, 'general.newChat', appSettings)) {
         event.preventDefault();
         startNewChat();
+        return;
+      }
+
+      if (isShortcutPressed(event, 'general.searchChats', appSettings)) {
+        event.preventDefault();
+        targetDoc.dispatchEvent(new Event(FOCUS_HISTORY_SEARCH_EVENT));
         return;
       }
 

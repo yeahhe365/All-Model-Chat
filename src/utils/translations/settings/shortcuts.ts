@@ -1,6 +1,7 @@
 export const shortcutsSettings = {
   shortcuts_general_title: { en: 'App', zh: '应用' },
   shortcuts_new_chat: { en: 'Start New Chat', zh: '开始新对话' },
+  shortcuts_search_chats: { en: 'Search Chats', zh: '搜索聊天' },
   shortcuts_open_settings: { en: 'Open Settings', zh: '打开设置' },
   shortcuts_open_logs: { en: 'Open Logs', zh: '打开日志' },
   shortcuts_toggle_pip: { en: 'Toggle Picture-in-Picture', zh: '切换画中画' },

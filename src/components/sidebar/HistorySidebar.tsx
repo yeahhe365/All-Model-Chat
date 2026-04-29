@@ -35,6 +35,7 @@ interface HistorySidebarProps {
   onOpenSettingsModal: () => void;
   themeId: string;
   newChatShortcut: string;
+  searchChatsShortcut: string;
 }
 
 const MiniSidebarButton = ({
@@ -131,6 +132,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     onMoveSessionToGroup,
     onSelectSession,
     newChatShortcut,
+    searchChatsShortcut,
   } = props;
 
   const {
@@ -147,6 +149,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     newlyTitledSessionId,
     menuRef,
     editInputRef,
+    searchInputRef,
     sessionsByGroupId,
     sortedGroups,
     categorizedUngroupedSessions,
@@ -161,6 +164,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleEmptySpaceClick,
     handleSessionSelect,
   } = useHistorySidebarLogic({
+    isOpen,
     onToggle,
     onAutoClose,
     sessions,
@@ -200,6 +204,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   };
 
   const [listParentRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
+  const searchTitle = t('history_search_button') + (searchChatsShortcut ? ` (${searchChatsShortcut})` : '');
 
   return (
     <aside
@@ -231,6 +236,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
           setIsSearching={setIsSearching}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          searchInputRef={searchInputRef}
           t={t}
           newChatShortcut={newChatShortcut}
         />
@@ -319,7 +325,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
           icon={IconNewChat}
           title={t('newChat') + (newChatShortcut ? ` (${newChatShortcut})` : '')}
         />
-        <MiniSidebarButton onClick={handleMiniSearchClick} icon={Search} title={t('history_search_button')} />
+        <MiniSidebarButton onClick={handleMiniSearchClick} icon={Search} title={searchTitle} />
         <CollapsedRecentChatsButton
           sessions={sessions}
           activeSessionId={activeSessionId}

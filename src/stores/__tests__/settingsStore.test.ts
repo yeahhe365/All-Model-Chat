@@ -103,6 +103,16 @@ describe('settingsStore', () => {
   });
 
   describe('loadSettings', () => {
+    it('defaults to Gemini Native API mode with the Gemini OpenAI-compatible base URL available as fallback', async () => {
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
+
+      await useSettingsStore.getState().loadSettings();
+
+      const { appSettings } = useSettingsStore.getState();
+      expect(appSettings.apiMode).toBe('gemini-native');
+      expect(appSettings.openaiCompatibleBaseUrl).toBe('https://generativelanguage.googleapis.com/v1beta/openai');
+    });
+
     it('provides English as the default input translation target language', async () => {
       vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
 

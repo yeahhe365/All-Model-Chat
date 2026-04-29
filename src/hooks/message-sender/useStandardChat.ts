@@ -16,6 +16,10 @@ import { StandardChatProps } from './types';
 import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/generationConfig';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { generateContentTurnApi } from '../../services/api/chatApi';
+import {
+  sendOpenAICompatibleMessageNonStream,
+  sendOpenAICompatibleMessageStream,
+} from '../../services/api/openaiCompatibleApi';
 import { isLikelyHtml } from '../../utils/codeUtils';
 import { ContentPart } from '../../types/chat';
 import { createStandardClientFunctions } from '../../features/standard-chat/standardClientFunctions';
@@ -223,6 +227,83 @@ export const useStandardChat = ({
         !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled,
       );
 
+      const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
+        finalSessionId,
+        generationId,
+        newAbortController,
+        generationStartTime,
+        sessionToUpdate,
+        finalParts,
+        (messageId, content) => {
+          if (
+            !isContinueMode &&
+            appSettings.autoCanvasVisualization &&
+            content &&
+            content.length > 50 &&
+            !isLikelyHtml(content)
+          ) {
+            const trimmed = content.trim();
+            if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
+              return;
+            }
+            logService.info('Auto-triggering Canvas visualization for message', {
+              msgId: messageId,
+            });
+            handleGenerateCanvas(messageId, content);
+          }
+        },
+      );
+
+      setSessionLoading(finalSessionId, true);
+      activeJobs.current.set(generationId, newAbortController);
+
+      if (appSettings.apiMode === 'openai-compatible') {
+        const openAICompatibleConfig = {
+          baseUrl: appSettings.openaiCompatibleBaseUrl,
+          systemInstruction: sessionToUpdate.systemInstruction,
+          temperature: sessionToUpdate.temperature,
+          topP: sessionToUpdate.topP,
+        };
+
+        if (appSettings.isStreamingEnabled) {
+          await sendOpenAICompatibleMessageStream(
+            keyToUse,
+            activeModelId,
+            historyForChat,
+            finalParts,
+            openAICompatibleConfig,
+            newAbortController.signal,
+            streamOnPart,
+            onThoughtChunk,
+            streamOnError,
+            streamOnComplete,
+            finalRole,
+          );
+          return;
+        }
+
+        await sendOpenAICompatibleMessageNonStream(
+          keyToUse,
+          activeModelId,
+          historyForChat,
+          finalParts,
+          openAICompatibleConfig,
+          newAbortController.signal,
+          streamOnError,
+          (parts, thoughts, usage, grounding, urlContext) => {
+            for (const part of parts) {
+              streamOnPart(part);
+            }
+            if (thoughts) {
+              onThoughtChunk(thoughts);
+            }
+            streamOnComplete(usage, grounding, urlContext);
+          },
+          finalRole,
+        );
+        return;
+      }
+
       const localPythonContextMessages =
         finalRole === 'user'
           ? [
@@ -295,36 +376,6 @@ export const useStandardChat = ({
         isLocalPythonEnabledForTurn ? standardFunctionDeclarations : [],
       );
       const hasFunctionDeclarationsInRequest = !!requestConfig.tools?.some((tool) => 'functionDeclarations' in tool);
-
-      const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
-        finalSessionId,
-        generationId,
-        newAbortController,
-        generationStartTime,
-        sessionToUpdate,
-        finalParts,
-        (messageId, content) => {
-          if (
-            !isContinueMode &&
-            appSettings.autoCanvasVisualization &&
-            content &&
-            content.length > 50 &&
-            !isLikelyHtml(content)
-          ) {
-            const trimmed = content.trim();
-            if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
-              return;
-            }
-            logService.info('Auto-triggering Canvas visualization for message', {
-              msgId: messageId,
-            });
-            handleGenerateCanvas(messageId, content);
-          }
-        },
-      );
-
-      setSessionLoading(finalSessionId, true);
-      activeJobs.current.set(generationId, newAbortController);
 
       if (hasFunctionDeclarationsInRequest) {
         try {

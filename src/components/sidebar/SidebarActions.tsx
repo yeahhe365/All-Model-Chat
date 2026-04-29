@@ -9,6 +9,7 @@ interface SidebarActionsProps {
   onAddNewGroup: () => void;
   isSearching: boolean;
   searchQuery: string;
+  searchInputRef?: React.RefObject<HTMLInputElement>;
   setIsSearching: (isSearching: boolean) => void;
   setSearchQuery: (query: string) => void;
   t: (key: keyof typeof translations, fallback?: string) => string;
@@ -21,6 +22,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
   onAddNewGroup,
   isSearching,
   searchQuery,
+  searchInputRef,
   setIsSearching,
   setSearchQuery,
   t,
@@ -64,7 +66,9 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
               strokeWidth={2}
             />
             <input
+              ref={searchInputRef}
               type="text"
+              aria-label={t('history_search_aria')}
               placeholder={t('history_search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
