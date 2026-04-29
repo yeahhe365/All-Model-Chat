@@ -9,7 +9,7 @@ type RuntimeConfigKey =
 
 type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
 
-export const DEFAULT_PROJECT_URL = 'https://all-model-chat.pages.dev/';
+const DEFAULT_PROJECT_URL = 'https://all-model-chat.pages.dev/';
 
 declare global {
   interface Window {

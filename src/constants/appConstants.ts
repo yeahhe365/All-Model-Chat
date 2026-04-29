@@ -28,7 +28,7 @@ const DEFAULT_BASE_FONT_SIZE = 16;
 const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
 const DEFAULT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'English';
 const DEFAULT_THOUGHT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'Simplified Chinese';
-export const DEFAULT_OPENAI_COMPATIBLE_MODEL_ID = 'gpt-5.5';
+const DEFAULT_OPENAI_COMPATIBLE_MODEL_ID = 'gpt-5.5';
 export const DEFAULT_OPENAI_COMPATIBLE_MODELS: ModelOption[] = [
   { id: DEFAULT_OPENAI_COMPATIBLE_MODEL_ID, name: 'GPT-5.5', isPinned: true },
   { id: 'gpt-5.1', name: 'GPT-5.1', isPinned: true },
