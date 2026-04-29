@@ -20,6 +20,7 @@ describe('SidebarHeader', () => {
     act(() => {
       root.unmount();
     });
+    delete window.__AMC_RUNTIME_CONFIG__;
     container.remove();
   });
 
@@ -42,5 +43,19 @@ describe('SidebarHeader', () => {
     const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="AMC WebUI"]');
 
     expect(logo?.getAttribute('src')).toBe('/sidebar-logo-dark.png');
+  });
+
+  it('uses the runtime-config project URL for the sidebar logo link', () => {
+    window.__AMC_RUNTIME_CONFIG__ = {
+      projectUrl: 'https://deploy.example/amc',
+    } as any;
+
+    act(() => {
+      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="pearl" />);
+    });
+
+    const logo = container.querySelector('a[href="https://deploy.example/amc"] img[alt="AMC WebUI"]');
+
+    expect(logo).not.toBeNull();
   });
 });

@@ -4,9 +4,12 @@ type RuntimeConfigKey =
   | 'serverManagedApi'
   | 'useCustomApiConfig'
   | 'useApiProxy'
-  | 'apiProxyUrl';
+  | 'apiProxyUrl'
+  | 'projectUrl';
 
 type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
+
+export const DEFAULT_PROJECT_URL = 'https://all-model-chat.pages.dev/';
 
 declare global {
   interface Window {
@@ -45,10 +48,20 @@ function readNullableString(value: unknown): string | null | undefined {
   return undefined;
 }
 
+function getRuntimeConfig(): RuntimeConfigShape | undefined {
+  return typeof window !== 'undefined' ? window.__AMC_RUNTIME_CONFIG__ : undefined;
+}
+
+export function getProjectUrl(): string {
+  const projectUrl = readNullableString(getRuntimeConfig()?.projectUrl);
+
+  return projectUrl ?? DEFAULT_PROJECT_URL;
+}
+
 export function getRuntimeConfigAppSettingsOverrides(): Partial<
   Pick<AppSettings, 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>
 > {
-  const runtimeConfig = typeof window !== 'undefined' ? window.__AMC_RUNTIME_CONFIG__ : undefined;
+  const runtimeConfig = getRuntimeConfig();
 
   if (!runtimeConfig) {
     return {};

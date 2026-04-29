@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { getRuntimeConfigAppSettingsOverrides } from './runtimeConfig';
+import { getProjectUrl, getRuntimeConfigAppSettingsOverrides } from './runtimeConfig';
 
 describe('runtimeConfig', () => {
   afterEach(() => {
@@ -10,6 +10,26 @@ describe('runtimeConfig', () => {
 
   it('returns empty overrides when runtime config is missing', () => {
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({});
+  });
+
+  it('returns the default project URL when runtime config is missing', () => {
+    expect(getProjectUrl()).toBe('https://all-model-chat.pages.dev/');
+  });
+
+  it('reads the project URL from window runtime config', () => {
+    window.__AMC_RUNTIME_CONFIG__ = {
+      projectUrl: 'https://deploy.example/amc',
+    } as any;
+
+    expect(getProjectUrl()).toBe('https://deploy.example/amc');
+  });
+
+  it('falls back to the default project URL when runtime config projectUrl is blank', () => {
+    window.__AMC_RUNTIME_CONFIG__ = {
+      projectUrl: '   ',
+    } as any;
+
+    expect(getProjectUrl()).toBe('https://all-model-chat.pages.dev/');
   });
 
   it('reads supported app setting overrides from window runtime config', () => {
