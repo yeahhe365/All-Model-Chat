@@ -51,6 +51,7 @@ export const chatInputTranslations = {
   pasteClipboard_title: { en: 'Paste clipboard', zh: '粘贴剪贴板内容' },
   clearInput_aria: { en: 'Clear input', zh: '清空输入框' },
   clearInput_title: { en: 'Clear input', zh: '清空输入框' },
+  composer_more_actions: { en: 'More input actions', zh: '更多输入操作' },
   selectedFile_cancelUpload: { en: 'Cancel Upload', zh: '取消上传' },
   selectedFile_removeFile: { en: 'Remove File', zh: '移除文件' },
   selectedFile_editFile: { en: 'Edit File', zh: '编辑文件' },

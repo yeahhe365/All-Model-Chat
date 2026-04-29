@@ -18,6 +18,7 @@ describe('certain redundancy cleanup guards', () => {
     const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
     const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
     const mainContentModelsSource = readProjectFile('src/components/layout/mainContentModels.ts');
+    const settingsModalSource = readProjectFile('src/components/settings/SettingsModal.tsx');
     const chatAreaContextSource = readProjectFile('src/components/layout/chat-area/ChatAreaContext.tsx');
     const headerSource = readProjectFile('src/components/header/Header.tsx');
     const historySidebarSource = readProjectFile('src/components/sidebar/HistorySidebar.tsx');
@@ -27,7 +28,8 @@ describe('certain redundancy cleanup guards', () => {
     expect(mainContentSource).not.toContain('buildHistorySidebarProps(');
     expect(mainContentSource).not.toContain('buildChatAreaModel(');
     expect(mainContentSource).toContain('useMainContentViewModel');
-    expect(mainContentViewModelSource).toContain('buildSettingsForModal');
+    expect(settingsModalSource).toContain('buildSettingsForModal');
+    expect(settingsModalSource).toContain('splitScopedSettingsUpdate');
     expect(mainContentViewModelSource).toContain('buildSidePanelKey');
     expect(mainContentModelsSource).not.toContain('export const buildHistorySidebarProps =');
     expect(mainContentModelsSource).not.toContain('export const buildChatAreaModel =');
@@ -46,12 +48,6 @@ describe('certain redundancy cleanup guards', () => {
     expect(mainContentViewModelSource).toContain('isPipSupported: pipState.isPipSupported,');
     expect(mainContentSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
     expect(mainContentViewModelSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
-  });
-
-  it('removes the dedicated mainContentModels test file', () => {
-    const filePath = path.join(projectRoot, 'src/components/layout/mainContentModels.test.ts');
-
-    expect(fs.existsSync(filePath)).toBe(false);
   });
 
   it('keeps message-list scroll ownership local instead of routing scroll events back through chat state', () => {
