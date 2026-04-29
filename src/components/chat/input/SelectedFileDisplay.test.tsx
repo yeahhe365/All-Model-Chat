@@ -162,6 +162,16 @@ describe('SelectedFileDisplay', () => {
     expect(removeButton?.className).toContain('w-[30px]');
   });
 
+  it('uses a trash icon for the remove file action', () => {
+    act(() => {
+      root.render(<SelectedFileDisplay file={createFile()} onRemove={() => {}} onCancelUpload={() => {}} />);
+    });
+
+    const removeButton = container.querySelector('[aria-label="Remove File"]');
+
+    expect(removeButton?.querySelector('.lucide-trash2')).not.toBeNull();
+  });
+
   it('renders move-to-input as a direct text file action and keeps copy id in overflow', () => {
     const onMoveTextToInput = vi.fn();
 

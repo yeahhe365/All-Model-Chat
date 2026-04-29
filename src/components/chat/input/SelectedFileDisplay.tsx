@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
 import {
   Ban,
-  X,
+  Trash2,
   Loader2,
   CheckCircle,
   Copy,
@@ -267,7 +267,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({
             title={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
             aria-label={isCancellable ? t('selectedFile_cancelUpload') : t('selectedFile_removeFile')}
           >
-            {isCancellable ? <Ban size={15} /> : <X size={15} />}
+            {isCancellable ? <Ban size={15} /> : <Trash2 size={15} />}
           </button>
         </div>
       </div>
