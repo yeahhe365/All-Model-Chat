@@ -113,4 +113,41 @@ describe('ModelVoiceSettings interactions', () => {
     expect(setModelId).toHaveBeenCalledWith('gemma-4-31b-it');
     expect(setSystemInstruction).toHaveBeenCalledWith('Persist this prompt');
   });
+
+  it('shows system prompt status, clear action, and a taller editor', async () => {
+    const setSystemInstruction = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <I18nProvider>
+          <ModelVoiceSettings
+            {...baseProps}
+            systemInstruction="Stay concise."
+            setSystemInstruction={setSystemInstruction}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('#system-prompt-input');
+    const clearButton = container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]');
+    const expandButton = container.querySelector<HTMLButtonElement>('[aria-label="Full editor"]');
+
+    expect(container.textContent).toContain('Enabled');
+    expect(textarea?.className).toContain('min-h-[112px]');
+    expect(clearButton).not.toBeNull();
+    expect(clearButton?.className).toContain('hover:text-[var(--theme-text-danger)]');
+    expect(expandButton?.className).toContain('w-8');
+    expect(expandButton?.className).toContain('h-8');
+    expect(expandButton?.className).toContain('hover:text-[var(--theme-text-link)]');
+
+    await act(async () => {
+      clearButton?.click();
+    });
+
+    expect(setSystemInstruction).toHaveBeenCalledWith('');
+    expect(textarea?.value).toBe('');
+    expect(container.textContent).toContain('Not set');
+    expect(container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]')).toBeNull();
+  });
 });

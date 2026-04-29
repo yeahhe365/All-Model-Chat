@@ -4,7 +4,7 @@ import { seedAppState } from './helpers/appHarness';
 
 const SESSION_ID = 'settings-model-selector-session';
 
-test('selecting a model still works when the system prompt textarea has pending edits', async ({ page }) => {
+test('editing the system prompt still persists when switching to models and selecting a model', async ({ page }) => {
   await seedAppState(page, {
     session: {
       id: SESSION_ID,
@@ -46,6 +46,8 @@ test('selecting a model still works when the system prompt textarea has pending 
     .getByRole('button', { name: 'Settings', exact: true })
     .click();
 
+  await page.getByRole('tab', { name: 'Models' }).click();
+
   const textarea = page.locator('#system-prompt-input');
   await expect(textarea).toBeVisible();
   await textarea.click();
@@ -56,6 +58,7 @@ test('selecting a model still works when the system prompt textarea has pending 
   await targetButton.click();
 
   await expect(targetButton).toContainText('Active');
+
   await expect(textarea).toHaveValue('Persist this prompt while selecting a model');
 
   await page.getByRole('button', { name: 'Close', exact: true }).click();
@@ -64,6 +67,7 @@ test('selecting a model still works when the system prompt textarea has pending 
     .getByRole('button', { name: 'Settings', exact: true })
     .click();
 
+  await expect(textarea).toHaveValue('Persist this prompt while selecting a model');
   await expect(page.getByTestId('settings-model-option-gemma-4-31b-it')).toContainText('Active');
 });
 
@@ -81,7 +85,7 @@ test('workspace settings content does not expose a horizontal scrollbar', async 
     .getByRole('button', { name: 'Settings', exact: true })
     .click();
 
-  await page.getByRole('tab', { name: 'Workspace' }).click();
+  await page.getByRole('tab', { name: 'Interface & Interaction' }).click();
 
   const settingsScroller = page.locator('main > div').first();
 

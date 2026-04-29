@@ -48,3 +48,4 @@ export const DEFAULT_TTS_VOICE = 'Zephyr';
 export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'gemini-3-flash-preview';
 export const DEFAULT_TTS_MODEL_ID = 'gemini-3.1-flash-tts-preview';
 export const DEFAULT_AUTO_CANVAS_MODEL_ID = 'gemini-3-flash-preview';
+export const DEFAULT_THOUGHT_TRANSLATION_MODEL_ID = 'gemini-3.1-flash-lite-preview';

@@ -18,6 +18,7 @@ import {
   DEFAULT_THINKING_LEVEL,
   DEFAULT_TRANSCRIPTION_MODEL_ID,
   DEFAULT_AUTO_CANVAS_MODEL_ID,
+  DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
 } from './modelConstants';
 import { getRuntimeConfigAppSettingsOverrides } from '../runtime/runtimeConfig';
 
@@ -25,6 +26,7 @@ const DEFAULT_IS_STREAMING_ENABLED = true;
 const DEFAULT_BASE_FONT_SIZE = 16;
 const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
 const DEFAULT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'English';
+const DEFAULT_THOUGHT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'Simplified Chinese';
 
 export const TRANSLATION_TARGET_LANGUAGE_OPTIONS: Array<{
   value: TranslationTargetLanguage;
@@ -120,6 +122,10 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   useApiProxy: false,
   language: 'system',
   translationTargetLanguage: DEFAULT_TRANSLATION_TARGET_LANGUAGE,
+  inputTranslationModelId: DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+  thoughtTranslationTargetLanguage: DEFAULT_THOUGHT_TRANSLATION_TARGET_LANGUAGE,
+  thoughtTranslationModelId: DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+  showInputTranslationButton: false,
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
   filesApiConfig: DEFAULT_FILES_API_CONFIG,
@@ -140,6 +146,8 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   autoCanvasModelId: DEFAULT_AUTO_CANVAS_MODEL_ID,
   isPasteRichTextAsMarkdownEnabled: true,
   isPasteAsTextFileEnabled: true,
+  showInputPasteButton: true,
+  showInputClearButton: false,
   isCopySelectionFormattingEnabled: true,
   isSystemAudioRecordingEnabled: false,
   customShortcuts: {},

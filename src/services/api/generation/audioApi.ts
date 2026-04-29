@@ -162,12 +162,12 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     };
 
     const textPart: Part = {
-      text: 'Transcribe audio.',
+      text: 'Transcribe voice input exactly.',
     };
 
     const config: GenerateContentConfig = {
       systemInstruction:
-        '请准确转录语音内容。使用正确的标点符号。不要描述音频、回答问题或添加对话填充词，仅返回文本。若音频中无语音或仅有背景噪音，请不要输出任何文字。',
+        '你是语音输入转写器，只做 ASR。请将音频中实际说出的语音转写为将插入聊天输入框的纯文本。保持原始语言和混合语言，不要翻译、总结、回答、解释或描述音频。尽量保留原词、语气词、代码、命令、URL、邮箱、数字、单位和专有名词；不要补写音频中不存在的内容。可以在不改变措辞和原意的前提下补充基础标点。若没有可辨识语音，请返回空字符串。',
     };
 
     const thinkingConfig: ThinkingConfig = {};
@@ -192,7 +192,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
       config,
     });
 
-    if (response.text) {
+    if (typeof response.text === 'string') {
       if (response.usageMetadata) {
         const { promptTokens, cachedPromptTokens, completionTokens, thoughtTokens, toolUsePromptTokens, totalTokens } =
           calculateTokenStats(response.usageMetadata);

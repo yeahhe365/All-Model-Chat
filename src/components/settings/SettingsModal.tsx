@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AppSettings, ModelOption } from '../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AppSettings, ChatSettings, ModelOption } from '../../types';
 import { Modal } from '../shared/Modal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { useSettingsLogic } from '../../hooks/features/useSettingsLogic';
@@ -7,13 +7,17 @@ import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsContent } from './SettingsContent';
 import { SettingsTransferProps } from './settingsTypes';
 import type { LogViewerProps } from '../log-viewer/LogViewer';
+import { buildSettingsForModal, SettingsScope, splitScopedSettingsUpdate } from '../layout/mainContentModels';
 
 interface SettingsModalProps extends SettingsTransferProps {
   isOpen: boolean;
   onClose: () => void;
   currentSettings: AppSettings;
+  currentChatSettings?: ChatSettings;
+  hasActiveSession?: boolean;
   availableModels: ModelOption[];
   onSave: (newSettings: AppSettings) => void;
+  onSaveCurrentChatSettings?: (newSettings: ChatSettings) => void;
   onClearAllHistory: () => void;
   onClearCache: () => void;
   onOpenLogViewer: (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => void;
@@ -24,8 +28,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
   currentSettings,
+  currentChatSettings,
+  hasActiveSession = false,
   availableModels,
   onSave,
+  onSaveCurrentChatSettings,
   onClearAllHistory,
   onClearCache,
   onOpenLogViewer,
@@ -41,6 +48,63 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setAvailableModels,
 }) => {
   const [liveSettings, setLiveSettings] = useState(currentSettings);
+  const [liveCurrentChatSettings, setLiveCurrentChatSettings] = useState(currentChatSettings);
+  const [settingsScope, setSettingsScope] = useState<SettingsScope>('defaults');
+  const canEditCurrentChat = hasActiveSession && !!liveCurrentChatSettings && !!onSaveCurrentChatSettings;
+  const chatScopedTabs = useMemo(() => new Set(['models']), []);
+
+  useEffect(() => {
+    setLiveSettings(currentSettings);
+  }, [currentSettings]);
+
+  useEffect(() => {
+    setLiveCurrentChatSettings(currentChatSettings);
+  }, [currentChatSettings]);
+
+  useEffect(() => {
+    if (!canEditCurrentChat && settingsScope === 'currentChat') {
+      setSettingsScope('defaults');
+    }
+  }, [canEditCurrentChat, settingsScope]);
+
+  const effectiveScope = canEditCurrentChat ? settingsScope : 'defaults';
+
+  const scopedSettings = useMemo(
+    () =>
+      buildSettingsForModal({
+        appSettings: liveSettings,
+        activeSessionId: canEditCurrentChat ? 'active' : null,
+        currentChatSettings: liveCurrentChatSettings,
+        scope: effectiveScope,
+      }),
+    [canEditCurrentChat, effectiveScope, liveCurrentChatSettings, liveSettings],
+  );
+
+  const saveScopedSettings = (nextSettings: AppSettings) => {
+    const previousSettings = buildSettingsForModal({
+      appSettings: liveSettings,
+      activeSessionId: canEditCurrentChat ? 'active' : null,
+      currentChatSettings: liveCurrentChatSettings,
+      scope: effectiveScope,
+    });
+    const splitUpdate = splitScopedSettingsUpdate({
+      scope: effectiveScope,
+      previousSettings,
+      nextSettings,
+      appSettings: liveSettings,
+      currentChatSettings: liveCurrentChatSettings,
+    });
+
+    if (splitUpdate.nextAppSettings) {
+      setLiveSettings(splitUpdate.nextAppSettings);
+      onSave(splitUpdate.nextAppSettings);
+    }
+
+    if (splitUpdate.nextChatSettings && onSaveCurrentChatSettings) {
+      setLiveCurrentChatSettings(splitUpdate.nextChatSettings);
+      onSaveCurrentChatSettings(splitUpdate.nextChatSettings);
+    }
+  };
 
   const {
     activeTab,
@@ -59,11 +123,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     tabs,
   } = useSettingsLogic({
     isOpen,
-    currentSettings: liveSettings,
-    onSave: (nextSettings) => {
-      setLiveSettings(nextSettings);
-      onSave(nextSettings);
-    },
+    currentSettings: scopedSettings,
+    onSave: saveScopedSettings,
     onClearAllHistory,
     onClearCache,
     onImportHistory,
@@ -71,6 +132,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   });
 
   const activeTabLabelKey = tabs.find((tab) => tab.id === activeTab)?.labelKey;
+  const activeTabUsesScope = chatScopedTabs.has(activeTab);
+  const visibleScope = activeTabUsesScope ? settingsScope : 'defaults';
+
+  useEffect(() => {
+    if (!activeTabUsesScope && settingsScope !== 'defaults') {
+      setSettingsScope('defaults');
+    }
+  }, [activeTabUsesScope, settingsScope]);
 
   if (!isOpen) return null;
 
@@ -94,13 +163,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8"
           >
             <div className="hidden md:block max-w-3xl mx-auto w-full pb-4 md:pb-6">
-              <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">
-                {activeTabLabelKey ? t(activeTabLabelKey) : ''}
-              </h2>
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">
+                  {activeTabLabelKey ? t(activeTabLabelKey) : ''}
+                </h2>
+                {activeTabUsesScope && (
+                  <div className="flex items-center rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/40 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setSettingsScope('defaults')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        visibleScope === 'defaults'
+                          ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm'
+                          : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'
+                      }`}
+                    >
+                      {t('settingsScopeDefaults')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => canEditCurrentChat && setSettingsScope('currentChat')}
+                      disabled={!canEditCurrentChat}
+                      title={!canEditCurrentChat ? t('settingsScopeCurrentChatUnavailable') : undefined}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                        visibleScope === 'currentChat'
+                          ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm'
+                          : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'
+                      }`}
+                    >
+                      {t('settingsScopeCurrentChat')}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <SettingsContent
               activeTab={activeTab}
-              currentSettings={liveSettings}
+              currentSettings={scopedSettings}
               availableModels={availableModels}
               updateSetting={updateSetting}
               handleModelChange={handleModelChange}

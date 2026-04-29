@@ -4,7 +4,10 @@ import { ModelVoiceSettings } from '../ModelVoiceSettings';
 import { SafetySection } from './SafetySection';
 import { MediaResolution, TranslationTargetLanguage } from '../../../types/settings';
 import { AVAILABLE_CANVAS_MODELS } from '../../../constants/settingsModelOptions';
-import { TRANSLATION_TARGET_LANGUAGE_OPTIONS } from '../../../constants/appConstants';
+import {
+  DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+  TRANSLATION_TARGET_LANGUAGE_OPTIONS,
+} from '../../../constants/appConstants';
 import { ToggleItem } from '../../shared/ToggleItem';
 import { Select } from '../../shared/Select';
 import { Languages, Wand2 } from 'lucide-react';
@@ -39,6 +42,12 @@ interface ChatBehaviorSectionProps {
   setMediaResolution?: (resolution: MediaResolution) => void;
   translationTargetLanguage: TranslationTargetLanguage;
   setTranslationTargetLanguage: (value: TranslationTargetLanguage) => void;
+  inputTranslationModelId: string;
+  setInputTranslationModelId: (value: string) => void;
+  thoughtTranslationTargetLanguage: TranslationTargetLanguage;
+  setThoughtTranslationTargetLanguage: (value: TranslationTargetLanguage) => void;
+  thoughtTranslationModelId: string;
+  setThoughtTranslationModelId: (value: string) => void;
   autoCanvasVisualization: boolean;
   setAutoCanvasVisualization: (value: boolean) => void;
   autoCanvasModelId: string;
@@ -47,6 +56,26 @@ interface ChatBehaviorSectionProps {
 
 export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) => {
   const { t } = props;
+  const inputTranslationModelOptions = props.availableModels.some((model) => model.id === props.inputTranslationModelId)
+    ? props.availableModels
+    : [
+        ...props.availableModels,
+        {
+          id: props.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+          name: props.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+        },
+      ];
+  const thoughtTranslationModelOptions = props.availableModels.some(
+    (model) => model.id === props.thoughtTranslationModelId,
+  )
+    ? props.availableModels
+    : [
+        ...props.availableModels,
+        {
+          id: props.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+          name: props.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+        },
+      ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-10">
@@ -83,25 +112,87 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
           <Languages size={14} strokeWidth={1.5} />
           {t('settingsTranslationSectionTitle')}
         </h4>
-        <Select
-          id="translation-target-language-select"
-          label=""
-          layout="horizontal"
-          labelContent={
-            <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
-              {t('settings_translationTargetLanguage_label')}
-            </div>
-          }
-          value={props.translationTargetLanguage}
-          onChange={(e) => props.setTranslationTargetLanguage(e.target.value as TranslationTargetLanguage)}
-          className="py-3"
-        >
-          {TRANSLATION_TARGET_LANGUAGE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {t(option.labelKey)}
-            </option>
-          ))}
-        </Select>
+        <div className="space-y-1">
+          <Select
+            id="translation-target-language-select"
+            label=""
+            layout="horizontal"
+            labelContent={
+              <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
+                {t('settingsInputTranslationLanguageLabel')}
+              </div>
+            }
+            value={props.translationTargetLanguage}
+            onChange={(e) => props.setTranslationTargetLanguage(e.target.value as TranslationTargetLanguage)}
+            className="py-3"
+          >
+            {TRANSLATION_TARGET_LANGUAGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {t(option.labelKey)}
+              </option>
+            ))}
+          </Select>
+          <Select
+            id="input-translation-model-select"
+            label=""
+            layout="horizontal"
+            labelContent={
+              <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
+                {t('settings_inputTranslationModel_label')}
+              </div>
+            }
+            value={props.inputTranslationModelId}
+            onChange={(e) => props.setInputTranslationModelId(e.target.value)}
+            className="py-3"
+          >
+            {inputTranslationModelOptions.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <Select
+            id="thought-translation-target-language-select"
+            label=""
+            layout="horizontal"
+            labelContent={
+              <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
+                {t('settings_thoughtTranslationTargetLanguage_label')}
+              </div>
+            }
+            value={props.thoughtTranslationTargetLanguage}
+            onChange={(e) => props.setThoughtTranslationTargetLanguage(e.target.value as TranslationTargetLanguage)}
+            className="py-3"
+          >
+            {TRANSLATION_TARGET_LANGUAGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {t(option.labelKey)}
+              </option>
+            ))}
+          </Select>
+          <Select
+            id="thought-translation-model-select"
+            label=""
+            layout="horizontal"
+            labelContent={
+              <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
+                {t('settings_thoughtTranslationModel_label')}
+              </div>
+            }
+            value={props.thoughtTranslationModelId}
+            onChange={(e) => props.setThoughtTranslationModelId(e.target.value)}
+            className="py-3"
+          >
+            {thoughtTranslationModelOptions.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
 
       {/* Canvas Visualization Settings */}

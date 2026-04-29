@@ -334,4 +334,65 @@ describe('useApp', () => {
 
     unmount();
   });
+
+  it('saves default settings without mutating the active chat settings', () => {
+    currentChatState.activeChat = {
+      ...hydratedSession,
+      settings: {
+        ...hydratedSession.settings,
+        modelId: 'session-model',
+        temperature: 0.2,
+      } as SavedChatSession['settings'],
+    };
+
+    const { result, unmount } = renderHook(() => useApp());
+
+    act(() => {
+      result.current.handleSaveSettings({
+        ...currentAppSettings,
+        modelId: 'default-model',
+        temperature: 1.4,
+      } as AppSettings);
+    });
+
+    expect(currentAppSettings.modelId).toBe('default-model');
+    expect(currentAppSettings.temperature).toBe(1.4);
+    expect(currentChatState.activeChat.settings.modelId).toBe('session-model');
+    expect(currentChatState.activeChat.settings.temperature).toBe(0.2);
+
+    unmount();
+  });
+
+  it('saves current chat settings without mutating default settings', () => {
+    currentAppSettings = {
+      ...currentAppSettings,
+      modelId: 'default-model',
+      temperature: 0.8,
+    } as AppSettings;
+    currentChatState.activeChat = {
+      ...hydratedSession,
+      settings: {
+        ...hydratedSession.settings,
+        modelId: 'session-model',
+        temperature: 0.2,
+      } as SavedChatSession['settings'],
+    };
+
+    const { result, unmount } = renderHook(() => useApp());
+
+    act(() => {
+      result.current.handleSaveCurrentChatSettings({
+        ...currentChatState.activeChat!.settings,
+        modelId: 'current-model',
+        temperature: 1.2,
+      } as SavedChatSession['settings']);
+    });
+
+    expect(currentChatState.activeChat.settings.modelId).toBe('current-model');
+    expect(currentChatState.activeChat.settings.temperature).toBe(1.2);
+    expect(currentAppSettings.modelId).toBe('default-model');
+    expect(currentAppSettings.temperature).toBe(0.8);
+
+    unmount();
+  });
 });

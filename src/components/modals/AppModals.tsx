@@ -30,6 +30,7 @@ interface AppModalsProps {
   appSettings?: AppSettings;
   availableModels: ModelOption[];
   handleSaveSettings: (newSettings: AppSettings) => void;
+  handleSaveCurrentChatSettings: (newSettings: ChatSettings) => void;
   clearCacheAndReload: () => void;
   clearAllHistory: () => void;
   handleInstallPwa: () => void;
@@ -56,6 +57,7 @@ interface AppModalsProps {
   isLogViewerOpen?: boolean;
   setIsLogViewerOpen?: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
   currentChatSettings: ChatSettings;
+  activeSessionId: string | null;
 
   setAvailableModels: (models: ModelOption[]) => void;
 }
@@ -72,6 +74,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
     appSettings,
     availableModels,
     handleSaveSettings,
+    handleSaveCurrentChatSettings,
     clearCacheAndReload,
     clearAllHistory,
     handleInstallPwa,
@@ -94,6 +97,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
     isLogViewerOpen = false,
     setIsLogViewerOpen = () => {},
     currentChatSettings,
+    activeSessionId,
     setAvailableModels,
   } = props;
 
@@ -129,8 +133,11 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
             isOpen={isSettingsModalOpen}
             onClose={() => setIsSettingsModalOpen(false)}
             currentSettings={appSettings!}
+            currentChatSettings={currentChatSettings}
+            hasActiveSession={!!activeSessionId}
             availableModels={availableModels}
             onSave={handleSaveSettings}
+            onSaveCurrentChatSettings={handleSaveCurrentChatSettings}
             onClearAllHistory={clearAllHistory}
             onClearCache={clearCacheAndReload}
             onOpenLogViewer={openLogViewer}

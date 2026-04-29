@@ -11,10 +11,39 @@ import {
 import { translations } from '../../utils/translations';
 import { MediaResolution } from '../../types/settings';
 
-export type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'shortcuts' | 'about';
+export type SettingsTab = 'models' | 'interface' | 'api' | 'data' | 'shortcuts' | 'about';
 export type SettingsTabDescriptor = { id: SettingsTab; labelKey: string };
 
 const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
+
+const normalizeSettingsTab = (savedTab: string | null): SettingsTab | null => {
+  switch (savedTab) {
+    case 'model':
+    case 'chat':
+    case 'models':
+    case 'generation':
+      return 'models';
+    case 'languageVoice':
+      return 'models';
+    case 'canvas':
+      return 'models';
+    case 'safety':
+      return 'models';
+    case 'interface':
+      return 'interface';
+    case 'shortcuts':
+      return 'shortcuts';
+    case 'api':
+    case 'account':
+      return 'api';
+    case 'data':
+      return 'data';
+    case 'about':
+      return 'about';
+    default:
+      return null;
+  }
+};
 
 interface UseSettingsLogicProps {
   isOpen: boolean;
@@ -43,15 +72,14 @@ export const useSettingsLogic = ({
 
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
     try {
-      const saved = localStorage.getItem(SETTINGS_TAB_STORAGE_KEY);
-      const validTabs: SettingsTab[] = ['model', 'interface', 'account', 'data', 'shortcuts', 'about'];
-      if (saved && validTabs.includes(saved as SettingsTab)) {
-        return saved as SettingsTab;
+      const normalizedTab = normalizeSettingsTab(localStorage.getItem(SETTINGS_TAB_STORAGE_KEY));
+      if (normalizedTab) {
+        return normalizedTab;
       }
     } catch {
       // Ignore storage errors
     }
-    return 'model';
+    return 'models';
   });
 
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -209,9 +237,9 @@ export const useSettingsLogic = ({
 
   const tabs = useMemo<SettingsTabDescriptor[]>(
     () => [
-      { id: 'model', labelKey: 'settingsTabModel' },
+      { id: 'models', labelKey: 'settingsTabModels' },
       { id: 'interface', labelKey: 'settingsTabInterface' },
-      { id: 'account', labelKey: 'settingsTabAccount' },
+      { id: 'api', labelKey: 'settingsTabApi' },
       { id: 'data', labelKey: 'settingsTabData' },
       { id: 'shortcuts', labelKey: 'settingsTabShortcuts' },
       { id: 'about', labelKey: 'settingsTabAbout' },

@@ -3,6 +3,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import type { AppSettings } from '../../../types';
 import { SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
 import { ApiConfigSection } from './ApiConfigSection';
 
@@ -33,6 +34,9 @@ describe('ApiConfigSection', () => {
   let container: HTMLDivElement;
   let root: Root;
   const initialState = useSettingsStore.getState();
+  const settingsFixture: AppSettings = {
+    ...initialState.appSettings,
+  };
 
   beforeEach(() => {
     Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true);
@@ -73,6 +77,8 @@ describe('ApiConfigSection', () => {
             setUseApiProxy={vi.fn()}
             serverManagedApi
             availableModels={[]}
+            settings={settingsFixture}
+            onUpdate={vi.fn()}
           />
         </I18nProvider>,
       );
@@ -120,6 +126,8 @@ describe('ApiConfigSection', () => {
             setUseApiProxy={vi.fn()}
             serverManagedApi={false}
             availableModels={[]}
+            settings={settingsFixture}
+            onUpdate={vi.fn()}
           />
         </I18nProvider>,
       );
@@ -127,6 +135,7 @@ describe('ApiConfigSection', () => {
 
     expect(container.textContent).toContain('API & Connections');
     expect(container.textContent).toContain('Test Connection');
+    expect(container.textContent).toContain('File Transfer Method');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
@@ -134,6 +143,7 @@ describe('ApiConfigSection', () => {
 
     expect(container.textContent).toContain('API 与连接');
     expect(container.textContent).toContain('测试连通性');
+    expect(container.textContent).toContain('文件传输方式');
   });
 
   it('explains that Live uses the browser API key directly without token endpoint settings', async () => {
@@ -152,6 +162,8 @@ describe('ApiConfigSection', () => {
             setUseApiProxy={vi.fn()}
             serverManagedApi={false}
             availableModels={[]}
+            settings={settingsFixture}
+            onUpdate={vi.fn()}
           />
         </I18nProvider>,
       );

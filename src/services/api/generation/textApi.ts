@@ -1,5 +1,6 @@
 import { getConfiguredApiClient } from '../apiClient';
 import { logService } from '../../logService';
+import { DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/modelConstants';
 
 const SCHEMA_TYPE = {
   OBJECT: 'OBJECT',
@@ -85,6 +86,7 @@ export const translateTextApi = async (
   apiKey: string,
   text: string,
   targetLanguage: string = 'English',
+  modelId: string = DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
 ): Promise<string> => {
   logService.info(`Translating text to ${targetLanguage}...`);
   const contents = buildTranslationContents(text, targetLanguage);
@@ -92,7 +94,7 @@ export const translateTextApi = async (
   try {
     const ai = await getConfiguredApiClient(apiKey);
     const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite-preview',
+      model: modelId,
       contents,
       config: {
         temperature: 0.1,

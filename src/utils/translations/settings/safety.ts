@@ -4,6 +4,7 @@ export const safetySettings = {
     en: 'Adjust content safety filters. Lower settings allow more content but may carry risks.',
     zh: '调整内容安全过滤。较低的设置允许更多内容，但可能带来风险。',
   },
+  models_safety_toggle_aria: { en: 'Toggle safety settings', zh: '展开或折叠安全设置' },
   safety_category_HARASSMENT: { en: 'Harassment', zh: '骚扰' },
   safety_category_HATE_SPEECH: { en: 'Hate Speech', zh: '仇恨言论' },
   safety_category_SEXUALLY_EXPLICIT: { en: 'Sexually Explicit', zh: '露骨色情' },

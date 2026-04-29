@@ -85,6 +85,10 @@ export interface AppSettings extends ChatSettings {
   useApiProxy?: boolean;
   language: 'en' | 'zh' | 'system';
   translationTargetLanguage: TranslationTargetLanguage;
+  inputTranslationModelId?: string;
+  thoughtTranslationTargetLanguage?: TranslationTargetLanguage;
+  thoughtTranslationModelId?: string;
+  showInputTranslationButton?: boolean;
   isStreamingEnabled: boolean;
   transcriptionModelId: string;
   filesApiConfig: FilesApiConfig;
@@ -105,6 +109,8 @@ export interface AppSettings extends ChatSettings {
   autoCanvasModelId: string;
   isPasteRichTextAsMarkdownEnabled?: boolean;
   isPasteAsTextFileEnabled?: boolean;
+  showInputPasteButton?: boolean;
+  showInputClearButton?: boolean;
   isCopySelectionFormattingEnabled?: boolean;
   isSystemAudioRecordingEnabled?: boolean;
   customShortcuts: Record<string, string>; // ID -> Key Combination String

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ModelOption } from '../../types';
-import { Info, Maximize2, Image as ImageIcon } from 'lucide-react';
+import { Info, SquarePen, X, Image as ImageIcon } from 'lucide-react';
 import { Tooltip } from '../shared/Tooltip';
 import { Select } from '../shared/Select';
 import { ModelSelector } from './controls/ModelSelector';
@@ -133,6 +133,13 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     setIsSystemPromptExpanded(true);
   };
 
+  const handleClearPrompt = () => {
+    setLocalPrompt('');
+    if (localPrompt !== '' || systemInstruction !== '') {
+      setSystemInstruction('');
+    }
+  };
+
   const inputBaseClasses =
     'w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm';
   const isSystemPromptSet = localPrompt && localPrompt.trim() !== '';
@@ -176,21 +183,38 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
               className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center"
             >
               <span>{t('settingsSystemPrompt')}</span>
-              {isSystemPromptSet && (
-                <span
-                  className="w-2 h-2 ml-2 bg-[var(--theme-text-success)] rounded-full animate-pulse"
-                  title={i18n('settingsSystemPromptActive')}
-                />
-              )}
+              <span
+                className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  isSystemPromptSet
+                    ? 'bg-[var(--theme-bg-success)] text-[var(--theme-text-success)]'
+                    : 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)]'
+                }`}
+              >
+                {isSystemPromptSet ? i18n('settingsSystemPromptEnabled') : i18n('settingsSystemPromptUnset')}
+              </span>
             </label>
-            <button
-              type="button"
-              onClick={handleOpenExpand}
-              className={SMALL_ICON_BUTTON_CLASS}
-              title={i18n('settingsExpandEditor')}
-            >
-              <Maximize2 size={14} />
-            </button>
+            <div className="flex items-center gap-1">
+              {isSystemPromptSet && (
+                <button
+                  type="button"
+                  onClick={handleClearPrompt}
+                  className={`${SMALL_ICON_BUTTON_CLASS} flex h-8 w-8 items-center justify-center hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10`}
+                  title={i18n('settingsClearSystemPrompt')}
+                  aria-label={i18n('settingsClearSystemPrompt')}
+                >
+                  <X size={14} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleOpenExpand}
+                className={`${SMALL_ICON_BUTTON_CLASS} flex h-8 w-8 items-center justify-center hover:text-[var(--theme-text-link)]`}
+                title={i18n('settingsExpandSystemPromptEditor')}
+                aria-label={i18n('settingsExpandSystemPromptEditor')}
+              >
+                <SquarePen size={14} />
+              </button>
+            </div>
           </div>
           <textarea
             id="system-prompt-input"
@@ -198,7 +222,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
             onChange={handlePromptChange}
             onBlur={handlePromptBlur}
             rows={3}
-            className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] custom-scrollbar`}
+            className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[112px] custom-scrollbar`}
             placeholder={t('chatBehavior_systemPrompt_placeholder')}
             aria-label={i18n('settingsSystemPromptAria')}
           />

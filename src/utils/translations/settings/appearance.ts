@@ -9,6 +9,7 @@ export const appearanceSettings = {
   settingsLanguageSystem: { en: 'System Default', zh: '跟随系统' },
   settingsLanguageEn: { en: 'English', zh: 'English' },
   settingsLanguageZh: { en: 'Chinese', zh: '中文' },
+  settingsInputToolbar: { en: 'Input Toolbar', zh: '输入框工具栏' },
   settingsBehaviorDisplay: { en: 'Interaction & Display', zh: '交互与显示' },
   // Interface Toggles
   settings_expandCodeBlocksByDefault_label: { en: 'Expand Code Blocks Automatically', zh: '自动展开代码块' },
@@ -72,6 +73,21 @@ export const appearanceSettings = {
   settings_pasteAsTextFile_tooltip: {
     en: 'Automatically convert large pasted text (>5000 characters) into an attached .txt file.',
     zh: '粘贴大量文本（>5000 字符）时，自动将其转换为 .txt 附件。',
+  },
+  settings_showInputTranslationButton_label: { en: 'Show Translate Button', zh: '显示翻译按钮' },
+  settings_showInputTranslationButton_tooltip: {
+    en: 'Controls whether the translate button appears in the message input toolbar.',
+    zh: '控制消息输入框工具栏中是否显示翻译按钮。',
+  },
+  settings_showInputPasteButton_label: { en: 'Show Paste Button', zh: '显示粘贴按钮' },
+  settings_showInputPasteButton_tooltip: {
+    en: 'Controls whether the paste button appears beside the message send button.',
+    zh: '控制消息发送按钮旁是否显示粘贴按钮。',
+  },
+  settings_showInputClearButton_label: { en: 'Show Clear Input Button', zh: '显示清空输入框按钮' },
+  settings_showInputClearButton_tooltip: {
+    en: 'Controls whether the clear input button appears beside the message send button.',
+    zh: '控制消息发送按钮旁是否显示清空输入框按钮。',
   },
   settings_copySelectionFormatting_label: {
     en: 'Preserve Formatting When Copying Selection',

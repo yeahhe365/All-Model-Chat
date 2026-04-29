@@ -8,7 +8,6 @@ import { logService } from '../../services/logService';
 import { getTranslator } from '../../utils/translations';
 import { applyThemeToDocument } from '../../utils/uiUtils';
 import { useUIStore } from '../../stores/uiStore';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { AppSettings, ChatSettings, ModelOption, SideViewContent } from '../../types';
 import { useDataExport } from '../data-management/useDataExport';
 import { useDataImport } from '../data-management/useDataImport';
@@ -155,36 +154,27 @@ export const useApp = () => {
   const handleSaveSettings = useCallback(
     (newSettings: AppSettings) => {
       setAppSettings(newSettings);
-
-      if (activeSessionId) {
-        if (newSettings.modelId !== currentChatSettings.modelId) {
-          handleSelectModelInHeader(newSettings.modelId);
-        }
-
-        setCurrentChatSettings((prevChatSettings) => {
-          const sessionOverrides = Object.fromEntries(
-            (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>)
-              .filter(
-                (key) =>
-                  key !== 'lockedApiKey' &&
-                  key !== 'modelId' &&
-                  key !== 'thinkingBudget' &&
-                  key !== 'thinkingLevel' &&
-                  key !== 'mediaResolution' &&
-                  key in newSettings,
-              )
-              .map((key) => [key, newSettings[key]]),
-          ) as Partial<ChatSettings>;
-
-          return {
-            ...prevChatSettings,
-            ...sessionOverrides,
-            lockedApiKey: null,
-          };
-        });
-      }
     },
-    [activeSessionId, currentChatSettings.modelId, handleSelectModelInHeader, setAppSettings, setCurrentChatSettings],
+    [setAppSettings],
+  );
+
+  const handleSaveCurrentChatSettings = useCallback(
+    (newSettings: ChatSettings) => {
+      if (!activeSessionId) {
+        return;
+      }
+
+      if (newSettings.modelId !== currentChatSettings.modelId) {
+        handleSelectModelInHeader(newSettings.modelId);
+      }
+
+      setCurrentChatSettings((prevChatSettings) => ({
+        ...prevChatSettings,
+        ...newSettings,
+        lockedApiKey: null,
+      }));
+    },
+    [activeSessionId, currentChatSettings.modelId, handleSelectModelInHeader, setCurrentChatSettings],
   );
 
   const {
@@ -271,6 +261,7 @@ export const useApp = () => {
     activeChat,
     sessionTitle,
     handleSaveSettings,
+    handleSaveCurrentChatSettings,
     handleLoadCanvasPromptAndSave,
     handleToggleBBoxMode,
     handleToggleGuideMode,

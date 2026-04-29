@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { KeyRound, RadioTower } from 'lucide-react';
-import type { ModelOption } from '../../../types';
+import type { AppSettings, ModelOption } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../../constants/appConstants';
@@ -15,6 +15,7 @@ import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
+import { FileStrategyControl } from './appearance/FileStrategyControl';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -27,6 +28,8 @@ interface ApiConfigSectionProps {
   setUseApiProxy: (value: boolean) => void;
   serverManagedApi: boolean;
   availableModels?: ModelOption[];
+  settings: AppSettings;
+  onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
@@ -39,6 +42,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   useApiProxy,
   setUseApiProxy,
   serverManagedApi,
+  settings,
+  onUpdate,
 }) => {
   const { t } = useI18n();
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -219,6 +224,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           </div>
         </div>
       </div>
+
+      <FileStrategyControl settings={settings} onUpdate={onUpdate} />
     </div>
   );
 };

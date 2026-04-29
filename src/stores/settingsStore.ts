@@ -49,6 +49,14 @@ function sanitizeAppSettings(settings: AppSettings): AppSettings {
     ...settings,
     modelId: resolveSupportedModelId(settings.modelId, defaultSettings.modelId),
     transcriptionModelId: resolveSupportedModelId(settings.transcriptionModelId, defaultSettings.transcriptionModelId),
+    inputTranslationModelId: resolveSupportedModelId(
+      settings.inputTranslationModelId,
+      defaultSettings.inputTranslationModelId ?? defaultSettings.modelId,
+    ),
+    thoughtTranslationModelId: resolveSupportedModelId(
+      settings.thoughtTranslationModelId,
+      defaultSettings.thoughtTranslationModelId ?? defaultSettings.modelId,
+    ),
   };
 }
 

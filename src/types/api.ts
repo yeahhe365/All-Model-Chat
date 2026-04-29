@@ -127,7 +127,7 @@ export interface GeminiService {
     abortSignal: AbortSignal,
   ) => Promise<string>;
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string) => Promise<string>;
-  translateText(apiKey: string, text: string, targetLanguage?: string): Promise<string>;
+  translateText(apiKey: string, text: string, targetLanguage?: string, modelId?: string): Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(
     apiKey: string,

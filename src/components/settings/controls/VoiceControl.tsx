@@ -10,6 +10,7 @@ interface VoiceControlProps {
   setTranscriptionModelId: (value: string) => void;
   ttsVoice?: string;
   setTtsVoice?: (value: string) => void;
+  titleKey?: string;
   t: (key: string) => string;
 }
 
@@ -18,12 +19,13 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({
   setTranscriptionModelId,
   ttsVoice,
   setTtsVoice,
+  titleKey = 'settingsVoiceSectionTitle',
   t,
 }) => {
   return (
     <div className="space-y-4">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
-        <Mic size={14} strokeWidth={1.5} /> {t('settingsVoiceSectionTitle')}
+        <Mic size={14} strokeWidth={1.5} /> {t(titleKey)}
       </h4>
 
       <div className="space-y-3">

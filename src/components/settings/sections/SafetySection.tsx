@@ -8,6 +8,7 @@ interface SafetySectionProps {
   safetySettings: SafetySetting[] | undefined;
   setSafetySettings: (settings: SafetySetting[]) => void;
   t: (key: keyof typeof translations | string) => string;
+  showIntro?: boolean;
 }
 
 const ALL_CATEGORIES: HarmCategory[] = [
@@ -85,7 +86,12 @@ const buildSliderMap = (settings: SafetySetting[] | undefined): SliderValueMap =
   return map;
 };
 
-export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, setSafetySettings, t }) => {
+export const SafetySection: React.FC<SafetySectionProps> = ({
+  safetySettings,
+  setSafetySettings,
+  t,
+  showIntro = true,
+}) => {
   const normalizedSettings = useMemo(() => normalizeSettings(safetySettings), [safetySettings]);
 
   // Local state to ensure slider updates immediately
@@ -120,15 +126,17 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-start gap-3 p-4 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-xl">
-        <Shield size={24} className="text-[var(--theme-text-link)] flex-shrink-0 mt-0.5" />
-        <div>
-          <h3 className="text-base font-semibold text-[var(--theme-text-primary)]">{t('safety_title')}</h3>
-          <p className="text-sm text-[var(--theme-text-secondary)] mt-1 leading-relaxed opacity-90">
-            {t('safety_description')}
-          </p>
+      {showIntro && (
+        <div className="flex items-start gap-3 p-4 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-xl">
+          <Shield size={24} className="text-[var(--theme-text-link)] flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="text-base font-semibold text-[var(--theme-text-primary)]">{t('safety_title')}</h3>
+            <p className="text-sm text-[var(--theme-text-secondary)] mt-1 leading-relaxed opacity-90">
+              {t('safety_description')}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid gap-6">
         {normalizedSettings.map((setting) => {

@@ -183,9 +183,21 @@ vi.mock('./ChatInputArea', async () => {
         >
           queue
         </button>
-        <button type="button" data-testid="translate-button" onClick={actionsProps.onTranslate}>
-          translate
-        </button>
+        {actionsProps.showInputTranslationButton === true && (
+          <button type="button" data-testid="translate-button" onClick={actionsProps.onTranslate}>
+            translate
+          </button>
+        )}
+        {actionsProps.showInputPasteButton !== false && (
+          <button type="button" data-testid="paste-button" onClick={actionsProps.onPasteFromClipboard}>
+            paste
+          </button>
+        )}
+        {actionsProps.showInputClearButton === true && (
+          <button type="button" data-testid="clear-input-button" onClick={actionsProps.onClearInput}>
+            clear
+          </button>
+        )}
         <button type="button" data-testid="live-camera-button" onClick={actionsProps.onStartLiveCamera}>
           camera
         </button>
@@ -938,6 +950,7 @@ describe('ChatInput', () => {
     providerValue.input.appSettings = {
       ...providerValue.input.appSettings,
       translationTargetLanguage: 'French',
+      showInputTranslationButton: true,
     };
     providerValue.input.isEditing = false;
     providerValue.input.editMode = 'resend';
@@ -970,8 +983,220 @@ describe('ChatInput', () => {
       await Promise.resolve();
     });
 
-    expect(mockGeminiService.translateText).toHaveBeenCalledWith('api-key', 'Hello', 'French');
+    expect(mockGeminiService.translateText).toHaveBeenCalledWith('api-key', 'Hello', 'French', undefined);
     expect(textarea?.value).toBe('Bonjour');
+  });
+
+  it('translates composer text using the configured input translation model', async () => {
+    mockGeminiService.translateText.mockResolvedValueOnce('Bonjour');
+    const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      translationTargetLanguage: 'French',
+      inputTranslationModelId: 'gemini-custom-input-translator',
+      showInputTranslationButton: true,
+    } as AppSettings;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const translateButton = container.querySelector<HTMLButtonElement>('[data-testid="translate-button"]');
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Hello');
+    });
+
+    await act(async () => {
+      translateButton?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mockGeminiService.translateText).toHaveBeenCalledWith(
+      'api-key',
+      'Hello',
+      'French',
+      'gemini-custom-input-translator',
+    );
+  });
+
+  it('hides the composer translate button when the setting is disabled', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      showInputTranslationButton: false,
+    } as AppSettings;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="translate-button"]')).toBeNull();
+  });
+
+  it('hides the composer translate button by default', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      showInputTranslationButton: undefined,
+    } as AppSettings;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="translate-button"]')).toBeNull();
+  });
+
+  it('appends clipboard text to the composer from the paste action', async () => {
+    const readText = vi.fn(async () => ' clipboard text');
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { readText },
+    });
+    const providerValue = createProviderValue(null);
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const pasteButton = container.querySelector<HTMLButtonElement>('[data-testid="paste-button"]');
+
+    expect(textarea).not.toBeNull();
+    expect(pasteButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Existing');
+    });
+
+    await act(async () => {
+      pasteButton?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(readText).toHaveBeenCalledTimes(1);
+    expect(textarea?.value).toBe('Existing clipboard text');
+    expect(document.activeElement).toBe(textarea);
+  });
+
+  it('hides the paste button when the interface setting is disabled', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      showInputPasteButton: false,
+    } as AppSettings;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="paste-button"]')).toBeNull();
+  });
+
+  it('clears the composer from the clear input action when enabled', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      showInputClearButton: true,
+    } as AppSettings;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const clearButton = container.querySelector<HTMLButtonElement>('[data-testid="clear-input-button"]');
+
+    expect(textarea).not.toBeNull();
+    expect(clearButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Text to clear');
+    });
+
+    await act(async () => {
+      clearButton?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(textarea?.value).toBe('');
+    expect(document.activeElement).toBe(textarea);
+  });
+
+  it('hides the clear input button by default', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="clear-input-button"]')).toBeNull();
   });
 
   it('does not auto-send a pending message when an attachment finishes as failed', async () => {

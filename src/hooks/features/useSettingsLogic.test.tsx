@@ -30,8 +30,10 @@ const renderHook = <T,>(callback: () => T) => {
 };
 
 describe('useSettingsLogic', () => {
+  let storage: Map<string, string>;
+
   beforeEach(() => {
-    const storage = new Map<string, string>();
+    storage = new Map<string, string>();
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => {
@@ -60,6 +62,116 @@ describe('useSettingsLogic', () => {
     );
 
     expect(result.current.tabs.map((tab) => tab.id)).not.toContain('usage');
+    unmount();
+  });
+
+  it('does not include the merged canvas tab in the settings sidebar model', () => {
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
+        isOpen: true,
+        currentSettings: DEFAULT_APP_SETTINGS,
+        onSave: vi.fn(),
+        onClearAllHistory: vi.fn(),
+        onClearCache: vi.fn(),
+        onImportHistory: vi.fn(),
+        t: (key: string) => key,
+      }),
+    );
+
+    expect(result.current.tabs.map((tab) => tab.id)).not.toContain('canvas');
+    unmount();
+  });
+
+  it('does not include the merged language and voice tab in the settings sidebar model', () => {
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
+        isOpen: true,
+        currentSettings: DEFAULT_APP_SETTINGS,
+        onSave: vi.fn(),
+        onClearAllHistory: vi.fn(),
+        onClearCache: vi.fn(),
+        onImportHistory: vi.fn(),
+        t: (key: string) => key,
+      }),
+    );
+
+    expect(result.current.tabs.map((tab) => tab.id)).not.toContain('languageVoice');
+    unmount();
+  });
+
+  it('restores legacy grouped chat tabs to the models tab', () => {
+    storage.set('chatSettingsLastTab', 'chat');
+
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
+        isOpen: true,
+        currentSettings: DEFAULT_APP_SETTINGS,
+        onSave: vi.fn(),
+        onClearAllHistory: vi.fn(),
+        onClearCache: vi.fn(),
+        onImportHistory: vi.fn(),
+        t: (key: string) => key,
+      }),
+    );
+
+    expect(result.current.activeTab).toBe('models');
+    unmount();
+  });
+
+  it('restores the removed model behavior tab to the models tab', () => {
+    storage.set('chatSettingsLastTab', 'generation');
+
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
+        isOpen: true,
+        currentSettings: DEFAULT_APP_SETTINGS,
+        onSave: vi.fn(),
+        onClearAllHistory: vi.fn(),
+        onClearCache: vi.fn(),
+        onImportHistory: vi.fn(),
+        t: (key: string) => key,
+      }),
+    );
+
+    expect(result.current.activeTab).toBe('models');
+    unmount();
+  });
+
+  it('restores the merged canvas tab to the models tab', () => {
+    storage.set('chatSettingsLastTab', 'canvas');
+
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
+        isOpen: true,
+        currentSettings: DEFAULT_APP_SETTINGS,
+        onSave: vi.fn(),
+        onClearAllHistory: vi.fn(),
+        onClearCache: vi.fn(),
+        onImportHistory: vi.fn(),
+        t: (key: string) => key,
+      }),
+    );
+
+    expect(result.current.activeTab).toBe('models');
+    unmount();
+  });
+
+  it('restores the merged language and voice tab to the models tab', () => {
+    storage.set('chatSettingsLastTab', 'languageVoice');
+
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
+        isOpen: true,
+        currentSettings: DEFAULT_APP_SETTINGS,
+        onSave: vi.fn(),
+        onClearAllHistory: vi.fn(),
+        onClearCache: vi.fn(),
+        onImportHistory: vi.fn(),
+        t: (key: string) => key,
+      }),
+    );
+
+    expect(result.current.activeTab).toBe('models');
     unmount();
   });
 

@@ -4,7 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { SettingsContent } from './SettingsContent';
 
-const mockChatBehaviorSection = vi.hoisted(() => ({
+const mockModelsSection = vi.hoisted(() => ({
+  lastProps: null as any,
+}));
+
+const mockGenerationSection = vi.hoisted(() => ({
+  lastProps: null as any,
+}));
+
+const mockShortcutsSection = vi.hoisted(() => ({
   lastProps: null as any,
 }));
 
@@ -12,9 +20,13 @@ vi.mock('./sections/UsageSection', () => ({
   UsageSection: () => <div data-testid="usage-section">Usage Section</div>,
 }));
 
-vi.mock('./sections/ChatBehaviorSection', () => ({
-  ChatBehaviorSection: (props: any) => {
-    mockChatBehaviorSection.lastProps = props;
+vi.mock('./sections/AppearanceSection', () => ({
+  AppearanceSection: () => <div data-testid="appearance-section">appearance</div>,
+}));
+
+vi.mock('./sections/ModelsSection', () => ({
+  ModelsSection: (props: any) => {
+    mockModelsSection.lastProps = props;
     return (
       <button
         data-testid="save-model-list"
@@ -28,6 +40,20 @@ vi.mock('./sections/ChatBehaviorSection', () => ({
         save
       </button>
     );
+  },
+}));
+
+vi.mock('./sections/GenerationSection', () => ({
+  GenerationSection: (props: any) => {
+    mockGenerationSection.lastProps = props;
+    return <div data-testid="generation-section">generation</div>;
+  },
+}));
+
+vi.mock('./sections/ShortcutsSection', () => ({
+  ShortcutsSection: (props: any) => {
+    mockShortcutsSection.lastProps = props;
+    return <div data-testid="shortcuts-section">shortcuts</div>;
   },
 }));
 
@@ -46,7 +72,9 @@ describe('SettingsContent', () => {
       root.unmount();
     });
     container.remove();
-    mockChatBehaviorSection.lastProps = null;
+    mockModelsSection.lastProps = null;
+    mockGenerationSection.lastProps = null;
+    mockShortcutsSection.lastProps = null;
   });
 
   it('does not render the obsolete usage section when the removed tab is requested', () => {
@@ -88,7 +116,7 @@ describe('SettingsContent', () => {
     act(() => {
       root.render(
         <SettingsContent
-          activeTab="model"
+          activeTab="models"
           currentSettings={{
             ...DEFAULT_APP_SETTINGS,
             modelId: 'removed-model',
@@ -129,16 +157,103 @@ describe('SettingsContent', () => {
     expect(updateSetting).not.toHaveBeenCalledWith('modelId', 'fallback-model');
   });
 
-  it('passes the input translation target setting into chat behavior settings', () => {
+  it('passes language, voice, and translation settings into models settings', () => {
     const updateSetting = vi.fn();
 
     act(() => {
       root.render(
         <SettingsContent
-          activeTab="model"
+          activeTab="models"
           currentSettings={{
             ...DEFAULT_APP_SETTINGS,
+            transcriptionModelId: 'gemini-3-flash-preview',
             translationTargetLanguage: 'Japanese',
+            inputTranslationModelId: 'gemini-custom-input-translator',
+            thoughtTranslationTargetLanguage: 'Korean',
+            thoughtTranslationModelId: 'gemini-custom-thought-translator',
+          }}
+          availableModels={[
+            { id: 'gemini-custom-input-translator', name: 'Input Translator' },
+            { id: 'gemini-custom-thought-translator', name: 'Thought Translator' },
+          ]}
+          updateSetting={updateSetting}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(mockModelsSection.lastProps.currentSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
+    expect(mockModelsSection.lastProps.currentSettings.translationTargetLanguage).toBe('Japanese');
+    expect(mockModelsSection.lastProps.currentSettings.inputTranslationModelId).toBe('gemini-custom-input-translator');
+    expect(mockModelsSection.lastProps.currentSettings.thoughtTranslationTargetLanguage).toBe('Korean');
+    expect(mockModelsSection.lastProps.currentSettings.thoughtTranslationModelId).toBe(
+      'gemini-custom-thought-translator',
+    );
+    expect(mockModelsSection.lastProps.availableModels).toEqual([
+      { id: 'gemini-custom-input-translator', name: 'Input Translator' },
+      { id: 'gemini-custom-thought-translator', name: 'Thought Translator' },
+    ]);
+    expect(updateSetting).not.toHaveBeenCalled();
+  });
+
+  it('does not render the removed model behavior section when the obsolete tab is requested', () => {
+    act(() => {
+      root.render(
+        <SettingsContent
+          activeTab={'generation' as any}
+          currentSettings={DEFAULT_APP_SETTINGS}
+          availableModels={[]}
+          updateSetting={vi.fn()}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="generation-section"]')).toBeNull();
+  });
+
+  it('keeps tts voice and raw reasoning controls inside models settings', () => {
+    const updateSetting = vi.fn();
+
+    act(() => {
+      root.render(
+        <SettingsContent
+          activeTab="models"
+          currentSettings={{
+            ...DEFAULT_APP_SETTINGS,
+            ttsVoice: 'Aoede',
+            isRawModeEnabled: true,
+            hideThinkingInContext: true,
           }}
           availableModels={[]}
           updateSetting={updateSetting}
@@ -162,20 +277,16 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(mockChatBehaviorSection.lastProps.translationTargetLanguage).toBe('Japanese');
-
-    act(() => {
-      mockChatBehaviorSection.lastProps.setTranslationTargetLanguage('Korean');
-    });
-
-    expect(updateSetting).toHaveBeenCalledWith('translationTargetLanguage', 'Korean');
+    expect(mockModelsSection.lastProps.currentSettings.ttsVoice).toBe('Aoede');
+    expect(mockModelsSection.lastProps.currentSettings.isRawModeEnabled).toBe(true);
+    expect(mockModelsSection.lastProps.currentSettings.hideThinkingInContext).toBe(true);
   });
 
   it('does not apply zoom-based enter animation to the active settings panel', () => {
     act(() => {
       root.render(
         <SettingsContent
-          activeTab="model"
+          activeTab="models"
           currentSettings={DEFAULT_APP_SETTINGS}
           availableModels={[]}
           updateSetting={vi.fn()}
@@ -203,5 +314,71 @@ describe('SettingsContent', () => {
 
     expect(panelSurface).not.toBeNull();
     expect(panelSurface?.className).not.toContain('zoom-in-95');
+  });
+
+  it('keeps shortcuts out of the workspace tab', () => {
+    act(() => {
+      root.render(
+        <SettingsContent
+          activeTab="interface"
+          currentSettings={DEFAULT_APP_SETTINGS}
+          availableModels={[]}
+          updateSetting={vi.fn()}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="appearance-section"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="shortcuts-section"]')).toBeNull();
+  });
+
+  it('renders shortcuts inside the shortcuts tab', () => {
+    const availableModels = [{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }];
+
+    act(() => {
+      root.render(
+        <SettingsContent
+          activeTab="shortcuts"
+          currentSettings={DEFAULT_APP_SETTINGS}
+          availableModels={availableModels}
+          updateSetting={vi.fn()}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="shortcuts-section"]')).not.toBeNull();
+    expect(mockShortcutsSection.lastProps.availableModels).toBe(availableModels);
   });
 });

@@ -2,7 +2,6 @@ import React from 'react';
 import { AppSettings } from '../../../types';
 import { ThemeLanguageSelector } from './appearance/ThemeLanguageSelector';
 import { FontSizeControl } from './appearance/FontSizeControl';
-import { FileStrategyControl } from './appearance/FileStrategyControl';
 import { InterfaceToggles } from './appearance/InterfaceToggles';
 
 interface AppearanceSectionProps {
@@ -16,8 +15,6 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({ settings, 
       <ThemeLanguageSelector settings={settings} onUpdate={onUpdate} />
 
       <FontSizeControl settings={settings} onUpdate={onUpdate} />
-
-      <FileStrategyControl settings={settings} onUpdate={onUpdate} />
 
       <InterfaceToggles settings={settings} onUpdate={onUpdate} />
     </div>

@@ -8,6 +8,7 @@ interface UtilityControlsProps {
   onToggleFullscreen?: () => void;
   isTranslating: boolean;
   onTranslate: () => void;
+  showTranslateButton?: boolean;
   disabled: boolean;
   canTranslate: boolean;
 }
@@ -17,6 +18,7 @@ export const UtilityControls: React.FC<UtilityControlsProps> = ({
   onToggleFullscreen,
   isTranslating,
   onTranslate,
+  showTranslateButton = false,
   disabled,
   canTranslate,
 }) => {
@@ -38,20 +40,22 @@ export const UtilityControls: React.FC<UtilityControlsProps> = ({
         </button>
       )}
 
-      <button
-        type="button"
-        onClick={onTranslate}
-        disabled={!canTranslate || isTranslating}
-        className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
-        aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
-        title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
-      >
-        {isTranslating ? (
-          <Loader2 size={iconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
-        ) : (
-          <Languages size={iconSize} strokeWidth={2} />
-        )}
-      </button>
+      {showTranslateButton && (
+        <button
+          type="button"
+          onClick={onTranslate}
+          disabled={!canTranslate || isTranslating}
+          className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
+          aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
+          title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
+        >
+          {isTranslating ? (
+            <Loader2 size={iconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
+          ) : (
+            <Languages size={iconSize} strokeWidth={2} />
+          )}
+        </button>
+      )}
     </>
   );
 };

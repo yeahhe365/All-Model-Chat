@@ -4,7 +4,7 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { getKeyForRequest } from '../../../utils/apiUtils';
 import { parseThoughtProcess } from '../../../utils/chat/parsing';
 import { geminiServiceInstance } from '../../../services/geminiService';
-import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/appConstants';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { ThinkingHeader } from './thoughts/ThinkingHeader';
 import { ThinkingActions } from './thoughts/ThinkingActions';
@@ -85,7 +85,12 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
         return;
       }
 
-      const result = await geminiServiceInstance.translateText(keyResult.key, effectiveThoughts, 'Chinese');
+      const result = await geminiServiceInstance.translateText(
+        keyResult.key,
+        effectiveThoughts,
+        appSettings.thoughtTranslationTargetLanguage || 'Simplified Chinese',
+        appSettings.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+      );
       setTranslatedThoughts(result);
       setIsShowingTranslation(true);
     } catch (error) {

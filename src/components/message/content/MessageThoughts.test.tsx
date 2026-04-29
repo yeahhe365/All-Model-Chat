@@ -1,13 +1,15 @@
 import { act } from 'react';
+import type React from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageThoughts } from './MessageThoughts';
 
-const { mockUseMessageStream } = vi.hoisted(() => ({
+const { mockUseMessageStream, mockTranslateText } = vi.hoisted(() => ({
   mockUseMessageStream: vi.fn(() => ({
     streamContent: '',
     streamThoughts: '',
   })),
+  mockTranslateText: vi.fn(),
 }));
 
 vi.mock('../../../contexts/I18nContext', () => ({
@@ -22,7 +24,7 @@ vi.mock('../../../utils/apiUtils', () => ({
 
 vi.mock('../../../services/geminiService', () => ({
   geminiServiceInstance: {
-    translateText: vi.fn(),
+    translateText: mockTranslateText,
   },
 }));
 
@@ -44,7 +46,11 @@ vi.mock('./thoughts/ThinkingHeader', () => ({
 }));
 
 vi.mock('./thoughts/ThinkingActions', () => ({
-  ThinkingActions: () => <div data-testid="thinking-actions" />,
+  ThinkingActions: ({ onTranslate }: { onTranslate: (event: React.MouseEvent) => void }) => (
+    <button type="button" data-testid="thinking-translate" onClick={onTranslate}>
+      translate
+    </button>
+  ),
 }));
 
 vi.mock('./thoughts/ThoughtContent', () => ({
@@ -61,6 +67,96 @@ describe('MessageThoughts', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('uses the configured thought translation model when translating thoughts', async () => {
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    mockTranslateText.mockResolvedValue('已翻译的思维链');
+
+    await act(async () => {
+      root.render(
+        <MessageThoughts
+          message={{
+            id: 'message-thought-translation',
+            role: 'model',
+            content: '',
+            thoughts: 'Plan carefully.',
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={true}
+          appSettings={{ thoughtTranslationModelId: 'gemini-custom-thought-translator' } as any}
+          themeId="pearl"
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-testid="thinking-translate"]')?.click();
+      await Promise.resolve();
+    });
+
+    expect(mockTranslateText).toHaveBeenCalledWith(
+      'api-key',
+      'Plan carefully.',
+      'Simplified Chinese',
+      'gemini-custom-thought-translator',
+    );
+
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it('uses the configured thought translation target language when translating thoughts', async () => {
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    mockTranslateText.mockResolvedValue('翻訳済みの思考');
+
+    await act(async () => {
+      root.render(
+        <MessageThoughts
+          message={{
+            id: 'message-thought-translation-language',
+            role: 'model',
+            content: '',
+            thoughts: 'Plan carefully.',
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={true}
+          appSettings={{ thoughtTranslationTargetLanguage: 'Japanese' } as any}
+          themeId="pearl"
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-testid="thinking-translate"]')?.click();
+      await Promise.resolve();
+    });
+
+    expect(mockTranslateText).toHaveBeenCalledWith(
+      'api-key',
+      'Plan carefully.',
+      'Japanese',
+      'gemini-3.1-flash-lite-preview',
+    );
+
+    act(() => {
+      root.unmount();
+    });
   });
 
   it('renders raw thinking blocks using the normal thought panel', () => {

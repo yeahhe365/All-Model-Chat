@@ -7,7 +7,7 @@ import { useChatStore } from '../../stores/chatStore';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
 import { isBboxSystemInstruction, isHdGuideSystemInstruction } from '../../constants/promptHelpers';
 import type { ChatAreaProps } from './chat-area/ChatAreaProps';
-import { buildSettingsForModal, buildSidePanelKey } from './mainContentModels';
+import { buildSidePanelKey } from './mainContentModels';
 
 interface UseMainContentViewModelOptions {
   app: AppViewModel;
@@ -30,6 +30,7 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
     handleExportChat,
     sessionTitle,
     handleSaveSettings,
+    handleSaveCurrentChatSettings,
     handleLoadCanvasPromptAndSave,
     handleToggleBBoxMode,
     handleToggleGuideMode,
@@ -239,16 +240,6 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
 
   const currentModelName = getCurrentModelDisplayName();
 
-  const settingsForModal = useMemo(
-    () =>
-      buildSettingsForModal({
-        appSettings,
-        activeSessionId: chatState.activeSessionId,
-        currentChatSettings: chatState.currentChatSettings,
-      }),
-    [appSettings, chatState.activeSessionId, chatState.currentChatSettings],
-  );
-
   const sidebarProps = useMemo(
     () => ({
       isOpen: uiState.isHistorySidebarOpen,
@@ -306,9 +297,10 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
     () => ({
       isSettingsModalOpen,
       setIsSettingsModalOpen,
-      appSettings: settingsForModal,
+      appSettings,
       availableModels: chatState.apiModels,
       handleSaveSettings,
+      handleSaveCurrentChatSettings,
       clearCacheAndReload: chatState.clearCacheAndReload,
       clearAllHistory: chatState.clearAllHistory,
       handleInstallPwa: eventsState.handleInstallPwa,
@@ -331,6 +323,7 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
       isLogViewerOpen,
       setIsLogViewerOpen,
       currentChatSettings: chatState.currentChatSettings,
+      activeSessionId: chatState.activeSessionId,
       setAvailableModels: chatState.setApiModels,
     }),
     [
@@ -352,6 +345,7 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
       handleImportAllScenarios,
       handleImportHistory,
       handleImportSettings,
+      handleSaveCurrentChatSettings,
       handleSaveSettings,
       isExportModalOpen,
       isLogViewerOpen,
@@ -361,7 +355,8 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
       setIsLogViewerOpen,
       setIsPreloadedMessagesModalOpen,
       setIsSettingsModalOpen,
-      settingsForModal,
+      appSettings,
+      chatState.activeSessionId,
     ],
   );
 

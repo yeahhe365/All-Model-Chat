@@ -54,6 +54,11 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   isWaitingForUpload,
   onCancelRecording,
   onTranslate,
+  showInputTranslationButton,
+  onPasteFromClipboard,
+  showInputPasteButton,
+  onClearInput,
+  showInputClearButton,
   isTranslating,
   inputText,
   onToggleFullscreen,
@@ -130,6 +135,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
             onToggleFullscreen={onToggleFullscreen}
             isTranslating={isTranslating}
             onTranslate={onTranslate}
+            showTranslateButton={showInputTranslationButton ?? false}
             disabled={disabled}
             canTranslate={!!inputText.trim() && !isEditing && !isTranscribing && !isMicInitializing}
           />
@@ -163,6 +169,11 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
           onFastSendMessage={onFastSendMessage}
           canQueueMessage={canQueueMessage}
           onQueueMessage={onQueueMessage}
+          onPasteFromClipboard={onPasteFromClipboard}
+          showInputPasteButton={showInputPasteButton ?? true}
+          onClearInput={onClearInput}
+          showInputClearButton={showInputClearButton ?? false}
+          isInputDisabled={disabled}
         />
       </div>
     </div>

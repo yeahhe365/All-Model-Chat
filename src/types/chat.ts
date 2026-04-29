@@ -220,6 +220,11 @@ export interface ChatInputActionsProps {
   isWaitingForUpload: boolean;
   onCancelRecording: () => void;
   onTranslate: () => void;
+  showInputTranslationButton?: boolean;
+  onPasteFromClipboard?: () => void;
+  showInputPasteButton?: boolean;
+  onClearInput?: () => void;
+  showInputClearButton?: boolean;
   isTranslating: boolean;
   inputText: string;
   onToggleFullscreen?: () => void;

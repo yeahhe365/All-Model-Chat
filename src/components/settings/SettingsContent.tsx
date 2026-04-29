@@ -1,16 +1,14 @@
 import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
-import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
 import { SettingsTab } from '../../hooks/features/useSettingsLogic';
 import { ApiConfigSection } from './sections/ApiConfigSection';
 import { AppearanceSection } from './sections/AppearanceSection';
-import { ChatBehaviorSection } from './sections/ChatBehaviorSection';
 import { DataManagementSection } from './sections/DataManagementSection';
+import { ModelsSection } from './sections/ModelsSection';
 import { ShortcutsSection } from './sections/ShortcutsSection';
 import { AboutSection } from './sections/AboutSection';
 import { SettingsTransferProps } from './settingsTypes';
 import type { LogViewerProps } from '../log-viewer/LogViewer';
-
 interface SettingsContentProps extends SettingsTransferProps {
   activeTab: SettingsTab;
   currentSettings: AppSettings;
@@ -70,51 +68,27 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
 
   return (
     <div className="max-w-3xl mx-auto w-full">
-      {activeTab === 'model' && (
+      {activeTab === 'models' && (
         <div className={`${animClass} max-w-4xl mx-auto`}>
-          <ChatBehaviorSection
+          <ModelsSection
             modelId={currentSettings.modelId}
             setModelId={handleModelChange}
-            transcriptionModelId={currentSettings.transcriptionModelId}
-            setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
-            ttsVoice={currentSettings.ttsVoice}
-            setTtsVoice={(v) => updateSetting('ttsVoice', v)}
-            systemInstruction={currentSettings.systemInstruction}
-            setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
-            temperature={currentSettings.temperature}
-            setTemperature={(v) => updateSetting('temperature', v)}
-            topP={currentSettings.topP}
-            setTopP={(v) => updateSetting('topP', v)}
-            topK={currentSettings.topK ?? 64}
-            setTopK={(v) => updateSetting('topK', v)}
-            showThoughts={currentSettings.showThoughts}
-            setShowThoughts={(v) => updateSetting('showThoughts', v)}
-            thinkingBudget={currentSettings.thinkingBudget}
-            setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
-            thinkingLevel={currentSettings.thinkingLevel}
-            setThinkingLevel={(v) => updateSetting('thinkingLevel', v)}
-            safetySettings={currentSettings.safetySettings}
-            setSafetySettings={(v) => updateSetting('safetySettings', v)}
-            mediaResolution={currentSettings.mediaResolution}
-            setMediaResolution={(v) => updateSetting('mediaResolution', v)}
-            translationTargetLanguage={currentSettings.translationTargetLanguage}
-            setTranslationTargetLanguage={(v) => updateSetting('translationTargetLanguage', v)}
-            autoCanvasVisualization={currentSettings.autoCanvasVisualization ?? false}
-            setAutoCanvasVisualization={(v) => updateSetting('autoCanvasVisualization', v)}
-            autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
-            setAutoCanvasModelId={(v) => updateSetting('autoCanvasModelId', v)}
             availableModels={availableModels}
-            t={t}
             setAvailableModels={handleAvailableModelsChange}
+            currentSettings={currentSettings}
+            onUpdateSettings={handleBatchUpdate}
+            t={t}
           />
         </div>
       )}
+
       {activeTab === 'interface' && (
         <div className={animClass}>
           <AppearanceSection settings={currentSettings} onUpdate={updateSetting} />
         </div>
       )}
-      {activeTab === 'account' && (
+
+      {activeTab === 'api' && (
         <div className={animClass}>
           <ApiConfigSection
             useCustomApiConfig={currentSettings.useCustomApiConfig}
@@ -126,9 +100,12 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
             useApiProxy={currentSettings.useApiProxy ?? false}
             setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
             serverManagedApi={currentSettings.serverManagedApi ?? false}
+            settings={currentSettings}
+            onUpdate={updateSetting}
           />
         </div>
       )}
+
       {activeTab === 'data' && (
         <div className={animClass}>
           <DataManagementSection
@@ -148,6 +125,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
           />
         </div>
       )}
+
       {activeTab === 'shortcuts' && (
         <div className={animClass}>
           <ShortcutsSection
@@ -158,6 +136,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
           />
         </div>
       )}
+
       {activeTab === 'about' && (
         <div className={animClass}>
           <AboutSection />

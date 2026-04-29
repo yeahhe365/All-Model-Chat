@@ -705,6 +705,7 @@ export const useChatInput = () => {
         keyResult.key,
         inputState.inputText,
         appSettings.translationTargetLanguage ?? 'English',
+        appSettings.inputTranslationModelId,
       );
       inputState.setInputText(translatedText);
     } catch (error) {
@@ -713,6 +714,33 @@ export const useChatInput = () => {
       inputState.setIsTranslating(false);
     }
   }, [appSettings, currentChatSettings, inputState, setAppFileError]);
+
+  const handlePasteFromClipboard = useCallback(async () => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) {
+      return;
+    }
+
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      if (!clipboardText) {
+        return;
+      }
+
+      inputState.setInputText((prev) => prev + clipboardText);
+      setTimeout(() => {
+        const textarea = inputState.textareaRef.current;
+        textarea?.focus();
+        textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
+      }, 0);
+    } catch {
+      return;
+    }
+  }, [inputState]);
+
+  const handleClearInput = useCallback(() => {
+    inputState.setInputText('');
+    setTimeout(() => inputState.textareaRef.current?.focus(), 0);
+  }, [inputState]);
 
   const onCompositionStart = useCallback(() => {
     inputState.isComposingRef.current = true;
@@ -932,6 +960,8 @@ export const useChatInput = () => {
       handleSubmit,
       handleFastSubmit,
       handleTranslate,
+      handlePasteFromClipboard,
+      handleClearInput,
       handleKeyDown,
       onCompositionStart,
       onCompositionEnd,
@@ -950,6 +980,7 @@ export const useChatInput = () => {
     [
       handleAddFileByIdSubmit,
       handleAddUrl,
+      handleClearInput,
       handleFastSubmit,
       handleFileChange,
       handleFolderChange,
@@ -957,6 +988,7 @@ export const useChatInput = () => {
       handleKeyDown,
       handlePaste,
       handlePasteAction,
+      handlePasteFromClipboard,
       handleSaveFileConfig,
       queueCurrentSubmission,
       removeQueuedSubmission,

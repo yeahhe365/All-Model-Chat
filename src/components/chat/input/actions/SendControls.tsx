@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Edit2, Loader2, ArrowUp, CornerDownLeft } from 'lucide-react';
+import { X, Save, Edit2, Loader2, ArrowUp, CornerDownLeft, ClipboardPaste, Eraser } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { IconStop } from '../../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
@@ -15,6 +15,11 @@ interface SendControlsProps {
   onFastSendMessage?: () => void;
   canQueueMessage?: boolean;
   onQueueMessage?: () => void;
+  onPasteFromClipboard?: () => void;
+  showInputPasteButton?: boolean;
+  onClearInput?: () => void;
+  showInputClearButton?: boolean;
+  isInputDisabled?: boolean;
 }
 
 interface Ripple {
@@ -35,6 +40,11 @@ export const SendControls: React.FC<SendControlsProps> = ({
   onFastSendMessage,
   canQueueMessage,
   onQueueMessage,
+  onPasteFromClipboard,
+  showInputPasteButton = true,
+  onClearInput,
+  showInputClearButton = false,
+  isInputDisabled,
 }) => {
   const { t } = useI18n();
   const iconSize = 18;
@@ -185,6 +195,40 @@ export const SendControls: React.FC<SendControlsProps> = ({
           <X size={iconSize} strokeWidth={2} />
         </button>
       </div>
+
+      {showInputClearButton && onClearInput && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClearInput();
+          }}
+          className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)] mr-2`}
+          aria-label={t('clearInput_aria')}
+          title={t('clearInput_title')}
+          disabled={!!isInputDisabled || isLoading || isWaitingForUpload}
+        >
+          <Eraser size={iconSize} strokeWidth={2} />
+        </button>
+      )}
+
+      {showInputPasteButton && onPasteFromClipboard && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onPasteFromClipboard();
+          }}
+          className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)] mr-2`}
+          aria-label={t('pasteClipboard_aria')}
+          title={t('pasteClipboard_title')}
+          disabled={!!isInputDisabled || isLoading || isWaitingForUpload}
+        >
+          <ClipboardPaste size={iconSize} strokeWidth={2} />
+        </button>
+      )}
 
       {/* Main Action Button */}
       <button

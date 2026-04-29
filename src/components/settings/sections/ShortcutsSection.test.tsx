@@ -31,10 +31,6 @@ describe('ShortcutsSection', () => {
         <I18nProvider>
           <ShortcutsSection
             currentSettings={useSettingsStore.getState().appSettings}
-            availableModels={[
-              { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
-              { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
-            ]}
             onUpdateSettings={vi.fn()}
             t={(key) =>
               useSettingsStore.getState().language === 'zh'
@@ -53,7 +49,7 @@ describe('ShortcutsSection', () => {
     expect(container.textContent).toContain('Next File');
   });
 
-  it('renders tab cycle model settings under the cycle models shortcut and updates the selected model list', async () => {
+  it('renders tab cycle model settings in the shortcuts screen and updates the selected model list', async () => {
     const onUpdateSettings = vi.fn();
 
     await act(async () => {
@@ -95,6 +91,17 @@ describe('ShortcutsSection', () => {
     );
     expect(toggleButton).not.toBeNull();
     expect(toggleButton?.getAttribute('aria-expanded')).toBe('false');
+
+    const tabCycleCard = toggleButton?.closest('div');
+    const tabCycleTitle = Array.from(toggleButton?.querySelectorAll('span') ?? []).find(
+      (element) => element.textContent === 'Models Included In Tab Cycle',
+    );
+    expect(tabCycleCard?.className).toContain('rounded-lg');
+    expect(tabCycleCard?.className).not.toContain('rounded-xl');
+    expect(tabCycleTitle?.className).toContain('text-sm');
+    expect(tabCycleTitle?.className).toContain('text-[var(--theme-text-primary)]');
+    expect(tabCycleTitle?.className).not.toContain('uppercase');
+    expect(toggleButton?.querySelector('svg')).not.toBeNull();
 
     await act(async () => {
       toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
