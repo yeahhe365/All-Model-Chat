@@ -14,8 +14,15 @@ const mockLanguageVoiceSection = vi.hoisted(() => ({
   lastProps: null as any,
 }));
 
+const mockModelSelector = vi.hoisted(() => ({
+  lastProps: null as any,
+}));
+
 vi.mock('../controls/ModelSelector', () => ({
-  ModelSelector: () => <div data-testid="model-selector">model selector</div>,
+  ModelSelector: (props: any) => {
+    mockModelSelector.lastProps = props;
+    return <div data-testid="model-selector">model selector</div>;
+  },
 }));
 
 vi.mock('./LanguageVoiceSection', () => ({
@@ -53,6 +60,7 @@ describe('ModelsSection', () => {
     mockSafetySection.renderCount = 0;
     mockSafetySection.lastProps = null;
     mockLanguageVoiceSection.lastProps = null;
+    mockModelSelector.lastProps = null;
   });
 
   it('keeps tab cycle model settings out of models settings', async () => {
@@ -190,9 +198,7 @@ describe('ModelsSection', () => {
     const toggleLabel = Array.from(container.querySelectorAll('span')).find(
       (element) => element.textContent?.trim() === 'Auto-open Canvas Visualization',
     );
-    const toggleInput = toggleLabel
-      ?.closest('.group')
-      ?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    const toggleInput = toggleLabel?.closest('.group')?.querySelector<HTMLInputElement>('input[type="checkbox"]');
 
     await act(async () => {
       toggleInput?.click();
@@ -201,9 +207,9 @@ describe('ModelsSection', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith({ autoCanvasVisualization: true });
 
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('#canvas-model-select')?.dispatchEvent(
-        new MouseEvent('click', { bubbles: true }),
-      );
+      container
+        .querySelector<HTMLButtonElement>('#canvas-model-select')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     await act(async () => {
@@ -265,5 +271,55 @@ describe('ModelsSection', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith({ inputTranslationModelId: 'gemini-3-flash-preview' });
     expect(onUpdateSettings).toHaveBeenCalledWith({ thoughtTranslationTargetLanguage: 'English' });
     expect(onUpdateSettings).toHaveBeenCalledWith({ thoughtTranslationModelId: 'gemini-3.1-pro-preview' });
+  });
+
+  it('shows only GPT-compatible model and chat controls in OpenAI-compatible mode', async () => {
+    const onUpdateSettings = vi.fn();
+    const defaultModels = [
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+      { id: 'gpt-4.1', name: 'GPT-4.1' },
+    ];
+
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <ModelsSection
+            modelId="gpt-5.5"
+            setModelId={vi.fn()}
+            availableModels={defaultModels}
+            setAvailableModels={vi.fn()}
+            defaultModels={defaultModels}
+            isOpenAICompatibleMode
+            currentSettings={{
+              ...useSettingsStore.getState().appSettings,
+              apiMode: 'openai-compatible',
+            }}
+            onUpdateSettings={onUpdateSettings}
+            t={(key) =>
+              ({
+                settingsSystemPrompt: 'System prompt',
+                settingsTemperature: 'Temperature',
+                settingsTopP: 'Top P',
+                settingsCanvasSectionTitle: 'Canvas Visualizations',
+                safety_title: 'Safety Settings',
+                models_safety_toggle_aria: 'Toggle safety settings',
+              })[String(key)] ?? String(key)
+            }
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="model-selector"]')).not.toBeNull();
+    expect(mockModelSelector.lastProps.defaultModels).toBe(defaultModels);
+    expect(container.textContent).toContain('System prompt');
+    expect(container.textContent).toContain('Temperature');
+    expect(container.textContent).toContain('Top P');
+    expect(container.textContent).not.toContain('Top K');
+    expect(container.textContent).not.toContain('Canvas Visualizations');
+    expect(container.textContent).not.toContain('Safety Settings');
+    expect(container.querySelector('[data-testid="language-voice-section"]')).toBeNull();
+    expect(container.querySelector<HTMLButtonElement>('button[aria-label="Toggle safety settings"]')).toBeNull();
   });
 });

@@ -40,4 +40,24 @@ describe('ApiProxySettings', () => {
       'https://api-proxy.de/gemini/v1beta/models/gemini-3-flash-preview:generateContent',
     );
   });
+
+  it('collapses proxy URL details while proxy usage is off', () => {
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ApiProxySettings
+            useApiProxy={false}
+            setUseApiProxy={vi.fn()}
+            apiProxyUrl="http://localhost:7860/v1beta"
+            setApiProxyUrl={vi.fn()}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(document.body).toHaveTextContent('Use Proxy Endpoint');
+    expect(document.body).not.toHaveTextContent('Reset');
+    expect(document.body).not.toHaveTextContent('Request URL Preview');
+    expect(container.querySelector('#api-proxy-url-input')).toBeNull();
+  });
 });

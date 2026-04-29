@@ -12,6 +12,7 @@ import { ThinkingControl } from '../controls/thinking/ThinkingControl';
 import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
 
 interface GenerationSectionProps {
+  isOpenAICompatibleMode?: boolean;
   modelId: string;
   systemInstruction: string;
   setSystemInstruction: (value: string) => void;
@@ -39,6 +40,7 @@ interface GenerationSectionProps {
 }
 
 export const GenerationSection: React.FC<GenerationSectionProps> = ({
+  isOpenAICompatibleMode = false,
   modelId,
   systemInstruction,
   setSystemInstruction,
@@ -100,16 +102,18 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <ThinkingControl
-        modelId={modelId}
-        thinkingBudget={thinkingBudget}
-        setThinkingBudget={setThinkingBudget}
-        thinkingLevel={thinkingLevel}
-        setThinkingLevel={setThinkingLevel}
-        showThoughts={showThoughts}
-        setShowThoughts={setShowThoughts}
-        t={t}
-      />
+      {!isOpenAICompatibleMode && (
+        <ThinkingControl
+          modelId={modelId}
+          thinkingBudget={thinkingBudget}
+          setThinkingBudget={setThinkingBudget}
+          thinkingLevel={thinkingLevel}
+          setThinkingLevel={setThinkingLevel}
+          showThoughts={showThoughts}
+          setShowThoughts={setShowThoughts}
+          t={t}
+        />
+      )}
 
       <div className="pt-2">
         <div className="flex justify-between items-center mb-2">
@@ -186,7 +190,10 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
       <div className="pt-4 space-y-5">
         <div>
           <div className="flex justify-between mb-2">
-            <label htmlFor="temperature-slider" className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center">
+            <label
+              htmlFor="temperature-slider"
+              className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center"
+            >
               {t('settingsTemperature')}
               <Tooltip text={t('chatBehavior_temp_tooltip')}>
                 <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
@@ -208,7 +215,10 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
 
         <div>
           <div className="flex justify-between mb-2">
-            <label htmlFor="top-p-slider" className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center">
+            <label
+              htmlFor="top-p-slider"
+              className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center"
+            >
               {t('settingsTopP')}
               <Tooltip text={t('chatBehavior_topP_tooltip')}>
                 <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
@@ -228,29 +238,34 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
           />
         </div>
 
-        <div>
-          <div className="flex justify-between mb-2">
-            <label htmlFor="top-k-slider" className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center">
-              Top K
-              <Tooltip text="Limits sampling to the K most probable tokens. Gemma 4 recommends 64. Set to 0 to disable.">
-                <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
-              </Tooltip>
-            </label>
-            <span className="text-sm font-mono text-[var(--theme-text-link)]">{topK}</span>
+        {!isOpenAICompatibleMode && (
+          <div>
+            <div className="flex justify-between mb-2">
+              <label
+                htmlFor="top-k-slider"
+                className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center"
+              >
+                Top K
+                <Tooltip text="Limits sampling to the K most probable tokens. Gemma 4 recommends 64. Set to 0 to disable.">
+                  <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
+                </Tooltip>
+              </label>
+              <span className="text-sm font-mono text-[var(--theme-text-link)]">{topK}</span>
+            </div>
+            <input
+              id="top-k-slider"
+              type="range"
+              min="0"
+              max="128"
+              step="1"
+              value={topK}
+              onChange={(event) => setTopK(parseInt(event.target.value, 10))}
+              className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
+            />
           </div>
-          <input
-            id="top-k-slider"
-            type="range"
-            min="0"
-            max="128"
-            step="1"
-            value={topK}
-            onChange={(event) => setTopK(parseInt(event.target.value, 10))}
-            className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
-          />
-        </div>
+        )}
 
-        {setMediaResolution && mediaResolution && (
+        {!isOpenAICompatibleMode && setMediaResolution && mediaResolution && (
           <Select
             id="media-resolution-select"
             label=""
@@ -261,7 +276,9 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
                 {t('settingsMediaResolution')}
                 <Tooltip
                   text={
-                    isNativeAudio ? 'Controls video/audio resolution for Live API.' : t('settingsMediaResolution_tooltip')
+                    isNativeAudio
+                      ? 'Controls video/audio resolution for Live API.'
+                      : t('settingsMediaResolution_tooltip')
                   }
                 >
                   <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
@@ -273,8 +290,12 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
           >
             <option value={MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED}>{t('mediaResolution_unspecified')}</option>
             <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
-            {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>}
-            {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>}
+            {!isNativeAudio && (
+              <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>
+            )}
+            {!isNativeAudio && (
+              <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>
+            )}
             {!isNativeAudio && supportsUltraHighResolution && (
               <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>
             )}
@@ -282,41 +303,43 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
         )}
       </div>
 
-      <div className="pt-6 border-t border-[var(--theme-border-secondary)] space-y-1">
-        <Select
-          id="tts-voice-select"
-          label=""
-          layout="horizontal"
-          labelContent={
-            <span className="flex items-center text-sm font-medium text-[var(--theme-text-primary)]">
-              <AudioLines size={14} className="mr-2 text-[var(--theme-text-secondary)]" />
-              {t('settingsTtsVoice')}
-            </span>
-          }
-          value={ttsVoice}
-          onChange={(event) => setTtsVoice(event.target.value)}
-          className="py-3"
-        >
-          {AVAILABLE_TTS_VOICES.map((voice) => (
-            <option key={voice.id} value={voice.id}>
-              {voice.name} ({t(voice.styleKey)})
-            </option>
-          ))}
-        </Select>
+      {!isOpenAICompatibleMode && (
+        <div className="pt-6 border-t border-[var(--theme-border-secondary)] space-y-1">
+          <Select
+            id="tts-voice-select"
+            label=""
+            layout="horizontal"
+            labelContent={
+              <span className="flex items-center text-sm font-medium text-[var(--theme-text-primary)]">
+                <AudioLines size={14} className="mr-2 text-[var(--theme-text-secondary)]" />
+                {t('settingsTtsVoice')}
+              </span>
+            }
+            value={ttsVoice}
+            onChange={(event) => setTtsVoice(event.target.value)}
+            className="py-3"
+          >
+            {AVAILABLE_TTS_VOICES.map((voice) => (
+              <option key={voice.id} value={voice.id}>
+                {voice.name} ({t(voice.styleKey)})
+              </option>
+            ))}
+          </Select>
 
-        <ToggleItem
-          label={t('settings_rawMode_label')}
-          checked={isRawModeEnabled}
-          onChange={setIsRawModeEnabled}
-          tooltip={t('settings_rawMode_tooltip')}
-        />
-        <ToggleItem
-          label={t('settings_hideThinkingInContext_label')}
-          checked={hideThinkingInContext}
-          onChange={setHideThinkingInContext}
-          tooltip={t('settings_hideThinkingInContext_tooltip')}
-        />
-      </div>
+          <ToggleItem
+            label={t('settings_rawMode_label')}
+            checked={isRawModeEnabled}
+            onChange={setIsRawModeEnabled}
+            tooltip={t('settings_rawMode_tooltip')}
+          />
+          <ToggleItem
+            label={t('settings_hideThinkingInContext_label')}
+            checked={hideThinkingInContext}
+            onChange={setHideThinkingInContext}
+            tooltip={t('settings_hideThinkingInContext_tooltip')}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -103,14 +103,23 @@ describe('settingsStore', () => {
   });
 
   describe('loadSettings', () => {
-    it('defaults to Gemini Native API mode with the Gemini OpenAI-compatible base URL available as fallback', async () => {
+    it('defaults to Gemini Native API mode with isolated OpenAI-compatible settings', async () => {
       vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
 
       await useSettingsStore.getState().loadSettings();
 
       const { appSettings } = useSettingsStore.getState();
       expect(appSettings.apiMode).toBe('gemini-native');
-      expect(appSettings.openaiCompatibleBaseUrl).toBe('https://generativelanguage.googleapis.com/v1beta/openai');
+      expect(appSettings.apiKey).toBeNull();
+      expect(appSettings.openaiCompatibleApiKey).toBeNull();
+      expect(appSettings.openaiCompatibleBaseUrl).toBe('https://api.openai.com/v1');
+      expect(appSettings.modelId).toBe('gemini-3-flash-preview');
+      expect(appSettings.openaiCompatibleModelId).toBe('gpt-5.5');
+      expect(appSettings.openaiCompatibleModels).toEqual([
+        { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+        { id: 'gpt-5.1', name: 'GPT-5.1', isPinned: true },
+        { id: 'gpt-4.1', name: 'GPT-4.1' },
+      ]);
     });
 
     it('provides English as the default input translation target language', async () => {
@@ -161,6 +170,23 @@ describe('settingsStore', () => {
       expect(state.appSettings.language).toBe('zh');
       expect(state.appSettings.topP).toBe(0.95);
       expect(state.isSettingsLoaded).toBe(true);
+    });
+
+    it('loads OpenAI-compatible model settings without changing the Gemini model setting', async () => {
+      vi.mocked(dbService.getAppSettings).mockResolvedValue({
+        modelId: 'gemini-3.1-pro-preview',
+        openaiCompatibleModelId: 'openai/custom-gpt',
+        openaiCompatibleModels: [{ id: 'openai/custom-gpt', name: 'Custom GPT', isPinned: true }],
+      } as any);
+
+      await useSettingsStore.getState().loadSettings();
+
+      const { appSettings } = useSettingsStore.getState();
+      expect(appSettings.modelId).toBe('gemini-3.1-pro-preview');
+      expect(appSettings.openaiCompatibleModelId).toBe('openai/custom-gpt');
+      expect(appSettings.openaiCompatibleModels).toEqual([
+        { id: 'openai/custom-gpt', name: 'Custom GPT', isPinned: true },
+      ]);
     });
 
     it('sets isSettingsLoaded when no stored settings', async () => {

@@ -290,7 +290,10 @@ describe('useStandardChat', () => {
       useStandardChat({
         appSettings: {
           apiMode: 'openai-compatible',
-          openaiCompatibleBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+          apiKey: 'gemini-key',
+          openaiCompatibleApiKey: 'openai-key',
+          openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+          openaiCompatibleModelId: 'gpt-5.5',
           hideThinkingInContext: false,
           isRawModeEnabled: false,
           autoCanvasVisualization: false,
@@ -344,11 +347,11 @@ describe('useStandardChat', () => {
     expect(mockSendMessageStream).not.toHaveBeenCalled();
     expect(mockSendOpenAICompatibleMessageStream).toHaveBeenCalledWith(
       'api-key',
-      'gemini-3-flash-preview',
+      'gpt-5.5',
       [],
       [{ text: 'analyze the csv' }],
       {
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        baseUrl: 'https://api.openai.com/v1',
         systemInstruction: 'Custom system instruction',
         temperature: 1,
         topP: 0.95,
@@ -358,6 +361,96 @@ describe('useStandardChat', () => {
       onThoughtChunk,
       streamOnError,
       streamOnComplete,
+      'user',
+    );
+
+    unmount();
+  });
+
+  it('routes non-stream OpenAI-compatible chat with the independent OpenAI model id', async () => {
+    const streamOnError = vi.fn();
+    const streamOnComplete = vi.fn();
+    const streamOnPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete,
+      streamOnPart,
+      onThoughtChunk,
+    }));
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          apiMode: 'openai-compatible',
+          apiKey: 'gemini-key',
+          openaiCompatibleApiKey: 'openai-key',
+          openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+          openaiCompatibleModelId: 'gpt-4.1-custom',
+          hideThinkingInContext: false,
+          isRawModeEnabled: false,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: false,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: true,
+          isCodeExecutionEnabled: true,
+          isLocalPythonEnabled: true,
+          isUrlContextEnabled: true,
+          isDeepSearchEnabled: true,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.sendStandardMessage('hello through compat', [], null, 'gemini-3-flash-preview');
+    });
+
+    expect(mockBuildGenerationConfig).not.toHaveBeenCalled();
+    expect(mockSendMessageNonStream).not.toHaveBeenCalled();
+    expect(mockSendOpenAICompatibleMessageNonStream).toHaveBeenCalledWith(
+      'api-key',
+      'gpt-4.1-custom',
+      [],
+      [{ text: 'analyze the csv' }],
+      {
+        baseUrl: 'https://api.openai.com/v1',
+        systemInstruction: 'Custom system instruction',
+        temperature: 1,
+        topP: 0.95,
+      },
+      expect.any(AbortSignal),
+      streamOnError,
+      expect.any(Function),
       'user',
     );
 

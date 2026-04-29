@@ -1,4 +1,4 @@
-import { AppSettings, FilesApiConfig, TranslationTargetLanguage } from '../types';
+import { AppSettings, FilesApiConfig, ModelOption, TranslationTargetLanguage } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
 export * from './modelConstants';
@@ -28,6 +28,12 @@ const DEFAULT_BASE_FONT_SIZE = 16;
 const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
 const DEFAULT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'English';
 const DEFAULT_THOUGHT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'Simplified Chinese';
+export const DEFAULT_OPENAI_COMPATIBLE_MODEL_ID = 'gpt-5.5';
+export const DEFAULT_OPENAI_COMPATIBLE_MODELS: ModelOption[] = [
+  { id: DEFAULT_OPENAI_COMPATIBLE_MODEL_ID, name: 'GPT-5.5', isPinned: true },
+  { id: 'gpt-5.1', name: 'GPT-5.1', isPinned: true },
+  { id: 'gpt-4.1', name: 'GPT-4.1' },
+];
 
 export const TRANSLATION_TARGET_LANGUAGE_OPTIONS: Array<{
   value: TranslationTargetLanguage;
@@ -121,7 +127,10 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   serverManagedApi: false,
   apiKey: null,
   apiProxyUrl: 'https://api-proxy.de/gemini',
+  openaiCompatibleApiKey: null,
   openaiCompatibleBaseUrl: DEFAULT_OPENAI_COMPATIBLE_BASE_URL,
+  openaiCompatibleModelId: DEFAULT_OPENAI_COMPATIBLE_MODEL_ID,
+  openaiCompatibleModels: DEFAULT_OPENAI_COMPATIBLE_MODELS,
   useApiProxy: false,
   language: 'system',
   translationTargetLanguage: DEFAULT_TRANSLATION_TARGET_LANGUAGE,

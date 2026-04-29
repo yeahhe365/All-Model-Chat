@@ -78,8 +78,38 @@ describe('ModelPicker behavior', () => {
     expect(container.querySelector('[data-badge-key="tts"]')).toBeNull();
     expect(container.querySelector('[data-badge-key="image"]')).toBeNull();
     expect(container.querySelector('[data-badge-key="robotics"]')).toBeNull();
+    expect(container.querySelector('[data-provider-section="gemini-native"]')).toBeNull();
+    expect(container.querySelector('[data-provider-section="openai-compatible"]')).toBeNull();
     expect(container.textContent).not.toContain('Pinned');
     expect(container.textContent).not.toContain('Speech');
     expect(container.textContent).toContain('Gemini 3.1 Flash TTS Preview');
+  });
+
+  it('groups models by provider when provider metadata is available', () => {
+    act(() => {
+      root.render(
+        renderPicker({
+          models: [
+            { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+            { id: 'gpt-5.5', name: 'GPT-5.5', apiMode: 'openai-compatible' },
+          ],
+          selectedId: 'gemini-3-flash-preview',
+        }),
+      );
+    });
+
+    act(() => {
+      container
+        .querySelector('[data-testid="model-picker-trigger"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const geminiSection = container.querySelector('[data-provider-section="gemini-native"]');
+    const openAISection = container.querySelector('[data-provider-section="openai-compatible"]');
+
+    expect(geminiSection?.textContent).toContain('Gemini');
+    expect(geminiSection?.textContent).toContain('Gemini 3 Flash Preview');
+    expect(openAISection?.textContent).toContain('OpenAI Compatible');
+    expect(openAISection?.textContent).toContain('GPT-5.5');
   });
 });

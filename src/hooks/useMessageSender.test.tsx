@@ -480,6 +480,75 @@ describe('useMessageSender', () => {
     unmount();
   });
 
+  it('uses the independent OpenAI-compatible model before applying Gemini model routing', async () => {
+    mockGetModelCapabilities.mockImplementation((modelId: string) => ({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: modelId === 'gemini-3-pro-image-preview',
+    }));
+
+    const setAppFileError = vi.fn();
+    const selectedFiles = [
+      {
+        id: 'file-1',
+        name: 'reference.pdf',
+        type: 'application/pdf',
+        size: 123,
+        uploadState: 'active',
+      } as any,
+    ];
+
+    const { result, unmount } = renderHook(() =>
+      useMessageSender({
+        appSettings: {
+          apiMode: 'openai-compatible',
+          openaiCompatibleModelId: 'gpt-5.5',
+          isAutoScrollOnSendEnabled: true,
+          generateQuadImages: false,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-pro-image-preview',
+        } as any,
+        messages: [],
+        selectedFiles,
+        setSelectedFiles: vi.fn(),
+        editingMessageId: null,
+        setEditingMessageId: vi.fn(),
+        setAppFileError,
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: null,
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        updateAndPersistSessions: vi.fn(),
+        sessionKeyMapRef: { current: new Map() },
+        language: 'zh',
+        setSessionLoading: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSendMessage({ text: 'summarize this PDF' });
+    });
+
+    expect(mockGetModelCapabilities).toHaveBeenCalledWith('gpt-5.5');
+    expect(setAppFileError).toHaveBeenCalledWith(null);
+    expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
+    expect(mockSendStandardMessage).toHaveBeenCalledWith(
+      'summarize this PDF',
+      selectedFiles,
+      null,
+      'gpt-5.5',
+      false,
+      false,
+    );
+    unmount();
+  });
+
   it('creates a localized error session when no model is selected', async () => {
     const setActiveSessionId = vi.fn();
     const updateAndPersistSessions = vi.fn((updater) => updater([]));

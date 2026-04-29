@@ -82,6 +82,39 @@ describe('getKeyForRequest', () => {
     });
   });
 
+  it('uses the dedicated OpenAI-compatible key without mutating Gemini API keys', () => {
+    const result = getKeyForRequest(
+      {
+        ...DEFAULT_APP_SETTINGS,
+        apiMode: 'openai-compatible',
+        useCustomApiConfig: true,
+        apiKey: 'gemini-key',
+        openaiCompatibleApiKey: 'openai-key',
+      },
+      chatSettings,
+    );
+
+    expect(result).toEqual({
+      key: 'openai-key',
+      isNewKey: true,
+    });
+  });
+
+  it('reports a missing key for OpenAI-compatible mode when only Gemini keys exist', () => {
+    const result = getKeyForRequest(
+      {
+        ...DEFAULT_APP_SETTINGS,
+        apiMode: 'openai-compatible',
+        useCustomApiConfig: true,
+        apiKey: 'gemini-key',
+        openaiCompatibleApiKey: null,
+      },
+      chatSettings,
+    );
+
+    expect(result).toEqual({ error: 'API Key not configured.' });
+  });
+
   it('can select a key without recording usage for Live token setup', () => {
     const result = getKeyForRequest(
       {

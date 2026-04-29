@@ -111,4 +111,44 @@ describe('ModelListEditor', () => {
     expect(onSave).not.toHaveBeenCalled();
     expect(container.textContent).toContain('Model IDs must be unique.');
   });
+
+  it('resets to caller-provided defaults for independent model lists', async () => {
+    const onSave = vi.fn();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ModelListEditor
+            availableModels={[{ id: 'custom-openai-model', name: 'Custom OpenAI Model', isPinned: true }]}
+            defaultModels={[
+              { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+              { id: 'gpt-4.1', name: 'GPT-4.1' },
+            ]}
+            onSave={onSave}
+            setIsEditingList={vi.fn()}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    await act(async () => {
+      const resetButton = Array.from(container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Reset'),
+      );
+      resetButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    act(() => {
+      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Save List'),
+      );
+      saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onSave).toHaveBeenCalledWith([
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+      { id: 'gpt-4.1', name: 'GPT-4.1', isPinned: false },
+    ]);
+  });
 });

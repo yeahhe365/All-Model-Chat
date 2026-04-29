@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ChatMessage, SavedChatSession } from '../../types';
+import type { AppSettings, ChatMessage, ModelOption, SavedChatSession } from '../../types';
 import { useApp } from './useApp';
 
 const mockSetIsHistorySidebarOpen = vi.fn();
@@ -45,7 +45,7 @@ type MockChatState = ReturnType<typeof buildChatState>;
 const buildChatState = () => ({
   activeChat: hydratedSession as SavedChatSession | undefined,
   activeSessionId: 'session-1',
-  apiModels: [],
+  apiModels: [] as ModelOption[],
   currentChatSettings: hydratedSession.settings,
   handleSaveAllScenarios: vi.fn(),
   handleSelectModelInHeader: vi.fn(),
@@ -392,6 +392,33 @@ describe('useApp', () => {
     expect(currentChatState.activeChat.settings.temperature).toBe(1.2);
     expect(currentAppSettings.modelId).toBe('default-model');
     expect(currentAppSettings.temperature).toBe(0.8);
+
+    unmount();
+  });
+
+  it('displays the independent OpenAI-compatible model name in OpenAI-compatible mode', () => {
+    currentAppSettings = {
+      ...currentAppSettings,
+      apiMode: 'openai-compatible',
+      modelId: 'gemini-3-flash-preview',
+      openaiCompatibleModelId: 'gpt-5.5',
+      openaiCompatibleModels: [
+        { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+        { id: 'gpt-4.1', name: 'GPT-4.1' },
+      ],
+    } as AppSettings;
+    currentChatState.activeChat = {
+      ...hydratedSession,
+      settings: {
+        ...hydratedSession.settings,
+        modelId: 'gemini-3-flash-preview',
+      } as SavedChatSession['settings'],
+    };
+    currentChatState.apiModels = [{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }];
+
+    const { result, unmount } = renderHook(() => useApp());
+
+    expect(result.current.getCurrentModelDisplayName()).toBe('GPT-5.5');
 
     unmount();
   });

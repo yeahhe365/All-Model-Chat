@@ -7,7 +7,7 @@
 <div align="center">
 
   <p>
-    <strong>All-in-one Model Console WebUI，基于 Google Gemini API 的全能 AI 交互工作台</strong>
+    <strong>All-in-one Model Console WebUI，以 Gemini 原生能力为主，同时支持 OpenAI 兼容标准聊天 API</strong>
   </p>
 
   <p>
@@ -43,12 +43,28 @@
 
 ## 项目简介
 
-**AMC WebUI** 是一款基于 React 18 的 All-in-one Model Console WebUI，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据默认存储于浏览器 IndexedDB，在保障隐私的同时提供流畅体验；同时支持新增的独立后端部署模式，用于服务端托管 Gemini 密钥与代理请求。
+**AMC WebUI** 是一款基于 React 18 的 All-in-one Model Console WebUI，主打 Google Gemini 原生能力，并提供额外的 **OpenAI 兼容标准聊天模式**。项目坚持 **Local-First** 原则：聊天数据默认存储于浏览器 IndexedDB，在保障隐私的同时提供流畅体验；同时支持独立后端部署模式，用于服务端托管 Gemini 密钥与代理请求。
 
 当前仓库围绕 **Vite + React SPA** 作为唯一主线构建形态：
 - **标准模式**：本地通过 Vite 开发 / 构建，适合日常开发与静态部署
 - **Docker 部署模式**：`web + api` 双服务部署，普通 Gemini 请求走 `/api/gemini/*`，Live API 由浏览器使用本地 key 直连
 - **静态前端 + 独立 API 模式**：前端部署到 Pages/CDN，后端单独托管 Node API 服务
+
+## API 模式说明
+
+### Gemini 原生模式
+- 项目的主能力路径，适用于 Thinking、Live API、Gemini Files API、Deep Search、Google Search、代码执行、图片生成等 Gemini 专属能力
+- 可结合 AMC 自带的 Gemini 代理与服务端托管密钥能力使用
+
+### OpenAI 兼容模式
+- 面向 **标准聊天** 的兼容路径，使用独立的 API Key、Base URL 和模型列表
+- 请求会发送到 `POST {Base URL}/chat/completions`，适用于 OpenAI 官方接口、Gemini 的 OpenAI 兼容端点，或其他兼容 `chat/completions` 的服务
+- 支持普通响应与流式响应，并保留系统提示词、`temperature`、`top_p` 等通用聊天参数
+
+### 需要注意
+- OpenAI 兼容模式 **不会覆盖** Gemini 原生配置；两套 Key 分开保存，模型列表也独立维护
+- OpenAI 兼容模式当前 **不走 Gemini 原生工具链**；README 中提到的 Gemini 专属能力，仍以 Gemini 原生模式为准
+- OpenAI 兼容 Base URL 应填写到接口根路径，例如 `https://api.openai.com/v1`；应用会自动补上 `/chat/completions`
 
 ---
 
@@ -90,8 +106,10 @@
 - **Imagen 4.0 图片生成**：支持 Fast / Standard / Ultra 三档，可配置宽高比与尺寸
 
 ### 企业级 API 管理
-- **多 Key 轮询**：支持填入多个 API Key 自动分担压力
-- **API 代理**：支持通过 SDK 原生 `baseUrl` 配置接入自定义 Gemini API 代理
+- **双 API 模式**：支持在 Gemini 原生 与 OpenAI 兼容 两条请求路径之间切换
+- **多 Key 轮询**：Gemini 原生 Key 与 OpenAI 兼容 Key 均支持多 Key 轮询
+- **配置隔离**：OpenAI 兼容模式使用独立 Key、独立 Base URL、独立模型列表，不会污染 Gemini 设置
+- **Gemini API 代理**：Gemini 原生模式支持通过 SDK 原生 `baseUrl` 配置接入自定义 Gemini API 代理
 
 ### 多语言界面
 - 支持中文 / 英文 / 跟随系统三种语言设置
@@ -155,7 +173,19 @@ npm run dev
 
 ```bash
 GEMINI_API_KEY=your_api_key_here
+VITE_OPENAI_API_KEY=your_openai_compatible_key_here
 ```
+
+如需切换到 OpenAI 兼容模式：
+1. 进入 **设置 -> API 配置**，将 API 模式切换为 **OpenAI 兼容**
+2. 填写 OpenAI 兼容 API Key，或在 `.env.local` 中预置 `VITE_OPENAI_API_KEY`
+3. 填写 OpenAI 兼容 Base URL，例如 `https://api.openai.com/v1`
+4. 进入 **设置 -> 模型**，选择或编辑该模式下独立维护的模型列表
+
+示例 Base URL：
+- OpenAI 官方：`https://api.openai.com/v1`
+- Gemini OpenAI 兼容端点：`https://generativelanguage.googleapis.com/v1beta/openai`
+- 其他兼容服务：填写其 `chat/completions` 所属的 `/v1` 或等价根路径
 
 ### 方式二：Docker Compose（自用推荐）
 
@@ -202,6 +232,7 @@ docker compose up -d --build
 - 上述 `RUNTIME_*` 会在容器启动时写入 `runtime-config.js`，可被浏览器读取，因此只能放“可公开”信息。
 - 默认 BYOK 模式只需要在设置界面填写 API Key：普通 Gemini 代理会使用浏览器请求携带的 key；Live API 会使用浏览器本地 key 直接建立官方 Live WebSocket 连接，不再经过 AMC 后端换取临时 token。
 - 如需服务端统一托管普通 Gemini 请求的 key，可配置 `GEMINI_API_KEY` 并将 `RUNTIME_SERVER_MANAGED_API=true`；Live API 仍需要浏览器中可用的 API Key。
+- OpenAI 兼容模式当前不读取 `RUNTIME_API_PROXY_URL`、`RUNTIME_USE_API_PROXY` 或 `RUNTIME_SERVER_MANAGED_API`；它会直接使用设置里的 OpenAI 兼容 Base URL 和独立 Key 发起 `chat/completions` 请求。如需走你自己的网关，请直接把该网关地址填为 OpenAI 兼容 Base URL。
 - 浏览器本地 key 适合自用/可信部署。它不会因为“保存在本地”而变成服务器密钥，同一浏览器上下文中的脚本、扩展、XSS 或设备风险仍可能读取它。
 - 前端在部署时默认只依赖后端端点：`/api/gemini/*`；Live API 从浏览器直连官方 Live 服务。
 
@@ -223,6 +254,10 @@ npm run start:api
 RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
 ```
 4. 如需服务端统一托管普通 Gemini 请求的密钥，在后端环境设置 `GEMINI_API_KEY`；如果使用 BYOK，可不设置该变量。跨域部署时按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。Live API 不使用独立 API 服务的 token 端点，而是从浏览器直连。
+
+补充：
+- `server/` 当前承载的是 Gemini 原生代理链路；OpenAI 兼容模式默认不会经过这个 Node API 服务
+- 如果你希望 OpenAI 兼容模式也走自建网关，请把该网关的兼容 Base URL 直接填到前端设置中
 
 #### 可选：使用 AIStudioToAPI 作为 Gemini 兼容后端
 

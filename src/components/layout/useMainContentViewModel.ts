@@ -48,7 +48,7 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
   } = app;
   const { setAppSettings } = app;
   const { setIsHistorySidebarOpen, setIsHistorySidebarOpenTransient } = uiState;
-  const { loadChatSession, handleSendMessage } = chatState;
+  const { loadChatSession, handleSendMessage, handleSelectModelInHeader } = chatState;
 
   const isSettingsModalOpen = useUIStore((state) => state.isSettingsModalOpen);
   const setIsSettingsModalOpen = useUIStore((state) => state.setIsSettingsModalOpen);
@@ -241,6 +241,56 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
   );
 
   const currentModelName = getCurrentModelDisplayName();
+  const isOpenAICompatibleMode = appSettings.apiMode === 'openai-compatible';
+  const openAICompatibleModelIds = useMemo(
+    () => new Set(appSettings.openaiCompatibleModels.map((model) => model.id)),
+    [appSettings.openaiCompatibleModels],
+  );
+  const geminiModelIds = useMemo(() => new Set(chatState.apiModels.map((model) => model.id)), [chatState.apiModels]);
+  const headerAvailableModels = useMemo(() => {
+    const seenIds = new Set<string>();
+    const geminiModels = chatState.apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));
+    const openAICompatibleModels = appSettings.openaiCompatibleModels.map((model) => ({
+      ...model,
+      apiMode: 'openai-compatible' as const,
+    }));
+
+    return [...geminiModels, ...openAICompatibleModels].filter((model) => {
+      if (seenIds.has(model.id)) {
+        return false;
+      }
+
+      seenIds.add(model.id);
+      return true;
+    });
+  }, [appSettings.openaiCompatibleModels, chatState.apiModels]);
+  const headerSelectedModelId = isOpenAICompatibleMode
+    ? appSettings.openaiCompatibleModelId
+    : chatState.currentChatSettings.modelId || appSettings.modelId;
+  const handleHeaderSelectModel = useCallback(
+    (modelId: string) => {
+      const isOpenAICompatibleModel = openAICompatibleModelIds.has(modelId);
+      const isGeminiModel = geminiModelIds.has(modelId);
+
+      if (isOpenAICompatibleModel && (!isGeminiModel || isOpenAICompatibleMode)) {
+        setAppSettings((prev) => ({
+          ...prev,
+          apiMode: 'openai-compatible',
+          openaiCompatibleModelId: modelId,
+        }));
+        return;
+      }
+
+      if (isOpenAICompatibleMode) {
+        setAppSettings((prev) => ({
+          ...prev,
+          apiMode: 'gemini-native',
+        }));
+      }
+      handleSelectModelInHeader(modelId);
+    },
+    [geminiModelIds, handleSelectModelInHeader, isOpenAICompatibleMode, openAICompatibleModelIds, setAppSettings],
+  );
 
   const sidebarProps = useMemo(
     () => ({
@@ -384,8 +434,8 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
       },
       header: {
         currentModelName,
-        availableModels: chatState.apiModels,
-        selectedModelId: chatState.currentChatSettings.modelId || appSettings.modelId,
+        availableModels: headerAvailableModels,
+        selectedModelId: headerSelectedModelId,
         isCanvasPromptActive,
         isCanvasPromptBusy,
         isPipSupported: pipState.isPipSupported,
@@ -394,7 +444,7 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
         onOpenScenariosModal: openScenariosModal,
         onToggleHistorySidebar: toggleHistorySidebar,
         onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
-        onSelectModel: chatState.handleSelectModelInHeader,
+        onSelectModel: handleHeaderSelectModel,
         onSetThinkingLevel: handleSetThinkingLevel,
         onToggleGemmaReasoning,
         onTogglePip: pipState.togglePip,
@@ -402,28 +452,32 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
       messageActions,
       inputActions,
       features: {
-        isImageEditModel: chatState.currentChatSettings.modelId?.includes('image-preview'),
-        isBBoxModeActive: isBboxSystemInstruction(chatState.currentChatSettings.systemInstruction),
-        isGuideModeActive: isHdGuideSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        isImageEditModel: !isOpenAICompatibleMode && chatState.currentChatSettings.modelId?.includes('image-preview'),
+        isBBoxModeActive:
+          !isOpenAICompatibleMode && isBboxSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        isGuideModeActive:
+          !isOpenAICompatibleMode && isHdGuideSystemInstruction(chatState.currentChatSettings.systemInstruction),
         generateQuadImages: appSettings.generateQuadImages ?? false,
-        isGoogleSearchEnabled: !!chatState.currentChatSettings.isGoogleSearchEnabled,
-        isCodeExecutionEnabled: !!chatState.currentChatSettings.isCodeExecutionEnabled,
-        isLocalPythonEnabled: !!chatState.currentChatSettings.isLocalPythonEnabled,
-        isUrlContextEnabled: !!chatState.currentChatSettings.isUrlContextEnabled,
-        isDeepSearchEnabled: !!chatState.currentChatSettings.isDeepSearchEnabled,
+        isGoogleSearchEnabled: !isOpenAICompatibleMode && !!chatState.currentChatSettings.isGoogleSearchEnabled,
+        isCodeExecutionEnabled: !isOpenAICompatibleMode && !!chatState.currentChatSettings.isCodeExecutionEnabled,
+        isLocalPythonEnabled: !isOpenAICompatibleMode && !!chatState.currentChatSettings.isLocalPythonEnabled,
+        isUrlContextEnabled: !isOpenAICompatibleMode && !!chatState.currentChatSettings.isUrlContextEnabled,
+        isDeepSearchEnabled: !isOpenAICompatibleMode && !!chatState.currentChatSettings.isDeepSearchEnabled,
       },
     }),
     [
       appSettings,
       chatState.activeSessionId,
-      chatState.apiModels,
       chatState.currentChatSettings,
       chatState.editingMessageId,
       chatState.handleAppDragEnter,
       chatState.handleAppDragLeave,
       chatState.handleAppDragOver,
       chatState.handleAppDrop,
-      chatState.handleSelectModelInHeader,
+      handleHeaderSelectModel,
+      headerAvailableModels,
+      headerSelectedModelId,
+      isOpenAICompatibleMode,
       chatState.isAppDraggingOver,
       chatState.isLoading,
       chatState.messages,

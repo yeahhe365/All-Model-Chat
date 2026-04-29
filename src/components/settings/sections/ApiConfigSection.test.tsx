@@ -90,7 +90,7 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('API & Connections');
+    expect(container.textContent).not.toContain('API & Connections');
 
     const testButton = Array.from(container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Test Connection'),
@@ -139,10 +139,10 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('API & Connections');
+    expect(container.textContent).not.toContain('API & Connections');
     expect(container.textContent).toContain('Test Connection');
     expect(container.textContent).toContain('File Transfer Method');
-    expect(container.textContent).toContain('API Mode');
+    expect(container.textContent).not.toContain('API Mode');
     expect(container.textContent).toContain('Gemini Native');
     expect(container.textContent).toContain('OpenAI Compatible');
 
@@ -150,10 +150,10 @@ describe('ApiConfigSection', () => {
       useSettingsStore.setState({ language: 'zh' });
     });
 
-    expect(container.textContent).toContain('API 与连接');
+    expect(container.textContent).not.toContain('API 与连接');
     expect(container.textContent).toContain('测试连通性');
     expect(container.textContent).toContain('文件传输方式');
-    expect(container.textContent).toContain('API 模式');
+    expect(container.textContent).not.toContain('API 模式');
   });
 
   it('renders API mode choices as one segmented control surface', async () => {
@@ -190,7 +190,7 @@ describe('ApiConfigSection', () => {
     expect(modeButtons[1].className.split(/\s+/)).not.toContain('border');
   });
 
-  it('tests the OpenAI-compatible endpoint when that global API mode is selected', async () => {
+  it('tests the OpenAI-compatible endpoint with the isolated OpenAI key when that global API mode is selected', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
       root.render(
@@ -198,7 +198,7 @@ describe('ApiConfigSection', () => {
           <ApiConfigSection
             useCustomApiConfig
             setUseCustomApiConfig={vi.fn()}
-            apiKey="openai-compatible-key"
+            apiKey="gemini-key"
             setApiKey={vi.fn()}
             apiProxyUrl={null}
             setApiProxyUrl={vi.fn()}
@@ -209,7 +209,9 @@ describe('ApiConfigSection', () => {
             settings={{
               ...settingsFixture,
               apiMode: 'openai-compatible',
-              openaiCompatibleBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+              openaiCompatibleApiKey: 'openai-compatible-key',
+              openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+              openaiCompatibleModelId: 'gpt-5.5',
             }}
             onUpdate={vi.fn()}
           />
@@ -228,17 +230,62 @@ describe('ApiConfigSection', () => {
     expect(getClientMock).not.toHaveBeenCalled();
     expect(sendOpenAICompatibleMessageNonStreamMock).toHaveBeenCalledWith(
       'openai-compatible-key',
-      'gemini-3-flash-preview',
+      'gpt-5.5',
       [],
       [{ text: 'Hello' }],
       {
-        baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        baseUrl: 'https://api.openai.com/v1',
         temperature: 0,
       },
       expect.any(AbortSignal),
       expect.any(Function),
       expect.any(Function),
     );
+  });
+
+  it('edits the OpenAI-compatible API key without overwriting the Gemini API key', async () => {
+    const setApiKey = vi.fn();
+    const onUpdate = vi.fn();
+
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <ApiConfigSection
+            useCustomApiConfig
+            setUseCustomApiConfig={vi.fn()}
+            apiKey="gemini-key"
+            setApiKey={setApiKey}
+            apiProxyUrl={null}
+            setApiProxyUrl={vi.fn()}
+            useApiProxy={false}
+            setUseApiProxy={vi.fn()}
+            serverManagedApi={false}
+            availableModels={[]}
+            settings={{
+              ...settingsFixture,
+              apiMode: 'openai-compatible',
+              openaiCompatibleApiKey: null,
+              openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+            }}
+            onUpdate={onUpdate}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    const apiKeyInput = container.querySelector('#api-key-input') as HTMLTextAreaElement | null;
+    expect(apiKeyInput).not.toBeNull();
+
+    await act(async () => {
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+      descriptor?.set?.call(apiKeyInput, 'sk-openai');
+      apiKeyInput!.dispatchEvent(new Event('input', { bubbles: true }));
+      apiKeyInput!.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(setApiKey).not.toHaveBeenCalled();
+    expect(onUpdate).toHaveBeenCalledWith('openaiCompatibleApiKey', 'sk-openai');
   });
 
   it('explains that Live uses the browser API key directly without token endpoint settings', async () => {

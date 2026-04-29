@@ -2,6 +2,7 @@ export interface ModelOption {
   id: string;
   name: string;
   isPinned?: boolean;
+  apiMode?: ApiMode;
 }
 
 export enum HarmCategory {
@@ -84,7 +85,10 @@ export interface AppSettings extends ChatSettings {
   serverManagedApi?: boolean;
   apiKey: string | null;
   apiProxyUrl: string | null;
+  openaiCompatibleApiKey: string | null;
   openaiCompatibleBaseUrl: string | null;
+  openaiCompatibleModelId: string;
+  openaiCompatibleModels: ModelOption[];
   useApiProxy?: boolean;
   language: 'en' | 'zh' | 'system';
   translationTargetLanguage: TranslationTargetLanguage;

@@ -9,6 +9,7 @@ interface ModelSelectorProps {
   selectedModelId: string;
   onSelectModel: (id: string) => void;
   setAvailableModels: (models: ModelOption[]) => void;
+  defaultModels?: ModelOption[];
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
@@ -16,6 +17,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   selectedModelId,
   onSelectModel,
   setAvailableModels,
+  defaultModels,
 }) => {
   const [isEditingList, setIsEditingList] = useState(false);
 
@@ -26,6 +28,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       {isEditingList ? (
         <ModelListEditor
           availableModels={availableModels}
+          defaultModels={defaultModels}
           onSave={setAvailableModels}
           setIsEditingList={setIsEditingList}
         />

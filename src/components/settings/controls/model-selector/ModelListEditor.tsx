@@ -6,6 +6,7 @@ import { useI18n } from '../../../../contexts/I18nContext';
 
 interface ModelListEditorProps {
   availableModels: ModelOption[];
+  defaultModels?: ModelOption[];
   onSave: (models: ModelOption[]) => void;
   setIsEditingList: (value: boolean) => void;
 }
@@ -20,7 +21,12 @@ const toEditableRows = (models: ModelOption[]): EditableModelRow[] =>
     _rowId: createRowId(),
   }));
 
-export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModels, onSave, setIsEditingList }) => {
+export const ModelListEditor: React.FC<ModelListEditorProps> = ({
+  availableModels,
+  defaultModels,
+  onSave,
+  setIsEditingList,
+}) => {
   const { t } = useI18n();
   const [tempModels, setTempModels] = useState<EditableModelRow[]>(() => toEditableRows(availableModels));
   const [validationMessage, setValidationMessage] = useState('');
@@ -50,6 +56,11 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
 
   const handleResetDefaults = async () => {
     if (window.confirm(t('settingsResetModelListConfirm'))) {
+      if (defaultModels) {
+        setTempModels(toEditableRows(defaultModels));
+        return;
+      }
+
       const { getDefaultModelOptions } = await import('../../../../utils/defaultModelOptions');
       setTempModels(toEditableRows(getDefaultModelOptions()));
     }

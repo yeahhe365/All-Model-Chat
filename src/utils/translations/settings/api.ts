@@ -4,9 +4,14 @@ export const apiSettings = {
   settingsApiModeGeminiNative: { en: 'Gemini Native', zh: 'Gemini 原生' },
   settingsApiModeOpenAICompatible: { en: 'OpenAI Compatible', zh: 'OpenAI 兼容' },
   settingsOpenAICompatibleBaseUrl: { en: 'OpenAI-Compatible Base URL', zh: 'OpenAI 兼容基础 URL' },
+  settingsOpenAICompatibleApiKey: { en: 'OpenAI-Compatible API Keys', zh: 'OpenAI 兼容 API 密钥' },
   settingsOpenAICompatibleHelp: {
     en: 'Used only when OpenAI Compatible mode is selected. Gemini Native requests keep using the existing Gemini API settings.',
     zh: '仅在选择 OpenAI 兼容模式时使用。Gemini 原生请求仍使用现有 Gemini API 设置。',
+  },
+  settingsOpenAICompatibleApiKeyHelp: {
+    en: 'Stored separately from Gemini API keys. Use this for OpenAI or GPT-compatible providers.',
+    zh: '与 Gemini API 密钥分开保存。用于 OpenAI 或 GPT 兼容服务。',
   },
   settingsUseCustomApi: { en: 'Use Custom API Settings', zh: '使用自定义 API 设置' },
   settingsApiKey: { en: 'Gemini API Keys', zh: 'Gemini API 密钥' },
@@ -19,6 +24,10 @@ export const apiSettings = {
     zh: '当前正在使用环境中的 API 设置。打开此项可手动覆盖。',
   },
   apiConfig_key_placeholder: { en: 'Enter your Gemini API keys', zh: '输入您的 Gemini API 密钥' },
+  apiConfig_openai_key_placeholder: {
+    en: 'Enter your OpenAI-compatible API keys',
+    zh: '输入您的 OpenAI 兼容 API 密钥',
+  },
   apiConfig_key_placeholder_disabled: { en: 'Using default', zh: '使用默认值' },
   apiConfig_testConnection: { en: 'Test Connection', zh: '测试连通性' },
   apiConfig_testing: { en: 'Testing...', zh: '测试中...' },

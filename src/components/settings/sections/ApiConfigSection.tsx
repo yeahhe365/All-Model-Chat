@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { KeyRound, RadioTower, ServerCog } from 'lucide-react';
+import { RadioTower } from 'lucide-react';
 import type { AppSettings, ModelOption } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
-import { useResponsiveValue } from '../../../hooks/useDevice';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
 import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
 import { getClient } from '../../../services/api/apiClient';
@@ -53,10 +52,11 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
   const overflowTimerRef = useRef<number | null>(null);
-  const viteEnv = (import.meta as ImportMeta & { env?: { VITE_GEMINI_API_KEY?: string } }).env;
+  const viteEnv = (import.meta as ImportMeta & { env?: { VITE_GEMINI_API_KEY?: string; VITE_OPENAI_API_KEY?: string } })
+    .env;
 
-  const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!viteEnv?.VITE_GEMINI_API_KEY;
+  const hasOpenAIEnvKey = !!viteEnv?.VITE_OPENAI_API_KEY;
   const canUseServerManagedTestKey = isServerManagedApiEnabledForProxyRequests({
     serverManagedApi,
     useCustomApiConfig,
@@ -65,6 +65,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   });
   const apiMode = settings.apiMode ?? 'gemini-native';
   const isOpenAICompatibleMode = apiMode === 'openai-compatible';
+  const openaiCompatibleApiKey = settings.openaiCompatibleApiKey;
 
   useEffect(() => {
     return () => {
@@ -96,6 +97,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
   const handleTestConnection = async () => {
     const resolveKeyToTest = (): string | null => {
+      if (isOpenAICompatibleMode) {
+        return openaiCompatibleApiKey || viteEnv?.VITE_OPENAI_API_KEY || null;
+      }
       if (apiKey) return apiKey;
       if (!useCustomApiConfig && hasEnvKey) {
         return viteEnv?.VITE_GEMINI_API_KEY || null;
@@ -106,7 +110,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
     const keyToTest = resolveKeyToTest();
 
-    if (!keyToTest && useCustomApiConfig && !canUseServerManagedTestKey) {
+    if (!isOpenAICompatibleMode && !keyToTest && useCustomApiConfig && !canUseServerManagedTestKey) {
       setTestStatus('error');
       setTestMessage(t('apiConfig_noKeyProvided'));
       return;
@@ -133,7 +137,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     setTestMessage(null);
 
     try {
-      const modelIdToUse = testModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
+      const modelIdToUse = isOpenAICompatibleMode
+        ? settings.openaiCompatibleModelId || settings.modelId
+        : testModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
 
       if (isOpenAICompatibleMode) {
         let compatibleError: Error | null = null;
@@ -181,21 +187,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
-          <KeyRound size={iconSize} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
-          {t('settingsApiConfig')}
-        </h3>
-      </div>
-
       <div>
         <div className="space-y-3 pb-4">
-          <div className="flex items-center gap-2">
-            <ServerCog size={15} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
-            <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
-              {t('settingsApiModeLabel')}
-            </label>
-          </div>
           <div
             role="group"
             aria-label={t('settingsApiModeLabel')}
@@ -219,101 +212,123 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             </button>
           </div>
           {isOpenAICompatibleMode && (
-            <div className="space-y-2">
-              <label
-                htmlFor="openai-compatible-base-url-input"
-                className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]"
-              >
-                {t('settingsOpenAICompatibleBaseUrl')}
-              </label>
-              <input
-                id="openai-compatible-base-url-input"
-                type="text"
-                value={settings.openaiCompatibleBaseUrl || ''}
-                onChange={(event) => onUpdate('openaiCompatibleBaseUrl', event.target.value)}
-                className={`w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono ${SETTINGS_INPUT_CLASS}`}
-                placeholder={DEFAULT_OPENAI_COMPATIBLE_BASE_URL}
-                aria-label={t('settingsOpenAICompatibleBaseUrl')}
+            <div className="space-y-4">
+              <ApiKeyInput
+                apiKey={openaiCompatibleApiKey}
+                setApiKey={(val) => {
+                  onUpdate('openaiCompatibleApiKey', val);
+                  setTestStatus('idle');
+                }}
+                label={t('settingsOpenAICompatibleApiKey')}
+                placeholder={t('apiConfig_openai_key_placeholder')}
+                helpText={t('settingsOpenAICompatibleApiKeyHelp')}
               />
-              <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
-                {t('settingsOpenAICompatibleHelp')}
-              </p>
+              <div className="space-y-2">
+                <label
+                  htmlFor="openai-compatible-base-url-input"
+                  className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]"
+                >
+                  {t('settingsOpenAICompatibleBaseUrl')}
+                </label>
+                <input
+                  id="openai-compatible-base-url-input"
+                  type="text"
+                  value={settings.openaiCompatibleBaseUrl || ''}
+                  onChange={(event) => onUpdate('openaiCompatibleBaseUrl', event.target.value)}
+                  className={`w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono ${SETTINGS_INPUT_CLASS}`}
+                  placeholder={DEFAULT_OPENAI_COMPATIBLE_BASE_URL}
+                  aria-label={t('settingsOpenAICompatibleBaseUrl')}
+                />
+                <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                  {t('settingsOpenAICompatibleHelp')}
+                </p>
+              </div>
+              <ApiConnectionTester
+                onTest={handleTestConnection}
+                testStatus={testStatus}
+                testMessage={testMessage}
+                isTestDisabled={testStatus === 'testing' || (!openaiCompatibleApiKey && !hasOpenAIEnvKey)}
+              />
             </div>
           )}
         </div>
 
-        <ApiConfigToggle
-          useCustomApiConfig={useCustomApiConfig}
-          setUseCustomApiConfig={handleUseCustomApiConfigChange}
-          hasEnvKey={hasEnvKey}
-        />
-
-        <div
-          className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[1000px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}
-        >
-          <div className="space-y-5">
-            <ApiKeyInput
-              apiKey={apiKey}
-              setApiKey={(val) => {
-                setApiKey(val);
-                setTestStatus('idle');
-              }}
+        {!isOpenAICompatibleMode && (
+          <>
+            <ApiConfigToggle
+              useCustomApiConfig={useCustomApiConfig}
+              setUseCustomApiConfig={handleUseCustomApiConfigChange}
+              hasEnvKey={hasEnvKey}
             />
 
-            <ApiProxySettings
-              useApiProxy={useApiProxy}
-              setUseApiProxy={(val) => {
-                setUseApiProxy(val);
-                setTestStatus('idle');
-              }}
-              apiProxyUrl={apiProxyUrl}
-              setApiProxyUrl={(val) => {
-                setApiProxyUrl(val);
-                setTestStatus('idle');
-              }}
-            />
+            <div
+              className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[1000px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}
+            >
+              <div className="space-y-5">
+                <ApiKeyInput
+                  apiKey={apiKey}
+                  setApiKey={(val) => {
+                    setApiKey(val);
+                    setTestStatus('idle');
+                  }}
+                />
 
-            <div className="space-y-3 pt-2">
-              <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/20 p-3">
-                <div className="flex items-start gap-3">
-                  <RadioTower
-                    size={16}
-                    className="mt-0.5 flex-shrink-0 text-[var(--theme-text-link)]"
-                    strokeWidth={1.5}
-                  />
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <p className="text-sm font-medium text-[var(--theme-text-primary)]">
-                      {t('settingsLiveAutomaticTitle')}
-                    </p>
-                    <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
-                      {t('settingsLiveAutomaticHelp')}
-                    </p>
-                    {useApiProxy && (
-                      <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
-                        {t('settingsLiveProxyCompatibilityHelp')}
-                      </p>
-                    )}
+                <ApiProxySettings
+                  useApiProxy={useApiProxy}
+                  setUseApiProxy={(val) => {
+                    setUseApiProxy(val);
+                    setTestStatus('idle');
+                  }}
+                  apiProxyUrl={apiProxyUrl}
+                  setApiProxyUrl={(val) => {
+                    setApiProxyUrl(val);
+                    setTestStatus('idle');
+                  }}
+                />
+
+                <div className="space-y-3 pt-2">
+                  <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/20 p-3">
+                    <div className="flex items-start gap-3">
+                      <RadioTower
+                        size={16}
+                        className="mt-0.5 flex-shrink-0 text-[var(--theme-text-link)]"
+                        strokeWidth={1.5}
+                      />
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <p className="text-sm font-medium text-[var(--theme-text-primary)]">
+                          {t('settingsLiveAutomaticTitle')}
+                        </p>
+                        <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                          {t('settingsLiveAutomaticHelp')}
+                        </p>
+                        {useApiProxy && (
+                          <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                            {t('settingsLiveProxyCompatibilityHelp')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                <ApiConnectionTester
+                  onTest={handleTestConnection}
+                  testStatus={testStatus}
+                  testMessage={testMessage}
+                  isTestDisabled={
+                    testStatus === 'testing' || (!apiKey && useCustomApiConfig && !canUseServerManagedTestKey)
+                  }
+                  availableModels={CONNECTION_TEST_MODELS}
+                  testModelId={testModelId}
+                  onModelChange={setTestModelId}
+                />
               </div>
             </div>
-
-            <ApiConnectionTester
-              onTest={handleTestConnection}
-              testStatus={testStatus}
-              testMessage={testMessage}
-              isTestDisabled={
-                testStatus === 'testing' || (!apiKey && useCustomApiConfig && !canUseServerManagedTestKey)
-              }
-              availableModels={CONNECTION_TEST_MODELS}
-              testModelId={testModelId}
-              onModelChange={setTestModelId}
-            />
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
-      <FileStrategyControl settings={settings} onUpdate={onUpdate} />
+      {!isOpenAICompatibleMode && <FileStrategyControl settings={settings} onUpdate={onUpdate} />}
     </div>
   );
 };

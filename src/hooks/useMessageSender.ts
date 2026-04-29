@@ -132,7 +132,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
       const isFastMode = overrideOptions?.isFastMode ?? false;
 
       const sessionToUpdate = currentChatSettings;
-      const activeModelId = sessionToUpdate.modelId;
+      const activeModelId =
+        appSettings.apiMode === 'openai-compatible'
+          ? appSettings.openaiCompatibleModelId || ''
+          : sessionToUpdate.modelId;
       const capabilities = getModelCapabilities(activeModelId);
       const isTtsModel = capabilities.isTtsModel;
       const isImagenModel = capabilities.isRealImagenModel;

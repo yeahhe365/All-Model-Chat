@@ -1,5 +1,6 @@
 import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
+import { DEFAULT_OPENAI_COMPATIBLE_MODELS } from '../../constants/appConstants';
 import { SettingsTab } from '../../hooks/features/useSettingsLogic';
 import { ApiConfigSection } from './sections/ApiConfigSection';
 import { AppearanceSection } from './sections/AppearanceSection';
@@ -46,6 +47,9 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   t,
 }) => {
   const animClass = 'animate-in fade-in duration-200 ease-out';
+  const isOpenAICompatibleMode = currentSettings.apiMode === 'openai-compatible';
+  const effectiveModelId = isOpenAICompatibleMode ? currentSettings.openaiCompatibleModelId : currentSettings.modelId;
+  const effectiveAvailableModels = isOpenAICompatibleMode ? currentSettings.openaiCompatibleModels : availableModels;
 
   const handleBatchUpdate = (updates: Partial<AppSettings>) => {
     (Object.entries(updates) as Array<[keyof AppSettings, AppSettings[keyof AppSettings]]>).forEach(([key, value]) => {
@@ -53,7 +57,30 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     });
   };
 
+  const handleEffectiveModelChange = (modelId: string) => {
+    if (isOpenAICompatibleMode) {
+      updateSetting('openaiCompatibleModelId', modelId);
+      return;
+    }
+
+    handleModelChange(modelId);
+  };
+
   const handleAvailableModelsChange = (models: ModelOption[]) => {
+    if (isOpenAICompatibleMode) {
+      updateSetting('openaiCompatibleModels', models);
+
+      if (models.length === 0 || models.some((model) => model.id === currentSettings.openaiCompatibleModelId)) {
+        return;
+      }
+
+      const fallbackModelId = models.find((model) => model.isPinned)?.id || models[0]?.id;
+      if (fallbackModelId) {
+        updateSetting('openaiCompatibleModelId', fallbackModelId);
+      }
+      return;
+    }
+
     setAvailableModels(models);
 
     if (models.length === 0 || models.some((model) => model.id === currentSettings.modelId)) {
@@ -71,10 +98,12 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
       {activeTab === 'models' && (
         <div className={`${animClass} max-w-4xl mx-auto`}>
           <ModelsSection
-            modelId={currentSettings.modelId}
-            setModelId={handleModelChange}
-            availableModels={availableModels}
+            modelId={effectiveModelId}
+            setModelId={handleEffectiveModelChange}
+            availableModels={effectiveAvailableModels}
             setAvailableModels={handleAvailableModelsChange}
+            defaultModels={isOpenAICompatibleMode ? DEFAULT_OPENAI_COMPATIBLE_MODELS : undefined}
+            isOpenAICompatibleMode={isOpenAICompatibleMode}
             currentSettings={currentSettings}
             onUpdateSettings={handleBatchUpdate}
             t={t}

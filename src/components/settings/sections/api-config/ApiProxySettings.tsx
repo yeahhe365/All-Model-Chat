@@ -31,11 +31,6 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
     setApiProxyUrl(DEFAULT_GEMINI_PROXY_URL);
   };
 
-  const getProxyPlaceholder = () => {
-    if (!useApiProxy) return t('settingsApiProxyPlaceholderDisabled');
-    return `e.g., ${DEFAULT_GEMINI_PROXY_URL}`;
-  };
-
   const currentBaseUrl = apiProxyUrl?.trim() || DEFAULT_GEMINI_API_BASE_URL;
   const previewUrl = buildGeminiRequestPreviewUrl(currentBaseUrl, DEFAULT_MODEL_ID, 'generateContent');
 
@@ -49,15 +44,17 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
           >
             {t('settingsApiProxyLabel')}
           </label>
-          <button
-            type="button"
-            onClick={handleResetProxy}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors border text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] border-transparent hover:border-[var(--theme-border-secondary)]"
-            title={t('settingsApiProxyReset')}
-          >
-            <RotateCcw size={10} strokeWidth={1.5} />
-            <span>{t('settingsApiProxyReset')}</span>
-          </button>
+          {useApiProxy && (
+            <button
+              type="button"
+              onClick={handleResetProxy}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors border text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] border-transparent hover:border-[var(--theme-border-secondary)]"
+              title={t('settingsApiProxyReset')}
+            >
+              <RotateCcw size={10} strokeWidth={1.5} />
+              <span>{t('settingsApiProxyReset')}</span>
+            </button>
+          )}
         </div>
         <Toggle
           id="use-api-proxy-toggle"
@@ -68,30 +65,32 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
         />
       </div>
 
-      <div className={`transition-all duration-200 ${useApiProxy ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-        <input
-          id="api-proxy-url-input"
-          type="text"
-          value={apiProxyUrl || ''}
-          onChange={(e) => setApiProxyUrl(e.target.value)}
-          className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
-          placeholder={getProxyPlaceholder()}
-          aria-label={t('settingsApiProxyUrlAria')}
-        />
+      {useApiProxy && (
+        <div className="transition-all duration-200 opacity-100">
+          <input
+            id="api-proxy-url-input"
+            type="text"
+            value={apiProxyUrl || ''}
+            onChange={(e) => setApiProxyUrl(e.target.value)}
+            className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
+            placeholder={`e.g., ${DEFAULT_GEMINI_PROXY_URL}`}
+            aria-label={t('settingsApiProxyUrlAria')}
+          />
 
-        <div className="mt-3 p-3 rounded-lg bg-[var(--theme-bg-tertiary)]/30 border border-[var(--theme-border-secondary)]">
-          <div className="flex gap-2 text-xs text-[var(--theme-text-tertiary)] mb-1.5">
-            <AlertCircle size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
-            <span>{t('settingsApiProxyPreview')}</span>
-          </div>
-          <div className="flex items-start gap-2 pl-5">
-            <ArrowRight size={12} className="mt-1 text-[var(--theme-text-tertiary)]" />
-            <code className="font-mono text-[11px] text-[var(--theme-text-primary)] break-all leading-relaxed">
-              {previewUrl}
-            </code>
+          <div className="mt-3 p-3 rounded-lg bg-[var(--theme-bg-tertiary)]/30 border border-[var(--theme-border-secondary)]">
+            <div className="flex gap-2 text-xs text-[var(--theme-text-tertiary)] mb-1.5">
+              <AlertCircle size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+              <span>{t('settingsApiProxyPreview')}</span>
+            </div>
+            <div className="flex items-start gap-2 pl-5">
+              <ArrowRight size={12} className="mt-1 text-[var(--theme-text-tertiary)]" />
+              <code className="font-mono text-[11px] text-[var(--theme-text-primary)] break-all leading-relaxed">
+                {previewUrl}
+              </code>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

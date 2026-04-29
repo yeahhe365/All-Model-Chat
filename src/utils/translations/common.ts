@@ -26,6 +26,8 @@ export const commonTranslations = {
   modelPickerSectionImage: { en: 'Image', zh: '图像' },
   modelPickerSectionRobotics: { en: 'Robotics', zh: '机器人' },
   modelPickerSectionOther: { en: 'Other', zh: '其他' },
+  modelPickerProviderGemini: { en: 'Gemini', zh: 'Gemini' },
+  modelPickerProviderOpenAICompatible: { en: 'OpenAI Compatible', zh: 'OpenAI 兼容' },
   modelPickerBadgePinned: { en: 'Pinned', zh: '置顶' },
   modelPickerBadgeLive: { en: 'Live', zh: '实时' },
   modelPickerBadgeSpeech: { en: 'Speech', zh: '语音' },

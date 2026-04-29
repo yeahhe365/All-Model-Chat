@@ -7,7 +7,7 @@
 <div align="center">
 
   <p>
-    <strong>An all-in-one Model Console WebUI for Google Gemini API and modern AI workflows.</strong>
+    <strong>An all-in-one Model Console WebUI centered on Gemini native capabilities, with OpenAI-compatible standard chat support.</strong>
   </p>
 
   <p>
@@ -43,13 +43,32 @@
 
 ## Overview
 
-**AMC WebUI** is a React 18 based all-in-one Model Console WebUI built around the Google Gemini API. It is designed as a **Local-First** AI workspace: conversations are stored in the browser's IndexedDB by default, while an optional standalone backend lets you host Gemini credentials server-side and proxy API requests safely in trusted deployments.
+**AMC WebUI** is a React 18 based all-in-one Model Console WebUI built around Google Gemini native capabilities, with an additional **OpenAI-compatible standard chat mode**. It is designed as a **Local-First** AI workspace: conversations are stored in the browser's IndexedDB by default, while an optional standalone backend lets you host Gemini credentials server-side and proxy API requests safely in trusted deployments.
 
 The project currently focuses on one main application shape: a **Vite + React SPA**.
 
 - **Standard mode**: local Vite development and static builds for day-to-day development or static hosting.
 - **Docker mode**: a `web + api` deployment where regular Gemini requests call `/api/gemini/*`, while Live API connects directly from the browser with the local key.
 - **Static frontend + standalone API mode**: deploy the frontend to Pages/CDN and run the Node API service separately.
+
+## API Modes
+
+### Gemini Native
+
+- The main feature path for Thinking, Live API, Gemini Files API, Deep Search, Google Search, code execution, image generation, and other Gemini-specific capabilities.
+- Can be combined with AMC's Gemini proxy and server-managed credential flow.
+
+### OpenAI Compatible
+
+- A **standard chat** path with its own API keys, Base URL, and model list.
+- Requests are sent to `POST {Base URL}/chat/completions`, which fits the OpenAI API, Gemini's OpenAI-compatible endpoint, and other providers that support `chat/completions`.
+- Supports both non-streaming and streaming chat, plus common settings such as system prompt, `temperature`, and `top_p`.
+
+### Important Notes
+
+- OpenAI Compatible mode does **not overwrite** Gemini Native settings. Keys and model lists are managed separately.
+- OpenAI Compatible mode currently does **not use the Gemini-native tool/generation pipeline**. Gemini-specific features mentioned in this README still depend on Gemini Native mode.
+- The OpenAI-compatible Base URL should point to the API root, for example `https://api.openai.com/v1`. AMC appends `/chat/completions` automatically.
 
 ---
 
@@ -96,7 +115,9 @@ The project currently focuses on one main application shape: a **Vite + React SP
 
 ### API Management
 
-- Multiple API key rotation for distributing load.
+- Dual API modes: switch between Gemini Native and OpenAI Compatible request paths.
+- Multiple API key rotation for both Gemini-native keys and OpenAI-compatible keys.
+- Isolated configuration: OpenAI Compatible mode uses its own keys, Base URL, and model list without mutating Gemini settings.
 - Custom Gemini API proxy support through the native `baseUrl` configuration in the SDK.
 
 ### Internationalized UI
@@ -147,7 +168,19 @@ For local frontend development, you can also create `.env.local` in the reposito
 
 ```bash
 GEMINI_API_KEY=your_api_key_here
+VITE_OPENAI_API_KEY=your_openai_compatible_key_here
 ```
+
+To use OpenAI Compatible mode:
+1. Open **Settings -> API Configuration** and switch the API mode to **OpenAI Compatible**.
+2. Enter an OpenAI-compatible API key, or preload `VITE_OPENAI_API_KEY` in `.env.local`.
+3. Set the OpenAI-compatible Base URL, for example `https://api.openai.com/v1`.
+4. Open **Settings -> Models** and choose or edit the dedicated model list for this mode.
+
+Example Base URLs:
+- OpenAI: `https://api.openai.com/v1`
+- Gemini OpenAI-compatible endpoint: `https://generativelanguage.googleapis.com/v1beta/openai`
+- Any other compatible provider: use the `/v1` root or equivalent root that serves `chat/completions`
 
 ### Option 2: Docker Compose (Recommended for Personal Use)
 
@@ -194,6 +227,8 @@ The `RUNTIME_*` values are written into `runtime-config.js` at container startup
 
 If you want server-managed credentials for regular Gemini requests, set `GEMINI_API_KEY` and `RUNTIME_SERVER_MANAGED_API=true`. Live API still requires an API key available in the browser. A browser-local key is suitable for personal or trusted deployments, but it is not a server secret: scripts running in the same browser context, extensions, XSS, or device compromise may still read it.
 
+OpenAI Compatible mode currently does not read `RUNTIME_API_PROXY_URL`, `RUNTIME_USE_API_PROXY`, or `RUNTIME_SERVER_MANAGED_API`. It sends `chat/completions` requests directly to the OpenAI-compatible Base URL configured in Settings, using its separate key set. If you want that mode to pass through your own gateway, point the Base URL at that gateway directly.
+
 ### Option 3: Cloudflare Pages + Standalone API
 
 You can deploy the frontend to Cloudflare Pages and run `server/` as a separate Node service on a VM, container platform, or serverless container runtime.
@@ -218,6 +253,10 @@ RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
 ```
 
 4. Set `GEMINI_API_KEY` in the backend environment if you want server-managed credentials for regular Gemini requests. For BYOK, you can omit it. For cross-origin deployments, optionally set `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`. Live API does not use a standalone API token endpoint; it connects directly from the browser.
+
+Additional notes:
+- `server/` currently serves the Gemini-native proxy path. OpenAI Compatible mode does not use that Node API by default.
+- If you want OpenAI Compatible traffic to use a self-hosted gateway, set that gateway's compatible Base URL in the frontend settings directly.
 
 #### Optional: Use AIStudioToAPI as a Gemini-Compatible Backend
 

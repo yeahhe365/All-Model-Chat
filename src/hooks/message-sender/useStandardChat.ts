@@ -176,6 +176,10 @@ export const useStandardChat = ({
         textToUse,
         enrichedFiles,
       } = params;
+      const apiModelId =
+        appSettings.apiMode === 'openai-compatible'
+          ? appSettings.openaiCompatibleModelId || activeModelId
+          : activeModelId;
 
       let baseMessagesForApi: ChatMessage[] = messages;
       if (effectiveEditingId) {
@@ -192,7 +196,7 @@ export const useStandardChat = ({
         finalRole = 'model';
         const targetMessage = messages.find((message) => message.id === effectiveEditingId);
         const currentContent = targetMessage?.content || '';
-        const isGemini3 = isGemini3Model(activeModelId);
+        const isGemini3 = isGemini3Model(apiModelId);
 
         let prefillContent = currentContent;
         if (!prefillContent.trim()) {
@@ -217,13 +221,13 @@ export const useStandardChat = ({
       }
 
       const shouldStripThinking = shouldStripThinkingFromContext(
-        activeModelId,
+        apiModelId,
         sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext,
       );
       const historyForChat = await createChatHistoryForApi(
         baseMessagesForApi,
         shouldStripThinking,
-        activeModelId,
+        apiModelId,
         !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled,
       );
 
@@ -268,7 +272,7 @@ export const useStandardChat = ({
         if (appSettings.isStreamingEnabled) {
           await sendOpenAICompatibleMessageStream(
             keyToUse,
-            activeModelId,
+            apiModelId,
             historyForChat,
             finalParts,
             openAICompatibleConfig,
@@ -284,7 +288,7 @@ export const useStandardChat = ({
 
         await sendOpenAICompatibleMessageNonStream(
           keyToUse,
-          activeModelId,
+          apiModelId,
           historyForChat,
           finalParts,
           openAICompatibleConfig,
@@ -319,7 +323,7 @@ export const useStandardChat = ({
           : baseMessagesForApi;
       const standardClientFunctions = createStandardClientFunctions({
         isLocalPythonEnabled:
-          !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode && !isImageModel(activeModelId),
+          !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode && !isImageModel(apiModelId),
         inputFiles: collectLocalPythonInputFiles(
           [
             ...localPythonContextMessages,
@@ -344,10 +348,10 @@ export const useStandardChat = ({
         !!sessionToUpdate.isUrlContextEnabled;
       const isLocalPythonEnabledForTurn =
         standardFunctionDeclarations.length > 0 &&
-        (isGemini3Model(activeModelId) || !hasRequestedServerSideToolThatNeedsCombination);
+        (isGemini3Model(apiModelId) || !hasRequestedServerSideToolThatNeedsCombination);
 
       const config = await buildGenerationConfig({
-        modelId: activeModelId,
+        modelId: apiModelId,
         systemInstruction: sessionToUpdate.systemInstruction,
         config: {
           temperature: sessionToUpdate.temperature,
@@ -371,7 +375,7 @@ export const useStandardChat = ({
       });
 
       const requestConfig = appendFunctionDeclarationsToTools(
-        activeModelId,
+        apiModelId,
         config,
         isLocalPythonEnabledForTurn ? standardFunctionDeclarations : [],
       );
@@ -383,7 +387,7 @@ export const useStandardChat = ({
             initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
             clientFunctions: standardClientFunctions,
             runTurn: (contents) =>
-              generateContentTurnApi(keyToUse, activeModelId, contents, requestConfig, newAbortController.signal),
+              generateContentTurnApi(keyToUse, apiModelId, contents, requestConfig, newAbortController.signal),
           });
 
           if (toolLoopResult.toolMessages.length > 0) {
@@ -448,7 +452,7 @@ export const useStandardChat = ({
       if (appSettings.isStreamingEnabled) {
         await geminiServiceInstance.sendMessageStream(
           keyToUse,
-          activeModelId,
+          apiModelId,
           historyForChat,
           finalParts,
           requestConfig,
@@ -464,7 +468,7 @@ export const useStandardChat = ({
 
       await geminiServiceInstance.sendMessageNonStream(
         keyToUse,
-        activeModelId,
+        apiModelId,
         historyForChat,
         finalParts,
         requestConfig,
@@ -506,11 +510,15 @@ export const useStandardChat = ({
       isContinueMode = false,
       isFastMode = false,
     ) => {
+      const effectiveActiveModelId =
+        appSettings.apiMode === 'openai-compatible'
+          ? appSettings.openaiCompatibleModelId || activeModelId
+          : activeModelId;
       const settingsForPersistence = { ...currentChatSettings };
       const settingsForApi = { ...currentChatSettings };
 
       if (isFastMode) {
-        const isGemini3Flash = activeModelId.includes('gemini-3') && activeModelId.includes('flash');
+        const isGemini3Flash = effectiveActiveModelId.includes('gemini-3') && effectiveActiveModelId.includes('flash');
         const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
 
         settingsForApi.thinkingLevel = targetLevel;
@@ -567,7 +575,7 @@ export const useStandardChat = ({
       const { contentParts: promptParts, enrichedFiles } = await buildContentParts(
         textToUse.trim(),
         successfullyProcessedFiles,
-        activeModelId,
+        effectiveActiveModelId,
         settingsForApi.mediaResolution,
         preferCodeExecutionFileInputs,
       );
@@ -576,7 +584,7 @@ export const useStandardChat = ({
       const isRawMode = Boolean(
         (settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled) &&
         !isContinueMode &&
-        getModelCapabilities(activeModelId).supportsRawReasoningPrefill,
+        getModelCapabilities(effectiveActiveModelId).supportsRawReasoningPrefill,
       );
 
       updateSessionState({
@@ -600,7 +608,7 @@ export const useStandardChat = ({
         generationId,
         generationStartTime,
         keyToUse,
-        activeModelId,
+        activeModelId: effectiveActiveModelId,
         promptParts,
         effectiveEditingId,
         isContinueMode,

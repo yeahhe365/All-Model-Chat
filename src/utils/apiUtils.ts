@@ -22,9 +22,16 @@ const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string |
     import.meta as ImportMeta & {
       env?: {
         VITE_GEMINI_API_KEY?: string;
+        VITE_OPENAI_API_KEY?: string;
       };
     }
   ).env;
+
+  if (appSettings.apiMode === 'openai-compatible') {
+    return {
+      apiKeysString: appSettings.openaiCompatibleApiKey || envWithGeminiKey?.VITE_OPENAI_API_KEY || null,
+    };
+  }
 
   if (appSettings.useCustomApiConfig) {
     return {
@@ -51,7 +58,9 @@ export const getKeyForRequest = (
 ): { key: string; isNewKey: boolean } | { error: string } => {
   const { skipIncrement = false } = options;
   const { skipUsageLogging = false } = options;
-  const shouldUseServerManagedMarker = isServerManagedApiEnabledForProxyRequests(appSettings);
+  const isOpenAICompatibleMode = appSettings.apiMode === 'openai-compatible';
+  const shouldUseServerManagedMarker =
+    !isOpenAICompatibleMode && isServerManagedApiEnabledForProxyRequests(appSettings);
 
   const logUsage = (key: string) => {
     if (appSettings.useCustomApiConfig && !skipUsageLogging) {

@@ -219,18 +219,28 @@ export const useApp = () => {
   );
 
   const getCurrentModelDisplayName = useCallback(() => {
-    const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
+    const isOpenAICompatibleMode = appSettings.apiMode === 'openai-compatible';
+    const modelIdToDisplay = isOpenAICompatibleMode
+      ? appSettings.openaiCompatibleModelId
+      : currentChatSettings.modelId || appSettings.modelId;
+    const availableModels = isOpenAICompatibleMode ? appSettings.openaiCompatibleModels : apiModels;
+
     if (isSwitchingModel) {
       return t('appSwitchingModel');
     }
 
-    const model = apiModels.find((candidate: ModelOption) => candidate.id === modelIdToDisplay);
+    const model = availableModels.find((candidate: ModelOption) => candidate.id === modelIdToDisplay);
     if (model) {
       return model.name;
     }
 
     if (modelIdToDisplay) {
-      const normalizedName = modelIdToDisplay.split('/').pop()?.replace('gemini-', 'Gemini ') || modelIdToDisplay;
+      const shortName = modelIdToDisplay.split('/').pop() || modelIdToDisplay;
+      if (shortName.toLowerCase().startsWith('gpt-')) {
+        return shortName.replace(/^gpt/i, 'GPT');
+      }
+
+      const normalizedName = shortName.replace('gemini-', 'Gemini ');
       return normalizedName
         .split('-')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -238,8 +248,17 @@ export const useApp = () => {
         .replace(' Preview ', ' Preview ');
     }
 
-    return apiModels.length === 0 ? t('appNoModelsAvailable') : t('appNoModelSelected');
-  }, [apiModels, appSettings.modelId, currentChatSettings.modelId, isSwitchingModel, t]);
+    return availableModels.length === 0 ? t('appNoModelsAvailable') : t('appNoModelSelected');
+  }, [
+    apiModels,
+    appSettings.apiMode,
+    appSettings.modelId,
+    appSettings.openaiCompatibleModelId,
+    appSettings.openaiCompatibleModels,
+    currentChatSettings.modelId,
+    isSwitchingModel,
+    t,
+  ]);
 
   return {
     appSettings,

@@ -3,7 +3,7 @@ const GEMINI_API_VERSION_SUFFIX = /\/v\d+(?:(?:alpha|beta)\d*|\.\d+)?$/i;
 export const DEFAULT_GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com';
 const DEFAULT_GEMINI_API_VERSION = 'v1beta';
 export const DEFAULT_GEMINI_PROXY_URL = 'https://api-proxy.de/gemini';
-export const DEFAULT_OPENAI_COMPATIBLE_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai';
+export const DEFAULT_OPENAI_COMPATIBLE_BASE_URL = 'https://api.openai.com/v1';
 
 export const normalizeGeminiApiBaseUrl = (baseUrl: string): string => {
   const trimmedBaseUrl = baseUrl.trim().replace(/\/+$/, '');

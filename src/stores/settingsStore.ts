@@ -5,7 +5,7 @@ import { Theme } from '../types/theme';
 import { DEFAULT_FILES_API_CONFIG, getDefaultAppSettings } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
 import { logService } from '../services/logService';
-import { resolveSupportedModelId } from '../utils/modelHelpers';
+import { resolveSupportedModelId, sanitizeModelOptions } from '../utils/modelHelpers';
 import { dbService } from '../utils/db';
 
 interface SettingsState {
@@ -45,9 +45,22 @@ function computeTheme(themeId: string): Theme {
 
 function sanitizeAppSettings(settings: AppSettings): AppSettings {
   const defaultSettings = getDefaultAppSettings();
+  const sanitizedOpenAICompatibleModels = sanitizeModelOptions(
+    settings.openaiCompatibleModels ?? defaultSettings.openaiCompatibleModels,
+  );
+  const openaiCompatibleModels =
+    sanitizedOpenAICompatibleModels.length > 0
+      ? sanitizedOpenAICompatibleModels
+      : defaultSettings.openaiCompatibleModels;
+
   return {
     ...settings,
     modelId: resolveSupportedModelId(settings.modelId, defaultSettings.modelId),
+    openaiCompatibleModelId: resolveSupportedModelId(
+      settings.openaiCompatibleModelId,
+      defaultSettings.openaiCompatibleModelId,
+    ),
+    openaiCompatibleModels,
     transcriptionModelId: resolveSupportedModelId(settings.transcriptionModelId, defaultSettings.transcriptionModelId),
     inputTranslationModelId: resolveSupportedModelId(
       settings.inputTranslationModelId,

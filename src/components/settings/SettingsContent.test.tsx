@@ -28,17 +28,22 @@ vi.mock('./sections/ModelsSection', () => ({
   ModelsSection: (props: any) => {
     mockModelsSection.lastProps = props;
     return (
-      <button
-        data-testid="save-model-list"
-        onClick={() =>
-          props.setAvailableModels([
-            { id: 'fallback-model', name: 'Fallback Model', isPinned: true },
-            { id: 'secondary-model', name: 'Secondary Model' },
-          ])
-        }
-      >
-        save
-      </button>
+      <>
+        <button
+          data-testid="save-model-list"
+          onClick={() =>
+            props.setAvailableModels([
+              { id: 'fallback-model', name: 'Fallback Model', isPinned: true },
+              { id: 'secondary-model', name: 'Secondary Model' },
+            ])
+          }
+        >
+          save
+        </button>
+        <button data-testid="select-model" onClick={() => props.setModelId('manual-openai-model')}>
+          select
+        </button>
+      </>
     );
   },
 }));
@@ -209,6 +214,83 @@ describe('SettingsContent', () => {
       { id: 'gemini-custom-thought-translator', name: 'Thought Translator' },
     ]);
     expect(updateSetting).not.toHaveBeenCalled();
+  });
+
+  it('uses the independent OpenAI-compatible model list in OpenAI-compatible mode', () => {
+    const updateSetting = vi.fn();
+    const setAvailableModels = vi.fn();
+    const handleModelChange = vi.fn();
+    const openAIModels = [
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+      { id: 'gpt-4.1', name: 'GPT-4.1' },
+    ];
+    const geminiModels = [{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }];
+
+    act(() => {
+      root.render(
+        <SettingsContent
+          activeTab="models"
+          currentSettings={{
+            ...DEFAULT_APP_SETTINGS,
+            apiMode: 'openai-compatible',
+            modelId: 'gemini-3-flash-preview',
+            openaiCompatibleModelId: 'gpt-5.5',
+            openaiCompatibleModels: openAIModels,
+          }}
+          availableModels={geminiModels}
+          updateSetting={updateSetting}
+          handleModelChange={handleModelChange}
+          setAvailableModels={setAvailableModels}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(mockModelsSection.lastProps.modelId).toBe('gpt-5.5');
+    expect(mockModelsSection.lastProps.availableModels).toBe(openAIModels);
+    expect(mockModelsSection.lastProps.defaultModels).toEqual([
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+      { id: 'gpt-5.1', name: 'GPT-5.1', isPinned: true },
+      { id: 'gpt-4.1', name: 'GPT-4.1' },
+    ]);
+    expect(mockModelsSection.lastProps.isOpenAICompatibleMode).toBe(true);
+
+    act(() => {
+      container
+        .querySelector('[data-testid="save-model-list"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModels', [
+      { id: 'fallback-model', name: 'Fallback Model', isPinned: true },
+      { id: 'secondary-model', name: 'Secondary Model' },
+    ]);
+    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'fallback-model');
+    expect(setAvailableModels).not.toHaveBeenCalled();
+    expect(handleModelChange).not.toHaveBeenCalled();
+
+    act(() => {
+      container
+        .querySelector('[data-testid="select-model"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'manual-openai-model');
+    expect(setAvailableModels).not.toHaveBeenCalled();
+    expect(handleModelChange).not.toHaveBeenCalled();
   });
 
   it('does not render the removed model behavior section when the obsolete tab is requested', () => {

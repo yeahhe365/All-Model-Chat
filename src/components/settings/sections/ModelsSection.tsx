@@ -14,6 +14,8 @@ interface ModelsSectionProps {
   setModelId: (id: string) => void;
   availableModels: ModelOption[];
   setAvailableModels: (models: ModelOption[]) => void;
+  defaultModels?: ModelOption[];
+  isOpenAICompatibleMode?: boolean;
   currentSettings: AppSettings;
   onUpdateSettings: (settings: Partial<AppSettings>) => void;
   t: (key: keyof typeof translations | string) => string;
@@ -24,6 +26,8 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
   setModelId,
   availableModels,
   setAvailableModels,
+  defaultModels,
+  isOpenAICompatibleMode = false,
   currentSettings,
   onUpdateSettings,
   t,
@@ -41,9 +45,11 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
         selectedModelId={modelId}
         onSelectModel={setModelId}
         setAvailableModels={setAvailableModels}
+        defaultModels={defaultModels}
       />
 
       <GenerationSection
+        isOpenAICompatibleMode={isOpenAICompatibleMode}
         modelId={modelId}
         systemInstruction={currentSettings.systemInstruction}
         setSystemInstruction={(value) => updateSetting('systemInstruction', value)}
@@ -70,66 +76,74 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
         t={t}
       />
 
-      <CanvasSection
-        autoCanvasVisualization={currentSettings.autoCanvasVisualization ?? false}
-        setAutoCanvasVisualization={(value) => updateSetting('autoCanvasVisualization', value)}
-        autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
-        setAutoCanvasModelId={(value) => updateSetting('autoCanvasModelId', value)}
-        t={t}
-      />
-
-      <LanguageVoiceSection
-        transcriptionModelId={currentSettings.transcriptionModelId}
-        setTranscriptionModelId={(value) => updateSetting('transcriptionModelId', value)}
-        translationTargetLanguage={currentSettings.translationTargetLanguage}
-        setTranslationTargetLanguage={(value) => updateSetting('translationTargetLanguage', value)}
-        inputTranslationModelId={currentSettings.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID}
-        setInputTranslationModelId={(value) => updateSetting('inputTranslationModelId', value)}
-        thoughtTranslationTargetLanguage={currentSettings.thoughtTranslationTargetLanguage || 'Simplified Chinese'}
-        setThoughtTranslationTargetLanguage={(value) => updateSetting('thoughtTranslationTargetLanguage', value)}
-        thoughtTranslationModelId={currentSettings.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID}
-        setThoughtTranslationModelId={(value) => updateSetting('thoughtTranslationModelId', value)}
-        availableModels={availableModels}
-        t={t}
-      />
-
-      <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)]/30 p-4">
-        <button
-          type="button"
-          onClick={() => setIsSafetyExpanded((prev) => !prev)}
-          aria-expanded={isSafetyExpanded}
-          aria-label={t('models_safety_toggle_aria')}
-          className="flex w-full items-center justify-between gap-3 text-left"
-        >
-          <span className="flex min-w-0 items-start gap-3">
-            <Shield size={20} className="mt-0.5 flex-shrink-0 text-[var(--theme-text-link)]" strokeWidth={1.75} />
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold text-[var(--theme-text-primary)]">{t('safety_title')}</span>
-              <span className="mt-1 block text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
-                {t('safety_description')}
-              </span>
-            </span>
-          </span>
-          <ChevronDown
-            size={16}
-            className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${
-              isSafetyExpanded ? 'rotate-180' : ''
-            }`}
-            strokeWidth={1.75}
+      {!isOpenAICompatibleMode && (
+        <>
+          <CanvasSection
+            autoCanvasVisualization={currentSettings.autoCanvasVisualization ?? false}
+            setAutoCanvasVisualization={(value) => updateSetting('autoCanvasVisualization', value)}
+            autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
+            setAutoCanvasModelId={(value) => updateSetting('autoCanvasModelId', value)}
+            t={t}
           />
-        </button>
 
-        {isSafetyExpanded && (
-          <div className="mt-4 border-t border-[var(--theme-border-secondary)]/60 pt-4">
-            <SafetySection
-              safetySettings={currentSettings.safetySettings}
-              setSafetySettings={(safetySettings) => onUpdateSettings({ safetySettings })}
-              t={t}
-              showIntro={false}
-            />
+          <LanguageVoiceSection
+            transcriptionModelId={currentSettings.transcriptionModelId}
+            setTranscriptionModelId={(value) => updateSetting('transcriptionModelId', value)}
+            translationTargetLanguage={currentSettings.translationTargetLanguage}
+            setTranslationTargetLanguage={(value) => updateSetting('translationTargetLanguage', value)}
+            inputTranslationModelId={currentSettings.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID}
+            setInputTranslationModelId={(value) => updateSetting('inputTranslationModelId', value)}
+            thoughtTranslationTargetLanguage={currentSettings.thoughtTranslationTargetLanguage || 'Simplified Chinese'}
+            setThoughtTranslationTargetLanguage={(value) => updateSetting('thoughtTranslationTargetLanguage', value)}
+            thoughtTranslationModelId={
+              currentSettings.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID
+            }
+            setThoughtTranslationModelId={(value) => updateSetting('thoughtTranslationModelId', value)}
+            availableModels={availableModels}
+            t={t}
+          />
+
+          <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)]/30 p-4">
+            <button
+              type="button"
+              onClick={() => setIsSafetyExpanded((prev) => !prev)}
+              aria-expanded={isSafetyExpanded}
+              aria-label={t('models_safety_toggle_aria')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <span className="flex min-w-0 items-start gap-3">
+                <Shield size={20} className="mt-0.5 flex-shrink-0 text-[var(--theme-text-link)]" strokeWidth={1.75} />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-[var(--theme-text-primary)]">
+                    {t('safety_title')}
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                    {t('safety_description')}
+                  </span>
+                </span>
+              </span>
+              <ChevronDown
+                size={16}
+                className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${
+                  isSafetyExpanded ? 'rotate-180' : ''
+                }`}
+                strokeWidth={1.75}
+              />
+            </button>
+
+            {isSafetyExpanded && (
+              <div className="mt-4 border-t border-[var(--theme-border-secondary)]/60 pt-4">
+                <SafetySection
+                  safetySettings={currentSettings.safetySettings}
+                  setSafetySettings={(safetySettings) => onUpdateSettings({ safetySettings })}
+                  t={t}
+                  showIntro={false}
+                />
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };
