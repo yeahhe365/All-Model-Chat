@@ -87,6 +87,8 @@ const baseProps = {
   isWaitingForUpload: false,
   onCancelRecording: vi.fn(),
   onTranslate: vi.fn(),
+  onPasteFromClipboard: vi.fn(),
+  onClearInput: vi.fn(),
   isTranslating: false,
   inputText: '',
   onToggleFullscreen: vi.fn(),
@@ -110,11 +112,45 @@ const baseProps = {
 describe('ChatInputActions', () => {
   let container: HTMLDivElement;
   let root: Root;
+  let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
+
+  const mockActionRowMeasurements = ({
+    containerWidth,
+    leftWidth,
+    rightWidth,
+  }: {
+    containerWidth: number;
+    leftWidth: number;
+    rightWidth: number;
+  }) => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const testId = this.getAttribute('data-testid');
+      const widthByTestId: Record<string, number> = {
+        'chat-input-actions-root': containerWidth,
+        'chat-input-actions-left': leftWidth,
+        'chat-input-actions-right': rightWidth,
+      };
+      const width = testId ? widthByTestId[testId] : undefined;
+
+      return {
+        x: 0,
+        y: 0,
+        top: 0,
+        left: 0,
+        right: width ?? 0,
+        bottom: 40,
+        width: width ?? 0,
+        height: 40,
+        toJSON: () => {},
+      } as DOMRect;
+    });
+  };
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
+    originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     attachmentMenuMock.mockClear();
     toolsMenuMock.mockClear();
     liveControlsMock.mockClear();
@@ -127,6 +163,8 @@ describe('ChatInputActions', () => {
       root.unmount();
     });
     container.remove();
+    HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+    vi.restoreAllMocks();
   });
 
   it('disables attachments for Imagen models', () => {
@@ -189,7 +227,9 @@ describe('ChatInputActions', () => {
     );
   });
 
-  it('keeps auxiliary composer actions out of send controls so they can collapse into the compact menu', () => {
+  it('keeps auxiliary composer actions direct when the single action row has enough room', () => {
+    mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
+
     act(() => {
       root.render(
         <ChatInputActions
@@ -218,6 +258,34 @@ describe('ChatInputActions', () => {
     expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('onClearInput');
     expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('showInputPasteButton');
     expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('showInputClearButton');
+    expect(container.querySelector('[data-testid="clear-input-button"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="paste-button"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="composer-more-menu"]')).toBeNull();
+  });
+
+  it('moves auxiliary composer actions into the more menu only when the direct row overflows', () => {
+    mockActionRowMeasurements({ containerWidth: 300, leftWidth: 88, rightWidth: 292 });
+
+    act(() => {
+      root.render(
+        <ChatInputActions
+          {...baseProps}
+          inputText="Translate or send this"
+          showInputTranslationButton
+          showInputPasteButton
+          showInputClearButton
+          canQueueMessage
+        />,
+      );
+    });
+
+    expect(sendControlsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canQueueMessage: true,
+      }),
+    );
+    expect(container.querySelector('[data-testid="clear-input-button"]')).toBeNull();
+    expect(container.querySelector('[data-testid="paste-button"]')).toBeNull();
     expect(container.querySelector('[data-testid="composer-more-menu"]')).not.toBeNull();
   });
 });

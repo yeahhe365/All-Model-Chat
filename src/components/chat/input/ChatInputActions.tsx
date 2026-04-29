@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ClipboardPaste, Eraser } from 'lucide-react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
@@ -25,6 +25,9 @@ interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
   onStopLiveVideo?: () => void;
   liveVideoSource?: 'camera' | 'screen' | null;
 }
+
+const ACTION_ROW_GAP_PX = 8;
+const ACTION_ROW_OVERFLOW_BUFFER_PX = 4;
 
 export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onAttachmentAction,
@@ -89,6 +92,113 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   const showPasteButton = showInputPasteButton && onPasteFromClipboard;
   const hasComposerMoreActions =
     (!isNativeAudioModel && (onToggleFullscreen || showInputTranslationButton)) || showClearButton || showPasteButton;
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const leftActionsRef = useRef<HTMLDivElement | null>(null);
+  const rightActionsRef = useRef<HTMLDivElement | null>(null);
+  const expandedRightWidthRef = useRef(0);
+  const previousMeasurementSignatureRef = useRef('');
+  const [shouldCollapseAuxiliaryActions, setShouldCollapseAuxiliaryActions] = useState(false);
+  const measurementSignature = useMemo(
+    () =>
+      [
+        hasComposerMoreActions,
+        isNativeAudioModel,
+        isLiveConnected,
+        !!onStartLiveSession,
+        !!onToggleFullscreen,
+        showInputTranslationButton,
+        showClearButton,
+        showPasteButton,
+        isLoading,
+        isEditing,
+        isWaitingForUpload,
+        canQueueMessage,
+      ].join('|'),
+    [
+      canQueueMessage,
+      hasComposerMoreActions,
+      isEditing,
+      isLiveConnected,
+      isLoading,
+      isNativeAudioModel,
+      isWaitingForUpload,
+      onStartLiveSession,
+      onToggleFullscreen,
+      showClearButton,
+      showInputTranslationButton,
+      showPasteButton,
+    ],
+  );
+  const showAuxiliaryActionsInMenu = hasComposerMoreActions && shouldCollapseAuxiliaryActions;
+
+  const measureActionRow = useCallback(() => {
+    const root = rootRef.current;
+    const leftActions = leftActionsRef.current;
+    const rightActions = rightActionsRef.current;
+
+    if (!root || !leftActions || !rightActions) {
+      return;
+    }
+
+    if (!hasComposerMoreActions) {
+      expandedRightWidthRef.current = 0;
+      setShouldCollapseAuxiliaryActions(false);
+      return;
+    }
+
+    const containerWidth = root.getBoundingClientRect().width;
+    const leftWidth = leftActions.getBoundingClientRect().width;
+    const currentRightWidth = rightActions.getBoundingClientRect().width;
+
+    if (containerWidth <= 0 || currentRightWidth <= 0) {
+      return;
+    }
+
+    if (!shouldCollapseAuxiliaryActions) {
+      expandedRightWidthRef.current = currentRightWidth;
+    }
+
+    const expandedRightWidth = expandedRightWidthRef.current || currentRightWidth;
+    const requiredWidth = leftWidth + expandedRightWidth + ACTION_ROW_GAP_PX + ACTION_ROW_OVERFLOW_BUFFER_PX;
+    const nextShouldCollapse = requiredWidth > containerWidth;
+
+    setShouldCollapseAuxiliaryActions((current) => (current === nextShouldCollapse ? current : nextShouldCollapse));
+  }, [hasComposerMoreActions, shouldCollapseAuxiliaryActions]);
+
+  useLayoutEffect(() => {
+    if (previousMeasurementSignatureRef.current !== measurementSignature) {
+      previousMeasurementSignatureRef.current = measurementSignature;
+
+      if (shouldCollapseAuxiliaryActions) {
+        setShouldCollapseAuxiliaryActions(false);
+        return;
+      }
+    }
+
+    measureActionRow();
+  }, [measureActionRow, measurementSignature, shouldCollapseAuxiliaryActions]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const leftActions = leftActionsRef.current;
+    const rightActions = rightActionsRef.current;
+
+    if (!root || !leftActions || !rightActions) {
+      return undefined;
+    }
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measureActionRow);
+      return () => window.removeEventListener('resize', measureActionRow);
+    }
+
+    const resizeObserver = new ResizeObserver(() => measureActionRow());
+    resizeObserver.observe(root);
+    resizeObserver.observe(leftActions);
+    resizeObserver.observe(rightActions);
+
+    return () => resizeObserver.disconnect();
+  }, [measureActionRow]);
 
   const renderDesktopPasteClearControls = () => (
     <>
@@ -131,8 +241,16 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   );
 
   return (
-    <div className="flex w-full items-center justify-between gap-2 overflow-hidden">
-      <div className="flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div
+      ref={rootRef}
+      data-testid="chat-input-actions-root"
+      className="flex w-full items-center justify-between gap-2 overflow-hidden"
+    >
+      <div
+        ref={leftActionsRef}
+        data-testid="chat-input-actions-left"
+        className="flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         <AttachmentMenu
           onAction={onAttachmentAction}
           disabled={disabled || !!isRealImagenModel}
@@ -169,7 +287,11 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
         />
       </div>
 
-      <div className="flex min-w-0 flex-shrink-0 items-center gap-1.5 sm:gap-3">
+      <div
+        ref={rightActionsRef}
+        data-testid="chat-input-actions-right"
+        className="flex min-w-0 flex-shrink-0 items-center gap-1.5 sm:gap-3"
+      >
         {!isLiveConnected && !isNativeAudioModel && (
           <RecordControls
             isRecording={!!isRecording}
@@ -181,8 +303,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
           />
         )}
 
-        {!isNativeAudioModel && (
-          <div className="hidden items-center gap-2 sm:flex sm:gap-3">
+        {!isNativeAudioModel && !showAuxiliaryActionsInMenu && (
+          <div className="flex items-center gap-2 sm:gap-3">
             <UtilityControls
               isFullscreen={isFullscreen}
               onToggleFullscreen={onToggleFullscreen}
@@ -195,12 +317,12 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
           </div>
         )}
 
-        {(showClearButton || showPasteButton) && (
-          <div className="hidden items-center gap-2 sm:flex sm:gap-3">{renderDesktopPasteClearControls()}</div>
+        {!showAuxiliaryActionsInMenu && (showClearButton || showPasteButton) && (
+          <div className="flex items-center gap-2 sm:gap-3">{renderDesktopPasteClearControls()}</div>
         )}
 
-        {hasComposerMoreActions && (
-          <div className="sm:hidden">
+        {showAuxiliaryActionsInMenu && (
+          <div>
             <ComposerMoreMenu
               isFullscreen={isFullscreen}
               onToggleFullscreen={isNativeAudioModel ? undefined : onToggleFullscreen}
