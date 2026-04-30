@@ -88,10 +88,10 @@ export const useChatInputFile = ({
       return;
     }
 
-    inputState.setIsAddingById(true);
+    inputState.setAddingById(true);
     justInitiatedFileOpRef.current = true;
     await onAddFileById(inputState.fileIdInput.trim());
-    inputState.setIsAddingById(false);
+    inputState.setAddingById(false);
     inputState.setFileIdInput('');
   }, [inputState, isLoading, justInitiatedFileOpRef, onAddFileById]);
 

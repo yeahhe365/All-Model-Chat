@@ -138,11 +138,20 @@ vi.mock('./ChatInputFileModals', () => ({
 }));
 
 vi.mock('./ChatInputArea', async () => {
-  const { useChatInputView, useLiveStatusView, useQueuedSubmissionView } = await import('./ChatInputViewContext');
+  const {
+    useChatInputActionsView,
+    useChatInputFileDisplayView,
+    useChatInputFormView,
+    useChatInputTextAreaView,
+    useLiveStatusView,
+    useQueuedSubmissionView,
+  } = await import('./ChatInputViewContext');
 
   const ChatInputArea = () => {
-    const view = useChatInputView() as any;
-    const { formProps, inputProps, actionsProps, fileDisplayProps } = view;
+    const formProps = useChatInputFormView();
+    const inputProps = useChatInputTextAreaView();
+    const actionsProps = useChatInputActionsView();
+    const fileDisplayProps = useChatInputFileDisplayView();
     const queuedProps = useQueuedSubmissionView();
     const liveStatusProps = useLiveStatusView();
     const extendedActionsProps = actionsProps as typeof actionsProps & {
@@ -213,7 +222,7 @@ vi.mock('./ChatInputArea', async () => {
         <button type="button" data-testid="live-screen-button" onClick={actionsProps.onStartLiveScreenShare}>
           screen
         </button>
-        {fileDisplayProps.selectedFiles.map((file: { id: string; name: string }) => (
+        {fileDisplayProps.selectedFiles.map((file: UploadedFile) => (
           <button
             key={file.id}
             type="button"

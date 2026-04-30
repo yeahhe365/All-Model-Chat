@@ -31,30 +31,25 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
     dispatchMachineState(createSetChatInputFlagAction(flag, value));
   }, []);
 
-  const setIsTranslating = useCallback(
+  const setTranslating = useCallback(
     (value: ChatInputBooleanUpdate) => setMachineFlag('isTranslating', value),
     [setMachineFlag],
   );
-  const setIsAnimatingSend = useCallback(
-    (value: ChatInputBooleanUpdate) => setMachineFlag('isAnimatingSend', value),
-    [setMachineFlag],
-  );
-  const setIsAddingById = useCallback(
+  const startSendAnimation = useCallback(() => setMachineFlag('isAnimatingSend', true), [setMachineFlag]);
+  const stopSendAnimation = useCallback(() => setMachineFlag('isAnimatingSend', false), [setMachineFlag]);
+  const setAddingById = useCallback(
     (value: ChatInputBooleanUpdate) => setMachineFlag('isAddingById', value),
     [setMachineFlag],
   );
-  const setIsAddingByUrl = useCallback(
+  const setAddingByUrl = useCallback(
     (value: ChatInputBooleanUpdate) => setMachineFlag('isAddingByUrl', value),
     [setMachineFlag],
   );
-  const setIsWaitingForUpload = useCallback(
+  const setWaitingForUpload = useCallback(
     (value: ChatInputBooleanUpdate) => setMachineFlag('isWaitingForUpload', value),
     [setMachineFlag],
   );
-  const setIsFullscreen = useCallback(
-    (value: ChatInputBooleanUpdate) => setMachineFlag('isFullscreen', value),
-    [setMachineFlag],
-  );
+  const exitFullscreen = useCallback(() => setMachineFlag('isFullscreen', false), [setMachineFlag]);
 
   // Load draft from localStorage when session changes
   useEffect(() => {
@@ -192,21 +187,22 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
     setTtsContext,
     machineState,
     isTranslating: machineState.isTranslating,
-    setIsTranslating,
+    setTranslating,
     isAnimatingSend: machineState.isAnimatingSend,
-    setIsAnimatingSend,
+    startSendAnimation,
+    stopSendAnimation,
     fileIdInput,
     setFileIdInput,
     isAddingById: machineState.isAddingById,
-    setIsAddingById,
+    setAddingById,
     urlInput,
     setUrlInput,
     isAddingByUrl: machineState.isAddingByUrl,
-    setIsAddingByUrl,
+    setAddingByUrl,
     isWaitingForUpload: machineState.isWaitingForUpload,
-    setIsWaitingForUpload,
+    setWaitingForUpload,
     isFullscreen: machineState.isFullscreen,
-    setIsFullscreen,
+    exitFullscreen,
     textareaRef,
     justInitiatedFileOpRef,
     prevIsProcessingFileRef,

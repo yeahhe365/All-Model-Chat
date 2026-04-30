@@ -110,6 +110,16 @@ export const useChatInputView = () => {
 };
 
 export const useChatInputActionsView = () => useChatInputView().actionsProps;
+export const useChatInputToolbarView = () => useChatInputView().toolbarProps;
+export const useChatInputSlashCommandView = () => useChatInputView().slashCommandProps;
+export const useChatInputFileDisplayView = () => useChatInputView().fileDisplayProps;
+export const useChatInputTextAreaView = () => useChatInputView().inputProps;
+export const useChatInputQuoteView = () => useChatInputView().quoteProps;
 export const useChatInputLayoutView = () => useChatInputView().layoutProps;
+export const useChatInputFileInputsView = () => useChatInputView().fileInputs;
+export const useChatInputFormView = () => useChatInputView().formProps;
+export const useChatInputSuggestionsView = () => useChatInputView().suggestionsProps;
 export const useQueuedSubmissionView = () => useChatInputView().queuedSubmissionProps;
 export const useLiveStatusView = () => useChatInputView().liveStatusProps;
+export const useChatInputLiveVideoView = () => useChatInputView().liveVideoProps;
+export const useChatInputThemeView = () => useChatInputView().themeId;

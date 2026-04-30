@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import path from 'path';
 import React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -174,5 +176,16 @@ describe('ChatInputViewContext', () => {
     expect(container.querySelector('[data-testid="live-connected"]')?.textContent).toBe('true');
 
     unmount();
+  });
+
+  it('keeps the chat input area on focused view hooks instead of the full view object', () => {
+    const source = readFileSync(path.resolve(__dirname, './ChatInputArea.tsx'), 'utf8');
+
+    expect(source).not.toContain('useChatInputView');
+    expect(source).toContain('useQueuedSubmissionView()');
+    expect(source).toContain('useLiveStatusView()');
+    expect(source).toContain('useChatInputToolbarView()');
+    expect(source).toContain('useChatInputTextAreaView()');
+    expect(source).toContain('useChatInputFormView()');
   });
 });

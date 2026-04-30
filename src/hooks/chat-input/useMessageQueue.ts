@@ -24,7 +24,7 @@ interface UseMessageQueueParams {
   clearCurrentDraft: () => void;
   setInputText: (value: string) => void;
   setQuotes: (quotes: string[]) => void;
-  setIsWaitingForUpload: (isWaiting: boolean) => void;
+  setWaitingForUpload: (isWaiting: boolean) => void;
   textareaRef: RefObject<HTMLTextAreaElement>;
   setSelectedFiles: SetSelectedFiles;
   setAppFileError: (error: string | null) => void;
@@ -52,7 +52,7 @@ export const useMessageQueue = ({
   clearCurrentDraft,
   setInputText,
   setQuotes,
-  setIsWaitingForUpload,
+  setWaitingForUpload,
   textareaRef,
   setSelectedFiles,
   setAppFileError,
@@ -77,13 +77,13 @@ export const useMessageQueue = ({
       const blockingFileFailure = getBlockingFileUploadFailure(useChatStore.getState().selectedFiles);
       if (blockingFileFailure) {
         pendingSubmissionRef.current = null;
-        setIsWaitingForUpload(false);
+        setWaitingForUpload(false);
         setAppFileError(uploadFailureMessage);
         return;
       }
 
       pendingSubmissionRef.current = null;
-      setIsWaitingForUpload(false);
+      setWaitingForUpload(false);
 
       if (submission.kind === 'edit') {
         completeEditSubmission(submission.messageId, submission.content);
@@ -96,7 +96,7 @@ export const useMessageQueue = ({
       completeEditSubmission,
       completeSendSubmission,
       setAppFileError,
-      setIsWaitingForUpload,
+      setWaitingForUpload,
       uploadFailureMessage,
     ],
   );
@@ -177,13 +177,13 @@ export const useMessageQueue = ({
   const queuePendingSubmission = useCallback(
     (submission: PendingChatInputSubmission) => {
       pendingSubmissionRef.current = submission;
-      setIsWaitingForUpload(true);
+      setWaitingForUpload(true);
 
       if (!areFilesStillProcessing(useChatStore.getState().selectedFiles)) {
         flushPendingSubmission(submission);
       }
     },
-    [flushPendingSubmission, setIsWaitingForUpload],
+    [flushPendingSubmission, setWaitingForUpload],
   );
 
   useEffect(() => {

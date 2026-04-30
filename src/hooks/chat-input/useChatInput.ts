@@ -222,7 +222,7 @@ export const useChatInput = () => {
     inputText: inputState.inputText,
     isTranslating: inputState.isTranslating,
     setInputText: inputState.setInputText,
-    setIsTranslating: inputState.setIsTranslating,
+    setTranslating: inputState.setTranslating,
     setAppFileError,
   });
 

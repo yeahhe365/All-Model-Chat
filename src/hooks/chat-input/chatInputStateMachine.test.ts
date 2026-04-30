@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import path from 'path';
 import { describe, expect, it } from 'vitest';
 import {
   chatInputStateReducer,
@@ -49,7 +51,7 @@ describe('chatInputStateMachine', () => {
     expect(nextState.isTranslating).toBe(true);
   });
 
-  it('creates compatibility actions for existing boolean setter call sites', () => {
+  it('creates reducer actions for boolean flag call sites', () => {
     const waitingAction = createSetChatInputFlagAction('isWaitingForUpload', true);
     const toggleAction = createToggleChatInputFullscreenAction();
 
@@ -123,5 +125,22 @@ describe('chatInputStateMachine', () => {
         liveStatus: { isConnected: true, isReconnecting: false, error: null },
       }),
     ).toBe('processing');
+  });
+
+  it('keeps reducer flags behind explicit chat input actions', () => {
+    const source = readFileSync(path.resolve(__dirname, './useChatInputState.ts'), 'utf8');
+
+    expect(source).not.toContain('setIsTranslating');
+    expect(source).not.toContain('setIsAnimatingSend');
+    expect(source).not.toContain('setIsAddingById');
+    expect(source).not.toContain('setIsAddingByUrl');
+    expect(source).not.toContain('setIsWaitingForUpload');
+    expect(source).not.toContain('setIsFullscreen');
+    expect(source).toContain('setTranslating');
+    expect(source).toContain('setAddingById');
+    expect(source).toContain('setWaitingForUpload');
+    expect(source).toContain('startSendAnimation');
+    expect(source).toContain('stopSendAnimation');
+    expect(source).toContain('exitFullscreen');
   });
 });

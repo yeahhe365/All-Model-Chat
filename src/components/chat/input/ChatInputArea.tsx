@@ -9,27 +9,40 @@ import { ChatFilePreviewList } from './area/ChatFilePreviewList';
 import { ChatTextArea } from './area/ChatTextArea';
 import { LiveStatusBanner } from './LiveStatusBanner';
 import { QueuedSubmissionCard } from './QueuedSubmissionCard';
-import { useChatInputView, useLiveStatusView, useQueuedSubmissionView } from './ChatInputViewContext';
+import {
+  useChatInputActionsView,
+  useChatInputFileDisplayView,
+  useChatInputFileInputsView,
+  useChatInputFormView,
+  useChatInputLayoutView,
+  useChatInputLiveVideoView,
+  useChatInputQuoteView,
+  useChatInputSlashCommandView,
+  useChatInputSuggestionsView,
+  useChatInputTextAreaView,
+  useChatInputThemeView,
+  useChatInputToolbarView,
+  useLiveStatusView,
+  useQueuedSubmissionView,
+} from './ChatInputViewContext';
 import { HiddenFileInputs } from './HiddenFileInputs';
 import { useChatInputAreaLayout } from './useChatInputAreaLayout';
 
 export const ChatInputArea: React.FC = () => {
-  const {
-    toolbarProps,
-    actionsProps,
-    slashCommandProps,
-    fileDisplayProps,
-    inputProps,
-    quoteProps,
-    layoutProps,
-    fileInputs,
-    formProps,
-    suggestionsProps,
-    liveVideoProps,
-    themeId,
-  } = useChatInputView();
+  const toolbarProps = useChatInputToolbarView();
+  const actionsProps = useChatInputActionsView();
+  const slashCommandProps = useChatInputSlashCommandView();
+  const fileDisplayProps = useChatInputFileDisplayView();
+  const inputProps = useChatInputTextAreaView();
+  const quoteProps = useChatInputQuoteView();
+  const layoutProps = useChatInputLayoutView();
+  const fileInputs = useChatInputFileInputsView();
+  const formProps = useChatInputFormView();
+  const suggestionsProps = useChatInputSuggestionsView();
   const queuedSubmissionProps = useQueuedSubmissionView();
   const liveStatusProps = useLiveStatusView();
+  const liveVideoProps = useChatInputLiveVideoView();
+  const themeId = useChatInputThemeView();
   const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
   const { isRecording } = actionsProps;
 

@@ -101,11 +101,11 @@ export const useChatInputSubmission = ({
       }
 
       onMessageSent();
-      inputState.setIsAnimatingSend(true);
-      setTimeout(() => inputState.setIsAnimatingSend(false), 400);
+      inputState.startSendAnimation();
+      setTimeout(() => inputState.stopSendAnimation(), 400);
 
       if (!preserveComposer && inputState.isFullscreen) {
-        inputState.setIsFullscreen(false);
+        inputState.exitFullscreen();
       }
     },
     [handleSmartSendMessage, inputState, onMessageSent],
@@ -130,7 +130,7 @@ export const useChatInputSubmission = ({
     clearCurrentDraft: inputState.clearCurrentDraft,
     setInputText: inputState.setInputText,
     setQuotes: inputState.setQuotes,
-    setIsWaitingForUpload: inputState.setIsWaitingForUpload,
+    setWaitingForUpload: inputState.setWaitingForUpload,
     textareaRef: inputState.textareaRef,
     setSelectedFiles,
     setAppFileError,

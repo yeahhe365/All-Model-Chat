@@ -9,7 +9,7 @@ interface UseChatInputTranslationParams {
   inputText: string;
   isTranslating: boolean;
   setInputText: Dispatch<SetStateAction<string>>;
-  setIsTranslating: (isTranslating: boolean) => void;
+  setTranslating: (isTranslating: boolean) => void;
   setAppFileError: (error: string | null) => void;
 }
 
@@ -19,7 +19,7 @@ export const useChatInputTranslation = ({
   inputText,
   isTranslating,
   setInputText,
-  setIsTranslating,
+  setTranslating,
   setAppFileError,
 }: UseChatInputTranslationParams) => {
   const handleTranslate = useCallback(async () => {
@@ -27,13 +27,13 @@ export const useChatInputTranslation = ({
       return;
     }
 
-    setIsTranslating(true);
+    setTranslating(true);
     setAppFileError(null);
 
     const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
     if ('error' in keyResult) {
       setAppFileError(keyResult.error);
-      setIsTranslating(false);
+      setTranslating(false);
       return;
     }
 
@@ -48,7 +48,7 @@ export const useChatInputTranslation = ({
     } catch (error) {
       setAppFileError(error instanceof Error ? error.message : 'Translation failed.');
     } finally {
-      setIsTranslating(false);
+      setTranslating(false);
     }
   }, [
     appSettings,
@@ -57,7 +57,7 @@ export const useChatInputTranslation = ({
     isTranslating,
     setAppFileError,
     setInputText,
-    setIsTranslating,
+    setTranslating,
   ]);
 
   return { handleTranslate };
