@@ -36,7 +36,7 @@ export interface ChatUiSliceActions {
   setIsSwitchingModel: (v: UpdaterOrValue<boolean>) => void;
 }
 
-export type ChatUiSlice = ChatUiSliceState & ChatUiSliceActions;
+type ChatUiSlice = ChatUiSliceState & ChatUiSliceActions;
 
 const resolveUpdater = <T>(value: UpdaterOrValue<T>, previous: T) =>
   typeof value === 'function' ? (value as (prev: T) => T)(previous) : value;

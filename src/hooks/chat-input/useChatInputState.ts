@@ -1,5 +1,13 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useReducer } from 'react';
 import { useIsMobile } from '../useDevice';
+import {
+  chatInputStateReducer,
+  createSetChatInputFlagAction,
+  createToggleChatInputFullscreenAction,
+  initialChatInputMachineState,
+  type ChatInputBooleanUpdate,
+  type ChatInputMachineFlag,
+} from './chatInputStateMachine';
 
 export const INITIAL_TEXTAREA_HEIGHT_PX = 25.2;
 export const MAX_TEXTAREA_HEIGHT_PX = 150;
@@ -8,14 +16,9 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
   const [inputText, setInputText] = useState('');
   const [quotes, setQuotes] = useState<string[]>([]);
   const [ttsContext, setTtsContext] = useState('');
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [isAnimatingSend, setIsAnimatingSend] = useState(false);
   const [fileIdInput, setFileIdInput] = useState('');
-  const [isAddingById, setIsAddingById] = useState(false);
   const [urlInput, setUrlInput] = useState('');
-  const [isAddingByUrl, setIsAddingByUrl] = useState(false);
-  const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [machineState, dispatchMachineState] = useReducer(chatInputStateReducer, initialChatInputMachineState);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
@@ -23,6 +26,35 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
   const isComposingRef = useRef(false);
 
   const isMobile = useIsMobile();
+
+  const setMachineFlag = useCallback((flag: ChatInputMachineFlag, value: ChatInputBooleanUpdate) => {
+    dispatchMachineState(createSetChatInputFlagAction(flag, value));
+  }, []);
+
+  const setIsTranslating = useCallback(
+    (value: ChatInputBooleanUpdate) => setMachineFlag('isTranslating', value),
+    [setMachineFlag],
+  );
+  const setIsAnimatingSend = useCallback(
+    (value: ChatInputBooleanUpdate) => setMachineFlag('isAnimatingSend', value),
+    [setMachineFlag],
+  );
+  const setIsAddingById = useCallback(
+    (value: ChatInputBooleanUpdate) => setMachineFlag('isAddingById', value),
+    [setMachineFlag],
+  );
+  const setIsAddingByUrl = useCallback(
+    (value: ChatInputBooleanUpdate) => setMachineFlag('isAddingByUrl', value),
+    [setMachineFlag],
+  );
+  const setIsWaitingForUpload = useCallback(
+    (value: ChatInputBooleanUpdate) => setMachineFlag('isWaitingForUpload', value),
+    [setMachineFlag],
+  );
+  const setIsFullscreen = useCallback(
+    (value: ChatInputBooleanUpdate) => setMachineFlag('isFullscreen', value),
+    [setMachineFlag],
+  );
 
   // Load draft from localStorage when session changes
   useEffect(() => {
@@ -136,13 +168,19 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
   }, [activeSessionId]);
 
   const handleToggleFullscreen = useCallback(() => {
-    setIsFullscreen((prev) => {
-      const newState = !prev;
-      if (newState) {
-        setTimeout(() => textareaRef.current?.focus(), 50);
-      }
-      return newState;
-    });
+    if (!machineState.isFullscreen) {
+      setTimeout(() => textareaRef.current?.focus(), 50);
+    }
+
+    dispatchMachineState(createToggleChatInputFullscreenAction());
+  }, [machineState.isFullscreen]);
+
+  const handleCompositionStart = useCallback(() => {
+    isComposingRef.current = true;
+  }, []);
+
+  const handleCompositionEnd = useCallback(() => {
+    isComposingRef.current = false;
   }, []);
 
   return {
@@ -152,26 +190,29 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
     setQuotes,
     ttsContext,
     setTtsContext,
-    isTranslating,
+    machineState,
+    isTranslating: machineState.isTranslating,
     setIsTranslating,
-    isAnimatingSend,
+    isAnimatingSend: machineState.isAnimatingSend,
     setIsAnimatingSend,
     fileIdInput,
     setFileIdInput,
-    isAddingById,
+    isAddingById: machineState.isAddingById,
     setIsAddingById,
     urlInput,
     setUrlInput,
-    isAddingByUrl,
+    isAddingByUrl: machineState.isAddingByUrl,
     setIsAddingByUrl,
-    isWaitingForUpload,
+    isWaitingForUpload: machineState.isWaitingForUpload,
     setIsWaitingForUpload,
-    isFullscreen,
+    isFullscreen: machineState.isFullscreen,
     setIsFullscreen,
     textareaRef,
     justInitiatedFileOpRef,
     prevIsProcessingFileRef,
     isComposingRef,
+    handleCompositionStart,
+    handleCompositionEnd,
     clearCurrentDraft,
     handleToggleFullscreen,
     isMobile,

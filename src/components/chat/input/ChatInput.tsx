@@ -2,12 +2,11 @@ import React from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { createPortal } from 'react-dom';
 import { ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
-import { useChatInput } from '../../../hooks/chat-input/useChatInput';
+import { INITIAL_TEXTAREA_HEIGHT_PX, useChatInput } from '../../../features/chat/input';
 import { ChatInputModals } from './ChatInputModals';
 import { ChatInputFileModals } from './ChatInputFileModals';
 import { ChatInputArea } from './ChatInputArea';
 import { ChatInputViewModel, ChatInputViewProvider } from './ChatInputViewContext';
-import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
 
 const ChatInputComponent: React.FC = () => {
   const { t } = useI18n();

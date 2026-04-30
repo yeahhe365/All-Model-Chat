@@ -111,3 +111,5 @@ export const useChatInputView = () => {
 
 export const useChatInputActionsView = () => useChatInputView().actionsProps;
 export const useChatInputLayoutView = () => useChatInputView().layoutProps;
+export const useQueuedSubmissionView = () => useChatInputView().queuedSubmissionProps;
+export const useLiveStatusView = () => useChatInputView().liveStatusProps;

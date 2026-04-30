@@ -29,6 +29,11 @@ interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
 const ACTION_ROW_GAP_PX = 8;
 const ACTION_ROW_OVERFLOW_BUFFER_PX = 4;
 
+interface AuxiliaryActionCollapseState {
+  measurementSignature: string;
+  shouldCollapse: boolean;
+}
+
 export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onAttachmentAction,
   disabled,
@@ -96,8 +101,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   const leftActionsRef = useRef<HTMLDivElement | null>(null);
   const rightActionsRef = useRef<HTMLDivElement | null>(null);
   const expandedRightWidthRef = useRef(0);
-  const previousMeasurementSignatureRef = useRef('');
-  const [shouldCollapseAuxiliaryActions, setShouldCollapseAuxiliaryActions] = useState(false);
   const measurementSignature = useMemo(
     () =>
       [
@@ -129,6 +132,14 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
       showPasteButton,
     ],
   );
+  const [auxiliaryActionCollapseState, setAuxiliaryActionCollapseState] = useState<AuxiliaryActionCollapseState>({
+    measurementSignature,
+    shouldCollapse: false,
+  });
+  const shouldCollapseAuxiliaryActions =
+    auxiliaryActionCollapseState.measurementSignature === measurementSignature
+      ? auxiliaryActionCollapseState.shouldCollapse
+      : false;
   const showAuxiliaryActionsInMenu = hasComposerMoreActions && shouldCollapseAuxiliaryActions;
 
   const measureActionRow = useCallback(() => {
@@ -142,7 +153,11 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
 
     if (!hasComposerMoreActions) {
       expandedRightWidthRef.current = 0;
-      setShouldCollapseAuxiliaryActions(false);
+      setAuxiliaryActionCollapseState((current) =>
+        current.measurementSignature === measurementSignature && !current.shouldCollapse
+          ? current
+          : { measurementSignature, shouldCollapse: false },
+      );
       return;
     }
 
@@ -162,21 +177,17 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
     const requiredWidth = leftWidth + expandedRightWidth + ACTION_ROW_GAP_PX + ACTION_ROW_OVERFLOW_BUFFER_PX;
     const nextShouldCollapse = requiredWidth > containerWidth;
 
-    setShouldCollapseAuxiliaryActions((current) => (current === nextShouldCollapse ? current : nextShouldCollapse));
-  }, [hasComposerMoreActions, shouldCollapseAuxiliaryActions]);
+    setAuxiliaryActionCollapseState((current) =>
+      current.measurementSignature === measurementSignature && current.shouldCollapse === nextShouldCollapse
+        ? current
+        : { measurementSignature, shouldCollapse: nextShouldCollapse },
+    );
+  }, [hasComposerMoreActions, measurementSignature, shouldCollapseAuxiliaryActions]);
 
   useLayoutEffect(() => {
-    if (previousMeasurementSignatureRef.current !== measurementSignature) {
-      previousMeasurementSignatureRef.current = measurementSignature;
-
-      if (shouldCollapseAuxiliaryActions) {
-        setShouldCollapseAuxiliaryActions(false);
-        return;
-      }
-    }
-
-    measureActionRow();
-  }, [measureActionRow, measurementSignature, shouldCollapseAuxiliaryActions]);
+    const animationFrameId = window.requestAnimationFrame(measureActionRow);
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [measureActionRow]);
 
   useEffect(() => {
     const root = rootRef.current;

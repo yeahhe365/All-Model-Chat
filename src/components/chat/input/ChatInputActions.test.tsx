@@ -146,6 +146,14 @@ describe('ChatInputActions', () => {
     });
   };
 
+  const waitForActionRowMeasurement = async () => {
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
+  };
+
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -227,7 +235,7 @@ describe('ChatInputActions', () => {
     );
   });
 
-  it('keeps auxiliary composer actions direct when the single action row has enough room', () => {
+  it('keeps auxiliary composer actions direct when the single action row has enough room', async () => {
     mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
 
     act(() => {
@@ -242,6 +250,7 @@ describe('ChatInputActions', () => {
         />,
       );
     });
+    await waitForActionRowMeasurement();
 
     expect(utilityControlsMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -263,7 +272,7 @@ describe('ChatInputActions', () => {
     expect(container.querySelector('[data-testid="composer-more-menu"]')).toBeNull();
   });
 
-  it('moves auxiliary composer actions into the more menu only when the direct row overflows', () => {
+  it('moves auxiliary composer actions into the more menu only when the direct row overflows', async () => {
     mockActionRowMeasurements({ containerWidth: 300, leftWidth: 88, rightWidth: 292 });
 
     act(() => {
@@ -278,6 +287,7 @@ describe('ChatInputActions', () => {
         />,
       );
     });
+    await waitForActionRowMeasurement();
 
     expect(sendControlsMock).toHaveBeenCalledWith(
       expect.objectContaining({

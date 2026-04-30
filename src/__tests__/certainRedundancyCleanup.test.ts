@@ -64,14 +64,14 @@ describe('certain redundancy cleanup guards', () => {
 
   it('routes preview and export plumbing through shared helpers', () => {
     const messageListUiSource = readProjectFile('src/hooks/useMessageListUI.ts');
-    const chatInputSource = readProjectFile('src/hooks/chat-input/useChatInput.ts');
+    const chatInputFileSource = readProjectFile('src/hooks/chat-input/useChatInputFile.ts');
     const useAppSource = readProjectFile('src/hooks/app/useApp.ts');
     const useAppPromptModesSource = readProjectFile('src/hooks/app/useAppPromptModes.ts');
     const messageExportSource = readProjectFile('src/hooks/useMessageExport.ts');
     const chatSessionExportSource = readProjectFile('src/hooks/data-management/useChatSessionExport.ts');
 
     expect(messageListUiSource).toContain('useFileModalState');
-    expect(chatInputSource).toContain('useChatInputFileUi');
+    expect(chatInputFileSource).toContain('useChatInputFileUi');
     expect(useAppSource).toContain('useAppPromptModes');
     expect(useAppPromptModesSource).toContain('loadCanvasSystemPrompt');
     expect(messageExportSource).toContain("from '../utils/export/runtime'");
@@ -93,6 +93,35 @@ describe('certain redundancy cleanup guards', () => {
     expect(source).not.toMatch(
       /slashCommandState\.handleInputChange\(event\.target\.value\);\s*setInputText\(event\.target\.value\);/s,
     );
+  });
+
+  it('keeps chat input orchestration delegated to focused hooks', () => {
+    const source = readProjectFile('src/hooks/chat-input/useChatInput.ts');
+    const submissionSource = readProjectFile('src/hooks/chat-input/useChatInputSubmission.ts');
+    const chatInputComponentSource = readProjectFile('src/components/chat/input/ChatInput.tsx');
+    const chatTextAreaSource = readProjectFile('src/components/chat/input/area/ChatTextArea.tsx');
+    const chatAreaSource = readProjectFile('src/components/layout/chat-area/useChatArea.ts');
+
+    expect(source).toContain('useChatInputCore');
+    expect(source).toContain('useChatInputFile');
+    expect(source).toContain('useChatInputSubmission');
+    expect(submissionSource).toContain('useLiveModeHandler');
+    expect(source).toContain('useChatInputClipboard');
+    expect(source).toContain('useChatInputKeyboard');
+    expect(source).not.toContain('isComposingRef.current =');
+    expect(source.length).toBeLessThan(10000);
+    expect(chatInputComponentSource).toContain("from '../../../features/chat/input'");
+    expect(chatTextAreaSource).toContain("from '../../../../features/chat/input'");
+    expect(chatAreaSource).toContain("from '../../../features/chat/input'");
+  });
+
+  it('keeps standard chat sender delegated to session, turn, and API helpers', () => {
+    const source = readProjectFile('src/hooks/message-sender/useStandardChat.ts');
+
+    expect(source).toContain('useStandardChatSession');
+    expect(source).toContain('resolveStandardChatTurn');
+    expect(source).toContain('useStandardChatApiCall');
+    expect(source.length).toBeLessThan(21000);
   });
 
   it('removes low-risk unused interface surface from selected modules', () => {

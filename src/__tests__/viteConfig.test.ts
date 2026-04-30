@@ -10,6 +10,7 @@ const baseMarkdownRendererEntryPath = path.join(projectRoot, 'src/components/mes
 const indexEntryPath = path.join(projectRoot, 'src/index.tsx');
 const useChatPath = path.join(projectRoot, 'src/hooks/chat/useChat.ts');
 const useStandardChatPath = path.join(projectRoot, 'src/hooks/message-sender/useStandardChat.ts');
+const useStandardChatApiCallPath = path.join(projectRoot, 'src/hooks/message-sender/useStandardChatApiCall.ts');
 const usePyodidePath = path.join(projectRoot, 'src/hooks/usePyodide.ts');
 const pyodideLoaderPath = path.join(projectRoot, 'src/services/loadPyodideService.ts');
 const standardClientFunctionsPath = path.join(projectRoot, 'src/features/standard-chat/standardClientFunctions.ts');
@@ -90,14 +91,16 @@ describe('Runtime loading boundaries', () => {
   it('removes static pyodide service imports from the main chat path', () => {
     const useChatSource = fs.readFileSync(useChatPath, 'utf8');
     const useStandardChatSource = fs.readFileSync(useStandardChatPath, 'utf8');
+    const useStandardChatApiCallSource = fs.readFileSync(useStandardChatApiCallPath, 'utf8');
     const usePyodideSource = fs.readFileSync(usePyodidePath, 'utf8');
 
     expect(fs.existsSync(pyodideLoaderPath)).toBe(true);
     expect(useChatSource).not.toContain("from '../../services/pyodideService'");
     expect(useStandardChatSource).not.toContain("from '../../services/pyodideService'");
+    expect(useStandardChatApiCallSource).not.toContain("from '../../services/pyodideService'");
     expect(usePyodideSource).not.toContain("from '../services/pyodideService'");
     expect(useChatSource).toContain("from '../../services/loadPyodideService'");
-    expect(useStandardChatSource).toContain("from '../../services/loadPyodideService'");
+    expect(useStandardChatApiCallSource).toContain("from '../../services/loadPyodideService'");
     expect(usePyodideSource).toContain("from '../services/loadPyodideService'");
   });
 

@@ -9,7 +9,7 @@ import { ChatFilePreviewList } from './area/ChatFilePreviewList';
 import { ChatTextArea } from './area/ChatTextArea';
 import { LiveStatusBanner } from './LiveStatusBanner';
 import { QueuedSubmissionCard } from './QueuedSubmissionCard';
-import { useChatInputView } from './ChatInputViewContext';
+import { useChatInputView, useLiveStatusView, useQueuedSubmissionView } from './ChatInputViewContext';
 import { HiddenFileInputs } from './HiddenFileInputs';
 import { useChatInputAreaLayout } from './useChatInputAreaLayout';
 
@@ -21,15 +21,15 @@ export const ChatInputArea: React.FC = () => {
     fileDisplayProps,
     inputProps,
     quoteProps,
-    queuedSubmissionProps,
     layoutProps,
     fileInputs,
     formProps,
     suggestionsProps,
-    liveStatusProps,
     liveVideoProps,
     themeId,
   } = useChatInputView();
+  const queuedSubmissionProps = useQueuedSubmissionView();
+  const liveStatusProps = useLiveStatusView();
   const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
   const { isRecording } = actionsProps;
 

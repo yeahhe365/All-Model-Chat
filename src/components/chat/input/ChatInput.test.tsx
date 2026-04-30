@@ -35,6 +35,7 @@ const mockLiveApiState = vi.hoisted(() => ({
   startScreenShare: vi.fn(async () => true),
   stopVideo: vi.fn(),
   isConnected: false,
+  isReconnecting: false,
   isMuted: false,
   isSpeaking: false,
   volume: 0,
@@ -137,12 +138,13 @@ vi.mock('./ChatInputFileModals', () => ({
 }));
 
 vi.mock('./ChatInputArea', async () => {
-  const { useChatInputView } = await import('./ChatInputViewContext');
+  const { useChatInputView, useLiveStatusView, useQueuedSubmissionView } = await import('./ChatInputViewContext');
 
   const ChatInputArea = () => {
     const view = useChatInputView() as any;
     const { formProps, inputProps, actionsProps, fileDisplayProps } = view;
-    const queuedProps = (useChatInputView() as any).queuedSubmissionProps;
+    const queuedProps = useQueuedSubmissionView();
+    const liveStatusProps = useLiveStatusView();
     const extendedActionsProps = actionsProps as typeof actionsProps & {
       canQueueMessage?: boolean;
       onQueueMessage?: () => void;
@@ -161,6 +163,13 @@ vi.mock('./ChatInputArea', async () => {
             <button type="button" data-testid="queued-remove" onClick={queuedProps.onRemove}>
               remove
             </button>
+          </div>
+        ) : null}
+        {liveStatusProps ? (
+          <div data-testid="live-status">
+            <span data-testid="live-connected">{String(liveStatusProps.isConnected)}</span>
+            <span data-testid="live-reconnecting">{String(liveStatusProps.isReconnecting)}</span>
+            <span data-testid="live-error">{liveStatusProps.error ?? ''}</span>
           </div>
         ) : null}
         <textarea
@@ -377,6 +386,7 @@ describe('ChatInput', () => {
       startScreenShare: vi.fn(async () => true),
       stopVideo: vi.fn(),
       isConnected: false,
+      isReconnecting: false,
       isMuted: false,
       isSpeaking: false,
       volume: 0,
@@ -603,6 +613,25 @@ describe('ChatInput', () => {
 
     expect(mockLiveApiState.startCamera).toHaveBeenCalledTimes(1);
     expect(mockLiveApiState.connect).not.toHaveBeenCalled();
+  });
+
+  it('passes Live status through the focused status view hook', async () => {
+    const providerValue = createProviderValue(null);
+    mockLiveApiState.isConnected = true;
+    mockLiveApiState.isReconnecting = true;
+    mockLiveApiState.error = 'Live reconnecting';
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="live-connected"]')?.textContent).toBe('true');
+    expect(container.querySelector('[data-testid="live-reconnecting"]')?.textContent).toBe('true');
+    expect(container.querySelector('[data-testid="live-error"]')?.textContent).toBe('Live reconnecting');
   });
 
   it('queues the next draft while loading and auto-sends it after loading finishes', async () => {

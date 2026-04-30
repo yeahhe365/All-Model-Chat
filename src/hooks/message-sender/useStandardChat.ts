@@ -1,31 +1,16 @@
 import { useCallback } from 'react';
 import { logService } from '../../services/logService';
 import { getKeyForRequest } from '../../utils/apiUtils';
-import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
+import { buildContentParts } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
-import { performOptimisticSessionUpdate, generateSessionTitle, createMessage } from '../../utils/chat/session';
-import {
-  getModelCapabilities,
-  isGemini3Model,
-  isImageModel,
-  shouldStripThinkingFromContext,
-} from '../../utils/modelHelpers';
+import { performOptimisticSessionUpdate } from '../../utils/chat/session';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
+import type { ChatMessage, UploadedFile } from '../../types';
 import { StandardChatProps } from './types';
-import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/generationConfig';
-import { geminiServiceInstance } from '../../services/geminiService';
-import { generateContentTurnApi } from '../../services/api/chatApi';
-import {
-  sendOpenAICompatibleMessageNonStream,
-  sendOpenAICompatibleMessageStream,
-} from '../../services/api/openaiCompatibleApi';
-import { isLikelyHtml } from '../../utils/codeUtils';
-import { ContentPart } from '../../types/chat';
-import { createStandardClientFunctions } from '../../features/standard-chat/standardClientFunctions';
-import { runStandardToolLoop } from '../../features/standard-chat/standardToolLoop';
-import { collectLocalPythonInputFiles } from '../../features/local-python/helpers';
-import { getPyodideService } from '../../services/loadPyodideService';
+import { useStandardChatSession } from './useStandardChatSession';
+import { useStandardChatApiCall } from './useStandardChatApiCall';
+import { resolveStandardChatTurn } from './standardChatTurn';
 
 export const useStandardChat = ({
   appSettings,
@@ -46,460 +31,29 @@ export const useStandardChat = ({
   sessionKeyMapRef,
   handleGenerateCanvas,
 }: StandardChatProps) => {
-  const updateSessionState = useCallback(
-    (params: {
-      finalSessionId: string;
-      textToUse: string;
-      enrichedFiles: UploadedFile[];
-      effectiveEditingId: string | null;
-      generationId: string;
-      generationStartTime: Date;
-      isContinueMode: boolean;
-      isRawMode: boolean;
-      sessionToUpdate: IndividualChatSettings;
-      keyToUse: string;
-      shouldLockKey: boolean;
-    }) => {
-      const {
-        finalSessionId,
-        textToUse,
-        enrichedFiles,
-        effectiveEditingId,
-        generationId,
-        generationStartTime,
-        isContinueMode,
-        isRawMode,
-        sessionToUpdate,
-        keyToUse,
-        shouldLockKey,
-      } = params;
+  const { updateSessionState } = useStandardChatSession({
+    appSettings,
+    activeSessionId,
+    setActiveSessionId,
+    setEditingMessageId,
+    updateAndPersistSessions,
+    sessionKeyMapRef,
+  });
 
-      updateAndPersistSessions((prev) => {
-        if (isContinueMode) {
-          return prev.map((session) => {
-            if (session.id !== finalSessionId) {
-              return session;
-            }
-
-            return {
-              ...session,
-              messages: session.messages.map((message) =>
-                message.id === effectiveEditingId
-                  ? {
-                      ...message,
-                      isLoading: true,
-                      generationEndTime: undefined,
-                      stoppedByUser: false,
-                    }
-                  : message,
-              ),
-            };
-          });
-        }
-
-        const existingSession = prev.find((session) => session.id === activeSessionId);
-        let cumulativeTotalTokens = 0;
-        if (existingSession && existingSession.messages.length > 0) {
-          const lastMessage = existingSession.messages[existingSession.messages.length - 1];
-          cumulativeTotalTokens = lastMessage.cumulativeTotalTokens || 0;
-        }
-
-        const userMessage = createMessage('user', textToUse.trim(), {
-          files: enrichedFiles.length ? enrichedFiles : undefined,
-          cumulativeTotalTokens: cumulativeTotalTokens > 0 ? cumulativeTotalTokens : undefined,
-        });
-
-        const modelMessage = createMessage('model', isRawMode ? '<thinking>' : '', {
-          id: generationId,
-          isLoading: true,
-          generationStartTime,
-        });
-
-        let newTitle: string | undefined;
-        if (!activeSessionId || existingSession?.title === 'New Chat') {
-          newTitle = generateSessionTitle([userMessage, modelMessage]);
-        }
-
-        return performOptimisticSessionUpdate(prev, {
-          activeSessionId,
-          newSessionId: finalSessionId,
-          newMessages: [userMessage, modelMessage],
-          settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...sessionToUpdate },
-          editingMessageId: effectiveEditingId,
-          title: newTitle,
-          shouldLockKey,
-          keyToLock: keyToUse,
-        });
-      });
-
-      if (!activeSessionId) {
-        setActiveSessionId(finalSessionId);
-      }
-
-      sessionKeyMapRef.current.set(finalSessionId, keyToUse);
-
-      if (effectiveEditingId) {
-        setEditingMessageId(null);
-      }
-    },
-    [activeSessionId, appSettings, sessionKeyMapRef, setActiveSessionId, setEditingMessageId, updateAndPersistSessions],
-  );
-
-  const performApiCall = useCallback(
-    async (params: {
-      finalSessionId: string;
-      generationId: string;
-      generationStartTime: Date;
-      keyToUse: string;
-      activeModelId: string;
-      promptParts: ContentPart[];
-      effectiveEditingId: string | null;
-      isContinueMode: boolean;
-      isRawMode: boolean;
-      sessionToUpdate: IndividualChatSettings;
-      newAbortController: AbortController;
-      textToUse: string;
-      enrichedFiles: UploadedFile[];
-    }) => {
-      const {
-        finalSessionId,
-        generationId,
-        generationStartTime,
-        keyToUse,
-        activeModelId,
-        promptParts,
-        effectiveEditingId,
-        isContinueMode,
-        isRawMode,
-        sessionToUpdate,
-        newAbortController,
-        textToUse,
-        enrichedFiles,
-      } = params;
-      const apiModelId =
-        appSettings.apiMode === 'openai-compatible'
-          ? appSettings.openaiCompatibleModelId || activeModelId
-          : activeModelId;
-
-      let baseMessagesForApi: ChatMessage[] = messages;
-      if (effectiveEditingId) {
-        const index = messages.findIndex((message) => message.id === effectiveEditingId);
-        if (index !== -1) {
-          baseMessagesForApi = messages.slice(0, index);
-        }
-      }
-
-      let finalRole: 'user' | 'model' = 'user';
-      let finalParts = promptParts;
-
-      if (isContinueMode) {
-        finalRole = 'model';
-        const targetMessage = messages.find((message) => message.id === effectiveEditingId);
-        const currentContent = targetMessage?.content || '';
-        const isGemini3 = isGemini3Model(apiModelId);
-
-        let prefillContent = currentContent;
-        if (!prefillContent.trim()) {
-          prefillContent = isGemini3 ? '<thinking>I have finished reasoning</thinking>' : ' ';
-        }
-        finalParts = [{ text: prefillContent }];
-      } else if (isRawMode) {
-        const tempUserMessage: ChatMessage = {
-          id: 'temp-raw-user',
-          role: 'user',
-          content: textToUse.trim(),
-          files: enrichedFiles,
-          timestamp: new Date(),
-        };
-        baseMessagesForApi = [...baseMessagesForApi, tempUserMessage];
-        finalRole = 'model';
-        finalParts = [{ text: '<thinking>' }];
-      } else if (promptParts.length === 0) {
-        setSessionLoading(finalSessionId, false);
-        activeJobs.current.delete(generationId);
-        return;
-      }
-
-      const shouldStripThinking = shouldStripThinkingFromContext(
-        apiModelId,
-        sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext,
-      );
-      const historyForChat = await createChatHistoryForApi(
-        baseMessagesForApi,
-        shouldStripThinking,
-        apiModelId,
-        !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled,
-      );
-
-      const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
-        finalSessionId,
-        generationId,
-        newAbortController,
-        generationStartTime,
-        sessionToUpdate,
-        finalParts,
-        (messageId, content) => {
-          if (
-            !isContinueMode &&
-            appSettings.autoCanvasVisualization &&
-            content &&
-            content.length > 50 &&
-            !isLikelyHtml(content)
-          ) {
-            const trimmed = content.trim();
-            if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
-              return;
-            }
-            logService.info('Auto-triggering Canvas visualization for message', {
-              msgId: messageId,
-            });
-            handleGenerateCanvas(messageId, content);
-          }
-        },
-      );
-
-      setSessionLoading(finalSessionId, true);
-      activeJobs.current.set(generationId, newAbortController);
-
-      if (appSettings.apiMode === 'openai-compatible') {
-        const openAICompatibleConfig = {
-          baseUrl: appSettings.openaiCompatibleBaseUrl,
-          systemInstruction: sessionToUpdate.systemInstruction,
-          temperature: sessionToUpdate.temperature,
-          topP: sessionToUpdate.topP,
-        };
-
-        if (appSettings.isStreamingEnabled) {
-          await sendOpenAICompatibleMessageStream(
-            keyToUse,
-            apiModelId,
-            historyForChat,
-            finalParts,
-            openAICompatibleConfig,
-            newAbortController.signal,
-            streamOnPart,
-            onThoughtChunk,
-            streamOnError,
-            streamOnComplete,
-            finalRole,
-          );
-          return;
-        }
-
-        await sendOpenAICompatibleMessageNonStream(
-          keyToUse,
-          apiModelId,
-          historyForChat,
-          finalParts,
-          openAICompatibleConfig,
-          newAbortController.signal,
-          streamOnError,
-          (parts, thoughts, usage, grounding, urlContext) => {
-            for (const part of parts) {
-              streamOnPart(part);
-            }
-            if (thoughts) {
-              onThoughtChunk(thoughts);
-            }
-            streamOnComplete(usage, grounding, urlContext);
-          },
-          finalRole,
-        );
-        return;
-      }
-
-      const localPythonContextMessages =
-        finalRole === 'user'
-          ? [
-              ...baseMessagesForApi,
-              {
-                id: 'temp-standard-user',
-                role: 'user' as const,
-                content: textToUse.trim(),
-                files: enrichedFiles,
-                timestamp: new Date(),
-              },
-            ]
-          : baseMessagesForApi;
-      const standardClientFunctions = createStandardClientFunctions({
-        isLocalPythonEnabled:
-          !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode && !isImageModel(apiModelId),
-        inputFiles: collectLocalPythonInputFiles(
-          [
-            ...localPythonContextMessages,
-            {
-              id: 'temp-standard-tool-target',
-              role: 'model',
-              content: '',
-              timestamp: new Date(),
-            },
-          ],
-          'temp-standard-tool-target',
-        ),
-        runPython: async (code, options) => {
-          const pyodideService = await getPyodideService();
-          return pyodideService.runPython(code, options);
-        },
-      });
-      const standardFunctionDeclarations = Object.values(standardClientFunctions).map(({ declaration }) => declaration);
-      const hasRequestedServerSideToolThatNeedsCombination =
-        !!sessionToUpdate.isGoogleSearchEnabled ||
-        !!sessionToUpdate.isDeepSearchEnabled ||
-        !!sessionToUpdate.isUrlContextEnabled;
-      const isLocalPythonEnabledForTurn =
-        standardFunctionDeclarations.length > 0 &&
-        (isGemini3Model(apiModelId) || !hasRequestedServerSideToolThatNeedsCombination);
-
-      const config = await buildGenerationConfig({
-        modelId: apiModelId,
-        systemInstruction: sessionToUpdate.systemInstruction,
-        config: {
-          temperature: sessionToUpdate.temperature,
-          topP: sessionToUpdate.topP,
-          topK: sessionToUpdate.topK,
-        },
-        showThoughts: sessionToUpdate.showThoughts,
-        thinkingBudget: sessionToUpdate.thinkingBudget,
-        isGoogleSearchEnabled: !!sessionToUpdate.isGoogleSearchEnabled,
-        isCodeExecutionEnabled: !!sessionToUpdate.isCodeExecutionEnabled,
-        isUrlContextEnabled: !!sessionToUpdate.isUrlContextEnabled,
-        thinkingLevel: sessionToUpdate.thinkingLevel,
-        aspectRatio,
-        isDeepSearchEnabled: sessionToUpdate.isDeepSearchEnabled,
-        imageSize,
-        safetySettings: sessionToUpdate.safetySettings,
-        mediaResolution: sessionToUpdate.mediaResolution,
-        isLocalPythonEnabled: isLocalPythonEnabledForTurn,
-        imageOutputMode,
-        personGeneration,
-      });
-
-      const requestConfig = appendFunctionDeclarationsToTools(
-        apiModelId,
-        config,
-        isLocalPythonEnabledForTurn ? standardFunctionDeclarations : [],
-      );
-      const hasFunctionDeclarationsInRequest = !!requestConfig.tools?.some((tool) => 'functionDeclarations' in tool);
-
-      if (hasFunctionDeclarationsInRequest) {
-        try {
-          const toolLoopResult = await runStandardToolLoop({
-            initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
-            clientFunctions: standardClientFunctions,
-            runTurn: (contents) =>
-              generateContentTurnApi(keyToUse, apiModelId, contents, requestConfig, newAbortController.signal),
-          });
-
-          if (toolLoopResult.toolMessages.length > 0) {
-            const internalMessages = toolLoopResult.toolMessages.flatMap(({ modelContent, functionResponseParts }) => [
-              createMessage('model', '', {
-                apiParts: modelContent.parts,
-                isInternalToolMessage: true,
-                toolParentMessageId: generationId,
-              }),
-              createMessage('user', '', {
-                apiParts: functionResponseParts,
-                isInternalToolMessage: true,
-                toolParentMessageId: generationId,
-              }),
-            ]);
-
-            updateAndPersistSessions(
-              (prev) =>
-                prev.map((session) => {
-                  if (session.id !== finalSessionId) {
-                    return session;
-                  }
-
-                  return {
-                    ...session,
-                    messages: session.messages.flatMap((message) => {
-                      if (message.id !== generationId) {
-                        return [message];
-                      }
-
-                      return [
-                        ...internalMessages,
-                        {
-                          ...message,
-                        },
-                      ];
-                    }),
-                  };
-                }),
-              { persist: false },
-            );
-          }
-
-          for (const part of toolLoopResult.finalTurn.parts) {
-            streamOnPart(part);
-          }
-          if (toolLoopResult.finalTurn.thoughts) {
-            onThoughtChunk(toolLoopResult.finalTurn.thoughts);
-          }
-          streamOnComplete(
-            toolLoopResult.finalTurn.usage,
-            toolLoopResult.finalTurn.grounding,
-            toolLoopResult.finalTurn.urlContext,
-            toolLoopResult.generatedFiles,
-          );
-        } catch (error) {
-          streamOnError(error instanceof Error ? error : new Error(String(error)));
-        }
-        return;
-      }
-
-      if (appSettings.isStreamingEnabled) {
-        await geminiServiceInstance.sendMessageStream(
-          keyToUse,
-          apiModelId,
-          historyForChat,
-          finalParts,
-          requestConfig,
-          newAbortController.signal,
-          streamOnPart,
-          onThoughtChunk,
-          streamOnError,
-          streamOnComplete,
-          finalRole,
-        );
-        return;
-      }
-
-      await geminiServiceInstance.sendMessageNonStream(
-        keyToUse,
-        apiModelId,
-        historyForChat,
-        finalParts,
-        requestConfig,
-        newAbortController.signal,
-        streamOnError,
-        (parts, thoughts, usage, grounding, urlContext) => {
-          for (const part of parts) {
-            streamOnPart(part);
-          }
-          if (thoughts) {
-            onThoughtChunk(thoughts);
-          }
-          streamOnComplete(usage, grounding, urlContext);
-        },
-        finalRole,
-      );
-    },
-    [
-      activeJobs,
-      appSettings,
-      aspectRatio,
-      getStreamHandlers,
-      handleGenerateCanvas,
-      imageOutputMode,
-      imageSize,
-      messages,
-      personGeneration,
-      setSessionLoading,
-      updateAndPersistSessions,
-    ],
-  );
+  const { performApiCall } = useStandardChatApiCall({
+    appSettings,
+    messages,
+    activeJobs,
+    setSessionLoading,
+    updateAndPersistSessions,
+    getStreamHandlers,
+    handleGenerateCanvas,
+    aspectRatio,
+    imageSize,
+    imageOutputMode,
+    personGeneration,
+    resolveTurn: resolveStandardChatTurn,
+  });
 
   const sendStandardMessage = useCallback(
     async (
@@ -552,7 +106,6 @@ export const useStandardChat = ({
 
       const { key: keyToUse, isNewKey } = keyResult;
       const shouldLockKey = isNewKey && filesToUse.some((file) => file.fileUri && file.uploadState === 'active');
-
       const newAbortController = new AbortController();
 
       let generationId: string;

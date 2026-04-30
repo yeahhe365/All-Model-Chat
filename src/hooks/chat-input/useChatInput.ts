@@ -1,36 +1,19 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { UploadedFile, VideoMetadata } from '../../types';
-import { MediaResolution } from '../../types/settings';
-import { useI18n } from '../../contexts/I18nContext';
-import { useChatInputState } from './useChatInputState';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { getModelCapabilities } from '../../utils/modelHelpers';
+import { useCallback, useMemo } from 'react';
 import { useVoiceInput } from '../useVoiceInput';
-import { useSlashCommands, type SlashCommandState } from '../useSlashCommands';
-import { useLiveAPI } from '../useLiveAPI';
-import { useTextAreaInsert } from '../useTextAreaInsert';
-import { processClipboardData } from '../../utils/clipboardUtils';
-import { getKeyForRequest } from '../../utils/apiUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
-import { isShortcutPressed } from '../../utils/shortcutUtils';
-import { useChatAreaInput } from '../../contexts/ChatAreaContext';
-import {
-  areFilesStillProcessing,
-  buildPendingChatInputSubmission,
-} from './pendingSubmissionUtils';
+import { useSlashCommands } from '../useSlashCommands';
+import { areFilesStillProcessing } from './pendingSubmissionUtils';
 import { hasSendableChatInputContent } from './chatInputUtils';
-import { useChatInputFileUi } from './useChatInputFileUi';
-import { cleanupFilePreviewUrl } from '../../utils/fileHelpers';
-import { buildContentParts } from '../../utils/chat/builder';
-import { useMessageQueue } from './useMessageQueue';
-import { useFilePreProcessingEffects } from './useFilePreProcessingEffects';
+import { useChatInputCore } from './useChatInputCore';
+import { useChatInputFile } from './useChatInputFile';
 import { useChatInputGlobalEffects } from './useChatInputGlobalEffects';
-
-const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
+import { useChatInputSubmission } from './useChatInputSubmission';
+import { useChatInputClipboard } from './useChatInputClipboard';
+import { useChatInputKeyboard } from './useChatInputKeyboard';
+import { useChatInputTranslation } from './useChatInputTranslation';
+import { getChatInputMode } from './chatInputStateMachine';
 
 export const useChatInput = () => {
-  const { t } = useI18n();
-  const chatInput = useChatAreaInput();
+  const { t, chatInput, inputState, fileRefs, targetDocument, insertText, capabilities, liveAPI } = useChatInputCore();
   const {
     appSettings,
     currentChatSettings,
@@ -61,8 +44,6 @@ export const useChatInput = () => {
     onTogglePip,
     setCurrentChatSettings,
     onAddUserMessage,
-    onLiveTranscript,
-    liveClientFunctions,
     selectedFiles,
     setSelectedFiles,
     setAppFileError,
@@ -73,58 +54,23 @@ export const useChatInput = () => {
     isProcessingFile,
   } = chatInput;
 
-  const inputState = useChatInputState(activeSessionId, isEditing);
-  const { setInputText, textareaRef } = inputState;
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
-  const zipInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const { document: targetDocument } = useWindowContext();
-  const insertText = useTextAreaInsert(textareaRef, setInputText);
-
-  const capabilities = getModelCapabilities(currentChatSettings.modelId);
-
-  const liveAPI = useLiveAPI({
-    appSettings,
-    chatSettings: currentChatSettings,
-    modelId: currentChatSettings.modelId,
-    onClose: undefined,
-    onTranscript: onLiveTranscript,
-    onGeneratedFiles: onLiveTranscript
-      ? (files) => onLiveTranscript('', 'model', false, 'content', undefined, files)
-      : undefined,
-    clientFunctions: liveClientFunctions,
-  });
-
-  const filePreProcessing = useFilePreProcessingEffects({
-    fileInputRef,
-    imageInputRef,
-    folderInputRef,
-    zipInputRef,
-    justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
-    onProcessFiles,
-    setSelectedFiles,
-    setAppFileError,
-  });
-
-  const { modalsState, localFileState } = useChatInputFileUi({
+  const {
+    filePreProcessing,
+    modalsState,
+    localFileState,
+    removeSelectedFile,
+    handleAddFileByIdSubmit,
+    handleSaveFileConfig,
+  } = useChatInputFile({
+    inputState,
     selectedFiles,
     setSelectedFiles,
-    setInputText: inputState.setInputText,
     setAppFileError,
     onProcessFiles,
-    onOpenFolderPicker: filePreProcessing.handleOpenFolderPicker,
-    onScreenshot: filePreProcessing.handleScreenshot,
-    fileInputRef,
-    imageInputRef,
-    folderInputRef,
-    zipInputRef,
-    cameraInputRef,
+    onAddFileById,
+    isLoading,
+    fileRefs,
     justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
-    textareaRef: inputState.textareaRef,
-    isConverting: filePreProcessing.isConverting,
-    setIsConverting: filePreProcessing.setIsConverting,
   });
 
   const voiceState = useVoiceInput({
@@ -191,538 +137,109 @@ export const useChatInput = () => {
     !localFileState.isConverting &&
     !areFilesStillProcessing(selectedFiles);
 
-  const handleSmartSendMessage = useCallback(
-    async (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => {
-      if (capabilities.isNativeAudioModel) {
-        const filesToSend = options?.files ?? selectedFiles;
-        let didConnect = liveAPI.isConnected;
-        if (!liveAPI.isConnected) {
-          try {
-            didConnect = await liveAPI.connect();
-          } catch (error) {
-            console.error('Failed to auto-connect Live API:', error);
-            return;
-          }
-        }
-
-        if (!didConnect) {
-          return;
-        }
-
-        let enrichedFiles = filesToSend;
-        let didSend: boolean;
-        if (filesToSend.length > 0) {
-          const builtContent = await buildContentParts(
-            text,
-            filesToSend,
-            currentChatSettings.modelId,
-            currentChatSettings.mediaResolution,
-          );
-          enrichedFiles = builtContent.enrichedFiles;
-          didSend = await liveAPI.sendContent(builtContent.contentParts);
-        } else {
-          didSend = await liveAPI.sendText(text);
-        }
-        if (!didSend) {
-          return;
-        }
-
-        if (onAddUserMessage) {
-          onAddUserMessage(text, enrichedFiles);
-        }
-        setSelectedFiles([]);
-        return;
-      }
-
-      onSendMessage(text, options);
-    },
-    [
-      capabilities.isNativeAudioModel,
-      currentChatSettings.mediaResolution,
-      currentChatSettings.modelId,
-      liveAPI,
-      onAddUserMessage,
-      onSendMessage,
-      selectedFiles,
-      setSelectedFiles,
-    ],
-  );
-
-  const completeEditSubmission = useCallback(
-    (messageId: string, content: string) => {
-      onUpdateMessageContent(messageId, content);
-      setEditingMessageId(null);
-      inputState.clearCurrentDraft();
-      inputState.setInputText('');
-      inputState.setQuotes([]);
-      onMessageSent();
-    },
-    [inputState, onMessageSent, onUpdateMessageContent, setEditingMessageId],
-  );
-
-  const completeSendSubmission = useCallback(
-    (
-      textToSend: string,
-      isFastMode: boolean,
-      options?: {
-        files?: UploadedFile[];
-        preserveComposer?: boolean;
-      },
-    ) => {
-      const preserveComposer = options?.preserveComposer ?? false;
-      const files = options?.files;
-
-      if (!preserveComposer) {
-        inputState.clearCurrentDraft();
-      }
-
-      handleSmartSendMessage(textToSend, { isFastMode, files });
-
-      if (!preserveComposer) {
-        inputState.setInputText('');
-        inputState.setQuotes([]);
-      }
-
-      onMessageSent();
-      inputState.setIsAnimatingSend(true);
-      setTimeout(() => inputState.setIsAnimatingSend(false), 400);
-
-      if (!preserveComposer && inputState.isFullscreen) {
-        inputState.setIsFullscreen(false);
-      }
-    },
-    [handleSmartSendMessage, inputState, onMessageSent],
-  );
-
-  const messageQueue = useMessageQueue({
-    activeSessionId,
-    modelId: currentChatSettings.modelId,
-    inputText: inputState.inputText,
-    quotes: inputState.quotes,
-    ttsContext: inputState.ttsContext,
-    selectedFiles,
-    isLoading,
-    canQueueMessageBase,
-    clearCurrentDraft: inputState.clearCurrentDraft,
-    setInputText: inputState.setInputText,
-    setQuotes: inputState.setQuotes,
-    setIsWaitingForUpload: inputState.setIsWaitingForUpload,
-    textareaRef: inputState.textareaRef,
-    setSelectedFiles,
-    setAppFileError,
-    uploadFailureMessage: t('messageSender_fileUploadFailedBeforeSend'),
-    completeEditSubmission,
-    completeSendSubmission,
-  });
   const {
     canQueueMessage,
     activeQueuedSubmission,
     queueCurrentSubmission,
-    queuePendingSubmission,
     restoreQueuedSubmission,
     removeQueuedSubmission,
-  } = messageQueue;
+    handleSubmit,
+    handleFastSubmit,
+    handleSmartSendMessage,
+  } = useChatInputSubmission({
+    activeSessionId,
+    currentChatSettings,
+    selectedFiles,
+    setSelectedFiles,
+    setAppFileError,
+    uploadFailureMessage: t('messageSender_fileUploadFailedBeforeSend'),
+    isLoading,
+    isEditing,
+    editMode,
+    editingMessageId,
+    canSend,
+    canQueueMessageBase,
+    inputState,
+    isNativeAudioModel: capabilities.isNativeAudioModel,
+    liveAPI,
+    onUpdateMessageContent,
+    setEditingMessageId,
+    onMessageSent,
+    onAddUserMessage,
+    onSendMessage,
+  });
 
-  const handleAddUrl = useCallback(
-    async (url: string) => {
-      if (!YOUTUBE_URL_REGEX.test(url)) {
-        setAppFileError('Invalid YouTube URL provided.');
-        return;
-      }
-
-      inputState.justInitiatedFileOpRef.current = true;
-      const newUrlFile: UploadedFile = {
-        id: `url-${Date.now()}`,
-        name: url.length > 30 ? `${url.substring(0, 27)}...` : url,
-        type: 'video/youtube-link',
-        size: 0,
-        fileUri: url,
-        uploadState: 'active',
-        isProcessing: false,
-      };
-
-      setSelectedFiles((prev) => [...prev, newUrlFile]);
-      inputState.setUrlInput('');
-      modalsState.setShowAddByUrlInput(false);
-      inputState.textareaRef.current?.focus();
-    },
-    [inputState, modalsState, setAppFileError, setSelectedFiles],
-  );
-
-  const handlePasteAction = useCallback(
-    async (clipboardData: DataTransfer | null, options: { forceTextInsertion?: boolean } = {}): Promise<boolean> => {
-      const inputModalOpen = modalsState.showCreateTextFileEditor || modalsState.showRecorder;
-
-      if (inputState.isAddingById || inputModalOpen) {
-        return false;
-      }
-
-      const result = processClipboardData(clipboardData, {
-        isPasteRichTextAsMarkdownEnabled: appSettings.isPasteRichTextAsMarkdownEnabled ?? true,
-        isPasteAsTextFileEnabled: appSettings.isPasteAsTextFileEnabled ?? true,
-      });
-
-      if (result.type === 'empty') {
-        return false;
-      }
-
-      if (result.type === 'files' || result.type === 'large-text-file') {
-        inputState.justInitiatedFileOpRef.current = true;
-        await onProcessFiles(result.files);
-        inputState.textareaRef.current?.focus();
-        return true;
-      }
-
-      if (result.type === 'markdown') {
-        insertText(result.content);
-        return true;
-      }
-
-      if (result.type === 'text') {
-        const pastedText = result.content;
-
-        if (YOUTUBE_URL_REGEX.test(pastedText.trim())) {
-          await handleAddUrl(pastedText.trim());
-          return true;
-        }
-
-        if (options.forceTextInsertion) {
-          insertText(pastedText);
-          return true;
-        }
-      }
-
-      return false;
-    },
-    [
-      appSettings.isPasteAsTextFileEnabled,
-      appSettings.isPasteRichTextAsMarkdownEnabled,
-      handleAddUrl,
-      inputState.isAddingById,
-      inputState.justInitiatedFileOpRef,
-      inputState.textareaRef,
-      insertText,
-      modalsState.showCreateTextFileEditor,
-      modalsState.showRecorder,
-      onProcessFiles,
-    ],
-  );
-
-  const handlePaste = useCallback(
-    async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const didHandle = await handlePasteAction(event.clipboardData);
-      if (didHandle) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    },
-    [handlePasteAction],
-  );
-
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      slashCommandState.handleInputChange(event.target.value);
-    },
-    [slashCommandState],
-  );
-
-  const performSubmit = useCallback(
-    (isFastMode: boolean) => {
-      if (!canSend) {
-        return;
-      }
-
-      const submission = buildPendingChatInputSubmission({
-        inputText: inputState.inputText,
-        quotes: inputState.quotes,
-        modelId: currentChatSettings.modelId,
-        ttsContext: inputState.ttsContext,
+  const chatInputMode = useMemo(
+    () =>
+      getChatInputMode({
+        state: inputState.machineState,
         isEditing,
-        editMode,
-        editingMessageId,
-        isFastMode,
-      });
-
-      const filesAreStillProcessing = areFilesStillProcessing(selectedFiles);
-      if (filesAreStillProcessing) {
-        queuePendingSubmission(submission);
-        return;
-      }
-
-      if (submission.kind === 'edit') {
-        completeEditSubmission(submission.messageId, submission.content);
-        return;
-      }
-
-      completeSendSubmission(submission.textToSend, submission.isFastMode);
-    },
+        hasActiveQueuedSubmission: !!activeQueuedSubmission,
+        canQueueMessage,
+        isNativeAudioModel: capabilities.isNativeAudioModel || false,
+        liveStatus: {
+          isConnected: liveAPI.isConnected,
+          isReconnecting: liveAPI.isReconnecting,
+          error: liveAPI.error,
+        },
+        isProcessingFile,
+        isConverting: localFileState.isConverting,
+      }),
     [
-      canSend,
-      completeEditSubmission,
-      completeSendSubmission,
-      currentChatSettings.modelId,
-      editMode,
-      editingMessageId,
-      inputState,
-      isEditing,
-      queuePendingSubmission,
-      selectedFiles,
-    ],
-  );
-
-  const handleSubmit = useCallback(
-    (event: React.FormEvent) => {
-      event.preventDefault();
-      performSubmit(false);
-    },
-    [performSubmit],
-  );
-
-  const handleFastSubmit = useCallback(() => {
-    performSubmit(true);
-  }, [performSubmit]);
-
-  const handleTranslate = useCallback(async () => {
-    if (!inputState.inputText.trim() || inputState.isTranslating) {
-      return;
-    }
-
-    inputState.setIsTranslating(true);
-    setAppFileError(null);
-
-    const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
-    if ('error' in keyResult) {
-      setAppFileError(keyResult.error);
-      inputState.setIsTranslating(false);
-      return;
-    }
-
-    try {
-      const translatedText = await geminiServiceInstance.translateText(
-        keyResult.key,
-        inputState.inputText,
-        appSettings.translationTargetLanguage ?? 'English',
-        appSettings.inputTranslationModelId,
-      );
-      inputState.setInputText(translatedText);
-    } catch (error) {
-      setAppFileError(error instanceof Error ? error.message : 'Translation failed.');
-    } finally {
-      inputState.setIsTranslating(false);
-    }
-  }, [appSettings, currentChatSettings, inputState, setAppFileError]);
-
-  const handlePasteFromClipboard = useCallback(async () => {
-    if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) {
-      return;
-    }
-
-    try {
-      const clipboardText = await navigator.clipboard.readText();
-      if (!clipboardText) {
-        return;
-      }
-
-      inputState.setInputText((prev) => prev + clipboardText);
-      setTimeout(() => {
-        const textarea = inputState.textareaRef.current;
-        textarea?.focus();
-        textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
-      }, 0);
-    } catch {
-      return;
-    }
-  }, [inputState]);
-
-  const handleClearInput = useCallback(() => {
-    inputState.setInputText('');
-    setTimeout(() => inputState.textareaRef.current?.focus(), 0);
-  }, [inputState]);
-
-  const onCompositionStart = useCallback(() => {
-    inputState.isComposingRef.current = true;
-  }, [inputState.isComposingRef]);
-
-  const onCompositionEnd = useCallback(() => {
-    inputState.isComposingRef.current = false;
-  }, [inputState.isComposingRef]);
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (slashCommandState.slashCommandState.isOpen) {
-        if (event.key === 'ArrowDown') {
-          event.preventDefault();
-          slashCommandState.setSlashCommandState((prev: SlashCommandState) => {
-            const length = prev.filteredCommands?.length || 0;
-            if (length === 0) {
-              return prev;
-            }
-
-            return { ...prev, selectedIndex: (prev.selectedIndex + 1) % length };
-          });
-          return;
-        }
-
-        if (event.key === 'ArrowUp') {
-          event.preventDefault();
-          slashCommandState.setSlashCommandState((prev: SlashCommandState) => {
-            const length = prev.filteredCommands?.length || 0;
-            if (length === 0) {
-              return prev;
-            }
-
-            return {
-              ...prev,
-              selectedIndex: (prev.selectedIndex - 1 + length) % length,
-            };
-          });
-          return;
-        }
-
-        if (event.key === 'Enter' || event.key === 'Tab') {
-          event.preventDefault();
-          const command =
-            slashCommandState.slashCommandState.filteredCommands[slashCommandState.slashCommandState.selectedIndex];
-          if (command) {
-            slashCommandState.handleCommandSelect(command);
-          }
-          return;
-        }
-      }
-
-      if (inputState.isComposingRef.current || event.nativeEvent.isComposing) {
-        return;
-      }
-
-      if (isShortcutPressed(event, 'global.stopCancel', appSettings)) {
-        if (isLoading) {
-          event.preventDefault();
-          onStopGenerating();
-          return;
-        }
-
-        if (isEditing) {
-          event.preventDefault();
-          onCancelEdit();
-          return;
-        }
-
-        if (slashCommandState.slashCommandState.isOpen) {
-          event.preventDefault();
-          slashCommandState.setSlashCommandState((prev: SlashCommandState) => ({ ...prev, isOpen: false }));
-          return;
-        }
-
-        if (inputState.isFullscreen) {
-          event.preventDefault();
-          inputState.handleToggleFullscreen();
-          return;
-        }
-      }
-
-      if (isShortcutPressed(event, 'input.editLast', appSettings) && !isLoading && inputState.inputText.length === 0) {
-        event.preventDefault();
-        onEditLastUserMessage();
-        return;
-      }
-
-      const isSendPressed = isShortcutPressed(event, 'input.sendMessage', appSettings);
-      const isNewLinePressed = isShortcutPressed(event, 'input.newLine', appSettings);
-
-      if (isSendPressed) {
-        if (
-          inputState.isMobile &&
-          event.key === 'Enter' &&
-          !event.shiftKey &&
-          !event.ctrlKey &&
-          !event.altKey &&
-          !event.metaKey
-        ) {
-          return;
-        }
-
-        const rawInput = inputState.inputText;
-        if (rawInput.startsWith('/')) {
-          const handledSlashCommand = slashCommandState.handleSlashCommandExecution(rawInput);
-          if (handledSlashCommand) {
-            event.preventDefault();
-            return;
-          }
-        }
-
-        if (canSend) {
-          event.preventDefault();
-          handleSubmit(event as unknown as React.FormEvent);
-          return;
-        }
-
-        if (canQueueMessage) {
-          event.preventDefault();
-          queueCurrentSubmission();
-        }
-        return;
-      }
-
-      if (!isNewLinePressed) {
-        return;
-      }
-
-      if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
-        return;
-      }
-
-      event.preventDefault();
-      const target = event.target as HTMLTextAreaElement;
-      const start = target.selectionStart;
-      const end = target.selectionEnd;
-      const value = target.value;
-      const newValue = `${value.substring(0, start)}\n${value.substring(end)}`;
-      inputState.setInputText(newValue);
-
-      requestAnimationFrame(() => {
-        target.selectionStart = start + 1;
-        target.selectionEnd = start + 1;
-        target.scrollTop = target.scrollHeight;
-      });
-    },
-    [
-      appSettings,
-      canSend,
+      activeQueuedSubmission,
       canQueueMessage,
-      handleSubmit,
-      inputState,
+      capabilities.isNativeAudioModel,
+      inputState.machineState,
       isEditing,
-      isLoading,
-      onCancelEdit,
-      onEditLastUserMessage,
-      onStopGenerating,
-      queueCurrentSubmission,
-      slashCommandState,
+      isProcessingFile,
+      liveAPI.error,
+      liveAPI.isConnected,
+      liveAPI.isReconnecting,
+      localFileState.isConverting,
     ],
   );
 
-  const removeSelectedFile = useCallback(
-    (fileIdToRemove: string) => {
-      setSelectedFiles((prev) => {
-        const fileToRemove = prev.find((file) => file.id === fileIdToRemove);
-        cleanupFilePreviewUrl(fileToRemove);
-        return prev.filter((file) => file.id !== fileIdToRemove);
-      });
-    },
-    [setSelectedFiles],
-  );
+  const { handleAddUrl, handlePaste, handlePasteAction, handlePasteFromClipboard, handleClearInput } =
+    useChatInputClipboard({
+      appSettings,
+      isAddingById: inputState.isAddingById,
+      showCreateTextFileEditor: modalsState.showCreateTextFileEditor,
+      showRecorder: modalsState.showRecorder,
+      justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
+      textareaRef: inputState.textareaRef,
+      setInputText: inputState.setInputText,
+      setUrlInput: inputState.setUrlInput,
+      setShowAddByUrlInput: modalsState.setShowAddByUrlInput,
+      setSelectedFiles,
+      setAppFileError,
+      onProcessFiles,
+      insertText,
+    });
 
-  const handleAddFileByIdSubmit = useCallback(async () => {
-    if (!inputState.fileIdInput.trim() || inputState.isAddingById || isLoading) {
-      return;
-    }
+  const { handleTranslate } = useChatInputTranslation({
+    appSettings,
+    currentChatSettings,
+    inputText: inputState.inputText,
+    isTranslating: inputState.isTranslating,
+    setInputText: inputState.setInputText,
+    setIsTranslating: inputState.setIsTranslating,
+    setAppFileError,
+  });
 
-    inputState.setIsAddingById(true);
-    inputState.justInitiatedFileOpRef.current = true;
-    await onAddFileById(inputState.fileIdInput.trim());
-    inputState.setIsAddingById(false);
-    inputState.setFileIdInput('');
-  }, [inputState, isLoading, onAddFileById]);
+  const { handleInputChange, handleKeyDown } = useChatInputKeyboard({
+    appSettings,
+    inputState,
+    slashCommandState,
+    isLoading,
+    isEditing,
+    canSend,
+    canQueueMessage,
+    handleSubmit,
+    queueCurrentSubmission,
+    onStopGenerating,
+    onCancelEdit,
+    onEditLastUserMessage,
+  });
 
   const handleToggleToolAndFocus = useCallback(
     (toggleFunc: () => void) => {
@@ -730,19 +247,6 @@ export const useChatInput = () => {
       setTimeout(() => inputState.textareaRef.current?.focus(), 0);
     },
     [inputState.textareaRef],
-  );
-
-  const handleSaveFileConfig = useCallback(
-    (
-      fileId: string,
-      updates: {
-        videoMetadata?: VideoMetadata;
-        mediaResolution?: MediaResolution;
-      },
-    ) => {
-      setSelectedFiles((prev) => prev.map((file) => (file.id === fileId ? { ...file, ...updates } : file)));
-    },
-    [setSelectedFiles],
   );
 
   const handlers = useMemo(
@@ -760,8 +264,8 @@ export const useChatInput = () => {
       handlePasteFromClipboard,
       handleClearInput,
       handleKeyDown,
-      onCompositionStart,
-      onCompositionEnd,
+      onCompositionStart: inputState.handleCompositionStart,
+      onCompositionEnd: inputState.handleCompositionEnd,
       removeSelectedFile,
       handleAddFileByIdSubmit,
       handleToggleToolAndFocus,
@@ -798,8 +302,8 @@ export const useChatInput = () => {
       localFileState.handleNextImage,
       localFileState.handlePrevImage,
       localFileState.inputImages,
-      onCompositionEnd,
-      onCompositionStart,
+      inputState.handleCompositionEnd,
+      inputState.handleCompositionStart,
       removeSelectedFile,
     ],
   );
@@ -835,6 +339,7 @@ export const useChatInput = () => {
     canSend,
     canQueueMessage,
     queuedSubmission: activeQueuedSubmission,
+    chatInputMode,
     isAnyModalOpen,
     handleSmartSendMessage,
   };
