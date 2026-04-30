@@ -3,11 +3,12 @@ import path from 'path';
 import { describe, expect, it } from 'vitest';
 
 const chatInputAreaPath = path.resolve(__dirname, './ChatInputArea.tsx');
+const chatInputAreaLayoutPath = path.resolve(__dirname, './useChatInputAreaLayout.ts');
 const chatInputStatePath = path.resolve(__dirname, '../../../hooks/chat-input/useChatInputState.ts');
 
 describe('ChatInputArea default spacing', () => {
   it('uses the reduced default vertical padding for the non-fullscreen input container', () => {
-    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+    const source = fs.readFileSync(chatInputAreaLayoutPath, 'utf8');
 
     expect(source).toContain(
       'px-3 py-[0.486rem] pb-[calc(3.15rem+0.486rem)] sm:px-4 sm:py-[0.648rem] sm:pb-[calc(3.15rem+0.648rem)]',
@@ -18,14 +19,14 @@ describe('ChatInputArea default spacing', () => {
   });
 
   it('doubles the non-fullscreen bottom safe-area spacing below the input area', () => {
-    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+    const source = fs.readFileSync(chatInputAreaLayoutPath, 'utf8');
 
     expect(source).toContain('pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]');
     expect(source).not.toContain('pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]');
   });
 
   it('keeps the action row anchored to the same absolute insets in fullscreen and regular modes', () => {
-    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+    const source = fs.readFileSync(chatInputAreaLayoutPath, 'utf8');
 
     expect(source).toContain('const actionsContainerClass =');
     expect(source).toContain(
@@ -61,12 +62,13 @@ describe('ChatInputArea default spacing', () => {
 
   it('renders the queued submission strip above the input shell instead of inside it', () => {
     const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+    const layoutSource = fs.readFileSync(chatInputAreaLayoutPath, 'utf8');
 
     const queuedStripIndex = source.indexOf('className={queuedSubmissionContainerClass}');
     const inputShellIndex = source.indexOf('className={inputContainerClass} onClick={handleInputShellClick}');
     const inputShellEndIndex = source.indexOf('<ChatTextArea', inputShellIndex);
 
-    expect(source).toContain('const queuedSubmissionContainerClass =');
+    expect(layoutSource).toContain('const queuedSubmissionContainerClass =');
     expect(queuedStripIndex).toBeGreaterThan(-1);
     expect(inputShellIndex).toBeGreaterThan(-1);
     expect(queuedStripIndex).toBeLessThan(inputShellIndex);
@@ -74,7 +76,7 @@ describe('ChatInputArea default spacing', () => {
   });
 
   it('uses an inset queued strip that visually docks to the wider composer shell', () => {
-    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+    const source = fs.readFileSync(chatInputAreaLayoutPath, 'utf8');
 
     expect(source).toContain('relative z-10 mx-5 mb-[-22px] -translate-y-1.5');
     expect(source).toContain(

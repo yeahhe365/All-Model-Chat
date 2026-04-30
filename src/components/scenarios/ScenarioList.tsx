@@ -66,7 +66,7 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-full space-y-4 sm:space-y-6">
+    <div className="flex flex-col h-full space-y-4">
       {/* Controls Container */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-shrink-0">
         {/* Search Bar */}

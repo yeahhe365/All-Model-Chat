@@ -81,7 +81,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       noPadding
-      contentClassName="w-full h-full sm:w-[95vw] sm:h-[90vh] sm:max-w-7xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden bg-[var(--theme-bg-primary)] border border-[var(--theme-border-primary)] transition-all"
+      contentClassName="w-full h-full sm:w-[95vw] sm:h-[90vh] sm:max-w-7xl sm:rounded-xl shadow-2xl flex flex-col overflow-hidden bg-[var(--theme-bg-primary)] border border-[var(--theme-border-primary)] transition-all"
     >
       <div className="flex flex-col h-full relative">
         {/* Modal Header */}
@@ -188,7 +188,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
         )}
 
         {/* Content Area */}
-        <div className="flex-grow flex flex-col min-h-0 bg-[var(--theme-bg-secondary)] p-3 sm:p-4 md:p-8 overflow-hidden">
+        <div className="flex-grow flex flex-col min-h-0 bg-[var(--theme-bg-secondary)] p-3 sm:p-4 md:px-6 md:py-5 overflow-hidden">
           {view === 'list' ? (
             <ScenarioList
               scenarios={scenarios}

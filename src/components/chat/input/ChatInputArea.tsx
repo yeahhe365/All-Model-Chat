@@ -3,7 +3,6 @@ import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
 import { SlashCommandMenu } from './SlashCommandMenu';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { ChatSuggestions } from './area/ChatSuggestions';
 import { ChatQuoteDisplay } from './area/ChatQuoteDisplay';
 import { ChatFilePreviewList } from './area/ChatFilePreviewList';
@@ -11,6 +10,8 @@ import { ChatTextArea } from './area/ChatTextArea';
 import { LiveStatusBanner } from './LiveStatusBanner';
 import { QueuedSubmissionCard } from './QueuedSubmissionCard';
 import { useChatInputView } from './ChatInputViewContext';
+import { HiddenFileInputs } from './HiddenFileInputs';
+import { useChatInputAreaLayout } from './useChatInputAreaLayout';
 
 export const ChatInputArea: React.FC = () => {
   const {
@@ -32,29 +33,21 @@ export const ChatInputArea: React.FC = () => {
   const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
   const { isRecording } = actionsProps;
 
-  const isUIBlocked = inputProps.disabled && !isAnimatingSend && !isRecording;
-
-  const wrapperClass = isFullscreen
-    ? 'fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-6 flex flex-col fullscreen-enter-animation'
-    : `bg-transparent ${isUIBlocked ? 'opacity-30 pointer-events-none' : ''}`;
-
-  const innerContainerClass = isFullscreen
-    ? 'w-full max-w-6xl mx-auto flex flex-col h-full'
-    : `mx-auto w-full ${!isPipActive ? 'max-w-[44.8rem]' : ''} px-2 sm:px-3 pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]`;
-
-  const formClass = isFullscreen
-    ? 'flex-grow flex flex-col relative min-h-0'
-    : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
-
-  const inputContainerClass = isFullscreen
-    ? 'flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 pb-[calc(3.5rem+0.72rem)] shadow-none h-full transition-all duration-200 relative'
-    : 'flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-3 py-[0.486rem] pb-[calc(3.15rem+0.486rem)] sm:px-4 sm:py-[0.648rem] sm:pb-[calc(3.15rem+0.648rem)] shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative z-20';
-  const queuedSubmissionContainerClass = isFullscreen
-    ? 'mb-2 flex-shrink-0'
-    : 'relative z-10 mx-5 mb-[-22px] -translate-y-1.5';
-
-  const actionsContainerClass =
-    'absolute bottom-[0.486rem] left-3 right-3 sm:bottom-[0.648rem] sm:left-4 sm:right-4 flex items-center justify-between z-10';
+  const {
+    isUIBlocked,
+    wrapperClass,
+    innerContainerClass,
+    formClass,
+    inputContainerClass,
+    queuedSubmissionContainerClass,
+    actionsContainerClass,
+  } = useChatInputAreaLayout({
+    isFullscreen,
+    isPipActive,
+    isAnimatingSend,
+    isRecording: !!isRecording,
+    inputDisabled: inputProps.disabled,
+  });
   const focusBlockingSelector =
     'button, a, input, textarea, select, label, summary, audio, video, [role="button"], [role="menuitem"], [contenteditable="true"]';
 
@@ -66,55 +59,6 @@ export const ChatInputArea: React.FC = () => {
 
     inputProps.textareaRef.current?.focus();
   };
-
-  const hiddenFileInputs = (
-    <>
-      <input
-        type="file"
-        ref={fileInputs.fileInputRef}
-        onChange={fileInputs.handleFileChange}
-        accept={ALL_SUPPORTED_MIME_TYPES.join(',')}
-        className="hidden"
-        aria-hidden="true"
-        multiple
-      />
-      <input
-        type="file"
-        ref={fileInputs.imageInputRef}
-        onChange={fileInputs.handleFileChange}
-        accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')}
-        className="hidden"
-        aria-hidden="true"
-        multiple
-      />
-      <input
-        type="file"
-        ref={fileInputs.folderInputRef}
-        onChange={fileInputs.handleFolderChange}
-        className="hidden"
-        aria-hidden="true"
-        {...({ webkitdirectory: '', directory: '' } as { webkitdirectory: string; directory: string })}
-        multiple
-      />
-      <input
-        type="file"
-        ref={fileInputs.zipInputRef}
-        onChange={fileInputs.handleZipChange}
-        accept=".zip"
-        className="hidden"
-        aria-hidden="true"
-      />
-      <input
-        type="file"
-        ref={fileInputs.cameraInputRef}
-        onChange={fileInputs.handleFileChange}
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        aria-hidden="true"
-      />
-    </>
-  );
 
   return (
     <div className={wrapperClass} aria-hidden={isUIBlocked}>
@@ -206,7 +150,7 @@ export const ChatInputArea: React.FC = () => {
 
             <div className={actionsContainerClass}>
               <ChatInputActions {...actionsProps} />
-              {hiddenFileInputs}
+              <HiddenFileInputs fileInputs={fileInputs} />
             </div>
           </div>
         </form>

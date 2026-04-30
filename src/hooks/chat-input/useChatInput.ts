@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
 import { useI18n } from '../../contexts/I18nContext';
@@ -10,28 +10,21 @@ import { useSlashCommands, type SlashCommandState } from '../useSlashCommands';
 import { useLiveAPI } from '../useLiveAPI';
 import { useTextAreaInsert } from '../useTextAreaInsert';
 import { processClipboardData } from '../../utils/clipboardUtils';
-import { generateFolderContext } from '../../utils/folderImportUtils';
-import { readDirectoryHandle } from '../../utils/import-context/directoryHandleReader';
 import { getKeyForRequest } from '../../utils/apiUtils';
-import { generateUniqueId } from '../../utils/chat/ids';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 import { useChatAreaInput } from '../../contexts/ChatAreaContext';
-import { useChatStore } from '../../stores/chatStore';
-import { captureScreenImage } from '../../utils/mediaUtils';
 import {
   areFilesStillProcessing,
   buildPendingChatInputSubmission,
-  buildQueuedChatInputSubmission,
-  getBlockingFileUploadFailure,
-  PendingChatInputSubmission,
-  QueuedChatInputSubmission,
-  shouldFlushPendingSubmission,
 } from './pendingSubmissionUtils';
 import { hasSendableChatInputContent } from './chatInputUtils';
 import { useChatInputFileUi } from './useChatInputFileUi';
 import { cleanupFilePreviewUrl } from '../../utils/fileHelpers';
 import { buildContentParts } from '../../utils/chat/builder';
+import { useMessageQueue } from './useMessageQueue';
+import { useFilePreProcessingEffects } from './useFilePreProcessingEffects';
+import { useChatInputGlobalEffects } from './useChatInputGlobalEffects';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
@@ -81,11 +74,12 @@ export const useChatInput = () => {
   } = chatInput;
 
   const inputState = useChatInputState(activeSessionId, isEditing);
-  const { setIsWaitingForUpload, setInputText, setQuotes, textareaRef } = inputState;
-  const pendingSubmissionRef = useRef<PendingChatInputSubmission | null>(null);
-  const [queuedSubmission, setQueuedSubmission] = useState<QueuedChatInputSubmission | null>(null);
-  const flushingQueuedSubmissionRef = useRef<QueuedChatInputSubmission | null>(null);
-  const [isConverting, setIsConverting] = useState(false);
+  const { setInputText, textareaRef } = inputState;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const zipInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const { document: targetDocument } = useWindowContext();
   const insertText = useTextAreaInsert(textareaRef, setInputText);
 
@@ -103,76 +97,16 @@ export const useChatInput = () => {
     clientFunctions: liveClientFunctions,
   });
 
-  const handleScreenshot = useCallback(async () => {
-    const blob = await captureScreenImage();
-
-    if (!blob) {
-      return;
-    }
-
-    const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
-    const file = new File([blob], fileName, { type: 'image/png' });
-    inputState.justInitiatedFileOpRef.current = true;
-    await onProcessFiles([file]);
-  }, [inputState.justInitiatedFileOpRef, onProcessFiles]);
-
-  const processFolderImport = useCallback(
-    async (files: File[] | FileList, emptyDirectoryPaths: string[] = []) => {
-      const fileCount = Array.isArray(files) ? files.length : files.length;
-      if (fileCount === 0 && emptyDirectoryPaths.length === 0) {
-        return;
-      }
-
-      const tempId = generateUniqueId();
-
-      setIsConverting(true);
-      setSelectedFiles((prev) => [
-        ...prev,
-        {
-          id: tempId,
-          name: 'Processing folder...',
-          type: 'application/x-directory',
-          size: 0,
-          isProcessing: true,
-          uploadState: 'pending',
-        },
-      ]);
-
-      try {
-        inputState.justInitiatedFileOpRef.current = true;
-        const contextFile = await generateFolderContext(files, {
-          emptyDirectoryPaths,
-        });
-        setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
-        await onProcessFiles([contextFile]);
-      } catch (error) {
-        console.error(error);
-        setAppFileError('Failed to process folder structure.');
-        setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
-      } finally {
-        setIsConverting(false);
-      }
-    },
-    [inputState.justInitiatedFileOpRef, onProcessFiles, setAppFileError, setSelectedFiles],
-  );
-
-  const handleOpenFolderPicker = useCallback(async () => {
-    if (!window.showDirectoryPicker) {
-      return;
-    }
-
-    try {
-      const directoryHandle = await window.showDirectoryPicker({ mode: 'read' });
-      const dropped = await readDirectoryHandle(directoryHandle);
-      await processFolderImport(dropped.files, dropped.emptyDirectoryPaths);
-    } catch (error) {
-      const errorName = error instanceof DOMException ? error.name : '';
-      if (errorName !== 'AbortError' && errorName !== 'NotAllowedError') {
-        console.error(error);
-        setAppFileError('Failed to process folder structure.');
-      }
-    }
-  }, [processFolderImport, setAppFileError]);
+  const filePreProcessing = useFilePreProcessingEffects({
+    fileInputRef,
+    imageInputRef,
+    folderInputRef,
+    zipInputRef,
+    justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
+    onProcessFiles,
+    setSelectedFiles,
+    setAppFileError,
+  });
 
   const { modalsState, localFileState } = useChatInputFileUi({
     selectedFiles,
@@ -180,12 +114,17 @@ export const useChatInput = () => {
     setInputText: inputState.setInputText,
     setAppFileError,
     onProcessFiles,
-    onOpenFolderPicker: handleOpenFolderPicker,
-    onScreenshot: handleScreenshot,
+    onOpenFolderPicker: filePreProcessing.handleOpenFolderPicker,
+    onScreenshot: filePreProcessing.handleScreenshot,
+    fileInputRef,
+    imageInputRef,
+    folderInputRef,
+    zipInputRef,
+    cameraInputRef,
     justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
     textareaRef: inputState.textareaRef,
-    isConverting,
-    setIsConverting,
+    isConverting: filePreProcessing.isConverting,
+    setIsConverting: filePreProcessing.setIsConverting,
   });
 
   const voiceState = useVoiceInput({
@@ -241,7 +180,7 @@ export const useChatInput = () => {
   const canSend =
     hasSendableContent && !isLoading && !inputState.isAddingById && !isModalOpen && !localFileState.isConverting;
 
-  const canQueueMessage =
+  const canQueueMessageBase =
     !capabilities.isNativeAudioModel &&
     hasSendableContent &&
     !!activeSessionId &&
@@ -250,11 +189,7 @@ export const useChatInput = () => {
     !inputState.isAddingById &&
     !isModalOpen &&
     !localFileState.isConverting &&
-    !areFilesStillProcessing(selectedFiles) &&
-    !queuedSubmission;
-
-  const activeQueuedSubmission =
-    queuedSubmission && queuedSubmission.sessionId === activeSessionId ? queuedSubmission : null;
+    !areFilesStillProcessing(selectedFiles);
 
   const handleSmartSendMessage = useCallback(
     async (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => {
@@ -359,172 +294,34 @@ export const useChatInput = () => {
     [handleSmartSendMessage, inputState, onMessageSent],
   );
 
-  const flushPendingSubmission = useCallback(
-    (submission = pendingSubmissionRef.current) => {
-      if (!submission) {
-        return;
-      }
-
-      const blockingFileFailure = getBlockingFileUploadFailure(useChatStore.getState().selectedFiles);
-      if (blockingFileFailure) {
-        pendingSubmissionRef.current = null;
-        setIsWaitingForUpload(false);
-        setAppFileError(t('messageSender_fileUploadFailedBeforeSend'));
-        return;
-      }
-
-      pendingSubmissionRef.current = null;
-      setIsWaitingForUpload(false);
-
-      if (submission.kind === 'edit') {
-        completeEditSubmission(submission.messageId, submission.content);
-        return;
-      }
-
-      completeSendSubmission(submission.textToSend, submission.isFastMode);
-    },
-    [completeEditSubmission, completeSendSubmission, setAppFileError, setIsWaitingForUpload, t],
-  );
-
-  const removeQueuedSubmission = useCallback(() => {
-    flushingQueuedSubmissionRef.current = null;
-    setQueuedSubmission(null);
-  }, []);
-
-  const restoreQueuedSubmission = useCallback(() => {
-    if (!queuedSubmission) {
-      return;
-    }
-
-    flushingQueuedSubmissionRef.current = null;
-    setQueuedSubmission(null);
-    inputState.setInputText(queuedSubmission.inputText);
-    inputState.setQuotes(queuedSubmission.quotes);
-    setSelectedFiles(queuedSubmission.files);
-    setTimeout(() => inputState.textareaRef.current?.focus(), 0);
-  }, [inputState, queuedSubmission, setSelectedFiles]);
-
-  const flushQueuedSubmission = useCallback(
-    (submission = queuedSubmission) => {
-      if (!submission) {
-        return;
-      }
-
-      if (flushingQueuedSubmissionRef.current === submission) {
-        return;
-      }
-
-      flushingQueuedSubmissionRef.current = submission;
-      setQueuedSubmission((current) => (current === submission ? null : current));
-      completeSendSubmission(submission.textToSend, submission.isFastMode, {
-        files: submission.files.length > 0 ? submission.files : undefined,
-        preserveComposer: true,
-      });
-    },
-    [completeSendSubmission, queuedSubmission],
-  );
-
-  const queueCurrentSubmission = useCallback(() => {
-    if (!canQueueMessage || !activeSessionId) {
-      return;
-    }
-
-    const submission = buildQueuedChatInputSubmission({
-      sessionId: activeSessionId,
-      inputText: inputState.inputText,
-      quotes: inputState.quotes,
-      modelId: currentChatSettings.modelId,
-      ttsContext: inputState.ttsContext,
-      files: selectedFiles,
-      isFastMode: false,
-    });
-
-    setQueuedSubmission(submission);
-    flushingQueuedSubmissionRef.current = null;
-    inputState.clearCurrentDraft();
-    inputState.setInputText('');
-    inputState.setQuotes([]);
-    setSelectedFiles([]);
-  }, [activeSessionId, canQueueMessage, currentChatSettings.modelId, inputState, selectedFiles, setSelectedFiles]);
-
-  const queuePendingSubmission = useCallback(
-    (submission: PendingChatInputSubmission) => {
-      pendingSubmissionRef.current = submission;
-      setIsWaitingForUpload(true);
-
-      if (!areFilesStillProcessing(useChatStore.getState().selectedFiles)) {
-        flushPendingSubmission(submission);
-      }
-    },
-    [flushPendingSubmission, setIsWaitingForUpload],
-  );
-
-  useEffect(() => {
-    const unsubscribe = useChatStore.subscribe((state, previousState) => {
-      if (
-        shouldFlushPendingSubmission({
-          pendingSubmission: pendingSubmissionRef.current,
-          previousFiles: previousState.selectedFiles,
-          currentFiles: state.selectedFiles,
-        })
-      ) {
-        flushPendingSubmission();
-      }
-    });
-
-    return unsubscribe;
-  }, [flushPendingSubmission]);
-
-  useEffect(() => {
-    if (activeQueuedSubmission && !isLoading) {
-      flushQueuedSubmission(activeQueuedSubmission);
-    }
-  }, [activeQueuedSubmission, flushQueuedSubmission, isLoading]);
-
-  const handleFileChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files?.length) {
-        inputState.justInitiatedFileOpRef.current = true;
-        await onProcessFiles(event.target.files);
-      }
-
-      if (modalsState.fileInputRef.current) {
-        modalsState.fileInputRef.current.value = '';
-      }
-
-      if (modalsState.imageInputRef.current) {
-        modalsState.imageInputRef.current.value = '';
-      }
-    },
-    [inputState.justInitiatedFileOpRef, modalsState.fileInputRef, modalsState.imageInputRef, onProcessFiles],
-  );
-
-  const handleFolderChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files?.length) {
-        await processFolderImport(event.target.files);
-      }
-
-      if (modalsState.folderInputRef.current) {
-        modalsState.folderInputRef.current.value = '';
-      }
-    },
-    [modalsState.folderInputRef, processFolderImport],
-  );
-
-  const handleZipChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files?.length) {
-        inputState.justInitiatedFileOpRef.current = true;
-        await onProcessFiles(event.target.files);
-      }
-
-      if (modalsState.zipInputRef.current) {
-        modalsState.zipInputRef.current.value = '';
-      }
-    },
-    [inputState.justInitiatedFileOpRef, modalsState.zipInputRef, onProcessFiles],
-  );
+  const messageQueue = useMessageQueue({
+    activeSessionId,
+    modelId: currentChatSettings.modelId,
+    inputText: inputState.inputText,
+    quotes: inputState.quotes,
+    ttsContext: inputState.ttsContext,
+    selectedFiles,
+    isLoading,
+    canQueueMessageBase,
+    clearCurrentDraft: inputState.clearCurrentDraft,
+    setInputText: inputState.setInputText,
+    setQuotes: inputState.setQuotes,
+    setIsWaitingForUpload: inputState.setIsWaitingForUpload,
+    textareaRef: inputState.textareaRef,
+    setSelectedFiles,
+    setAppFileError,
+    uploadFailureMessage: t('messageSender_fileUploadFailedBeforeSend'),
+    completeEditSubmission,
+    completeSendSubmission,
+  });
+  const {
+    canQueueMessage,
+    activeQueuedSubmission,
+    queueCurrentSubmission,
+    queuePendingSubmission,
+    restoreQueuedSubmission,
+    removeQueuedSubmission,
+  } = messageQueue;
 
   const handleAddUrl = useCallback(
     async (url: string) => {
@@ -950,9 +747,9 @@ export const useChatInput = () => {
 
   const handlers = useMemo(
     () => ({
-      handleFileChange,
-      handleFolderChange,
-      handleZipChange,
+      handleFileChange: filePreProcessing.handleFileChange,
+      handleFolderChange: filePreProcessing.handleFolderChange,
+      handleZipChange: filePreProcessing.handleZipChange,
       handleAddUrl,
       handlePaste,
       handlePasteAction,
@@ -982,8 +779,9 @@ export const useChatInput = () => {
       handleAddUrl,
       handleClearInput,
       handleFastSubmit,
-      handleFileChange,
-      handleFolderChange,
+      filePreProcessing.handleFileChange,
+      filePreProcessing.handleFolderChange,
+      filePreProcessing.handleZipChange,
       handleInputChange,
       handleKeyDown,
       handlePaste,
@@ -996,7 +794,6 @@ export const useChatInput = () => {
       handleSubmit,
       handleToggleToolAndFocus,
       handleTranslate,
-      handleZipChange,
       localFileState.currentImageIndex,
       localFileState.handleNextImage,
       localFileState.handlePrevImage,
@@ -1007,144 +804,22 @@ export const useChatInput = () => {
     ],
   );
 
-  useEffect(() => {
-    if (!commandedInput) {
-      return;
-    }
-
-    if (commandedInput.mode === 'quote') {
-      setQuotes((prev) => [...prev, commandedInput.text]);
-    } else if (commandedInput.mode === 'append') {
-      setInputText((prev) => prev + (prev ? '\n' : '') + commandedInput.text);
-    } else if (commandedInput.mode === 'insert') {
-      insertText(commandedInput.text);
-    } else {
-      setInputText(commandedInput.text);
-    }
-
-    if (commandedInput.mode === 'insert') {
-      return;
-    }
-
-    setTimeout(() => {
-      const textarea = textareaRef.current;
-      if (!textarea) {
-        return;
-      }
-
-      textarea.focus();
-      const textLength = textarea.value.length;
-      textarea.setSelectionRange(textLength, textLength);
-    }, 0);
-  }, [commandedInput, insertText, setInputText, setQuotes, textareaRef]);
-
-  useEffect(() => {
-    if (inputState.prevIsProcessingFileRef.current && !isProcessingFile && !inputState.isAddingById) {
-      inputState.textareaRef.current?.focus();
-      inputState.justInitiatedFileOpRef.current = false;
-    }
-    inputState.prevIsProcessingFileRef.current = isProcessingFile;
-  }, [inputState, isProcessingFile]);
-
-  useEffect(() => {
-    const handleGlobalPaste = async (event: ClipboardEvent) => {
-      if (isAnyModalOpen) {
-        return;
-      }
-
-      const target = event.target as HTMLElement;
-      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-
-      if (isInput) {
-        return;
-      }
-
-      const didHandle = await handlePasteAction(event.clipboardData, { forceTextInsertion: true });
-
-      if (!didHandle) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const textarea = inputState.textareaRef.current;
-      if (!textarea) {
-        return;
-      }
-
-      textarea.focus();
-      setTimeout(() => {
-        const len = textarea.value.length;
-        textarea.setSelectionRange(len, len);
-        textarea.scrollTop = textarea.scrollHeight;
-      }, 0);
-    };
-
-    document.addEventListener('paste', handleGlobalPaste);
-    return () => document.removeEventListener('paste', handleGlobalPaste);
-  }, [handlePasteAction, inputState.textareaRef, isAnyModalOpen]);
-
-  useEffect(() => {
-    const handleGlobalKeyDown = (event: KeyboardEvent) => {
-      if (isAnyModalOpen) {
-        return;
-      }
-
-      const target = event.target as HTMLElement;
-      const isInput =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT' ||
-        target.isContentEditable;
-
-      if (isShortcutPressed(event, 'input.clearDraft', appSettings)) {
-        if (isInput && target !== inputState.textareaRef.current) {
-          return;
-        }
-        event.preventDefault();
-        inputState.setInputText('');
-        inputState.textareaRef.current?.focus();
-        return;
-      }
-
-      if (isInput || event.ctrlKey || event.metaKey || event.altKey) {
-        return;
-      }
-
-      if (event.key.length !== 1) {
-        return;
-      }
-
-      const textarea = inputState.textareaRef.current;
-      if (!textarea) {
-        return;
-      }
-
-      event.preventDefault();
-      textarea.focus();
-      inputState.setInputText((prev) => prev + event.key);
-      setTimeout(() => {
-        const len = textarea.value.length;
-        textarea.setSelectionRange(len, len);
-        textarea.scrollTop = textarea.scrollHeight;
-      }, 0);
-    };
-
-    document.addEventListener('keydown', handleGlobalKeyDown);
-    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [appSettings, inputState, isAnyModalOpen]);
-
-  const prevFileCountRef = useRef(selectedFiles.length);
-  useEffect(() => {
-    if (selectedFiles.length > prevFileCountRef.current) {
-      setTimeout(() => {
-        inputState.textareaRef.current?.focus();
-      }, 50);
-    }
-
-    prevFileCountRef.current = selectedFiles.length;
-  }, [inputState.textareaRef, selectedFiles.length]);
+  useChatInputGlobalEffects({
+    appSettings,
+    commandedInput,
+    isAnyModalOpen,
+    isProcessingFile,
+    isAddingById: inputState.isAddingById,
+    selectedFileCount: selectedFiles.length,
+    targetDocument,
+    textareaRef: inputState.textareaRef,
+    prevIsProcessingFileRef: inputState.prevIsProcessingFileRef,
+    justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
+    setInputText: inputState.setInputText,
+    setQuotes: inputState.setQuotes,
+    insertText,
+    handlePasteAction,
+  });
 
   return {
     chatInput,

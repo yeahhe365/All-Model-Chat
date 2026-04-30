@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, InputCommand, ChatSettings } from '../types';
-import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
+import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, ChatSettings } from '../types';
 import { dbService } from '../utils/db';
 import { logService } from '../services/logService';
 import { rehydrateSessionFiles } from '../utils/chat/session';
@@ -15,6 +14,7 @@ import {
 } from './sessionPersistence';
 import { persistSessionChanges } from './sessionPersistenceEffects';
 import { setupChatStoreSync } from './chatStoreSync';
+import { createChatUiSlice, type ChatUiSliceActions, type ChatUiSliceState } from './chatStoreSlices';
 
 type UpdaterOrValue<T> = T | ((prev: T) => T);
 export type { SessionHistoryMode };
@@ -32,27 +32,12 @@ const _sessionPersistVersion = new Map<string, number>();
 let _fileOperationGeneration = 0;
 
 // ── Store types ──
-interface ChatState {
+interface ChatState extends ChatUiSliceState {
   // Session Data
   savedSessions: SavedChatSession[];
   savedGroups: ChatGroup[];
   activeSessionId: string | null;
   activeMessages: ChatMessage[];
-
-  // Auxiliary
-  editingMessageId: string | null;
-  editMode: 'update' | 'resend';
-  commandedInput: InputCommand | null;
-  loadingSessionIds: Set<string>;
-  generatingTitleSessionIds: Set<string>;
-  selectedFiles: UploadedFile[];
-  appFileError: string | null;
-  isAppProcessingFile: boolean;
-  aspectRatio: string;
-  imageSize: string;
-  imageOutputMode: ImageOutputMode;
-  personGeneration: ImagePersonGeneration;
-  isSwitchingModel: boolean;
 
   // Read-only refs (accessed via helpers, not reactive)
   _activeJobs: { current: Map<string, AbortController> };
@@ -60,27 +45,12 @@ interface ChatState {
   _fileDrafts: { current: Record<string, UploadedFile[]> };
 }
 
-interface ChatActions {
+interface ChatActions extends ChatUiSliceActions {
   // Session setters
   setSavedSessions: (v: UpdaterOrValue<SavedChatSession[]>) => void;
   setSavedGroups: (v: UpdaterOrValue<ChatGroup[]>) => void;
   setActiveSessionId: (id: UpdaterOrValue<string | null>, options?: SetActiveSessionOptions) => void;
   setActiveMessages: (v: UpdaterOrValue<ChatMessage[]>) => void;
-
-  // Auxiliary setters
-  setEditingMessageId: (id: UpdaterOrValue<string | null>) => void;
-  setEditMode: (mode: UpdaterOrValue<'update' | 'resend'>) => void;
-  setCommandedInput: (cmd: UpdaterOrValue<InputCommand | null>) => void;
-  setLoadingSessionIds: (v: UpdaterOrValue<Set<string>>) => void;
-  setGeneratingTitleSessionIds: (v: UpdaterOrValue<Set<string>>) => void;
-  setSelectedFiles: (v: UpdaterOrValue<UploadedFile[]>) => void;
-  setAppFileError: (v: UpdaterOrValue<string | null>) => void;
-  setIsAppProcessingFile: (v: UpdaterOrValue<boolean>) => void;
-  setAspectRatio: (v: UpdaterOrValue<string>) => void;
-  setImageSize: (v: UpdaterOrValue<string>) => void;
-  setImageOutputMode: (v: UpdaterOrValue<ImageOutputMode>) => void;
-  setPersonGeneration: (v: UpdaterOrValue<ImagePersonGeneration>) => void;
-  setIsSwitchingModel: (v: UpdaterOrValue<boolean>) => void;
 
   // Persistence
   updateAndPersistSessions: (
@@ -105,19 +75,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   activeSessionId: null,
   activeMessages: [],
 
-  editingMessageId: null,
-  editMode: 'resend',
-  commandedInput: null,
-  loadingSessionIds: new Set<string>(),
-  generatingTitleSessionIds: new Set<string>(),
-  selectedFiles: [],
-  appFileError: null,
-  isAppProcessingFile: false,
-  aspectRatio: '1:1',
-  imageSize: '1K',
-  imageOutputMode: 'IMAGE_TEXT',
-  personGeneration: 'ALLOW_ADULT',
-  isSwitchingModel: false,
+  ...createChatUiSlice<ChatState & ChatActions>(set),
 
   _activeJobs,
   _userScrolledUp,
@@ -143,60 +101,6 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   setActiveMessages: (v) =>
     set((s) => ({
       activeMessages: typeof v === 'function' ? v(s.activeMessages) : v,
-    })),
-
-  // ── Auxiliary Setters ──
-  setEditingMessageId: (value) =>
-    set((state) => ({
-      editingMessageId: typeof value === 'function' ? value(state.editingMessageId) : value,
-    })),
-  setEditMode: (value) =>
-    set((state) => ({
-      editMode: typeof value === 'function' ? value(state.editMode) : value,
-    })),
-  setCommandedInput: (value) =>
-    set((state) => ({
-      commandedInput: typeof value === 'function' ? value(state.commandedInput) : value,
-    })),
-  setLoadingSessionIds: (v) =>
-    set((s) => ({
-      loadingSessionIds: typeof v === 'function' ? v(s.loadingSessionIds) : v,
-    })),
-  setGeneratingTitleSessionIds: (v) =>
-    set((s) => ({
-      generatingTitleSessionIds: typeof v === 'function' ? v(s.generatingTitleSessionIds) : v,
-    })),
-  setSelectedFiles: (v) =>
-    set((s) => ({
-      selectedFiles: typeof v === 'function' ? v(s.selectedFiles) : v,
-    })),
-  setAppFileError: (value) =>
-    set((state) => ({
-      appFileError: typeof value === 'function' ? value(state.appFileError) : value,
-    })),
-  setIsAppProcessingFile: (value) =>
-    set((state) => ({
-      isAppProcessingFile: typeof value === 'function' ? value(state.isAppProcessingFile) : value,
-    })),
-  setAspectRatio: (value) =>
-    set((state) => ({
-      aspectRatio: typeof value === 'function' ? value(state.aspectRatio) : value,
-    })),
-  setImageSize: (value) =>
-    set((state) => ({
-      imageSize: typeof value === 'function' ? value(state.imageSize) : value,
-    })),
-  setImageOutputMode: (value) =>
-    set((state) => ({
-      imageOutputMode: typeof value === 'function' ? value(state.imageOutputMode) : value,
-    })),
-  setPersonGeneration: (value) =>
-    set((state) => ({
-      personGeneration: typeof value === 'function' ? value(state.personGeneration) : value,
-    })),
-  setIsSwitchingModel: (value) =>
-    set((state) => ({
-      isSwitchingModel: typeof value === 'function' ? value(state.isSwitchingModel) : value,
     })),
 
   // ── Persistence Actions ──

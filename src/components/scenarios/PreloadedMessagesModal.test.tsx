@@ -36,7 +36,11 @@ vi.mock('../../hooks/features/useScenarioManager', () => ({
 }));
 
 vi.mock('../shared/Modal', () => ({
-  Modal: ({ children }: { children: React.ReactNode }) => <div data-testid="modal-shell">{children}</div>,
+  Modal: ({ children, contentClassName }: { children: React.ReactNode; contentClassName?: string }) => (
+    <div data-testid="modal-shell" className={contentClassName}>
+      {children}
+    </div>
+  ),
 }));
 
 vi.mock('./ScenarioList', () => ({
@@ -123,5 +127,47 @@ describe('PreloadedMessagesModal', () => {
     });
 
     expect(scenarioManagerState.actions.handleSaveAllAndClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses compact desktop spacing in the scenario list content area', () => {
+    act(() => {
+      root.render(
+        <PreloadedMessagesModal
+          isOpen
+          onClose={vi.fn()}
+          savedScenarios={[]}
+          onSaveAllScenarios={vi.fn()}
+          onLoadScenario={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    const scenarioList = container.querySelector('[data-testid="scenario-list"]');
+    const contentArea = scenarioList?.parentElement;
+
+    expect(contentArea?.className).toContain('md:px-6');
+    expect(contentArea?.className).toContain('md:py-5');
+    expect(contentArea?.className).not.toContain('md:p-8');
+  });
+
+  it('matches the settings modal desktop corner radius', () => {
+    act(() => {
+      root.render(
+        <PreloadedMessagesModal
+          isOpen
+          onClose={vi.fn()}
+          savedScenarios={[]}
+          onSaveAllScenarios={vi.fn()}
+          onLoadScenario={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    const modalShell = container.querySelector('[data-testid="modal-shell"]');
+
+    expect(modalShell?.className).toContain('sm:rounded-xl');
+    expect(modalShell?.className).not.toContain('sm:rounded-3xl');
   });
 });

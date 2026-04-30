@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type React from 'react';
 
 import type { UploadedFile } from '../../types';
@@ -15,6 +15,11 @@ interface UseChatInputFileUiOptions {
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
   onOpenFolderPicker: () => Promise<void>;
   onScreenshot: () => Promise<void>;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  imageInputRef: React.RefObject<HTMLInputElement>;
+  folderInputRef: React.RefObject<HTMLInputElement>;
+  zipInputRef: React.RefObject<HTMLInputElement>;
+  cameraInputRef: React.RefObject<HTMLInputElement>;
   justInitiatedFileOpRef: React.MutableRefObject<boolean>;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   isConverting: boolean;
@@ -29,6 +34,11 @@ export const useChatInputFileUi = ({
   onProcessFiles,
   onOpenFolderPicker,
   onScreenshot,
+  fileInputRef,
+  imageInputRef,
+  folderInputRef,
+  zipInputRef,
+  cameraInputRef,
   justInitiatedFileOpRef,
   textareaRef,
   isConverting,
@@ -56,12 +66,6 @@ export const useChatInputFileUi = ({
     openConfiguration,
     isPreviewEditable,
   } = useFileModalState<UploadedFile>(selectedFiles);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
-  const zipInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleAttachmentAction = useCallback(
     (
@@ -108,7 +112,7 @@ export const useChatInputFileUi = ({
           break;
       }
     },
-    [onOpenFolderPicker, onScreenshot],
+    [cameraInputRef, fileInputRef, folderInputRef, imageInputRef, onOpenFolderPicker, onScreenshot, zipInputRef],
   );
 
   const handleConfirmCreateTextFile = useCallback(
@@ -287,16 +291,21 @@ export const useChatInputFileUi = ({
     }),
     [
       editingFile,
+      cameraInputRef,
+      fileInputRef,
+      folderInputRef,
       handleAttachmentAction,
       handleAudioRecord,
       handleConfirmCreateTextFile,
       handleEditFile,
+      imageInputRef,
       isHelpModalOpen,
       showAddByIdInput,
       showAddByUrlInput,
       showCreateTextFileEditor,
       showRecorder,
       showTtsContextEditor,
+      zipInputRef,
     ],
   );
 
