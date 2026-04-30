@@ -1,13 +1,26 @@
-import { useCallback } from 'react';
+import { useCallback, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import type { UploadedFile } from '../../types';
 import type { ChatSettings } from '../../types/settings';
 import { areFilesStillProcessing, buildPendingChatInputSubmission } from './pendingSubmissionUtils';
 import { useLiveModeHandler, type LiveModeApi } from './useLiveModeHandler';
 import { useMessageQueue } from './useMessageQueue';
-import type { useChatInputState } from './useChatInputState';
 
-type ChatInputState = ReturnType<typeof useChatInputState>;
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
+
+interface ChatInputSubmissionState {
+  inputText: string;
+  quotes: string[];
+  ttsContext: string;
+  isFullscreen: boolean;
+  clearCurrentDraft: () => void;
+  setInputText: Dispatch<SetStateAction<string>>;
+  setQuotes: Dispatch<SetStateAction<string[]>>;
+  setWaitingForUpload: (isWaiting: boolean) => void;
+  startSendAnimation: () => void;
+  stopSendAnimation: () => void;
+  exitFullscreen: () => void;
+  textareaRef: RefObject<HTMLTextAreaElement>;
+}
 
 interface UseChatInputSubmissionParams {
   activeSessionId: string | null;
@@ -22,7 +35,7 @@ interface UseChatInputSubmissionParams {
   editingMessageId: string | null;
   canSend: boolean;
   canQueueMessageBase: boolean;
-  inputState: ChatInputState;
+  submissionState: ChatInputSubmissionState;
   isNativeAudioModel: boolean;
   liveAPI: LiveModeApi;
   onUpdateMessageContent: (messageId: string, content: string) => void;
@@ -45,7 +58,7 @@ export const useChatInputSubmission = ({
   editingMessageId,
   canSend,
   canQueueMessageBase,
-  inputState,
+  submissionState,
   isNativeAudioModel,
   liveAPI,
   onUpdateMessageContent,
@@ -54,6 +67,21 @@ export const useChatInputSubmission = ({
   onAddUserMessage,
   onSendMessage,
 }: UseChatInputSubmissionParams) => {
+  const {
+    inputText,
+    quotes,
+    ttsContext,
+    isFullscreen,
+    clearCurrentDraft,
+    setInputText,
+    setQuotes,
+    setWaitingForUpload,
+    startSendAnimation,
+    stopSendAnimation,
+    exitFullscreen,
+    textareaRef,
+  } = submissionState;
+
   const { handleSmartSendMessage } = useLiveModeHandler({
     isNativeAudioModel,
     selectedFiles,
@@ -69,12 +97,12 @@ export const useChatInputSubmission = ({
     (messageId: string, content: string) => {
       onUpdateMessageContent(messageId, content);
       setEditingMessageId(null);
-      inputState.clearCurrentDraft();
-      inputState.setInputText('');
-      inputState.setQuotes([]);
+      clearCurrentDraft();
+      setInputText('');
+      setQuotes([]);
       onMessageSent();
     },
-    [inputState, onMessageSent, onUpdateMessageContent, setEditingMessageId],
+    [clearCurrentDraft, onMessageSent, onUpdateMessageContent, setEditingMessageId, setInputText, setQuotes],
   );
 
   const completeSendSubmission = useCallback(
@@ -90,25 +118,35 @@ export const useChatInputSubmission = ({
       const files = options?.files;
 
       if (!preserveComposer) {
-        inputState.clearCurrentDraft();
+        clearCurrentDraft();
       }
 
       handleSmartSendMessage(textToSend, { isFastMode, files });
 
       if (!preserveComposer) {
-        inputState.setInputText('');
-        inputState.setQuotes([]);
+        setInputText('');
+        setQuotes([]);
       }
 
       onMessageSent();
-      inputState.startSendAnimation();
-      setTimeout(() => inputState.stopSendAnimation(), 400);
+      startSendAnimation();
+      setTimeout(() => stopSendAnimation(), 400);
 
-      if (!preserveComposer && inputState.isFullscreen) {
-        inputState.exitFullscreen();
+      if (!preserveComposer && isFullscreen) {
+        exitFullscreen();
       }
     },
-    [handleSmartSendMessage, inputState, onMessageSent],
+    [
+      clearCurrentDraft,
+      exitFullscreen,
+      handleSmartSendMessage,
+      isFullscreen,
+      onMessageSent,
+      setInputText,
+      setQuotes,
+      startSendAnimation,
+      stopSendAnimation,
+    ],
   );
 
   const {
@@ -121,17 +159,17 @@ export const useChatInputSubmission = ({
   } = useMessageQueue({
     activeSessionId,
     modelId: currentChatSettings.modelId,
-    inputText: inputState.inputText,
-    quotes: inputState.quotes,
-    ttsContext: inputState.ttsContext,
+    inputText,
+    quotes,
+    ttsContext,
     selectedFiles,
     isLoading,
     canQueueMessageBase,
-    clearCurrentDraft: inputState.clearCurrentDraft,
-    setInputText: inputState.setInputText,
-    setQuotes: inputState.setQuotes,
-    setWaitingForUpload: inputState.setWaitingForUpload,
-    textareaRef: inputState.textareaRef,
+    clearCurrentDraft,
+    setInputText,
+    setQuotes,
+    setWaitingForUpload,
+    textareaRef,
     setSelectedFiles,
     setAppFileError,
     uploadFailureMessage,
@@ -146,10 +184,10 @@ export const useChatInputSubmission = ({
       }
 
       const submission = buildPendingChatInputSubmission({
-        inputText: inputState.inputText,
-        quotes: inputState.quotes,
+        inputText,
+        quotes,
         modelId: currentChatSettings.modelId,
-        ttsContext: inputState.ttsContext,
+        ttsContext,
         isEditing,
         editMode,
         editingMessageId,
@@ -175,10 +213,12 @@ export const useChatInputSubmission = ({
       currentChatSettings.modelId,
       editMode,
       editingMessageId,
-      inputState,
+      inputText,
       isEditing,
       queuePendingSubmission,
+      quotes,
       selectedFiles,
+      ttsContext,
     ],
   );
 

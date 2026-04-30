@@ -1,14 +1,20 @@
-import { useCallback } from 'react';
+import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type { AppSettings } from '../../types';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 import type { SlashCommandState } from '../useSlashCommands';
-import type { useChatInputState } from './useChatInputState';
 
-type ChatInputState = ReturnType<typeof useChatInputState>;
+interface ChatInputKeyboardState {
+  inputText: string;
+  isFullscreen: boolean;
+  isMobile: boolean;
+  isComposingRef: MutableRefObject<boolean>;
+  setInputText: Dispatch<SetStateAction<string>>;
+  handleToggleFullscreen: () => void;
+}
 
 interface UseChatInputKeyboardParams {
   appSettings: AppSettings;
-  inputState: ChatInputState;
+  keyboardState: ChatInputKeyboardState;
   slashCommandState: {
     slashCommandState: SlashCommandState;
     setSlashCommandState: React.Dispatch<React.SetStateAction<SlashCommandState>>;
@@ -29,7 +35,7 @@ interface UseChatInputKeyboardParams {
 
 export const useChatInputKeyboard = ({
   appSettings,
-  inputState,
+  keyboardState,
   slashCommandState,
   isLoading,
   isEditing,
@@ -41,6 +47,8 @@ export const useChatInputKeyboard = ({
   onCancelEdit,
   onEditLastUserMessage,
 }: UseChatInputKeyboardParams) => {
+  const { inputText, isFullscreen, isMobile, isComposingRef, setInputText, handleToggleFullscreen } = keyboardState;
+
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       slashCommandState.handleInputChange(event.target.value);
@@ -91,7 +99,7 @@ export const useChatInputKeyboard = ({
         }
       }
 
-      if (inputState.isComposingRef.current || event.nativeEvent.isComposing) {
+      if (isComposingRef.current || event.nativeEvent.isComposing) {
         return;
       }
 
@@ -114,14 +122,14 @@ export const useChatInputKeyboard = ({
           return;
         }
 
-        if (inputState.isFullscreen) {
+        if (isFullscreen) {
           event.preventDefault();
-          inputState.handleToggleFullscreen();
+          handleToggleFullscreen();
           return;
         }
       }
 
-      if (isShortcutPressed(event, 'input.editLast', appSettings) && !isLoading && inputState.inputText.length === 0) {
+      if (isShortcutPressed(event, 'input.editLast', appSettings) && !isLoading && inputText.length === 0) {
         event.preventDefault();
         onEditLastUserMessage();
         return;
@@ -131,18 +139,11 @@ export const useChatInputKeyboard = ({
       const isNewLinePressed = isShortcutPressed(event, 'input.newLine', appSettings);
 
       if (isSendPressed) {
-        if (
-          inputState.isMobile &&
-          event.key === 'Enter' &&
-          !event.shiftKey &&
-          !event.ctrlKey &&
-          !event.altKey &&
-          !event.metaKey
-        ) {
+        if (isMobile && event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
           return;
         }
 
-        const rawInput = inputState.inputText;
+        const rawInput = inputText;
         if (rawInput.startsWith('/')) {
           const handledSlashCommand = slashCommandState.handleSlashCommandExecution(rawInput);
           if (handledSlashCommand) {
@@ -178,7 +179,7 @@ export const useChatInputKeyboard = ({
       const end = target.selectionEnd;
       const value = target.value;
       const newValue = `${value.substring(0, start)}\n${value.substring(end)}`;
-      inputState.setInputText(newValue);
+      setInputText(newValue);
 
       requestAnimationFrame(() => {
         target.selectionStart = start + 1;
@@ -191,13 +192,18 @@ export const useChatInputKeyboard = ({
       canQueueMessage,
       canSend,
       handleSubmit,
-      inputState,
+      handleToggleFullscreen,
+      inputText,
+      isComposingRef,
       isEditing,
+      isFullscreen,
       isLoading,
+      isMobile,
       onCancelEdit,
       onEditLastUserMessage,
       onStopGenerating,
       queueCurrentSubmission,
+      setInputText,
       slashCommandState,
     ],
   );

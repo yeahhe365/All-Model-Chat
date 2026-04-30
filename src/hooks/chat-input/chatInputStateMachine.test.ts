@@ -143,4 +143,35 @@ describe('chatInputStateMachine', () => {
     expect(source).toContain('stopSendAnimation');
     expect(source).toContain('exitFullscreen');
   });
+
+  it('keeps child hooks off the full chat input state compatibility surface', () => {
+    const childHookFilenames = [
+      'useChatInputFile.ts',
+      'useChatInputKeyboard.ts',
+      'useChatInputSubmission.ts',
+      'useChatInputTranslation.ts',
+      'useMessageQueue.ts',
+    ];
+
+    childHookFilenames.forEach((filename) => {
+      const source = readFileSync(path.resolve(__dirname, filename), 'utf8');
+
+      expect(source).not.toContain('type { useChatInputState }');
+      expect(source).not.toContain('ReturnType<typeof useChatInputState>');
+      expect(source).not.toContain('inputState: ChatInputState');
+      expect(source).not.toMatch(
+        /setIs(?:Translating|AnimatingSend|AddingById|AddingByUrl|WaitingForUpload|Fullscreen)/,
+      );
+    });
+  });
+
+  it('keeps narrowed child hook state wrappers out of callback dependencies', () => {
+    const submissionSource = readFileSync(path.resolve(__dirname, './useChatInputSubmission.ts'), 'utf8');
+    const keyboardSource = readFileSync(path.resolve(__dirname, './useChatInputKeyboard.ts'), 'utf8');
+
+    expect(submissionSource).not.toMatch(/\[[^\]\n]*submissionState[^\]\n]*\]/);
+    expect(submissionSource).not.toMatch(/submissionState,\n\s+\],/);
+    expect(keyboardSource).not.toMatch(/\[[^\]\n]*keyboardState[^\]\n]*\]/);
+    expect(keyboardSource).not.toMatch(/keyboardState,\n\s+\],/);
+  });
 });

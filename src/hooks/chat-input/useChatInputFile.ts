@@ -1,12 +1,11 @@
-import { useCallback, type RefObject } from 'react';
+import { useCallback, type Dispatch, type MutableRefObject, type RefObject, type SetStateAction } from 'react';
 import type { UploadedFile, VideoMetadata } from '../../types';
 import type { MediaResolution } from '../../types/settings';
 import { cleanupFilePreviewUrl } from '../../utils/fileHelpers';
 import { useFilePreProcessingEffects } from './useFilePreProcessingEffects';
 import { useChatInputFileUi } from './useChatInputFileUi';
-import type { useChatInputState } from './useChatInputState';
+import type { ChatInputBooleanUpdate } from './chatInputStateMachine';
 
-type ChatInputState = ReturnType<typeof useChatInputState>;
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
 
 interface ChatInputFileRefs {
@@ -18,7 +17,12 @@ interface ChatInputFileRefs {
 }
 
 interface UseChatInputFileParams {
-  inputState: ChatInputState;
+  fileIdInput: string;
+  isAddingById: boolean;
+  setAddingById: (value: ChatInputBooleanUpdate) => void;
+  setFileIdInput: Dispatch<SetStateAction<string>>;
+  setInputText: Dispatch<SetStateAction<string>>;
+  textareaRef: RefObject<HTMLTextAreaElement>;
   selectedFiles: UploadedFile[];
   setSelectedFiles: SetSelectedFiles;
   setAppFileError: (error: string | null) => void;
@@ -26,11 +30,16 @@ interface UseChatInputFileParams {
   onAddFileById: (fileId: string) => Promise<void>;
   isLoading: boolean;
   fileRefs: ChatInputFileRefs;
-  justInitiatedFileOpRef: ChatInputState['justInitiatedFileOpRef'];
+  justInitiatedFileOpRef: MutableRefObject<boolean>;
 }
 
 export const useChatInputFile = ({
-  inputState,
+  fileIdInput,
+  isAddingById,
+  setAddingById,
+  setFileIdInput,
+  setInputText,
+  textareaRef,
   selectedFiles,
   setSelectedFiles,
   setAppFileError,
@@ -56,7 +65,7 @@ export const useChatInputFile = ({
   const { modalsState, localFileState } = useChatInputFileUi({
     selectedFiles,
     setSelectedFiles,
-    setInputText: inputState.setInputText,
+    setInputText,
     setAppFileError,
     onProcessFiles,
     onOpenFolderPicker: filePreProcessing.handleOpenFolderPicker,
@@ -67,7 +76,7 @@ export const useChatInputFile = ({
     zipInputRef,
     cameraInputRef,
     justInitiatedFileOpRef,
-    textareaRef: inputState.textareaRef,
+    textareaRef,
     isConverting: filePreProcessing.isConverting,
     setIsConverting: filePreProcessing.setIsConverting,
   });
@@ -84,16 +93,19 @@ export const useChatInputFile = ({
   );
 
   const handleAddFileByIdSubmit = useCallback(async () => {
-    if (!inputState.fileIdInput.trim() || inputState.isAddingById || isLoading) {
+    if (!fileIdInput.trim() || isAddingById || isLoading) {
       return;
     }
 
-    inputState.setAddingById(true);
+    setAddingById(true);
     justInitiatedFileOpRef.current = true;
-    await onAddFileById(inputState.fileIdInput.trim());
-    inputState.setAddingById(false);
-    inputState.setFileIdInput('');
-  }, [inputState, isLoading, justInitiatedFileOpRef, onAddFileById]);
+    try {
+      await onAddFileById(fileIdInput.trim());
+      setFileIdInput('');
+    } finally {
+      setAddingById(false);
+    }
+  }, [fileIdInput, isAddingById, isLoading, justInitiatedFileOpRef, onAddFileById, setAddingById, setFileIdInput]);
 
   const handleSaveFileConfig = useCallback(
     (
