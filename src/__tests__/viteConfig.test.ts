@@ -16,11 +16,7 @@ const pyodideLoaderPath = path.join(projectRoot, 'src/services/loadPyodideServic
 const standardClientFunctionsPath = path.join(projectRoot, 'src/features/standard-chat/standardClientFunctions.ts');
 const liveClientFunctionsPath = path.join(projectRoot, 'src/hooks/live-api/liveClientFunctions.ts');
 const ttsVoiceSelectorPath = path.join(projectRoot, 'src/components/chat/input/toolbar/TtsVoiceSelector.tsx');
-const createFilePdfExportSurfacePath = path.join(
-  projectRoot,
-  'src/components/modals/create-file/CreateFilePdfExportSurface.tsx',
-);
-const htmlExportPath = path.join(projectRoot, 'src/utils/export/pdf.ts');
+const markdownPdfExportPath = path.join(projectRoot, 'src/utils/export/markdownPdf.ts');
 
 describe('vite.config runtime ownership', () => {
   it('does not externalize core runtime libraries needed in the Vite bundle', () => {
@@ -56,26 +52,25 @@ describe('vite.config runtime ownership', () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
 
     expect(config).toMatch(/globIgnores:\s*\[[\s\S]*pyodide/i);
+    expect(config).toContain("'**/fonts/NotoSansCJKsc-VF.ttf'");
   });
 
-  it('keeps html export code behind a runtime import instead of a forced vendor chunk', () => {
-    const source = fs.readFileSync(htmlExportPath, 'utf8');
+  it('keeps Markdown PDF export off the html2canvas/html2pdf screenshot path', () => {
+    const source = fs.readFileSync(markdownPdfExportPath, 'utf8');
 
-    expect(source).toContain("await import('html2pdf.js')");
+    expect(source).toContain("from 'jspdf'");
+    expect(source).not.toContain('html2canvas');
+    expect(source).not.toContain('html2pdf');
   });
 });
 
 describe('Runtime loading boundaries', () => {
   it('loads both base markdown and math markdown renderers lazily', () => {
     const lazyMarkdownSource = fs.readFileSync(lazyMarkdownRendererPath, 'utf8');
-    const createFilePdfExportSurfaceSource = fs.readFileSync(createFilePdfExportSurfacePath, 'utf8');
 
     expect(fs.existsSync(baseMarkdownRendererEntryPath)).toBe(true);
     expect(lazyMarkdownSource).toContain("import('./BaseMarkdownRendererEntry')");
     expect(lazyMarkdownSource).toContain("import('./MarkdownRenderer')");
-    expect(createFilePdfExportSurfaceSource).toContain(
-      "import { MarkdownRenderer } from '../../message/MarkdownRenderer'",
-    );
   });
 
   it('moves KaTeX and PDF viewer CSS ownership out of the global app entry', () => {

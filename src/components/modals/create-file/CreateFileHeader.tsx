@@ -6,7 +6,6 @@ interface CreateFileHeaderProps {
   isEditing: boolean;
   isPdf: boolean;
   isExportingPdf: boolean;
-  isPdfPreviewReady: boolean;
   supportsRichPreview: boolean;
   isPreviewMode: boolean;
   setIsPreviewMode: (mode: boolean) => void;
@@ -19,7 +18,6 @@ export const CreateFileHeader: React.FC<CreateFileHeaderProps> = ({
   isEditing,
   isPdf,
   isExportingPdf,
-  isPdfPreviewReady,
   supportsRichPreview,
   isPreviewMode,
   setIsPreviewMode,
@@ -37,7 +35,7 @@ export const CreateFileHeader: React.FC<CreateFileHeaderProps> = ({
         {isPdf && (
           <button
             onClick={handleDownloadPdf}
-            disabled={isExportingPdf || !isPdfPreviewReady}
+            disabled={isExportingPdf}
             className="flex items-center justify-center h-9 w-9 sm:w-auto sm:px-3 rounded-lg text-xs font-medium transition-colors bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-50"
             title="Download PDF"
           >

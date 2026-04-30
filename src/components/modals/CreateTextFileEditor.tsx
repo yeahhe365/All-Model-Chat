@@ -41,10 +41,7 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
     isPreviewMode,
     setIsPreviewMode,
     isExportingPdf,
-    isPdfPreviewReady,
-    setIsPdfPreviewReady,
     textareaRef,
-    printRef,
     isEditing,
     isPdf,
     supportsRichPreview,
@@ -69,7 +66,6 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           isEditing={isEditing}
           isPdf={isPdf}
           isExportingPdf={isExportingPdf}
-          isPdfPreviewReady={isPdfPreviewReady}
           supportsRichPreview={supportsRichPreview}
           isPreviewMode={isPreviewMode}
           setIsPreviewMode={setIsPreviewMode}
@@ -84,9 +80,6 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           setTextContent={setTextContent}
           debouncedContent={debouncedContent}
           textareaRef={textareaRef}
-          printRef={printRef}
-          isPdf={isPdf}
-          setIsPdfPreviewReady={setIsPdfPreviewReady}
           isPreviewMode={isPreviewMode}
           supportsRichPreview={supportsRichPreview}
           handlePaste={handlePaste}
@@ -103,11 +96,9 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           setExtension={setExtension}
           onSave={() => handleSave(isProcessing)}
           isEditing={isEditing}
-          isPdf={isPdf}
           isProcessing={isProcessing}
           isLoading={isLoading}
           isExportingPdf={isExportingPdf}
-          isPdfPreviewReady={isPdfPreviewReady}
           hasContent={!!textContent.trim()}
           t={t}
         />

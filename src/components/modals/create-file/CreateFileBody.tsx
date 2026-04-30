@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { useState } from 'react';
 import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
 import { translations } from '../../../utils/translations';
 
@@ -7,9 +7,6 @@ interface CreateFileBodyProps {
   setTextContent: (text: string) => void;
   debouncedContent: string;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
-  printRef: React.RefObject<HTMLDivElement>;
-  isPdf: boolean;
-  setIsPdfPreviewReady: (ready: boolean) => void;
   isPreviewMode: boolean;
   supportsRichPreview: boolean;
   handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
@@ -18,19 +15,11 @@ interface CreateFileBodyProps {
   t: (key: keyof typeof translations | string) => string;
 }
 
-const PdfExportSurface = lazy(async () => {
-  const module = await import('./CreateFilePdfExportSurface');
-  return { default: module.CreateFilePdfExportSurface };
-});
-
 export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
   textContent,
   setTextContent,
   debouncedContent,
   textareaRef,
-  printRef,
-  isPdf,
-  setIsPdfPreviewReady,
   isPreviewMode,
   supportsRichPreview,
   handlePaste,
@@ -138,17 +127,6 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
           </div>
         )}
       </div>
-      {isPdf && (
-        <Suspense fallback={null}>
-          <PdfExportSurface
-            content={debouncedContent || '*Start typing...*'}
-            printRef={printRef}
-            themeId={themeId}
-            t={t}
-            setIsPdfPreviewReady={setIsPdfPreviewReady}
-          />
-        </Suspense>
-      )}
     </div>
   );
 };

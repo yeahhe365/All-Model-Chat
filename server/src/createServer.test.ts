@@ -262,4 +262,86 @@ describe('createServer', () => {
       error: 'Gemini upstream request failed: network down',
     });
   });
+
+  it('proxies external images through GET /api/image-proxy for PDF export', async () => {
+    const app = createServer(
+      {
+        geminiApiBase: 'https://example.test',
+        geminiApiKey: 'server-key',
+      },
+      {
+        fetchImpl: vi.fn(async () => {
+          return new Response(new Uint8Array([137, 80, 78, 71]), {
+            status: 200,
+            headers: {
+              'content-type': 'image/png',
+            },
+          });
+        }),
+      },
+    );
+    const started = await startHttpServer(app);
+    cleanupCallbacks.push(started.close);
+
+    const response = await fetch(
+      `${started.baseUrl}/api/image-proxy?url=${encodeURIComponent('https://cdn.example.com/diagram.png')}`,
+    );
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/png');
+    expect(response.headers.get('cache-control')).toContain('max-age');
+    expect(Array.from(bytes)).toEqual([137, 80, 78, 71]);
+  });
+
+  it('rejects non-image image proxy responses', async () => {
+    const app = createServer(
+      {
+        geminiApiBase: 'https://example.test',
+        geminiApiKey: 'server-key',
+      },
+      {
+        fetchImpl: vi.fn(async () => {
+          return new Response('not an image', {
+            status: 200,
+            headers: {
+              'content-type': 'text/html',
+            },
+          });
+        }),
+      },
+    );
+    const started = await startHttpServer(app);
+    cleanupCallbacks.push(started.close);
+
+    const response = await fetch(
+      `${started.baseUrl}/api/image-proxy?url=${encodeURIComponent('https://cdn.example.com/not-image')}`,
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(415);
+    expect(body).toEqual({ error: 'Image proxy target did not return an image.' });
+  });
+
+  it('rejects private network image proxy targets', async () => {
+    const fetchImpl = vi.fn();
+    const app = createServer(
+      {
+        geminiApiBase: 'https://example.test',
+        geminiApiKey: 'server-key',
+      },
+      { fetchImpl },
+    );
+    const started = await startHttpServer(app);
+    cleanupCallbacks.push(started.close);
+
+    const response = await fetch(
+      `${started.baseUrl}/api/image-proxy?url=${encodeURIComponent('http://127.0.0.1/private.png')}`,
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({ error: 'Image proxy URL is not allowed.' });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
 });

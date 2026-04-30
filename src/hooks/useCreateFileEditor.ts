@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { convertHtmlToMarkdown } from '../utils/htmlToMarkdown';
-import { loadHtml2PdfFactory, waitForElementToBecomeStable } from '../utils/export/pdf';
+import { triggerDownload } from '../utils/export/core';
+import { createMarkdownPdfBlob } from '../utils/export/markdownPdf';
 import {
   createInlineImagePlaceholder,
   extractInlineImagePlaceholders,
@@ -47,11 +48,9 @@ export const useCreateFileEditor = ({
   const [debouncedEditorContent, setDebouncedEditorContent] = useState(initialInlineImagesRef.current.editorContent);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const [isPdfPreviewReady, setIsPdfPreviewReady] = useState(false);
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const printRef = useRef<HTMLDivElement>(null);
 
   // Filename Logic
   const [filenameBase, setFilenameBase] = useState(() => {
@@ -100,48 +99,12 @@ export const useCreateFileEditor = ({
     [debouncedEditorContent],
   );
 
-  useEffect(() => {
-    if (!isPdf) {
-      setIsPdfPreviewReady(false);
-    }
-  }, [isPdf]);
-
-  const getPdfExportTarget = () => {
-    if (!printRef.current) {
-      console.error('Print reference not found for PDF generation.');
-      return null;
-    }
-
-    return printRef.current;
-  };
-
-  // Shared html2canvas options
-  const getPdfOpt = (finalName: string) => ({
-    margin: [10, 15, 10, 15],
-    filename: `${finalName}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff',
-      windowWidth: 800,
-      scrollY: 0,
-    },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-  });
-
   // Logic: PDF Generation
-  const generatePdfBlob = async (): Promise<Blob | null> => {
-    const container = getPdfExportTarget();
-    if (!container) return null;
-
-    await waitForElementToBecomeStable(container);
-
-    const html2pdf = await loadHtml2PdfFactory();
-    return html2pdf().set(getPdfOpt('temp')).from(container).output('blob');
-  };
+  const generatePdfBlob = async (filename: string): Promise<Blob> =>
+    createMarkdownPdfBlob(resolveInlineImagePlaceholders(textContent, imagePlaceholdersRef.current), {
+      filename,
+      themeId,
+    });
 
   const handleSave = async (isProcessing: boolean) => {
     if (isProcessing) return;
@@ -154,12 +117,8 @@ export const useCreateFileEditor = ({
     if (isPdf) {
       setIsExportingPdf(true);
       try {
-        const pdfBlob = await generatePdfBlob();
-        if (pdfBlob) {
-          onConfirm(pdfBlob, finalName);
-        } else {
-          alert('Failed to generate PDF. Please ensure preview is loaded.');
-        }
+        const pdfBlob = await generatePdfBlob(finalName);
+        onConfirm(pdfBlob, finalName);
       } catch (error) {
         console.error('PDF generation error:', error);
         alert('Error generating PDF.');
@@ -172,17 +131,12 @@ export const useCreateFileEditor = ({
   };
 
   const handleDownloadPdf = async () => {
-    const container = getPdfExportTarget();
-    if (!container) return;
-
     setIsExportingPdf(true);
-    const finalName = filenameBase.trim() || 'document';
+    const finalName = `${filenameBase.trim() || 'document'}.pdf`;
 
     try {
-      await waitForElementToBecomeStable(container);
-
-      const html2pdf = await loadHtml2PdfFactory();
-      await html2pdf().set(getPdfOpt(finalName)).from(container).save();
+      const pdfBlob = await generatePdfBlob(finalName);
+      triggerDownload(URL.createObjectURL(pdfBlob), finalName);
     } catch (error) {
       console.error('PDF Export failed:', error);
       alert('Error generating PDF.');
@@ -335,10 +289,7 @@ export const useCreateFileEditor = ({
     isPreviewMode,
     setIsPreviewMode,
     isExportingPdf,
-    isPdfPreviewReady,
-    setIsPdfPreviewReady,
     textareaRef,
-    printRef,
     isEditing,
     isPdf,
     supportsRichPreview,

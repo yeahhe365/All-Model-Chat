@@ -1,4 +1,4 @@
-export type ChatInputMode = 'idle' | 'editing' | 'queuing' | 'live' | 'processing';
+type ChatInputMode = 'idle' | 'editing' | 'queuing' | 'live' | 'processing';
 
 export interface ChatInputMachineState {
   isTranslating: boolean;
@@ -12,7 +12,7 @@ export interface ChatInputMachineState {
 export type ChatInputMachineFlag = keyof ChatInputMachineState;
 export type ChatInputBooleanUpdate = boolean | ((previous: boolean) => boolean);
 
-export type ChatInputMachineAction =
+type ChatInputMachineAction =
   | {
       type: 'setFlag';
       flag: ChatInputMachineFlag;
