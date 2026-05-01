@@ -1,6 +1,27 @@
 import React from 'react';
-import { Atom, Braces, Database, FileCode2, FileJson, FileText, Terminal, Workflow } from 'lucide-react';
-import { IconHtml5, IconPython } from '../../icons/CustomIcons';
+import { Atom, Braces, FileCode2, FileJson, FileText, Workflow } from 'lucide-react';
+import {
+  IconCLang,
+  IconCpp,
+  IconCSharp,
+  IconDart,
+  IconGo,
+  IconHtml5,
+  IconIni,
+  IconJava,
+  IconKotlin,
+  IconLua,
+  IconPhp,
+  IconPython,
+  IconRuby,
+  IconRust,
+  IconShell,
+  IconSql,
+  IconSwift,
+  IconToml,
+  IconTypeScript,
+  IconYaml,
+} from '../../icons/CustomIcons';
 
 type LanguageBadgeConfig = {
   badgeId: string;
@@ -20,6 +41,8 @@ const TextGlyph: React.FC<{ label: string; className: string }> = ({ label, clas
 );
 
 const normalizeLanguage = (language: string) => language.trim().toLowerCase();
+const LANGUAGE_ICON_SIZE = 20;
+const STROKE_LANGUAGE_ICON_SIZE = 18;
 
 const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
   const lang = normalizeLanguage(language || 'text');
@@ -29,7 +52,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       badgeId: 'python',
       iconId: 'python',
       displayName: 'Python',
-      renderIcon: () => <IconPython size={16} className="text-[#4f8ff7]" color="currentColor" />,
+      renderIcon: () => <IconPython size={LANGUAGE_ICON_SIZE} className="text-[#4f8ff7]" color="currentColor" />,
     };
   }
 
@@ -39,7 +62,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       iconId: 'tsx',
       displayName: 'TypeScript React',
       compactLabel: 'TSX',
-      renderIcon: () => <TextGlyph label="TS" className="bg-[#2563eb] text-white" />,
+      renderIcon: () => <IconTypeScript size={LANGUAGE_ICON_SIZE} />,
     };
   }
 
@@ -48,7 +71,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       badgeId: 'typescript',
       iconId: 'typescript',
       displayName: 'TypeScript',
-      renderIcon: () => <TextGlyph label="TS" className="bg-[#3178c6] text-white" />,
+      renderIcon: () => <IconTypeScript size={LANGUAGE_ICON_SIZE} />,
     };
   }
 
@@ -67,7 +90,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       iconId: 'react',
       displayName: 'React JSX',
       compactLabel: 'JSX',
-      renderIcon: () => <Atom size={14} strokeWidth={2.1} className="text-[#61dafb]" />,
+      renderIcon: () => <Atom size={STROKE_LANGUAGE_ICON_SIZE} strokeWidth={2.1} className="text-[#61dafb]" />,
     };
   }
 
@@ -76,7 +99,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       badgeId: 'html',
       iconId: 'html',
       displayName: 'HTML',
-      renderIcon: () => <IconHtml5 size={14} />,
+      renderIcon: () => <IconHtml5 size={LANGUAGE_ICON_SIZE} />,
     };
   }
 
@@ -89,12 +112,120 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
     };
   }
 
+  if (['go', 'golang'].includes(lang)) {
+    return {
+      badgeId: 'go',
+      iconId: 'go',
+      displayName: 'Go',
+      renderIcon: () => <IconGo size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['rust', 'rs'].includes(lang)) {
+    return {
+      badgeId: 'rust',
+      iconId: 'rust',
+      displayName: 'Rust',
+      renderIcon: () => <IconRust size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['java', 'jvm'].includes(lang)) {
+    return {
+      badgeId: 'java',
+      iconId: 'java',
+      displayName: 'Java',
+      renderIcon: () => <IconJava size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['cs', 'csharp', 'c#'].includes(lang)) {
+    return {
+      badgeId: 'csharp',
+      iconId: 'csharp',
+      displayName: 'C#',
+      renderIcon: () => <IconCSharp size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['kotlin', 'kt', 'android'].includes(lang)) {
+    return {
+      badgeId: 'kotlin',
+      iconId: 'kotlin',
+      displayName: 'Kotlin',
+      renderIcon: () => <IconKotlin size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['rb', 'ruby', 'rails'].includes(lang)) {
+    return {
+      badgeId: 'ruby',
+      iconId: 'ruby',
+      displayName: 'Ruby',
+      renderIcon: () => <IconRuby size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['php'].includes(lang)) {
+    return {
+      badgeId: 'php',
+      iconId: 'php',
+      displayName: 'PHP',
+      renderIcon: () => <IconPhp size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['swift'].includes(lang)) {
+    return {
+      badgeId: 'swift',
+      iconId: 'swift',
+      displayName: 'Swift',
+      renderIcon: () => <IconSwift size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['dart'].includes(lang)) {
+    return {
+      badgeId: 'dart',
+      iconId: 'dart',
+      displayName: 'Dart',
+      renderIcon: () => <IconDart size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['lua'].includes(lang)) {
+    return {
+      badgeId: 'lua',
+      iconId: 'lua',
+      displayName: 'Lua',
+      renderIcon: () => <IconLua size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['c', 'h'].includes(lang)) {
+    return {
+      badgeId: 'c',
+      iconId: 'c',
+      displayName: 'C',
+      renderIcon: () => <IconCLang size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['cpp', 'c++', 'hpp'].includes(lang)) {
+    return {
+      badgeId: 'cpp',
+      iconId: 'cpp',
+      displayName: 'C++',
+      renderIcon: () => <IconCpp size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
   if (['json', 'json5'].includes(lang)) {
     return {
       badgeId: 'json',
       iconId: 'json',
       displayName: 'JSON',
-      renderIcon: () => <FileJson size={14} strokeWidth={2.1} className="text-yellow-500" />,
+      renderIcon: () => <FileJson size={STROKE_LANGUAGE_ICON_SIZE} strokeWidth={2.1} className="text-yellow-500" />,
     };
   }
 
@@ -103,7 +234,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       badgeId: 'sql',
       iconId: 'sql',
       displayName: 'SQL',
-      renderIcon: () => <Database size={14} strokeWidth={2.1} className="text-sky-400" />,
+      renderIcon: () => <IconSql size={LANGUAGE_ICON_SIZE} />,
     };
   }
 
@@ -112,7 +243,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       badgeId: 'shell',
       iconId: 'shell',
       displayName: 'Shell',
-      renderIcon: () => <Terminal size={14} strokeWidth={2.1} className="text-emerald-400" />,
+      renderIcon: () => <IconShell size={LANGUAGE_ICON_SIZE} />,
     };
   }
 
@@ -122,17 +253,50 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       iconId: lang,
       displayName: lang === 'dot' ? 'Graphviz DOT' : lang === 'graphviz' ? 'Graphviz' : 'Mermaid',
       compactLabel: lang === 'mermaid' ? 'MMD' : 'DOT',
-      renderIcon: () => <Workflow size={14} strokeWidth={2.1} className="text-pink-400" />,
+      renderIcon: () => <Workflow size={STROKE_LANGUAGE_ICON_SIZE} strokeWidth={2.1} className="text-pink-400" />,
     };
   }
 
-  if (['md', 'markdown', 'csv', 'txt', 'text', 'log', 'yaml', 'yml', 'toml', 'ini', 'config'].includes(lang)) {
+  if (['yaml', 'yml'].includes(lang)) {
+    return {
+      badgeId: 'yaml',
+      iconId: 'yaml',
+      displayName: 'YAML',
+      renderIcon: () => <IconYaml size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['toml'].includes(lang)) {
+    return {
+      badgeId: 'toml',
+      iconId: 'toml',
+      displayName: 'TOML',
+      renderIcon: () => <IconToml size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['ini', 'config'].includes(lang)) {
+    return {
+      badgeId: 'ini',
+      iconId: 'ini',
+      displayName: 'INI',
+      renderIcon: () => <IconIni size={LANGUAGE_ICON_SIZE} />,
+    };
+  }
+
+  if (['md', 'markdown', 'csv', 'txt', 'text', 'log'].includes(lang)) {
     return {
       badgeId: lang,
       iconId: 'text',
       displayName: lang === 'md' ? 'Markdown' : lang.toUpperCase(),
       compactLabel: lang === 'markdown' ? 'MD' : undefined,
-      renderIcon: () => <FileText size={14} strokeWidth={2.1} className="text-[var(--theme-text-secondary)]" />,
+      renderIcon: () => (
+        <FileText
+          size={STROKE_LANGUAGE_ICON_SIZE}
+          strokeWidth={2.1}
+          className="text-[var(--theme-text-secondary)]"
+        />
+      ),
     };
   }
 
@@ -185,7 +349,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       badgeId: lang,
       iconId: 'braces',
       displayName: lang.toUpperCase(),
-      renderIcon: () => <Braces size={14} strokeWidth={2.1} className="text-violet-400" />,
+      renderIcon: () => <Braces size={STROKE_LANGUAGE_ICON_SIZE} strokeWidth={2.1} className="text-violet-400" />,
     };
   }
 
@@ -193,7 +357,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
     badgeId: lang,
     iconId: 'generic',
     displayName: lang,
-    renderIcon: () => <FileCode2 size={14} strokeWidth={2.1} className="text-gray-400" />,
+    renderIcon: () => <FileCode2 size={STROKE_LANGUAGE_ICON_SIZE} strokeWidth={2.1} className="text-gray-400" />,
   };
 };
 
@@ -208,7 +372,7 @@ export const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
     >
       <span
         data-language-icon={config.iconId}
-        className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center"
+        className="inline-flex h-5 w-5 flex-shrink-0 items-center justify-center"
         aria-hidden="true"
       >
         {config.renderIcon()}

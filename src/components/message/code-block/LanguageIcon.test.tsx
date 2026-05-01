@@ -33,10 +33,10 @@ describe('LanguageIcon', () => {
     expect(badge?.textContent).toContain('Python');
     expect(badge?.className.split(/\s+/)).toContain('gap-1.5');
     expect(icon).not.toBeNull();
-    expect(icon?.className.split(/\s+/)).toContain('h-4');
-    expect(icon?.className.split(/\s+/)).toContain('w-4');
-    expect(icon?.querySelector('svg')?.getAttribute('width')).toBe('16');
-    expect(icon?.querySelector('svg')?.getAttribute('height')).toBe('16');
+    expect(icon?.className.split(/\s+/)).toContain('h-5');
+    expect(icon?.className.split(/\s+/)).toContain('w-5');
+    expect(icon?.querySelector('svg')?.getAttribute('width')).toBe('20');
+    expect(icon?.querySelector('svg')?.getAttribute('height')).toBe('20');
     expect(icon?.querySelector('[stop-color="#5a9fd4"]')).not.toBeNull();
     expect(icon?.querySelector('[stop-color="#ffd43b"]')).not.toBeNull();
     expect(meta).not.toBeNull();
@@ -51,10 +51,71 @@ describe('LanguageIcon', () => {
     });
 
     const badge = container.querySelector('[data-language-badge="tsx"]');
+    const icon = container.querySelector('[data-language-icon="tsx"]');
 
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toContain('TypeScript React');
     expect(badge?.textContent).toContain('TSX');
+    expect(icon?.querySelector('svg')?.getAttribute('width')).toBe('20');
+    expect(icon?.querySelector('svg')?.getAttribute('height')).toBe('20');
+  });
+
+  it('renders TypeScript code blocks with the SVG language icon', () => {
+    act(() => {
+      root.render(<LanguageIcon language="typescript" />);
+    });
+
+    const badge = container.querySelector('[data-language-badge="typescript"]');
+    const icon = container.querySelector('[data-language-icon="typescript"]');
+
+    expect(badge).not.toBeNull();
+    expect(badge?.textContent).toContain('TypeScript');
+    expect(icon?.querySelector('svg')?.getAttribute('width')).toBe('20');
+    expect(icon?.querySelector('svg')?.getAttribute('height')).toBe('20');
+    expect(icon?.textContent).not.toContain('TS');
+  });
+
+  it('renders dedicated SVG icons for common code block languages', () => {
+    const cases = [
+      ['go', 'go', 'Go'],
+      ['golang', 'go', 'Go'],
+      ['rust', 'rust', 'Rust'],
+      ['rs', 'rust', 'Rust'],
+      ['java', 'java', 'Java'],
+      ['cs', 'csharp', 'C#'],
+      ['csharp', 'csharp', 'C#'],
+      ['kotlin', 'kotlin', 'Kotlin'],
+      ['kt', 'kotlin', 'Kotlin'],
+      ['ruby', 'ruby', 'Ruby'],
+      ['rb', 'ruby', 'Ruby'],
+      ['php', 'php', 'PHP'],
+      ['swift', 'swift', 'Swift'],
+      ['dart', 'dart', 'Dart'],
+      ['lua', 'lua', 'Lua'],
+      ['c', 'c', 'C'],
+      ['cpp', 'cpp', 'C++'],
+      ['c++', 'cpp', 'C++'],
+      ['sql', 'sql', 'SQL'],
+      ['postgresql', 'sql', 'SQL'],
+      ['bash', 'shell', 'Shell'],
+      ['powershell', 'shell', 'Shell'],
+      ['yaml', 'yaml', 'YAML'],
+      ['toml', 'toml', 'TOML'],
+      ['ini', 'ini', 'INI'],
+    ];
+
+    cases.forEach(([language, iconId, label]) => {
+      act(() => {
+        root.render(<LanguageIcon language={language} />);
+      });
+
+      const icon = container.querySelector(`[data-language-icon="${iconId}"]`);
+      const badge = container.querySelector('[data-language-badge]');
+
+      expect(badge?.textContent).toContain(label);
+      expect(icon?.querySelector('svg')?.getAttribute('width')).toBe('20');
+      expect(icon?.querySelector('svg')?.getAttribute('height')).toBe('20');
+    });
   });
 
   it('falls back to a generic code badge for unknown languages', () => {

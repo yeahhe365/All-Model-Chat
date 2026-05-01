@@ -64,18 +64,28 @@ describe('ChatInputViewContext', () => {
     };
 
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    const preventExpectedProviderError = (event: ErrorEvent) => {
+      if (event.error?.message === 'ChatInputViewProvider is required before using chat input view hooks') {
+        event.preventDefault();
+      }
+    };
+    window.addEventListener('error', preventExpectedProviderError);
 
-    const { container, unmount } = render(
-      <ErrorBoundary>
-        <Consumer />
-      </ErrorBoundary>,
-    );
+    let rendered: ReturnType<typeof render> | undefined;
+    try {
+      rendered = render(
+        <ErrorBoundary>
+          <Consumer />
+        </ErrorBoundary>,
+      );
 
-    expect(container.querySelector('[data-testid="boundary-error"]')?.textContent).toBe(
-      'ChatInputViewProvider is required before using chat input view hooks',
-    );
-
-    unmount();
+      expect(rendered.container.querySelector('[data-testid="boundary-error"]')?.textContent).toBe(
+        'ChatInputViewProvider is required before using chat input view hooks',
+      );
+    } finally {
+      window.removeEventListener('error', preventExpectedProviderError);
+      rendered?.unmount();
+    }
   });
 
   it('provides focused view slices to chat input children', () => {
