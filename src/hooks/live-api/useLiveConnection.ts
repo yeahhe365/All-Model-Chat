@@ -5,6 +5,7 @@ import { logService } from '../../services/logService';
 import { getLiveApiClient, LiveApiAuthConfigurationError } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
 import type { LiveErrorState } from './liveErrorState';
+import { useStateWithRef } from '../useStateWithRef';
 
 interface UseLiveConnectionProps {
   appSettings: AppSettings;
@@ -49,26 +50,14 @@ export const useLiveConnection = ({
   sessionHandleRef,
   sessionRef,
 }: UseLiveConnectionProps) => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected, isConnectedRef] = useStateWithRef(false);
   const [errorState, setErrorState] = useState<LiveErrorState | null>(null);
-  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [isReconnecting, setIsReconnecting, isReconnectingRef] = useStateWithRef(false);
 
-  // Ref to track connection state synchronously for audio callbacks
-  const isConnectedRef = useRef(false);
-  const isReconnectingRef = useRef(false);
   const isProactiveReconnectRef = useRef(false);
   const disconnectRef = useRef<() => void>(() => {});
   const setupCompleteResolveRef = useRef<(() => void) | null>(null);
   const setupCompleteRejectRef = useRef<((error: Error) => void) | null>(null);
-
-  // Sync Ref with State (Keep as a fallback for external state changes)
-  useEffect(() => {
-    isConnectedRef.current = isConnected;
-  }, [isConnected]);
-
-  useEffect(() => {
-    isReconnectingRef.current = isReconnecting;
-  }, [isReconnecting]);
 
   // Reconnection Refs
   const retryCountRef = useRef(0);
@@ -124,9 +113,6 @@ export const useLiveConnection = ({
       logService.error('Max reconnection attempts reached.');
       setTranslationError('liveStatus_connection_lost_retry_failed', 'Connection lost. Please try again.');
       setIsReconnecting(false);
-
-      // 同步修改 Ref 以立即拦截发送
-      isConnectedRef.current = false;
       setIsConnected(false);
 
       stopVideo();
@@ -153,7 +139,7 @@ export const useLiveConnection = ({
       retryCountRef.current++;
       connectRef.current(); // Call the latest connect function
     }, delay);
-  }, [resetAudioState, stopVideo, setTranslationError]);
+  }, [resetAudioState, setIsConnected, setIsReconnecting, stopVideo, setTranslationError]);
 
   const handleGoAway = useCallback(
     (goAway?: { timeLeft?: string }) => {
@@ -168,7 +154,7 @@ export const useLiveConnection = ({
 
       sessionRef.current?.then((session) => session.close());
     },
-    [sessionHandleRef, sessionRef, setTranslationError],
+    [sessionHandleRef, sessionRef, setIsReconnecting, setTranslationError],
   );
 
   const connect = useCallback(async (): Promise<boolean> => {
@@ -225,7 +211,6 @@ export const useLiveConnection = ({
           },
           onmessage: (msg) => {
             if (msg.setupComplete) {
-              isConnectedRef.current = true;
               setIsConnected(true);
               setIsReconnecting(false);
               setErrorState(null);
@@ -239,8 +224,6 @@ export const useLiveConnection = ({
             sessionRef.current = null;
             rejectSetupComplete(new Error('Live API connection closed before setup completed.'));
 
-            // 同步修改 Ref 防止报错
-            isConnectedRef.current = false;
             setIsConnected(false);
 
             // Finalize any open transcripts
@@ -267,8 +250,6 @@ export const useLiveConnection = ({
             sessionRef.current = null;
             rejectSetupComplete(err instanceof Error ? err : new Error('Connection error'));
 
-            // 同步修改 Ref
-            isConnectedRef.current = false;
             setIsConnected(false);
 
             // Finalize any open transcripts
@@ -299,8 +280,6 @@ export const useLiveConnection = ({
       logService.error('Failed to connect to Live API', err);
       clearSetupCompleteWaiters();
 
-      // 同步修改 Ref
-      isConnectedRef.current = false;
       setIsConnected(false);
 
       if (
@@ -348,9 +327,12 @@ export const useLiveConnection = ({
     handleMessage,
     sessionRef,
     sessionHandleRef,
+    setIsConnected,
+    setIsReconnecting,
     resolveSetupComplete,
     rejectSetupComplete,
     clearSetupCompleteWaiters,
+    isConnectedRef,
     setRawError,
     setTranslationError,
   ]);
@@ -369,7 +351,7 @@ export const useLiveConnection = ({
         return false;
       }
     },
-    [sessionRef],
+    [isConnectedRef, sessionRef],
   );
 
   const sendContent = useCallback(
@@ -392,7 +374,7 @@ export const useLiveConnection = ({
         return false;
       }
     },
-    [sessionRef],
+    [isConnectedRef, sessionRef],
   );
 
   const disconnect = useCallback(() => {
@@ -413,8 +395,6 @@ export const useLiveConnection = ({
     resetAudioState();
     stopVideo(); // Stop video stream if active
 
-    // 同步修改 Ref
-    isConnectedRef.current = false;
     setIsConnected(false);
     setIsReconnecting(false);
     setErrorState(null);
@@ -422,7 +402,17 @@ export const useLiveConnection = ({
     sessionHandleRef.current = null;
 
     if (onClose) onClose();
-  }, [onClose, resetAudioState, stopVideo, sessionRef, setSessionHandle, sessionHandleRef, rejectSetupComplete]);
+  }, [
+    onClose,
+    resetAudioState,
+    stopVideo,
+    sessionRef,
+    setIsConnected,
+    setIsReconnecting,
+    setSessionHandle,
+    sessionHandleRef,
+    rejectSetupComplete,
+  ]);
 
   // Update the ref whenever connect changes so triggerReconnect calls the latest version
   useEffect(() => {
@@ -435,13 +425,16 @@ export const useLiveConnection = ({
 
   // Cleanup on unmount
   useEffect(() => {
+    const connectedRef = isConnectedRef;
+    const reconnectingRef = isReconnectingRef;
+
     return () => {
       isUserDisconnectRef.current = true;
-      if (isConnectedRef.current || isReconnectingRef.current) {
+      if (connectedRef.current || reconnectingRef.current) {
         disconnectRef.current();
       }
     };
-  }, []);
+  }, [isConnectedRef, isReconnectingRef]);
 
   return {
     isConnected,

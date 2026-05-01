@@ -1,5 +1,4 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockSendStandardMessage = vi.fn();
@@ -86,31 +85,7 @@ vi.mock('../contexts/I18nContext', () => ({
 }));
 
 import { useMessageSender } from './useMessageSender';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
+import { renderHook } from '@/test/testUtils';
 
 describe('useMessageSender', () => {
   beforeEach(() => {

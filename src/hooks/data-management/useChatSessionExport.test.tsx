@@ -1,9 +1,9 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SavedChatSession, Theme } from '../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { useChatSessionExport } from './useChatSessionExport';
+import { renderHook } from '@/test/testUtils';
 
 const exportHtmlStringAsFile = vi.fn();
 const exportTextStringAsFile = vi.fn();
@@ -24,30 +24,6 @@ vi.mock('../../utils/export/runtime', () => ({
     buildTextDocument,
   })),
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
 
 const makeSession = (): SavedChatSession => ({
   id: 'session-1',

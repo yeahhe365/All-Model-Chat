@@ -1,5 +1,4 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../utils/appUtils', () => ({
@@ -8,36 +7,7 @@ vi.mock('../../utils/appUtils', () => ({
 }));
 
 import { useChatEffects } from './useChatEffects';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    rerender: () => {
-      act(() => {
-        root.render(<TestComponent />);
-      });
-    },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
+import { renderHook } from '@/test/testUtils';
 
 const createProps = (overrides: Partial<Parameters<typeof useChatEffects>[0]> = {}) => ({
   activeSessionId: null,

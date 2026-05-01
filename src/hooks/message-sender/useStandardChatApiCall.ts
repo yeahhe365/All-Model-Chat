@@ -19,6 +19,7 @@ import type { ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile 
 import type { ContentPart } from '../../types/chat';
 import type { GetStreamHandlers, SessionsUpdater, StandardChatProps } from './types';
 import type { resolveStandardChatTurn } from './standardChatTurn';
+import { useMessageLifecycle } from './useMessageLifecycle';
 
 interface UseStandardChatApiCallParams {
   appSettings: StandardChatProps['appSettings'];
@@ -65,6 +66,12 @@ export const useStandardChatApiCall = ({
   personGeneration,
   resolveTurn,
 }: UseStandardChatApiCallParams) => {
+  const { startMessageLifecycle, finishMessageLifecycle } = useMessageLifecycle({
+    updateAndPersistSessions,
+    setSessionLoading,
+    activeJobs,
+  });
+
   const performApiCall = useCallback(
     async ({
       finalSessionId,
@@ -97,8 +104,7 @@ export const useStandardChatApiCall = ({
       });
 
       if (shouldSkipApiCall) {
-        setSessionLoading(finalSessionId, false);
-        activeJobs.current.delete(generationId);
+        finishMessageLifecycle(finalSessionId, generationId);
         return;
       }
 
@@ -140,8 +146,7 @@ export const useStandardChatApiCall = ({
         },
       );
 
-      setSessionLoading(finalSessionId, true);
-      activeJobs.current.set(generationId, newAbortController);
+      startMessageLifecycle(finalSessionId, generationId, newAbortController);
 
       if (appSettings.apiMode === 'openai-compatible') {
         const openAICompatibleConfig = {
@@ -369,9 +374,9 @@ export const useStandardChatApiCall = ({
       );
     },
     [
-      activeJobs,
       appSettings,
       aspectRatio,
+      finishMessageLifecycle,
       getStreamHandlers,
       handleGenerateCanvas,
       imageOutputMode,
@@ -379,7 +384,7 @@ export const useStandardChatApiCall = ({
       messages,
       personGeneration,
       resolveTurn,
-      setSessionLoading,
+      startMessageLifecycle,
       updateAndPersistSessions,
     ],
   );

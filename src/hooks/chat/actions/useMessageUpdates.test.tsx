@@ -1,31 +1,7 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import { useMessageUpdates } from './useMessageUpdates';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
+import { renderHook } from '@/test/testUtils';
 
 describe('useMessageUpdates', () => {
   it('creates and updates a live model message when generated files arrive before text', () => {

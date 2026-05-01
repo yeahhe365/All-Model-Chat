@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { generateUniqueId } from '../../utils/chat/ids';
-import { createMessage } from '../../utils/chat/session';
 import { getTranslator } from '../../utils/translations';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/generationConfig';
 import { CanvasGeneratorProps } from './types';
 import { loadCanvasSystemPrompt } from '../../constants/promptHelpers';
+import { useMessageLifecycle } from './useMessageLifecycle';
 
 export const useCanvasGenerator = ({
   appSettings,
@@ -21,6 +21,12 @@ export const useCanvasGenerator = ({
   aspectRatio,
   language,
 }: CanvasGeneratorProps) => {
+  const { createLoadingModelMessage, runMessageLifecycle } = useMessageLifecycle({
+    updateAndPersistSessions,
+    setSessionLoading,
+    activeJobs,
+  });
+
   const handleGenerateCanvas = useCallback(
     async (sourceMessageId: string, content: string) => {
       if (!activeSessionId) return;
@@ -42,9 +48,8 @@ export const useCanvasGenerator = ({
             const sourceIndex = s.messages.findIndex((m) => m.id === sourceMessageId);
             const insertIndex = sourceIndex !== -1 ? sourceIndex + 1 : s.messages.length;
 
-            const newMsg = createMessage('model', '', {
+            const newMsg = createLoadingModelMessage({
               id: generationId,
-              isLoading: true,
               generationStartTime,
               excludeFromContext: true,
             });
@@ -57,9 +62,6 @@ export const useCanvasGenerator = ({
           return s;
         }),
       );
-
-      setSessionLoading(activeSessionId, true);
-      activeJobs.current.set(generationId, newAbortController);
 
       const canvasModelId = appSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
       const canvasThinkingLevel = 'HIGH';
@@ -99,34 +101,40 @@ export const useCanvasGenerator = ({
       const t = getTranslator(language);
       const promptInstruction = t('suggestion_html_desc');
 
-      try {
-        await geminiServiceInstance.sendMessageStream(
-          keyToUse,
-          canvasModelId,
-          [],
-          [{ text: promptInstruction }, { text: content }],
-          config,
-          newAbortController.signal,
-          streamOnPart,
-          onThoughtChunk,
-          streamOnError,
-          streamOnComplete,
-        );
-      } catch (error) {
-        streamOnError(error instanceof Error ? error : new Error(String(error)));
-      }
+      await runMessageLifecycle({
+        sessionId: activeSessionId,
+        generationId,
+        abortController: newAbortController,
+        onError: (error) => {
+          streamOnError(error instanceof Error ? error : new Error(String(error)));
+        },
+        execute: async () => {
+          await geminiServiceInstance.sendMessageStream(
+            keyToUse,
+            canvasModelId,
+            [],
+            [{ text: promptInstruction }, { text: content }],
+            config,
+            newAbortController.signal,
+            streamOnPart,
+            onThoughtChunk,
+            streamOnError,
+            streamOnComplete,
+          );
+        },
+      });
     },
     [
       appSettings,
       currentChatSettings,
       activeSessionId,
       updateAndPersistSessions,
-      setSessionLoading,
-      activeJobs,
       getStreamHandlers,
       setAppFileError,
       aspectRatio,
       language,
+      createLoadingModelMessage,
+      runMessageLifecycle,
     ],
   );
 

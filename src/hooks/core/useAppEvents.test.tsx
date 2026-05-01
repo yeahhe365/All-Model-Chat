@@ -1,9 +1,9 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppSettings, ChatSettings, ModelOption } from '../../types';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 import { useAppEvents } from './useAppEvents';
+import { renderHook } from '@/test/testUtils';
 
 const registerPwaMock = vi.fn();
 const updateRegistrationMock = vi.fn();
@@ -44,31 +44,6 @@ vi.mock('../../pwa/install', () => ({
   getPwaInstallState: vi.fn(() => ({ state: 'installed' })),
   getManualInstallMessage: vi.fn(() => 'manual install'),
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
 
 describe('useAppEvents manual update checks', () => {
   const appSettings = {

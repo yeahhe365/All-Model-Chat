@@ -1,8 +1,8 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { useMainContentViewModel } from './useMainContentViewModel';
+import { renderHook } from '@/test/testUtils';
 
 const mockStores = vi.hoisted(() => {
   const ui = {
@@ -38,31 +38,6 @@ vi.mock('../../stores/chatStore', () => ({
 vi.mock('../../utils/shortcutUtils', () => ({
   getShortcutDisplay: vi.fn(() => 'shortcut'),
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
 
 const buildApp = (overrides: Record<string, unknown> = {}) => {
   const appSettings = {
@@ -189,19 +164,8 @@ const buildApp = (overrides: Record<string, unknown> = {}) => {
 };
 
 describe('useMainContentViewModel', () => {
-  let root: Root | null = null;
-
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    if (root) {
-      act(() => {
-        root?.unmount();
-      });
-      root = null;
-    }
   });
 
   it('shows Gemini and OpenAI-compatible models together while OpenAI mode is active', () => {

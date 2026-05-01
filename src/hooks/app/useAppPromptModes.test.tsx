@@ -1,5 +1,4 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '../../types';
@@ -18,47 +17,7 @@ vi.mock('../../constants/promptHelpers', async () => {
 });
 
 import { focusChatInput, useAppPromptModes } from './useAppPromptModes';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    rerender: () => {
-      act(() => {
-        root.render(<TestComponent />);
-      });
-    },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
-
-const createDeferred = <T,>() => {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
-};
+import { createDeferred, renderHook } from '@/test/testUtils';
 
 const CANVAS_PROMPT = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
 const CANVAS_PROMPT_EN = '<title>Canvas Assistant: Responsive Visual Guide</title>\ncanvas prompt';

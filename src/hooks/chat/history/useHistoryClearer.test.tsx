@@ -1,9 +1,9 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 import type { SavedChatSession } from '../../../types';
 import { useHistoryClearer } from './useHistoryClearer';
+import { renderHook } from '@/test/testUtils';
 
 const { dbServiceMock, cleanupFilePreviewUrlsMock } = vi.hoisted(() => ({
   dbServiceMock: {
@@ -26,30 +26,6 @@ vi.mock('../../../utils/appUtils', () => ({
   },
   cleanupFilePreviewUrls: cleanupFilePreviewUrlsMock,
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
 
 const createSession = (id: string): SavedChatSession => ({
   id,

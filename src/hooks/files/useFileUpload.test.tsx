@@ -1,10 +1,10 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { UploadedFile } from '../../types';
 import { useChatStore } from '../../stores/chatStore';
 import { useFileUpload } from './useFileUpload';
+import { createDeferred, renderHook } from '@/test/testUtils';
 
 const { mockUploadFileItem } = vi.hoisted(() => ({
   mockUploadFileItem: vi.fn(),
@@ -34,39 +34,6 @@ vi.mock('../../contexts/I18nContext', () => ({
     t: (key: string) => key,
   }),
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
-
-const createDeferred = () => {
-  let resolve!: () => void;
-  const promise = new Promise<void>((res) => {
-    resolve = res;
-  });
-
-  return { promise, resolve };
-};
 
 describe('useFileUpload', () => {
   beforeEach(() => {

@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import type { ImagePersonGeneration } from '../../types/settings';
-import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { pcmBase64ToWavUrl } from '../../utils/audio/audioProcessing';
 import { generateUniqueId } from '../../utils/chat/ids';
@@ -9,6 +8,7 @@ import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { performOptimisticSessionUpdate, createMessage, generateSessionTitle } from '../../utils/chat/session';
 import { showNotification, playCompletionSound } from '../../utils/uiUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import { useMessageLifecycle } from './useMessageLifecycle';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -25,7 +25,11 @@ export const useTtsImagenSender = ({
   activeJobs,
   setActiveSessionId,
 }: TtsImagenSenderProps) => {
-  const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
+  const { createLoadingModelMessage, runMessageLifecycle } = useMessageLifecycle({
+    updateAndPersistSessions,
+    setSessionLoading,
+    activeJobs,
+  });
 
   const handleTtsImagenMessage = useCallback(
     async (
@@ -47,9 +51,8 @@ export const useTtsImagenSender = ({
       const finalSessionId = activeSessionId || generateUniqueId();
 
       const userMessage = createMessage('user', text);
-      const modelMessage = createMessage('model', '', {
+      const modelMessage = createLoadingModelMessage({
         id: modelMessageId,
-        isLoading: true,
         generationStartTime: new Date(),
       });
 
@@ -78,113 +81,112 @@ export const useTtsImagenSender = ({
         setActiveSessionId(finalSessionId);
       }
 
-      setSessionLoading(finalSessionId, true);
-      activeJobs.current.set(generationId, newAbortController);
+      await runMessageLifecycle({
+        sessionId: finalSessionId,
+        generationId,
+        abortController: newAbortController,
+        modelMessageId,
+        errorPrefix: isTtsModel ? 'TTS Error' : 'Image Gen Error',
+        execute: async () => {
+          if (isTtsModel) {
+            const base64Pcm = await geminiServiceInstance.generateSpeech(
+              keyToUse,
+              currentChatSettings.modelId,
+              text,
+              currentChatSettings.ttsVoice,
+              newAbortController.signal,
+            );
+            if (newAbortController.signal.aborted) throw new Error('aborted');
+            const wavUrl = pcmBase64ToWavUrl(base64Pcm);
 
-      try {
-        if (isTtsModel) {
-          const base64Pcm = await geminiServiceInstance.generateSpeech(
-            keyToUse,
-            currentChatSettings.modelId,
-            text,
-            currentChatSettings.ttsVoice,
-            newAbortController.signal,
-          );
-          if (newAbortController.signal.aborted) throw new Error('aborted');
-          const wavUrl = pcmBase64ToWavUrl(base64Pcm);
+            updateAndPersistSessions((p) =>
+              p.map((s) =>
+                s.id === finalSessionId
+                  ? {
+                      ...s,
+                      messages: s.messages.map((m) =>
+                        m.id === modelMessageId
+                          ? {
+                              ...m,
+                              isLoading: false,
+                              content: text,
+                              audioSrc: wavUrl,
+                              audioAutoplay: true,
+                              generationEndTime: new Date(),
+                            }
+                          : m,
+                      ),
+                    }
+                  : s,
+              ),
+            );
 
-          updateAndPersistSessions((p) =>
-            p.map((s) =>
-              s.id === finalSessionId
-                ? {
-                    ...s,
-                    messages: s.messages.map((m) =>
-                      m.id === modelMessageId
-                        ? {
-                            ...m,
-                            isLoading: false,
-                            content: text,
-                            audioSrc: wavUrl,
-                            audioAutoplay: true,
-                            generationEndTime: new Date(),
-                          }
-                        : m,
-                    ),
-                  }
-                : s,
-            ),
-          );
+            if (appSettings.isCompletionSoundEnabled) {
+              playCompletionSound();
+            }
 
-          if (appSettings.isCompletionSoundEnabled) {
-            playCompletionSound();
-          }
+            if (appSettings.isCompletionNotificationEnabled && document.hidden) {
+              const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
+              showNotification('Audio Ready', {
+                body: 'Text-to-speech audio has been generated.',
+                icon: APP_LOGO_SVG_DATA_URI,
+              });
+            }
+          } else {
+            // Imagen
+            const imageBase64Array = await geminiServiceInstance.generateImages(
+              keyToUse,
+              currentChatSettings.modelId,
+              text,
+              aspectRatio,
+              imageSize,
+              newAbortController.signal,
+              {
+                numberOfImages: appSettings.generateQuadImages ? 4 : 1,
+                personGeneration,
+              },
+            );
 
-          if (appSettings.isCompletionNotificationEnabled && document.hidden) {
-            const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
-            showNotification('Audio Ready', {
-              body: 'Text-to-speech audio has been generated.',
-              icon: APP_LOGO_SVG_DATA_URI,
+            if (newAbortController.signal.aborted) throw new Error('aborted');
+
+            const generatedFiles = imageBase64Array.map((base64Data, index) => {
+              return createUploadedFileFromBase64(base64Data, 'image/png', `generated-image-${index + 1}`);
             });
+
+            updateAndPersistSessions((p) =>
+              p.map((s) =>
+                s.id === finalSessionId
+                  ? {
+                      ...s,
+                      messages: s.messages.map((m) =>
+                        m.id === modelMessageId
+                          ? {
+                              ...m,
+                              isLoading: false,
+                              content: `Generated ${generatedFiles.length} image(s) for: "${text}"`,
+                              files: generatedFiles,
+                              generationEndTime: new Date(),
+                            }
+                          : m,
+                      ),
+                    }
+                  : s,
+              ),
+            );
+
+            if (appSettings.isCompletionSoundEnabled) {
+              playCompletionSound();
+            }
+
+            if (appSettings.isCompletionNotificationEnabled && document.hidden) {
+              const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
+              showNotification('Image Ready', { body: 'Your image has been generated.', icon: APP_LOGO_SVG_DATA_URI });
+            }
           }
-        } else {
-          // Imagen
-          const imageBase64Array = await geminiServiceInstance.generateImages(
-            keyToUse,
-            currentChatSettings.modelId,
-            text,
-            aspectRatio,
-            imageSize,
-            newAbortController.signal,
-            {
-              numberOfImages: appSettings.generateQuadImages ? 4 : 1,
-              personGeneration,
-            },
-          );
-
-          if (newAbortController.signal.aborted) throw new Error('aborted');
-
-          const generatedFiles = imageBase64Array.map((base64Data, index) => {
-            return createUploadedFileFromBase64(base64Data, 'image/png', `generated-image-${index + 1}`);
-          });
-
-          updateAndPersistSessions((p) =>
-            p.map((s) =>
-              s.id === finalSessionId
-                ? {
-                    ...s,
-                    messages: s.messages.map((m) =>
-                      m.id === modelMessageId
-                        ? {
-                            ...m,
-                            isLoading: false,
-                            content: `Generated ${generatedFiles.length} image(s) for: "${text}"`,
-                            files: generatedFiles,
-                            generationEndTime: new Date(),
-                          }
-                        : m,
-                    ),
-                  }
-                : s,
-            ),
-          );
-
-          if (appSettings.isCompletionSoundEnabled) {
-            playCompletionSound();
-          }
-
-          if (appSettings.isCompletionNotificationEnabled && document.hidden) {
-            const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
-            showNotification('Image Ready', { body: 'Your image has been generated.', icon: APP_LOGO_SVG_DATA_URI });
-          }
-        }
-      } catch (error) {
-        handleApiError(error, finalSessionId, modelMessageId, isTtsModel ? 'TTS Error' : 'Image Gen Error');
-      } finally {
-        setSessionLoading(finalSessionId, false);
-        activeJobs.current.delete(generationId);
-      }
+        },
+      });
     },
-    [updateAndPersistSessions, setSessionLoading, activeJobs, handleApiError, setActiveSessionId],
+    [createLoadingModelMessage, runMessageLifecycle, updateAndPersistSessions, setActiveSessionId],
   );
 
   return { handleTtsImagenMessage };

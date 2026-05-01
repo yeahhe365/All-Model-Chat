@@ -1,10 +1,10 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RefObject } from 'react';
+import type { PropsWithChildren, RefObject } from 'react';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { useHtmlPreviewModal } from './useHtmlPreviewModal';
 import { HTML_PREVIEW_MESSAGE_CHANNEL } from '../../utils/htmlPreview';
+import { renderHook } from '@/test/testUtils';
 
 vi.mock('./useFullscreen', () => ({
   useFullscreen: () => ({
@@ -13,35 +13,9 @@ vi.mock('./useFullscreen', () => ({
   }),
 }));
 
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(
-      <WindowProvider window={window} document={document}>
-        <TestComponent />
-      </WindowProvider>,
-    );
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
+const HtmlPreviewWrapper = ({ children }: PropsWithChildren) => (
+  <WindowProvider window={window} document={document}>{children}</WindowProvider>
+);
 
 describe('useHtmlPreviewModal', () => {
   beforeEach(() => {
@@ -61,13 +35,15 @@ describe('useHtmlPreviewModal', () => {
     });
     const iframeRef = { current: iframe } as RefObject<HTMLIFrameElement>;
 
-    const { result, unmount } = renderHook(() =>
-      useHtmlPreviewModal({
-        isOpen: true,
-        onClose: vi.fn(),
-        htmlContent: '<html><body>Hello</body></html>',
-        iframeRef,
-      }),
+    const { result, unmount } = renderHook(
+      () =>
+        useHtmlPreviewModal({
+          isOpen: true,
+          onClose: vi.fn(),
+          htmlContent: '<html><body>Hello</body></html>',
+          iframeRef,
+        }),
+      { attachToDocument: true, wrapper: HtmlPreviewWrapper },
     );
 
     expect(result.current.isPreviewReady).toBe(false);
@@ -96,13 +72,15 @@ describe('useHtmlPreviewModal', () => {
     });
     const iframeRef = { current: iframe } as RefObject<HTMLIFrameElement>;
 
-    const { unmount } = renderHook(() =>
-      useHtmlPreviewModal({
-        isOpen: true,
-        onClose,
-        htmlContent: '<html><body>Hello</body></html>',
-        iframeRef,
-      }),
+    const { unmount } = renderHook(
+      () =>
+        useHtmlPreviewModal({
+          isOpen: true,
+          onClose,
+          htmlContent: '<html><body>Hello</body></html>',
+          iframeRef,
+        }),
+      { attachToDocument: true, wrapper: HtmlPreviewWrapper },
     );
 
     act(() => {

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import type { Session as LiveSession } from '@google/genai';
 import type { AppSettings, ChatSettings, LiveClientFunctions, UploadedFile } from '../types';
 import { useLiveAudio } from './live-api/useLiveAudio';
@@ -11,6 +11,7 @@ import { resolveLiveErrorText } from './live-api/liveErrorState';
 import { useBackgroundKeepAlive } from './core/useBackgroundKeepAlive';
 import { useI18n } from '../contexts/I18nContext';
 import { getKeyForRequest, SERVER_MANAGED_API_KEY } from '../utils/apiUtils';
+import { useStateWithRef } from './useStateWithRef';
 
 interface UseLiveAPIProps {
   appSettings: AppSettings;
@@ -42,13 +43,7 @@ export const useLiveAPI = ({
   const goAwayHandlerRef = useRef<(goAway: { timeLeft?: string }) => void>(() => {});
 
   // Session Resumption State
-  const [sessionHandle, setSessionHandle] = useState<string | null>(null);
-  const sessionHandleRef = useRef<string | null>(null);
-
-  // Sync Ref with State for Session Handle
-  useEffect(() => {
-    sessionHandleRef.current = sessionHandle;
-  }, [sessionHandle]);
+  const [sessionHandle, setSessionHandle, sessionHandleRef] = useStateWithRef<string | null>(null);
 
   // 1. Audio Management Hook
   const { volume, isSpeaking, isMuted, toggleMute, initializeAudio, playAudioChunk, stopAudioPlayback, cleanupAudio } =

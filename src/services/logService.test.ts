@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createDeferred } from '@/test/testUtils';
 
 const { mockAddApiUsageRecord, mockAddLogs, mockPruneLogs, mockClearLogs, mockClearApiUsage, mockGetLogs } = vi.hoisted(
   () => ({
@@ -25,16 +26,6 @@ vi.mock('../utils/db', () => ({
 const flushMicrotasks = async () => {
   await Promise.resolve();
   await Promise.resolve();
-};
-
-const createDeferred = () => {
-  let resolve!: () => void;
-  let reject!: (error?: unknown) => void;
-  const promise = new Promise<void>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
 };
 
 describe('logService', () => {

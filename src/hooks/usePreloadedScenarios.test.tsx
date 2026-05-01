@@ -1,11 +1,11 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { SYSTEM_SCENARIO_IDS } from '../features/scenarios/scenarioLibrary';
 import type { SavedChatSession } from '../types';
 import { createNewSession } from '../utils/chat/session';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
+import { renderHook } from '@/test/testUtils';
 
 const { localStorageMock } = vi.hoisted(() => {
   const store = new Map<string, string>();
@@ -61,31 +61,6 @@ vi.mock('../services/logService', () => ({
     debug: vi.fn(),
   },
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
 
 describe('usePreloadedScenarios', () => {
   beforeEach(() => {

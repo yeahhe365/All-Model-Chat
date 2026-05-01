@@ -1,38 +1,7 @@
 import React, { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSelectionPosition } from './useSelectionPosition';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-  let currentCallback = callback;
-
-  const TestComponent = () => {
-    result.current = currentCallback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    rerender: (nextCallback: () => T) => {
-      currentCallback = nextCallback;
-      act(() => {
-        root.render(<TestComponent />);
-      });
-    },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
+import { renderHook } from '@/test/testUtils';
 
 const createRect = (overrides: Partial<DOMRect> = {}): DOMRect =>
   ({

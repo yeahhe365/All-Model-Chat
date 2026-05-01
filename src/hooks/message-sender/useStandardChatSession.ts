@@ -3,6 +3,7 @@ import type { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile 
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { createMessage, generateSessionTitle, performOptimisticSessionUpdate } from '../../utils/chat/session';
 import type { SessionsUpdater } from './types';
+import { createLoadingModelMessage } from './useMessageLifecycle';
 
 interface UseStandardChatSessionParams {
   appSettings: AppSettings;
@@ -84,9 +85,9 @@ export const useStandardChatSession = ({
           cumulativeTotalTokens: cumulativeTotalTokens > 0 ? cumulativeTotalTokens : undefined,
         });
 
-        const modelMessage = createMessage('model', isRawMode ? '<thinking>' : '', {
+        const modelMessage = createLoadingModelMessage({
           id: generationId,
-          isLoading: true,
+          content: isRawMode ? '<thinking>' : '',
           generationStartTime,
         });
 

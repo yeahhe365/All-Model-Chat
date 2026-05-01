@@ -1,9 +1,9 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
 import { dbService } from '../../../utils/db';
 import { useSessionActions } from './useSessionActions';
+import { renderHook } from '@/test/testUtils';
 
 vi.mock('../../../utils/db', () => ({
   dbService: {
@@ -25,30 +25,6 @@ vi.mock('../../../utils/appUtils', () => ({
   cleanupFilePreviewUrls: vi.fn(),
   generateUniqueId: vi.fn(() => `generated-${Math.random().toString(36).slice(2, 8)}`),
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
 
 const createFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
   id: 'file-1',

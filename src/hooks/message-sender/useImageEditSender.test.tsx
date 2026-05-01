@@ -1,5 +1,4 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -78,31 +77,7 @@ vi.mock('../../utils/chat/ids', () => ({
 }));
 
 import { useImageEditSender } from './useImageEditSender';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
+import { renderHook } from '@/test/testUtils';
 
 describe('useImageEditSender', () => {
   beforeEach(() => {

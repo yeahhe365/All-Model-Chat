@@ -1,7 +1,7 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCanvasGenerator } from './useCanvasGenerator';
+import { renderHook } from '@/test/testUtils';
 
 const {
   mockGetKeyForRequest,
@@ -54,31 +54,6 @@ vi.mock('../../constants/promptHelpers', () => ({
 vi.mock('../../constants/appConstants', () => ({
   DEFAULT_AUTO_CANVAS_MODEL_ID: 'gemini-canvas-default',
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
 
 describe('useCanvasGenerator', () => {
   beforeEach(() => {

@@ -1,32 +1,7 @@
-import React, { act } from 'react';
-import { createRoot } from 'react-dom/client';
+import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSlashCommands } from './useSlashCommands';
-
-const renderHook = <T>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(React.createElement(TestComponent));
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-      container.remove();
-    },
-  };
-};
+import { renderHook } from '@/test/testUtils';
 
 const createProps = (overrides: Partial<Parameters<typeof useSlashCommands>[0]> = {}) => {
   const textarea = document.createElement('textarea');

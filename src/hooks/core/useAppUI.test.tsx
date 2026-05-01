@@ -1,33 +1,9 @@
 import React from 'react';
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppUI } from './useAppUI';
 import { useUIStore } from '../../stores/uiStore';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
+import { renderHook } from '@/test/testUtils';
 
 const createTouchEvent = (target: EventTarget, x: number, y: number): React.TouchEvent =>
   ({

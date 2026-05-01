@@ -1,5 +1,4 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
@@ -56,46 +55,7 @@ vi.mock('../../../utils/modelHelpers', () => ({
 
 import { useSessionLoader } from './useSessionLoader';
 import { dbService } from '../../../utils/db';
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
-
-const createDeferred = <T,>() => {
-  let resolve!: (value: T) => void;
-  let reject!: (error?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-
-  return { promise, resolve, reject };
-};
-
-const flushPromises = async () => {
-  await Promise.resolve();
-  await Promise.resolve();
-};
+import { createDeferred, flushPromises, renderHook } from '@/test/testUtils';
 
 const createSession = (id: string, title: string): SavedChatSession => ({
   id,

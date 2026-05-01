@@ -1,9 +1,9 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 import { MediaResolution } from '../../types/settings';
 import { useLiveModeHandler } from './useLiveModeHandler';
+import { renderHook } from '@/test/testUtils';
 
 const { mockBuildContentParts } = vi.hoisted(() => ({
   mockBuildContentParts: vi.fn(),
@@ -12,30 +12,6 @@ const { mockBuildContentParts } = vi.hoisted(() => ({
 vi.mock('../../utils/chat/builder', () => ({
   buildContentParts: mockBuildContentParts,
 }));
-
-const renderHook = <T,>(callback: () => T) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
-  const result: { current: T | null } = { current: null };
-
-  const TestComponent = () => {
-    result.current = callback();
-    return null;
-  };
-
-  act(() => {
-    root.render(<TestComponent />);
-  });
-
-  return {
-    result: result as { current: T },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
 
 const makeFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
   id: 'file-1',
