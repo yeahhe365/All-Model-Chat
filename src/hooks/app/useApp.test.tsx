@@ -165,19 +165,21 @@ vi.mock('../../stores/uiStore', () => ({
     }),
 }));
 
-vi.mock('../../utils/appUtils', async () => {
-  const actual = await vi.importActual<typeof import('../../utils/appUtils')>('../../utils/appUtils');
-  return {
-    ...actual,
-    getTranslator: () => (key: string) => key,
-    applyThemeToDocument: vi.fn(),
-    logService: {
-      error: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-    },
-  };
-});
+vi.mock('../../utils/translations', () => ({
+  getTranslator: () => (key: string) => key,
+}));
+
+vi.mock('../../utils/uiUtils', () => ({
+  applyThemeToDocument: vi.fn(),
+}));
+
+vi.mock('../../services/logService', () => ({
+  logService: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
 
 describe('useApp', () => {
   beforeEach(() => {

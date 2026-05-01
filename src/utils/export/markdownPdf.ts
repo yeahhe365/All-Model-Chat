@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
+import { isImageMimeType } from '../fileTypeUtils';
 
 interface MarkdownPdfOptions {
   filename: string;
@@ -141,7 +142,7 @@ const fetchImageSourceAsDataUrl = async (src: string): Promise<string | null> =>
     }
 
     const blob = await response.blob();
-    if (!blob.type.startsWith('image/')) {
+    if (!isImageMimeType(blob.type)) {
       return null;
     }
 
@@ -432,7 +433,9 @@ class MarkdownPdfRenderer {
         this.writeLines(this.splitText(`${marker}${itemText}`, this.contentWidth - baseIndent), { indent: baseIndent });
       }
 
-      const nestedBlocks = (items[index].children ?? []).filter((child) => child.type === 'list' || child.type === 'code');
+      const nestedBlocks = (items[index].children ?? []).filter(
+        (child) => child.type === 'list' || child.type === 'code',
+      );
       await this.renderBlocks(nestedBlocks, { indent: baseIndent + 6 });
       this.cursorY += 1.5;
     }

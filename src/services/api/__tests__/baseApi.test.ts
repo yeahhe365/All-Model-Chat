@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { appendFunctionDeclarationsToTools, buildGenerationConfig, toCountTokensConfig } from '../baseApi';
+import { getClient, getApiClient, getConfiguredApiClient } from '../apiClient';
+import { appendFunctionDeclarationsToTools, buildGenerationConfig, toCountTokensConfig } from '../generationConfig';
+import { getLiveApiClient } from '../liveApiAuth';
 import { MediaResolution } from '../../../types/settings';
 
 type MockGoogleGenAIConfig = {
@@ -31,15 +33,19 @@ vi.mock('../../logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
-// Mock appUtils for model helpers
-vi.mock('../../../utils/appUtils', () => ({
-  isGemini3Model: vi.fn((id: string) => id?.includes('gemini-3')),
-  isGeminiRoboticsModel: vi.fn((id: string) => id?.includes('gemini-robotics-er')),
-  isGemmaModel: vi.fn((id: string) => id?.toLowerCase().includes('gemma')),
-}));
+// Mock model classifiers while preserving normalization helpers.
+vi.mock('../../../utils/modelHelpers', async () => {
+  const actual = await vi.importActual<typeof import('../../../utils/modelHelpers')>('../../../utils/modelHelpers');
+
+  return {
+    ...actual,
+    isGemini3Model: vi.fn((id: string) => id?.includes('gemini-3')),
+    isGeminiRoboticsModel: vi.fn((id: string) => id?.includes('gemini-robotics-er')),
+    isGemmaModel: vi.fn((id: string) => id?.toLowerCase().includes('gemma')),
+  };
+});
 
 import { GoogleGenAI } from '@google/genai';
-import { getClient, getApiClient, getConfiguredApiClient, getLiveApiClient } from '../baseApi';
 import { dbService } from '../../../utils/db';
 
 // ── getClient ──

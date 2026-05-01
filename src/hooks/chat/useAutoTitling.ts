@@ -3,7 +3,7 @@ import { AppSettings, SavedChatSession } from '../../types';
 import { logService } from '../../services/logService';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { generateSessionTitle } from '../../utils/chat/session';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { generateTitleApi } from '../../services/api/generation/textApi';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -67,7 +67,7 @@ export const useAutoTitling = ({
           return;
         }
 
-        const newTitle = await geminiServiceInstance.generateTitle(keyToUse, userContent, modelContent, language);
+        const newTitle = await generateTitleApi(keyToUse, userContent, modelContent, language);
 
         if (newTitle && newTitle.trim()) {
           logService.info(`Generated new title for session ${sessionId}: "${newTitle}"`);

@@ -6,6 +6,7 @@ import { FileConfigHeader } from './file-config/FileConfigHeader';
 import { ResolutionConfig } from './file-config/ResolutionConfig';
 import { VideoConfig } from './file-config/VideoConfig';
 import { FileConfigFooter } from './file-config/FileConfigFooter';
+import { getFileKindFlags } from '../../utils/fileTypeUtils';
 
 interface FileConfigurationModalProps {
   isOpen: boolean;
@@ -41,11 +42,13 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
   isGemini3,
 }) => {
   const [draft, setDraft] = useState<FileConfigurationDraft>(() => buildDraft(file));
+  const { isVideo, isYoutube, isImage, isPdf } = getFileKindFlags(file);
+  const supportsVideoConfiguration = isVideo || isYoutube;
 
   const handleSave = () => {
     const updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution } = {};
 
-    if (file.type.startsWith('video/')) {
+    if (supportsVideoConfiguration) {
       const normalize = (value: string) => {
         const trimmedValue = value.trim();
         if (!trimmedValue) return undefined;
@@ -87,10 +90,7 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
     onClose();
   };
 
-  const isVideo = file.type.startsWith('video/');
-  const isImage = file.type.startsWith('image/');
-  const isPdf = file.type === 'application/pdf';
-  const showResolutionSettings = isGemini3 && (isImage || isVideo || isPdf);
+  const showResolutionSettings = isGemini3 && (isImage || supportsVideoConfiguration || isPdf);
 
   return (
     <Modal
@@ -98,7 +98,11 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
       onClose={onClose}
       contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--theme-border-primary)]"
     >
-      <FileConfigHeader onClose={onClose} showResolutionSettings={showResolutionSettings} isVideo={isVideo} />
+      <FileConfigHeader
+        onClose={onClose}
+        showResolutionSettings={showResolutionSettings}
+        isVideo={supportsVideoConfiguration}
+      />
 
       <div className="p-6 space-y-6">
         {showResolutionSettings && (
@@ -108,7 +112,7 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
           />
         )}
 
-        {isVideo && (
+        {supportsVideoConfiguration && (
           <VideoConfig
             startOffset={draft.startOffset}
             setStartOffset={(value) => setDraft((prev) => ({ ...prev, startOffset: value }))}

@@ -25,10 +25,8 @@ vi.mock('../../../services/logService', () => ({
   },
 }));
 
-vi.mock('../../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    generateSpeech: generateSpeechMock,
-  },
+vi.mock('../../../services/api/generation/audioApi', () => ({
+  generateSpeechApi: generateSpeechMock,
 }));
 
 import { DEFAULT_APP_SETTINGS } from '../../../constants/appConstants';

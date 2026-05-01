@@ -4,7 +4,7 @@ import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { fileToBlobUrl } from '../../utils/fileHelpers';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { uploadFileApi } from '../../services/api/fileApi';
 import { formatSpeed, getEffectiveMimeType, getUploadLifecycleForGeminiState, shouldUseFileApi } from './utils';
 
 interface UploadFileItemParams {
@@ -134,7 +134,7 @@ export const uploadFileItem = async ({
     };
 
     try {
-      const uploadedFileInfo = await geminiServiceInstance.uploadFile(
+      const uploadedFileInfo = await uploadFileApi(
         keyToUse,
         file,
         effectiveMimeType,

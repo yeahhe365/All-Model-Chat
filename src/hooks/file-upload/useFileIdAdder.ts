@@ -4,10 +4,11 @@ import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { generateUniqueId } from '../../utils/chat/ids';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { getFileMetadataApi } from '../../services/api/fileApi';
 import { getUploadLifecycleForGeminiState } from './utils';
 import { useI18n } from '../../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../../utils/apiUtils';
+import { isVideoMimeType } from '../../utils/fileTypeUtils';
 
 interface UseFileIdAdderProps {
   appSettings: AppSettings;
@@ -87,16 +88,14 @@ export const useFileIdAdder = ({
       ]);
 
       try {
-        const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
+        const fileMetadata = await getFileMetadataApi(keyToUse, fileApiId);
         if (fileMetadata) {
           logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
           const mimeType = fileMetadata.mimeType ?? 'application/octet-stream';
 
           // Allow known video types or generic octet-stream (often used for arbitrary files)
           // But strictly validate if it is a supported type if it's not generic
-          const isValidType =
-            ALL_SUPPORTED_MIME_TYPES.includes(mimeType) ||
-            (mimeType.startsWith('video/') && !mimeType.includes('youtube'));
+          const isValidType = ALL_SUPPORTED_MIME_TYPES.includes(mimeType) || isVideoMimeType(mimeType);
 
           if (!isValidType) {
             logService.warn(`Unsupported file type for file ID ${fileApiId}`, { type: mimeType });

@@ -1,6 +1,7 @@
 import type { Part, UsageMetadata } from '@google/genai';
 import type { ChatHistoryItem, NonStreamMessageSender, StreamMessageSender } from '../../types';
 import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../../utils/apiProxyUrl';
+import { isAudioMimeType, isImageMimeType } from '../../utils/fileTypeUtils';
 import { logService } from '../logService';
 
 interface OpenAICompatibleChatConfig {
@@ -90,24 +91,25 @@ const partToOpenAIContentItems = (
   }
 
   const inlineData = partWithMedia.inlineData;
-  if (inlineData?.data && inlineData.mimeType?.startsWith('image/')) {
+  const mimeType = inlineData?.mimeType;
+  if (inlineData?.data && mimeType && isImageMimeType(mimeType)) {
     return [
       {
         type: 'image_url',
         image_url: {
-          url: `data:${inlineData.mimeType};base64,${inlineData.data}`,
+          url: `data:${mimeType};base64,${inlineData.data}`,
         },
       },
     ];
   }
 
-  if (inlineData?.data && inlineData.mimeType?.startsWith('audio/')) {
+  if (inlineData?.data && mimeType && isAudioMimeType(mimeType)) {
     return [
       {
         type: 'input_audio',
         input_audio: {
           data: inlineData.data,
-          format: getInlineAudioFormat(inlineData.mimeType),
+          format: getInlineAudioFormat(mimeType),
         },
       },
     ];

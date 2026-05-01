@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../utils/appUtils', () => ({
+vi.mock('./logService', () => ({
   logService: {
     info: vi.fn(),
     warn: vi.fn(),

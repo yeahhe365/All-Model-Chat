@@ -4,6 +4,7 @@ import { UploadedFile } from '../../../types';
 import { Plus, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { formatFileSize } from '../../../utils/fileHelpers';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../../constants/fileConstants';
+import { isImageMimeType } from '../../../utils/fileTypeUtils';
 
 interface TokenCountFilesProps {
   files: UploadedFile[];
@@ -49,7 +50,7 @@ export const TokenCountFiles: React.FC<TokenCountFilesProps> = ({
               className="flex items-center gap-2 px-2.5 py-1.5 bg-[var(--theme-bg-tertiary)]/50 border border-[var(--theme-border-secondary)] rounded-md text-xs group"
             >
               <span className="text-[var(--theme-text-secondary)]">
-                {file.type.startsWith('image/') ? <ImageIcon size={12} /> : <FileText size={12} />}
+                {isImageMimeType(file.type) ? <ImageIcon size={12} /> : <FileText size={12} />}
               </span>
               <span className="max-w-[150px] truncate text-[var(--theme-text-primary)]" title={file.name}>
                 {file.name}

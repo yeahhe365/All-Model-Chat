@@ -37,10 +37,8 @@ vi.mock('../../utils/translations', () => ({
   getTranslator: mockGetTranslator,
 }));
 
-vi.mock('../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    sendMessageStream: mockSendMessageStream,
-  },
+vi.mock('../../services/api/chatApi', () => ({
+  sendStatelessMessageStreamApi: mockSendMessageStream,
 }));
 
 vi.mock('../../services/api/generationConfig', () => ({

@@ -4,6 +4,7 @@ import { AppSettings, UploadedFile } from '../../types';
 import { logService } from '../../services/logService';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { isTextFile } from '../../utils/fileHelpers';
+import { isAudioMimeType } from '../../utils/fileTypeUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '../../utils/audioCompression';
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
@@ -28,7 +29,7 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
         // Expanded audio detection
         const isAudio =
-          file.type.startsWith('audio/') ||
+          isAudioMimeType(file.type) ||
           ['.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.webm', '.wma', '.aiff'].some((ext) =>
             fileNameLower.endsWith(ext),
           );

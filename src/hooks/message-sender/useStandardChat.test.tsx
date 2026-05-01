@@ -86,13 +86,8 @@ vi.mock('../../services/api/generationConfig', () => ({
 
 vi.mock('../../services/api/chatApi', () => ({
   generateContentTurnApi: vi.fn(),
-}));
-
-vi.mock('../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    sendMessageStream: mockSendMessageStream,
-    sendMessageNonStream: mockSendMessageNonStream,
-  },
+  sendStatelessMessageStreamApi: mockSendMessageStream,
+  sendStatelessMessageNonStreamApi: mockSendMessageNonStream,
 }));
 
 vi.mock('../../services/api/openaiCompatibleApi', () => ({

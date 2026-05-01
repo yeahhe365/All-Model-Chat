@@ -5,6 +5,7 @@ import { useCodeBlock } from '../../../hooks/ui/useCodeBlock';
 import { usePyodide } from '../../../hooks/usePyodide';
 import { CodeHeader } from './parts/CodeHeader';
 import { extractTextFromNode } from '../../../utils/uiUtils';
+import { isImageMimeType } from '../../../utils/fileTypeUtils';
 import { FileDisplay } from '../FileDisplay';
 
 interface CodeBlockProps {
@@ -69,7 +70,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
     });
   }, [files]);
 
-  const displayInlineImage = image && !generatedFiles.some((file) => file.type.startsWith('image/'));
+  const displayInlineImage = image && !generatedFiles.some((file) => isImageMimeType(file.type));
   const showPreviewControls = (props.showPreviewControls ?? true) && showPreview;
 
   return (

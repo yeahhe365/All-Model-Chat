@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { getTranslator } from '../../utils/translations';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { sendStatelessMessageStreamApi } from '../../services/api/chatApi';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/generationConfig';
 import { CanvasGeneratorProps } from './types';
@@ -109,7 +109,7 @@ export const useCanvasGenerator = ({
           streamOnError(error instanceof Error ? error : new Error(String(error)));
         },
         execute: async () => {
-          await geminiServiceInstance.sendMessageStream(
+          await sendStatelessMessageStreamApi(
             keyToUse,
             canvasModelId,
             [],

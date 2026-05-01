@@ -5,6 +5,16 @@ import path from 'path';
 const projectRoot = path.resolve(__dirname, '../..');
 
 const readProjectFile = (relativePath: string) => fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
+const listProjectSourceFiles = (relativeDir: string): string[] => {
+  const absoluteDir = path.join(projectRoot, relativeDir);
+  return fs.readdirSync(absoluteDir, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(relativeDir, entry.name);
+    if (entry.isDirectory()) {
+      return listProjectSourceFiles(entryPath);
+    }
+    return /\.(ts|tsx)$/.test(entry.name) ? [entryPath] : [];
+  });
+};
 
 describe('certain redundancy cleanup guards', () => {
   it('does not keep identity wrapper exports in mainContentModels', () => {
@@ -12,6 +22,12 @@ describe('certain redundancy cleanup guards', () => {
 
     expect(source).not.toContain('export const buildAppModalsProps =');
     expect(source).not.toContain('export const buildChatAreaInputActions =');
+  });
+
+  it('does not keep pure barrel files for split utilities and APIs', () => {
+    expect(fs.existsSync(path.join(projectRoot, 'src/utils/appUtils.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/services/api/baseApi.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/features/chat/input/index.ts'))).toBe(false);
   });
 
   it('inlines main content prop assembly and trims related interface surface', () => {
@@ -110,9 +126,32 @@ describe('certain redundancy cleanup guards', () => {
     expect(source).toContain('useChatInputKeyboard');
     expect(source).not.toContain('isComposingRef.current =');
     expect(source.length).toBeLessThan(10000);
-    expect(chatInputComponentSource).toContain("from '../../../features/chat/input'");
-    expect(chatTextAreaSource).toContain("from '../../../../features/chat/input'");
-    expect(chatAreaSource).toContain("from '../../../features/chat/input'");
+    expect(chatInputComponentSource).toContain("from '../../../hooks/chat-input/useChatInput'");
+    expect(chatInputComponentSource).toContain("from '../../../hooks/chat-input/useChatInputState'");
+    expect(chatTextAreaSource).toContain("from '../../../../hooks/chat-input/useChatInputState'");
+    expect(chatAreaSource).toContain("from '../../../hooks/chat-input/useChatInputHeight'");
+  });
+
+  it('keeps chat store selectors close to their consumer instead of behind a bulk binding hook', () => {
+    const chatHookSource = readProjectFile('src/hooks/chat/useChat.ts');
+
+    expect(chatHookSource).toContain("from '../../stores/chatStore'");
+    expect(chatHookSource).not.toContain('useChatStoreBindings');
+    expect(fs.existsSync(path.join(projectRoot, 'src/hooks/chat/useChatStoreBindings.ts'))).toBe(false);
+  });
+
+  it('uses function APIs directly instead of the Gemini service wrapper', () => {
+    const apiTypesSource = readProjectFile('src/types/api.ts');
+    const sourceFiles = ['src/hooks', 'src/components', 'src/services'].flatMap(listProjectSourceFiles);
+
+    expect(apiTypesSource).not.toContain('interface GeminiService');
+    expect(fs.existsSync(path.join(projectRoot, 'src/services/geminiService.ts'))).toBe(false);
+
+    for (const relativePath of sourceFiles) {
+      const source = readProjectFile(relativePath);
+      expect(source).not.toContain('geminiServiceInstance');
+      expect(source).not.toContain("services/geminiService");
+    }
   });
 
   it('keeps standard chat sender delegated to session, turn, and API helpers', () => {

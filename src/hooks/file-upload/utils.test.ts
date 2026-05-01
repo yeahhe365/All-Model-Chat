@@ -9,7 +9,7 @@ import {
   shouldUseFileApi,
 } from './utils';
 
-vi.mock('../../utils/appUtils', () => ({
+vi.mock('../../utils/fileHelpers', () => ({
   isTextFile: (file: { name: string; type: string }) => {
     const lowerName = file.name.toLowerCase();
     return (

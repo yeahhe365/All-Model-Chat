@@ -21,7 +21,7 @@ vi.mock('../../logService', () => ({
   },
 }));
 
-vi.mock('../../../utils/appUtils', () => ({
+vi.mock('../../../utils/fileHelpers', () => ({
   blobToBase64: blobToBase64Mock,
 }));
 

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { logService } from '../../../services/logService';
 import { getKeyForRequest } from '../../../utils/apiUtils';
-import { geminiServiceInstance } from '../../../services/geminiService';
+import { transcribeAudioApi } from '../../../services/api/generation/audioApi';
 
 interface UseAudioActionsProps {
   appSettings: AppSettings;
@@ -41,7 +41,7 @@ export const useAudioActions = ({
 
       try {
         const modelToUse = appSettings.transcriptionModelId || 'models/gemini-flash-latest';
-        const transcribedText = await geminiServiceInstance.transcribeAudio(keyResult.key, audioFile, modelToUse);
+        const transcribedText = await transcribeAudioApi(keyResult.key, audioFile, modelToUse);
         return transcribedText;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

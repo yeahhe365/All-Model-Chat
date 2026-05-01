@@ -11,7 +11,7 @@ vi.mock('../../../utils/db', () => ({
   },
 }));
 
-vi.mock('../../../utils/appUtils', () => ({
+vi.mock('../../../utils/chat/session', () => ({
   createNewSession: vi.fn((settings, messages, title) => ({
     id: `copy-${Math.random().toString(36).slice(2, 8)}`,
     title,
@@ -19,10 +19,19 @@ vi.mock('../../../utils/appUtils', () => ({
     settings,
     timestamp: Date.now(),
   })),
+}));
+
+vi.mock('../../../services/logService', () => ({
   logService: {
     info: vi.fn(),
   },
+}));
+
+vi.mock('../../../utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: vi.fn(),
+}));
+
+vi.mock('../../../utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => `generated-${Math.random().toString(36).slice(2, 8)}`),
 }));
 

@@ -3,7 +3,7 @@ import { UploadedFile, AppSettings } from '../../types';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildContentParts } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { countTokensApi } from '../../services/api/generation/tokenApi';
 import {
   appendFunctionDeclarationsToTools,
   buildGenerationConfig,
@@ -131,7 +131,7 @@ export const useTokenCountLogic = ({
           ? appendFunctionDeclarationsToTools(modelId, generationConfig, [createRunLocalPythonDeclaration()])
           : generationConfig;
 
-        const count = await geminiServiceInstance.countTokens(
+        const count = await countTokensApi(
           keyResult.key,
           modelId,
           contentParts,

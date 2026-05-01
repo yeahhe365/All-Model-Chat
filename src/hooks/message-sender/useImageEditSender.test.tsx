@@ -28,10 +28,8 @@ vi.mock('./useApiErrorHandler', () => ({
   }),
 }));
 
-vi.mock('../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    editImage: editImageMock,
-  },
+vi.mock('../../services/api/generation/imageEditApi', () => ({
+  editImageApi: editImageMock,
 }));
 
 vi.mock('../../utils/chat/builder', () => ({

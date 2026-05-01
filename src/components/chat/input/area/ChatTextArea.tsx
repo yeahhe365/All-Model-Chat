@@ -1,5 +1,5 @@
 import React, { useRef, useLayoutEffect } from 'react';
-import { MAX_TEXTAREA_HEIGHT_PX } from '../../../../features/chat/input';
+import { MAX_TEXTAREA_HEIGHT_PX } from '../../../../hooks/chat-input/useChatInputState';
 
 interface ChatTextAreaProps {
   textareaRef: React.RefObject<HTMLTextAreaElement>;

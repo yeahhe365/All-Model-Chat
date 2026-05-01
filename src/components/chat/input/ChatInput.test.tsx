@@ -45,8 +45,8 @@ const mockLiveApiState = vi.hoisted(() => ({
 const mockApiUtils = vi.hoisted(() => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
 }));
-const mockGeminiService = vi.hoisted(() => ({
-  translateText: vi.fn(async () => 'Translated text'),
+const mockTextApi = vi.hoisted(() => ({
+  translateTextApi: vi.fn(async () => 'Translated text'),
 }));
 
 const mockChatStoreSubscribers = vi.hoisted(
@@ -88,8 +88,8 @@ vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: mockApiUtils.getKeyForRequest,
 }));
 
-vi.mock('../../../services/geminiService', () => ({
-  geminiServiceInstance: mockGeminiService,
+vi.mock('../../../services/api/generation/textApi', () => ({
+  translateTextApi: mockTextApi.translateTextApi,
 }));
 
 vi.mock('../../../hooks/ui/useFileModalState', () => ({
@@ -978,7 +978,7 @@ describe('ChatInput', () => {
   });
 
   it('translates composer text using the configured target language', async () => {
-    mockGeminiService.translateText.mockResolvedValueOnce('Bonjour');
+    mockTextApi.translateTextApi.mockResolvedValueOnce('Bonjour');
     const providerValue = createProviderValue(null);
     providerValue.input.appSettings = {
       ...providerValue.input.appSettings,
@@ -1016,12 +1016,12 @@ describe('ChatInput', () => {
       await Promise.resolve();
     });
 
-    expect(mockGeminiService.translateText).toHaveBeenCalledWith('api-key', 'Hello', 'French', undefined);
+    expect(mockTextApi.translateTextApi).toHaveBeenCalledWith('api-key', 'Hello', 'French', undefined);
     expect(textarea?.value).toBe('Bonjour');
   });
 
   it('translates composer text using the configured input translation model', async () => {
-    mockGeminiService.translateText.mockResolvedValueOnce('Bonjour');
+    mockTextApi.translateTextApi.mockResolvedValueOnce('Bonjour');
     const providerValue = createProviderValue(null);
     providerValue.input.appSettings = {
       ...providerValue.input.appSettings,
@@ -1058,7 +1058,7 @@ describe('ChatInput', () => {
       await Promise.resolve();
     });
 
-    expect(mockGeminiService.translateText).toHaveBeenCalledWith(
+    expect(mockTextApi.translateTextApi).toHaveBeenCalledWith(
       'api-key',
       'Hello',
       'French',

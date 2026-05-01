@@ -7,13 +7,14 @@ import {
   ChatSettings as IndividualChatSettings,
 } from '../../types';
 import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { editImageApi } from '../../services/api/generation/imageEditApi';
 import { logService } from '../../services/logService';
 import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { performOptimisticSessionUpdate, createMessage, generateSessionTitle } from '../../utils/chat/session';
 import { shouldStripThinkingFromContext } from '../../utils/modelHelpers';
+import { isImageMimeType } from '../../utils/fileTypeUtils';
 import { playCompletionSound } from '../../utils/uiUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import type { Part } from '@google/genai';
@@ -73,7 +74,7 @@ export const useImageEditSender = ({
       options: { shouldLockKey?: boolean } = {},
     ) => {
       const modelMessageId = generationId;
-      const imageFiles = files.filter((f) => f.type.startsWith('image/'));
+      const imageFiles = files.filter((f) => isImageMimeType(f.type));
 
       const finalSessionId = activeSessionId || generateUniqueId();
 
@@ -134,7 +135,7 @@ export const useImageEditSender = ({
           );
 
           const callApi = () =>
-            geminiServiceInstance.editImage(
+            editImageApi(
               keyToUse,
               currentChatSettings.modelId,
               historyForApi,

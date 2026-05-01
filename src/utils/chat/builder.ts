@@ -2,6 +2,7 @@ import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../t
 import type { PartMediaResolutionLevel } from '@google/genai';
 import { logService } from '../../services/logService';
 import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
+import { getFileKindFlags, isImageMimeType } from '../fileTypeUtils';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 import { stripReasoningMarkup } from './reasoning';
@@ -64,10 +65,8 @@ export const buildContentParts = async (
         return { file: newFile, part };
       }
 
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-      const isYoutube = file.type === 'video/youtube-link';
-      const isPdf = file.type === 'application/pdf';
+      const fileKind = getFileKindFlags(file);
+      const { isImage, isVideo, isYoutube, isPdf } = fileKind;
       // Check if file should be treated as text content (not base64 inlineData)
       const isTextLike = isTextFile(file);
 
@@ -136,13 +135,7 @@ export const buildContentParts = async (
         } else {
           // Standard Inline Data (Images, PDFs, Audio, Video if small enough)
           // STRICT ALLOWLIST for Inline Data to prevent API 400 errors (e.g. for .xlsx)
-          const isSupportedInlineType =
-            file.type.startsWith('image/') ||
-            file.type.startsWith('audio/') ||
-            file.type.startsWith('video/') ||
-            file.type === 'application/pdf';
-
-          if (isSupportedInlineType) {
+          if (fileKind.isInlineData) {
             let base64DataForApi: string | undefined;
 
             // Prioritize rawFile (Blob/File) for conversion
@@ -204,7 +197,7 @@ export const buildContentParts = async (
         effectiveResolution &&
         effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED
       ) {
-        const isResolutionEligibleMedia = isImage || isVideo || isPdf;
+        const isResolutionEligibleMedia = isImage || isVideo || isYoutube || isPdf;
         const shouldInject = isResolutionEligibleMedia && Boolean(part.fileData || part.inlineData);
         if (shouldInject) {
           part.mediaResolution = { level: toPartMediaResolutionLevel(effectiveResolution) };
@@ -296,7 +289,7 @@ export const createChatHistoryForApi = async (
                 if (partCopy.inlineData) {
                   const mimeType = partCopy.inlineData.mimeType || 'unknown';
                   const canRehydrateGeneratedMedia =
-                    mimeType.startsWith('image/') && (hasCodeExecutionArtifacts || isGeminiImageHistoryTarget(modelId));
+                    isImageMimeType(mimeType) && (hasCodeExecutionArtifacts || isGeminiImageHistoryTarget(modelId));
                   if (partCopy.inlineData.data && canRehydrateGeneratedMedia) {
                     return partCopy;
                   }

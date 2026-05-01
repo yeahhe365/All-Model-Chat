@@ -1,9 +1,7 @@
 import type {
   Content,
-  CountTokensConfig,
   Part,
   UsageMetadata,
-  File as GeminiFile,
   FunctionDeclaration,
 } from '@google/genai';
 import type { ImageOutputMode, ImagePersonGeneration, SafetySetting } from './settings';
@@ -93,59 +91,6 @@ export interface EditImageRequestConfig {
 export interface GenerateImagesRequestOptions {
   numberOfImages?: number;
   personGeneration?: ImagePersonGeneration;
-}
-
-export interface GeminiService {
-  uploadFile: (
-    apiKey: string,
-    file: File,
-    mimeType: string,
-    displayName: string,
-    signal: AbortSignal,
-    onProgress?: (loaded: number, total: number) => void,
-  ) => Promise<GeminiFile>;
-  getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;
-
-  // Stateless Message Sending
-  sendMessageStream: StreamMessageSender;
-  sendMessageNonStream: NonStreamMessageSender;
-
-  generateImages: (
-    apiKey: string,
-    modelId: string,
-    prompt: string,
-    aspectRatio: string,
-    imageSize: string | undefined,
-    abortSignal: AbortSignal,
-    options?: GenerateImagesRequestOptions,
-  ) => Promise<string[]>;
-  generateSpeech: (
-    apiKey: string,
-    modelId: string,
-    text: string,
-    voice: string,
-    abortSignal: AbortSignal,
-  ) => Promise<string>;
-  transcribeAudio: (apiKey: string, audioFile: File, modelId: string) => Promise<string>;
-  translateText(apiKey: string, text: string, targetLanguage?: string, modelId?: string): Promise<string>;
-  generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
-  generateSuggestions(
-    apiKey: string,
-    userContent: string,
-    modelContent: string,
-    language: 'en' | 'zh',
-  ): Promise<string[]>;
-  editImage: (
-    apiKey: string,
-    modelId: string,
-    history: ChatHistoryItem[],
-    parts: Part[],
-    abortSignal: AbortSignal,
-    aspectRatio?: string,
-    imageSize?: string,
-    requestConfig?: EditImageRequestConfig,
-  ) => Promise<Part[]>;
-  countTokens: (apiKey: string, modelId: string, parts: Part[], config?: CountTokensConfig) => Promise<number>;
 }
 
 export interface ThoughtSupportingPart extends Part {

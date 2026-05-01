@@ -282,4 +282,13 @@ describe('ChatInputViewContext', () => {
     expect(source).toContain('useQueuedSubmissionView');
     expect(source).toContain('useLiveStatusView');
   });
+
+  it('uses one store-backed provider instead of many slice contexts', () => {
+    const source = readFileSync(path.resolve(__dirname, './ChatInputViewContext.tsx'), 'utf8');
+
+    expect(source).toContain('createStore<ChatInputViewModel>');
+    expect(source).toContain('useStore(store, selector)');
+    expect(source).not.toContain('createChatInputViewSliceContext');
+    expect(source).not.toContain('ChatInputToolbarViewContext.Provider');
+  });
 });

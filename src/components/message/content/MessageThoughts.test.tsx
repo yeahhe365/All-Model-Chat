@@ -22,10 +22,8 @@ vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
 }));
 
-vi.mock('../../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    translateText: mockTranslateText,
-  },
+vi.mock('../../../services/api/generation/textApi', () => ({
+  translateTextApi: mockTranslateText,
 }));
 
 vi.mock('../../../hooks/useCopyToClipboard', () => ({

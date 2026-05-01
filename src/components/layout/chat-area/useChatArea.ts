@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useChatInputHeight } from '../../../features/chat/input';
+import { useChatInputHeight } from '../../../hooks/chat-input/useChatInputHeight';
 import { useChatStore } from '../../../stores/chatStore';
 import { isImageModel } from '../../../utils/modelHelpers';
 

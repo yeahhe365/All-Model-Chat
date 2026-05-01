@@ -38,12 +38,23 @@ vi.mock('../../utils/db', () => ({
   },
 }));
 
-// Mock appUtils
-vi.mock('../../utils/appUtils', () => ({
+vi.mock('../../services/logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
+}));
+
+vi.mock('../../utils/chat/session', () => ({
   rehydrateSessionFiles: vi.fn((session: any) => session),
+}));
+
+vi.mock('../../utils/translations', () => ({
   getTranslator: vi.fn(),
+}));
+
+vi.mock('../../utils/uiUtils', () => ({
   applyThemeToDocument: vi.fn(),
+}));
+
+vi.mock('../../utils/modelHelpers', () => ({
   resolveSupportedModelId: vi.fn((modelId: string | null | undefined, fallback: string) => modelId || fallback),
 }));
 

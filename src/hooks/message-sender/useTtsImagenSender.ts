@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import type { ImagePersonGeneration } from '../../types/settings';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { generateSpeechApi } from '../../services/api/generation/audioApi';
+import { generateImagesApi } from '../../services/api/generation/imageApi';
 import { pcmBase64ToWavUrl } from '../../utils/audio/audioProcessing';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
@@ -89,7 +90,7 @@ export const useTtsImagenSender = ({
         errorPrefix: isTtsModel ? 'TTS Error' : 'Image Gen Error',
         execute: async () => {
           if (isTtsModel) {
-            const base64Pcm = await geminiServiceInstance.generateSpeech(
+            const base64Pcm = await generateSpeechApi(
               keyToUse,
               currentChatSettings.modelId,
               text,
@@ -134,7 +135,7 @@ export const useTtsImagenSender = ({
             }
           } else {
             // Imagen
-            const imageBase64Array = await geminiServiceInstance.generateImages(
+            const imageBase64Array = await generateImagesApi(
               keyToUse,
               currentChatSettings.modelId,
               text,

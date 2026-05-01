@@ -1,5 +1,6 @@
 import { MIME_TO_EXTENSION_MAP, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
 import { UploadedFile } from '../types';
+import { isAudioMimeType, isImageMimeType, isVideoMimeType } from './fileTypeUtils';
 
 const getFileExtension = (filename: string): string => {
   const extension = filename.split('.').pop()?.toLowerCase();
@@ -110,7 +111,7 @@ export const getExtensionFromMimeType = (mimeType: string): string => {
   if (MIME_TO_EXTENSION_MAP[mimeType]) return MIME_TO_EXTENSION_MAP[mimeType];
 
   // Fallback logic for generic types (image/xyz -> .xyz)
-  if (mimeType.startsWith('image/') || mimeType.startsWith('audio/') || mimeType.startsWith('video/')) {
+  if (isImageMimeType(mimeType) || isAudioMimeType(mimeType) || isVideoMimeType(mimeType)) {
     const subtype = mimeType.split('/')[1];
     if (subtype) return `.${subtype}`;
   }

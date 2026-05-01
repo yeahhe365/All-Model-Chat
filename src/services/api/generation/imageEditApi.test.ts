@@ -4,44 +4,15 @@ import type { Part } from '@google/genai';
 const buildGenerationConfigMock = vi.fn();
 const sendStatelessMessageNonStreamApiMock = vi.fn();
 
-vi.mock('./api/generationConfig', () => ({
+vi.mock('../generationConfig', () => ({
   buildGenerationConfig: buildGenerationConfigMock,
 }));
 
-vi.mock('./api/chatApi', () => ({
-  sendStatelessMessageStreamApi: vi.fn(),
+vi.mock('../chatApi', () => ({
   sendStatelessMessageNonStreamApi: sendStatelessMessageNonStreamApiMock,
 }));
 
-vi.mock('./api/fileApi', () => ({
-  uploadFileApi: vi.fn(),
-  getFileMetadataApi: vi.fn(),
-}));
-
-vi.mock('./api/generation/imageApi', () => ({
-  generateImagesApi: vi.fn(),
-}));
-
-vi.mock('./api/generation/audioApi', () => ({
-  generateSpeechApi: vi.fn(),
-  transcribeAudioApi: vi.fn(),
-}));
-
-vi.mock('./api/generation/textApi', () => ({
-  generateTitleApi: vi.fn(),
-  generateSuggestionsApi: vi.fn(),
-  translateTextApi: vi.fn(),
-}));
-
-vi.mock('./api/generation/tokenApi', () => ({
-  countTokensApi: vi.fn(),
-}));
-
-vi.mock('./logService', () => ({
-  logService: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
-}));
-
-describe('geminiService.editImage', () => {
+describe('editImageApi', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -69,9 +40,9 @@ describe('geminiService.editImage', () => {
       },
     );
 
-    const { geminiServiceInstance } = await import('./geminiService');
+    const { editImageApi } = await import('./imageEditApi');
 
-    await geminiServiceInstance.editImage(
+    await editImageApi(
       'key',
       'gemini-3.1-flash-image-preview',
       [],

@@ -11,6 +11,7 @@ import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 import { buildExactPricingFromUsageMetadata } from '../../utils/usagePricingTelemetry';
 import { resolveChatExactPricing } from '../../utils/chatPricingEvidence';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
+import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '../../utils/fileTypeUtils';
 
 type SessionsUpdater = (
   updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -273,9 +274,9 @@ export const useChatStreamHandler = ({
           const { mimeType, data } = anyPart.inlineData;
 
           const isSupportedFile =
-            mimeType.startsWith('image/') ||
-            mimeType.startsWith('audio/') ||
-            mimeType.startsWith('video/') ||
+            isImageMimeType(mimeType) ||
+            isAudioMimeType(mimeType) ||
+            isVideoMimeType(mimeType) ||
             SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
 
           if (isSupportedFile) {
@@ -283,7 +284,7 @@ export const useChatStreamHandler = ({
               ? createUploadedFileFromBase64(
                   data,
                   mimeType,
-                  mimeType.startsWith('image/') ? `generated-plot-${Date.now()}` : 'generated-file',
+                  isImageMimeType(mimeType) ? `generated-plot-${Date.now()}` : 'generated-file',
                 )
               : undefined;
 

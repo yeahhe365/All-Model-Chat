@@ -8,10 +8,8 @@ const { uploadFileMock, generateUniqueIdMock, fileToBlobUrlMock } = vi.hoisted((
   fileToBlobUrlMock: vi.fn(),
 }));
 
-vi.mock('../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    uploadFile: uploadFileMock,
-  },
+vi.mock('../../services/api/fileApi', () => ({
+  uploadFileApi: uploadFileMock,
 }));
 
 vi.mock('../../utils/chat/ids', () => ({

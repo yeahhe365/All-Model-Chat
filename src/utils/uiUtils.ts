@@ -4,13 +4,6 @@ import { AppSettings, MediaResolution } from '../types';
 import { Theme } from '../types/theme';
 import { AVAILABLE_THEMES } from '../constants/themeConstants';
 import {
-  SUPPORTED_IMAGE_MIME_TYPES,
-  SUPPORTED_AUDIO_MIME_TYPES,
-  SUPPORTED_VIDEO_MIME_TYPES,
-  SUPPORTED_PDF_MIME_TYPES,
-  SUPPORTED_SPREADSHEET_MIME_TYPES,
-} from '../constants/fileConstants';
-import {
   ImageIcon,
   FileAudio,
   FileVideo,
@@ -22,6 +15,9 @@ import {
   FileCode2,
   AlertTriangle,
 } from 'lucide-react';
+import type { FileCategory } from './fileTypeUtils';
+export { getFileTypeCategory } from './fileTypeUtils';
+export type { FileCategory } from './fileTypeUtils';
 
 type NotificationOptionsWithTag = NotificationOptions & {
   renotify?: boolean;
@@ -139,56 +135,6 @@ export const playCompletionSound = () => {
   } catch (e) {
     console.error('Error playing completion sound', e);
   }
-};
-
-type FileCategory =
-  | 'image'
-  | 'audio'
-  | 'video'
-  | 'pdf'
-  | 'youtube'
-  | 'code'
-  | 'spreadsheet'
-  | 'doc'
-  | 'presentation'
-  | 'archive'
-  | 'error';
-
-export const getFileTypeCategory = (mimeType: string, error?: string): FileCategory => {
-  if (error) return 'error';
-  if (mimeType === 'video/youtube-link') return 'youtube';
-  if (SUPPORTED_AUDIO_MIME_TYPES.includes(mimeType)) return 'audio';
-  if (SUPPORTED_VIDEO_MIME_TYPES.includes(mimeType)) return 'video';
-  if (SUPPORTED_PDF_MIME_TYPES.includes(mimeType)) return 'pdf';
-  if (SUPPORTED_IMAGE_MIME_TYPES.includes(mimeType) || mimeType === 'image/svg+xml') return 'image';
-  if (
-    SUPPORTED_SPREADSHEET_MIME_TYPES.includes(mimeType) ||
-    mimeType === 'text/csv' ||
-    mimeType === 'application/vnd.ms-excel'
-  )
-    return 'spreadsheet';
-
-  // Expanded mappings for code execution outputs
-  if (
-    mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-    mimeType === 'application/msword'
-  )
-    return 'doc';
-  if (
-    mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
-    mimeType === 'application/vnd.ms-powerpoint'
-  )
-    return 'presentation';
-  if (
-    mimeType === 'application/zip' ||
-    mimeType === 'application/x-zip-compressed' ||
-    mimeType === 'application/x-7z-compressed' ||
-    mimeType === 'application/x-tar' ||
-    mimeType === 'application/gzip'
-  )
-    return 'archive';
-
-  return 'code';
 };
 
 export const CATEGORY_STYLES: Record<FileCategory, { Icon: React.ElementType; colorClass: string; bgClass: string }> = {

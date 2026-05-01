@@ -1,6 +1,6 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import type { AppSettings, ChatSettings } from '../../types/settings';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { translateTextApi } from '../../services/api/generation/textApi';
 import { getKeyForRequest } from '../../utils/apiUtils';
 
 interface UseChatInputTranslationParams {
@@ -38,7 +38,7 @@ export const useChatInputTranslation = ({
     }
 
     try {
-      const translatedText = await geminiServiceInstance.translateText(
+      const translatedText = await translateTextApi(
         keyResult.key,
         inputText,
         appSettings.translationTargetLanguage ?? 'English',

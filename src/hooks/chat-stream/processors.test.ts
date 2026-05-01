@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Part } from '@google/genai';
 
-vi.mock('../../utils/appUtils', () => ({
-  generateUniqueId: () => 'generated-id',
-}));
-
 vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: () => 'generated-id',
 }));

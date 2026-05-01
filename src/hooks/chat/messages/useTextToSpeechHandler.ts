@@ -3,7 +3,7 @@ import { AppSettings, ChatSettings as IndividualChatSettings } from '../../../ty
 import { logService } from '../../../services/logService';
 import { getKeyForRequest } from '../../../utils/apiUtils';
 import { pcmBase64ToWavUrl } from '../../../utils/audio/audioProcessing';
-import { geminiServiceInstance } from '../../../services/geminiService';
+import { generateSpeechApi } from '../../../services/api/generation/audioApi';
 import { DEFAULT_TTS_MODEL_ID } from '../../../constants/appConstants';
 
 interface TextToSpeechHandlerProps {
@@ -27,7 +27,7 @@ export const useTextToSpeechHandler = ({ appSettings, currentChatSettings }: Tex
       const abortController = new AbortController();
 
       try {
-        const base64Pcm = await geminiServiceInstance.generateSpeech(key, modelId, text, voice, abortController.signal);
+        const base64Pcm = await generateSpeechApi(key, modelId, text, voice, abortController.signal);
         return pcmBase64ToWavUrl(base64Pcm);
       } catch (error) {
         logService.error('Quick TTS generation failed:', { error });

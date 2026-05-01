@@ -16,8 +16,8 @@ import {
 import { UploadedFile } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { triggerDownload } from '../../../utils/export/core';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { copyFileToClipboard, formatFileSize } from '../../../utils/fileHelpers';
+import { getFileKindFlags } from '../../../utils/fileTypeUtils';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider } from './FloatingToolbar';
 
 interface FilePreviewHeaderProps {
@@ -36,17 +36,13 @@ export interface FilePreviewHeaderHandle {
 
 export const FilePreviewHeader = React.forwardRef<FilePreviewHeaderHandle, FilePreviewHeaderProps>(
   ({ file, onClose, isEditable = false, onToggleEdit, onSave, editedName, onNameChange }, ref) => {
-  const { t } = useI18n();
+    const { t } = useI18n();
     const [isDownloading, setIsDownloading] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const copyFeedbackTimeoutRef = useRef<number | null>(null);
 
-    const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type === 'image/svg+xml';
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const isVideo = file.type.startsWith('video/');
-    const isAudio = file.type.startsWith('audio/');
+    const { isImage, isPdf, isVideo, isAudio, isTextFallback: isText } = getFileKindFlags(file);
     const isMermaidDiagram = file.type === 'image/svg+xml';
-    const isText = !isImage && !isPdf && !isVideo && !isAudio;
 
     const FileIcon = isImage ? ImageIcon : isPdf ? FileText : isVideo ? FileVideo : isAudio ? FileAudio : FileCode2;
 

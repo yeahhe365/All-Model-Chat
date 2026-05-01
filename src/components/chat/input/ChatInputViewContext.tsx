@@ -1,5 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useLayoutEffect, useState } from 'react';
+import { useStore } from 'zustand';
+import { createStore, type StoreApi } from 'zustand/vanilla';
 import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import type { SlashCommand as Command } from '../../../types/slashCommands';
 
@@ -88,86 +90,46 @@ export interface ChatInputViewModel {
   themeId: string;
 }
 
-const missingChatInputViewSlice = Symbol('missingChatInputViewSlice');
-type MissingChatInputViewSlice = typeof missingChatInputViewSlice;
-type ChatInputViewSliceContext<T> = React.Context<T | MissingChatInputViewSlice>;
+type ChatInputViewStore = StoreApi<ChatInputViewModel>;
 
-const createChatInputViewSliceContext = <T,>() =>
-  createContext<T | MissingChatInputViewSlice>(missingChatInputViewSlice);
-
-const ChatInputToolbarViewContext = createChatInputViewSliceContext<ChatInputViewModel['toolbarProps']>();
-const ChatInputActionsViewContext = createChatInputViewSliceContext<ChatInputViewModel['actionsProps']>();
-const ChatInputSlashCommandViewContext = createChatInputViewSliceContext<ChatInputViewModel['slashCommandProps']>();
-const ChatInputFileDisplayViewContext = createChatInputViewSliceContext<ChatInputViewModel['fileDisplayProps']>();
-const ChatInputTextAreaViewContext = createChatInputViewSliceContext<ChatInputViewModel['inputProps']>();
-const ChatInputQuoteViewContext = createChatInputViewSliceContext<ChatInputViewModel['quoteProps']>();
-const ChatInputLayoutViewContext = createChatInputViewSliceContext<ChatInputViewModel['layoutProps']>();
-const ChatInputFileInputsViewContext = createChatInputViewSliceContext<ChatInputViewModel['fileInputs']>();
-const ChatInputFormViewContext = createChatInputViewSliceContext<ChatInputViewModel['formProps']>();
-const ChatInputSuggestionsViewContext = createChatInputViewSliceContext<ChatInputViewModel['suggestionsProps']>();
-const QueuedSubmissionViewContext = createChatInputViewSliceContext<ChatInputViewModel['queuedSubmissionProps']>();
-const LiveStatusViewContext = createChatInputViewSliceContext<ChatInputViewModel['liveStatusProps']>();
-const ChatInputLiveVideoViewContext = createChatInputViewSliceContext<ChatInputViewModel['liveVideoProps']>();
-const ChatInputThemeViewContext = createChatInputViewSliceContext<ChatInputViewModel['themeId']>();
+const ChatInputViewStoreContext = createContext<ChatInputViewStore | null>(null);
 
 interface ChatInputViewProviderProps {
   value: ChatInputViewModel;
   children: React.ReactNode;
 }
 
-export const ChatInputViewProvider: React.FC<ChatInputViewProviderProps> = ({ value, children }) => (
-  <ChatInputToolbarViewContext.Provider value={value.toolbarProps}>
-    <ChatInputActionsViewContext.Provider value={value.actionsProps}>
-      <ChatInputSlashCommandViewContext.Provider value={value.slashCommandProps}>
-        <ChatInputFileDisplayViewContext.Provider value={value.fileDisplayProps}>
-          <ChatInputTextAreaViewContext.Provider value={value.inputProps}>
-            <ChatInputQuoteViewContext.Provider value={value.quoteProps}>
-              <ChatInputLayoutViewContext.Provider value={value.layoutProps}>
-                <ChatInputFileInputsViewContext.Provider value={value.fileInputs}>
-                  <ChatInputFormViewContext.Provider value={value.formProps}>
-                    <ChatInputSuggestionsViewContext.Provider value={value.suggestionsProps}>
-                      <QueuedSubmissionViewContext.Provider value={value.queuedSubmissionProps}>
-                        <LiveStatusViewContext.Provider value={value.liveStatusProps}>
-                          <ChatInputLiveVideoViewContext.Provider value={value.liveVideoProps}>
-                            <ChatInputThemeViewContext.Provider value={value.themeId}>
-                              {children}
-                            </ChatInputThemeViewContext.Provider>
-                          </ChatInputLiveVideoViewContext.Provider>
-                        </LiveStatusViewContext.Provider>
-                      </QueuedSubmissionViewContext.Provider>
-                    </ChatInputSuggestionsViewContext.Provider>
-                  </ChatInputFormViewContext.Provider>
-                </ChatInputFileInputsViewContext.Provider>
-              </ChatInputLayoutViewContext.Provider>
-            </ChatInputQuoteViewContext.Provider>
-          </ChatInputTextAreaViewContext.Provider>
-        </ChatInputFileDisplayViewContext.Provider>
-      </ChatInputSlashCommandViewContext.Provider>
-    </ChatInputActionsViewContext.Provider>
-  </ChatInputToolbarViewContext.Provider>
-);
+export const ChatInputViewProvider: React.FC<ChatInputViewProviderProps> = ({ value, children }) => {
+  const [store] = useState(() => createStore<ChatInputViewModel>(() => value));
 
-const useRequiredChatInputViewSlice = <T,>(context: ChatInputViewSliceContext<T>) => {
-  const value = useContext(context);
+  useLayoutEffect(() => {
+    store.setState(value, true);
+  }, [store, value]);
 
-  if (value === missingChatInputViewSlice) {
+  return <ChatInputViewStoreContext.Provider value={store}>{children}</ChatInputViewStoreContext.Provider>;
+};
+
+const useRequiredChatInputViewSlice = <T,>(selector: (view: ChatInputViewModel) => T) => {
+  const store = useContext(ChatInputViewStoreContext);
+
+  if (!store) {
     throw new Error('ChatInputViewProvider is required before using chat input view hooks');
   }
 
-  return value;
+  return useStore(store, selector);
 };
 
-export const useChatInputActionsView = () => useRequiredChatInputViewSlice(ChatInputActionsViewContext);
-export const useChatInputToolbarView = () => useRequiredChatInputViewSlice(ChatInputToolbarViewContext);
-export const useChatInputSlashCommandView = () => useRequiredChatInputViewSlice(ChatInputSlashCommandViewContext);
-export const useChatInputFileDisplayView = () => useRequiredChatInputViewSlice(ChatInputFileDisplayViewContext);
-export const useChatInputTextAreaView = () => useRequiredChatInputViewSlice(ChatInputTextAreaViewContext);
-export const useChatInputQuoteView = () => useRequiredChatInputViewSlice(ChatInputQuoteViewContext);
-export const useChatInputLayoutView = () => useRequiredChatInputViewSlice(ChatInputLayoutViewContext);
-export const useChatInputFileInputsView = () => useRequiredChatInputViewSlice(ChatInputFileInputsViewContext);
-export const useChatInputFormView = () => useRequiredChatInputViewSlice(ChatInputFormViewContext);
-export const useChatInputSuggestionsView = () => useRequiredChatInputViewSlice(ChatInputSuggestionsViewContext);
-export const useQueuedSubmissionView = () => useRequiredChatInputViewSlice(QueuedSubmissionViewContext);
-export const useLiveStatusView = () => useRequiredChatInputViewSlice(LiveStatusViewContext);
-export const useChatInputLiveVideoView = () => useRequiredChatInputViewSlice(ChatInputLiveVideoViewContext);
-export const useChatInputThemeView = () => useRequiredChatInputViewSlice(ChatInputThemeViewContext);
+export const useChatInputActionsView = () => useRequiredChatInputViewSlice((view) => view.actionsProps);
+export const useChatInputToolbarView = () => useRequiredChatInputViewSlice((view) => view.toolbarProps);
+export const useChatInputSlashCommandView = () => useRequiredChatInputViewSlice((view) => view.slashCommandProps);
+export const useChatInputFileDisplayView = () => useRequiredChatInputViewSlice((view) => view.fileDisplayProps);
+export const useChatInputTextAreaView = () => useRequiredChatInputViewSlice((view) => view.inputProps);
+export const useChatInputQuoteView = () => useRequiredChatInputViewSlice((view) => view.quoteProps);
+export const useChatInputLayoutView = () => useRequiredChatInputViewSlice((view) => view.layoutProps);
+export const useChatInputFileInputsView = () => useRequiredChatInputViewSlice((view) => view.fileInputs);
+export const useChatInputFormView = () => useRequiredChatInputViewSlice((view) => view.formProps);
+export const useChatInputSuggestionsView = () => useRequiredChatInputViewSlice((view) => view.suggestionsProps);
+export const useQueuedSubmissionView = () => useRequiredChatInputViewSlice((view) => view.queuedSubmissionProps);
+export const useLiveStatusView = () => useRequiredChatInputViewSlice((view) => view.liveStatusProps);
+export const useChatInputLiveVideoView = () => useRequiredChatInputViewSlice((view) => view.liveVideoProps);
+export const useChatInputThemeView = () => useRequiredChatInputViewSlice((view) => view.themeId);

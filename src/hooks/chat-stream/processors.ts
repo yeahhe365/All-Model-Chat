@@ -5,6 +5,7 @@ import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { calculateTokenStats } from '../../utils/modelHelpers';
 import { getTranslator } from '../../utils/translations';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
+import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '../../utils/fileTypeUtils';
 
 export const appendApiPart = (parts: Part[] = [], newPart: Part) => {
   const newParts = [...parts];
@@ -87,14 +88,14 @@ const applyPartToMessages = (
     const { mimeType, data } = partWithInlineData.inlineData;
 
     const isSupportedFile =
-      mimeType.startsWith('image/') ||
-      mimeType.startsWith('audio/') ||
-      mimeType.startsWith('video/') ||
+      isImageMimeType(mimeType) ||
+      isAudioMimeType(mimeType) ||
+      isVideoMimeType(mimeType) ||
       SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
 
     if (isSupportedFile && data) {
       let baseName = 'generated-file';
-      if (mimeType.startsWith('image/')) {
+      if (isImageMimeType(mimeType)) {
         baseName = `generated-plot-${generateUniqueId().slice(-4)}`;
       }
 

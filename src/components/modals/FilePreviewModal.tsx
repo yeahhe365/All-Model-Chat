@@ -3,7 +3,6 @@ import { UploadedFile } from '../../types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { useI18n } from '../../contexts/I18nContext';
 import { Modal } from '../shared/Modal';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { FilePreviewHeader, type FilePreviewHeaderHandle } from '../shared/file-preview/FilePreviewHeader';
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
@@ -12,6 +11,7 @@ import { copyFileToClipboard, isMarkdownFile, isTextFile } from '../../utils/fil
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
+import { getFileKindFlags } from '../../utils/fileTypeUtils';
 
 const LazyPdfViewer = lazy(async () => {
   const module = await import('../shared/file-preview/PdfViewerEntry');
@@ -125,11 +125,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
     setIsEditing(true);
   }, [file, isEditing]);
 
-  const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type === 'image/svg+xml';
-  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-  const isVideo = file.type.startsWith('video/') && file.type !== 'video/youtube-link';
-  const isYoutube = file.type === 'video/youtube-link';
-  const isAudio = file.type.startsWith('audio/');
+  const { isImage, isPdf, isVideo, isYoutube, isAudio } = getFileKindFlags(file);
   const isDocx = !isImage && !isPdf && !isVideo && !isYoutube && !isAudio && isDocxCandidate;
   const isText = !isImage && !isDocx && !isPdf && !isVideo && !isYoutube && !isAudio && isTextFile(file);
   const isMarkdown = isText && isMarkdownFile(file);

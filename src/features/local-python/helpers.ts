@@ -1,4 +1,5 @@
 import type { ChatMessage, UploadedFile } from '../../types';
+import { isImageMimeType } from '../../utils/fileTypeUtils';
 
 const PYTHON_BLOCK_REGEX = /```(?:python|py)\s*([\s\S]*?)\s*```/gi;
 
@@ -65,4 +66,4 @@ export const collectLocalPythonInputFiles = (messages: ChatMessage[], targetMess
 };
 
 export const hasGeneratedImageFile = (files: Array<{ type: string }>) =>
-  files.some((file) => file.type.startsWith('image/'));
+  files.some((file) => isImageMimeType(file.type));

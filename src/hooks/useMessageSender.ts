@@ -21,6 +21,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
 import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 import { isTextFile } from '../utils/fileHelpers';
+import { isImageMimeType, isPdfMimeType } from '../utils/fileTypeUtils';
 
 const CODE_EXECUTION_TEXT_FILE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024;
 
@@ -193,8 +194,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
       if (isImageEditModel || isGemini3Image) {
         const allowsPdfReferences = activeModelId === 'gemini-3.1-flash-image-preview';
         const hasUnsupportedAttachments = filesToUse.some((file) => {
-          if (file.type.startsWith('image/')) return false;
-          if (allowsPdfReferences && file.type === 'application/pdf') return false;
+          if (isImageMimeType(file.type)) return false;
+          if (allowsPdfReferences && isPdfMimeType(file.type)) return false;
           return true;
         });
 
@@ -212,7 +213,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
       }
 
-      const imageReferenceCount = filesToUse.filter((file) => file.type.startsWith('image/')).length;
+      const imageReferenceCount = filesToUse.filter((file) => isImageMimeType(file.type)).length;
       if (isGemini3Image && imageReferenceCount > 14) {
         logService.warn('Send message blocked: Gemini 3 image model reference image limit exceeded.', {
           imageReferenceCount,

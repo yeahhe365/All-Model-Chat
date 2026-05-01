@@ -4,7 +4,7 @@ import type { SavedChatSession } from '../../../types';
 import { useChatSessionActions } from './useChatSessionActions';
 import { renderHook } from '@/test/testUtils';
 
-vi.mock('../../../utils/appUtils', () => ({
+vi.mock('../../../utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: vi.fn(),
 }));
 

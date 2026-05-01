@@ -19,11 +19,14 @@ vi.mock('../../../utils/db', () => ({
   dbService: dbServiceMock,
 }));
 
-vi.mock('../../../utils/appUtils', () => ({
+vi.mock('../../../services/logService', () => ({
   logService: {
     warn: vi.fn(),
     info: vi.fn(),
   },
+}));
+
+vi.mock('../../../utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: cleanupFilePreviewUrlsMock,
 }));
 

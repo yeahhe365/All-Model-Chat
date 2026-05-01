@@ -15,7 +15,7 @@ vi.mock('../../services/logService', () => ({
   },
 }));
 
-vi.mock('../../services/api/baseApi', () => ({
+vi.mock('../../services/api/liveApiAuth', () => ({
   LiveApiAuthConfigurationError: class LiveApiAuthConfigurationError extends Error {
     constructor(message: string) {
       super(message);

@@ -7,6 +7,7 @@ import {
   extractInlineImagePlaceholders,
   resolveInlineImagePlaceholders,
 } from '../utils/inlineImagePlaceholders';
+import { isImageMimeType } from '../utils/fileTypeUtils';
 import { CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY } from '../constants/appConstants';
 
 export const SUPPORTED_EXTENSIONS = [
@@ -183,7 +184,7 @@ export const useCreateFileEditor = ({
       // 1. Handle Images
       if (items) {
         for (let i = 0; i < items.length; i++) {
-          if (items[i].type.startsWith('image/')) {
+          if (isImageMimeType(items[i].type)) {
             const file = items[i].getAsFile();
             if (file) {
               e.preventDefault();
@@ -231,14 +232,14 @@ export const useCreateFileEditor = ({
 
       if (items) {
         for (let i = 0; i < items.length; i++) {
-          if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+          if (items[i].kind === 'file' && isImageMimeType(items[i].type)) {
             file = items[i].getAsFile();
             break;
           }
         }
       } else if (e.dataTransfer.files) {
         for (let i = 0; i < e.dataTransfer.files.length; i++) {
-          if (e.dataTransfer.files[i].type.startsWith('image/')) {
+          if (isImageMimeType(e.dataTransfer.files[i].type)) {
             file = e.dataTransfer.files[i];
             break;
           }

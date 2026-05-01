@@ -4,7 +4,7 @@ import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings }
 import { logService } from '../../services/logService';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { getModelCapabilities } from '../../utils/modelHelpers';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { generateSuggestionsApi } from '../../services/api/generation/textApi';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -78,12 +78,7 @@ export const useSuggestions = ({
       }
 
       try {
-        const suggestions = await geminiServiceInstance.generateSuggestions(
-          keyToUse,
-          userContent,
-          modelContent,
-          language,
-        );
+        const suggestions = await generateSuggestionsApi(keyToUse, userContent, modelContent, language);
         if (suggestions && suggestions.length > 0) {
           updateAndPersistSessions((prev) =>
             prev.map((s) =>

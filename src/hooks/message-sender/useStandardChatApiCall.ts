@@ -4,12 +4,15 @@ import { createChatHistoryForApi } from '../../utils/chat/builder';
 import { createMessage } from '../../utils/chat/session';
 import { isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '../../utils/modelHelpers';
 import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/generationConfig';
-import { generateContentTurnApi } from '../../services/api/chatApi';
+import {
+  generateContentTurnApi,
+  sendStatelessMessageNonStreamApi,
+  sendStatelessMessageStreamApi,
+} from '../../services/api/chatApi';
 import {
   sendOpenAICompatibleMessageNonStream,
   sendOpenAICompatibleMessageStream,
 } from '../../services/api/openaiCompatibleApi';
-import { geminiServiceInstance } from '../../services/geminiService';
 import { isLikelyHtml } from '../../utils/codeUtils';
 import { createStandardClientFunctions } from '../../features/standard-chat/standardClientFunctions';
 import { runStandardToolLoop } from '../../features/standard-chat/standardToolLoop';
@@ -337,7 +340,7 @@ export const useStandardChatApiCall = ({
       }
 
       if (appSettings.isStreamingEnabled) {
-        await geminiServiceInstance.sendMessageStream(
+        await sendStatelessMessageStreamApi(
           keyToUse,
           apiModelId,
           historyForChat,
@@ -353,7 +356,7 @@ export const useStandardChatApiCall = ({
         return;
       }
 
-      await geminiServiceInstance.sendMessageNonStream(
+      await sendStatelessMessageNonStreamApi(
         keyToUse,
         apiModelId,
         historyForChat,

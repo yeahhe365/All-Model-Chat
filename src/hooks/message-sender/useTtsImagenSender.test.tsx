@@ -20,16 +20,24 @@ vi.mock('./useApiErrorHandler', () => ({
   }),
 }));
 
-vi.mock('../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    generateImages: generateImagesMock,
-    generateSpeech: vi.fn(),
-  },
+vi.mock('../../services/api/generation/imageApi', () => ({
+  generateImagesApi: generateImagesMock,
 }));
 
-vi.mock('../../utils/appUtils', () => ({
+vi.mock('../../services/api/generation/audioApi', () => ({
+  generateSpeechApi: vi.fn(),
+}));
+
+vi.mock('../../utils/audio/audioProcessing', () => ({
   pcmBase64ToWavUrl: vi.fn(() => 'blob:wav-url'),
+}));
+
+vi.mock('../../utils/uiUtils', () => ({
   showNotification: vi.fn(),
+  playCompletionSound: vi.fn(),
+}));
+
+vi.mock('../../utils/chat/session', () => ({
   performOptimisticSessionUpdate: performOptimisticSessionUpdateMock,
   createMessage: (role: 'user' | 'model', content: string, options: Record<string, unknown> = {}) => ({
     id: options.id ?? `${role}-message`,
@@ -38,9 +46,14 @@ vi.mock('../../utils/appUtils', () => ({
     timestamp: new Date('2026-04-21T00:00:00.000Z'),
     ...options,
   }),
-  createUploadedFileFromBase64: createUploadedFileFromBase64Mock,
   generateSessionTitle: vi.fn(() => 'Generated Title'),
-  playCompletionSound: vi.fn(),
+}));
+
+vi.mock('../../utils/chat/parsing', () => ({
+  createUploadedFileFromBase64: createUploadedFileFromBase64Mock,
+}));
+
+vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generated-session'),
 }));
 

@@ -25,10 +25,8 @@ vi.mock('../../services/logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('../../services/geminiService', () => ({
-  geminiServiceInstance: {
-    getFileMetadata: getFileMetadataMock,
-  },
+vi.mock('../../services/api/fileApi', () => ({
+  getFileMetadataApi: getFileMetadataMock,
 }));
 
 vi.mock('../../contexts/I18nContext', () => ({

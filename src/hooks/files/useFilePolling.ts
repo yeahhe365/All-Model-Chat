@@ -1,9 +1,9 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
 import { getKeyForRequest } from '../../utils/apiUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
 import { logService } from '../../services/logService';
 import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../../services/api/filePollingConfig';
+import { getFileMetadataApi } from '../../services/api/fileApi';
 
 const MAX_POLLING_BACKOFF_MULTIPLIER = 8;
 
@@ -102,7 +102,7 @@ export const useFilePolling = ({
           }
 
           try {
-            const metadata = await geminiServiceInstance.getFileMetadata(keyResult.key, fileApiName);
+            const metadata = await getFileMetadataApi(keyResult.key, fileApiName);
             if (metadata?.state === 'ACTIVE') {
               logService.info(`File ${fileApiName} is now ACTIVE.`);
               pollingFailures.current.delete(fileId);
