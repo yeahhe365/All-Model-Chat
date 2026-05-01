@@ -1,8 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useVoiceInput } from '../useVoiceInput';
 import { useSlashCommands } from '../useSlashCommands';
-import { areFilesStillProcessing } from './pendingSubmissionUtils';
-import { hasSendableChatInputContent } from './chatInputUtils';
 import { useChatInputCore } from './useChatInputCore';
 import { useChatInputFile } from './useChatInputFile';
 import { useChatInputGlobalEffects } from './useChatInputGlobalEffects';
@@ -10,7 +8,7 @@ import { useChatInputSubmission } from './useChatInputSubmission';
 import { useChatInputClipboard } from './useChatInputClipboard';
 import { useChatInputKeyboard } from './useChatInputKeyboard';
 import { useChatInputTranslation } from './useChatInputTranslation';
-import { getChatInputMode } from './chatInputStateMachine';
+import { getChatInputAvailability, getCurrentChatInputMode } from './chatInputAvailability';
 
 export const useChatInput = () => {
   const { t, chatInput, inputState, fileRefs, targetDocument, insertText, capabilities, liveAPI } = useChatInputCore();
@@ -112,35 +110,16 @@ export const useChatInput = () => {
     thinkingLevel: currentChatSettings.thinkingLevel,
   });
 
-  const isModalOpen =
-    modalsState.showCreateTextFileEditor ||
-    modalsState.showRecorder ||
-    !!localFileState.configuringFile ||
-    !!localFileState.previewFile ||
-    localFileState.showTokenModal ||
-    modalsState.showTtsContextEditor;
-  const isAnyModalOpen = isModalOpen || modalsState.isHelpModalOpen;
-
-  const hasSendableContent = hasSendableChatInputContent({
-    inputText: inputState.inputText,
-    quotes: inputState.quotes,
-    selectedFileCount: selectedFiles.length,
-    isNativeAudioModel: capabilities.isNativeAudioModel,
+  const { canSend, canQueueMessageBase, isAnyModalOpen } = getChatInputAvailability({
+    inputState,
+    modalsState,
+    localFileState,
+    selectedFiles,
+    capabilities,
+    activeSessionId,
+    isLoading,
+    isEditing,
   });
-
-  const canSend =
-    hasSendableContent && !isLoading && !inputState.isAddingById && !isModalOpen && !localFileState.isConverting;
-
-  const canQueueMessageBase =
-    !capabilities.isNativeAudioModel &&
-    hasSendableContent &&
-    !!activeSessionId &&
-    isLoading &&
-    !isEditing &&
-    !inputState.isAddingById &&
-    !isModalOpen &&
-    !localFileState.isConverting &&
-    !areFilesStillProcessing(selectedFiles);
 
   const {
     canQueueMessage,
@@ -187,35 +166,16 @@ export const useChatInput = () => {
     onSendMessage,
   });
 
-  const chatInputMode = useMemo(
-    () =>
-      getChatInputMode({
-        state: inputState.machineState,
-        isEditing,
-        hasActiveQueuedSubmission: !!activeQueuedSubmission,
-        canQueueMessage,
-        isNativeAudioModel: capabilities.isNativeAudioModel || false,
-        liveStatus: {
-          isConnected: liveAPI.isConnected,
-          isReconnecting: liveAPI.isReconnecting,
-          error: liveAPI.error,
-        },
-        isProcessingFile,
-        isConverting: localFileState.isConverting,
-      }),
-    [
-      activeQueuedSubmission,
-      canQueueMessage,
-      capabilities.isNativeAudioModel,
-      inputState.machineState,
-      isEditing,
-      isProcessingFile,
-      liveAPI.error,
-      liveAPI.isConnected,
-      liveAPI.isReconnecting,
-      localFileState.isConverting,
-    ],
-  );
+  const chatInputMode = getCurrentChatInputMode({
+    inputState,
+    localFileState,
+    capabilities,
+    liveAPI,
+    activeQueuedSubmission,
+    canQueueMessage,
+    isEditing,
+    isProcessingFile,
+  });
 
   const { handleAddUrl, handlePaste, handlePasteAction, handlePasteFromClipboard, handleClearInput } =
     useChatInputClipboard({
