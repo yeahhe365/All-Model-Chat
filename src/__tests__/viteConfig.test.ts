@@ -52,7 +52,7 @@ describe('vite.config runtime ownership', () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
 
     expect(config).toMatch(/globIgnores:\s*\[[\s\S]*pyodide/i);
-    expect(config).toContain("'**/fonts/NotoSansCJKsc-VF.ttf'");
+    expect(config).toContain("'**/fonts/NotoSansCJKsc-VF.ttf.part-*'");
   });
 
   it('keeps Markdown PDF export off the html2canvas/html2pdf screenshot path', () => {

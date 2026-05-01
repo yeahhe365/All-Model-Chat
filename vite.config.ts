@@ -367,7 +367,7 @@ export default defineConfig(({ mode }) => {
             '**/assets/graphviz-vendor-*.js',
             '**/assets/html2canvas.esm-*.js',
             '**/assets/data-vendor-*.js',
-            '**/fonts/NotoSansCJKsc-VF.ttf',
+            '**/fonts/NotoSansCJKsc-VF.ttf.part-*',
           ],
         },
         devOptions: {

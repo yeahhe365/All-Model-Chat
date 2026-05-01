@@ -96,12 +96,13 @@ describe('createMarkdownPdfBlob', () => {
     expect(setLineWidthMock).toHaveBeenCalledWith(0.06);
   });
 
-  it('loads the CJK font before writing Chinese text', async () => {
+  it('loads the split CJK font before writing Chinese text', async () => {
     const originalFetch = globalThis.fetch;
-    const fetchMock = vi.fn().mockResolvedValue({
+    const fontChunks = [new Uint8Array([1, 2]).buffer, new Uint8Array([3]).buffer];
+    const fetchMock = vi.fn().mockImplementation(async () => ({
       ok: true,
-      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
-    });
+      arrayBuffer: async () => fontChunks.shift() ?? new Uint8Array([]).buffer,
+    }));
     globalThis.fetch = fetchMock;
 
     try {
@@ -113,7 +114,8 @@ describe('createMarkdownPdfBlob', () => {
       globalThis.fetch = originalFetch;
     }
 
-    expect(fetchMock).toHaveBeenCalledWith('/fonts/NotoSansCJKsc-VF.ttf');
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/fonts/NotoSansCJKsc-VF.ttf.part-00');
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/fonts/NotoSansCJKsc-VF.ttf.part-01');
     expect(addFileToVFSMock).toHaveBeenCalledWith('NotoSansCJKsc-VF.ttf', expect.any(String));
     expect(addFontMock).toHaveBeenCalledWith('NotoSansCJKsc-VF.ttf', 'NotoSansCJKsc', 'normal', 'Identity-H');
     expect(setFontMock).toHaveBeenCalledWith('NotoSansCJKsc', 'normal');

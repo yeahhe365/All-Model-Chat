@@ -40,7 +40,7 @@ const CODE_LINE_HEIGHT = 5;
 const TEXT_STROKE_WIDTH = 0.06;
 const CJK_FONT_NAME = 'NotoSansCJKsc';
 const CJK_FONT_FILE = 'NotoSansCJKsc-VF.ttf';
-const CJK_FONT_URL = `/fonts/${CJK_FONT_FILE}`;
+const CJK_FONT_PART_URLS = [`/fonts/${CJK_FONT_FILE}.part-00`, `/fonts/${CJK_FONT_FILE}.part-01`];
 const CJK_TEXT_PATTERN = /[\u3400-\u9fff\uf900-\ufaff]/;
 
 let cjkFontBase64Promise: Promise<string | null> | null = null;
@@ -79,16 +79,32 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   return btoa(binary);
 };
 
+const concatenateArrayBuffers = (buffers: ArrayBuffer[]): ArrayBuffer => {
+  const totalLength = buffers.reduce((sum, buffer) => sum + buffer.byteLength, 0);
+  const bytes = new Uint8Array(totalLength);
+  let offset = 0;
+
+  buffers.forEach((buffer) => {
+    bytes.set(new Uint8Array(buffer), offset);
+    offset += buffer.byteLength;
+  });
+
+  return bytes.buffer;
+};
+
 const loadCjkFontBase64 = async (): Promise<string | null> => {
   if (!cjkFontBase64Promise) {
-    cjkFontBase64Promise = fetch(CJK_FONT_URL)
-      .then(async (response) => {
+    cjkFontBase64Promise = Promise.all(
+      CJK_FONT_PART_URLS.map(async (url) => {
+        const response = await fetch(url);
         if (!response.ok) {
-          return null;
+          throw new Error(`Failed to load CJK font part: ${url}`);
         }
 
-        return arrayBufferToBase64(await response.arrayBuffer());
-      })
+        return response.arrayBuffer();
+      }),
+    )
+      .then((buffers) => arrayBufferToBase64(concatenateArrayBuffers(buffers)))
       .catch(() => null);
   }
 
