@@ -3,14 +3,12 @@ import React from 'react';
 interface ImageSizeSelectorProps {
   imageSize: string;
   setImageSize: (size: string) => void;
-  t: (key: string) => string;
   supportedSizes?: string[];
 }
 
 export const ImageSizeSelector: React.FC<ImageSizeSelectorProps> = ({
   imageSize,
   setImageSize,
-  t: _t,
   supportedSizes,
 }) => {
   const sizes = supportedSizes || [];

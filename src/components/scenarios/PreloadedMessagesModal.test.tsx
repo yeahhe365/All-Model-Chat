@@ -83,13 +83,12 @@ describe('PreloadedMessagesModal', () => {
           savedScenarios={[]}
           onSaveAllScenarios={vi.fn()}
           onLoadScenario={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
 
     const closeButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.getAttribute('aria-label') === 'scenarios_close_aria',
+      (button) => button.getAttribute('aria-label') === 'Close scenarios manager',
     );
 
     expect(closeButton).not.toBeUndefined();
@@ -111,13 +110,12 @@ describe('PreloadedMessagesModal', () => {
           savedScenarios={[]}
           onSaveAllScenarios={vi.fn()}
           onLoadScenario={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
 
     const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('scenarios_save_and_close'),
+      button.textContent?.includes('Save'),
     );
 
     expect(saveButton).not.toBeUndefined();
@@ -138,7 +136,6 @@ describe('PreloadedMessagesModal', () => {
           savedScenarios={[]}
           onSaveAllScenarios={vi.fn()}
           onLoadScenario={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -160,7 +157,6 @@ describe('PreloadedMessagesModal', () => {
           savedScenarios={[]}
           onSaveAllScenarios={vi.fn()}
           onLoadScenario={vi.fn()}
-          t={(key) => key}
         />,
       );
     });

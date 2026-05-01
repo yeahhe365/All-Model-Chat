@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { SavedScenario } from '../../types';
 import { Search, Layers, User, Shield, Inbox } from 'lucide-react';
 import { ScenarioItem } from './ScenarioItem';
-import { translations } from '../../utils/translations';
 
 interface ScenarioListProps {
   scenarios: SavedScenario[];
@@ -15,7 +15,6 @@ interface ScenarioListProps {
   onDuplicate: (scenario: SavedScenario) => void;
   onExport: (scenario: SavedScenario) => void;
   onView?: (scenario: SavedScenario) => void;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 type TabType = 'all' | 'mine' | 'system';
@@ -31,8 +30,8 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
   onDuplicate,
   onExport,
   onView,
-  t,
 }) => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
   const filteredScenarios = useMemo(() => {
@@ -145,7 +144,6 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
                   onDuplicate={onDuplicate}
                   onExport={onExport}
                   onView={isSystem ? onView : undefined}
-                  t={t}
                 />
               );
             })}

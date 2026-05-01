@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Loader2, Trash2, RefreshCw } from 'lucide-react';
 
 interface TokenCountFooterProps {
@@ -7,7 +8,6 @@ interface TokenCountFooterProps {
   hasContent: boolean;
   onClear: () => void;
   onCalculate: () => void;
-  t: (key: string) => string;
 }
 
 export const TokenCountFooter: React.FC<TokenCountFooterProps> = ({
@@ -16,8 +16,8 @@ export const TokenCountFooter: React.FC<TokenCountFooterProps> = ({
   hasContent,
   onClear,
   onCalculate,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="p-4 border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/30 flex items-center justify-between">
       <div className="flex items-center gap-2">

@@ -77,7 +77,6 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
       models={availableModels}
       selectedId={selectedModelId}
       onSelect={onSelectModel}
-      t={t}
       dropdownClassName="w-[calc(100vw-2rem)] max-w-[320px] sm:w-[320px] sm:max-w-none max-h-96"
       renderTrigger={({ isOpen, setIsOpen }) => (
         <div className="relative flex items-center gap-1">

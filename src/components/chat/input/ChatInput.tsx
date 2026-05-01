@@ -80,7 +80,6 @@ const ChatInputComponent: React.FC = () => {
     },
     isAddingByUrl: inputState.isAddingByUrl,
     isLoading: chatInput.isLoading,
-    t,
     generateQuadImages: chatInput.generateQuadImages,
     onToggleQuadImages: chatInput.onToggleQuadImages,
     supportedAspectRatios: capabilities.supportedAspectRatios,

@@ -1,6 +1,6 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { User, Bot, Send } from 'lucide-react';
-import { translations } from '../../../utils/translations';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { getShortcutDisplay, isShortcutPressed } from '../../../utils/shortcutUtils';
 
@@ -12,7 +12,6 @@ interface ScenarioMessageInputProps {
   onAdd: () => void;
   inputRef: React.RefObject<HTMLTextAreaElement>;
   readOnly: boolean;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
@@ -23,8 +22,8 @@ export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
   onAdd,
   inputRef,
   readOnly,
-  t,
 }) => {
+  const { t } = useI18n();
   const appSettings = useSettingsStore((state) => state.appSettings);
   const saveConfirmShortcut = getShortcutDisplay('global.saveConfirm', appSettings);
 

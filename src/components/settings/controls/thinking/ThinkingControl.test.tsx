@@ -46,7 +46,6 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={setThinkingLevel}
             showThoughts
             setShowThoughts={vi.fn()}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
@@ -56,8 +55,8 @@ describe('ThinkingControl image model behavior', () => {
     expect(container.textContent).toContain('High');
     expect(container.textContent).not.toContain('Low');
     expect(container.textContent).not.toContain('Medium');
-    expect(container.textContent).not.toContain('settingsThinkingMode_custom');
-    expect(container.textContent).not.toContain('settingsThinkingMode_off');
+    expect(container.textContent).not.toContain('Token Budget');
+    expect(container.textContent).not.toContain('Off');
     expect(setThinkingBudget).toHaveBeenCalledWith(-1);
     expect(setThinkingLevel).toHaveBeenCalledWith('MINIMAL');
   });
@@ -74,7 +73,6 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={vi.fn()}
             showThoughts
             setShowThoughts={vi.fn()}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
@@ -95,7 +93,6 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={vi.fn()}
             showThoughts={false}
             setShowThoughts={vi.fn()}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
@@ -116,18 +113,17 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={vi.fn()}
             showThoughts
             setShowThoughts={vi.fn()}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
     });
 
-    expect(container.textContent).toContain('settingsGemmaReasoningToggle_label');
+    expect(container.textContent).toContain('Gemma Reasoning Level');
     expect(container.textContent).toContain('Minimal');
     expect(container.textContent).toContain('High');
     expect(container.textContent).not.toContain('Low');
     expect(container.textContent).not.toContain('Medium');
-    expect(container.textContent).toContain('settingsGemmaReasoningToggle_enabledDesc');
+    expect(container.textContent).toContain('Gemma uses HIGH reasoning for better results, with higher latency.');
     const toggleButton = container.querySelector('button[aria-pressed]');
     expect(toggleButton).toBeNull();
   });
@@ -146,13 +142,12 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={vi.fn()}
             showThoughts={false}
             setShowThoughts={setShowThoughts}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
     });
 
-    expect(container.textContent).toContain('settingsGemmaReasoningToggle_disabledDesc');
+    expect(container.textContent).toContain('Gemma uses MINIMAL reasoning for faster responses.');
 
     const highButton = Array.from(container.querySelectorAll('button')).find((node) =>
       node.textContent?.includes('High'),
@@ -178,7 +173,6 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={vi.fn()}
             showThoughts
             setShowThoughts={vi.fn()}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
@@ -202,7 +196,6 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={vi.fn()}
             showThoughts
             setShowThoughts={vi.fn()}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
@@ -227,15 +220,14 @@ describe('ThinkingControl image model behavior', () => {
             setThinkingLevel={setThinkingLevel}
             showThoughts
             setShowThoughts={vi.fn()}
-            t={(key) => key}
           />
         </I18nProvider>,
       );
     });
 
-    expect(container.textContent).toContain('settingsThinkingMode_auto');
-    expect(container.textContent).toContain('settingsThinkingMode_custom');
-    expect(container.textContent).not.toContain('settingsThinkingMode_off');
+    expect(container.textContent).toContain('Auto');
+    expect(container.textContent).toContain('Token Budget');
+    expect(container.textContent).not.toContain('Off');
     expect(setThinkingBudget).toHaveBeenCalledWith(-1);
     expect(setThinkingLevel).toHaveBeenCalledWith('MINIMAL');
   });

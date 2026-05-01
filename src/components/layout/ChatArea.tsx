@@ -57,11 +57,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       onRetryMessage: messageActions.onRetryMessage,
       onUpdateMessageFile: messageActions.onUpdateMessageFile,
       showThoughts: session.showThoughts,
-      themeId,
-      baseFontSize: appSettings.baseFontSize,
-      expandCodeBlocksByDefault: appSettings.expandCodeBlocksByDefault,
-      isMermaidRenderingEnabled: appSettings.isMermaidRenderingEnabled,
-      isGraphvizRenderingEnabled: appSettings.isGraphvizRenderingEnabled ?? true,
       onSuggestionClick: messageActions.onSuggestionClick,
       onOrganizeInfoClick: messageActions.onOrganizeInfoClick,
       onFollowUpSuggestionClick: messageActions.onFollowUpSuggestionClick,
@@ -70,7 +65,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       onForkMessage: messageActions.onForkMessage,
       onQuickTTS: messageActions.onQuickTTS,
       chatInputHeight,
-      appSettings,
       currentModelId: session.currentChatSettings.modelId,
       onOpenSidePanel: messageActions.onOpenSidePanel,
       onQuote: handleQuote,
@@ -78,7 +72,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       activeSessionId: session.activeSessionId,
     }),
     [
-      appSettings,
       chatInputHeight,
       handleInsert,
       handleQuote,
@@ -88,7 +81,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       session.messages,
       session.sessionTitle,
       session.showThoughts,
-      themeId,
     ],
   );
 

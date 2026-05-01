@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { ChevronDown } from 'lucide-react';
 import { GoogleSpinner } from '../../../icons/GoogleSpinner';
 import { ThinkingTimer } from '../../ThinkingTimer';
@@ -10,7 +11,6 @@ interface ThinkingHeaderProps {
   thinkingTimeMs?: number;
   generationStartTime?: Date;
   firstTokenTimeMs?: number;
-  t: (key: string, fallback?: string) => string;
   isExpanded: boolean;
 }
 
@@ -20,9 +20,9 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
   thinkingTimeMs,
   generationStartTime,
   firstTokenTimeMs,
-  t,
   isExpanded,
 }) => {
+  const { t } = useI18n();
   // Determine the effective start time for the timer
   // If firstTokenTimeMs is available, we start counting from (Start + TTFT) to show "Pure Thinking Time" (excluding latency)
   // If NOT available yet (during initial connection), we count from generationStartTime (Total Time)
@@ -55,7 +55,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                   {thinkingTimeMs !== undefined ? (
                     t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
                   ) : effectiveTimerStart ? (
-                    <ThinkingTimer startTime={effectiveTimerStart} t={t} />
+                    <ThinkingTimer startTime={effectiveTimerStart} />
                   ) : (
                     <span className="animate-pulse">{t('thinking_text')}</span>
                   )}

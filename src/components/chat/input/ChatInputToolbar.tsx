@@ -40,7 +40,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   onCancelAddUrl,
   isAddingByUrl,
   isLoading,
-  t,
   generateQuadImages,
   onToggleQuadImages,
   supportedAspectRatios,
@@ -87,7 +86,7 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
         showMediaResolution) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {showTtsVoice && (
-            <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} t={t as (key: string) => string} />
+            <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} />
           )}
           {isTtsModel && onEditTtsContext && (
             <button
@@ -120,7 +119,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
             <MediaResolutionSelector
               mediaResolution={mediaResolution!}
               setMediaResolution={setMediaResolution!}
-              t={t as (key: string) => string}
               isNativeAudioModel={isNativeAudioModel}
             />
           )}
@@ -128,7 +126,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
             <ImagenAspectRatioSelector
               aspectRatio={aspectRatio!}
               setAspectRatio={setAspectRatio!}
-              t={t as (key: string) => string}
               supportedRatios={supportedAspectRatios}
             />
           )}
@@ -136,7 +133,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
             <ImageSizeSelector
               imageSize={imageSize!}
               setImageSize={setImageSize!}
-              t={t as (key: string) => string}
               supportedSizes={supportedImageSizes}
             />
           )}
@@ -144,21 +140,18 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
             <ImageOutputModeSelector
               imageOutputMode={imageOutputMode!}
               setImageOutputMode={setImageOutputMode!}
-              t={t as (key: string) => string}
             />
           )}
           {showPersonGeneration && (
             <PersonGenerationSelector
               personGeneration={personGeneration!}
               setPersonGeneration={setPersonGeneration!}
-              t={t as (key: string) => string}
             />
           )}
           {showQuadToggle && (
             <QuadImageToggle
               enabled={generateQuadImages!}
               onToggle={onToggleQuadImages!}
-              t={t as (key: string) => string}
             />
           )}
         </div>
@@ -176,7 +169,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
           onCancel={onCancelAddById}
           isAddingById={isAddingById}
           isLoading={isLoading}
-          t={t as (key: string) => string}
         />
       )}
       {showAddByUrlInput && (
@@ -187,7 +179,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
           onCancel={onCancelAddUrl}
           isAddingByUrl={isAddingByUrl}
           isLoading={isLoading}
-          t={t as (key: string) => string}
         />
       )}
     </div>

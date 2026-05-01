@@ -43,7 +43,6 @@ describe('CreateTextFileEditor PDF export', () => {
             onCancel={vi.fn()}
             isProcessing={false}
             isLoading={false}
-            t={(key) => key}
             initialContent={'# Exported\\n\\n![remote](https://example.com/remote.png)'}
             initialFilename="article.pdf"
             themeId="pearl"
@@ -53,7 +52,7 @@ describe('CreateTextFileEditor PDF export', () => {
     });
 
     const saveButton = Array.from(document.body.querySelectorAll('button')).find(
-      (button) => button.getAttribute('title') === 'save',
+      (button) => button.getAttribute('title') === 'Save',
     );
     expect(saveButton).toBeTruthy();
     expect(saveButton).not.toBeDisabled();

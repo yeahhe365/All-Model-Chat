@@ -1,6 +1,5 @@
 import React from 'react';
 import { Quote, Trash2 } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
 import { LazyMarkdownRenderer } from '../../../message/LazyMarkdownRenderer';
 
 interface ChatQuoteDisplayProps {
@@ -10,7 +9,6 @@ interface ChatQuoteDisplayProps {
 }
 
 export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRemoveQuote, themeId }) => {
-  const { t } = useI18n();
   if (!quotes || quotes.length === 0) return null;
 
   return (
@@ -40,7 +38,6 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
                   expandCodeBlocksByDefault={false}
                   isMermaidRenderingEnabled={true}
                   isGraphvizRenderingEnabled={false}
-                  t={t}
                   themeId={themeId}
                   onOpenSidePanel={() => {}}
                   fallbackMode="raw"

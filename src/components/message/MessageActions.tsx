@@ -250,7 +250,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         {(message.content || message.thoughts) && !message.isLoading && (
           <MessageCopyButton
             textToCopy={message.content}
-            t={t}
             className={actionButtonClasses}
             iconSize={actionIconSize}
           />
@@ -263,7 +262,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
               sessionTitle={sessionTitle}
               messageIndex={messageIndex}
               themeId={themeId}
-              t={t}
               className={actionButtonClasses}
               iconSize={actionIconSize}
             />

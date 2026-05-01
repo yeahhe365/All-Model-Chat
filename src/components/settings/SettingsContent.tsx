@@ -44,7 +44,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   onExportHistory,
   onImportScenarios,
   onExportScenarios,
-  t,
 }) => {
   const animClass = 'animate-in fade-in duration-200 ease-out';
   const isOpenAICompatibleMode = currentSettings.apiMode === 'openai-compatible';
@@ -106,7 +105,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
             isOpenAICompatibleMode={isOpenAICompatibleMode}
             currentSettings={currentSettings}
             onUpdateSettings={handleBatchUpdate}
-            t={t}
           />
         </div>
       )}
@@ -161,7 +159,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
             currentSettings={currentSettings}
             availableModels={availableModels}
             onUpdateSettings={handleBatchUpdate}
-            t={t}
           />
         </div>
       )}

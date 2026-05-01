@@ -71,7 +71,6 @@ export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
             models={availableModels}
             selectedId={selectedModelId}
             onSelect={handleModelSelect}
-            t={t}
             dropdownClassName="w-full max-h-60"
             renderTrigger={({ isOpen, setIsOpen, selectedModel }) => (
               <button
@@ -103,7 +102,6 @@ export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
             setText(newText);
             setTokenCount(null);
           }}
-          t={t}
         />
 
         <TokenCountFiles
@@ -111,7 +109,6 @@ export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
           fileInputRef={fileInputRef}
           onFileChange={handleFileChange}
           onRemoveFile={removeFile}
-          t={t}
         />
 
         {/* Error Display */}
@@ -128,7 +125,6 @@ export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
         hasContent={!!text.trim() || files.length > 0}
         onClear={clearAll}
         onCalculate={handleCalculateClick}
-        t={t}
       />
     </Modal>
   );

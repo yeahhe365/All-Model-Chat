@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
-import { translations } from '../../../utils/translations';
 
 interface CreateFileBodyProps {
   textContent: string;
@@ -12,7 +12,6 @@ interface CreateFileBodyProps {
   handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
   handleDrop: (e: React.DragEvent, isDragging: boolean) => void;
   themeId: string;
-  t: (key: keyof typeof translations | string) => string;
 }
 
 export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
@@ -25,8 +24,8 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
   handlePaste,
   handleDrop,
   themeId,
-  t,
 }) => {
+  const { t } = useI18n();
   const [isDragging, setIsDragging] = useState(false);
 
   const onDragEnter = (e: React.DragEvent) => {
@@ -114,7 +113,6 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                     isMermaidRenderingEnabled={true}
                     isGraphvizRenderingEnabled={true}
                     allowHtml={true}
-                    t={t}
                     themeId={themeId}
                     fallbackMode="raw"
                   />

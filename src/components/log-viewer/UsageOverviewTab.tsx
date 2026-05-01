@@ -50,7 +50,8 @@ const PriceValue: React.FC<{
 };
 
 export const UsageOverviewTab: React.FC = () => {
-  const { language, t } = useI18n();
+  const { t } = useI18n();
+  const { language } = useI18n();
   const { timeRange, setTimeRange, isLoading, summary, byModel } = useUsageStats();
 
   return (

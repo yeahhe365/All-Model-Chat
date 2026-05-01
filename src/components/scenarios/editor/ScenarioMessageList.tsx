@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { PreloadedMessage } from '../../../types';
 import { User, Bot, ArrowUp, ArrowDown, Edit3, Trash2, MessageSquare } from 'lucide-react';
-import { translations } from '../../../utils/translations';
 import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../constants/appConstants';
 
 interface ScenarioMessageListProps {
@@ -12,7 +12,6 @@ interface ScenarioMessageListProps {
   onDeleteMessage: (id: string) => void;
   onMoveMessage: (index: number, direction: -1 | 1) => void;
   readOnly: boolean;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
@@ -23,8 +22,8 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
   onDeleteMessage,
   onMoveMessage,
   readOnly,
-  t,
 }) => {
+  const { t } = useI18n();
   const listRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom if adding new messages (heuristic: if editingId is null and length increased, handled by parent usually,

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Languages } from 'lucide-react';
 import { DEFAULT_THOUGHT_TRANSLATION_MODEL_ID, TRANSLATION_TARGET_LANGUAGE_OPTIONS } from '../../../constants/appConstants';
 import { ModelOption } from '../../../types';
@@ -18,10 +19,10 @@ interface LanguageVoiceSectionProps {
   setThoughtTranslationTargetLanguage: (value: TranslationTargetLanguage) => void;
   thoughtTranslationModelId: string;
   setThoughtTranslationModelId: (value: string) => void;
-  t: (key: string) => string;
 }
 
 export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props) => {
+  const { t } = useI18n();
   const inputTranslationModelOptions = props.availableModels.some((model) => model.id === props.inputTranslationModelId)
     ? props.availableModels
     : [
@@ -49,18 +50,17 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
         transcriptionModelId={props.transcriptionModelId}
         setTranscriptionModelId={props.setTranscriptionModelId}
         titleKey="settingsTranscriptionSectionTitle"
-        t={props.t}
       />
 
       <div className="pt-6 border-t border-[var(--theme-border-secondary)] space-y-4">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
           <Languages size={14} strokeWidth={1.5} />
-          {props.t('settingsTranslationSectionTitle')}
+          {t('settingsTranslationSectionTitle')}
         </h4>
         <div className="space-y-4">
           <div className="space-y-1">
             <h5 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
-              {props.t('settingsInputTranslationSectionTitle')}
+              {t('settingsInputTranslationSectionTitle')}
             </h5>
             <Select
               id="translation-target-language-select"
@@ -68,7 +68,7 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
               layout="horizontal"
               labelContent={
                 <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
-                  {props.t('settingsInputTranslationLanguageLabel')}
+                  {t('settingsInputTranslationLanguageLabel')}
                 </div>
               }
               value={props.translationTargetLanguage}
@@ -77,7 +77,7 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
             >
               {TRANSLATION_TARGET_LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {props.t(option.labelKey)}
+                  {t(option.labelKey)}
                 </option>
               ))}
             </Select>
@@ -87,7 +87,7 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
               layout="horizontal"
               labelContent={
                 <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
-                  {props.t('settings_inputTranslationModel_label')}
+                  {t('settings_inputTranslationModel_label')}
                 </div>
               }
               value={props.inputTranslationModelId}
@@ -104,7 +104,7 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
 
           <div className="space-y-1 border-t border-[var(--theme-border-secondary)] pt-4">
             <h5 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
-              {props.t('settingsThoughtTranslationSectionTitle')}
+              {t('settingsThoughtTranslationSectionTitle')}
             </h5>
             <Select
               id="thought-translation-target-language-select"
@@ -112,7 +112,7 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
               layout="horizontal"
               labelContent={
                 <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
-                  {props.t('settings_thoughtTranslationTargetLanguage_label')}
+                  {t('settings_thoughtTranslationTargetLanguage_label')}
                 </div>
               }
               value={props.thoughtTranslationTargetLanguage}
@@ -123,7 +123,7 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
             >
               {TRANSLATION_TARGET_LANGUAGE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {props.t(option.labelKey)}
+                  {t(option.labelKey)}
                 </option>
               ))}
             </Select>
@@ -133,7 +133,7 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
               layout="horizontal"
               labelContent={
                 <div className="flex items-center gap-2 text-sm font-medium text-[var(--theme-text-primary)]">
-                  {props.t('settings_thoughtTranslationModel_label')}
+                  {t('settings_thoughtTranslationModel_label')}
                 </div>
               }
               value={props.thoughtTranslationModelId}

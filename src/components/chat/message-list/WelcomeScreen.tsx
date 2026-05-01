@@ -1,9 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { translations } from '../../../utils/translations';
-
-interface WelcomeScreenProps {
-  t: (key: keyof typeof translations, fallback?: string) => string;
-}
+import { useI18n } from '../../../contexts/I18nContext';
 
 const WelcomeEasterEggText: React.FC<{ text: string }> = ({ text }) => {
   const supportsHoverPointer = useMemo(
@@ -128,7 +124,8 @@ const WelcomeEasterEggText: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ t }) => {
+export const WelcomeScreen: React.FC = () => {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col items-center justify-center min-h-full w-full max-w-4xl mx-auto px-4 pb-16">
       <div className="w-full">

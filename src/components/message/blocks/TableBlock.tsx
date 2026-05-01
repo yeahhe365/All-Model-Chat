@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Minimize2, Download, FileSpreadsheet, FileText, Copy, Check } from 'lucide-react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { useWindowContext } from '../../../contexts/WindowContext';
 import { triggerDownload } from '../../../utils/export/core';
 import { useClickOutside } from '../../../hooks/useClickOutside';
-import { translations } from '../../../utils/translations';
 import { convertHtmlToMarkdown } from '../../../utils/htmlToMarkdown';
 import {
   FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
@@ -13,11 +13,10 @@ import {
   MENU_ITEM_DEFAULT_STATE_CLASS,
 } from '../../../constants/appConstants';
 
-interface TableBlockProps extends React.TableHTMLAttributes<HTMLTableElement> {
-  t?: (key: keyof typeof translations) => string;
-}
+type TableBlockProps = React.TableHTMLAttributes<HTMLTableElement>;
 
-export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, ...props }) => {
+export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...props }) => {
+  const { t } = useI18n();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -77,7 +76,6 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
     setShowDownloadMenu(false);
   };
 
-  const tFunc = t || ((key: string) => (key === 'exportToCSV' ? 'Export to CSV' : 'Export to Excel'));
   const tableClassName = [className, 'min-w-full', 'w-max', 'text-left'].filter(Boolean).join(' ');
 
   // When fullscreen, we use a portal and a specific layout.
@@ -109,14 +107,14 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                   className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS} px-4 py-3 gap-3`}
                 >
                   <FileText size={16} className="text-blue-500" />
-                  <span>{tFunc('exportToCSV')}</span>
+                  <span>{t('exportToCSV')}</span>
                 </button>
                 <button
                   onClick={handleDownloadExcel}
                   className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS} px-4 py-3 gap-3`}
                 >
                   <FileSpreadsheet size={16} className="text-green-500" />
-                  <span>{tFunc('exportToExcel')}</span>
+                  <span>{t('exportToExcel')}</span>
                 </button>
               </div>
             )}
@@ -180,14 +178,14 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                 className={`${MENU_ITEM_COMPACT_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS}`}
               >
                 <FileText size={14} className="text-blue-500" />
-                <span>{tFunc('exportToCSV')}</span>
+                <span>{t('exportToCSV')}</span>
               </button>
               <button
                 onClick={handleDownloadExcel}
                 className={`${MENU_ITEM_COMPACT_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS}`}
               >
                 <FileSpreadsheet size={14} className="text-green-500" />
-                <span>{tFunc('exportToExcel')}</span>
+                <span>{t('exportToExcel')}</span>
               </button>
             </div>
           )}

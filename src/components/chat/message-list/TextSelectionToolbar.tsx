@@ -26,7 +26,6 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
   onInsert,
   onTTS,
   containerRef,
-  t,
 }) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const copyResetTimeoutRef = useRef<number | null>(null);
@@ -152,7 +151,6 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
           onSearch={handleSearchClick}
           onTTS={onTTS ? handleTTSClick : undefined}
           isCopied={isCopied}
-          t={t}
         />
       )}
     </ToolbarContainer>

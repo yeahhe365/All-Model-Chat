@@ -8,8 +8,8 @@ interface DragDropOverlayProps {
 }
 
 export const DragDropOverlay: React.FC<DragDropOverlayProps> = ({ isDraggingOver }) => {
-  const dragIconSize = useResponsiveValue(48, 64);
   const { t } = useI18n();
+  const dragIconSize = useResponsiveValue(48, 64);
 
   if (!isDraggingOver) return null;
 

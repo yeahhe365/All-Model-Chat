@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Download } from 'lucide-react';
 import { ChatMessage } from '../../../types';
-import { translations } from '../../../utils/translations';
 import { useMessageExport } from '../../../hooks/useMessageExport';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { ExportModal } from './export/ExportModal';
@@ -12,7 +12,6 @@ interface ExportMessageButtonProps {
   messageIndex?: number;
   themeId: string;
   className?: string;
-  t: (key: keyof typeof translations, fallback?: string) => string;
   iconSize?: number;
 }
 
@@ -22,9 +21,9 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({
   messageIndex,
   themeId,
   className,
-  t,
   iconSize: propIconSize,
 }) => {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const responsiveIconSize = useResponsiveValue(14, 16);
   const iconSize = propIconSize ?? responsiveIconSize;
@@ -52,7 +51,6 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({
           onClose={() => setIsOpen(false)}
           onExport={onExportSelect}
           exportingType={exportingType}
-          t={t}
         />
       )}
     </>

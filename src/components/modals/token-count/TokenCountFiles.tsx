@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { UploadedFile } from '../../../types';
 import { Plus, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { formatFileSize } from '../../../utils/fileHelpers';
@@ -9,7 +10,6 @@ interface TokenCountFilesProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (id: string) => void;
-  t: (key: string) => string;
 }
 
 export const TokenCountFiles: React.FC<TokenCountFilesProps> = ({
@@ -17,8 +17,8 @@ export const TokenCountFiles: React.FC<TokenCountFilesProps> = ({
   fileInputRef,
   onFileChange,
   onRemoveFile,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">

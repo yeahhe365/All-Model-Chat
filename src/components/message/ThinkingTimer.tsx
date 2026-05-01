@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { formatDuration } from '../../utils/dateHelpers';
-import { translations } from '../../utils/translations';
 
 interface ThinkingTimerProps {
   startTime: Date;
-  t: (key: keyof typeof translations) => string;
 }
 
-export const ThinkingTimer: React.FC<ThinkingTimerProps> = ({ startTime, t }) => {
+export const ThinkingTimer: React.FC<ThinkingTimerProps> = ({ startTime }) => {
+  const { t } = useI18n();
   const [seconds, setSeconds] = useState(() => Math.floor((Date.now() - new Date(startTime).getTime()) / 1000));
 
   useEffect(() => {

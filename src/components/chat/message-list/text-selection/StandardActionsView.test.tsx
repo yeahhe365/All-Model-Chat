@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getTranslator } from '../../../../utils/translations';
+import { useSettingsStore } from '../../../../stores/settingsStore';
 import { StandardActionsView } from './StandardActionsView';
 
 describe('StandardActionsView', () => {
@@ -22,7 +22,7 @@ describe('StandardActionsView', () => {
   });
 
   it('renders localized Chinese action labels', () => {
-    const t = getTranslator('zh');
+    useSettingsStore.setState({ language: 'zh' });
 
     act(() => {
       root.render(
@@ -32,7 +32,6 @@ describe('StandardActionsView', () => {
           onCopy={vi.fn()}
           onSearch={vi.fn()}
           isCopied={false}
-          t={t}
         />,
       );
     });
@@ -44,7 +43,7 @@ describe('StandardActionsView', () => {
   });
 
   it('renders Insert instead of Input in English', () => {
-    const t = getTranslator('en');
+    useSettingsStore.setState({ language: 'en' });
 
     act(() => {
       root.render(
@@ -54,7 +53,6 @@ describe('StandardActionsView', () => {
           onCopy={vi.fn()}
           onSearch={vi.fn()}
           isCopied={false}
-          t={t}
         />,
       );
     });
@@ -67,7 +65,7 @@ describe('StandardActionsView', () => {
   });
 
   it('keeps selection action buttons free of scale transforms', () => {
-    const t = getTranslator('en');
+    useSettingsStore.setState({ language: 'en' });
 
     act(() => {
       root.render(
@@ -77,7 +75,6 @@ describe('StandardActionsView', () => {
           onCopy={vi.fn()}
           onSearch={vi.fn()}
           isCopied={false}
-          t={t}
         />,
       );
     });

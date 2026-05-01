@@ -19,7 +19,8 @@ const compareVersions = (v1: string, v2: string) => {
 };
 
 export const AboutSection: React.FC = () => {
-  const { language, t } = useI18n();
+  const { t } = useI18n();
+  const { language } = useI18n();
   const themeId = useSettingsStore((state) => state.currentTheme.id);
   const iconSize = useResponsiveValue(18, 20);
   const isCompactViewport = useResponsiveValue(true, false, 900);

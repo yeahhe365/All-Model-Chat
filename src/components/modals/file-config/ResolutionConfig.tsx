@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Image as ImageIcon } from 'lucide-react';
 import { MediaResolution } from '../../../types/settings';
 import { Select } from '../../shared/Select';
@@ -6,10 +7,11 @@ import { Select } from '../../shared/Select';
 interface ResolutionConfigProps {
   mediaResolution: MediaResolution | '';
   setMediaResolution: (value: MediaResolution) => void;
-  t: (key: string) => string;
 }
 
-export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({ mediaResolution, setMediaResolution, t }) => (
+export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({ mediaResolution, setMediaResolution }) => {
+  const { t } = useI18n();
+  return (
   <div className="space-y-3 pb-4 border-b border-[var(--theme-border-secondary)]/50">
     <Select
       id="file-media-resolution"
@@ -35,3 +37,4 @@ export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({ mediaResolut
     </p>
   </div>
 );
+};

@@ -1,9 +1,9 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Download, X, Loader2 } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import { ExportOptions } from './ExportOptions';
 import { ExportType } from '../../../../hooks/useMessageExport';
-import { translations } from '../../../../utils/translations';
 import { useResponsiveValue } from '../../../../hooks/useDevice';
 
 interface ExportModalProps {
@@ -11,10 +11,10 @@ interface ExportModalProps {
   onClose: () => void;
   onExport: (type: ExportType) => void;
   exportingType: ExportType | null;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
-export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExport, exportingType, t }) => {
+export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExport, exportingType }) => {
+  const { t } = useI18n();
   const headingIconSize = useResponsiveValue(20, 24);
 
   return (

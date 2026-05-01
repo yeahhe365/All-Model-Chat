@@ -1,6 +1,6 @@
 import React from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { SquarePen, Trash2 } from 'lucide-react';
-import { translations } from '../../utils/translations';
 import {
   MENU_ITEM_BUTTON_CLASS,
   MENU_ITEM_DEFAULT_STATE_CLASS,
@@ -11,10 +11,11 @@ interface GroupItemMenuProps {
   menuRef: React.RefObject<HTMLDivElement>;
   onStartEdit: () => void;
   onDelete: () => void;
-  t: (key: keyof typeof translations) => string;
 }
 
-export const GroupItemMenu: React.FC<GroupItemMenuProps> = ({ menuRef, onStartEdit, onDelete, t }) => (
+export const GroupItemMenu: React.FC<GroupItemMenuProps> = ({ menuRef, onStartEdit, onDelete }) => {
+  const { t } = useI18n();
+  return (
   <div ref={menuRef} className="relative z-10">
     <div className="absolute right-3 -top-1 w-40 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg py-1">
       <button onClick={onStartEdit} className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS}`}>
@@ -26,3 +27,4 @@ export const GroupItemMenu: React.FC<GroupItemMenuProps> = ({ menuRef, onStartEd
     </div>
   </div>
 );
+};

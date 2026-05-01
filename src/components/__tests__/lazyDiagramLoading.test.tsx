@@ -131,7 +131,6 @@ describe('lazy diagram loading', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled
           isGraphvizRenderingEnabled
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -183,7 +182,6 @@ describe('lazy diagram loading', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled
           isGraphvizRenderingEnabled
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,

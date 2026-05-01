@@ -36,7 +36,7 @@ export interface FilePreviewHeaderHandle {
 
 export const FilePreviewHeader = React.forwardRef<FilePreviewHeaderHandle, FilePreviewHeaderProps>(
   ({ file, onClose, isEditable = false, onToggleEdit, onSave, editedName, onNameChange }, ref) => {
-    const { t } = useI18n();
+  const { t } = useI18n();
     const [isDownloading, setIsDownloading] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const copyFeedbackTimeoutRef = useRef<number | null>(null);

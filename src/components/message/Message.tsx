@@ -1,7 +1,8 @@
 import React from 'react';
-import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
+import { ChatMessage, UploadedFile, SideViewContent } from '../../types';
 import { MessageContent } from './MessageContent';
 import { MessageActions } from './MessageActions';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 interface MessageProps {
   message: ChatMessage;
@@ -14,16 +15,10 @@ interface MessageProps {
   onImageClick: (file: UploadedFile) => void; // Renamed to onFileClick in logic, kept name for props compat
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   showThoughts: boolean;
-  themeId: string;
-  baseFontSize: number;
-  expandCodeBlocksByDefault: boolean;
-  isMermaidRenderingEnabled: boolean;
-  isGraphvizRenderingEnabled: boolean;
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onSuggestionClick?: (suggestion: string) => void;
-  appSettings: AppSettings;
   onOpenSidePanel: (content: SideViewContent) => void;
   onConfigureFile?: (file: UploadedFile, messageId: string) => void;
   isGemini3?: boolean;
@@ -31,6 +26,8 @@ interface MessageProps {
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {
   const { message, prevMessage } = props;
+  const appSettings = useSettingsStore((state) => state.appSettings);
+  const themeId = useSettingsStore((state) => state.currentTheme.id);
 
   const isGrouped = !!(
     prevMessage &&
@@ -87,7 +84,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             onGenerateCanvas={props.onGenerateCanvas}
             onContinueGeneration={props.onContinueGeneration}
             onForkMessage={props.onForkMessage}
-            themeId={props.themeId}
+            themeId={themeId}
           />
         )}
         <div className={`${bubbleClasses}`}>
@@ -96,13 +93,13 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             onImageClick={props.onImageClick}
             onOpenHtmlPreview={props.onOpenHtmlPreview}
             showThoughts={props.showThoughts}
-            baseFontSize={props.baseFontSize}
-            expandCodeBlocksByDefault={props.expandCodeBlocksByDefault}
-            isMermaidRenderingEnabled={props.isMermaidRenderingEnabled}
-            isGraphvizRenderingEnabled={props.isGraphvizRenderingEnabled}
+            baseFontSize={appSettings.baseFontSize}
+            expandCodeBlocksByDefault={appSettings.expandCodeBlocksByDefault}
+            isMermaidRenderingEnabled={appSettings.isMermaidRenderingEnabled}
+            isGraphvizRenderingEnabled={appSettings.isGraphvizRenderingEnabled ?? true}
             onSuggestionClick={props.onSuggestionClick}
-            appSettings={props.appSettings}
-            themeId={props.themeId}
+            appSettings={appSettings}
+            themeId={themeId}
             onOpenSidePanel={props.onOpenSidePanel}
             onConfigureFile={props.onConfigureFile}
             isGemini3={props.isGemini3}
@@ -120,7 +117,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             onGenerateCanvas={props.onGenerateCanvas}
             onContinueGeneration={props.onContinueGeneration}
             onForkMessage={props.onForkMessage}
-            themeId={props.themeId}
+            themeId={themeId}
           />
         )}
       </div>

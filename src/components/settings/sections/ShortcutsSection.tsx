@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { translations } from '../../../utils/translations';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SHORTCUT_REGISTRY, DEFAULT_SHORTCUTS } from '../../../constants/shortcuts';
 import { AppSettings, ModelOption } from '../../../types';
 import { ShortcutRecorder } from './shortcuts/ShortcutRecorder';
@@ -9,15 +9,14 @@ interface ShortcutsSectionProps {
   currentSettings?: AppSettings;
   availableModels?: ModelOption[];
   onUpdateSettings?: (settings: Partial<AppSettings>) => void;
-  t: (key: keyof typeof translations | string) => string;
 }
 
 export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({
   currentSettings,
   availableModels = [],
   onUpdateSettings,
-  t,
 }) => {
+  const { t } = useI18n();
   // Group shortcuts by category
   const groupedShortcuts = useMemo(() => {
     const groups: Record<string, typeof SHORTCUT_REGISTRY> = {};
@@ -95,7 +94,6 @@ export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({
         availableModels={availableModels}
         configuredIds={currentSettings.tabModelCycleIds}
         onChange={(tabModelCycleIds) => onUpdateSettings({ tabModelCycleIds })}
-        t={t}
       />
     </div>
   );

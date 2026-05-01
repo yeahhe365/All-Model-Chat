@@ -31,7 +31,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -56,7 +55,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -81,7 +79,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -106,7 +103,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -130,7 +126,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -155,7 +150,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -177,7 +171,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -204,7 +197,6 @@ describe('BaseMarkdownRendererEntry', () => {
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
           allowHtml
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -231,7 +223,6 @@ describe('BaseMarkdownRendererEntry', () => {
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
           allowHtml
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
           files={[
@@ -269,7 +260,6 @@ describe('BaseMarkdownRendererEntry', () => {
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
           allowHtml
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -297,7 +287,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -319,7 +308,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
           hideThinkingInContext
@@ -344,7 +332,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
           hideThinkingInContext
@@ -368,7 +355,6 @@ describe('BaseMarkdownRendererEntry', () => {
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
           allowHtml
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
         />,
@@ -390,7 +376,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
           interactiveMode="disabled"
@@ -416,7 +401,6 @@ describe('BaseMarkdownRendererEntry', () => {
           expandCodeBlocksByDefault={false}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
           interactiveMode="disabled"

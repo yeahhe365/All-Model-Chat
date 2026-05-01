@@ -1,15 +1,15 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { buildHtmlPreviewSrcDoc } from '../../../utils/htmlPreview';
-import { translations } from '../../../utils/translations';
 
 interface HtmlPreviewContentProps {
   iframeRef: React.RefObject<HTMLIFrameElement>;
   htmlContent: string;
   scale: number;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
-export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({ iframeRef, htmlContent, scale, t }) => {
+export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({ iframeRef, htmlContent, scale }) => {
+  const { t } = useI18n();
   const handleIframeError = (event: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
     console.error('Iframe loading error:', event);
   };

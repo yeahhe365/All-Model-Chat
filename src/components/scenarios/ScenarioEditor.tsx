@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { SavedScenario } from '../../types';
-import { translations } from '../../utils/translations';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { ScenarioEditorHeader } from './editor/ScenarioEditorHeader';
 import { ScenarioSystemPrompt } from './editor/ScenarioSystemPrompt';
@@ -11,7 +11,6 @@ interface ScenarioEditorProps {
   initialScenario: SavedScenario | null;
   onSave: (scenario: SavedScenario) => void;
   onCancel: () => void;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
   readOnly?: boolean;
 }
 
@@ -26,9 +25,9 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
   initialScenario,
   onSave,
   onCancel,
-  t,
   readOnly = false,
 }) => {
+  const { t } = useI18n();
   const [scenario, setScenario] = useState<SavedScenario>(() => initialScenario || createEmptyScenario());
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
@@ -88,7 +87,6 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
         onOpenSystemPrompt={() => setIsSystemPromptExpanded(true)}
         isSaveDisabled={!scenario.title.trim()}
         readOnly={readOnly}
-        t={t}
       />
 
       <div className="flex flex-col md:flex-row flex-grow min-h-0 overflow-hidden">
@@ -97,7 +95,6 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
           onChange={(val) => setScenario((prev) => ({ ...prev, systemInstruction: val }))}
           onExpand={() => setIsSystemPromptExpanded(true)}
           readOnly={readOnly}
-          t={t}
         />
 
         <TextEditorModal
@@ -107,7 +104,6 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
           value={scenario.systemInstruction || ''}
           onChange={(val) => setScenario((prev) => ({ ...prev, systemInstruction: val }))}
           placeholder={t('scenarios_system_prompt_placeholder')}
-          t={t}
           readOnly={readOnly}
         />
 
@@ -120,7 +116,6 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
             onDeleteMessage={handleDeleteMessage}
             onMoveMessage={handleMoveMessage}
             readOnly={readOnly}
-            t={t}
           />
 
           <ScenarioMessageInput
@@ -131,7 +126,6 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
             onAdd={handleAddMessage}
             inputRef={inputRef}
             readOnly={readOnly}
-            t={t}
           />
         </div>
       </div>

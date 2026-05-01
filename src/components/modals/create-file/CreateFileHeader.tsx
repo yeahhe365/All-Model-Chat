@@ -1,6 +1,6 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { FileText, Download, Loader2, Edit3, Eye, X } from 'lucide-react';
-import { translations } from '../../../utils/translations';
 
 interface CreateFileHeaderProps {
   isEditing: boolean;
@@ -11,7 +11,6 @@ interface CreateFileHeaderProps {
   setIsPreviewMode: (mode: boolean) => void;
   handleDownloadPdf: () => void;
   onClose: () => void;
-  t: (key: keyof typeof translations | string) => string;
 }
 
 export const CreateFileHeader: React.FC<CreateFileHeaderProps> = ({
@@ -23,8 +22,8 @@ export const CreateFileHeader: React.FC<CreateFileHeaderProps> = ({
   setIsPreviewMode,
   handleDownloadPdf,
   onClose,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-[var(--theme-bg-secondary)]/50 flex-shrink-0 z-10">
       <h2 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">

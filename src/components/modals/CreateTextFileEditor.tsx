@@ -10,7 +10,6 @@ interface CreateTextFileEditorProps {
   onCancel: () => void;
   isProcessing: boolean;
   isLoading: boolean;
-  t: (key: string) => string;
   initialContent?: string;
   initialFilename?: string;
   themeId: string;
@@ -23,7 +22,6 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
     onCancel,
     isProcessing,
     isLoading,
-    t,
     initialContent = '',
     initialFilename = '',
     themeId,
@@ -71,7 +69,6 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           setIsPreviewMode={setIsPreviewMode}
           handleDownloadPdf={handleDownloadPdf}
           onClose={onCancel}
-          t={t}
         />
       }
       body={
@@ -85,7 +82,6 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           handlePaste={handlePaste}
           handleDrop={handleDrop}
           themeId={themeId}
-          t={t}
         />
       }
       footer={
@@ -100,7 +96,6 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           isLoading={isLoading}
           isExportingPdf={isExportingPdf}
           hasContent={!!textContent.trim()}
-          t={t}
         />
       }
     />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { AudioLines } from 'lucide-react';
 import { Select } from '../../../shared/Select';
 import { AVAILABLE_TTS_VOICES } from '../../../../constants/voiceOptions';
@@ -6,10 +7,10 @@ import { AVAILABLE_TTS_VOICES } from '../../../../constants/voiceOptions';
 interface TtsVoiceSelectorProps {
   ttsVoice: string;
   setTtsVoice: (voice: string) => void;
-  t: (key: string) => string;
 }
 
-export const TtsVoiceSelector: React.FC<TtsVoiceSelectorProps> = ({ ttsVoice, setTtsVoice, t }) => {
+export const TtsVoiceSelector: React.FC<TtsVoiceSelectorProps> = ({ ttsVoice, setTtsVoice }) => {
+  const { t } = useI18n();
   return (
     <Select
       id="tts-voice-selector"

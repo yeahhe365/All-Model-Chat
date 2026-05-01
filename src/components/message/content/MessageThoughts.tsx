@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { ChatMessage, AppSettings, SideViewContent, UploadedFile } from '../../../types';
-import { useI18n } from '../../../contexts/I18nContext';
 import { getKeyForRequest } from '../../../utils/apiUtils';
 import { parseThoughtProcess } from '../../../utils/chat/parsing';
 import { geminiServiceInstance } from '../../../services/geminiService';
@@ -37,7 +36,6 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
   isGraphvizRenderingEnabled,
   onOpenSidePanel,
 }) => {
-  const { t } = useI18n();
   const { content, thoughts, isLoading, role, id: messageId } = message;
 
   // Subscribe to live thoughts if loading to check visibility
@@ -126,7 +124,6 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
             thinkingTimeMs={message.thinkingTimeMs}
             generationStartTime={message.generationStartTime}
             firstTokenTimeMs={message.firstTokenTimeMs}
-            t={t}
             isExpanded={isExpanded}
           />
 
@@ -140,7 +137,6 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
                 isCopied={isCopied}
                 onTranslate={handleTranslateThoughts}
                 onCopy={handleCopyThoughts}
-                t={t}
               />
             </div>
           </div>
@@ -159,7 +155,6 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
               expandCodeBlocksByDefault={expandCodeBlocksByDefault}
               isMermaidRenderingEnabled={isMermaidRenderingEnabled}
               isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-              t={t}
               themeId={themeId}
               onOpenSidePanel={onOpenSidePanel}
             />

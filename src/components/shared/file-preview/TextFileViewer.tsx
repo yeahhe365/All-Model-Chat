@@ -201,7 +201,6 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
               isMermaidRenderingEnabled={false}
               isGraphvizRenderingEnabled={false}
               allowHtml={true}
-              t={t}
               themeId={themeId}
               interactiveMode="disabled"
               fallbackMode="raw"

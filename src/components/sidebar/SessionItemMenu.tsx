@@ -1,7 +1,7 @@
 import React from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { SquarePen, Trash2, Pin, PinOff, Download, Copy } from 'lucide-react';
 import { SavedChatSession } from '../../types';
-import { translations } from '../../utils/translations';
 import {
   MENU_ITEM_BUTTON_CLASS,
   MENU_ITEM_DEFAULT_STATE_CLASS,
@@ -16,7 +16,6 @@ interface SessionItemMenuProps {
   onDuplicate: () => void;
   onExport: () => void;
   onDelete: () => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const SessionItemMenu: React.FC<SessionItemMenuProps> = ({
@@ -27,8 +26,9 @@ export const SessionItemMenu: React.FC<SessionItemMenuProps> = ({
   onDuplicate,
   onExport,
   onDelete,
-  t,
-}) => (
+}) => {
+  const { t } = useI18n();
+  return (
   <div
     ref={menuRef}
     className="absolute right-3 top-9 z-10 w-40 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg py-1"
@@ -55,3 +55,4 @@ export const SessionItemMenu: React.FC<SessionItemMenuProps> = ({
     </button>
   </div>
 );
+};

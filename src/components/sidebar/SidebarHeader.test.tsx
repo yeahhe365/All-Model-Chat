@@ -1,15 +1,11 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { translations } from '../../utils/translations';
 import { SidebarHeader } from './SidebarHeader';
 
 describe('SidebarHeader', () => {
   let container: HTMLDivElement;
   let root: Root;
-
-  const t = (key: keyof typeof translations) => String(key);
-
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -26,7 +22,7 @@ describe('SidebarHeader', () => {
 
   it('renders the sidebar logo from the PNG asset', () => {
     act(() => {
-      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="pearl" />);
+      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="pearl" />);
     });
 
     const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="AMC WebUI"]');
@@ -37,7 +33,7 @@ describe('SidebarHeader', () => {
 
   it('uses the dark sidebar logo for the onyx theme', () => {
     act(() => {
-      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="onyx" />);
+      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="onyx" />);
     });
 
     const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="AMC WebUI"]');
@@ -51,7 +47,7 @@ describe('SidebarHeader', () => {
     } as any;
 
     act(() => {
-      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} t={t} themeId="pearl" />);
+      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="pearl" />);
     });
 
     const logo = container.querySelector('a[href="https://deploy.example/amc"] img[alt="AMC WebUI"]');

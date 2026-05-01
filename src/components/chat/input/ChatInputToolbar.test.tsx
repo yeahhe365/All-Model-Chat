@@ -38,7 +38,6 @@ const baseProps: ChatInputToolbarProps = {
   onCancelAddUrl: vi.fn(),
   isAddingByUrl: false,
   isLoading: false,
-  t: (key: string) => key,
 };
 
 describe('ChatInputToolbar', () => {

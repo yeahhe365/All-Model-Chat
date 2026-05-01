@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { ChevronDown, Keyboard } from 'lucide-react';
 import { ModelOption } from '../../../../types';
 import { getQuickSwitchModelIds, getTabCycleModelIds } from '../../../../utils/modelCatalog';
@@ -7,15 +8,14 @@ interface TabCycleModelsCardProps {
   availableModels: ModelOption[];
   configuredIds?: string[];
   onChange: (modelIds: string[] | undefined) => void;
-  t: (key: string) => string;
 }
 
 export const TabCycleModelsCard: React.FC<TabCycleModelsCardProps> = ({
   availableModels,
   configuredIds,
   onChange,
-  t,
 }) => {
+  const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const orderedCycleModels = useMemo(() => {

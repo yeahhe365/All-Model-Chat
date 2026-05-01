@@ -38,7 +38,6 @@ describe('GroundedResponse', () => {
           onImageClick={() => undefined}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={() => undefined}
         />,
@@ -67,7 +66,6 @@ describe('GroundedResponse', () => {
           onImageClick={() => undefined}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={() => undefined}
         />,
@@ -109,7 +107,6 @@ describe('GroundedResponse', () => {
           onImageClick={() => undefined}
           isMermaidRenderingEnabled={false}
           isGraphvizRenderingEnabled={false}
-          t={(key) => key}
           themeId="pearl"
           onOpenSidePanel={() => undefined}
         />,

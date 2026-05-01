@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { UploadedFile, SideViewContent } from '../../types';
 import { LazyMarkdownRenderer } from './LazyMarkdownRenderer';
-import { translations } from '../../utils/translations';
 import { insertCitations, extractSources } from './grounded-response/utils';
 import { ContextUrls } from './grounded-response/ContextUrls';
 import { SearchSources } from './grounded-response/SearchSources';
@@ -18,7 +17,6 @@ interface GroundedResponseProps {
   onImageClick: (file: UploadedFile) => void;
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
-  t: (key: keyof typeof translations) => string;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
   files?: UploadedFile[];
@@ -165,7 +163,6 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
   onImageClick,
   isMermaidRenderingEnabled,
   isGraphvizRenderingEnabled,
-  t,
   themeId,
   onOpenSidePanel,
   files,
@@ -197,7 +194,6 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
           isMermaidRenderingEnabled={isMermaidRenderingEnabled}
           isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
           allowHtml={true}
-          t={t}
           themeId={themeId}
           onOpenSidePanel={onOpenSidePanel}
           files={files}

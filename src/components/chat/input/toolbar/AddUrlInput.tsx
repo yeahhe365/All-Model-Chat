@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { IconYoutube } from '../../../icons/CustomIcons';
 import { InputBar } from './InputBar';
 
@@ -9,7 +10,6 @@ interface AddUrlInputProps {
   onCancel: () => void;
   isAddingByUrl: boolean;
   isLoading: boolean;
-  t: (key: string) => string;
 }
 
 export const AddUrlInput: React.FC<AddUrlInputProps> = ({
@@ -19,8 +19,8 @@ export const AddUrlInput: React.FC<AddUrlInputProps> = ({
   onCancel,
   isAddingByUrl,
   isLoading,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <InputBar
       value={urlInput}

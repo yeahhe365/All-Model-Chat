@@ -1,4 +1,3 @@
-import { translations } from '../../utils/translations';
 import type { PwaInstallState } from '../../pwa/install';
 
 export interface SettingsTransferProps {
@@ -10,5 +9,4 @@ export interface SettingsTransferProps {
   onExportHistory: () => void;
   onImportScenarios: (file: File) => void;
   onExportScenarios: () => void;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }

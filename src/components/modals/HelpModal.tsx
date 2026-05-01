@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { Modal } from '../shared/Modal';
 import { X, HelpCircle, Search, Check, Copy } from 'lucide-react';
-import { translations } from '../../utils/translations';
 import { CommandIcon } from '../icons/CommandIcon';
 import { CommandInfo } from '../../types';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
@@ -14,10 +14,10 @@ interface HelpModalProps {
   isOpen: boolean;
   onClose: () => void;
   commands: CommandInfo[];
-  t: (key: keyof typeof translations) => string;
 }
 
-export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands, t }) => {
+export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands }) => {
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const { copyToClipboard } = useCopyToClipboard();

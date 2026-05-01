@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { ChevronDown, Shield } from 'lucide-react';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID, DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/appConstants';
 import { AppSettings, ModelOption } from '../../../types';
-import { translations } from '../../../utils/translations';
 import { ModelSelector } from '../controls/ModelSelector';
 import { CanvasSection } from './CanvasSection';
 import { GenerationSection } from './GenerationSection';
@@ -18,7 +18,6 @@ interface ModelsSectionProps {
   isOpenAICompatibleMode?: boolean;
   currentSettings: AppSettings;
   onUpdateSettings: (settings: Partial<AppSettings>) => void;
-  t: (key: keyof typeof translations | string) => string;
 }
 
 export const ModelsSection: React.FC<ModelsSectionProps> = ({
@@ -30,8 +29,8 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
   isOpenAICompatibleMode = false,
   currentSettings,
   onUpdateSettings,
-  t,
 }) => {
+  const { t } = useI18n();
   const [isSafetyExpanded, setIsSafetyExpanded] = useState(false);
 
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
@@ -73,7 +72,6 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
         setIsRawModeEnabled={(value) => updateSetting('isRawModeEnabled', value)}
         hideThinkingInContext={currentSettings.hideThinkingInContext ?? false}
         setHideThinkingInContext={(value) => updateSetting('hideThinkingInContext', value)}
-        t={t}
       />
 
       {!isOpenAICompatibleMode && (
@@ -83,7 +81,6 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
             setAutoCanvasVisualization={(value) => updateSetting('autoCanvasVisualization', value)}
             autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
             setAutoCanvasModelId={(value) => updateSetting('autoCanvasModelId', value)}
-            t={t}
           />
 
           <LanguageVoiceSection
@@ -100,7 +97,6 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
             }
             setThoughtTranslationModelId={(value) => updateSetting('thoughtTranslationModelId', value)}
             availableModels={availableModels}
-            t={t}
           />
 
           <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)]/30 p-4">
@@ -136,7 +132,6 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
                 <SafetySection
                   safetySettings={currentSettings.safetySettings}
                   setSafetySettings={(safetySettings) => onUpdateSettings({ safetySettings })}
-                  t={t}
                   showIntro={false}
                 />
               </div>

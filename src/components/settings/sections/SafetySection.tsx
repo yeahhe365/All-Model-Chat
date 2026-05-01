@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SafetySetting, HarmCategory, HarmBlockThreshold } from '../../../types/settings';
-import { translations } from '../../../utils/translations';
 import { Shield, Info } from 'lucide-react';
 import { DEFAULT_SAFETY_SETTINGS } from '../../../constants/appConstants';
 
 interface SafetySectionProps {
   safetySettings: SafetySetting[] | undefined;
   setSafetySettings: (settings: SafetySetting[]) => void;
-  t: (key: keyof typeof translations | string) => string;
   showIntro?: boolean;
 }
 
@@ -89,9 +88,9 @@ const buildSliderMap = (settings: SafetySetting[] | undefined): SliderValueMap =
 export const SafetySection: React.FC<SafetySectionProps> = ({
   safetySettings,
   setSafetySettings,
-  t,
   showIntro = true,
 }) => {
+  const { t } = useI18n();
   const normalizedSettings = useMemo(() => normalizeSettings(safetySettings), [safetySettings]);
 
   // Local state to ensure slider updates immediately

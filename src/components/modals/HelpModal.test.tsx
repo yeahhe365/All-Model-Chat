@@ -28,33 +28,28 @@ describe('HelpModal', () => {
   });
 
   it('localizes the search, copy, and empty-state text', async () => {
-    const t = (key: string) => key;
-
     await act(async () => {
-      root.render(<HelpModal isOpen onClose={vi.fn()} commands={[]} t={t as any} />);
+      root.render(<HelpModal isOpen onClose={vi.fn()} commands={[]} />);
     });
 
     const searchInput = document.querySelector('input');
-    expect(searchInput?.getAttribute('placeholder')).toBe('helpModal_search_placeholder');
-    expect(document.body.textContent).toContain('helpModal_no_results');
-    expect(document.body.textContent).toContain('helpModal_tip');
+    expect(searchInput?.getAttribute('placeholder')).toBe('Search commands...');
+    expect(document.body.textContent).toContain('No commands found');
+    expect(document.body.textContent).toContain('Tip');
   });
 
   it('adds visible keyboard focus styles to close and copy actions', async () => {
-    const t = (key: string) => key;
-
     await act(async () => {
       root.render(
         <HelpModal
           isOpen
           onClose={vi.fn()}
           commands={[{ name: '/canvas', description: 'Toggle canvas', icon: 'canvas' } as any]}
-          t={t as any}
         />,
       );
     });
 
-    const closeButton = document.body.querySelector('button[aria-label="helpModal_close_aria"]');
+    const closeButton = document.body.querySelector('button[aria-label="Close help modal"]');
     const copyButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('/canvas'),
     );

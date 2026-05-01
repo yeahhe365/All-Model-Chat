@@ -1,6 +1,6 @@
 import React from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { Search, X } from 'lucide-react';
-import { translations } from '../../utils/translations';
 import { IconNewChat, IconNewGroup } from '../icons/CustomIcons';
 
 interface SidebarActionsProps {
@@ -12,7 +12,6 @@ interface SidebarActionsProps {
   searchInputRef?: React.RefObject<HTMLInputElement>;
   setIsSearching: (isSearching: boolean) => void;
   setSearchQuery: (query: string) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
   newChatShortcut?: string;
 }
 
@@ -25,9 +24,9 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
   searchInputRef,
   setIsSearching,
   setSearchQuery,
-  t,
   newChatShortcut,
 }) => {
+  const { t } = useI18n();
   const closeSearch = () => {
     setIsSearching(false);
     setSearchQuery('');

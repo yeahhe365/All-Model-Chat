@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Wand2 } from 'lucide-react';
 import { AVAILABLE_CANVAS_MODELS } from '../../../constants/settingsModelOptions';
 import { ToggleItem } from '../../shared/ToggleItem';
@@ -9,7 +10,6 @@ interface CanvasSectionProps {
   setAutoCanvasVisualization: (value: boolean) => void;
   autoCanvasModelId: string;
   setAutoCanvasModelId: (value: string) => void;
-  t: (key: string) => string;
 }
 
 export const CanvasSection: React.FC<CanvasSectionProps> = ({
@@ -17,8 +17,9 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({
   setAutoCanvasVisualization,
   autoCanvasModelId,
   setAutoCanvasModelId,
-  t,
-}) => (
+}) => {
+  const { t } = useI18n();
+  return (
   <div className="max-w-3xl mx-auto space-y-4">
     <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
       <Wand2 size={14} strokeWidth={1.5} />
@@ -54,3 +55,4 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({
     </div>
   </div>
 );
+};

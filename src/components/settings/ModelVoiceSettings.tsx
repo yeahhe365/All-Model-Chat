@@ -21,7 +21,6 @@ interface ModelVoiceSettingsProps {
   setTranscriptionModelId: (value: string) => void;
   ttsVoice: string;
   setTtsVoice: (value: string) => void;
-  t: (key: string) => string;
   systemInstruction: string;
   setSystemInstruction: (value: string) => void;
   thinkingBudget: number;
@@ -64,12 +63,11 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     setTopP,
     topK,
     setTopK,
-    t,
     setAvailableModels,
     mediaResolution,
     setMediaResolution,
   } = props;
-  const { t: i18n } = useI18n();
+  const { t } = useI18n();
 
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
   const skipNextPromptBlurCommitRef = useRef(false);
@@ -173,7 +171,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
           setThinkingLevel={setThinkingLevel}
           showThoughts={showThoughts}
           setShowThoughts={setShowThoughts}
-          t={t}
         />
 
         <div className="pt-2">
@@ -190,7 +187,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                     : 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)]'
                 }`}
               >
-                {isSystemPromptSet ? i18n('settingsSystemPromptEnabled') : i18n('settingsSystemPromptUnset')}
+                {isSystemPromptSet ? t('settingsSystemPromptEnabled') : t('settingsSystemPromptUnset')}
               </span>
             </label>
             <div className="flex items-center gap-1">
@@ -199,8 +196,8 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                   type="button"
                   onClick={handleClearPrompt}
                   className={`${SMALL_ICON_BUTTON_CLASS} flex h-8 w-8 items-center justify-center hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10`}
-                  title={i18n('settingsClearSystemPrompt')}
-                  aria-label={i18n('settingsClearSystemPrompt')}
+                  title={t('settingsClearSystemPrompt')}
+                  aria-label={t('settingsClearSystemPrompt')}
                 >
                   <X size={14} />
                 </button>
@@ -209,8 +206,8 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                 type="button"
                 onClick={handleOpenExpand}
                 className={`${SMALL_ICON_BUTTON_CLASS} flex h-8 w-8 items-center justify-center hover:text-[var(--theme-text-link)]`}
-                title={i18n('settingsExpandSystemPromptEditor')}
-                aria-label={i18n('settingsExpandSystemPromptEditor')}
+                title={t('settingsExpandSystemPromptEditor')}
+                aria-label={t('settingsExpandSystemPromptEditor')}
               >
                 <SquarePen size={14} />
               </button>
@@ -224,7 +221,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
             rows={3}
             className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[112px] custom-scrollbar`}
             placeholder={t('chatBehavior_systemPrompt_placeholder')}
-            aria-label={i18n('settingsSystemPromptAria')}
+            aria-label={t('settingsSystemPromptAria')}
           />
         </div>
 
@@ -236,7 +233,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
           onChange={setSystemInstruction}
           placeholder={t('chatBehavior_systemPrompt_placeholder')}
           confirmLabel={t('settingsSaveAndClose')}
-          t={t}
         />
 
         {/* Parameters Sliders */}
@@ -361,7 +357,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
         setTranscriptionModelId={setTranscriptionModelId}
         ttsVoice={ttsVoice}
         setTtsVoice={setTtsVoice}
-        t={t}
       />
     </div>
   );

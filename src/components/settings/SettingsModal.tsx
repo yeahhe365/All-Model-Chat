@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { AppSettings, ChatSettings, ModelOption } from '../../types';
 import { Modal } from '../shared/Modal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
@@ -38,7 +39,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onOpenLogViewer,
   onInstallPwa,
   installState,
-  t,
   onImportSettings,
   onExportSettings,
   onImportHistory,
@@ -47,6 +47,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportScenarios,
   setAvailableModels,
 }) => {
+  const { t } = useI18n();
   const [liveSettings, setLiveSettings] = useState(currentSettings);
   const [liveCurrentChatSettings, setLiveCurrentChatSettings] = useState(currentChatSettings);
   const [settingsScope, setSettingsScope] = useState<SettingsScope>('defaults');
@@ -152,7 +153,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         enterAnimationClassName=""
         contentClassName="w-full h-[100dvh] sm:h-[85vh] sm:max-h-[800px] sm:w-[90vw] max-w-6xl sm:rounded-xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-[var(--theme-bg-primary)] transition-all"
       >
-        <SettingsSidebar tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} onClose={onClose} t={t} />
+        <SettingsSidebar tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} onClose={onClose} />
 
         {/* Content Area */}
         <main className="flex-1 flex flex-col min-w-0 bg-[var(--theme-bg-primary)] relative overflow-hidden">
@@ -220,7 +221,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onExportHistory={onExportHistory}
               onImportScenarios={onImportScenarios}
               onExportScenarios={onExportScenarios}
-              t={t}
             />
           </div>
         </main>

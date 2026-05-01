@@ -7,6 +7,8 @@ import { AppSettings, ChatMessage, ChatSettings, UploadedFile } from '../../type
 import { I18nProvider } from '../../contexts/I18nContext';
 import { ChatAreaProvider, ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
 
+const messagePropsSpy = vi.fn();
+
 interface VirtuosoMockProps<T> {
   data: T[];
   itemContent: (index: number, item: T) => ReactNode;
@@ -30,11 +32,19 @@ vi.mock('react-virtuoso', () => ({
 }));
 
 vi.mock('../message/Message', () => ({
-  Message: ({ message, onImageClick }: MessageMockProps) => (
-    <button type="button" data-testid={`open-preview-${message.id}`} onClick={() => onImageClick(message.files![0])}>
-      Open preview
-    </button>
-  ),
+  Message: (props: MessageMockProps) => {
+    messagePropsSpy(props);
+
+    return (
+      <button
+        type="button"
+        data-testid={`open-preview-${props.message.id}`}
+        onClick={() => props.onImageClick(props.message.files![0])}
+      >
+        Open preview
+      </button>
+    );
+  },
 }));
 
 vi.mock('../modals/FilePreviewModal', () => ({
@@ -111,17 +121,11 @@ describe('MessageList image preview', () => {
       onRetryMessage: () => {},
       onUpdateMessageFile: () => {},
       showThoughts: false,
-      themeId: 'pearl',
-      baseFontSize: 14,
-      expandCodeBlocksByDefault: false,
-      isMermaidRenderingEnabled: false,
-      isGraphvizRenderingEnabled: false,
       onGenerateCanvas: () => {},
       onContinueGeneration: () => {},
       onForkMessage: () => {},
       onQuickTTS: async () => null,
       chatInputHeight: 0,
-      appSettings: { showWelcomeSuggestions: true } as AppSettings,
       currentModelId: 'gemini-2.5-flash',
       onOpenSidePanel: () => {},
       onQuote: () => {},
@@ -271,5 +275,27 @@ describe('MessageList image preview', () => {
 
     expect(document.querySelector('[data-testid="markdown-preview-modal"]')).toBeInTheDocument();
     expect(document.querySelector('[data-testid="file-preview-modal"]')).not.toBeInTheDocument();
+  });
+
+  it('does not pass global display settings through MessageList to Message', () => {
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ChatAreaProvider value={createProviderValue()}>
+            <MessageList />
+          </ChatAreaProvider>
+        </I18nProvider>,
+      );
+    });
+
+    const props = messagePropsSpy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
+
+    expect(props).toBeDefined();
+    expect(props).not.toHaveProperty('themeId');
+    expect(props).not.toHaveProperty('baseFontSize');
+    expect(props).not.toHaveProperty('expandCodeBlocksByDefault');
+    expect(props).not.toHaveProperty('isMermaidRenderingEnabled');
+    expect(props).not.toHaveProperty('isGraphvizRenderingEnabled');
+    expect(props).not.toHaveProperty('appSettings');
   });
 });

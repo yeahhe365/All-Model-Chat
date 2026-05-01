@@ -216,6 +216,44 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
+  it('excludes non-selectable UI chrome from formatted and plain selection text', () => {
+    const host = document.createElement('div');
+    const chrome = document.createElement('span');
+    chrome.className = 'select-none';
+    chrome.textContent = 'Python Copy';
+    const strong = document.createElement('strong');
+    strong.textContent = 'hello world';
+    host.append(chrome, strong);
+    document.body.appendChild(host);
+
+    const toolbarRef = createToolbarRef();
+    const { result, unmount } = renderHook(() =>
+      useSelectionPosition({
+        containerRef: host as any,
+        isAudioActive: false,
+        toolbarRef,
+        preserveFormattingOnCopy: false,
+      }),
+    );
+
+    const range = document.createRange();
+    range.selectNodeContents(host);
+    range.getBoundingClientRect = () => createRect();
+
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    act(() => {
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+
+    expect(result.current.selectedText).toBe('**hello world**');
+    expect(result.current.selectedCopyText).toBe('hello world');
+
+    unmount();
+  });
+
   it('notifies when global copy uses the selected markdown text', () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');

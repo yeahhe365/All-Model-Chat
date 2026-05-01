@@ -23,7 +23,7 @@ describe('ThinkingHeader', () => {
 
   it('renders the loading spinner without accent background chrome', async () => {
     await act(async () => {
-      root.render(<ThinkingHeader isLoading lastThought={null} t={(key) => key} isExpanded={false} />);
+      root.render(<ThinkingHeader isLoading lastThought={null} isExpanded={false} />);
     });
 
     const spinnerWrapper = container.querySelector('svg')?.parentElement;

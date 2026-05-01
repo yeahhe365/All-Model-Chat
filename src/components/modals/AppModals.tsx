@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
 import type { LogViewerProps } from '../log-viewer/LogViewer';
 import type { PwaInstallState } from '../../pwa/install';
 
@@ -63,7 +62,6 @@ interface AppModalsProps {
 }
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {
-  const { t } = useI18n();
   const [logViewerState, setLogViewerState] = useState<Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>>({
     initialTab: 'console',
     initialUsageTab: 'overview',
@@ -149,7 +147,6 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
             onExportHistory={handleExportHistory}
             onImportScenarios={handleImportAllScenarios}
             onExportScenarios={handleExportAllScenarios}
-            t={t}
             setAvailableModels={setAvailableModels}
           />
         </Suspense>
@@ -162,7 +159,6 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
             savedScenarios={savedScenarios}
             onSaveAllScenarios={handleSaveAllScenarios}
             onLoadScenario={handleLoadPreloadedScenario}
-            t={t}
           />
         </Suspense>
       )}

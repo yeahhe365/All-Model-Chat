@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Languages, Loader2, ClipboardCopy, Check } from 'lucide-react';
 
 interface ThinkingActionsProps {
@@ -8,7 +9,6 @@ interface ThinkingActionsProps {
   isCopied: boolean;
   onTranslate: (e: React.MouseEvent) => void;
   onCopy: (e: React.MouseEvent) => void;
-  t: (key: string, fallback?: string) => string;
 }
 
 export const ThinkingActions: React.FC<ThinkingActionsProps> = ({
@@ -18,8 +18,8 @@ export const ThinkingActions: React.FC<ThinkingActionsProps> = ({
   isCopied,
   onTranslate,
   onCopy,
-  t,
 }) => {
+  const { t } = useI18n();
   if (!isExpanded) return null;
 
   return (

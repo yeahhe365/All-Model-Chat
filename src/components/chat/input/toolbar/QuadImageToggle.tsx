@@ -1,13 +1,14 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { LayoutGrid } from 'lucide-react';
 
 interface QuadImageToggleProps {
   enabled: boolean;
   onToggle: () => void;
-  t: (key: string) => string;
 }
 
-export const QuadImageToggle: React.FC<QuadImageToggleProps> = ({ enabled, onToggle, t }) => {
+export const QuadImageToggle: React.FC<QuadImageToggleProps> = ({ enabled, onToggle }) => {
+  const { t } = useI18n();
   return (
     <button
       onClick={onToggle}

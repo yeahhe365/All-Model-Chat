@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { SavedScenario } from '../../types';
 import { X, Plus, Upload, Download, ArrowLeft } from 'lucide-react';
-import { translations } from '../../utils/translations';
 import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
 import { ScenarioList } from './ScenarioList';
@@ -14,7 +14,6 @@ interface PreloadedMessagesModalProps {
   savedScenarios: SavedScenario[];
   onSaveAllScenarios: (scenarios: SavedScenario[]) => void;
   onLoadScenario: (scenario: SavedScenario) => void;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
@@ -23,8 +22,8 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   savedScenarios,
   onSaveAllScenarios,
   onLoadScenario,
-  t,
 }) => {
+  const { t } = useI18n();
   const {
     scenarios,
     view,
@@ -201,14 +200,12 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
               onDuplicate={actions.handleDuplicateScenario}
               onExport={actions.handleExportSingleScenario}
               onView={actions.handleStartEdit}
-              t={t}
             />
           ) : (
             <ScenarioEditor
               initialScenario={editingScenario}
               onSave={actions.handleSaveScenario}
               onCancel={actions.handleCancelEdit}
-              t={t}
               readOnly={!!isSystemScenario}
             />
           )}

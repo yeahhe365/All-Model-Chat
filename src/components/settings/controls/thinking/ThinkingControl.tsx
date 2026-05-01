@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
@@ -15,7 +16,6 @@ interface ThinkingControlProps {
   setThinkingLevel?: (value: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
-  t: (key: string) => string;
 }
 
 type ThinkingLevelOption = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
@@ -28,8 +28,8 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   setThinkingLevel,
   showThoughts,
   setShowThoughts,
-  t,
 }) => {
+  const { t } = useI18n();
   const isGemini3 = isGemini3Model(modelId);
   const capabilities = getModelCapabilities(modelId);
   const supportsThinkingLevel = capabilities.supportsThinkingLevel;
@@ -204,7 +204,6 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             onModeChange={handleModeChange}
             isGemini3={isGemini3}
             canDisableThinking={canDisableThinking}
-            t={t}
           />
         )}
 

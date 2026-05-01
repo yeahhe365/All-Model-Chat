@@ -2,7 +2,6 @@ import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ModelOption } from '../../types';
-import { getTranslator } from '../../utils/translations';
 import { ModelPicker } from './ModelPicker';
 
 const renderPicker = ({
@@ -18,7 +17,6 @@ const renderPicker = ({
     models={models}
     selectedId={selectedId}
     onSelect={onSelect}
-    t={getTranslator('en')}
     renderTrigger={({ isOpen, setIsOpen, selectedModel }) => (
       <button
         type="button"

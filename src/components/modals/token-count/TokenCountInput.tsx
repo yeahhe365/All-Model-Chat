@@ -1,12 +1,13 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface TokenCountInputProps {
   text: string;
   onChange: (text: string) => void;
-  t: (key: string) => string;
 }
 
-export const TokenCountInput: React.FC<TokenCountInputProps> = ({ text, onChange, t }) => {
+export const TokenCountInput: React.FC<TokenCountInputProps> = ({ text, onChange }) => {
+  const { t } = useI18n();
   return (
     <div className="space-y-2 flex-grow flex flex-col">
       <label className="text-xs font-bold uppercase text-[var(--theme-text-tertiary)] tracking-wider">

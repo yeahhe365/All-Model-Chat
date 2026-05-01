@@ -26,11 +26,6 @@ interface ChatAreaMessageListContextValue {
     updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution },
   ) => void;
   showThoughts: boolean;
-  themeId: string;
-  baseFontSize: number;
-  expandCodeBlocksByDefault: boolean;
-  isMermaidRenderingEnabled: boolean;
-  isGraphvizRenderingEnabled: boolean;
   onSuggestionClick?: (suggestion: string) => void;
   onOrganizeInfoClick?: (suggestion: string) => void;
   onFollowUpSuggestionClick?: (suggestion: string) => void;
@@ -39,7 +34,6 @@ interface ChatAreaMessageListContextValue {
   onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
   chatInputHeight: number;
-  appSettings: AppSettings;
   currentModelId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
   onQuote: (text: string) => void;

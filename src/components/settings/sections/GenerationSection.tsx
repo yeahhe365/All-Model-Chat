@@ -36,7 +36,6 @@ interface GenerationSectionProps {
   setIsRawModeEnabled: (value: boolean) => void;
   hideThinkingInContext: boolean;
   setHideThinkingInContext: (value: boolean) => void;
-  t: (key: string) => string;
 }
 
 export const GenerationSection: React.FC<GenerationSectionProps> = ({
@@ -64,9 +63,8 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
   setIsRawModeEnabled,
   hideThinkingInContext,
   setHideThinkingInContext,
-  t,
 }) => {
-  const { t: i18n } = useI18n();
+  const { t } = useI18n();
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
   const [localPrompt, setLocalPrompt] = useState(systemInstruction);
   const skipNextPromptBlurCommitRef = useRef(false);
@@ -111,7 +109,6 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
           setThinkingLevel={setThinkingLevel}
           showThoughts={showThoughts}
           setShowThoughts={setShowThoughts}
-          t={t}
         />
       )}
 
@@ -129,7 +126,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
                   : 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)]'
               }`}
             >
-              {isSystemPromptSet ? i18n('settingsSystemPromptEnabled') : i18n('settingsSystemPromptUnset')}
+              {isSystemPromptSet ? t('settingsSystemPromptEnabled') : t('settingsSystemPromptUnset')}
             </span>
           </label>
           <div className="flex items-center gap-1">
@@ -138,8 +135,8 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
                 type="button"
                 onClick={handleClearPrompt}
                 className={`${SMALL_ICON_BUTTON_CLASS} flex h-8 w-8 items-center justify-center hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10`}
-                title={i18n('settingsClearSystemPrompt')}
-                aria-label={i18n('settingsClearSystemPrompt')}
+                title={t('settingsClearSystemPrompt')}
+                aria-label={t('settingsClearSystemPrompt')}
               >
                 <X size={14} />
               </button>
@@ -151,8 +148,8 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
               }}
               onClick={handleOpenExpand}
               className={`${SMALL_ICON_BUTTON_CLASS} flex h-8 w-8 items-center justify-center hover:text-[var(--theme-text-link)]`}
-              title={i18n('settingsExpandSystemPromptEditor')}
-              aria-label={i18n('settingsExpandSystemPromptEditor')}
+              title={t('settingsExpandSystemPromptEditor')}
+              aria-label={t('settingsExpandSystemPromptEditor')}
             >
               <SquarePen size={14} />
             </button>
@@ -172,7 +169,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
           rows={3}
           className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[112px] custom-scrollbar`}
           placeholder={t('chatBehavior_systemPrompt_placeholder')}
-          aria-label={i18n('settingsSystemPromptAria')}
+          aria-label={t('settingsSystemPromptAria')}
         />
       </div>
 
@@ -184,7 +181,6 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
         onChange={setSystemInstruction}
         placeholder={t('chatBehavior_systemPrompt_placeholder')}
         confirmLabel={t('settingsSaveAndClose')}
-        t={t}
       />
 
       <div className="pt-4 space-y-5">

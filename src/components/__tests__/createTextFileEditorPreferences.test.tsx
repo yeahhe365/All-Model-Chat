@@ -36,7 +36,6 @@ describe('CreateTextFileEditor extension preference', () => {
             onCancel={vi.fn()}
             isProcessing={false}
             isLoading={false}
-            t={(key) => key}
             themeId="pearl"
             {...props}
           />

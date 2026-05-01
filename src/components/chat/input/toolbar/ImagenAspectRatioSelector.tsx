@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Sparkles } from 'lucide-react';
 import { Select } from '../../../shared/Select';
 
@@ -62,16 +63,15 @@ const defaultAspectRatios = ['1:1', '16:9', '9:16', '4:3', '3:4', '2:3', '3:2', 
 interface ImagenAspectRatioSelectorProps {
   aspectRatio: string;
   setAspectRatio: (ratio: string) => void;
-  t: (key: string) => string;
   supportedRatios?: string[];
 }
 
 export const ImagenAspectRatioSelector: React.FC<ImagenAspectRatioSelectorProps> = ({
   aspectRatio,
   setAspectRatio,
-  t,
   supportedRatios,
 }) => {
+  const { t } = useI18n();
   const ratios = supportedRatios || defaultAspectRatios;
 
   return (

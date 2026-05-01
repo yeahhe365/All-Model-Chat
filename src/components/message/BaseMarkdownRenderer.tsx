@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import ReactMarkdown from 'react-markdown';
 import type { PluggableList } from 'unified';
 import { CodeBlock } from './blocks/CodeBlock';
@@ -6,7 +7,6 @@ import { TableBlock } from './blocks/TableBlock';
 import { ToolResultBlock } from './blocks/ToolResultBlock';
 import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock';
 import { UploadedFile, SideViewContent } from '../../types';
-import { translations } from '../../utils/translations';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { InlineCode } from './code-block/InlineCode';
 
@@ -30,7 +30,6 @@ export interface MarkdownRendererProps {
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
   allowHtml?: boolean;
-  t: (key: keyof typeof translations) => string;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
   hideThinkingInContext?: boolean;
@@ -214,7 +213,6 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
     expandCodeBlocksByDefault,
     isMermaidRenderingEnabled,
     isGraphvizRenderingEnabled,
-    t,
     themeId,
     onOpenSidePanel,
     hideThinkingInContext,
@@ -225,6 +223,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
     remarkPlugins,
     rehypePlugins,
   }) => {
+    const { t } = useI18n();
     const isInteractive = interactiveMode !== 'disabled';
 
     const components = useMemo(
@@ -274,7 +273,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
             />
           );
         },
-        table: (props: MarkdownTableProps) => <TableBlock {...props} t={t} />,
+        table: (props: MarkdownTableProps) => <TableBlock {...props} />,
         a: (props: MarkdownAnchorProps) => {
           const { href, children, ...rest } = props;
           const isInternal = href && (href.startsWith('#') || href.startsWith('/'));
@@ -374,7 +373,6 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
               onOpenHtmlPreview={onOpenHtmlPreview}
               expandCodeBlocksByDefault={expandCodeBlocksByDefault}
               showPreviewControls={isInteractive}
-              t={t}
               onOpenSidePanel={onOpenSidePanel}
             >
               {codeElement || children}

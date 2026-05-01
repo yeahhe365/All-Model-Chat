@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Quote, Copy, Check, CornerRightDown, Volume2 } from 'lucide-react';
 import { IconGoogle } from '../../../icons/CustomIcons';
 import { translations } from '../../../../utils/translations';
@@ -20,8 +21,8 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
   onSearch,
   onTTS,
   isCopied,
-  t,
 }) => {
+  const { t } = useI18n();
   const quoteLabel = t ? t('quote') : 'Quote';
   const insertLabel = t ? t('fill_input') : 'Insert';
   const copyLabel = isCopied ? (t ? t('copied') : 'Copied') : t ? t('copy') : 'Copy';

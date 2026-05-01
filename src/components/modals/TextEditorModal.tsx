@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { X, Check } from 'lucide-react';
 import { TextEditorModalShell } from './TextEditorModalShell';
 import { FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '../../constants/appConstants';
@@ -10,7 +11,6 @@ interface TextEditorModalProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  t: (key: string, fallback?: string) => string;
   readOnly?: boolean;
   confirmLabel?: string;
 }
@@ -23,10 +23,10 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
   value,
   onChange,
   placeholder,
-  t,
   readOnly,
   confirmLabel,
 }) => {
+  const { t } = useI18n();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Use local state to decouple rendering from global app state during active typing

@@ -34,7 +34,6 @@ describe('CodeHeader', () => {
           onDownload={vi.fn()}
           onOpenSide={vi.fn()}
           onFullscreen={vi.fn()}
-          t={(key) => key}
           canRun
           isRunning={false}
           onRun={vi.fn()}
@@ -51,25 +50,26 @@ describe('CodeHeader', () => {
     expect(header?.className).toContain('border-b');
     expect(header?.className.split(/\s+/)).toContain('z-10');
     expect(header?.className.split(/\s+/)).not.toContain('z-30');
+    expect(header?.className.split(/\s+/)).toContain('select-none');
     expect(header?.className.split(/\s+/)).toContain('py-0');
     expect(toolbar).not.toBeNull();
     expect(toolbar?.className.split(/\s+/)).toContain('gap-0.5');
     expect(toolbar?.className).not.toContain('border');
     expect(container.querySelector('[title="Run Python Code"]')).not.toBeNull();
     expect(container.querySelector('[title="Open in Side Panel"]')).not.toBeNull();
-    expect(container.querySelector('[title="code_fullscreen_monitor"]')).not.toBeNull();
-    expect(container.querySelector('[title="code_fullscreen_modal"]')).not.toBeNull();
+    expect(container.querySelector('[title="Monitor Fullscreen"]')).not.toBeNull();
+    expect(container.querySelector('[title="Preview Overlay"]')).not.toBeNull();
     expect(container.querySelector('[title="Download PYTHON"]')).not.toBeNull();
-    expect(container.querySelector('[title="copy_button_title"]')).not.toBeNull();
+    expect(container.querySelector('[title="Copy content"]')).not.toBeNull();
     expect(container.querySelector('[title="Expand"]')).not.toBeNull();
-    expect((container.querySelector('[title="copy_button_title"]') as HTMLElement | null)?.className).toContain(
+    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain(
       '!min-h-10',
     );
-    expect((container.querySelector('[title="copy_button_title"]') as HTMLElement | null)?.className).toContain(
+    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain(
       '!min-w-10',
     );
-    expect(container.querySelector('[title="copy_button_title"] svg')?.getAttribute('width')).toBe('16');
-    expect(container.querySelector('[title="copy_button_title"] svg')?.getAttribute('height')).toBe('16');
+    expect(container.querySelector('[title="Copy content"] svg')?.getAttribute('width')).toBe('16');
+    expect(container.querySelector('[title="Copy content"] svg')?.getAttribute('height')).toBe('16');
   });
 
   it('shows the upgraded TSX language badge inside the header', () => {
@@ -86,7 +86,6 @@ describe('CodeHeader', () => {
           onDownload={vi.fn()}
           onOpenSide={vi.fn()}
           onFullscreen={vi.fn()}
-          t={(key) => key}
         />,
       );
     });

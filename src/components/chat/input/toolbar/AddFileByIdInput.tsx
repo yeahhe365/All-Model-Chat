@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Link } from 'lucide-react';
 import { InputBar } from './InputBar';
 
@@ -9,7 +10,6 @@ interface AddFileByIdInputProps {
   onCancel: () => void;
   isAddingById: boolean;
   isLoading: boolean;
-  t: (key: string) => string;
 }
 
 export const AddFileByIdInput: React.FC<AddFileByIdInputProps> = ({
@@ -19,8 +19,8 @@ export const AddFileByIdInput: React.FC<AddFileByIdInputProps> = ({
   onCancel,
   isAddingById,
   isLoading,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <InputBar
       value={fileIdInput}

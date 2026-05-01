@@ -1,5 +1,4 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
 import { AudioRecorder } from '../../modals/AudioRecorder';
 import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
 import { HelpModal } from '../../modals/HelpModal';
@@ -62,7 +61,6 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   ttsContext,
   setTtsContext,
 }) => {
-  const { t } = useI18n();
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen && !showTtsContextEditor) {
     return null;
   }
@@ -82,7 +80,6 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
           onCancel={onCreateTextFileCancel}
           isProcessing={isProcessingFile}
           isLoading={isLoading}
-          t={t as (key: string) => string}
           initialContent={initialContent}
           initialFilename={initialFilename}
           themeId={themeId}
@@ -90,7 +87,7 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
         />
       )}
       {isHelpModalOpen && (
-        <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />
+        <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} />
       )}
 
       {showTtsContextEditor && onCloseTtsContextEditor && setTtsContext && (
@@ -101,7 +98,6 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
           value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
           onChange={setTtsContext}
           placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}
-          t={t as (key: string) => string}
         />
       )}
     </>

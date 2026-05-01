@@ -2,7 +2,6 @@ import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import React from 'react';
-import { getTranslator } from '../../../utils/translations';
 import { HtmlPreviewContent } from './HtmlPreviewContent';
 
 describe('HtmlPreviewContent', () => {
@@ -31,7 +30,6 @@ describe('HtmlPreviewContent', () => {
           iframeRef={iframeRef}
           htmlContent="<html><body>Hello</body></html>"
           scale={1}
-          t={getTranslator('en')}
         />,
       );
     });

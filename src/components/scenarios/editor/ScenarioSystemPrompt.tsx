@@ -1,6 +1,6 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Bot, Maximize2 } from 'lucide-react';
-import { translations } from '../../../utils/translations';
 import { SMALL_ICON_BUTTON_CLASS } from '../../../constants/appConstants';
 
 interface ScenarioSystemPromptProps {
@@ -8,7 +8,6 @@ interface ScenarioSystemPromptProps {
   onChange: (value: string) => void;
   onExpand: () => void;
   readOnly: boolean;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const ScenarioSystemPrompt: React.FC<ScenarioSystemPromptProps> = ({
@@ -16,8 +15,8 @@ export const ScenarioSystemPrompt: React.FC<ScenarioSystemPromptProps> = ({
   onChange,
   onExpand,
   readOnly,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="hidden md:flex w-80 border-r border-[var(--theme-border-secondary)] flex-col bg-[var(--theme-bg-secondary)] flex-shrink-0">
       <div className="p-4 border-b border-[var(--theme-border-secondary)]/50">

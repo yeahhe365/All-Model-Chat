@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { ModelOption, SafetySetting } from '../../../types';
 import { ModelVoiceSettings } from '../ModelVoiceSettings';
 import { SafetySection } from './SafetySection';
@@ -36,7 +37,6 @@ interface ChatBehaviorSectionProps {
   setShowThoughts: (value: boolean) => void;
   safetySettings?: SafetySetting[];
   setSafetySettings: (settings: SafetySetting[]) => void;
-  t: (key: string) => string;
   setAvailableModels: (models: ModelOption[]) => void;
   mediaResolution?: MediaResolution;
   setMediaResolution?: (resolution: MediaResolution) => void;
@@ -55,7 +55,7 @@ interface ChatBehaviorSectionProps {
 }
 
 export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) => {
-  const { t } = props;
+  const { t } = useI18n();
   const inputTranslationModelOptions = props.availableModels.some((model) => model.id === props.inputTranslationModelId)
     ? props.availableModels
     : [
@@ -102,7 +102,6 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
         setTopP={props.setTopP}
         topK={props.topK}
         setTopK={props.setTopK}
-        t={t}
         mediaResolution={props.mediaResolution}
         setMediaResolution={props.setMediaResolution}
       />
@@ -232,7 +231,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
       </div>
 
       <div className="pt-6 border-t border-[var(--theme-border-secondary)]">
-        <SafetySection safetySettings={props.safetySettings} setSafetySettings={props.setSafetySettings} t={t} />
+        <SafetySection safetySettings={props.safetySettings} setSafetySettings={props.setSafetySettings} />
       </div>
     </div>
   );

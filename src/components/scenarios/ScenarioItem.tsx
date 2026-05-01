@@ -1,7 +1,7 @@
 import React from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { SavedScenario } from '../../types';
 import { Download, Edit3, Trash2, Shield, MessageSquare, Eye, Copy, Sparkles } from 'lucide-react';
-import { translations } from '../../utils/translations';
 import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../constants/appConstants';
 
 interface ScenarioItemProps {
@@ -13,7 +13,6 @@ interface ScenarioItemProps {
   onDuplicate: (scenario: SavedScenario) => void;
   onExport: (scenario: SavedScenario) => void;
   onView?: (scenario: SavedScenario) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const ScenarioItem: React.FC<ScenarioItemProps> = ({
@@ -25,8 +24,8 @@ export const ScenarioItem: React.FC<ScenarioItemProps> = ({
   onDuplicate,
   onExport,
   onView,
-  t,
 }) => {
+  const { t } = useI18n();
   const messageCount = scenario.messages.length;
   const hasSystemPrompt = !!scenario.systemInstruction;
 

@@ -32,14 +32,6 @@ describe('ShortcutsSection', () => {
           <ShortcutsSection
             currentSettings={useSettingsStore.getState().appSettings}
             onUpdateSettings={vi.fn()}
-            t={(key) =>
-              useSettingsStore.getState().language === 'zh'
-                ? String(key)
-                : ({
-                    shortcuts_prev_file: 'Previous File',
-                    shortcuts_next_file: 'Next File',
-                  }[String(key)] ?? String(key))
-            }
           />
         </I18nProvider>,
       );
@@ -67,16 +59,6 @@ describe('ShortcutsSection', () => {
               { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
             ]}
             onUpdateSettings={onUpdateSettings}
-            t={(key) =>
-              ({
-                shortcuts_cycle_models: 'Cycle Models',
-                shortcuts_cycle_models_scope_title: 'Models Included In Tab Cycle',
-                shortcuts_cycle_models_scope_hint: 'Tab cycles through the checked models in the current picker order.',
-                shortcuts_cycle_models_scope_summary: '{count} models selected',
-                shortcuts_cycle_models_scope_toggle_aria: 'Toggle Tab cycle model panel',
-                shortcuts_cycle_models_scope_model_aria: 'Toggle Tab cycle model',
-              })[String(key)] ?? String(key)
-            }
           />
         </I18nProvider>,
       );

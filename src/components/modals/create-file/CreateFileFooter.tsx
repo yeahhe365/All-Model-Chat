@@ -1,6 +1,6 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { ChevronDown, Save, FilePlus, Loader2 } from 'lucide-react';
-import { translations } from '../../../utils/translations';
 import { SUPPORTED_EXTENSIONS } from '../../../hooks/useCreateFileEditor';
 
 interface CreateFileFooterProps {
@@ -14,7 +14,6 @@ interface CreateFileFooterProps {
   isLoading: boolean;
   isExportingPdf: boolean;
   hasContent: boolean;
-  t: (key: keyof typeof translations | string) => string;
 }
 
 export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
@@ -28,8 +27,8 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
   isLoading,
   isExportingPdf,
   hasContent,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="flex items-center justify-between px-4 py-3 gap-3 bg-[var(--theme-bg-secondary)]/50 flex-shrink-0">
       <div className="flex items-center gap-2 flex-1 min-w-0 w-full">

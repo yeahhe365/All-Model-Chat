@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { KeyRound, LayoutPanelLeft, SlidersHorizontal } from 'lucide-react';
 import { X } from 'lucide-react';
 import { SettingsTab, type SettingsTabDescriptor } from '../../hooks/features/useSettingsLogic';
-import { translations } from '../../utils/translations';
 import { IconAbout, IconData, IconKeyboard } from '../icons/CustomIcons';
 
 const SETTINGS_TAB_ICONS: Record<SettingsTab, React.ElementType> = {
@@ -19,7 +19,6 @@ interface SettingsSidebarProps {
   activeTab: SettingsTab;
   setActiveTab: (tab: SettingsTab) => void;
   onClose: () => void;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 const SIDEBAR_GROUPS: Array<{ id: string; tabIds: SettingsTab[] }> = [
@@ -37,7 +36,8 @@ const SIDEBAR_GROUPS: Array<{ id: string; tabIds: SettingsTab[] }> = [
   },
 ];
 
-export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ tabs, activeTab, setActiveTab, onClose, t }) => {
+export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ tabs, activeTab, setActiveTab, onClose }) => {
+  const { t } = useI18n();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const tabsById = new Map(tabs.map((tab) => [tab.id, tab]));
   const groupedTabs = SIDEBAR_GROUPS.map((group) => ({

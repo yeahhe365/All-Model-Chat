@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Modal } from '../shared/Modal';
 import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
-import { useI18n } from '../../contexts/I18nContext';
 import { FileConfigHeader } from './file-config/FileConfigHeader';
 import { ResolutionConfig } from './file-config/ResolutionConfig';
 import { VideoConfig } from './file-config/VideoConfig';
@@ -41,7 +40,6 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
   onSave,
   isGemini3,
 }) => {
-  const { t } = useI18n();
   const [draft, setDraft] = useState<FileConfigurationDraft>(() => buildDraft(file));
 
   const handleSave = () => {
@@ -100,14 +98,13 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
       onClose={onClose}
       contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--theme-border-primary)]"
     >
-      <FileConfigHeader onClose={onClose} t={t} showResolutionSettings={showResolutionSettings} isVideo={isVideo} />
+      <FileConfigHeader onClose={onClose} showResolutionSettings={showResolutionSettings} isVideo={isVideo} />
 
       <div className="p-6 space-y-6">
         {showResolutionSettings && (
           <ResolutionConfig
             mediaResolution={draft.mediaResolution}
             setMediaResolution={(value) => setDraft((prev) => ({ ...prev, mediaResolution: value }))}
-            t={t}
           />
         )}
 
@@ -119,11 +116,10 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
             setEndOffset={(value) => setDraft((prev) => ({ ...prev, endOffset: value }))}
             fps={draft.fps}
             setFps={(value) => setDraft((prev) => ({ ...prev, fps: value }))}
-            t={t}
           />
         )}
 
-        <FileConfigFooter onClose={onClose} onSave={handleSave} t={t} />
+        <FileConfigFooter onClose={onClose} onSave={handleSave} />
       </div>
     </Modal>
   );

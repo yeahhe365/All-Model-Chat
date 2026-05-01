@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useSettingsStore } from '../../../stores/settingsStore';
 import { ChatBehaviorSection } from './ChatBehaviorSection';
 
 vi.mock('../ModelVoiceSettings', () => ({
@@ -10,31 +11,6 @@ vi.mock('../ModelVoiceSettings', () => ({
 vi.mock('./SafetySection', () => ({
   SafetySection: () => <div data-testid="safety-section" />,
 }));
-
-const t = (key: string) =>
-  (
-    ({
-      settingsTranslationSectionTitle: '翻译设置',
-      settingsInputTranslationSectionTitle: '输入框翻译',
-      settingsInputTranslationLanguageLabel: '输入框翻译语言',
-      settings_inputTranslationModel_label: '输入框翻译模型',
-      settingsThoughtTranslationSectionTitle: '思维链翻译',
-      settings_thoughtTranslationTargetLanguage_label: '思维链翻译语言',
-      settings_thoughtTranslationModel_label: '思维链翻译模型',
-      settingsCanvasSectionTitle: 'Canvas 可视化',
-      settings_autoCanvasVisualization_label: '自动打开 Canvas 可视化',
-      settings_autoCanvasVisualization_tooltip: '自动打开 Canvas 可视化说明',
-      settings_autoCanvasModel_label: 'Canvas 模型',
-      translationTargetLanguage_english: '英文',
-      translationTargetLanguage_simplifiedChinese: '简体中文',
-      translationTargetLanguage_traditionalChinese: '繁体中文',
-      translationTargetLanguage_japanese: '日语',
-      translationTargetLanguage_korean: '韩语',
-      translationTargetLanguage_spanish: '西班牙语',
-      translationTargetLanguage_french: '法语',
-      translationTargetLanguage_german: '德语',
-    }) as Record<string, string>
-  )[key] || key;
 
 const baseProps = {
   modelId: 'gemini-3.1-flash-lite-preview',
@@ -58,7 +34,6 @@ const baseProps = {
   setShowThoughts: vi.fn(),
   safetySettings: [],
   setSafetySettings: vi.fn(),
-  t,
   setAvailableModels: vi.fn(),
   translationTargetLanguage: 'English' as const,
   setTranslationTargetLanguage: vi.fn(),
@@ -92,6 +67,8 @@ describe('ChatBehaviorSection', () => {
   });
 
   it('shows translation controls without extra subgroup headings and keeps language before model', () => {
+    useSettingsStore.setState({ language: 'zh' });
+
     act(() => {
       root.render(<ChatBehaviorSection {...baseProps} />);
     });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Settings2, Zap } from 'lucide-react';
 import { MediaResolution } from '../../../../types/settings';
 import { Select } from '../../../shared/Select';
@@ -6,16 +7,15 @@ import { Select } from '../../../shared/Select';
 interface MediaResolutionSelectorProps {
   mediaResolution: MediaResolution;
   setMediaResolution: (resolution: MediaResolution) => void;
-  t: (key: string) => string;
   isNativeAudioModel?: boolean;
 }
 
 export const MediaResolutionSelector: React.FC<MediaResolutionSelectorProps> = ({
   mediaResolution,
   setMediaResolution,
-  t,
   isNativeAudioModel,
 }) => {
+  const { t } = useI18n();
   const standardOptions = [
     { value: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED, label: t('mediaResolution_unspecified') },
     { value: MediaResolution.MEDIA_RESOLUTION_LOW, label: t('mediaResolution_low') },

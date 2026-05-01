@@ -177,7 +177,6 @@ export interface ChatInputToolbarProps {
   onCancelAddUrl: () => void;
   isAddingByUrl: boolean;
   isLoading: boolean;
-  t: (key: string) => string;
   generateQuadImages?: boolean;
   onToggleQuadImages?: () => void;
   supportedAspectRatios?: string[];

@@ -105,7 +105,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -143,7 +142,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -197,7 +195,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -254,7 +251,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -316,7 +312,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -354,7 +349,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -387,7 +381,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -421,7 +414,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });
@@ -455,7 +447,6 @@ describe('SettingsContent', () => {
           onExportHistory={vi.fn()}
           onImportScenarios={vi.fn()}
           onExportScenarios={vi.fn()}
-          t={(key) => key}
         />,
       );
     });

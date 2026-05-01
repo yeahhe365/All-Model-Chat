@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { Pin, MoreHorizontal } from 'lucide-react';
 import { SavedChatSession } from '../../types';
-import { translations } from '../../utils/translations';
 import { SessionItemMenu } from './SessionItemMenu';
 import { LoadingDots } from '../shared/LoadingDots';
 
@@ -26,10 +26,10 @@ interface SessionItemProps {
   setEditingItem: (item: { type: 'session' | 'group'; id: string; title: string } | null) => void;
   toggleMenu: (e: React.MouseEvent, id: string) => void;
   setActiveMenu: (id: string | null) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const SessionItem: React.FC<SessionItemProps> = (props) => {
+  const { t } = useI18n();
   const {
     session,
     activeSessionId,
@@ -51,7 +51,6 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
     setEditingItem,
     toggleMenu,
     setActiveMenu,
-    t,
   } = props;
 
   const [isRightClickAnimating, setIsRightClickAnimating] = useState(false);
@@ -149,7 +148,6 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
             onDeleteSession(session.id);
             setActiveMenu(null);
           }}
-          t={t}
         />
       )}
     </li>

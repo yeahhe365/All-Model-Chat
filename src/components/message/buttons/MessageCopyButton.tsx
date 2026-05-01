@@ -1,16 +1,16 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Check, ClipboardCopy } from 'lucide-react';
-import { translations } from '../../../utils/translations';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 
 interface MessageCopyButtonProps {
   textToCopy?: string;
   className?: string;
-  t: (key: keyof typeof translations) => string;
   iconSize?: number;
 }
 
-export const MessageCopyButton: React.FC<MessageCopyButtonProps> = ({ textToCopy, className, t, iconSize = 14 }) => {
+export const MessageCopyButton: React.FC<MessageCopyButtonProps> = ({ textToCopy, className, iconSize = 14 }) => {
+  const { t } = useI18n();
   const { isCopied, copyToClipboard } = useCopyToClipboard();
 
   const handleCopy = () => {

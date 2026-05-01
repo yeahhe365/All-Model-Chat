@@ -25,6 +25,21 @@ const isEditableElement = (element: Element | null): boolean => {
   return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.isContentEditable;
 };
 
+const SELECTION_EXCLUDED_SELECTOR = '.select-none, [data-selection-copy="exclude"]';
+
+const cloneSelectionContent = (range: Range): HTMLDivElement => {
+  const container = document.createElement('div');
+  container.appendChild(range.cloneContents());
+
+  container.querySelectorAll(SELECTION_EXCLUDED_SELECTOR).forEach((element) => {
+    element.remove();
+  });
+
+  return container;
+};
+
+const getPlainSelectionText = (container: HTMLElement): string => (container.innerText || container.textContent || '').trim();
+
 export const useSelectionPosition = ({
   containerRef,
   isAudioActive,
@@ -82,11 +97,10 @@ export const useSelectionPosition = ({
       }
 
       // Extract content
-      const container = document.createElement('div');
-      container.appendChild(range.cloneContents());
+      const container = cloneSelectionContent(range);
       const html = container.innerHTML;
       const text = convertHtmlToMarkdown(html).trim();
-      const plainText = selection.toString().trim();
+      const plainText = getPlainSelectionText(container);
 
       if (!text) {
         clearSelectionState();

@@ -1,6 +1,6 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { ChevronLeft, Settings2, Save } from 'lucide-react';
-import { translations } from '../../../utils/translations';
 import { ICON_BUTTON_CLASS, FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../../constants/appConstants';
 
 interface ScenarioEditorHeaderProps {
@@ -11,7 +11,6 @@ interface ScenarioEditorHeaderProps {
   onOpenSystemPrompt: () => void;
   isSaveDisabled: boolean;
   readOnly: boolean;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const ScenarioEditorHeader: React.FC<ScenarioEditorHeaderProps> = ({
@@ -22,8 +21,8 @@ export const ScenarioEditorHeader: React.FC<ScenarioEditorHeaderProps> = ({
   onOpenSystemPrompt,
   isSaveDisabled,
   readOnly,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-secondary)] p-3 sm:p-4 flex-shrink-0 z-10">
       <div className="flex items-center gap-3 sm:gap-4">

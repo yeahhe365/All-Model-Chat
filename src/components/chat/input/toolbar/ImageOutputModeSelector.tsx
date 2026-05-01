@@ -1,18 +1,19 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import type { ImageOutputMode } from '../../../../types/settings';
 import { Select } from '../../../shared/Select';
 
 interface ImageOutputModeSelectorProps {
   imageOutputMode: ImageOutputMode;
   setImageOutputMode: (mode: ImageOutputMode) => void;
-  t: (key: string) => string;
 }
 
 export const ImageOutputModeSelector: React.FC<ImageOutputModeSelectorProps> = ({
   imageOutputMode,
   setImageOutputMode,
-  t,
-}) => (
+}) => {
+  const { t } = useI18n();
+  return (
   <Select
     id="image-output-mode-selector"
     label={t('imageOutputMode_title')}
@@ -27,3 +28,4 @@ export const ImageOutputModeSelector: React.FC<ImageOutputModeSelectorProps> = (
     <option value="IMAGE_ONLY">{t('imageOutputMode_imageOnly')}</option>
   </Select>
 );
+};

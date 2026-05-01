@@ -179,7 +179,6 @@ export const MarkdownFileViewer: React.FC<MarkdownFileViewerProps> = ({
                 isMermaidRenderingEnabled={true}
                 isGraphvizRenderingEnabled={true}
                 allowHtml={true}
-                t={t}
                 themeId={themeId}
                 interactiveMode="disabled"
                 fallbackMode="raw"

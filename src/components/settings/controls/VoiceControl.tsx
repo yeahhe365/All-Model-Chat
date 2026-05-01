@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Mic, Info, AudioLines } from 'lucide-react';
 import { AVAILABLE_TRANSCRIPTION_MODELS } from '../../../constants/settingsModelOptions';
 import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
@@ -11,7 +12,6 @@ interface VoiceControlProps {
   ttsVoice?: string;
   setTtsVoice?: (value: string) => void;
   titleKey?: string;
-  t: (key: string) => string;
 }
 
 export const VoiceControl: React.FC<VoiceControlProps> = ({
@@ -20,8 +20,8 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({
   ttsVoice,
   setTtsVoice,
   titleKey = 'settingsVoiceSectionTitle',
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="space-y-4">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">

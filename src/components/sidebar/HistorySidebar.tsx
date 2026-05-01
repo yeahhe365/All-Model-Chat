@@ -200,7 +200,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     setEditingItem,
     toggleMenu,
     setActiveMenu,
-    t,
   };
 
   const [listParentRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
@@ -227,7 +226,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
             : 'opacity-100 pointer-events-auto md:opacity-0 md:pointer-events-none'
         }`}
       >
-        <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} themeId={themeId} />
+        <SidebarHeader isOpen={isOpen} onToggle={onToggle} themeId={themeId} />
         <SidebarActions
           onNewChat={onNewChat}
           onCloseSidebar={onAutoClose}
@@ -237,7 +236,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           searchInputRef={searchInputRef}
-          t={t}
           newChatShortcut={newChatShortcut}
         />
         <div

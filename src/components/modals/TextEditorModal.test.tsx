@@ -44,7 +44,6 @@ describe('TextEditorModal', () => {
             title="Editor"
             value="Original"
             onChange={onChange}
-            t={() => 'Done'}
           />
         </WindowProvider>,
       );
@@ -58,7 +57,7 @@ describe('TextEditorModal', () => {
     });
 
     const doneButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Done'),
+      button.textContent?.includes('Close'),
     ) as HTMLButtonElement | undefined;
 
     expect(doneButton).toBeDefined();
@@ -81,7 +80,6 @@ describe('TextEditorModal', () => {
             title="Editor"
             value="Original"
             onChange={vi.fn()}
-            t={() => 'Done'}
           />
         </WindowProvider>,
       );
@@ -89,7 +87,7 @@ describe('TextEditorModal', () => {
 
     const buttons = Array.from(document.body.querySelectorAll('button'));
     const closeButton = buttons[0];
-    const doneButton = buttons.find((button) => button.textContent?.includes('Done'));
+    const doneButton = buttons.find((button) => button.textContent?.includes('Close'));
 
     expect(closeButton?.className).toContain('focus-visible:ring-2');
     expect(doneButton?.className).toContain('focus-visible:ring-2');

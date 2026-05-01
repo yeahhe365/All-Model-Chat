@@ -84,15 +84,6 @@ describe('ModelsSection', () => {
               tabModelCycleIds: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
             }}
             onUpdateSettings={onUpdateSettings}
-            t={(key) =>
-              ({
-                shortcuts_cycle_models_scope_title: 'Models Included In Tab Cycle',
-                shortcuts_cycle_models_scope_hint: 'Tab cycles through the checked models in the current picker order.',
-                shortcuts_cycle_models_scope_summary: '{count} models selected',
-                shortcuts_cycle_models_scope_toggle_aria: 'Toggle Tab cycle model panel',
-                shortcuts_cycle_models_scope_model_aria: 'Toggle Tab cycle model',
-              })[String(key)] ?? String(key)
-            }
           />
         </I18nProvider>,
       );
@@ -128,13 +119,6 @@ describe('ModelsSection', () => {
               safetySettings,
             }}
             onUpdateSettings={onUpdateSettings}
-            t={(key) =>
-              ({
-                safety_title: 'Safety Settings',
-                safety_description: 'Adjust content safety filters.',
-                models_safety_toggle_aria: 'Toggle safety settings',
-              })[String(key)] ?? String(key)
-            }
           />
         </I18nProvider>,
       );
@@ -178,14 +162,6 @@ describe('ModelsSection', () => {
               autoCanvasModelId: 'gemini-3-flash-preview',
             }}
             onUpdateSettings={onUpdateSettings}
-            t={(key) =>
-              ({
-                settingsCanvasSectionTitle: 'Canvas Visualizations',
-                settings_autoCanvasVisualization_label: 'Auto-open Canvas Visualization',
-                settings_autoCanvasVisualization_tooltip: 'Automatically trigger Canvas visualization.',
-                settings_autoCanvasModel_label: 'Canvas Model',
-              })[String(key)] ?? String(key)
-            }
           />
         </I18nProvider>,
       );
@@ -245,7 +221,6 @@ describe('ModelsSection', () => {
               thoughtTranslationModelId: 'gemini-custom-thought-translator',
             }}
             onUpdateSettings={onUpdateSettings}
-            t={(key) => String(key)}
           />
         </I18nProvider>,
       );
@@ -296,16 +271,6 @@ describe('ModelsSection', () => {
               apiMode: 'openai-compatible',
             }}
             onUpdateSettings={onUpdateSettings}
-            t={(key) =>
-              ({
-                settingsSystemPrompt: 'System prompt',
-                settingsTemperature: 'Temperature',
-                settingsTopP: 'Top P',
-                settingsCanvasSectionTitle: 'Canvas Visualizations',
-                safety_title: 'Safety Settings',
-                models_safety_toggle_aria: 'Toggle safety settings',
-              })[String(key)] ?? String(key)
-            }
           />
         </I18nProvider>,
       );
@@ -313,7 +278,7 @@ describe('ModelsSection', () => {
 
     expect(container.querySelector('[data-testid="model-selector"]')).not.toBeNull();
     expect(mockModelSelector.lastProps.defaultModels).toBe(defaultModels);
-    expect(container.textContent).toContain('System prompt');
+    expect(container.textContent).toContain('Default System Prompt');
     expect(container.textContent).toContain('Temperature');
     expect(container.textContent).toContain('Top P');
     expect(container.textContent).not.toContain('Top K');

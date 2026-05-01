@@ -14,7 +14,6 @@ interface ThoughtContentProps {
   expandCodeBlocksByDefault: boolean;
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
-  t: (key: string, fallback?: string) => string;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
 }
@@ -30,7 +29,6 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
   expandCodeBlocksByDefault,
   isMermaidRenderingEnabled,
   isGraphvizRenderingEnabled,
-  t,
   themeId,
   onOpenSidePanel,
 }) => {
@@ -65,7 +63,6 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
           isMermaidRenderingEnabled={isMermaidRenderingEnabled}
           isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
           allowHtml={true}
-          t={t}
           themeId={themeId}
           onOpenSidePanel={onOpenSidePanel}
         />

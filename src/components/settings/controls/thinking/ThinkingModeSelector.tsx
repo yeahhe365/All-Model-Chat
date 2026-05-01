@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Settings2, Ban } from 'lucide-react';
 import { SparklesIcon } from './SparklesIcon';
 
@@ -7,7 +8,6 @@ interface ThinkingModeSelectorProps {
   onModeChange: (mode: 'auto' | 'off' | 'custom') => void;
   isGemini3: boolean;
   canDisableThinking: boolean;
-  t: (key: string) => string;
 }
 
 export const ThinkingModeSelector: React.FC<ThinkingModeSelectorProps> = ({
@@ -15,8 +15,8 @@ export const ThinkingModeSelector: React.FC<ThinkingModeSelectorProps> = ({
   onModeChange,
   isGemini3,
   canDisableThinking,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div
       className={`grid ${canDisableThinking ? 'grid-cols-3' : 'grid-cols-2'} gap-1 bg-[var(--theme-bg-tertiary)] p-1 rounded-lg mt-3 select-none`}

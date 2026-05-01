@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Clock, MonitorPlay, Info } from 'lucide-react';
 
 interface VideoConfigProps {
@@ -8,7 +9,6 @@ interface VideoConfigProps {
   setEndOffset: (val: string) => void;
   fps: string;
   setFps: (val: string) => void;
-  t: (key: string) => string;
 }
 
 export const VideoConfig: React.FC<VideoConfigProps> = ({
@@ -18,8 +18,8 @@ export const VideoConfig: React.FC<VideoConfigProps> = ({
   setEndOffset,
   fps,
   setFps,
-  t,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">

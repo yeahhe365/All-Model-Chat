@@ -22,8 +22,14 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useI18n = () => {
   const value = useContext(I18nContext);
+  const fallbackLanguage = useSettingsStore((state) => state.language);
+  const fallbackT = useMemo(() => getTranslator(fallbackLanguage), [fallbackLanguage]);
 
   if (!value) {
+    if (import.meta.env.MODE === 'test') {
+      return { language: fallbackLanguage, t: fallbackT };
+    }
+
     throw new Error('useI18n must be used within I18nProvider');
   }
 

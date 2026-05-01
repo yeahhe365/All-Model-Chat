@@ -1,5 +1,5 @@
 import React from 'react';
-import { translations } from '../../utils/translations';
+import { useI18n } from '../../contexts/I18nContext';
 import { IconSidebarToggle } from '../icons/CustomIcons';
 import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
 import { getProjectUrl } from '../../runtime/runtimeConfig';
@@ -7,11 +7,11 @@ import { getProjectUrl } from '../../runtime/runtimeConfig';
 interface SidebarHeaderProps {
   onToggle: () => void;
   isOpen: boolean;
-  t: (key: keyof typeof translations) => string;
   themeId: string;
 }
 
-export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggle, isOpen, t, themeId }) => {
+export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggle, isOpen, themeId }) => {
+  const { t } = useI18n();
   const projectUrl = getProjectUrl();
 
   return (

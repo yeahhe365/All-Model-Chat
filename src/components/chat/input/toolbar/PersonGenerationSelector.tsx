@@ -1,18 +1,19 @@
 import React from 'react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import type { ImagePersonGeneration } from '../../../../types/settings';
 import { Select } from '../../../shared/Select';
 
 interface PersonGenerationSelectorProps {
   personGeneration: ImagePersonGeneration;
   setPersonGeneration: (mode: ImagePersonGeneration) => void;
-  t: (key: string) => string;
 }
 
 export const PersonGenerationSelector: React.FC<PersonGenerationSelectorProps> = ({
   personGeneration,
   setPersonGeneration,
-  t,
-}) => (
+}) => {
+  const { t } = useI18n();
+  return (
   <Select
     id="person-generation-selector"
     label={t('personGeneration_title')}
@@ -28,3 +29,4 @@ export const PersonGenerationSelector: React.FC<PersonGenerationSelectorProps> =
     <option value="DONT_ALLOW">{t('personGeneration_dontAllow')}</option>
   </Select>
 );
+};

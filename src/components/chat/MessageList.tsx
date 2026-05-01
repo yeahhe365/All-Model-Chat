@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { useI18n } from '../../contexts/I18nContext';
 import { Message } from '../message/Message';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
@@ -13,6 +12,7 @@ import { isGemini3Model } from '../../utils/modelHelpers';
 import { useChatAreaMessageList } from '../layout/chat-area/ChatAreaContext';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
 import { isMarkdownFile } from '../../utils/fileHelpers';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 const LazyHtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');
@@ -30,7 +30,6 @@ const LazyMarkdownPreviewModal = lazy(async () => {
 });
 
 const MessageListComponent: React.FC = () => {
-  const { t } = useI18n();
   const {
     messages,
     sessionTitle,
@@ -40,24 +39,19 @@ const MessageListComponent: React.FC = () => {
     onRetryMessage,
     onUpdateMessageFile,
     showThoughts,
-    themeId,
-    baseFontSize,
-    expandCodeBlocksByDefault,
-    isMermaidRenderingEnabled,
-    isGraphvizRenderingEnabled,
     onFollowUpSuggestionClick,
     onGenerateCanvas,
     onContinueGeneration,
     onForkMessage,
     onQuickTTS,
     chatInputHeight,
-    appSettings,
     currentModelId,
     onOpenSidePanel,
     onQuote,
     onInsert,
     activeSessionId,
   } = useChatAreaMessageList();
+  const themeId = useSettingsStore((state) => state.currentTheme.id);
   const visibleMessages = useMemo(() => getVisibleChatMessages(messages), [messages]);
   // UI Logic (Modals, Previews, Configuration)
   const {
@@ -104,7 +98,7 @@ const MessageListComponent: React.FC = () => {
         className={`relative flex-grow h-full ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
       >
         {visibleMessages.length === 0 ? (
-          <WelcomeScreen t={t} />
+          <WelcomeScreen />
         ) : (
           <Virtuoso
             ref={virtuosoRef}
@@ -135,16 +129,10 @@ const MessageListComponent: React.FC = () => {
                   onImageClick={handleFileClick}
                   onOpenHtmlPreview={handleOpenHtmlPreview}
                   showThoughts={showThoughts}
-                  themeId={themeId}
-                  baseFontSize={baseFontSize}
-                  expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-                  isMermaidRenderingEnabled={isMermaidRenderingEnabled}
-                  isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                   onGenerateCanvas={onGenerateCanvas}
                   onContinueGeneration={onContinueGeneration}
                   onForkMessage={onForkMessage}
                   onSuggestionClick={onFollowUpSuggestionClick}
-                  appSettings={appSettings}
                   onOpenSidePanel={onOpenSidePanel}
                   onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
                   isGemini3={isGemini3}
@@ -160,7 +148,6 @@ const MessageListComponent: React.FC = () => {
           onInsert={onInsert}
           onTTS={onQuickTTS}
           containerRef={scrollerRef}
-          t={t}
         />
 
         <ScrollNavigation

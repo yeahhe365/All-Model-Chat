@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import {
   Loader2,
   Download,
@@ -12,7 +13,6 @@ import {
   Atom,
 } from 'lucide-react';
 import { IconHtml5 } from '../../icons/CustomIcons';
-import { translations } from '../../../utils/translations';
 import {
   FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
   ICON_BUTTON_CLASS,
@@ -34,7 +34,6 @@ interface HtmlPreviewHeaderProps {
   onScreenshot: () => void;
   onToggleFullscreen: () => void;
   onClose: () => void;
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 export const HtmlPreviewHeader: React.FC<HtmlPreviewHeaderProps> = ({
@@ -52,8 +51,8 @@ export const HtmlPreviewHeader: React.FC<HtmlPreviewHeaderProps> = ({
   onScreenshot,
   onToggleFullscreen,
   onClose,
-  t,
 }) => {
+  const { t } = useI18n();
   const isReactPreview = title.toLowerCase().includes('react');
   const HeaderIcon = isReactPreview ? Atom : IconHtml5;
   const iconBgClass = isReactPreview ? 'bg-cyan-500/10 text-cyan-500' : 'bg-orange-500/10';

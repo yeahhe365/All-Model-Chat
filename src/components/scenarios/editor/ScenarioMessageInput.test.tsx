@@ -53,7 +53,6 @@ describe('ScenarioMessageInput', () => {
           onAdd={onAdd}
           inputRef={inputRef}
           readOnly={false}
-          t={(key) => key}
         />,
       );
     });

@@ -1,13 +1,15 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Save } from 'lucide-react';
 
 interface FileConfigFooterProps {
   onClose: () => void;
   onSave: () => void;
-  t: (key: string) => string;
 }
 
-export const FileConfigFooter: React.FC<FileConfigFooterProps> = ({ onClose, onSave, t }) => (
+export const FileConfigFooter: React.FC<FileConfigFooterProps> = ({ onClose, onSave }) => {
+  const { t } = useI18n();
+  return (
   <div className="flex justify-end gap-3 pt-2">
     <button
       onClick={onClose}
@@ -24,3 +26,4 @@ export const FileConfigFooter: React.FC<FileConfigFooterProps> = ({ onClose, onS
     </button>
   </div>
 );
+};

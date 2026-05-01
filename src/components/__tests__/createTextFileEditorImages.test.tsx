@@ -63,7 +63,6 @@ describe('CreateTextFileEditor image insertion', () => {
             onCancel={vi.fn()}
             isProcessing={false}
             isLoading={false}
-            t={(key) => key}
             initialFilename="draft.md"
             themeId="pearl"
           />

@@ -6,23 +6,12 @@ import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { I18nProvider } from '../../contexts/I18nContext';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { translations } from '../../utils/translations';
 import { SettingsModal } from './SettingsModal';
 
 describe('SettingsModal', () => {
   let container: HTMLDivElement;
   let root: Root;
   const initialState = useSettingsStore.getState();
-  const t = (key: string) => {
-    if (key === 'settingsTabApi') {
-      return 'API';
-    }
-    return key;
-  };
-  const translateEn = (key: string) => {
-    const entry = translations[key as keyof typeof translations];
-    return typeof entry === 'object' && entry && 'en' in entry ? entry.en : key;
-  };
 
   beforeEach(() => {
     localStorage.setItem('chatSettingsLastTab', 'api');
@@ -65,7 +54,6 @@ describe('SettingsModal', () => {
               onExportHistory={vi.fn()}
               onImportScenarios={vi.fn()}
               onExportScenarios={vi.fn()}
-              t={t}
             />
           </I18nProvider>
         </WindowProvider>,
@@ -104,7 +92,6 @@ describe('SettingsModal', () => {
               onExportHistory={vi.fn()}
               onImportScenarios={vi.fn()}
               onExportScenarios={vi.fn()}
-              t={t}
             />
           </I18nProvider>
         </WindowProvider>,
@@ -142,7 +129,6 @@ describe('SettingsModal', () => {
               onExportHistory={vi.fn()}
               onImportScenarios={vi.fn()}
               onExportScenarios={vi.fn()}
-              t={translateEn}
             />
           </I18nProvider>
         </WindowProvider>,
@@ -186,7 +172,6 @@ describe('SettingsModal', () => {
               onExportHistory={vi.fn()}
               onImportScenarios={vi.fn()}
               onExportScenarios={vi.fn()}
-              t={translateEn}
             />
           </I18nProvider>
         </WindowProvider>,
@@ -252,7 +237,6 @@ describe('SettingsModal', () => {
               onExportHistory={vi.fn()}
               onImportScenarios={vi.fn()}
               onExportScenarios={vi.fn()}
-              t={(key) => key}
             />
           </I18nProvider>
         </WindowProvider>,
@@ -261,7 +245,7 @@ describe('SettingsModal', () => {
 
     await act(async () => {
       Array.from(document.querySelectorAll('button'))
-        .find((button) => button.textContent === 'settingsScopeCurrentChat')
+        .find((button) => button.textContent === 'Current Chat')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
@@ -303,21 +287,20 @@ describe('SettingsModal', () => {
               onExportHistory={vi.fn()}
               onImportScenarios={vi.fn()}
               onExportScenarios={vi.fn()}
-              t={(key) => key}
             />
           </I18nProvider>
         </WindowProvider>,
       );
     });
 
-    expect(document.body.textContent).toContain('settingsScopeCurrentChat');
+    expect(document.body.textContent).toContain('Current Chat');
 
     await act(async () => {
       Array.from(document.querySelectorAll('[role="tab"]'))
-        .find((tab) => tab.textContent?.includes('settingsTabInterface'))
+        .find((tab) => tab.textContent?.includes('Interface & Interaction'))
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(document.body.textContent).not.toContain('settingsScopeCurrentChat');
+    expect(document.body.textContent).not.toContain('Current Chat');
   });
 });
