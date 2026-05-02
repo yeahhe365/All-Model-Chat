@@ -5,12 +5,10 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { IconYoutube, IconPython } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
+import { getModelCapabilities } from '../../../utils/modelHelpers';
 
 interface ToolsMenuProps {
-  isImageModel?: boolean;
-  isGemini3ImageModel?: boolean;
-  supportsBuiltInCustomToolCombination?: boolean;
-  isGemmaModel?: boolean;
+  currentModelId: string;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;
@@ -56,10 +54,7 @@ const ActiveToolBadge: React.FC<{
 );
 
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
-  isImageModel,
-  isGemini3ImageModel,
-  supportsBuiltInCustomToolCombination = true,
-  isGemmaModel,
+  currentModelId,
   isGoogleSearchEnabled,
   onToggleGoogleSearch,
   isCodeExecutionEnabled,
@@ -78,6 +73,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   const { t } = useI18n();
   const { isOpen, menuPosition, containerRef, buttonRef, menuRef, targetWindow, closeMenu, toggleMenu } =
     usePortaledMenu();
+  const capabilities = getModelCapabilities(currentModelId);
+  const isImageModel = capabilities.isImagenModel;
+  const isGemini3ImageModel = capabilities.isGemini3ImageModel;
+  const supportsBuiltInCustomToolCombination = capabilities.isGemini3;
+  const isGemmaModel = capabilities.isGemmaModel;
 
   const handleToggle = (toggleFunc?: () => void) => {
     if (toggleFunc) {

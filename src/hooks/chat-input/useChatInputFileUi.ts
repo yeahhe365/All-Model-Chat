@@ -3,7 +3,8 @@ import type React from 'react';
 
 import type { UploadedFile } from '../../types';
 import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
-import { cleanupFilePreviewUrl, cleanupReplacedFilePreviewUrl, isTextFile } from '../../utils/fileHelpers';
+import { cleanupFilePreviewUrl, cleanupReplacedFilePreviewUrl } from '../../utils/fileHelpers';
+import { isTextFile } from '../../utils/fileTypeUtils';
 import { useFileModalState } from '../ui/useFileModalState';
 import { readUploadedTextFileContent } from './textFileToInput';
 

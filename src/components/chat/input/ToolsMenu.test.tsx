@@ -33,6 +33,7 @@ describe('ToolsMenu', () => {
       root.render(
         <I18nProvider>
           <ToolsMenu
+            currentModelId="gemini-3.1-flash-live-preview"
             isGoogleSearchEnabled={false}
             onToggleGoogleSearch={() => {}}
             isCodeExecutionEnabled={false}
@@ -69,8 +70,7 @@ describe('ToolsMenu', () => {
       root.render(
         <I18nProvider>
           <ToolsMenu
-            isImageModel
-            isGemini3ImageModel
+            currentModelId="gemini-3.1-flash-image-preview"
             isGoogleSearchEnabled={false}
             onToggleGoogleSearch={() => {}}
             isCodeExecutionEnabled={false}
@@ -111,7 +111,7 @@ describe('ToolsMenu', () => {
       root.render(
         <I18nProvider>
           <ToolsMenu
-            isGemmaModel
+            currentModelId="gemma-3-27b-it"
             isGoogleSearchEnabled={false}
             onToggleGoogleSearch={() => {}}
             isCodeExecutionEnabled={false}
@@ -150,7 +150,7 @@ describe('ToolsMenu', () => {
       root.render(
         <I18nProvider>
           <ToolsMenu
-            supportsBuiltInCustomToolCombination={false}
+            currentModelId="gemini-2.5-pro"
             isGoogleSearchEnabled
             onToggleGoogleSearch={() => {}}
             isCodeExecutionEnabled={false}
@@ -178,7 +178,7 @@ describe('ToolsMenu', () => {
       root.render(
         <I18nProvider>
           <ToolsMenu
-            supportsBuiltInCustomToolCombination
+            currentModelId="gemini-3.1-pro-preview"
             isGoogleSearchEnabled
             onToggleGoogleSearch={() => {}}
             isCodeExecutionEnabled={false}

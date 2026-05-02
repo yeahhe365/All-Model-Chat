@@ -1,25 +1,8 @@
-import { MIME_TO_EXTENSION_MAP, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
+import { MIME_TO_EXTENSION_MAP } from '../constants/fileConstants';
 import { UploadedFile } from '../types';
 import { isAudioMimeType, isImageMimeType, isVideoMimeType } from './fileTypeUtils';
 
-const getFileExtension = (filename: string): string => {
-  const extension = filename.split('.').pop()?.toLowerCase();
-  return extension ? `.${extension}` : '';
-};
-
-export const isTextFile = (file: File | UploadedFile | { name: string; type: string }): boolean => {
-  const fileExtension = getFileExtension(file.name);
-  return (
-    SUPPORTED_TEXT_MIME_TYPES.includes(file.type) ||
-    TEXT_BASED_EXTENSIONS.includes(fileExtension) ||
-    file.type === 'text/plain'
-  );
-};
-
-export const isMarkdownFile = (file: File | UploadedFile | { name: string; type: string }): boolean => {
-  const fileExtension = getFileExtension(file.name);
-  return file.type === 'text/markdown' || fileExtension === '.md' || fileExtension === '.markdown';
-};
+export { isMarkdownFile, isTextFile } from './fileTypeUtils';
 
 export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
   const binaryString = atob(base64);

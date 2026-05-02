@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
-import { formatFileSize, isTextFile } from '../../../utils/fileHelpers';
+import { formatFileSize } from '../../../utils/fileHelpers';
+import { isTextFile } from '../../../utils/fileTypeUtils';
 import { getFileCardMeta } from '../../../utils/fileCardUtils';
 import { useI18n } from '../../../contexts/I18nContext';
 import { FileThumbnail } from './FileThumbnail';

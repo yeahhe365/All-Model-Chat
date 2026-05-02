@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import {
   AppSettings,
   ChatMessage,
-  SavedChatSession,
   UploadedFile,
   ChatSettings as IndividualChatSettings,
 } from '../../types';
@@ -10,18 +9,15 @@ import type { ImageOutputMode, ImagePersonGeneration } from '../../types/setting
 import { editImageApi } from '../../services/api/generation/imageEditApi';
 import { logService } from '../../services/logService';
 import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
-import { generateUniqueId } from '../../utils/chat/ids';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
-import { performOptimisticSessionUpdate, createMessage, generateSessionTitle } from '../../utils/chat/session';
 import { shouldStripThinkingFromContext } from '../../utils/modelHelpers';
 import { isImageMimeType } from '../../utils/fileTypeUtils';
 import { playCompletionSound } from '../../utils/uiUtils';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import type { Part } from '@google/genai';
 import { appendApiPart } from '../chat-stream/processors';
 import { useMessageLifecycle } from './useMessageLifecycle';
-
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+import { startOptimisticMessageTurn } from './messagePipeline';
+import type { SessionsUpdater } from './types';
 
 const stripGeneratedInlinePayload = (part: Part): Part => {
   const inlineData = (part as Part & { inlineData?: { mimeType?: string; data?: string } }).inlineData;
@@ -49,7 +45,7 @@ export const useImageEditSender = ({
   activeJobs,
   setActiveSessionId,
 }: ImageEditSenderProps) => {
-  const { createLoadingModelMessage, runMessageLifecycle } = useMessageLifecycle({
+  const { runMessageLifecycle } = useMessageLifecycle({
     updateAndPersistSessions,
     setSessionLoading,
     activeJobs,
@@ -73,39 +69,21 @@ export const useImageEditSender = ({
       personGeneration: ImagePersonGeneration,
       options: { shouldLockKey?: boolean } = {},
     ) => {
-      const modelMessageId = generationId;
       const imageFiles = files.filter((f) => isImageMimeType(f.type));
-
-      const finalSessionId = activeSessionId || generateUniqueId();
-
-      const userMessage = createMessage('user', text, { files });
-      const modelMessage = createLoadingModelMessage({
-        id: modelMessageId,
-        generationStartTime: new Date(),
+      const { finalSessionId, modelMessageId } = startOptimisticMessageTurn({
+        activeSessionId,
+        appSettings,
+        currentChatSettings,
+        updateAndPersistSessions,
+        setActiveSessionId,
+        text,
+        files,
+        generationId,
+        editingMessageId: effectiveEditingId,
+        shouldGenerateTitle: !activeSessionId || (!!effectiveEditingId && messages.length === 0),
+        shouldLockKey: options.shouldLockKey,
+        keyToLock: keyToUse,
       });
-
-      let newTitle = undefined;
-      if (!activeSessionId || (effectiveEditingId && messages.length === 0)) {
-        // Set a temporary placeholder title based on content
-        newTitle = generateSessionTitle([userMessage, modelMessage]);
-      }
-
-      updateAndPersistSessions((prev) =>
-        performOptimisticSessionUpdate(prev, {
-          activeSessionId,
-          newSessionId: finalSessionId,
-          newMessages: [userMessage, modelMessage],
-          settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings },
-          editingMessageId: effectiveEditingId,
-          title: newTitle,
-          shouldLockKey: options.shouldLockKey,
-          keyToLock: keyToUse,
-        }),
-      );
-
-      if (!activeSessionId) {
-        setActiveSessionId(finalSessionId);
-      }
 
       await runMessageLifecycle({
         sessionId: finalSessionId,
@@ -240,7 +218,7 @@ export const useImageEditSender = ({
         },
       });
     },
-    [createLoadingModelMessage, runMessageLifecycle, updateAndPersistSessions, setActiveSessionId],
+    [runMessageLifecycle, updateAndPersistSessions, setActiveSessionId],
   );
 
   return { handleImageEditMessage };

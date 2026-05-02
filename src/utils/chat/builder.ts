@@ -1,8 +1,8 @@
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import type { PartMediaResolutionLevel } from '@google/genai';
 import { logService } from '../../services/logService';
-import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
-import { getFileKindFlags, isImageMimeType } from '../fileTypeUtils';
+import { blobToBase64, fileToString } from '../fileHelpers';
+import { getFileKindFlags, isImageMimeType, isTextFile } from '../fileTypeUtils';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 import { stripReasoningMarkup } from './reasoning';

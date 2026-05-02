@@ -1,17 +1,14 @@
 import React, { useCallback } from 'react';
-import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
+import { AppSettings, ChatSettings as IndividualChatSettings } from '../../types';
 import type { ImagePersonGeneration } from '../../types/settings';
 import { generateSpeechApi } from '../../services/api/generation/audioApi';
 import { generateImagesApi } from '../../services/api/generation/imageApi';
 import { pcmBase64ToWavUrl } from '../../utils/audio/audioProcessing';
-import { generateUniqueId } from '../../utils/chat/ids';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
-import { performOptimisticSessionUpdate, createMessage, generateSessionTitle } from '../../utils/chat/session';
 import { showNotification, playCompletionSound } from '../../utils/uiUtils';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { useMessageLifecycle } from './useMessageLifecycle';
-
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+import { startOptimisticMessageTurn } from './messagePipeline';
+import type { SessionsUpdater } from './types';
 
 interface TtsImagenSenderProps {
   updateAndPersistSessions: SessionsUpdater;
@@ -26,7 +23,7 @@ export const useTtsImagenSender = ({
   activeJobs,
   setActiveSessionId,
 }: TtsImagenSenderProps) => {
-  const { createLoadingModelMessage, runMessageLifecycle } = useMessageLifecycle({
+  const { runMessageLifecycle } = useMessageLifecycle({
     updateAndPersistSessions,
     setSessionLoading,
     activeJobs,
@@ -47,40 +44,17 @@ export const useTtsImagenSender = ({
       options: { shouldLockKey?: boolean } = {},
     ) => {
       const isTtsModel = currentChatSettings.modelId.includes('-tts');
-      const modelMessageId = generationId;
-
-      const finalSessionId = activeSessionId || generateUniqueId();
-
-      const userMessage = createMessage('user', text);
-      const modelMessage = createLoadingModelMessage({
-        id: modelMessageId,
-        generationStartTime: new Date(),
+      const { finalSessionId, modelMessageId } = startOptimisticMessageTurn({
+        activeSessionId,
+        appSettings,
+        currentChatSettings,
+        updateAndPersistSessions,
+        setActiveSessionId,
+        text,
+        generationId,
+        shouldLockKey: options.shouldLockKey,
+        keyToLock: keyToUse,
       });
-
-      // Auto Title if needed (Simple heuristic for these models)
-      let newTitle = undefined;
-      if (!activeSessionId) {
-        // Set a temporary placeholder title based on content
-        newTitle = generateSessionTitle([userMessage, modelMessage]);
-      }
-
-      updateAndPersistSessions((prev) =>
-        performOptimisticSessionUpdate(prev, {
-          activeSessionId,
-          newSessionId: finalSessionId,
-          newMessages: [userMessage, modelMessage],
-          settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings },
-          // Editing is less relevant for TTS/Imagen one-offs, but we support it structure-wise
-          editingMessageId: null,
-          title: newTitle,
-          shouldLockKey: options.shouldLockKey,
-          keyToLock: keyToUse,
-        }),
-      );
-
-      if (!activeSessionId) {
-        setActiveSessionId(finalSessionId);
-      }
 
       await runMessageLifecycle({
         sessionId: finalSessionId,
@@ -187,7 +161,7 @@ export const useTtsImagenSender = ({
         },
       });
     },
-    [createLoadingModelMessage, runMessageLifecycle, updateAndPersistSessions, setActiveSessionId],
+    [runMessageLifecycle, updateAndPersistSessions, setActiveSessionId],
   );
 
   return { handleTtsImagenMessage };

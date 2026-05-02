@@ -7,11 +7,11 @@ import { FilePreviewHeader, type FilePreviewHeaderHandle } from '../shared/file-
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
 import { IconYoutube } from '../icons/CustomIcons';
-import { copyFileToClipboard, isMarkdownFile, isTextFile } from '../../utils/fileHelpers';
+import { copyFileToClipboard } from '../../utils/fileHelpers';
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
-import { getFileKindFlags } from '../../utils/fileTypeUtils';
+import { getFileKindFlags, isMarkdownFile, isTextFile } from '../../utils/fileTypeUtils';
 
 const LazyPdfViewer = lazy(async () => {
   const module = await import('../shared/file-preview/PdfViewerEntry');

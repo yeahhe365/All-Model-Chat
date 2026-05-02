@@ -163,6 +163,47 @@ describe('certain redundancy cleanup guards', () => {
     expect(source.length).toBeLessThan(21000);
   });
 
+  it('keeps one-off media senders on the shared optimistic message pipeline', () => {
+    for (const relativePath of [
+      'src/hooks/message-sender/useTtsImagenSender.ts',
+      'src/hooks/message-sender/useImageEditSender.ts',
+    ]) {
+      const source = readProjectFile(relativePath);
+
+      expect(source).toContain('startOptimisticMessageTurn');
+      expect(source).not.toContain('performOptimisticSessionUpdate');
+      expect(source).not.toContain('generateSessionTitle');
+      expect(source).not.toContain('DEFAULT_CHAT_SETTINGS');
+    }
+  });
+
+  it('keeps model generation settings behind a unified settings update interface', () => {
+    const modelsSectionSource = readProjectFile('src/components/settings/sections/ModelsSection.tsx');
+    const generationSectionSource = readProjectFile('src/components/settings/sections/GenerationSection.tsx');
+
+    expect(generationSectionSource).toContain('currentSettings: AppSettings;');
+    expect(generationSectionSource).toContain('onUpdateSetting: <K extends keyof AppSettings>');
+    expect(modelsSectionSource).toContain('currentSettings={currentSettings}');
+    expect(modelsSectionSource).toContain('onUpdateSetting={updateSetting}');
+
+    for (const propName of [
+      'setSystemInstruction',
+      'setTemperature',
+      'setTopP',
+      'setTopK',
+      'setThinkingBudget',
+      'setThinkingLevel',
+      'setShowThoughts',
+      'setMediaResolution',
+      'setTtsVoice',
+      'setIsRawModeEnabled',
+      'setHideThinkingInContext',
+    ]) {
+      expect(modelsSectionSource).not.toContain(`${propName}={`);
+      expect(generationSectionSource).not.toContain(`${propName}:`);
+    }
+  });
+
   it('removes low-risk unused interface surface from selected modules', () => {
     const modelSelectorSource = readProjectFile('src/components/settings/controls/ModelSelector.tsx');
     const liveConfigSource = readProjectFile('src/hooks/live-api/useLiveConfig.ts');

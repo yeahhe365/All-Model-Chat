@@ -5,7 +5,9 @@ import {
   isAudioMimeType,
   isImageMimeType,
   isInlineDataMimeType,
+  isMarkdownFile,
   isPdfFile,
+  isTextFile,
   isVideoMimeType,
   isYoutubeMimeType,
 } from './fileTypeUtils';
@@ -47,5 +49,13 @@ describe('fileTypeUtils', () => {
     expect(getFileTypeCategory('application/pdf')).toBe('pdf');
     expect(getFileTypeCategory('text/plain')).toBe('code');
     expect(getFileTypeCategory('image/png', 'upload failed')).toBe('error');
+  });
+
+  it('classifies text and Markdown files from the same helper surface', () => {
+    expect(isTextFile({ name: 'notes.md', type: '' })).toBe(true);
+    expect(isTextFile({ name: 'config.json', type: 'application/json' })).toBe(true);
+    expect(isTextFile({ name: 'photo.png', type: 'image/png' })).toBe(false);
+    expect(isMarkdownFile({ name: 'README.markdown', type: '' })).toBe(true);
+    expect(isMarkdownFile({ name: 'README.txt', type: 'text/plain' })).toBe(false);
   });
 });

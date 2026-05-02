@@ -20,8 +20,7 @@ import { getModelCapabilities } from '../utils/modelHelpers';
 import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
 import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
-import { isTextFile } from '../utils/fileHelpers';
-import { isImageMimeType, isPdfMimeType } from '../utils/fileTypeUtils';
+import { isImageMimeType, isPdfMimeType, isTextFile } from '../utils/fileTypeUtils';
 
 const CODE_EXECUTION_TEXT_FILE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024;
 

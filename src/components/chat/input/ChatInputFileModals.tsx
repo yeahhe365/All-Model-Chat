@@ -3,7 +3,7 @@ import { UploadedFile, AppSettings, ModelOption } from '../../../types';
 import { FileConfigurationModal } from '../../modals/FileConfigurationModal';
 import { VideoMetadata } from '../../../types';
 import { MediaResolution } from '../../../types/settings';
-import { isMarkdownFile } from '../../../utils/fileHelpers';
+import { isMarkdownFile } from '../../../utils/fileTypeUtils';
 
 const LazyTokenCountModal = lazy(async () => {
   const module = await import('../../modals/TokenCountModal');

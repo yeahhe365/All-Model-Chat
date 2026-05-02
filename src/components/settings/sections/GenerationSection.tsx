@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioLines, Image as ImageIcon, Info, SquarePen, X } from 'lucide-react';
 import { SETTINGS_INPUT_CLASS, SMALL_ICON_BUTTON_CLASS } from '../../../constants/appConstants';
+import type { AppSettings } from '../../../types';
 import { MediaResolution } from '../../../types/settings';
 import { getModelCapabilities } from '../../../utils/modelHelpers';
 import { useI18n } from '../../../contexts/I18nContext';
@@ -14,57 +15,30 @@ import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
 interface GenerationSectionProps {
   isOpenAICompatibleMode?: boolean;
   modelId: string;
-  systemInstruction: string;
-  setSystemInstruction: (value: string) => void;
-  temperature: number;
-  setTemperature: (value: number) => void;
-  topP: number;
-  setTopP: (value: number) => void;
-  topK: number;
-  setTopK: (value: number) => void;
-  thinkingBudget: number;
-  setThinkingBudget: (value: number) => void;
-  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
-  setThinkingLevel?: (value: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
-  showThoughts: boolean;
-  setShowThoughts: (value: boolean) => void;
-  mediaResolution?: MediaResolution;
-  setMediaResolution?: (resolution: MediaResolution) => void;
-  ttsVoice: string;
-  setTtsVoice: (value: string) => void;
-  isRawModeEnabled: boolean;
-  setIsRawModeEnabled: (value: boolean) => void;
-  hideThinkingInContext: boolean;
-  setHideThinkingInContext: (value: boolean) => void;
+  currentSettings: AppSettings;
+  onUpdateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
 
 export const GenerationSection: React.FC<GenerationSectionProps> = ({
   isOpenAICompatibleMode = false,
   modelId,
-  systemInstruction,
-  setSystemInstruction,
-  temperature,
-  setTemperature,
-  topP,
-  setTopP,
-  topK,
-  setTopK,
-  thinkingBudget,
-  setThinkingBudget,
-  thinkingLevel,
-  setThinkingLevel,
-  showThoughts,
-  setShowThoughts,
-  mediaResolution,
-  setMediaResolution,
-  ttsVoice,
-  setTtsVoice,
-  isRawModeEnabled,
-  setIsRawModeEnabled,
-  hideThinkingInContext,
-  setHideThinkingInContext,
+  currentSettings,
+  onUpdateSetting,
 }) => {
   const { t } = useI18n();
+  const {
+    systemInstruction,
+    temperature,
+    topP,
+    thinkingBudget,
+    thinkingLevel,
+    showThoughts,
+    mediaResolution,
+    ttsVoice,
+  } = currentSettings;
+  const topK = currentSettings.topK ?? 64;
+  const isRawModeEnabled = currentSettings.isRawModeEnabled ?? false;
+  const hideThinkingInContext = currentSettings.hideThinkingInContext ?? false;
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
   const [localPrompt, setLocalPrompt] = useState(systemInstruction);
   const skipNextPromptBlurCommitRef = useRef(false);
@@ -75,9 +49,9 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
 
   const commitPromptIfNeeded = useCallback(() => {
     if (localPrompt !== systemInstruction) {
-      setSystemInstruction(localPrompt);
+      onUpdateSetting('systemInstruction', localPrompt);
     }
-  }, [localPrompt, setSystemInstruction, systemInstruction]);
+  }, [localPrompt, onUpdateSetting, systemInstruction]);
 
   const handleOpenExpand = () => {
     commitPromptIfNeeded();
@@ -87,7 +61,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
   const handleClearPrompt = () => {
     setLocalPrompt('');
     if (localPrompt !== '' || systemInstruction !== '') {
-      setSystemInstruction('');
+      onUpdateSetting('systemInstruction', '');
     }
   };
 
@@ -104,11 +78,11 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
         <ThinkingControl
           modelId={modelId}
           thinkingBudget={thinkingBudget}
-          setThinkingBudget={setThinkingBudget}
+          setThinkingBudget={(value) => onUpdateSetting('thinkingBudget', value)}
           thinkingLevel={thinkingLevel}
-          setThinkingLevel={setThinkingLevel}
+          setThinkingLevel={(value) => onUpdateSetting('thinkingLevel', value)}
           showThoughts={showThoughts}
-          setShowThoughts={setShowThoughts}
+          setShowThoughts={(value) => onUpdateSetting('showThoughts', value)}
         />
       )}
 
@@ -178,7 +152,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
         onClose={() => setIsSystemPromptExpanded(false)}
         title={t('settingsSystemPrompt')}
         value={systemInstruction}
-        onChange={setSystemInstruction}
+        onChange={(value) => onUpdateSetting('systemInstruction', value)}
         placeholder={t('chatBehavior_systemPrompt_placeholder')}
         confirmLabel={t('settingsSaveAndClose')}
       />
@@ -204,7 +178,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
             max="2"
             step="0.05"
             value={temperature}
-            onChange={(event) => setTemperature(parseFloat(event.target.value))}
+            onChange={(event) => onUpdateSetting('temperature', parseFloat(event.target.value))}
             className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
           />
         </div>
@@ -229,7 +203,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
             max="1"
             step="0.05"
             value={topP}
-            onChange={(event) => setTopP(parseFloat(event.target.value))}
+            onChange={(event) => onUpdateSetting('topP', parseFloat(event.target.value))}
             className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
           />
         </div>
@@ -255,13 +229,13 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
               max="128"
               step="1"
               value={topK}
-              onChange={(event) => setTopK(parseInt(event.target.value, 10))}
+              onChange={(event) => onUpdateSetting('topK', parseInt(event.target.value, 10))}
               className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
             />
           </div>
         )}
 
-        {!isOpenAICompatibleMode && setMediaResolution && mediaResolution && (
+        {!isOpenAICompatibleMode && mediaResolution && (
           <Select
             id="media-resolution-select"
             label=""
@@ -282,7 +256,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
               </span>
             }
             value={mediaResolution}
-            onChange={(event) => setMediaResolution(event.target.value as MediaResolution)}
+            onChange={(event) => onUpdateSetting('mediaResolution', event.target.value as MediaResolution)}
           >
             <option value={MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED}>{t('mediaResolution_unspecified')}</option>
             <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
@@ -312,7 +286,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
               </span>
             }
             value={ttsVoice}
-            onChange={(event) => setTtsVoice(event.target.value)}
+            onChange={(event) => onUpdateSetting('ttsVoice', event.target.value)}
             className="py-3"
           >
             {AVAILABLE_TTS_VOICES.map((voice) => (
@@ -325,13 +299,13 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
           <ToggleItem
             label={t('settings_rawMode_label')}
             checked={isRawModeEnabled}
-            onChange={setIsRawModeEnabled}
+            onChange={(value) => onUpdateSetting('isRawModeEnabled', value)}
             tooltip={t('settings_rawMode_tooltip')}
           />
           <ToggleItem
             label={t('settings_hideThinkingInContext_label')}
             checked={hideThinkingInContext}
-            onChange={setHideThinkingInContext}
+            onChange={(value) => onUpdateSetting('hideThinkingInContext', value)}
             tooltip={t('settings_hideThinkingInContext_tooltip')}
           />
         </div>

@@ -191,10 +191,8 @@ export interface ChatInputToolbarProps {
 export interface ChatInputActionsProps {
   onAttachmentAction: (action: AttachmentAction) => void;
   disabled: boolean;
+  currentModelId: string;
   isImageModel?: boolean;
-  isGemini3ImageModel?: boolean;
-  supportsBuiltInCustomToolCombination?: boolean;
-  isGemmaModel?: boolean;
   isRealImagenModel?: boolean;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;

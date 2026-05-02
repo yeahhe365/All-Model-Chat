@@ -62,12 +62,12 @@ import { ChatInputActions } from './ChatInputActions';
 const baseProps = {
   onAttachmentAction: vi.fn(),
   disabled: false,
+  currentModelId: 'gemini-3.1-pro-preview',
   isGoogleSearchEnabled: false,
   onToggleGoogleSearch: vi.fn(),
   isCodeExecutionEnabled: false,
   onToggleCodeExecution: vi.fn(),
   isLocalPythonEnabled: false,
-  supportsBuiltInCustomToolCombination: true,
   onToggleLocalPython: vi.fn(),
   isUrlContextEnabled: false,
   onToggleUrlContext: vi.fn(),
@@ -185,7 +185,7 @@ describe('ChatInputActions', () => {
 
   it('keeps attachments enabled for Gemini image models that support reference images', () => {
     act(() => {
-      root.render(<ChatInputActions {...baseProps} isImageModel isGemini3ImageModel />);
+      root.render(<ChatInputActions {...baseProps} isImageModel />);
     });
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
@@ -217,22 +217,17 @@ describe('ChatInputActions', () => {
     );
   });
 
-  it('forwards Gemma capability into the tools menu', () => {
+  it('forwards only the current model id into the tools menu for capability derivation', () => {
     act(() => {
-      root.render(<ChatInputActions {...baseProps} isGemmaModel />);
-    });
-
-    expect(toolsMenuMock).toHaveBeenCalledWith(expect.objectContaining({ isGemmaModel: true }));
-  });
-
-  it('forwards built-in/custom tool combination support into the tools menu', () => {
-    act(() => {
-      root.render(<ChatInputActions {...baseProps} supportsBuiltInCustomToolCombination={false} />);
+      root.render(<ChatInputActions {...baseProps} currentModelId="gemma-3-27b-it" />);
     });
 
     expect(toolsMenuMock).toHaveBeenCalledWith(
-      expect.objectContaining({ supportsBuiltInCustomToolCombination: false }),
+      expect.objectContaining({ currentModelId: 'gemma-3-27b-it' }),
     );
+    expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('isGemmaModel');
+    expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('supportsBuiltInCustomToolCombination');
+    expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('isGemini3ImageModel');
   });
 
   it('keeps auxiliary composer actions direct when the single action row has enough room', async () => {

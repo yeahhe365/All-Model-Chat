@@ -50,28 +50,8 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
       <GenerationSection
         isOpenAICompatibleMode={isOpenAICompatibleMode}
         modelId={modelId}
-        systemInstruction={currentSettings.systemInstruction}
-        setSystemInstruction={(value) => updateSetting('systemInstruction', value)}
-        temperature={currentSettings.temperature}
-        setTemperature={(value) => updateSetting('temperature', value)}
-        topP={currentSettings.topP}
-        setTopP={(value) => updateSetting('topP', value)}
-        topK={currentSettings.topK ?? 64}
-        setTopK={(value) => updateSetting('topK', value)}
-        showThoughts={currentSettings.showThoughts}
-        setShowThoughts={(value) => updateSetting('showThoughts', value)}
-        thinkingBudget={currentSettings.thinkingBudget}
-        setThinkingBudget={(value) => updateSetting('thinkingBudget', value)}
-        thinkingLevel={currentSettings.thinkingLevel}
-        setThinkingLevel={(value) => updateSetting('thinkingLevel', value)}
-        mediaResolution={currentSettings.mediaResolution}
-        setMediaResolution={(value) => updateSetting('mediaResolution', value)}
-        ttsVoice={currentSettings.ttsVoice}
-        setTtsVoice={(value) => updateSetting('ttsVoice', value)}
-        isRawModeEnabled={currentSettings.isRawModeEnabled ?? false}
-        setIsRawModeEnabled={(value) => updateSetting('isRawModeEnabled', value)}
-        hideThinkingInContext={currentSettings.hideThinkingInContext ?? false}
-        setHideThinkingInContext={(value) => updateSetting('hideThinkingInContext', value)}
+        currentSettings={currentSettings}
+        onUpdateSetting={updateSetting}
       />
 
       {!isOpenAICompatibleMode && (

@@ -11,7 +11,7 @@ import { MessageListFooter } from './message-list/MessageListFooter';
 import { isGemini3Model } from '../../utils/modelHelpers';
 import { useChatAreaMessageList } from '../layout/chat-area/ChatAreaContext';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
-import { isMarkdownFile } from '../../utils/fileHelpers';
+import { isMarkdownFile } from '../../utils/fileTypeUtils';
 import { useSettingsStore } from '../../stores/settingsStore';
 
 const LazyHtmlPreviewModal = lazy(async () => {
