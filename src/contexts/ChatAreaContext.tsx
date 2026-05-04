@@ -1,16 +1,18 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext } from 'react';
 import type {
+  AppSettings,
   ChatSettings,
   ChatMessage,
   ChatToolToggleStates,
+  InputCommand,
   LiveClientFunctions,
   ModelOption,
   SideViewContent,
   UploadedFile,
   VideoMetadata,
 } from '../types';
-import type { MediaResolution } from '../types/settings';
+import type { ImageOutputMode, ImagePersonGeneration, MediaResolution } from '../types/settings';
 
 interface ChatAreaMessageListContextValue {
   messages: ChatMessage[];
@@ -41,9 +43,14 @@ interface ChatAreaMessageListContextValue {
 }
 
 interface ChatAreaInputContextValue {
-  [legacyField: string]: unknown;
+  appSettings: AppSettings;
   currentChatSettings: ChatSettings;
+  setAppFileError: (error: string | null) => void;
+  activeSessionId: string | null;
+  commandedInput: InputCommand | null;
   onMessageSent: () => void;
+  selectedFiles: UploadedFile[];
+  setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
   onSendMessage: (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => void;
   isLoading: boolean;
   isEditing: boolean;
@@ -53,9 +60,29 @@ interface ChatAreaInputContextValue {
   onAddFileById: (fileId: string) => Promise<void>;
   onCancelUpload: (fileId: string) => void;
   onTranscribeAudio: (file: File) => Promise<string | null>;
+  isProcessingFile: boolean;
+  fileError: string | null;
   isImagenModel?: boolean;
   isImageEditModel?: boolean;
+  aspectRatio?: string;
+  setAspectRatio?: (ratio: string) => void;
+  imageSize?: string;
+  setImageSize?: (size: string) => void;
+  imageOutputMode?: ImageOutputMode;
+  setImageOutputMode?: (mode: ImageOutputMode) => void;
+  personGeneration?: ImagePersonGeneration;
+  setPersonGeneration?: (mode: ImagePersonGeneration) => void;
   toolStates?: ChatToolToggleStates;
+  isGoogleSearchEnabled?: boolean;
+  onToggleGoogleSearch?: () => void;
+  isCodeExecutionEnabled?: boolean;
+  onToggleCodeExecution?: () => void;
+  isLocalPythonEnabled?: boolean;
+  onToggleLocalPython?: () => void;
+  isUrlContextEnabled?: boolean;
+  onToggleUrlContext?: () => void;
+  isDeepSearchEnabled?: boolean;
+  onToggleDeepSearch?: () => void;
   onClearChat: () => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
@@ -73,7 +100,10 @@ interface ChatAreaInputContextValue {
   onSuggestionClick?: (suggestion: string) => void;
   onOrganizeInfoClick?: (suggestion: string) => void;
   showEmptyStateSuggestions?: boolean;
+  editMode: 'update' | 'resend';
   onUpdateMessageContent: (messageId: string, content: string) => void;
+  editingMessageId: string | null;
+  setEditingMessageId: (id: string | null) => void;
   onAddUserMessage: (text: string, files?: UploadedFile[]) => void;
   onLiveTranscript?: (
     text: string,
@@ -88,6 +118,7 @@ interface ChatAreaInputContextValue {
   isBBoxModeActive?: boolean;
   onToggleGuide?: () => void;
   isGuideModeActive?: boolean;
+  themeId: string;
 }
 
 export interface ChatAreaProviderValue {

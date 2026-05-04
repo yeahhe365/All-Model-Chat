@@ -237,7 +237,7 @@ describe('certain redundancy cleanup guards', () => {
     expect(settingsModalSource).toContain('useSettingsTransferActions');
   });
 
-  it('keeps store-backed chat input state out of ChatAreaInputContext', () => {
+  it('keeps composer state in ChatAreaInputContext so the input uses one context-backed data path', () => {
     const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
     const chatAreaSource = readProjectFile('src/components/layout/ChatArea.tsx');
     const chatInputCoreSource = readProjectFile('src/hooks/chat-input/useChatInputCore.ts');
@@ -259,16 +259,16 @@ describe('certain redundancy cleanup guards', () => {
       'personGeneration?:',
       'themeId: string;',
     ]) {
-      expect(chatAreaContextSource).not.toContain(field);
+      expect(chatAreaContextSource).toContain(field);
     }
 
-    expect(chatAreaSource).not.toContain('commandedInput = useChatStore');
-    expect(chatAreaSource).not.toContain('selectedFiles = useChatStore');
-    expect(chatInputCoreSource).toContain("from '../../stores/chatStore'");
-    expect(chatInputCoreSource).toContain("from '../../stores/settingsStore'");
+    expect(chatAreaSource).toContain('commandedInput = useChatStore');
+    expect(chatAreaSource).toContain('selectedFiles = useChatStore');
+    expect(chatInputCoreSource).not.toContain("from '../../stores/chatStore'");
+    expect(chatInputCoreSource).not.toContain("from '../../stores/settingsStore'");
   });
 
-  it('keeps chat input tool state local to the input consumer instead of prop-drilling it through ChatArea', () => {
+  it('passes chat input tool state through the input context while keeping registry-based tool menus', () => {
     const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
     const chatTypesSource = readProjectFile('src/types/chat.ts');
     const chatInputActionsSource = readProjectFile('src/components/chat/input/ChatInputActions.tsx');
@@ -278,10 +278,11 @@ describe('certain redundancy cleanup guards', () => {
     const chatAreaSource = readProjectFile('src/components/layout/ChatArea.tsx');
     const chatInputCoreSource = readProjectFile('src/hooks/chat-input/useChatInputCore.ts');
 
-    expect(chatAreaContextSource).not.toContain('toolStates: ChatToolToggleStates;');
+    expect(chatAreaContextSource).toContain('toolStates?: ChatToolToggleStates;');
     expect(chatAreaSource).not.toContain('toolStates: features.toolStates');
+    expect(chatAreaSource).toContain('useChatInputToolStates');
     expect(mainContentViewModelSource).not.toContain('toolStates: {');
-    expect(chatInputCoreSource).toContain('useChatInputToolStates');
+    expect(chatInputCoreSource).not.toContain('useChatInputToolStates');
     expect(chatTypesSource).toContain('toolStates: ChatToolToggleStates;');
     expect(chatInputActionsSource).toContain('toolStates');
     expect(toolsMenuSource).toContain('getChatToolsForSurface');

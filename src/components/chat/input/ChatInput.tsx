@@ -43,6 +43,8 @@ const ChatInputComponent: React.FC = () => {
     }
   }, [liveAPI]);
 
+  const toolStates = chatInput.toolStates ?? {};
+
   // 2. 组装 Toolbar 参数
   const toolbarProps: ChatInputToolbarProps = {
     isImagenModel: capabilities.isImagenModel || false,
@@ -101,33 +103,33 @@ const ChatInputComponent: React.FC = () => {
     isRealImagenModel: capabilities.isRealImagenModel || false,
     toolStates: {
       googleSearch: {
-        isEnabled: !!chatInput.toolStates.googleSearch?.isEnabled,
-        onToggle: chatInput.toolStates.googleSearch?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.googleSearch!.onToggle!)
+        isEnabled: !!toolStates.googleSearch?.isEnabled,
+        onToggle: toolStates.googleSearch?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(toolStates.googleSearch!.onToggle!)
           : undefined,
       },
       codeExecution: {
-        isEnabled: !!chatInput.toolStates.codeExecution?.isEnabled,
-        onToggle: chatInput.toolStates.codeExecution?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.codeExecution!.onToggle!)
+        isEnabled: !!toolStates.codeExecution?.isEnabled,
+        onToggle: toolStates.codeExecution?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(toolStates.codeExecution!.onToggle!)
           : undefined,
       },
       localPython: {
-        isEnabled: !!chatInput.toolStates.localPython?.isEnabled,
-        onToggle: chatInput.toolStates.localPython?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.localPython!.onToggle!)
+        isEnabled: !!toolStates.localPython?.isEnabled,
+        onToggle: toolStates.localPython?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(toolStates.localPython!.onToggle!)
           : undefined,
       },
       urlContext: {
-        isEnabled: !!chatInput.toolStates.urlContext?.isEnabled,
-        onToggle: chatInput.toolStates.urlContext?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.urlContext!.onToggle!)
+        isEnabled: !!toolStates.urlContext?.isEnabled,
+        onToggle: toolStates.urlContext?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(toolStates.urlContext!.onToggle!)
           : undefined,
       },
       deepSearch: {
-        isEnabled: !!chatInput.toolStates.deepSearch?.isEnabled,
-        onToggle: chatInput.toolStates.deepSearch?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.deepSearch!.onToggle!)
+        isEnabled: !!toolStates.deepSearch?.isEnabled,
+        onToggle: toolStates.deepSearch?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(toolStates.deepSearch!.onToggle!)
           : undefined,
       },
     },

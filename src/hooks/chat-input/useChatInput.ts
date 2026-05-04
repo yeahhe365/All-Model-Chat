@@ -26,7 +26,7 @@ export const useChatInput = () => {
     onUpdateMessageContent,
     onCancelEdit,
     onStopGenerating,
-    toolStates,
+    toolStates = {},
     onClearChat,
     onNewChat,
     onOpenSettings,

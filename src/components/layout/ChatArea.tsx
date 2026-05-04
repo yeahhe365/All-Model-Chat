@@ -12,6 +12,7 @@ import { getVisibleChatMessages } from '../../utils/chat/visibility';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
+import { useChatInputToolStates } from '../../hooks/chat-input/useChatInputToolStates';
 
 export type { ChatAreaProps };
 
@@ -23,8 +24,30 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
   const themeId = useSettingsStore((s) => s.currentTheme.id);
   const isSwitchingModel = useChatStore((s) => s.isSwitchingModel);
   const isHistorySidebarOpen = useUIStore((s) => s.isHistorySidebarOpen);
+  const commandedInput = useChatStore((s) => s.commandedInput);
+  const selectedFiles = useChatStore((s) => s.selectedFiles);
+  const setSelectedFiles = useChatStore((s) => s.setSelectedFiles);
+  const editingMessageId = useChatStore((s) => s.editingMessageId);
+  const setEditingMessageId = useChatStore((s) => s.setEditingMessageId);
+  const editMode = useChatStore((s) => s.editMode);
+  const isProcessingFile = useChatStore((s) => s.isAppProcessingFile);
+  const fileError = useChatStore((s) => s.appFileError);
+  const setAppFileError = useChatStore((s) => s.setAppFileError);
+  const aspectRatio = useChatStore((s) => s.aspectRatio);
+  const setAspectRatio = useChatStore((s) => s.setAspectRatio);
+  const imageSize = useChatStore((s) => s.imageSize);
+  const setImageSize = useChatStore((s) => s.setImageSize);
+  const imageOutputMode = useChatStore((s) => s.imageOutputMode);
+  const setImageOutputMode = useChatStore((s) => s.setImageOutputMode);
+  const personGeneration = useChatStore((s) => s.personGeneration);
+  const setPersonGeneration = useChatStore((s) => s.setPersonGeneration);
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea({
     currentChatSettings: session.currentChatSettings,
+  });
+  const toolStates = useChatInputToolStates({
+    currentChatSettings: session.currentChatSettings,
+    isLoading: session.isLoading,
+    onStopGenerating: inputActions.onStopGenerating,
   });
 
   const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);
@@ -69,19 +92,39 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
 
   const inputValue = useMemo(
     () => ({
+      appSettings,
       currentChatSettings: session.currentChatSettings,
+      setAppFileError,
+      activeSessionId: session.activeSessionId,
+      commandedInput,
       onMessageSent: inputActions.onMessageSent,
+      selectedFiles,
+      setSelectedFiles,
       onSendMessage: inputActions.onSendMessage,
       isLoading: session.isLoading,
       isEditing: session.isEditing,
+      editMode,
+      editingMessageId,
+      setEditingMessageId,
       onStopGenerating: inputActions.onStopGenerating,
       onCancelEdit: inputActions.onCancelEdit,
       onProcessFiles: inputActions.onProcessFiles,
       onAddFileById: inputActions.onAddFileById,
       onCancelUpload: inputActions.onCancelUpload,
       onTranscribeAudio: inputActions.onTranscribeAudio,
+      isProcessingFile,
+      fileError,
       isImagenModel,
       isImageEditModel: features.isImageEditModel,
+      aspectRatio,
+      setAspectRatio,
+      imageSize,
+      setImageSize,
+      imageOutputMode,
+      setImageOutputMode,
+      personGeneration,
+      setPersonGeneration,
+      toolStates,
       onClearChat: inputActions.onClearChat,
       onNewChat: header.onNewChat,
       onOpenSettings: inputActions.onOpenSettings,
@@ -107,25 +150,47 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       isBBoxModeActive: features.isBBoxModeActive,
       onToggleGuide: inputActions.onToggleGuide,
       isGuideModeActive: features.isGuideModeActive,
+      themeId,
     }),
     [
+      appSettings,
+      aspectRatio,
+      commandedInput,
+      editMode,
+      editingMessageId,
       features.generateQuadImages,
       features.isBBoxModeActive,
       features.isGuideModeActive,
       features.isImageEditModel,
+      fileError,
       header.availableModels,
       header.isPipActive,
       header.onNewChat,
       header.onSelectModel,
       header.onTogglePip,
+      imageOutputMode,
+      imageSize,
       inputActions,
       isImagenModel,
+      isProcessingFile,
       messageActions.onOrganizeInfoClick,
       messageActions.onSuggestionClick,
+      personGeneration,
+      selectedFiles,
       session.currentChatSettings,
+      session.activeSessionId,
       session.isEditing,
       session.isLoading,
+      setAppFileError,
+      setAspectRatio,
+      setEditingMessageId,
+      setImageOutputMode,
+      setImageSize,
+      setPersonGeneration,
+      setSelectedFiles,
       showEmptyStateSuggestions,
+      themeId,
+      toolStates,
     ],
   );
 

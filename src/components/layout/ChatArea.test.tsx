@@ -18,7 +18,7 @@ const mockState = vi.hoisted(() => ({
   chat: {
     isSwitchingModel: false,
     commandedInput: null as { id: number; text: string; mode?: 'replace' | 'append' | 'quote' | 'insert' } | null,
-    selectedFiles: [],
+    selectedFiles: [] as Array<{ id: string; name: string }>,
     setSelectedFiles: vi.fn(),
     editingMessageId: null as string | null,
     setEditingMessageId: vi.fn(),
@@ -30,6 +30,10 @@ const mockState = vi.hoisted(() => ({
     setAspectRatio: vi.fn(),
     imageSize: '1K',
     setImageSize: vi.fn(),
+    imageOutputMode: 'IMAGE_TEXT',
+    setImageOutputMode: vi.fn(),
+    personGeneration: 'ALLOW_ADULT',
+    setPersonGeneration: vi.fn(),
   },
   ui: {
     isHistorySidebarOpen: false,
@@ -38,6 +42,7 @@ const mockState = vi.hoisted(() => ({
     messageList: vi.fn(),
     chatInput: vi.fn(),
   },
+  lastInputContext: null as Record<string, unknown> | null,
 }));
 
 const dispatchTouchEvent = (
@@ -99,10 +104,12 @@ vi.mock('../chat/MessageList', async () => {
 
 vi.mock('../chat/input/ChatInput', async () => {
   const { useChatStore } = await import('../../stores/chatStore');
+  const { useChatAreaInput } = await import('./chat-area/ChatAreaContext');
 
   const ChatInput = React.memo(() => {
     mockState.renders.chatInput();
     const commandedInput = useChatStore((state) => state.commandedInput);
+    mockState.lastInputContext = useChatAreaInput() as unknown as Record<string, unknown>;
     return <div data-testid="chat-input">{commandedInput?.text ?? 'empty'}</div>;
   });
 
@@ -253,6 +260,7 @@ describe('ChatArea provider slice memoization', () => {
     mockState.chat.selectedFiles = [];
     mockState.chat.editingMessageId = null;
     mockState.chat.appFileError = null;
+    mockState.lastInputContext = null;
     mockState.ui.isHistorySidebarOpen = false;
     mockState.renders.messageList.mockClear();
     mockState.renders.chatInput.mockClear();
@@ -277,8 +285,6 @@ describe('ChatArea provider slice memoization', () => {
     });
 
     const messageListRenderCount = mockState.renders.messageList.mock.calls.length;
-    const chatInputRenderCount = mockState.renders.chatInput.mock.calls.length;
-
     mockState.chat.commandedInput = {
       id: 1,
       mode: 'replace',
@@ -289,8 +295,45 @@ describe('ChatArea provider slice memoization', () => {
       root.render(<ChatArea {...props} />);
     });
 
-    expect(mockState.renders.chatInput.mock.calls.length).toBe(chatInputRenderCount);
     expect(mockState.renders.messageList.mock.calls.length).toBe(messageListRenderCount);
+  });
+
+  it('provides store-backed composer state through the input context', () => {
+    mockState.chat.selectedFiles = [{ id: 'file-1', name: 'one.png' }];
+    mockState.chat.commandedInput = {
+      id: 1,
+      mode: 'replace',
+      text: 'context input',
+    };
+
+    const props = createChatAreaProps();
+
+    act(() => {
+      root.render(<ChatArea {...props} />);
+    });
+
+    expect(mockState.lastInputContext).toMatchObject({
+      appSettings: mockState.settings.appSettings,
+      activeSessionId: 'session-1',
+      commandedInput: mockState.chat.commandedInput,
+      selectedFiles: mockState.chat.selectedFiles,
+      setSelectedFiles: mockState.chat.setSelectedFiles,
+      setAppFileError: mockState.chat.setAppFileError,
+      editMode: mockState.chat.editMode,
+      editingMessageId: mockState.chat.editingMessageId,
+      setEditingMessageId: mockState.chat.setEditingMessageId,
+      isProcessingFile: mockState.chat.isAppProcessingFile,
+      fileError: mockState.chat.appFileError,
+      aspectRatio: mockState.chat.aspectRatio,
+      setAspectRatio: mockState.chat.setAspectRatio,
+      imageSize: mockState.chat.imageSize,
+      setImageSize: mockState.chat.setImageSize,
+      imageOutputMode: mockState.chat.imageOutputMode,
+      setImageOutputMode: mockState.chat.setImageOutputMode,
+      personGeneration: mockState.chat.personGeneration,
+      setPersonGeneration: mockState.chat.setPersonGeneration,
+      themeId: mockState.settings.currentTheme.id,
+    });
   });
 
   it('does not re-render chat-input consumers when only message-list slice data changes', () => {
