@@ -381,8 +381,8 @@ describe('ChatInput', () => {
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
-  const dispatchKeyDown = (element: HTMLTextAreaElement, key: string) => {
-    element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+  const dispatchKeyDown = (element: HTMLTextAreaElement, key: string, init: KeyboardEventInit = {}) => {
+    element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }));
   };
 
   beforeEach(() => {
@@ -572,6 +572,39 @@ describe('ChatInput', () => {
 
     expect(providerValue.input.onClearChat).not.toHaveBeenCalled();
     expect(textarea?.value).toBe('/clear');
+  });
+
+  it('does not submit while IME key events use process key code', async () => {
+    const onSendMessage = vi.fn();
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = false;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onSendMessage = onSendMessage;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'ni');
+      dispatchKeyDown(textarea, 'Enter', { keyCode: 229, which: 229 });
+    });
+
+    expect(onSendMessage).not.toHaveBeenCalled();
+    expect(textarea?.value).toBe('ni');
   });
 
   it('sends Live text turns with selected attachments through client content', async () => {

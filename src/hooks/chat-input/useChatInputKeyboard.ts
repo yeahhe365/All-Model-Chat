@@ -3,6 +3,18 @@ import type { AppSettings } from '../../types';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 import type { SlashCommandState } from '../useSlashCommands';
 
+const IME_PROCESS_KEY_CODE = 229;
+
+const isKeyboardEventComposing = (event: React.KeyboardEvent<HTMLTextAreaElement>) => event.nativeEvent.isComposing;
+
+const isImeCompositionEvent = (event: React.KeyboardEvent<HTMLTextAreaElement>) =>
+  isKeyboardEventComposing(event) ||
+  event.key === 'Process' ||
+  event.keyCode === IME_PROCESS_KEY_CODE ||
+  event.which === IME_PROCESS_KEY_CODE ||
+  event.nativeEvent.keyCode === IME_PROCESS_KEY_CODE ||
+  event.nativeEvent.which === IME_PROCESS_KEY_CODE;
+
 interface ChatInputKeyboardState {
   inputText: string;
   isFullscreen: boolean;
@@ -58,7 +70,7 @@ export const useChatInputKeyboard = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (isComposingRef.current || event.nativeEvent.isComposing) {
+      if (isComposingRef.current || isImeCompositionEvent(event)) {
         return;
       }
 
