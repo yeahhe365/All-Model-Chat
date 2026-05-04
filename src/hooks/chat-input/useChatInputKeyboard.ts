@@ -58,6 +58,10 @@ export const useChatInputKeyboard = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (isComposingRef.current || event.nativeEvent.isComposing) {
+        return;
+      }
+
       if (slashCommandState.slashCommandState.isOpen) {
         if (event.key === 'ArrowDown') {
           event.preventDefault();
@@ -97,10 +101,6 @@ export const useChatInputKeyboard = ({
           }
           return;
         }
-      }
-
-      if (isComposingRef.current || event.nativeEvent.isComposing) {
-        return;
       }
 
       if (isShortcutPressed(event, 'global.stopCancel', appSettings)) {

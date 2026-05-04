@@ -542,6 +542,38 @@ describe('ChatInput', () => {
     expect(providerValue.input.onClearChat).not.toHaveBeenCalled();
   });
 
+  it('does not execute slash commands while IME composition is active', async () => {
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = false;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, '/clear');
+      textarea.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+      dispatchKeyDown(textarea, 'Enter');
+    });
+
+    expect(providerValue.input.onClearChat).not.toHaveBeenCalled();
+    expect(textarea?.value).toBe('/clear');
+  });
+
   it('sends Live text turns with selected attachments through client content', async () => {
     const onAddUserMessage = vi.fn();
     const selectedFiles: UploadedFile[] = [
