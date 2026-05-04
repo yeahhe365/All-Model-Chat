@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import type { FileCategory } from './fileTypeUtils';
 export { getFileTypeCategory } from './fileTypeUtils';
-export type { FileCategory } from './fileTypeUtils';
 
 type NotificationOptionsWithTag = NotificationOptions & {
   renotify?: boolean;

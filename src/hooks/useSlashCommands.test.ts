@@ -8,10 +8,12 @@ const createProps = (overrides: Partial<Parameters<typeof useSlashCommands>[0]> 
 
   return {
     t: (key: string) => key,
-    onToggleGoogleSearch: vi.fn(),
-    onToggleDeepSearch: vi.fn(),
-    onToggleCodeExecution: vi.fn(),
-    onToggleUrlContext: vi.fn(),
+    toolStates: {
+      googleSearch: { isEnabled: false, onToggle: vi.fn() },
+      deepSearch: { isEnabled: false, onToggle: vi.fn() },
+      codeExecution: { isEnabled: false, onToggle: vi.fn() },
+      urlContext: { isEnabled: false, onToggle: vi.fn() },
+    },
     onClearChat: vi.fn(),
     onNewChat: vi.fn(),
     onOpenSettings: vi.fn(),

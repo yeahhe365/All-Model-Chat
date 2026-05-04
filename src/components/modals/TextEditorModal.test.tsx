@@ -38,13 +38,7 @@ describe('TextEditorModal', () => {
     await act(async () => {
       root.render(
         <WindowProvider>
-          <TextEditorModal
-            isOpen
-            onClose={onClose}
-            title="Editor"
-            value="Original"
-            onChange={onChange}
-          />
+          <TextEditorModal isOpen onClose={onClose} title="Editor" value="Original" onChange={onChange} />
         </WindowProvider>,
       );
     });
@@ -74,13 +68,7 @@ describe('TextEditorModal', () => {
     await act(async () => {
       root.render(
         <WindowProvider>
-          <TextEditorModal
-            isOpen
-            onClose={vi.fn()}
-            title="Editor"
-            value="Original"
-            onChange={vi.fn()}
-          />
+          <TextEditorModal isOpen onClose={vi.fn()} title="Editor" value="Original" onChange={vi.fn()} />
         </WindowProvider>,
       );
     });

@@ -35,10 +35,6 @@ interface AppModalsProps {
   handleInstallPwa: () => void;
   installState: PwaInstallState;
 
-  handleImportSettings: (file: File) => void;
-  handleExportSettings: () => void;
-  handleImportHistory: (file: File) => void;
-  handleExportHistory: () => void;
   handleImportAllScenarios: (file: File) => void;
   handleExportAllScenarios: () => void;
 
@@ -77,10 +73,6 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
     clearAllHistory,
     handleInstallPwa,
     installState,
-    handleImportSettings,
-    handleExportSettings,
-    handleImportHistory,
-    handleExportHistory,
     handleImportAllScenarios,
     handleExportAllScenarios,
     isPreloadedMessagesModalOpen = false,
@@ -141,10 +133,6 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
             onOpenLogViewer={openLogViewer}
             onInstallPwa={handleInstallPwa}
             installState={installState}
-            onImportSettings={handleImportSettings}
-            onExportSettings={handleExportSettings}
-            onImportHistory={handleImportHistory}
-            onExportHistory={handleExportHistory}
             onImportScenarios={handleImportAllScenarios}
             onExportScenarios={handleExportAllScenarios}
             setAvailableModels={setAvailableModels}

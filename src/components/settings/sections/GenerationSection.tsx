@@ -3,7 +3,7 @@ import { AudioLines, Image as ImageIcon, Info, SquarePen, X } from 'lucide-react
 import { SETTINGS_INPUT_CLASS, SMALL_ICON_BUTTON_CLASS } from '../../../constants/appConstants';
 import type { AppSettings } from '../../../types';
 import { MediaResolution } from '../../../types/settings';
-import { getModelCapabilities } from '../../../utils/modelHelpers';
+import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
 import { useI18n } from '../../../contexts/I18nContext';
 import { Tooltip } from '../../shared/Tooltip';
 import { Select } from '../../shared/Select';
@@ -65,7 +65,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
     }
   };
 
-  const capabilities = getModelCapabilities(modelId);
+  const capabilities = getCachedModelCapabilities(modelId);
   const isNativeAudio = capabilities.isNativeAudioModel;
   const supportsUltraHighResolution = capabilities.isGemini3 || modelId.toLowerCase().includes('gemini-robotics-er');
   const isSystemPromptSet = localPrompt.trim() !== '';

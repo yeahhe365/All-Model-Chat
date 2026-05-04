@@ -62,10 +62,13 @@ describe('CreateTextFileEditor PDF export', () => {
       await Promise.resolve();
     });
 
-    expect(createMarkdownPdfBlobMock).toHaveBeenCalledWith('# Exported\\n\\n![remote](https://example.com/remote.png)', {
-      filename: 'article.pdf',
-      themeId: 'pearl',
-    });
+    expect(createMarkdownPdfBlobMock).toHaveBeenCalledWith(
+      '# Exported\\n\\n![remote](https://example.com/remote.png)',
+      {
+        filename: 'article.pdf',
+        themeId: 'pearl',
+      },
+    );
     expect(onConfirm).toHaveBeenCalledWith(expect.any(Blob), 'article.pdf');
   });
 });

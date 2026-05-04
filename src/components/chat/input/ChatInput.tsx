@@ -99,23 +99,45 @@ const ChatInputComponent: React.FC = () => {
     currentModelId: chatInput.currentChatSettings.modelId,
     isImageModel: capabilities.isImagenModel || false,
     isRealImagenModel: capabilities.isRealImagenModel || false,
-    isGoogleSearchEnabled: chatInput.isGoogleSearchEnabled,
-    onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(chatInput.onToggleGoogleSearch),
-    isCodeExecutionEnabled: chatInput.isCodeExecutionEnabled,
-    onToggleCodeExecution: () => handlers.handleToggleToolAndFocus(chatInput.onToggleCodeExecution),
-    isLocalPythonEnabled: chatInput.isLocalPythonEnabled,
-    onToggleLocalPython: chatInput.onToggleLocalPython
-      ? () => handlers.handleToggleToolAndFocus(chatInput.onToggleLocalPython!)
-      : undefined,
-    isUrlContextEnabled: chatInput.isUrlContextEnabled,
-    onToggleUrlContext: () => handlers.handleToggleToolAndFocus(chatInput.onToggleUrlContext),
-    isDeepSearchEnabled: chatInput.isDeepSearchEnabled,
-    onToggleDeepSearch: () => handlers.handleToggleToolAndFocus(chatInput.onToggleDeepSearch),
-    onAddYouTubeVideo: () => {
-      modalsState.setShowAddByUrlInput(true);
-      inputState.textareaRef.current?.focus();
+    toolStates: {
+      googleSearch: {
+        isEnabled: !!chatInput.toolStates.googleSearch?.isEnabled,
+        onToggle: chatInput.toolStates.googleSearch?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.googleSearch!.onToggle!)
+          : undefined,
+      },
+      codeExecution: {
+        isEnabled: !!chatInput.toolStates.codeExecution?.isEnabled,
+        onToggle: chatInput.toolStates.codeExecution?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.codeExecution!.onToggle!)
+          : undefined,
+      },
+      localPython: {
+        isEnabled: !!chatInput.toolStates.localPython?.isEnabled,
+        onToggle: chatInput.toolStates.localPython?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.localPython!.onToggle!)
+          : undefined,
+      },
+      urlContext: {
+        isEnabled: !!chatInput.toolStates.urlContext?.isEnabled,
+        onToggle: chatInput.toolStates.urlContext?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.urlContext!.onToggle!)
+          : undefined,
+      },
+      deepSearch: {
+        isEnabled: !!chatInput.toolStates.deepSearch?.isEnabled,
+        onToggle: chatInput.toolStates.deepSearch?.onToggle
+          ? () => handlers.handleToggleToolAndFocus(chatInput.toolStates.deepSearch!.onToggle!)
+          : undefined,
+      },
     },
-    onCountTokens: () => localFileState.setShowTokenModal(true),
+    toolUtilityActions: {
+      onAddYouTubeVideo: () => {
+        modalsState.setShowAddByUrlInput(true);
+        inputState.textareaRef.current?.focus();
+      },
+      onCountTokens: () => localFileState.setShowTokenModal(true),
+    },
     onRecordButtonClick: voiceState.handleVoiceInputClick,
     onCancelRecording: voiceState.handleCancelRecording,
     isRecording: voiceState.isRecording,
@@ -227,9 +249,7 @@ const ChatInputComponent: React.FC = () => {
     },
     suggestionsProps:
       chatInput.showEmptyStateSuggestions &&
-      !capabilities.isImagenModel &&
-      !capabilities.isTtsModel &&
-      !capabilities.isNativeAudioModel &&
+      capabilities.permissions.canGenerateSuggestions &&
       chatInput.onSuggestionClick &&
       chatInput.onOrganizeInfoClick
         ? {

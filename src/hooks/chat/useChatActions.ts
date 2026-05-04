@@ -1,5 +1,11 @@
 import React from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../../types';
+import {
+  AppSettings,
+  ChatMessage,
+  ChatSettings as IndividualChatSettings,
+  SavedChatSession,
+  UploadedFile,
+} from '../../types';
 import { useModelSelection } from './actions/useModelSelection';
 import { useChatSessionActions } from './actions/useChatSessionActions';
 import { useMessageUpdates } from './actions/useMessageUpdates';
@@ -24,6 +30,12 @@ interface UseChatActionsProps {
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
     options?: { persist?: boolean },
   ) => void;
+  updateMessageInActiveSession: (
+    messageId: string,
+    updates: Partial<ChatMessage> | ((message: ChatMessage) => ChatMessage),
+    options?: { persist?: boolean },
+  ) => void;
+  appendMessageToSession: (sessionId: string, message: ChatMessage, options?: { persist?: boolean }) => void;
   handleStopGenerating: (options?: { silent?: boolean }) => void;
   startNewChat: () => void;
   handleTogglePinSession: (sessionId: string) => void;
@@ -42,6 +54,8 @@ export const useChatActions = ({
   setCurrentChatSettings,
   setSelectedFiles,
   updateAndPersistSessions,
+  updateMessageInActiveSession,
+  appendMessageToSession,
   handleStopGenerating,
   startNewChat,
   handleTogglePinSession,
@@ -86,6 +100,8 @@ export const useChatActions = ({
       appSettings,
       currentChatSettings,
       updateAndPersistSessions,
+      updateMessageInActiveSession,
+      appendMessageToSession,
       userScrolledUpRef,
     });
 

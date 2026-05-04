@@ -1,4 +1,5 @@
 import { decodeBase64ToArrayBuffer } from '../fileHelpers';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 
 export { decodeBase64ToArrayBuffer };
 
@@ -86,7 +87,7 @@ const createWavBuffer = (pcmData: Uint8Array, sampleRate: number, numChannels: n
 export function pcmBase64ToWavUrl(base64: string, sampleRate = 24_000, numChannels = 1): string {
   const pcm = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   const wavBuffer = createWavBuffer(pcm, sampleRate, numChannels);
-  return URL.createObjectURL(new Blob([wavBuffer], { type: 'audio/wav' }));
+  return createManagedObjectUrl(new Blob([wavBuffer], { type: 'audio/wav' }));
 }
 
 /**
@@ -118,7 +119,7 @@ export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000)
 
   // 4. Create Blob and URL
   const blob = new Blob([wavBuffer], { type: 'audio/wav' });
-  return URL.createObjectURL(blob);
+  return createManagedObjectUrl(blob);
 };
 
 /**

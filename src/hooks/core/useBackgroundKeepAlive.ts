@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { logService } from '../../services/logService';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '../../services/objectUrlManager';
 
 const WORKER_CODE = `
 let intervalId = null;
@@ -26,12 +27,12 @@ export const useBackgroundKeepAlive = (isActive: boolean) => {
       try {
         if (!workerRef.current) {
           const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
-          const url = URL.createObjectURL(blob);
+          const url = createManagedObjectUrl(blob);
           workerRef.current = new Worker(url);
           workerRef.current.onmessage = () => {
             // The message event wakes up the main thread
           };
-          URL.revokeObjectURL(url);
+          releaseManagedObjectUrl(url);
           logService.debug('[KeepAlive] Worker started');
         }
         workerRef.current.postMessage('start');

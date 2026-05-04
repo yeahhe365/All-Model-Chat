@@ -50,15 +50,7 @@ export const useChatInputTranslation = ({
     } finally {
       setTranslating(false);
     }
-  }, [
-    appSettings,
-    currentChatSettings,
-    inputText,
-    isTranslating,
-    setAppFileError,
-    setInputText,
-    setTranslating,
-  ]);
+  }, [appSettings, currentChatSettings, inputText, isTranslating, setAppFileError, setInputText, setTranslating]);
 
   return { handleTranslate };
 };

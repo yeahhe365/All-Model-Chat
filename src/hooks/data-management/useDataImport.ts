@@ -90,11 +90,9 @@ const STRING_KEYS = [
   'transcriptionModelId',
   'autoCanvasModelId',
 ] as const satisfies ReadonlyArray<keyof AppSettings>;
-const NULLABLE_STRING_KEYS = [
-  'apiKey',
-  'apiProxyUrl',
-  'lockedApiKey',
-] as const satisfies ReadonlyArray<keyof AppSettings>;
+const NULLABLE_STRING_KEYS = ['apiKey', 'apiProxyUrl', 'lockedApiKey'] as const satisfies ReadonlyArray<
+  keyof AppSettings
+>;
 const BOOLEAN_KEYS = [
   'showThoughts',
   'isGoogleSearchEnabled',

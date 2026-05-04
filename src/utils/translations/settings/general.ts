@@ -13,7 +13,10 @@ export const generalSettings = {
   settingsTabShortcuts: { en: 'Shortcuts', zh: '快捷键' },
   settingsScopeDefaults: { en: 'New Chat Defaults', zh: '新对话默认值' },
   settingsScopeCurrentChat: { en: 'Current Chat', zh: '当前会话' },
-  settingsScopeCurrentChatUnavailable: { en: 'Open a chat to edit current-chat settings.', zh: '打开对话后可编辑当前会话设置。' },
+  settingsScopeCurrentChatUnavailable: {
+    en: 'Open a chat to edit current-chat settings.',
+    zh: '打开对话后可编辑当前会话设置。',
+  },
   usageTitle: { en: 'API Usage', zh: 'API 用量' },
   usageDescription: {
     en: 'Track token consumption and request counts for recent model activity.',

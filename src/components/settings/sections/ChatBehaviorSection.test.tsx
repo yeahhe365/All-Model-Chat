@@ -78,9 +78,7 @@ describe('ChatBehaviorSection', () => {
     const inputModel = text.indexOf('输入框翻译模型');
     const thoughtLanguage = text.indexOf('思维链翻译语言');
     const thoughtModel = text.indexOf('思维链翻译模型');
-    const subgroupHeadings = Array.from(container.querySelectorAll('h5')).map((heading) =>
-      heading.textContent?.trim(),
-    );
+    const subgroupHeadings = Array.from(container.querySelectorAll('h5')).map((heading) => heading.textContent?.trim());
 
     expect(inputLanguage).toBeGreaterThan(-1);
     expect(inputModel).toBeGreaterThan(inputLanguage);

@@ -1,6 +1,7 @@
 import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { logService } from '../../services/logService';
+import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildFileUploadPreflight, checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
 import { uploadFileItem } from './uploadFileItem';
@@ -98,9 +99,7 @@ export const useFileUploader = ({
             }
 
             // 2. Fix Memory Leak: Revoke the local Blob URL to free up browser memory
-            if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
-              URL.revokeObjectURL(file.dataUrl);
-            }
+            releaseManagedObjectUrl(file.dataUrl);
 
             // 3. Update state to reflect cancellation and clear heavy object references
             return {

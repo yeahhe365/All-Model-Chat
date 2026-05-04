@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { AppSettings, SavedScenario, ChatGroup } from '../../types';
 import { logService } from '../../services/logService';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { serializeSessionForPortableExport } from '../../utils/chat/session';
 import { triggerDownload } from '../../utils/export/core';
 import { dbService } from '../../utils/db';
@@ -21,7 +22,7 @@ export const useDataExport = ({ appSettings, savedGroups, savedScenarios, t }: U
       const jsonString = JSON.stringify(dataToExport, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const date = new Date().toISOString().slice(0, 10);
-      triggerDownload(URL.createObjectURL(blob), `amc-webui-settings-${date}.json`);
+      triggerDownload(createManagedObjectUrl(blob), `amc-webui-settings-${date}.json`);
     } catch (error) {
       logService.error('Failed to export settings', { error });
       alert(t('export_failed_title'));
@@ -47,7 +48,7 @@ export const useDataExport = ({ appSettings, savedGroups, savedScenarios, t }: U
       const jsonString = JSON.stringify(dataToExport, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const date = new Date().toISOString().slice(0, 10);
-      triggerDownload(URL.createObjectURL(blob), `amc-webui-history-${date}.json`);
+      triggerDownload(createManagedObjectUrl(blob), `amc-webui-history-${date}.json`);
     } catch (error) {
       logService.error('Failed to export history', { error });
       alert(t('export_failed_title'));
@@ -61,7 +62,7 @@ export const useDataExport = ({ appSettings, savedGroups, savedScenarios, t }: U
       const jsonString = JSON.stringify(dataToExport, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const date = new Date().toISOString().slice(0, 10);
-      triggerDownload(URL.createObjectURL(blob), `amc-webui-scenarios-${date}.json`);
+      triggerDownload(createManagedObjectUrl(blob), `amc-webui-scenarios-${date}.json`);
     } catch (error) {
       logService.error('Failed to export scenarios', { error });
       alert(t('export_failed_title'));

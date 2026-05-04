@@ -1,4 +1,4 @@
-import { getConfiguredApiClient } from '../apiClient';
+import { executeConfiguredApiRequest } from '../apiExecutor';
 import { logService } from '../../logService';
 import { DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/modelConstants';
 
@@ -88,31 +88,31 @@ export const translateTextApi = async (
   targetLanguage: string = 'English',
   modelId: string = DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
 ): Promise<string> => {
-  logService.info(`Translating text to ${targetLanguage}...`);
   const contents = buildTranslationContents(text, targetLanguage);
 
-  try {
-    const ai = await getConfiguredApiClient(apiKey);
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents,
-      config: {
-        temperature: 0.1,
-        topP: 0.95,
-        thinkingConfig: { thinkingBudget: -1 },
-      },
-    });
+  return executeConfiguredApiRequest({
+    apiKey,
+    label: `Translating text to ${targetLanguage}...`,
+    errorLabel: 'Error during text translation:',
+    run: async ({ client: ai }) => {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents,
+        config: {
+          temperature: 0.1,
+          topP: 0.95,
+          thinkingConfig: { thinkingBudget: -1 },
+        },
+      });
 
-    const translatedText = response.text?.trim();
-    if (translatedText) {
-      return translatedText;
-    } else {
-      throw new Error('Translation failed. The model returned an empty response.');
-    }
-  } catch (error) {
-    logService.error('Error during text translation:', error);
-    throw error;
-  }
+      const translatedText = response.text?.trim();
+      if (translatedText) {
+        return translatedText;
+      } else {
+        throw new Error('Translation failed. The model returned an empty response.');
+      }
+    },
+  });
 };
 
 export const generateSuggestionsApi = async (
@@ -121,62 +121,71 @@ export const generateSuggestionsApi = async (
   modelContent: string,
   language: 'en' | 'zh',
 ): Promise<string[]> => {
-  logService.info(`Generating suggestions in ${language}...`);
   const contents = buildSuggestionContents(userContent, modelContent, language);
 
   try {
-    const ai = await getConfiguredApiClient(apiKey);
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite-preview',
-      contents,
-      config: {
-        thinkingConfig: { thinkingBudget: -1 }, // auto
-        temperature: 0.8,
-        topP: 0.95,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: SCHEMA_TYPE.OBJECT,
-          properties: {
-            suggestions: {
-              type: SCHEMA_TYPE.ARRAY,
-              items: {
-                type: SCHEMA_TYPE.STRING,
-                description: 'A short, relevant suggested reply or follow-up question.',
+    return await executeConfiguredApiRequest({
+      apiKey,
+      label: `Generating suggestions in ${language}...`,
+      errorLabel: 'Error during suggestions generation:',
+      run: async ({ client: ai }) => {
+        const response = await ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite-preview',
+          contents,
+          config: {
+            thinkingConfig: { thinkingBudget: -1 }, // auto
+            temperature: 0.8,
+            topP: 0.95,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: SCHEMA_TYPE.OBJECT,
+              properties: {
+                suggestions: {
+                  type: SCHEMA_TYPE.ARRAY,
+                  items: {
+                    type: SCHEMA_TYPE.STRING,
+                    description: 'A short, relevant suggested reply or follow-up question.',
+                  },
+                  description: 'An array of exactly three suggested replies.',
+                },
               },
-              description: 'An array of exactly three suggested replies.',
             },
           },
-        },
+        });
+
+        const jsonStr = response.text?.trim();
+        if (!jsonStr) {
+          throw new Error('Suggestions generation returned an empty response.');
+        }
+        const parsed = JSON.parse(jsonStr);
+        if (
+          parsed.suggestions &&
+          Array.isArray(parsed.suggestions) &&
+          parsed.suggestions.every((suggestion: unknown) => typeof suggestion === 'string')
+        ) {
+          return parsed.suggestions.slice(0, 3); // Ensure only 3
+        } else {
+          throw new Error('Suggestions generation returned an invalid format.');
+        }
       },
     });
-
-    const jsonStr = response.text?.trim();
-    if (!jsonStr) {
-      throw new Error('Suggestions generation returned an empty response.');
-    }
-    const parsed = JSON.parse(jsonStr);
-    if (
-      parsed.suggestions &&
-      Array.isArray(parsed.suggestions) &&
-      parsed.suggestions.every((suggestion: unknown) => typeof suggestion === 'string')
-    ) {
-      return parsed.suggestions.slice(0, 3); // Ensure only 3
-    } else {
-      throw new Error('Suggestions generation returned an invalid format.');
-    }
-  } catch (error) {
-    logService.error('Error during suggestions generation:', error);
+  } catch {
     // Fallback to a non-JSON approach in case the model struggles with the schema
     try {
-      const ai = await getConfiguredApiClient(apiKey); // Re-get client
-      const fallbackResponse = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite-preview',
-        contents: buildSuggestionContents(userContent, modelContent, language, true),
-        config: {
-          thinkingConfig: { thinkingBudget: -1 },
-          temperature: 0.8,
-          topP: 0.95,
-        },
+      const fallbackResponse = await executeConfiguredApiRequest({
+        apiKey,
+        label: `Generating fallback suggestions in ${language}...`,
+        errorLabel: 'Fallback suggestions generation also failed:',
+        run: async ({ client: ai }) =>
+          ai.models.generateContent({
+            model: 'gemini-3.1-flash-lite-preview',
+            contents: buildSuggestionContents(userContent, modelContent, language, true),
+            config: {
+              thinkingConfig: { thinkingBudget: -1 },
+              temperature: 0.8,
+              topP: 0.95,
+            },
+          }),
       });
       const fallbackText = fallbackResponse.text?.trim();
       if (fallbackText) {
@@ -187,7 +196,7 @@ export const generateSuggestionsApi = async (
           .slice(0, 3);
       }
     } catch (fallbackError) {
-      logService.error('Fallback suggestions generation also failed:', fallbackError);
+      logService.debug('Fallback suggestions returned no usable suggestions.', fallbackError);
     }
     return []; // Return empty array on failure
   }
@@ -199,34 +208,34 @@ export const generateTitleApi = async (
   modelContent: string,
   language: 'en' | 'zh',
 ): Promise<string> => {
-  logService.info(`Generating title in ${language}...`);
   const contents = buildTitleContents(userContent, modelContent, language);
 
-  try {
-    const ai = await getConfiguredApiClient(apiKey);
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite-preview',
-      contents,
-      config: {
-        thinkingConfig: { thinkingBudget: -1 },
-        temperature: 0.3,
-        topP: 0.9,
-      },
-    });
+  return executeConfiguredApiRequest({
+    apiKey,
+    label: `Generating title in ${language}...`,
+    errorLabel: 'Error during title generation:',
+    run: async ({ client: ai }) => {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-lite-preview',
+        contents,
+        config: {
+          thinkingConfig: { thinkingBudget: -1 },
+          temperature: 0.3,
+          topP: 0.9,
+        },
+      });
 
-    const titleText = response.text?.trim();
-    if (titleText) {
-      // Clean up the title: remove quotes, trim whitespace
-      let title = titleText;
-      if ((title.startsWith('"') && title.endsWith('"')) || (title.startsWith("'") && title.endsWith("'"))) {
-        title = title.substring(1, title.length - 1);
+      const titleText = response.text?.trim();
+      if (titleText) {
+        // Clean up the title: remove quotes, trim whitespace
+        let title = titleText;
+        if ((title.startsWith('"') && title.endsWith('"')) || (title.startsWith("'") && title.endsWith("'"))) {
+          title = title.substring(1, title.length - 1);
+        }
+        return title;
+      } else {
+        throw new Error('Title generation failed. The model returned an empty response.');
       }
-      return title;
-    } else {
-      throw new Error('Title generation failed. The model returned an empty response.');
-    }
-  } catch (error) {
-    logService.error('Error during title generation:', error);
-    throw error;
-  }
+    },
+  });
 };

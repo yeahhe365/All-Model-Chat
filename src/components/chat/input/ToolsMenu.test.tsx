@@ -9,6 +9,23 @@ vi.mock('../../../services/logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
+const createToolStates = (
+  enabled: Partial<
+    Record<'googleSearch' | 'deepSearch' | 'codeExecution' | 'localPython' | 'urlContext', boolean>
+  > = {},
+) => ({
+  googleSearch: { isEnabled: !!enabled.googleSearch, onToggle: () => {} },
+  deepSearch: { isEnabled: !!enabled.deepSearch, onToggle: () => {} },
+  codeExecution: { isEnabled: !!enabled.codeExecution, onToggle: () => {} },
+  localPython: { isEnabled: !!enabled.localPython, onToggle: () => {} },
+  urlContext: { isEnabled: !!enabled.urlContext, onToggle: () => {} },
+});
+
+const toolUtilityActions = {
+  onAddYouTubeVideo: () => {},
+  onCountTokens: () => {},
+};
+
 describe('ToolsMenu', () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -34,20 +51,9 @@ describe('ToolsMenu', () => {
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-3.1-flash-live-preview"
-            isGoogleSearchEnabled={false}
-            onToggleGoogleSearch={() => {}}
-            isCodeExecutionEnabled={false}
-            onToggleCodeExecution={() => {}}
-            isLocalPythonEnabled
-            onToggleLocalPython={() => {}}
-            isUrlContextEnabled={false}
-            onToggleUrlContext={() => {}}
-            isDeepSearchEnabled={false}
-            onToggleDeepSearch={() => {}}
-            onAddYouTubeVideo={() => {}}
-            onCountTokens={() => {}}
+            toolStates={createToolStates({ localPython: true })}
+            toolUtilityActions={toolUtilityActions}
             disabled={false}
-            isNativeAudioModel
           />
         </I18nProvider>,
       );
@@ -71,20 +77,9 @@ describe('ToolsMenu', () => {
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-3.1-flash-image-preview"
-            isGoogleSearchEnabled={false}
-            onToggleGoogleSearch={() => {}}
-            isCodeExecutionEnabled={false}
-            onToggleCodeExecution={() => {}}
-            isLocalPythonEnabled={false}
-            onToggleLocalPython={() => {}}
-            isUrlContextEnabled={false}
-            onToggleUrlContext={() => {}}
-            isDeepSearchEnabled={false}
-            onToggleDeepSearch={() => {}}
-            onAddYouTubeVideo={() => {}}
-            onCountTokens={() => {}}
+            toolStates={createToolStates()}
+            toolUtilityActions={toolUtilityActions}
             disabled={false}
-            isNativeAudioModel={false}
           />
         </I18nProvider>,
       );
@@ -112,20 +107,9 @@ describe('ToolsMenu', () => {
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemma-3-27b-it"
-            isGoogleSearchEnabled={false}
-            onToggleGoogleSearch={() => {}}
-            isCodeExecutionEnabled={false}
-            onToggleCodeExecution={() => {}}
-            isLocalPythonEnabled
-            onToggleLocalPython={() => {}}
-            isUrlContextEnabled={false}
-            onToggleUrlContext={() => {}}
-            isDeepSearchEnabled={false}
-            onToggleDeepSearch={() => {}}
-            onAddYouTubeVideo={() => {}}
-            onCountTokens={() => {}}
+            toolStates={createToolStates({ localPython: true })}
+            toolUtilityActions={toolUtilityActions}
             disabled={false}
-            isNativeAudioModel={false}
           />
         </I18nProvider>,
       );
@@ -151,20 +135,9 @@ describe('ToolsMenu', () => {
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-2.5-pro"
-            isGoogleSearchEnabled
-            onToggleGoogleSearch={() => {}}
-            isCodeExecutionEnabled={false}
-            onToggleCodeExecution={() => {}}
-            isLocalPythonEnabled
-            onToggleLocalPython={() => {}}
-            isUrlContextEnabled={false}
-            onToggleUrlContext={() => {}}
-            isDeepSearchEnabled={false}
-            onToggleDeepSearch={() => {}}
-            onAddYouTubeVideo={() => {}}
-            onCountTokens={() => {}}
+            toolStates={createToolStates({ googleSearch: true, localPython: true })}
+            toolUtilityActions={toolUtilityActions}
             disabled={false}
-            isNativeAudioModel={false}
           />
         </I18nProvider>,
       );
@@ -179,20 +152,9 @@ describe('ToolsMenu', () => {
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-3.1-pro-preview"
-            isGoogleSearchEnabled
-            onToggleGoogleSearch={() => {}}
-            isCodeExecutionEnabled={false}
-            onToggleCodeExecution={() => {}}
-            isLocalPythonEnabled
-            onToggleLocalPython={() => {}}
-            isUrlContextEnabled={false}
-            onToggleUrlContext={() => {}}
-            isDeepSearchEnabled={false}
-            onToggleDeepSearch={() => {}}
-            onAddYouTubeVideo={() => {}}
-            onCountTokens={() => {}}
+            toolStates={createToolStates({ googleSearch: true, localPython: true })}
+            toolUtilityActions={toolUtilityActions}
             disabled={false}
-            isNativeAudioModel={false}
           />
         </I18nProvider>,
       );

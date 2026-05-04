@@ -63,18 +63,17 @@ const baseProps = {
   onAttachmentAction: vi.fn(),
   disabled: false,
   currentModelId: 'gemini-3.1-pro-preview',
-  isGoogleSearchEnabled: false,
-  onToggleGoogleSearch: vi.fn(),
-  isCodeExecutionEnabled: false,
-  onToggleCodeExecution: vi.fn(),
-  isLocalPythonEnabled: false,
-  onToggleLocalPython: vi.fn(),
-  isUrlContextEnabled: false,
-  onToggleUrlContext: vi.fn(),
-  isDeepSearchEnabled: false,
-  onToggleDeepSearch: vi.fn(),
-  onAddYouTubeVideo: vi.fn(),
-  onCountTokens: vi.fn(),
+  toolStates: {
+    googleSearch: { isEnabled: false, onToggle: vi.fn() },
+    deepSearch: { isEnabled: false, onToggle: vi.fn() },
+    codeExecution: { isEnabled: false, onToggle: vi.fn() },
+    localPython: { isEnabled: false, onToggle: vi.fn() },
+    urlContext: { isEnabled: false, onToggle: vi.fn() },
+  },
+  toolUtilityActions: {
+    onAddYouTubeVideo: vi.fn(),
+    onCountTokens: vi.fn(),
+  },
   onRecordButtonClick: vi.fn(),
   isRecording: false,
   isMicInitializing: false,
@@ -222,9 +221,7 @@ describe('ChatInputActions', () => {
       root.render(<ChatInputActions {...baseProps} currentModelId="gemma-3-27b-it" />);
     });
 
-    expect(toolsMenuMock).toHaveBeenCalledWith(
-      expect.objectContaining({ currentModelId: 'gemma-3-27b-it' }),
-    );
+    expect(toolsMenuMock).toHaveBeenCalledWith(expect.objectContaining({ currentModelId: 'gemma-3-27b-it' }));
     expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('isGemmaModel');
     expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('supportsBuiltInCustomToolCombination');
     expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('isGemini3ImageModel');

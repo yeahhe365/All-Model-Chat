@@ -20,10 +20,7 @@ export const getLiveApiClient = async (
   const apiKey = apiKeyForLiveConnection?.trim();
 
   if (!apiKey) {
-    throw new LiveApiAuthConfigurationError(
-      'MISSING_API_KEY',
-      'Live API requires a browser API key.',
-    );
+    throw new LiveApiAuthConfigurationError('MISSING_API_KEY', 'Live API requires a browser API key.');
   }
 
   return getClient(apiKey, resolveLiveClientBaseUrl(appSettings), httpOptions);

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { audioWorkletCode } from '../../utils/audio/audioWorklet';
 import { decodeBase64ToArrayBuffer, decodeAudioData } from '../../utils/audio/audioProcessing';
 import { logService } from '../../services/logService';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '../../services/objectUrlManager';
 import { useStateWithRef } from '../useStateWithRef';
 
 export const useLiveAudio = () => {
@@ -73,12 +74,12 @@ export const useLiveAudio = () => {
 
       // AudioWorklet Setup
       const blob = new Blob([audioWorkletCode], { type: 'application/javascript' });
-      const blobUrl = URL.createObjectURL(blob);
+      const blobUrl = createManagedObjectUrl(blob);
 
       try {
         await inputCtx.audioWorklet.addModule(blobUrl);
       } finally {
-        URL.revokeObjectURL(blobUrl);
+        releaseManagedObjectUrl(blobUrl);
       }
 
       const workletNode = new AudioWorkletNode(inputCtx, 'pcm-processor');
@@ -137,39 +138,42 @@ export const useLiveAudio = () => {
     }
   }, [isMutedRef, setIsMuted]);
 
-  const playAudioChunk = useCallback(async (base64Audio: string) => {
-    const ctx = audioContextRef.current;
-    if (!ctx) return;
+  const playAudioChunk = useCallback(
+    async (base64Audio: string) => {
+      const ctx = audioContextRef.current;
+      if (!ctx) return;
 
-    clearOutputAudioTail();
-    outputAudioActiveRef.current = true;
-    setIsSpeaking(true);
+      clearOutputAudioTail();
+      outputAudioActiveRef.current = true;
+      setIsSpeaking(true);
 
-    try {
-      // Ensure strict timing sequence
-      nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
+      try {
+        // Ensure strict timing sequence
+        nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
 
-      const arrayBuffer = decodeBase64ToArrayBuffer(base64Audio);
-      const audioBuffer = await decodeAudioData(arrayBuffer, ctx);
+        const arrayBuffer = decodeBase64ToArrayBuffer(base64Audio);
+        const audioBuffer = await decodeAudioData(arrayBuffer, ctx);
 
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(ctx.destination);
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
 
-      source.onended = () => {
-        sourcesRef.current.delete(source);
-        if (sourcesRef.current.size === 0) {
-          markOutputAudioInactiveSoon();
-        }
-      };
+        source.onended = () => {
+          sourcesRef.current.delete(source);
+          if (sourcesRef.current.size === 0) {
+            markOutputAudioInactiveSoon();
+          }
+        };
 
-      source.start(nextStartTimeRef.current);
-      nextStartTimeRef.current += audioBuffer.duration;
-      sourcesRef.current.add(source);
-    } catch (error) {
-      logService.error('Failed to play audio chunk', error);
-    }
-  }, [clearOutputAudioTail, markOutputAudioInactiveSoon]);
+        source.start(nextStartTimeRef.current);
+        nextStartTimeRef.current += audioBuffer.duration;
+        sourcesRef.current.add(source);
+      } catch (error) {
+        logService.error('Failed to play audio chunk', error);
+      }
+    },
+    [clearOutputAudioTail, markOutputAudioInactiveSoon],
+  );
 
   const stopAudioPlayback = useCallback(() => {
     clearOutputAudioTail();

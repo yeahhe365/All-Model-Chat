@@ -2,6 +2,8 @@ import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 
 import { translations } from '../utils/translations';
 import { AttachmentAction, ModelOption } from '../types';
 import type { SlashCommand as Command } from '../types/slashCommands';
+import type { ChatToolToggleStates, ToggleableChatToolId } from '../types/chatTools';
+import { getSlashCommandToolDefinitions } from '../features/chat-tools/toolRegistry';
 
 export type SlashCommandState = {
   isOpen: boolean;
@@ -12,10 +14,7 @@ export type SlashCommandState = {
 
 interface UseSlashCommandsProps {
   t: (key: keyof typeof translations) => string;
-  onToggleGoogleSearch: () => void;
-  onToggleDeepSearch: () => void;
-  onToggleCodeExecution: () => void;
-  onToggleUrlContext: () => void;
+  toolStates: ChatToolToggleStates;
   onClearChat: () => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
@@ -45,12 +44,16 @@ const CLOSED_SLASH_COMMAND_STATE: SlashCommandState = {
 
 const INPUT_POPULATING_COMMANDS = new Set(['model', 'edit']);
 
+const TOOL_COMMAND_ACTIONS: Record<string, ToggleableChatToolId> = {
+  deep: 'deepSearch',
+  online: 'googleSearch',
+  code: 'codeExecution',
+  url: 'urlContext',
+};
+
 export const useSlashCommands = ({
   t,
-  onToggleGoogleSearch,
-  onToggleDeepSearch,
-  onToggleCodeExecution,
-  onToggleUrlContext,
+  toolStates,
   onClearChat,
   onNewChat,
   onOpenSettings,
@@ -72,17 +75,20 @@ export const useSlashCommands = ({
 }: UseSlashCommandsProps) => {
   const [slashCommandState, setSlashCommandState] = useState<SlashCommandState>(CLOSED_SLASH_COMMAND_STATE);
 
-  const commandDefinitions = useMemo(
-    () => [
+  const commandDefinitions = useMemo(() => {
+    const toolCommands = getSlashCommandToolDefinitions().map((tool) => ({
+      name: tool.slashCommand!.name,
+      description: t(tool.slashCommand!.descriptionKey as keyof typeof translations),
+      icon: tool.slashCommand!.icon,
+    }));
+
+    return [
       { name: 'model', description: t('help_cmd_model'), icon: 'bot' },
       { name: 'help', description: t('help_cmd_help'), icon: 'help' },
       { name: 'edit', description: t('help_cmd_edit'), icon: 'edit' },
       { name: 'pin', description: t('help_cmd_pin'), icon: 'pin' },
       { name: 'retry', description: t('help_cmd_retry'), icon: 'retry' },
-      { name: 'online', description: t('help_cmd_search'), icon: 'search' },
-      { name: 'deep', description: t('help_cmd_deep'), icon: 'deep' },
-      { name: 'code', description: t('help_cmd_code'), icon: 'code' },
-      { name: 'url', description: t('help_cmd_url'), icon: 'url' },
+      ...toolCommands,
       { name: 'file', description: t('help_cmd_file'), icon: 'file' },
       { name: 'clear', description: t('help_cmd_clear'), icon: 'clear' },
       { name: 'new', description: t('help_cmd_new'), icon: 'new' },
@@ -90,9 +96,8 @@ export const useSlashCommands = ({
       { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas' },
       { name: 'pip', description: t('help_cmd_pip'), icon: 'pip' },
       { name: 'fast', description: t('help_cmd_fast'), icon: 'fast' },
-    ],
-    [t],
-  );
+    ];
+  }, [t]);
 
   const commands = useMemo<Command[]>(
     () =>
@@ -124,13 +129,15 @@ export const useSlashCommands = ({
           case 'retry':
             return { name, description, icon, action: onRetryLastTurn };
           case 'online':
-            return { name, description, icon, action: onToggleGoogleSearch };
           case 'deep':
-            return { name, description, icon, action: onToggleDeepSearch };
           case 'code':
-            return { name, description, icon, action: onToggleCodeExecution };
           case 'url':
-            return { name, description, icon, action: onToggleUrlContext };
+            return {
+              name,
+              description,
+              icon,
+              action: toolStates[TOOL_COMMAND_ACTIONS[name]]?.onToggle ?? (() => undefined),
+            };
           case 'file':
             return { name, description, icon, action: () => onAttachmentAction('upload') };
           case 'clear':
@@ -175,16 +182,13 @@ export const useSlashCommands = ({
       onRetryLastTurn,
       onSetThinkingLevel,
       onToggleCanvasPrompt,
-      onToggleCodeExecution,
-      onToggleDeepSearch,
-      onToggleGoogleSearch,
       onTogglePinCurrentSession,
       onTogglePip,
-      onToggleUrlContext,
       setInputText,
       setIsHelpModalOpen,
       textareaRef,
       thinkingLevel,
+      toolStates,
     ],
   );
 

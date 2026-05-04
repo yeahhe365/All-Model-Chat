@@ -158,7 +158,13 @@ async function proxyExternalImage(
   }
 
   if (!upstreamResponse.ok) {
-    sendJson(request, response, 502, { error: `Image proxy target returned ${upstreamResponse.status}.` }, allowedOrigins);
+    sendJson(
+      request,
+      response,
+      502,
+      { error: `Image proxy target returned ${upstreamResponse.status}.` },
+      allowedOrigins,
+    );
     return;
   }
 

@@ -174,8 +174,12 @@ describe('MessageActions', () => {
     const menu = container.querySelector('[role="menu"]');
     expect(menu).toBeInTheDocument();
 
-    const continueItem = container.querySelector<HTMLButtonElement>('[role="menuitem"][aria-label="Continue Generating"]');
-    const canvasItem = container.querySelector<HTMLButtonElement>('[role="menuitem"][aria-label="Visualize with Canvas"]');
+    const continueItem = container.querySelector<HTMLButtonElement>(
+      '[role="menuitem"][aria-label="Continue Generating"]',
+    );
+    const canvasItem = container.querySelector<HTMLButtonElement>(
+      '[role="menuitem"][aria-label="Visualize with Canvas"]',
+    );
     const forkItem = container.querySelector<HTMLButtonElement>('[role="menuitem"][aria-label="Fork from here"]');
     expect(continueItem).toBeInTheDocument();
     expect(canvasItem).toBeInTheDocument();
@@ -235,26 +239,26 @@ describe('MessageActions', () => {
                 isGrouped={false}
                 onEditMessage={() => {}}
                 onDeleteMessage={() => {}}
-              onRetryMessage={() => {}}
-              onGenerateCanvas={() => {}}
-              onContinueGeneration={() => {}}
-              onForkMessage={() => {}}
-              themeId="pearl"
-            />
-            <MessageActions
+                onRetryMessage={() => {}}
+                onGenerateCanvas={() => {}}
+                onContinueGeneration={() => {}}
+                onForkMessage={() => {}}
+                themeId="pearl"
+              />
+              <MessageActions
                 message={userMessage}
                 sessionTitle="Session"
                 messageIndex={1}
                 isGrouped={false}
                 onEditMessage={() => {}}
                 onDeleteMessage={() => {}}
-              onRetryMessage={() => {}}
-              onGenerateCanvas={() => {}}
-              onContinueGeneration={() => {}}
-              onForkMessage={() => {}}
-              themeId="pearl"
-            />
-          </>
+                onRetryMessage={() => {}}
+                onGenerateCanvas={() => {}}
+                onContinueGeneration={() => {}}
+                onForkMessage={() => {}}
+                themeId="pearl"
+              />
+            </>
           </WindowProvider>
         </I18nProvider>,
       );

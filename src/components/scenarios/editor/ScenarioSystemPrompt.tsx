@@ -10,12 +10,7 @@ interface ScenarioSystemPromptProps {
   readOnly: boolean;
 }
 
-export const ScenarioSystemPrompt: React.FC<ScenarioSystemPromptProps> = ({
-  value,
-  onChange,
-  onExpand,
-  readOnly,
-}) => {
+export const ScenarioSystemPrompt: React.FC<ScenarioSystemPromptProps> = ({ value, onChange, onExpand, readOnly }) => {
   const { t } = useI18n();
   return (
     <div className="hidden md:flex w-80 border-r border-[var(--theme-border-secondary)] flex-col bg-[var(--theme-bg-secondary)] flex-shrink-0">

@@ -1,5 +1,6 @@
 import { ChatSettings, ImageOutputMode, ImagePersonGeneration, MediaResolution } from './settings';
 import type { Part } from '@google/genai';
+import type { ChatToolToggleStates, ChatToolUtilityActions } from './chatTools';
 
 export interface VideoMetadata {
   startOffset?: string;
@@ -194,17 +195,8 @@ export interface ChatInputActionsProps {
   currentModelId: string;
   isImageModel?: boolean;
   isRealImagenModel?: boolean;
-  isGoogleSearchEnabled: boolean;
-  onToggleGoogleSearch: () => void;
-  isCodeExecutionEnabled: boolean;
-  onToggleCodeExecution: () => void;
-  isLocalPythonEnabled?: boolean;
-  onToggleLocalPython?: () => void;
-  isUrlContextEnabled: boolean;
-  onToggleUrlContext: () => void;
-  isDeepSearchEnabled: boolean;
-  onToggleDeepSearch: () => void;
-  onAddYouTubeVideo: () => void;
+  toolStates: ChatToolToggleStates;
+  toolUtilityActions: ChatToolUtilityActions;
   onRecordButtonClick: () => void;
   isRecording?: boolean;
   isMicInitializing?: boolean;
@@ -226,7 +218,6 @@ export interface ChatInputActionsProps {
   inputText: string;
   onToggleFullscreen?: () => void;
   isFullscreen?: boolean;
-  onCountTokens: () => void;
   editMode?: 'update' | 'resend';
   isNativeAudioModel?: boolean;
   onStartLiveSession?: () => void;

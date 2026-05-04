@@ -3,7 +3,8 @@ import { useI18n } from '../../../../contexts/I18nContext';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
-import { getModelCapabilities, isGemini3Model } from '../../../../utils/modelHelpers';
+import { isGemini3Model } from '../../../../utils/modelHelpers';
+import { getCachedModelCapabilities } from '../../../../stores/modelCapabilitiesStore';
 import { ThinkingModeSelector } from './ThinkingModeSelector';
 import { ThinkingLevelSelector } from './ThinkingLevelSelector';
 import { ThinkingBudgetSlider } from './ThinkingBudgetSlider';
@@ -31,7 +32,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
 }) => {
   const { t } = useI18n();
   const isGemini3 = isGemini3Model(modelId);
-  const capabilities = getModelCapabilities(modelId);
+  const capabilities = getCachedModelCapabilities(modelId);
   const supportsThinkingLevel = capabilities.supportsThinkingLevel;
   const isFlash3 = isGemini3 && modelId.toLowerCase().includes('flash');
   const isRobotics = modelId.toLowerCase().includes('gemini-robotics-er');

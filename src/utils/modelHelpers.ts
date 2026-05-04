@@ -120,6 +120,22 @@ export const isGemini3Model = (modelId: string): boolean => {
   );
 };
 
+interface ModelInteractionPermissions {
+  canAcceptAttachments: boolean;
+  canUseTools: boolean;
+  canUseGoogleSearch: boolean;
+  canUseDeepSearch: boolean;
+  canUseCodeExecution: boolean;
+  canUseLocalPython: boolean;
+  canUseUrlContext: boolean;
+  canUseTokenCount: boolean;
+  canUseYouTubeUrl: boolean;
+  canGenerateSuggestions: boolean;
+  canUseVoiceInput: boolean;
+  canUseLiveControls: boolean;
+  requiresTextPrompt: boolean;
+}
+
 export const getModelCapabilities = (modelId: string) => {
   const isGemini3 = isGemini3Model(modelId);
   const supportsThinkingLevelSelection = supportsThinkingLevel(modelId);
@@ -129,6 +145,23 @@ export const getModelCapabilities = (modelId: string) => {
   const ttsModel = isTtsModel(modelId);
   const nativeAudioModel = isNativeAudioModel(modelId);
   const imageModel = realImagenModel || flashImageModel || gemini3ImageModel;
+  const canUseTextChatTools = !nativeAudioModel && !imageModel && !ttsModel;
+  const canUseBuiltInCustomToolCombination = isGemini3;
+  const permissions: ModelInteractionPermissions = {
+    canAcceptAttachments: !realImagenModel && !ttsModel && !nativeAudioModel,
+    canUseTools: canUseTextChatTools || nativeAudioModel || gemini3ImageModel || imageModel,
+    canUseGoogleSearch: canUseTextChatTools || nativeAudioModel || gemini3ImageModel,
+    canUseDeepSearch: canUseTextChatTools,
+    canUseCodeExecution: canUseTextChatTools && !isGemmaModel(modelId),
+    canUseLocalPython: canUseTextChatTools || nativeAudioModel,
+    canUseUrlContext: canUseTextChatTools && !isGemmaModel(modelId),
+    canUseTokenCount: !nativeAudioModel,
+    canUseYouTubeUrl: canUseTextChatTools,
+    canGenerateSuggestions: canUseTextChatTools,
+    canUseVoiceInput: !nativeAudioModel && !imageModel && !ttsModel,
+    canUseLiveControls: nativeAudioModel,
+    requiresTextPrompt: ttsModel || imageModel,
+  };
 
   let supportedAspectRatios: string[] | undefined;
   if (realImagenModel) {
@@ -175,6 +208,8 @@ export const getModelCapabilities = (modelId: string) => {
     isImagenModel: imageModel,
     isTtsModel: ttsModel,
     isNativeAudioModel: nativeAudioModel,
+    supportsBuiltInCustomToolCombination: canUseBuiltInCustomToolCombination,
+    permissions,
     supportedAspectRatios,
     supportedImageSizes,
   };

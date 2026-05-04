@@ -1,7 +1,10 @@
 import React from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { Languages } from 'lucide-react';
-import { DEFAULT_THOUGHT_TRANSLATION_MODEL_ID, TRANSLATION_TARGET_LANGUAGE_OPTIONS } from '../../../constants/appConstants';
+import {
+  DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+  TRANSLATION_TARGET_LANGUAGE_OPTIONS,
+} from '../../../constants/appConstants';
 import { ModelOption } from '../../../types';
 import { TranslationTargetLanguage } from '../../../types/settings';
 import { Select } from '../../shared/Select';

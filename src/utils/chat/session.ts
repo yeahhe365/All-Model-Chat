@@ -2,6 +2,7 @@ import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord
 import { generateUniqueId } from './ids';
 import { base64ToBlob, blobToBase64 } from '../fileHelpers';
 import { getVisibleChatMessages } from './visibility';
+import { createManagedObjectUrl, releaseManagedObjectUrlsByOwner } from '../../services/objectUrlManager';
 
 const logSessionWarning = (message: string, data?: unknown) => {
   console.warn(`[session] ${message}`, data);
@@ -65,6 +66,9 @@ export const generateSessionTitle = (messages: ChatMessage[]): string => {
 };
 
 export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSession => {
+  const sessionResourceOwner = `session:${session.id}`;
+  releaseManagedObjectUrlsByOwner(sessionResourceOwner);
+
   const newMessages = session.messages.map((message) => {
     if (!message.files?.length) return message;
 
@@ -78,7 +82,10 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
           const base64Clean = file.dataUrl.includes(',') ? file.dataUrl.split(',')[1] : file.dataUrl;
           const blob = base64ToBlob(base64Clean, file.type);
           const newFile = new File([blob], file.name, { type: file.type });
-          const newUrl = URL.createObjectURL(newFile);
+          const newUrl = createManagedObjectUrl(newFile, {
+            key: `session-file:${session.id}:${message.id}:${file.id}`,
+            ownerId: sessionResourceOwner,
+          });
 
           return { ...file, rawFile: newFile, dataUrl: newUrl };
         } catch {
@@ -95,7 +102,10 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
       if (isValidRawFile) {
         try {
           // Create a new blob URL. The browser will handle the old invalid one on page unload.
-          const dataUrl = URL.createObjectURL(file.rawFile as Blob);
+          const dataUrl = createManagedObjectUrl(file.rawFile as Blob, {
+            key: `session-file:${session.id}:${message.id}:${file.id}`,
+            ownerId: sessionResourceOwner,
+          });
           return { ...file, dataUrl: dataUrl };
         } catch (error) {
           logSessionError('Failed to create object URL for file on load', { fileId: file.id, error });

@@ -291,11 +291,7 @@ const getLanguageBadgeConfig = (language: string): LanguageBadgeConfig => {
       displayName: lang === 'md' ? 'Markdown' : lang.toUpperCase(),
       compactLabel: lang === 'markdown' ? 'MD' : undefined,
       renderIcon: () => (
-        <FileText
-          size={STROKE_LANGUAGE_ICON_SIZE}
-          strokeWidth={2.1}
-          className="text-[var(--theme-text-secondary)]"
-        />
+        <FileText size={STROKE_LANGUAGE_ICON_SIZE} strokeWidth={2.1} className="text-[var(--theme-text-secondary)]" />
       ),
     };
   }

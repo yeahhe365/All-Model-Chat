@@ -3,6 +3,8 @@ import { UploadedFile, AppSettings } from '../../types';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildContentParts } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
+import { cleanupFilePreviewUrl, cleanupFilePreviewUrls } from '../../utils/fileHelpers';
 import { countTokensApi } from '../../services/api/generation/tokenApi';
 import {
   appendFunctionDeclarationsToTools,
@@ -131,12 +133,7 @@ export const useTokenCountLogic = ({
           ? appendFunctionDeclarationsToTools(modelId, generationConfig, [createRunLocalPythonDeclaration()])
           : generationConfig;
 
-        const count = await countTokensApi(
-          keyResult.key,
-          modelId,
-          contentParts,
-          toCountTokensConfig(requestConfig),
-        );
+        const count = await countTokensApi(keyResult.key, modelId, contentParts, toCountTokensConfig(requestConfig));
         setTokenCount(count);
       } catch (err) {
         console.error('Token calculation failed', err);
@@ -171,7 +168,7 @@ export const useTokenCountLogic = ({
         type: file.type,
         size: file.size,
         rawFile: file,
-        dataUrl: URL.createObjectURL(file),
+        dataUrl: createManagedObjectUrl(file),
         uploadState: 'active' as const,
       }));
       setFiles((prev) => [...prev, ...newFiles]);
@@ -181,13 +178,20 @@ export const useTokenCountLogic = ({
   };
 
   const removeFile = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
+    setFiles((prev) => {
+      const removedFile = prev.find((file) => file.id === id);
+      cleanupFilePreviewUrl(removedFile);
+      return prev.filter((f) => f.id !== id);
+    });
     setTokenCount(null);
   };
 
   const clearAll = () => {
     setText('');
-    setFiles([]);
+    setFiles((prev) => {
+      cleanupFilePreviewUrls(prev);
+      return [];
+    });
     setTokenCount(null);
   };
 

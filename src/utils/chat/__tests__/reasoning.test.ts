@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { extractGemmaThoughtChannel, extractRawThinkingBlocks, stripReasoningMarkup } from '../reasoning';
+import {
+  extractGemmaThoughtChannel,
+  extractRawThinkingBlocks,
+  stripGemmaThoughtMarkup,
+  stripReasoningMarkup,
+  wrapReasoningMarkup,
+} from '../reasoning';
 
 describe('extractGemmaThoughtChannel', () => {
   it('returns plain text unchanged when no Gemma thought channel markup is present', () => {
@@ -23,6 +29,22 @@ describe('stripReasoningMarkup', () => {
     const plainText = '\n\n- item 1\n- item 2\n';
 
     expect(stripReasoningMarkup(plainText)).toBe(plainText);
+  });
+});
+
+describe('renderable reasoning markup helpers', () => {
+  it('wraps raw thinking blocks without touching fenced code examples', () => {
+    const markdown = '```html\n<thinking>literal</thinking>\n```\n\n<thinking>Plan <x>.</thinking>\nFinal.';
+
+    expect(wrapReasoningMarkup(markdown, false)).toContain('```html\n<thinking>literal</thinking>\n```');
+    expect(wrapReasoningMarkup(markdown, false)).toContain('<details>');
+    expect(wrapReasoningMarkup(markdown, false)).toContain('Plan &lt;x&gt;.');
+  });
+
+  it('strips Gemma thought channels outside literal markdown segments', () => {
+    const markdown = '`<|channel>thought keep literal<channel|>`\n<|channel>thought hidden<channel|>Visible.';
+
+    expect(stripGemmaThoughtMarkup(markdown)).toBe('`<|channel>thought keep literal<channel|>`\n Visible.');
   });
 });
 

@@ -7,15 +7,12 @@ import {
   SavedChatSession,
 } from '../types';
 import { logService } from '../services/logService';
-import { getKeyForRequest } from '../utils/apiUtils';
-import { generateUniqueId } from '../utils/chat/ids';
-import { createNewSession } from '../utils/chat/session';
-import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './message-sender/useChatStreamHandler';
 import { useTtsImagenSender } from './message-sender/useTtsImagenSender';
 import { useImageEditSender } from './message-sender/useImageEditSender';
 import { useCanvasGenerator } from './message-sender/useCanvasGenerator';
 import { useStandardChat } from './message-sender/useStandardChat';
+import { useModelRequestRunner } from './message-sender/useModelRequestRunner';
 import { getModelCapabilities } from '../utils/modelHelpers';
 import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
@@ -117,6 +114,14 @@ export const useMessageSender = (props: MessageSenderProps) => {
     setActiveSessionId,
   });
 
+  const { prepareModelRequest } = useModelRequestRunner({
+    appSettings,
+    currentChatSettings,
+    updateAndPersistSessions,
+    setActiveSessionId,
+    translateApiKeyError,
+  });
+
   const handleSendMessage = useCallback(
     async (overrideOptions?: {
       text?: string;
@@ -141,6 +146,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
       const isImagenModel = capabilities.isRealImagenModel;
       const isImageEditModel = capabilities.isFlashImageModel;
       const isGemini3Image = capabilities.isGemini3ImageModel;
+      const permissions = capabilities.permissions ?? {
+        canAcceptAttachments: !isImagenModel,
+        requiresTextPrompt: isTtsModel || isImagenModel || isImageEditModel || isGemini3Image,
+      };
 
       logService.info(`Sending message with model ${activeModelId}`, {
         textLength: textToUse.length,
@@ -153,13 +162,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
       if (
         !textToUse.trim() &&
-        !isTtsModel &&
-        !isImagenModel &&
+        !permissions.requiresTextPrompt &&
         !isContinueMode &&
         filesToUse.filter((f) => f.uploadState === 'active').length === 0
       )
         return;
-      if ((isTtsModel || isImagenModel || isImageEditModel || isGemini3Image) && !textToUse.trim()) return;
+      if (permissions.requiresTextPrompt && !textToUse.trim()) return;
       if (filesToUse.some((f) => f.isProcessing || (f.uploadState !== 'active' && !f.error))) {
         logService.warn('Send message blocked: files are still processing.');
         setAppFileError(t('messageSender_waitForFiles'));
@@ -222,7 +230,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         return;
       }
 
-      if (isImagenModel && filesToUse.length > 0) {
+      if (!permissions.canAcceptAttachments && filesToUse.length > 0) {
         logService.warn('Send message blocked: Imagen models do not support file attachments.');
         setAppFileError(t('messageSender_imagenTextOnly'));
         return;
@@ -230,48 +238,25 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
       setAppFileError(null);
 
-      if (!activeModelId) {
-        logService.error('Send message failed: No model selected.');
-        const errorMsg: ChatMessage = {
-          id: generateUniqueId(),
-          role: 'error',
-          content: t('messageSender_noModelSelected'),
-          timestamp: new Date(),
-        };
-        const newSession = createNewSession(
-          { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
-          [errorMsg],
-          t('messageSender_errorSessionTitle'),
-        );
-        updateAndPersistSessions((p) => [newSession, ...p]);
-        setActiveSessionId(newSession.id);
+      const continueTargetMessage =
+        isContinueMode && effectiveEditingId ? messages.find((message) => message.id === effectiveEditingId) : null;
+      const request = prepareModelRequest({
+        activeModelId,
+        files: filesToUse,
+        keySettings: sessionToUpdate,
+        generationId: continueTargetMessage ? (effectiveEditingId ?? undefined) : undefined,
+        generationStartTime: continueTargetMessage?.generationStartTime,
+        messages: {
+          noModelSelected: t('messageSender_noModelSelected'),
+          noModelTitle: t('messageSender_errorSessionTitle'),
+          apiKeyTitle: t('messageSender_apiKeyErrorSessionTitle'),
+        },
+      });
+
+      if (!request.ok) {
         return;
       }
-
-      const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
-      if ('error' in keyResult) {
-        logService.error('Send message failed: API Key not configured.');
-        const translatedApiError = translateApiKeyError(keyResult.error);
-        const errorMsg: ChatMessage = {
-          id: generateUniqueId(),
-          role: 'error',
-          content: translatedApiError,
-          timestamp: new Date(),
-        };
-        const newSession = createNewSession(
-          { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
-          [errorMsg],
-          t('messageSender_apiKeyErrorSessionTitle'),
-        );
-        updateAndPersistSessions((p) => [newSession, ...p]);
-        setActiveSessionId(newSession.id);
-        return;
-      }
-      const { key: keyToUse, isNewKey } = keyResult;
-      const shouldLockKey = isNewKey && filesToUse.some((f) => f.fileUri && f.uploadState === 'active');
-
-      const newAbortController = new AbortController();
-      const generationId = generateUniqueId();
+      const { keyToUse, shouldLockKey, generationId, abortController: newAbortController } = request;
 
       if (appSettings.isAutoScrollOnSendEnabled) {
         userScrolledUpRef.current = false;
@@ -320,7 +305,15 @@ export const useMessageSender = (props: MessageSenderProps) => {
         return;
       }
 
-      await sendStandardMessage(textToUse, filesToUse, effectiveEditingId, activeModelId, isContinueMode, isFastMode);
+      await sendStandardMessage({
+        text: textToUse,
+        files: filesToUse,
+        editingMessageId: effectiveEditingId,
+        activeModelId,
+        isContinueMode,
+        isFastMode,
+        request,
+      });
     },
     [
       appSettings,
@@ -337,13 +330,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
       personGeneration,
       userScrolledUpRef,
       activeSessionId,
-      setActiveSessionId,
-      updateAndPersistSessions,
       handleTtsImagenMessage,
       handleImageEditMessage,
       sendStandardMessage,
+      prepareModelRequest,
       t,
-      translateApiKeyError,
     ],
   );
 

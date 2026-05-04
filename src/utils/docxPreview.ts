@@ -1,3 +1,5 @@
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '../services/objectUrlManager';
+
 const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 const DOCX_WORKER_CODE = `
@@ -29,12 +31,12 @@ export const isDocxFile = (file: { name: string; type: string }) => {
 export const extractDocxText = async (file: Blob): Promise<ExtractDocxTextResult> => {
   return new Promise<ExtractDocxTextResult>((resolve, reject) => {
     const blob = new Blob([DOCX_WORKER_CODE], { type: 'application/javascript' });
-    const workerUrl = URL.createObjectURL(blob);
+    const workerUrl = createManagedObjectUrl(blob);
     const worker = new Worker(workerUrl, { type: 'module' });
 
     const cleanup = () => {
       worker.terminate();
-      URL.revokeObjectURL(workerUrl);
+      releaseManagedObjectUrl(workerUrl);
     };
 
     worker.onmessage = (event) => {

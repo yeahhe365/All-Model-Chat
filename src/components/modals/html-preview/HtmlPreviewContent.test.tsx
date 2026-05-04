@@ -25,13 +25,7 @@ describe('HtmlPreviewContent', () => {
     const iframeRef = React.createRef<HTMLIFrameElement>();
 
     act(() => {
-      root.render(
-        <HtmlPreviewContent
-          iframeRef={iframeRef}
-          htmlContent="<html><body>Hello</body></html>"
-          scale={1}
-        />,
-      );
+      root.render(<HtmlPreviewContent iframeRef={iframeRef} htmlContent="<html><body>Hello</body></html>" scale={1} />);
     });
 
     const iframe = container.querySelector('iframe');

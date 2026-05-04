@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+delete process.env.NO_COLOR;
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,

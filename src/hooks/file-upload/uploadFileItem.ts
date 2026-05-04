@@ -2,6 +2,7 @@ import React from 'react';
 import { AppSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
+import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { fileToBlobUrl } from '../../utils/fileHelpers';
 import { uploadFileApi } from '../../services/api/fileApi';
@@ -60,7 +61,7 @@ export const uploadFileItem = async ({
       const errorMsg = 'API key was not available for file upload.';
       logService.error(errorMsg);
       // Cleanup on early rejection
-      if (dataUrl.startsWith('blob:')) URL.revokeObjectURL(dataUrl);
+      releaseManagedObjectUrl(dataUrl);
       setSelectedFiles((prev) => [
         ...prev,
         {
@@ -178,9 +179,7 @@ export const uploadFileItem = async ({
       }
 
       // Fix Memory Leak: Revoke Blob URL when upload fails or aborts mid-flight
-      if (dataUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(dataUrl);
-      }
+      releaseManagedObjectUrl(dataUrl);
 
       setSelectedFiles((prev) =>
         prev.map((f) =>

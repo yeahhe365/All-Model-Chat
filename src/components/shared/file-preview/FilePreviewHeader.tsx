@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { UploadedFile } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
+import { createManagedObjectUrl } from '../../../services/objectUrlManager';
 import { triggerDownload } from '../../../utils/export/core';
 import { copyFileToClipboard, formatFileSize } from '../../../utils/fileHelpers';
 import { getFileKindFlags } from '../../../utils/fileTypeUtils';
@@ -89,7 +90,7 @@ export const FilePreviewHeader = React.forwardRef<FilePreviewHeaderHandle, FileP
           const base64Content = file.dataUrl.split(',')[1];
           const svgContent = decodeURIComponent(escape(atob(base64Content)));
           const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-          const url = URL.createObjectURL(blob);
+          const url = createManagedObjectUrl(blob);
           const filename = `${file.name.split('.')[0] || 'diagram'}.svg`;
           triggerDownload(url, filename, true);
         } catch (e) {

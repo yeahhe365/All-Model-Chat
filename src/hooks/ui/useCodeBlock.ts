@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from
 import { useCopyToClipboard } from '../useCopyToClipboard';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { getCodeBlockPreviewType } from '../../utils/codeUtils';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { SideViewContent } from '../../types';
 
@@ -241,7 +242,7 @@ export const useCodeBlock = ({
       }
     }
     const blob = new Blob([resolvedCodeText], { type: downloadMimeType });
-    const url = URL.createObjectURL(blob);
+    const url = createManagedObjectUrl(blob);
     triggerDownload(url, filename);
   };
 

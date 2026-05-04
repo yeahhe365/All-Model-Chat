@@ -1,6 +1,7 @@
 import { UploadedFile } from '../../types';
 import { generateUniqueId } from './ids';
 import { base64ToBlob, getExtensionFromMimeType } from '../fileHelpers';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 
 export const parseThoughtProcess = (thoughts: string | undefined) => {
   if (!thoughts) return null;
@@ -67,7 +68,7 @@ export const createUploadedFileFromBase64 = (
 
   const blob = base64ToBlob(base64Data, mimeType);
   const file = new File([blob], fileName, { type: mimeType });
-  const dataUrl = URL.createObjectURL(file);
+  const dataUrl = createManagedObjectUrl(file);
 
   return {
     id: generateUniqueId(),

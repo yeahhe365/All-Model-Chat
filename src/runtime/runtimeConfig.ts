@@ -1,11 +1,6 @@
 import type { AppSettings } from '../types/settings';
 
-type RuntimeConfigKey =
-  | 'serverManagedApi'
-  | 'useCustomApiConfig'
-  | 'useApiProxy'
-  | 'apiProxyUrl'
-  | 'projectUrl';
+type RuntimeConfigKey = 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'projectUrl';
 
 type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
 
@@ -67,8 +62,9 @@ export function getRuntimeConfigAppSettingsOverrides(): Partial<
     return {};
   }
 
-  const overrides: Partial<Pick<AppSettings, 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>> =
-    {};
+  const overrides: Partial<
+    Pick<AppSettings, 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>
+  > = {};
 
   const serverManagedApi = readBooleanValue(runtimeConfig.serverManagedApi);
   if (serverManagedApi !== undefined) {

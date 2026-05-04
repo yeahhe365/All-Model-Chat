@@ -31,9 +31,7 @@ export const buildSettingsForModal = ({
   };
 };
 
-const CHAT_SCOPED_KEYS = new Set<keyof ChatSettings>(
-  Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>,
-);
+const CHAT_SCOPED_KEYS = new Set<keyof ChatSettings>(Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>);
 
 interface SplitScopedSettingsUpdateArgs {
   scope: SettingsScope;

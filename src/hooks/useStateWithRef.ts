@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
-export const useStateWithRef = <T,>(initialValue: T): readonly [T, Dispatch<SetStateAction<T>>, MutableRefObject<T>] => {
+export const useStateWithRef = <T>(initialValue: T): readonly [T, Dispatch<SetStateAction<T>>, MutableRefObject<T>] => {
   const [state, setState] = useState(initialValue);
   const ref = useRef(state);
 

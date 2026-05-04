@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../../../types';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
+import { updateSessionById } from '../../../utils/chat/sessionMutations';
 
 interface UseChatSessionActionsProps {
   activeSessionId: string | null;
@@ -30,21 +31,18 @@ export const useChatSessionActions = ({
     if (isLoading) handleStopGenerating();
     if (activeSessionId) {
       updateAndPersistSessions((prev) =>
-        prev.map((s) => {
-          if (s.id === activeSessionId) {
-            // Cleanup files in the cleared session
-            s.messages.forEach((msg) => cleanupFilePreviewUrls(msg.files));
+        updateSessionById(prev, activeSessionId, (s) => {
+          // Cleanup files in the cleared session
+          s.messages.forEach((msg) => cleanupFilePreviewUrls(msg.files));
 
-            return {
-              ...s,
-              messages: [],
-              title: 'New Chat',
-              timestamp: Date.now(),
-              // Resetting lockedApiKey is crucial to allow using new global settings
-              settings: { ...s.settings, lockedApiKey: null },
-            };
-          }
-          return s;
+          return {
+            ...s,
+            messages: [],
+            title: 'New Chat',
+            timestamp: Date.now(),
+            // Resetting lockedApiKey is crucial to allow using new global settings
+            settings: { ...s.settings, lockedApiKey: null },
+          };
         }),
       );
       setSelectedFiles([]);

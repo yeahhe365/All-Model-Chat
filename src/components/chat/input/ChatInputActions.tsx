@@ -40,18 +40,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   currentModelId,
   isImageModel,
   isRealImagenModel,
-  isGoogleSearchEnabled,
-  onToggleGoogleSearch,
-  isCodeExecutionEnabled,
-  onToggleCodeExecution,
-  isLocalPythonEnabled,
-  onToggleLocalPython,
-  isUrlContextEnabled,
-  onToggleUrlContext,
-  isDeepSearchEnabled,
-  onToggleDeepSearch,
-  onAddYouTubeVideo,
-  onCountTokens,
+  toolStates,
+  toolUtilityActions,
   onRecordButtonClick,
   isRecording,
   isMicInitializing,
@@ -268,28 +258,17 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
 
         {isNativeAudioModel && (
           <WebSearchToggle
-            isGoogleSearchEnabled={isGoogleSearchEnabled}
-            onToggleGoogleSearch={onToggleGoogleSearch}
+            isGoogleSearchEnabled={!!toolStates.googleSearch?.isEnabled}
+            onToggleGoogleSearch={toolStates.googleSearch?.onToggle ?? (() => undefined)}
             disabled={disabled}
           />
         )}
 
         <ToolsMenu
           currentModelId={currentModelId}
-          isGoogleSearchEnabled={isGoogleSearchEnabled}
-          onToggleGoogleSearch={onToggleGoogleSearch}
-          isCodeExecutionEnabled={isCodeExecutionEnabled}
-          onToggleCodeExecution={onToggleCodeExecution}
-          isLocalPythonEnabled={isLocalPythonEnabled}
-          onToggleLocalPython={onToggleLocalPython}
-          isUrlContextEnabled={isUrlContextEnabled}
-          onToggleUrlContext={onToggleUrlContext}
-          isDeepSearchEnabled={isDeepSearchEnabled}
-          onToggleDeepSearch={onToggleDeepSearch}
-          onAddYouTubeVideo={onAddYouTubeVideo}
-          onCountTokens={onCountTokens}
+          toolStates={toolStates}
+          toolUtilityActions={toolUtilityActions}
           disabled={disabled}
-          isNativeAudioModel={isNativeAudioModel}
         />
       </div>
 

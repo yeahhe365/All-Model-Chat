@@ -5,9 +5,8 @@ import { generateSpeechApi } from '../../services/api/generation/audioApi';
 import { generateImagesApi } from '../../services/api/generation/imageApi';
 import { pcmBase64ToWavUrl } from '../../utils/audio/audioProcessing';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
-import { showNotification, playCompletionSound } from '../../utils/uiUtils';
 import { useMessageLifecycle } from './useMessageLifecycle';
-import { startOptimisticMessageTurn } from './messagePipeline';
+import { runOptimisticMessagePipeline } from './messagePipeline';
 import type { SessionsUpdater } from './types';
 
 interface TtsImagenSenderProps {
@@ -44,7 +43,8 @@ export const useTtsImagenSender = ({
       options: { shouldLockKey?: boolean } = {},
     ) => {
       const isTtsModel = currentChatSettings.modelId.includes('-tts');
-      const { finalSessionId, modelMessageId } = startOptimisticMessageTurn({
+
+      await runOptimisticMessagePipeline({
         activeSessionId,
         appSettings,
         currentChatSettings,
@@ -54,14 +54,9 @@ export const useTtsImagenSender = ({
         generationId,
         shouldLockKey: options.shouldLockKey,
         keyToLock: keyToUse,
-      });
-
-      await runMessageLifecycle({
-        sessionId: finalSessionId,
-        generationId,
         abortController: newAbortController,
-        modelMessageId,
         errorPrefix: isTtsModel ? 'TTS Error' : 'Image Gen Error',
+        runMessageLifecycle,
         execute: async () => {
           if (isTtsModel) {
             const base64Pcm = await generateSpeechApi(
@@ -74,39 +69,21 @@ export const useTtsImagenSender = ({
             if (newAbortController.signal.aborted) throw new Error('aborted');
             const wavUrl = pcmBase64ToWavUrl(base64Pcm);
 
-            updateAndPersistSessions((p) =>
-              p.map((s) =>
-                s.id === finalSessionId
-                  ? {
-                      ...s,
-                      messages: s.messages.map((m) =>
-                        m.id === modelMessageId
-                          ? {
-                              ...m,
-                              isLoading: false,
-                              content: text,
-                              audioSrc: wavUrl,
-                              audioAutoplay: true,
-                              generationEndTime: new Date(),
-                            }
-                          : m,
-                      ),
-                    }
-                  : s,
-              ),
-            );
-
-            if (appSettings.isCompletionSoundEnabled) {
-              playCompletionSound();
-            }
-
-            if (appSettings.isCompletionNotificationEnabled && document.hidden) {
-              const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
-              showNotification('Audio Ready', {
-                body: 'Text-to-speech audio has been generated.',
-                icon: APP_LOGO_SVG_DATA_URI,
-              });
-            }
+            return {
+              patch: {
+                isLoading: false,
+                content: text,
+                audioSrc: wavUrl,
+                audioAutoplay: true,
+                generationEndTime: new Date(),
+              },
+              feedback: {
+                notification: {
+                  title: 'Audio Ready',
+                  body: 'Text-to-speech audio has been generated.',
+                },
+              },
+            };
           } else {
             // Imagen
             const imageBase64Array = await generateImagesApi(
@@ -128,35 +105,20 @@ export const useTtsImagenSender = ({
               return createUploadedFileFromBase64(base64Data, 'image/png', `generated-image-${index + 1}`);
             });
 
-            updateAndPersistSessions((p) =>
-              p.map((s) =>
-                s.id === finalSessionId
-                  ? {
-                      ...s,
-                      messages: s.messages.map((m) =>
-                        m.id === modelMessageId
-                          ? {
-                              ...m,
-                              isLoading: false,
-                              content: `Generated ${generatedFiles.length} image(s) for: "${text}"`,
-                              files: generatedFiles,
-                              generationEndTime: new Date(),
-                            }
-                          : m,
-                      ),
-                    }
-                  : s,
-              ),
-            );
-
-            if (appSettings.isCompletionSoundEnabled) {
-              playCompletionSound();
-            }
-
-            if (appSettings.isCompletionNotificationEnabled && document.hidden) {
-              const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
-              showNotification('Image Ready', { body: 'Your image has been generated.', icon: APP_LOGO_SVG_DATA_URI });
-            }
+            return {
+              patch: {
+                isLoading: false,
+                content: `Generated ${generatedFiles.length} image(s) for: "${text}"`,
+                files: generatedFiles,
+                generationEndTime: new Date(),
+              },
+              feedback: {
+                notification: {
+                  title: 'Image Ready',
+                  body: 'Your image has been generated.',
+                },
+              },
+            };
           }
         },
       });

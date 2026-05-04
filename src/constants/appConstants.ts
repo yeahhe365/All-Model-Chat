@@ -2,7 +2,6 @@ import { AppSettings, FilesApiConfig, ModelOption, TranslationTargetLanguage } f
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
 export * from './modelConstants';
-export * from './promptConstants';
 export * from './shortcuts';
 
 export const DEFAULT_SYSTEM_INSTRUCTION = '';

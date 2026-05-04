@@ -289,11 +289,7 @@ export const useApp = () => {
     isCanvasPromptBusy,
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
-    handleExportSettings: dataExport.handleExportSettings,
-    handleExportHistory: dataExport.handleExportHistory,
     handleExportAllScenarios: dataExport.handleExportAllScenarios,
-    handleImportSettings: dataImport.handleImportSettings,
-    handleImportHistory: dataImport.handleImportHistory,
     handleImportAllScenarios: dataImport.handleImportAllScenarios,
   };
 };

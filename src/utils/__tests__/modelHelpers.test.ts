@@ -145,6 +145,49 @@ describe('getModelCapabilities', () => {
     expect(getModelCapabilities('gemini-2.5-flash').supportsRawReasoningPrefill).toBe(false);
   });
 
+  it('exposes interaction permissions so UI code does not branch on model families', () => {
+    const textCapabilities = getModelCapabilities('gemini-3.1-pro-preview');
+    const ttsCapabilities = getModelCapabilities('gemini-3.1-flash-tts-preview');
+    const liveCapabilities = getModelCapabilities('gemini-3.1-flash-live-preview');
+    const geminiImageCapabilities = getModelCapabilities('gemini-3.1-flash-image-preview');
+    const imagenCapabilities = getModelCapabilities('imagen-4.0-generate-preview');
+
+    expect(textCapabilities.permissions).toMatchObject({
+      canAcceptAttachments: true,
+      canUseCodeExecution: true,
+      canUseUrlContext: true,
+      canGenerateSuggestions: true,
+      requiresTextPrompt: false,
+    });
+    expect(ttsCapabilities.permissions).toMatchObject({
+      canAcceptAttachments: false,
+      canUseTools: false,
+      canGenerateSuggestions: false,
+      requiresTextPrompt: true,
+    });
+    expect(liveCapabilities.permissions).toMatchObject({
+      canAcceptAttachments: false,
+      canUseGoogleSearch: true,
+      canUseLocalPython: true,
+      canUseCodeExecution: false,
+      canGenerateSuggestions: false,
+      requiresTextPrompt: false,
+    });
+    expect(geminiImageCapabilities.permissions).toMatchObject({
+      canAcceptAttachments: true,
+      canUseGoogleSearch: true,
+      canUseCodeExecution: false,
+      canGenerateSuggestions: false,
+      requiresTextPrompt: true,
+    });
+    expect(imagenCapabilities.permissions).toMatchObject({
+      canAcceptAttachments: false,
+      canUseGoogleSearch: false,
+      canUseTokenCount: true,
+      requiresTextPrompt: true,
+    });
+  });
+
   it('exposes the latest Gemini 3.1 Flash Image ratios and sizes', () => {
     const capabilities = getModelCapabilities('gemini-3.1-flash-image-preview');
 

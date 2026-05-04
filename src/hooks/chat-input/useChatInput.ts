@@ -26,10 +26,7 @@ export const useChatInput = () => {
     onUpdateMessageContent,
     onCancelEdit,
     onStopGenerating,
-    onToggleGoogleSearch,
-    onToggleDeepSearch,
-    onToggleCodeExecution,
-    onToggleUrlContext,
+    toolStates,
     onClearChat,
     onNewChat,
     onOpenSettings,
@@ -86,10 +83,7 @@ export const useChatInput = () => {
 
   const slashCommandState = useSlashCommands({
     t,
-    onToggleGoogleSearch,
-    onToggleDeepSearch,
-    onToggleCodeExecution,
-    onToggleUrlContext,
+    toolStates,
     onClearChat,
     onNewChat,
     onOpenSettings,

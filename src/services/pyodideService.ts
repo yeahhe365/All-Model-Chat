@@ -1,4 +1,5 @@
 import { logService } from './logService';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from './objectUrlManager';
 import { UploadedFile } from '../types';
 
 // Worker code template. __PYODIDE_BASE_URL__ will be replaced at runtime.
@@ -352,8 +353,8 @@ export class PyodideService {
   }: PyodideServiceDependencies = {}) {
     this.baseUri = baseUri;
     this.createWorker = createWorker ?? ((url) => new Worker(url));
-    this.createObjectUrl = createObjectUrl ?? ((blob) => URL.createObjectURL(blob));
-    this.revokeObjectUrl = revokeObjectUrl ?? ((url) => URL.revokeObjectURL(url));
+    this.createObjectUrl = createObjectUrl ?? createManagedObjectUrl;
+    this.revokeObjectUrl = revokeObjectUrl ?? releaseManagedObjectUrl;
     this.setTimeoutFn = setTimeoutFn ?? globalThis.setTimeout.bind(globalThis);
     this.createRequestId = createRequestId ?? (() => Math.random().toString(36).substring(7));
   }

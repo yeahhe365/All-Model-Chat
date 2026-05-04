@@ -10,6 +10,7 @@ import { UploadedFile, SideViewContent } from '../../types';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { InlineCode } from './code-block/InlineCode';
 import { splitMarkdownSegments } from '../../utils/markdownUtils';
+import { stripGemmaThoughtMarkup, wrapReasoningMarkup } from '../../utils/chat/reasoning';
 
 const loadMermaidBlock = async () => {
   const module = await import('./blocks/MermaidBlock');
@@ -70,9 +71,6 @@ interface BaseMarkdownRendererProps extends MarkdownRendererProps {
   rehypePlugins: PluggableList;
 }
 
-const GEMMA_THOUGHT_CHANNEL_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/gi;
-const THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/gi;
-const INCOMPLETE_THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)$/i;
 const INLINE_MATH_OPERATOR_REGEX = /(?:^|[^A-Za-z])(?:\d+\s*[=+\-*/<>]\s*\d+|[A-Za-z]\s*[=+\-*/<>]\s*[A-Za-z0-9])/;
 const INLINE_MATH_MARKER_REGEX = /[\\^_{}]/;
 
@@ -80,14 +78,6 @@ const transformMarkdownTextSegments = (value: string, transform: (segment: strin
   splitMarkdownSegments(value)
     .map((segment) => (segment.type === 'literal' ? segment.value : transform(segment.value)))
     .join('');
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 
 const isLikelyMathExpression = (value: string): boolean => {
   const trimmedValue = value.trim();
@@ -114,33 +104,6 @@ const normalizeEscapedMathDelimiters = (value: string): string => {
 
   return nextValue;
 };
-
-const createThinkingBlockMarkup = (innerContent: string, isLoading: boolean): string => {
-  const escapedContent = escapeHtml(innerContent.trim());
-  const openAttribute = isLoading ? ' open' : '';
-
-  return `<details${openAttribute}><summary>Raw Thinking Process</summary><div>${escapedContent}</div></details>`;
-};
-
-const wrapReasoningMarkup = (value: string, isLoading: boolean): string => {
-  let nextValue = value.replace(THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
-    createThinkingBlockMarkup(innerContent, isLoading),
-  );
-
-  if (isLoading) {
-    nextValue = nextValue.replace(INCOMPLETE_THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
-      createThinkingBlockMarkup(innerContent, true),
-    );
-  }
-
-  nextValue = nextValue.replace(GEMMA_THOUGHT_CHANNEL_REGEX, (_match, innerContent: string) =>
-    createThinkingBlockMarkup(innerContent, isLoading),
-  );
-
-  return nextValue;
-};
-
-const stripGemmaThoughtMarkup = (value: string): string => value.replace(GEMMA_THOUGHT_CHANNEL_REGEX, ' ');
 
 export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.memo(
   ({
@@ -343,12 +306,10 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
       const contentWithNormalizedMath = transformMarkdownTextSegments(content, normalizeEscapedMathDelimiters);
 
       if (hideThinkingInContext) {
-        return transformMarkdownTextSegments(contentWithNormalizedMath, (segment) =>
-          wrapReasoningMarkup(segment, isLoading),
-        );
+        return wrapReasoningMarkup(contentWithNormalizedMath, isLoading);
       }
 
-      return transformMarkdownTextSegments(contentWithNormalizedMath, stripGemmaThoughtMarkup);
+      return stripGemmaThoughtMarkup(contentWithNormalizedMath);
     }, [content, hideThinkingInContext, isLoading]);
 
     return (

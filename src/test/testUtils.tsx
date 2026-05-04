@@ -25,7 +25,15 @@ export const renderHook = <T,>(callback: () => T, options: RenderHookOptions = {
   const render = () => {
     const Wrapper = options.wrapper;
     act(() => {
-      root.render(Wrapper ? <Wrapper><TestComponent /></Wrapper> : <TestComponent />);
+      root.render(
+        Wrapper ? (
+          <Wrapper>
+            <TestComponent />
+          </Wrapper>
+        ) : (
+          <TestComponent />
+        ),
+      );
     });
   };
 
@@ -48,7 +56,7 @@ export const renderHook = <T,>(callback: () => T, options: RenderHookOptions = {
   };
 };
 
-export const createDeferred = <T = void>() => {
+export const createDeferred = <T = void,>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
   let reject!: (error?: unknown) => void;
   const promise = new Promise<T>((res, rej) => {

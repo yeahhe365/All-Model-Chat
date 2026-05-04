@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { SavedScenario } from '../../types';
 import { translations } from '../../utils/translations';
 import { generateUniqueId } from '../../utils/chat/ids';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import {
   buildSavedScenarios,
@@ -135,7 +136,7 @@ export const useScenarioManager = ({
     const jsonString = JSON.stringify(dataToExport, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const date = new Date().toISOString().slice(0, 10);
-    triggerDownload(URL.createObjectURL(blob), `scenarios-export-${date}.json`);
+    triggerDownload(createManagedObjectUrl(blob), `scenarios-export-${date}.json`);
     showFeedback('success', t('scenarios_feedback_exported'));
   }, [scenarios, showFeedback, t]);
 
@@ -149,7 +150,7 @@ export const useScenarioManager = ({
       const safeTitle = sanitizeFilename(scenario.title);
       const jsonString = JSON.stringify(dataToExport, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
-      triggerDownload(URL.createObjectURL(blob), `scenario-${safeTitle}.json`);
+      triggerDownload(createManagedObjectUrl(blob), `scenario-${safeTitle}.json`);
       showFeedback('success', t('scenarios_feedback_exported'));
     },
     [showFeedback, t],

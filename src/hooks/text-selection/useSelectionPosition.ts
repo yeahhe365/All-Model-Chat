@@ -38,7 +38,8 @@ const cloneSelectionContent = (range: Range): HTMLDivElement => {
   return container;
 };
 
-const getPlainSelectionText = (container: HTMLElement): string => (container.innerText || container.textContent || '').trim();
+const getPlainSelectionText = (container: HTMLElement): string =>
+  (container.innerText || container.textContent || '').trim();
 
 export const useSelectionPosition = ({
   containerRef,

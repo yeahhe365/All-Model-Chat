@@ -1,8 +1,7 @@
 import { MIME_TO_EXTENSION_MAP } from '../constants/fileConstants';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '../services/objectUrlManager';
 import { UploadedFile } from '../types';
 import { isAudioMimeType, isImageMimeType, isVideoMimeType } from './fileTypeUtils';
-
-export { isMarkdownFile, isTextFile } from './fileTypeUtils';
 
 export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
   const binaryString = atob(base64);
@@ -46,7 +45,7 @@ export const fileToString = (file: File): Promise<string> => {
 };
 
 export const fileToBlobUrl = (file: File | Blob): string => {
-  return URL.createObjectURL(file);
+  return createManagedObjectUrl(file);
 };
 
 const isClipboardTextType = (mimeType: string): boolean => {
@@ -113,7 +112,7 @@ export const formatFileSize = (sizeInBytes: number): string => {
 
 export const cleanupFilePreviewUrl = (file: { dataUrl?: string } | undefined) => {
   if (file?.dataUrl?.startsWith('blob:')) {
-    URL.revokeObjectURL(file.dataUrl);
+    releaseManagedObjectUrl(file.dataUrl);
   }
 };
 

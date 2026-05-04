@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { convertHtmlToMarkdown } from '../utils/htmlToMarkdown';
+import { createManagedObjectUrl } from '../services/objectUrlManager';
 import { triggerDownload } from '../utils/export/core';
 import { createMarkdownPdfBlob } from '../utils/export/markdownPdf';
 import {
@@ -137,7 +138,7 @@ export const useCreateFileEditor = ({
 
     try {
       const pdfBlob = await generatePdfBlob(finalName);
-      triggerDownload(URL.createObjectURL(pdfBlob), finalName);
+      triggerDownload(createManagedObjectUrl(pdfBlob), finalName);
     } catch (error) {
       console.error('PDF Export failed:', error);
       alert('Error generating PDF.');

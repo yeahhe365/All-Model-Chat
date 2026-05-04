@@ -90,6 +90,13 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     setAspectRatio: () => {},
     imageSize: '1K',
     setImageSize: () => {},
+    toolStates: {
+      googleSearch: { isEnabled: false, onToggle: () => {} },
+      deepSearch: { isEnabled: false, onToggle: () => {} },
+      codeExecution: { isEnabled: false, onToggle: () => {} },
+      localPython: { isEnabled: false, onToggle: () => {} },
+      urlContext: { isEnabled: false, onToggle: () => {} },
+    },
     isGoogleSearchEnabled: false,
     onToggleGoogleSearch: () => {},
     isCodeExecutionEnabled: false,

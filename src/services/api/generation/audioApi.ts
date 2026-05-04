@@ -1,5 +1,5 @@
 import type { GenerateContentConfig, ThinkingConfig } from '@google/genai';
-import { getConfiguredApiClient } from '../apiClient';
+import { executeConfiguredApiRequest } from '../apiExecutor';
 import { logService } from '../../logService';
 import type { Part } from '@google/genai';
 import { blobToBase64 } from '../../../utils/fileHelpers';
@@ -79,146 +79,159 @@ export const generateSpeechApi = async (
   voice: string,
   abortSignal: AbortSignal,
 ): Promise<string> => {
-  logService.info(`Generating speech with model ${modelId}`, { textLength: text.length, voice });
-
   if (!text.trim()) {
     throw new Error('TTS input text cannot be empty.');
   }
 
-  try {
-    const ai = await getConfiguredApiClient(apiKey);
-    const multiSpeakerVoiceConfig = extractMultiSpeakerVoiceConfig(text);
-    const response = await ai.models.generateContent({
-      model: modelId,
-      // TTS models do not support chat history roles, just plain content parts
-      contents: [{ parts: [{ text: text }] }],
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: multiSpeakerVoiceConfig ? { multiSpeakerVoiceConfig } : buildSingleSpeakerSpeechConfig(voice),
-      },
-    });
+  return executeConfiguredApiRequest({
+    apiKey,
+    label: `Generating speech with model ${modelId}`,
+    errorLabel: `Failed to generate speech with model ${modelId}:`,
+    abortSignal,
+    run: async ({ client: ai }) => {
+      logService.debug('TTS request payload details', { textLength: text.length, voice });
+      const multiSpeakerVoiceConfig = extractMultiSpeakerVoiceConfig(text);
+      const response = await ai.models.generateContent({
+        model: modelId,
+        // TTS models do not support chat history roles, just plain content parts
+        contents: [{ parts: [{ text: text }] }],
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: multiSpeakerVoiceConfig ? { multiSpeakerVoiceConfig } : buildSingleSpeakerSpeechConfig(voice),
+        },
+      });
 
-    if (abortSignal.aborted) {
-      const abortError = new Error('Speech generation cancelled by user.');
-      abortError.name = 'AbortError';
-      throw abortError;
-    }
+      if (abortSignal.aborted) {
+        const abortError = new Error('Speech generation cancelled by user.');
+        abortError.name = 'AbortError';
+        throw abortError;
+      }
 
-    const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
-    if (typeof audioData === 'string' && audioData.length > 0) {
-      if (response.usageMetadata) {
-        const { promptTokens, cachedPromptTokens, completionTokens, thoughtTokens, toolUsePromptTokens, totalTokens } =
-          calculateTokenStats(response.usageMetadata);
-        logService.recordTokenUsage(
-          modelId,
-          {
+      if (typeof audioData === 'string' && audioData.length > 0) {
+        if (response.usageMetadata) {
+          const {
             promptTokens,
             cachedPromptTokens,
             completionTokens,
             thoughtTokens,
             toolUsePromptTokens,
             totalTokens,
-          },
-          buildExactPricingFromUsageMetadata('tts', response.usageMetadata),
-        );
+          } = calculateTokenStats(response.usageMetadata);
+          logService.recordTokenUsage(
+            modelId,
+            {
+              promptTokens,
+              cachedPromptTokens,
+              completionTokens,
+              thoughtTokens,
+              toolUsePromptTokens,
+              totalTokens,
+            },
+            buildExactPricingFromUsageMetadata('tts', response.usageMetadata),
+          );
+        }
+        return audioData;
       }
-      return audioData;
-    }
 
-    const candidate = response.candidates?.[0];
-    if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
-      throw new Error(`TTS generation failed with reason: ${candidate.finishReason}`);
-    }
+      const candidate = response.candidates?.[0];
+      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+        throw new Error(`TTS generation failed with reason: ${candidate.finishReason}`);
+      }
 
-    logService.error('TTS response did not contain expected audio data structure:', { response });
+      logService.error('TTS response did not contain expected audio data structure:', { response });
 
-    // Fallback to checking text error if any, though unlikely with AUDIO modality
-    const textError = response.text;
-    if (textError) {
-      throw new Error(`TTS generation failed: ${textError}`);
-    }
+      // Fallback to checking text error if any, though unlikely with AUDIO modality
+      const textError = response.text;
+      if (textError) {
+        throw new Error(`TTS generation failed: ${textError}`);
+      }
 
-    throw new Error('No audio data found in TTS response.');
-  } catch (error) {
-    logService.error(`Failed to generate speech with model ${modelId}:`, error);
-    throw error;
-  }
+      throw new Error('No audio data found in TTS response.');
+    },
+  });
 };
 
 export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string): Promise<string> => {
-  logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size });
+  return executeConfiguredApiRequest({
+    apiKey,
+    label: `Transcribing audio with model ${modelId}`,
+    errorLabel: 'Error during audio transcription:',
+    run: async ({ client: ai }) => {
+      logService.debug('Audio transcription request file details', { fileName: audioFile.name, size: audioFile.size });
+      // Use blobToBase64 which is efficient and handles Blobs/Files
+      const audioBase64 = await blobToBase64(audioFile);
 
-  try {
-    const ai = await getConfiguredApiClient(apiKey);
-    // Use blobToBase64 which is efficient and handles Blobs/Files
-    const audioBase64 = await blobToBase64(audioFile);
+      const audioPart: Part = {
+        inlineData: {
+          mimeType: audioFile.type,
+          data: audioBase64,
+        },
+      };
 
-    const audioPart: Part = {
-      inlineData: {
-        mimeType: audioFile.type,
-        data: audioBase64,
-      },
-    };
+      const textPart: Part = {
+        text: 'Transcribe voice input exactly.',
+      };
 
-    const textPart: Part = {
-      text: 'Transcribe voice input exactly.',
-    };
+      const config: GenerateContentConfig = {
+        systemInstruction:
+          '你是语音输入转写器，只做 ASR。请将音频中实际说出的语音转写为将插入聊天输入框的纯文本。保持原始语言和混合语言，不要翻译、总结、回答、解释或描述音频。尽量保留原词、语气词、代码、命令、URL、邮箱、数字、单位和专有名词；不要补写音频中不存在的内容。可以在不改变措辞和原意的前提下补充基础标点。若没有可辨识语音，请返回空字符串。',
+      };
 
-    const config: GenerateContentConfig = {
-      systemInstruction:
-        '你是语音输入转写器，只做 ASR。请将音频中实际说出的语音转写为将插入聊天输入框的纯文本。保持原始语言和混合语言，不要翻译、总结、回答、解释或描述音频。尽量保留原词、语气词、代码、命令、URL、邮箱、数字、单位和专有名词；不要补写音频中不存在的内容。可以在不改变措辞和原意的前提下补充基础标点。若没有可辨识语音，请返回空字符串。',
-    };
+      const thinkingConfig: ThinkingConfig = {};
 
-    const thinkingConfig: ThinkingConfig = {};
+      // Apply specific defaults based on model
+      if (modelId.includes('gemini-3')) {
+        thinkingConfig.includeThoughts = false;
+        thinkingConfig.thinkingLevel = 'MINIMAL' as ThinkingConfig['thinkingLevel'];
+      } else if (modelId.includes('flash')) {
+        // Both 2.5 Flash and Flash Lite
+        thinkingConfig.thinkingBudget = 512;
+      } else {
+        // Disable thinking for other models by default
+        thinkingConfig.thinkingBudget = 0;
+      }
 
-    // Apply specific defaults based on model
-    if (modelId.includes('gemini-3')) {
-      thinkingConfig.includeThoughts = false;
-      thinkingConfig.thinkingLevel = 'MINIMAL' as ThinkingConfig['thinkingLevel'];
-    } else if (modelId.includes('flash')) {
-      // Both 2.5 Flash and Flash Lite
-      thinkingConfig.thinkingBudget = 512;
-    } else {
-      // Disable thinking for other models by default
-      thinkingConfig.thinkingBudget = 0;
-    }
+      config.thinkingConfig = thinkingConfig;
 
-    config.thinkingConfig = thinkingConfig;
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: { parts: [textPart, audioPart] },
+        config,
+      });
 
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents: { parts: [textPart, audioPart] },
-      config,
-    });
-
-    if (typeof response.text === 'string') {
-      if (response.usageMetadata) {
-        const { promptTokens, cachedPromptTokens, completionTokens, thoughtTokens, toolUsePromptTokens, totalTokens } =
-          calculateTokenStats(response.usageMetadata);
-        logService.recordTokenUsage(
-          modelId,
-          {
+      if (typeof response.text === 'string') {
+        if (response.usageMetadata) {
+          const {
             promptTokens,
             cachedPromptTokens,
             completionTokens,
             thoughtTokens,
             toolUsePromptTokens,
             totalTokens,
-          },
-          buildExactPricingFromUsageMetadata('transcription', response.usageMetadata),
-        );
+          } = calculateTokenStats(response.usageMetadata);
+          logService.recordTokenUsage(
+            modelId,
+            {
+              promptTokens,
+              cachedPromptTokens,
+              completionTokens,
+              thoughtTokens,
+              toolUsePromptTokens,
+              totalTokens,
+            },
+            buildExactPricingFromUsageMetadata('transcription', response.usageMetadata),
+          );
+        }
+        return response.text;
+      } else {
+        const safetyFeedback = response.candidates?.[0]?.finishReason;
+        if (safetyFeedback && safetyFeedback !== 'STOP') {
+          throw new Error(`Transcription failed due to safety settings: ${safetyFeedback}`);
+        }
+        throw new Error('Transcription failed. The model returned an empty response.');
       }
-      return response.text;
-    } else {
-      const safetyFeedback = response.candidates?.[0]?.finishReason;
-      if (safetyFeedback && safetyFeedback !== 'STOP') {
-        throw new Error(`Transcription failed due to safety settings: ${safetyFeedback}`);
-      }
-      throw new Error('Transcription failed. The model returned an empty response.');
-    }
-  } catch (error) {
-    logService.error('Error during audio transcription:', error);
-    throw error;
-  }
+    },
+  });
 };

@@ -22,6 +22,10 @@ interface SettingsContentProps extends SettingsTransferProps {
   onOpenLogViewer: (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => void;
   onClearLogs: () => void;
   onReset: () => void;
+  onImportSettings: (file: File) => void;
+  onExportSettings: () => void;
+  onImportHistory: (file: File) => void;
+  onExportHistory: () => void;
 }
 
 export const SettingsContent: React.FC<SettingsContentProps> = ({

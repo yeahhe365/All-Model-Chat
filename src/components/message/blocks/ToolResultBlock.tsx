@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Check, FileOutput } from 'lucide-react';
+import { createManagedObjectUrl } from '../../../services/objectUrlManager';
 import { triggerDownload } from '../../../utils/export/core';
 import { extractTextFromNode } from '../../../utils/uiUtils';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
@@ -48,7 +49,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({
     }
 
     const blob = new Blob([rawCode], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    const url = createManagedObjectUrl(blob);
     triggerDownload(url, `execution-output-${Date.now()}.${extension}`);
 
     setCopied(true);

@@ -1,9 +1,4 @@
-import type {
-  Content,
-  Part,
-  UsageMetadata,
-  FunctionDeclaration,
-} from '@google/genai';
+import type { Content, Part, UsageMetadata, FunctionDeclaration } from '@google/genai';
 import type { ImageOutputMode, ImagePersonGeneration, SafetySetting } from './settings';
 import type { UploadedFile } from './chat';
 

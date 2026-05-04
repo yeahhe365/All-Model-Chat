@@ -7,13 +7,17 @@ import { getModelCapabilities } from '../../utils/modelHelpers';
 import { generateSuggestionsApi } from '../../services/api/generation/textApi';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type MessageUpdater = (
+  sessionId: string,
+  messageId: string,
+  updates: Partial<SavedChatSession['messages'][number]>,
+) => void;
 
 interface SuggestionsProps {
   appSettings: AppSettings;
   activeChat: SavedChatSession | undefined;
   isLoading: boolean;
-  updateAndPersistSessions: SessionsUpdater;
+  updateMessageInSession: MessageUpdater;
   language: 'en' | 'zh';
   sessionKeyMapRef?: React.MutableRefObject<Map<string, string>>;
 }
@@ -22,7 +26,7 @@ export const useSuggestions = ({
   appSettings,
   activeChat,
   isLoading,
-  updateAndPersistSessions,
+  updateMessageInSession,
   language,
   sessionKeyMapRef,
 }: SuggestionsProps) => {
@@ -37,16 +41,7 @@ export const useSuggestions = ({
       sessionSettings: IndividualChatSettings,
     ) => {
       // Show loading state
-      updateAndPersistSessions((prev) =>
-        prev.map((s) =>
-          s.id === sessionId
-            ? {
-                ...s,
-                messages: s.messages.map((m) => (m.id === messageId ? { ...m, isGeneratingSuggestions: true } : m)),
-              }
-            : s,
-        ),
-      );
+      updateMessageInSession(sessionId, messageId, { isGeneratingSuggestions: true });
 
       // Sticky Key Logic: Prefer key used in the last turn
       const stickyKey = sessionKeyMapRef?.current?.get(sessionId);
@@ -60,18 +55,7 @@ export const useSuggestions = ({
         if ('error' in keyResult) {
           logService.error('Cannot generate suggestions: API key not configured.');
           // Hide loading state on error
-          updateAndPersistSessions((prev) =>
-            prev.map((s) =>
-              s.id === sessionId
-                ? {
-                    ...s,
-                    messages: s.messages.map((m) =>
-                      m.id === messageId ? { ...m, isGeneratingSuggestions: false } : m,
-                    ),
-                  }
-                : s,
-            ),
-          );
+          updateMessageInSession(sessionId, messageId, { isGeneratingSuggestions: false });
           return;
         }
         keyToUse = keyResult.key;
@@ -80,49 +64,18 @@ export const useSuggestions = ({
       try {
         const suggestions = await generateSuggestionsApi(keyToUse, userContent, modelContent, language);
         if (suggestions && suggestions.length > 0) {
-          updateAndPersistSessions((prev) =>
-            prev.map((s) =>
-              s.id === sessionId
-                ? {
-                    ...s,
-                    messages: s.messages.map((m) =>
-                      m.id === messageId ? { ...m, suggestions, isGeneratingSuggestions: false } : m,
-                    ),
-                  }
-                : s,
-            ),
-          );
+          updateMessageInSession(sessionId, messageId, { suggestions, isGeneratingSuggestions: false });
         } else {
           // Hide loading state if no suggestions are returned
-          updateAndPersistSessions((prev) =>
-            prev.map((s) =>
-              s.id === sessionId
-                ? {
-                    ...s,
-                    messages: s.messages.map((m) =>
-                      m.id === messageId ? { ...m, isGeneratingSuggestions: false } : m,
-                    ),
-                  }
-                : s,
-            ),
-          );
+          updateMessageInSession(sessionId, messageId, { isGeneratingSuggestions: false });
         }
       } catch (error) {
         logService.error('Suggestion generation failed in handler', { error });
         // Hide loading state on error
-        updateAndPersistSessions((prev) =>
-          prev.map((s) =>
-            s.id === sessionId
-              ? {
-                  ...s,
-                  messages: s.messages.map((m) => (m.id === messageId ? { ...m, isGeneratingSuggestions: false } : m)),
-                }
-              : s,
-          ),
-        );
+        updateMessageInSession(sessionId, messageId, { isGeneratingSuggestions: false });
       }
     },
-    [appSettings, language, updateAndPersistSessions, sessionKeyMapRef],
+    [appSettings, language, updateMessageInSession, sessionKeyMapRef],
   );
 
   useEffect(() => {
@@ -134,7 +87,7 @@ export const useSuggestions = ({
       // Filter out non-text models (Imagen, TTS, Audio, etc.)
       const capabilities = getModelCapabilities(settings.modelId);
 
-      if (capabilities.isImagenModel || capabilities.isTtsModel || capabilities.isNativeAudioModel) {
+      if (!capabilities.permissions.canGenerateSuggestions) {
         prevIsLoadingRef.current = isLoading;
         return;
       }

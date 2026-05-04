@@ -71,6 +71,13 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     fileError: null,
     isImagenModel: false,
     isImageEditModel: false,
+    toolStates: {
+      googleSearch: { isEnabled: false, onToggle: vi.fn() },
+      deepSearch: { isEnabled: false, onToggle: vi.fn() },
+      codeExecution: { isEnabled: false, onToggle: vi.fn() },
+      localPython: { isEnabled: false, onToggle: vi.fn() },
+      urlContext: { isEnabled: false, onToggle: vi.fn() },
+    },
     aspectRatio: '1:1',
     setAspectRatio: vi.fn(),
     imageSize: '1K',

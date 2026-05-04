@@ -25,6 +25,11 @@ interface ChatInputLocalFileState {
 
 interface ChatInputCapabilities {
   isNativeAudioModel: boolean;
+  permissions: {
+    canAcceptAttachments: boolean;
+    canUseLiveControls: boolean;
+    requiresTextPrompt: boolean;
+  };
 }
 
 interface ChatInputAvailabilityOptions {
@@ -78,13 +83,15 @@ export const getChatInputAvailability = ({
     quotes: inputState.quotes,
     selectedFileCount: selectedFiles.length,
     isNativeAudioModel: capabilities.isNativeAudioModel,
+    canAcceptAttachments: capabilities.permissions.canAcceptAttachments,
+    requiresTextPrompt: capabilities.permissions.requiresTextPrompt,
   });
 
   const canSend =
     hasSendableContent && !isLoading && !inputState.isAddingById && !isModalOpen && !localFileState.isConverting;
 
   const canQueueMessageBase =
-    !capabilities.isNativeAudioModel &&
+    !capabilities.permissions.canUseLiveControls &&
     hasSendableContent &&
     !!activeSessionId &&
     isLoading &&
@@ -116,7 +123,7 @@ export const getCurrentChatInputMode = ({
     isEditing,
     hasActiveQueuedSubmission: !!activeQueuedSubmission,
     canQueueMessage,
-    isNativeAudioModel: capabilities.isNativeAudioModel || false,
+    isNativeAudioModel: capabilities.permissions?.canUseLiveControls || capabilities.isNativeAudioModel || false,
     liveStatus: {
       isConnected: liveAPI.isConnected,
       isReconnecting: liveAPI.isReconnecting,

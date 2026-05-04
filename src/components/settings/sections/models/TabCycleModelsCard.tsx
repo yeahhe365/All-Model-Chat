@@ -10,11 +10,7 @@ interface TabCycleModelsCardProps {
   onChange: (modelIds: string[] | undefined) => void;
 }
 
-export const TabCycleModelsCard: React.FC<TabCycleModelsCardProps> = ({
-  availableModels,
-  configuredIds,
-  onChange,
-}) => {
+export const TabCycleModelsCard: React.FC<TabCycleModelsCardProps> = ({ availableModels, configuredIds, onChange }) => {
   const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
 

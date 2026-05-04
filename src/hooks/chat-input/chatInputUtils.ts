@@ -9,7 +9,9 @@ interface HasSendableChatInputContentOptions {
   inputText: string;
   quotes: string[];
   selectedFileCount: number;
-  isNativeAudioModel: boolean;
+  isNativeAudioModel?: boolean;
+  canAcceptAttachments?: boolean;
+  requiresTextPrompt?: boolean;
 }
 
 const formatQuoteBlock = (quote: string, index: number, totalQuotes: number) => {
@@ -53,10 +55,12 @@ export const hasSendableChatInputContent = ({
   quotes,
   selectedFileCount,
   isNativeAudioModel,
+  canAcceptAttachments,
+  requiresTextPrompt,
 }: HasSendableChatInputContentOptions): boolean => {
   const hasTextPayload = inputText.trim() !== '' || quotes.length > 0;
 
-  if (isNativeAudioModel) {
+  if (requiresTextPrompt || isNativeAudioModel || canAcceptAttachments === false) {
     return hasTextPayload;
   }
 

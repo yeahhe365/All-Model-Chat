@@ -58,6 +58,9 @@ export const useChat = (
   const setIsSwitchingModel = useChatStore((state) => state.setIsSwitchingModel);
   const setGeneratingTitleSessionIds = useChatStore((state) => state.setGeneratingTitleSessionIds);
   const updateAndPersistSessions = useChatStore((state) => state.updateAndPersistSessions);
+  const updateMessageInSession = useChatStore((state) => state.updateMessageInSession);
+  const updateMessageInActiveSession = useChatStore((state) => state.updateMessageInActiveSession);
+  const appendMessageToSession = useChatStore((state) => state.appendMessageToSession);
   const updateAndPersistGroups = useChatStore((state) => state.updateAndPersistGroups);
   const setSessionLoading = useChatStore((state) => state.setSessionLoading);
   const setCurrentChatSettings = useChatStore((state) => state.setCurrentChatSettings);
@@ -208,7 +211,7 @@ export const useChat = (
     setGeneratingTitleSessionIds,
     sessionKeyMapRef,
   });
-  useSuggestions({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, sessionKeyMapRef });
+  useSuggestions({ appSettings, activeChat, isLoading, updateMessageInSession, language, sessionKeyMapRef });
 
   const { loadChatSession, startNewChat, handleDeleteChatHistorySession } = historyHandler;
 
@@ -224,6 +227,8 @@ export const useChat = (
     setCurrentChatSettings,
     setSelectedFiles,
     updateAndPersistSessions,
+    updateMessageInActiveSession,
+    appendMessageToSession,
     handleStopGenerating: messageActions.handleStopGenerating,
     startNewChat,
     handleTogglePinSession: historyHandler.handleTogglePinSession,

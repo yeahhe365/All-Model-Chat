@@ -4,8 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mockSendStandardMessage = vi.fn();
 const mockHandleTtsImagenMessage = vi.fn();
 const mockHandleImageEditMessage = vi.fn();
-const { mockGetModelCapabilities, mockCreateNewSession } = vi.hoisted(() => ({
+const { mockGetModelCapabilities, mockCreateMessage, mockCreateNewSession } = vi.hoisted(() => ({
   mockGetModelCapabilities: vi.fn(),
+  mockCreateMessage: vi.fn((role: string, content: string, options?: Record<string, unknown>) => ({
+    id: 'error-message-id',
+    role,
+    content,
+    timestamp: new Date('2026-05-04T09:30:00.000Z'),
+    ...options,
+  })),
   mockCreateNewSession: vi.fn(),
 }));
 
@@ -57,6 +64,7 @@ vi.mock('../utils/apiUtils', () => ({
 }));
 
 vi.mock('../utils/chat/session', () => ({
+  createMessage: mockCreateMessage,
   createNewSession: mockCreateNewSession,
 }));
 
@@ -514,12 +522,20 @@ describe('useMessageSender', () => {
     expect(setAppFileError).toHaveBeenCalledWith(null);
     expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).toHaveBeenCalledWith(
-      'summarize this PDF',
-      selectedFiles,
-      null,
-      'gpt-5.5',
-      false,
-      false,
+      expect.objectContaining({
+        text: 'summarize this PDF',
+        files: selectedFiles,
+        editingMessageId: null,
+        activeModelId: 'gpt-5.5',
+        isContinueMode: false,
+        isFastMode: false,
+        request: expect.objectContaining({
+          ok: true,
+          keyToUse: 'api-key',
+          generationId: 'generation-id',
+          abortController: expect.any(AbortController),
+        }),
+      }),
     );
     unmount();
   });

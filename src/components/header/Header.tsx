@@ -4,7 +4,7 @@ import { ModelOption } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
-import { getModelCapabilities } from '../../utils/modelHelpers';
+import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 
 interface HeaderProps {
   onNewChat: () => void;
@@ -71,10 +71,10 @@ export const Header: React.FC<HeaderProps> = ({
   const iconSize = 18;
   const strokeWidth = 2;
 
-  const { isNativeAudioModel, isImagenModel, isTtsModel } = getModelCapabilities(selectedModelId || '');
+  const { permissions } = getCachedModelCapabilities(selectedModelId || '');
 
   // Only show Canvas button for standard chat models (not specialized audio/image models)
-  const showTextTools = !isNativeAudioModel && !isImagenModel && !isTtsModel;
+  const showTextTools = permissions.canGenerateSuggestions;
 
   return (
     <header

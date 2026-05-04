@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Maximize2, Minimize2, Download, FileSpreadsheet, FileText, Copy, Check } from 'lucide-react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { useWindowContext } from '../../../contexts/WindowContext';
+import { createManagedObjectUrl } from '../../../services/objectUrlManager';
 import { triggerDownload } from '../../../utils/export/core';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { convertHtmlToMarkdown } from '../../../utils/htmlToMarkdown';
@@ -57,7 +58,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
       .join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const url = createManagedObjectUrl(blob);
     triggerDownload(url, `table-export-${Date.now()}.csv`);
     setShowDownloadMenu(false);
   };
@@ -71,7 +72,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
             <head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Sheet1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><meta charset="utf-8"></head>
             <body>${tableHtml}</body></html>`;
     const blob = new Blob([template], { type: 'application/vnd.ms-excel' });
-    const url = URL.createObjectURL(blob);
+    const url = createManagedObjectUrl(blob);
     triggerDownload(url, `table-export-${Date.now()}.xls`);
     setShowDownloadMenu(false);
   };

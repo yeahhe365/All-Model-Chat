@@ -1,4 +1,5 @@
 import { triggerDownload } from './core';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { createSnapshotContainer, createExportDOMHeader, sanitizeDocumentStylesForPngExport } from './dom';
 
 /**
@@ -85,7 +86,7 @@ export const exportElementAsPng = async (
     // Convert to Blob to handle larger images better than data URI
     canvas.toBlob((blob) => {
       if (blob) {
-        const url = URL.createObjectURL(blob);
+        const url = createManagedObjectUrl(blob);
         triggerDownload(url, filename);
       } else {
         console.error('Canvas to Blob conversion failed (Result is null). The chat may be too long.');

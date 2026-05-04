@@ -480,6 +480,41 @@ describe('chatStore', () => {
     });
   });
 
+  describe('atomic session and message actions', () => {
+    it('updates a message in the active session without repeating session/message traversal at call sites', () => {
+      const message = { id: 'm1', role: 'model' as const, content: 'draft', timestamp: new Date(), isLoading: true };
+      useChatStore.getState().setActiveSessionId('s1');
+      useChatStore.getState().setActiveMessages([message]);
+      useChatStore.getState().setSavedSessions([makeSession({ id: 's1', messages: [] })]);
+
+      useChatStore
+        .getState()
+        .updateMessageInActiveSession('m1', { content: 'final', isLoading: false }, { persist: false });
+
+      expect(useChatStore.getState().activeMessages[0]).toEqual(
+        expect.objectContaining({ content: 'final', isLoading: false }),
+      );
+    });
+
+    it('appends messages and bumps the target session timestamp through a store action', () => {
+      const initialTimestamp = 10;
+      useChatStore.getState().setActiveSessionId('s1');
+      useChatStore.getState().setSavedSessions([makeSession({ id: 's1', timestamp: initialTimestamp })]);
+
+      useChatStore
+        .getState()
+        .appendMessageToSession(
+          's1',
+          { id: 'm1', role: 'user', content: 'hello', timestamp: new Date() },
+          { persist: false },
+        );
+
+      const session = useChatStore.getState().savedSessions.find((candidate) => candidate.id === 's1');
+      expect(session?.messages).toHaveLength(1);
+      expect(session?.timestamp).toBeGreaterThan(initialTimestamp);
+    });
+  });
+
   // ── updateAndPersistGroups ──
 
   describe('updateAndPersistGroups', () => {

@@ -5,24 +5,19 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { IconYoutube, IconPython } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
-import { getModelCapabilities } from '../../../utils/modelHelpers';
+import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
+import {
+  getChatToolsForSurface,
+  type ChatToolDefinition,
+  type ChatToolIconKey,
+} from '../../../features/chat-tools/toolRegistry';
+import type { ChatToolId, ChatToolToggleStates, ChatToolUtilityActions, ToggleableChatToolId } from '../../../types';
 
 interface ToolsMenuProps {
   currentModelId: string;
-  isGoogleSearchEnabled: boolean;
-  onToggleGoogleSearch: () => void;
-  isCodeExecutionEnabled: boolean;
-  onToggleCodeExecution: () => void;
-  isLocalPythonEnabled?: boolean;
-  onToggleLocalPython?: () => void;
-  isUrlContextEnabled: boolean;
-  onToggleUrlContext: () => void;
-  isDeepSearchEnabled: boolean;
-  onToggleDeepSearch: () => void;
-  onAddYouTubeVideo: () => void;
-  onCountTokens: () => void;
+  toolStates: ChatToolToggleStates;
+  toolUtilityActions: ChatToolUtilityActions;
   disabled: boolean;
-  isNativeAudioModel?: boolean;
 }
 
 const ActiveToolBadge: React.FC<{
@@ -53,31 +48,35 @@ const ActiveToolBadge: React.FC<{
   </>
 );
 
-export const ToolsMenu: React.FC<ToolsMenuProps> = ({
-  currentModelId,
-  isGoogleSearchEnabled,
-  onToggleGoogleSearch,
-  isCodeExecutionEnabled,
-  onToggleCodeExecution,
-  isLocalPythonEnabled,
-  onToggleLocalPython,
-  isUrlContextEnabled,
-  onToggleUrlContext,
-  isDeepSearchEnabled,
-  onToggleDeepSearch,
-  onAddYouTubeVideo,
-  onCountTokens,
-  disabled,
-  isNativeAudioModel,
-}) => {
+const BUILT_IN_TOOL_IDS = new Set<ChatToolId>(['deepSearch', 'googleSearch', 'codeExecution', 'urlContext']);
+
+const isToggleableToolId = (id: ChatToolId): id is ToggleableChatToolId =>
+  id === 'deepSearch' || id === 'googleSearch' || id === 'codeExecution' || id === 'localPython' || id === 'urlContext';
+
+const renderToolIcon = (icon: ChatToolIconKey, size: number) => {
+  switch (icon) {
+    case 'telescope':
+      return <Telescope size={size} strokeWidth={2} />;
+    case 'globe':
+      return <Globe size={size} strokeWidth={2} />;
+    case 'terminal':
+      return <Terminal size={size} strokeWidth={2} />;
+    case 'python':
+      return <IconPython size={size} strokeWidth={2} />;
+    case 'link':
+      return <Link size={size} strokeWidth={2} />;
+    case 'youtube':
+      return <IconYoutube size={size} strokeWidth={2} />;
+    case 'calculator':
+      return <Calculator size={size} strokeWidth={2} />;
+  }
+};
+
+export const ToolsMenu: React.FC<ToolsMenuProps> = ({ currentModelId, toolStates, toolUtilityActions, disabled }) => {
   const { t } = useI18n();
   const { isOpen, menuPosition, containerRef, buttonRef, menuRef, targetWindow, closeMenu, toggleMenu } =
     usePortaledMenu();
-  const capabilities = getModelCapabilities(currentModelId);
-  const isImageModel = capabilities.isImagenModel;
-  const isGemini3ImageModel = capabilities.isGemini3ImageModel;
-  const supportsBuiltInCustomToolCombination = capabilities.isGemini3;
-  const isGemmaModel = capabilities.isGemmaModel;
+  const capabilities = getCachedModelCapabilities(currentModelId);
 
   const handleToggle = (toggleFunc?: () => void) => {
     if (toggleFunc) {
@@ -89,96 +88,36 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
   // Matched icon size to other toolbar buttons (Attachment, Mic, etc.)
   const menuIconSize = 20;
 
-  const menuItems = [
-    {
-      labelKey: 'deep_search_label',
-      icon: <Telescope size={18} strokeWidth={2} />,
-      isEnabled: isDeepSearchEnabled,
-      action: () => handleToggle(onToggleDeepSearch),
-    },
-    {
-      labelKey: 'web_search_label',
-      icon: <Globe size={18} strokeWidth={2} />,
-      isEnabled: isGoogleSearchEnabled,
-      action: () => handleToggle(onToggleGoogleSearch),
-    },
-    {
-      labelKey: 'code_execution_label',
-      icon: <Terminal size={18} strokeWidth={2} />,
-      isEnabled: isCodeExecutionEnabled,
-      action: () => handleToggle(onToggleCodeExecution),
-    },
-    {
-      labelKey: 'local_python_label',
-      icon: <IconPython size={18} strokeWidth={2} />,
-      isEnabled: !!isLocalPythonEnabled,
-      action: () => handleToggle(onToggleLocalPython),
-    },
-    {
-      labelKey: 'url_context_label',
-      icon: <Link size={18} strokeWidth={2} />,
-      isEnabled: isUrlContextEnabled,
-      action: () => handleToggle(onToggleUrlContext),
-    },
-    {
-      labelKey: 'attachMenu_addByUrl',
-      icon: <IconYoutube size={18} strokeWidth={2} />,
-      isEnabled: false,
-      action: () => {
-        onAddYouTubeVideo();
-        closeMenu();
-      },
-    },
-    {
-      labelKey: 'tools_token_count_label',
-      icon: <Calculator size={18} strokeWidth={2} />,
-      isEnabled: false,
-      action: () => {
-        onCountTokens();
-        closeMenu();
-      },
-    },
-  ];
+  const getToolAction = (tool: ChatToolDefinition) => {
+    const toolId = tool.id;
 
-  const filteredItems = menuItems.filter((item) => {
-    if (isNativeAudioModel) {
-      if (item.labelKey === 'local_python_label') {
-        return !!onToggleLocalPython;
+    if (isToggleableToolId(toolId)) {
+      return () => handleToggle(toolStates[toolId]?.onToggle);
+    }
+
+    return () => {
+      if (toolId === 'youtubeUrl') {
+        toolUtilityActions.onAddYouTubeVideo();
+      } else if (toolId === 'tokenCount') {
+        toolUtilityActions.onCountTokens();
       }
+      closeMenu();
+    };
+  };
 
-      // In Live mode, web search has a dedicated toggle and the remaining
-      // server-side tools in this menu are intentionally hidden for now.
-      return false;
-    }
+  const filteredItems = getChatToolsForSurface({
+    surface: 'tools-menu',
+    capabilities,
+    hasLocalPythonHandler: !!toolStates.localPython?.onToggle,
+  }).filter((tool) => !isToggleableToolId(tool.id) || !!toolStates[tool.id]?.onToggle);
 
-    if (isImageModel) {
-      if (item.labelKey === 'tools_token_count_label') {
-        return true;
-      }
-
-      return isGemini3ImageModel && item.labelKey === 'web_search_label';
-    }
-
-    if (isGemmaModel) {
-      if (item.labelKey === 'code_execution_label' || item.labelKey === 'url_context_label') {
-        return false;
-      }
-    }
-
-    // Only show Local Python if handler is provided (it's new feature)
-    if (item.labelKey === 'local_python_label' && !onToggleLocalPython) {
-      return false;
-    }
-    return true;
-  });
-
-  const hasBuiltInToolEnabled =
-    isGoogleSearchEnabled || isDeepSearchEnabled || isCodeExecutionEnabled || isUrlContextEnabled;
+  const hasBuiltInToolEnabled = filteredItems.some(
+    (tool) => BUILT_IN_TOOL_IDS.has(tool.id) && isToggleableToolId(tool.id) && toolStates[tool.id]?.isEnabled,
+  );
   const showBuiltInCustomToolNotice =
-    !supportsBuiltInCustomToolCombination &&
-    !isNativeAudioModel &&
-    !isImageModel &&
-    !!isLocalPythonEnabled &&
+    !capabilities.supportsBuiltInCustomToolCombination &&
+    !capabilities.permissions.canUseLiveControls &&
+    !!toolStates.localPython?.isEnabled &&
     hasBuiltInToolEnabled;
 
   if (filteredItems.length === 0) return null;
@@ -209,76 +148,49 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 style={menuPosition}
                 role="menu"
               >
-                {filteredItems.map((item) => (
-                  <button
-                    key={item.labelKey}
-                    onClick={item.action}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between transition-colors ${item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`}
-                    role="menuitem"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <span
-                        className={
-                          item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'
-                        }
-                      >
-                        {item.icon}
-                      </span>
-                      <span className="font-medium">{t(item.labelKey)}</span>
-                    </div>
-                    {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}
-                  </button>
-                ))}
+                {filteredItems.map((item) => {
+                  const isEnabled = isToggleableToolId(item.id) ? !!toolStates[item.id]?.isEnabled : false;
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={getToolAction(item)}
+                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between transition-colors ${isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`}
+                      role="menuitem"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <span
+                          className={isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'}
+                        >
+                          {renderToolIcon(item.icon, 18)}
+                        </span>
+                        <span className="font-medium">{t(item.labelKey)}</span>
+                      </div>
+                      {isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}
+                    </button>
+                  );
+                })}
               </div>,
               targetWindow.document.body,
             )}
         </div>
-        {/* Only show badges for tools that are relevant to the current mode */}
-        {!isNativeAudioModel && !isImageModel && isDeepSearchEnabled && (
-          <ActiveToolBadge
-            label={t('deep_search_short')}
-            onRemove={onToggleDeepSearch}
-            removeAriaLabel="Disable Deep Search"
-            icon={<Telescope size={14} strokeWidth={2} />}
-          />
-        )}
-
-        {/* In Live Mode, Web Search is a toggle button, so badge is redundant/confusing if inside tools menu logic, but let's hide it from here if the button shows status */}
-        {!isNativeAudioModel && isGoogleSearchEnabled && (!isImageModel || isGemini3ImageModel) && (
-          <ActiveToolBadge
-            label={t('web_search_short')}
-            onRemove={onToggleGoogleSearch}
-            removeAriaLabel="Disable Web Search"
-            icon={<Globe size={14} strokeWidth={2} />}
-          />
-        )}
-
-        {!isNativeAudioModel && !isImageModel && !isGemmaModel && isCodeExecutionEnabled && (
-          <ActiveToolBadge
-            label={t('code_execution_short')}
-            onRemove={onToggleCodeExecution}
-            removeAriaLabel="Disable Code Execution"
-            icon={<Terminal size={14} strokeWidth={2} />}
-          />
-        )}
-
-        {!isImageModel && isLocalPythonEnabled && onToggleLocalPython && (
-          <ActiveToolBadge
-            label={t('local_python_short')}
-            onRemove={onToggleLocalPython}
-            removeAriaLabel="Disable Local Python"
-            icon={<IconPython size={14} strokeWidth={2} />}
-          />
-        )}
-
-        {!isNativeAudioModel && !isImageModel && !isGemmaModel && isUrlContextEnabled && (
-          <ActiveToolBadge
-            label={t('url_context_short')}
-            onRemove={onToggleUrlContext}
-            removeAriaLabel="Disable URL Context"
-            icon={<Link size={14} strokeWidth={2} />}
-          />
-        )}
+        {filteredItems
+          .filter(
+            (item) =>
+              item.shortLabelKey &&
+              isToggleableToolId(item.id) &&
+              toolStates[item.id]?.isEnabled &&
+              toolStates[item.id]?.onToggle,
+          )
+          .map((item) => (
+            <ActiveToolBadge
+              key={item.id}
+              label={t(item.shortLabelKey!)}
+              onRemove={toolStates[item.id as ToggleableChatToolId]!.onToggle!}
+              removeAriaLabel={`Disable ${t(item.labelKey)}`}
+              icon={renderToolIcon(item.icon, 14)}
+            />
+          ))}
       </div>
       {showBuiltInCustomToolNotice && (
         <div className="max-w-sm rounded-xl border border-[var(--theme-bg-danger)]/20 bg-[var(--theme-bg-danger)]/8 px-3 py-2 text-xs text-[var(--theme-text-secondary)]">

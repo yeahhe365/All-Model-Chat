@@ -4,7 +4,7 @@ import { ModelOption } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
 import { ModelPicker } from '../shared/ModelPicker';
-import { getModelCapabilities } from '../../utils/modelHelpers';
+import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 
 interface HeaderModelSelectorProps {
   currentModelName?: string;
@@ -49,7 +49,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   const isSelectorDisabled = availableModels.length === 0 || isLoading || isSwitchingModel;
 
   // Check for Gemini 3 models (ignoring case) but exclude image models
-  const { supportsThinkingLevel, isImagenModel, isGemmaModel } = getModelCapabilities(selectedModelId);
+  const { supportsThinkingLevel, isImagenModel, isGemmaModel } = getCachedModelCapabilities(selectedModelId);
   const supportsThinkingToggle = (supportsThinkingLevel && !isImagenModel) || isGemmaModel;
 
   // Determine the target "Fast" level based on model capabilities

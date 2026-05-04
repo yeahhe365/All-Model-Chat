@@ -62,12 +62,8 @@ describe('CodeHeader', () => {
     expect(container.querySelector('[title="Download PYTHON"]')).not.toBeNull();
     expect(container.querySelector('[title="Copy content"]')).not.toBeNull();
     expect(container.querySelector('[title="Expand"]')).not.toBeNull();
-    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain(
-      '!min-h-10',
-    );
-    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain(
-      '!min-w-10',
-    );
+    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain('!min-h-10');
+    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain('!min-w-10');
     expect(container.querySelector('[title="Copy content"] svg')?.getAttribute('width')).toBe('16');
     expect(container.querySelector('[title="Copy content"] svg')?.getAttribute('height')).toBe('16');
   });

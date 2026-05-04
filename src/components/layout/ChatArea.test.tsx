@@ -98,11 +98,11 @@ vi.mock('../chat/MessageList', async () => {
 });
 
 vi.mock('../chat/input/ChatInput', async () => {
-  const { useChatAreaInput } = await import('./chat-area/ChatAreaContext');
+  const { useChatStore } = await import('../../stores/chatStore');
 
   const ChatInput = React.memo(() => {
     mockState.renders.chatInput();
-    const { commandedInput } = useChatAreaInput();
+    const commandedInput = useChatStore((state) => state.commandedInput);
     return <div data-testid="chat-input">{commandedInput?.text ?? 'empty'}</div>;
   });
 
@@ -179,11 +179,6 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
       onAddFileById: vi.fn(async () => {}),
       onCancelUpload: vi.fn(),
       onTranscribeAudio: vi.fn(async () => null),
-      onToggleGoogleSearch: vi.fn(),
-      onToggleCodeExecution: vi.fn(),
-      onToggleLocalPython: vi.fn(),
-      onToggleUrlContext: vi.fn(),
-      onToggleDeepSearch: vi.fn(),
       onClearChat: vi.fn(),
       onOpenSettings: vi.fn(),
       onToggleCanvasPrompt: vi.fn(),
@@ -203,11 +198,6 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
       isBBoxModeActive: false,
       isGuideModeActive: false,
       generateQuadImages: false,
-      isGoogleSearchEnabled: false,
-      isCodeExecutionEnabled: false,
-      isLocalPythonEnabled: false,
-      isUrlContextEnabled: false,
-      isDeepSearchEnabled: false,
     },
     ...overrides,
   },
@@ -299,7 +289,7 @@ describe('ChatArea provider slice memoization', () => {
       root.render(<ChatArea {...props} />);
     });
 
-    expect(mockState.renders.chatInput.mock.calls.length).toBeGreaterThan(chatInputRenderCount);
+    expect(mockState.renders.chatInput.mock.calls.length).toBe(chatInputRenderCount);
     expect(mockState.renders.messageList.mock.calls.length).toBe(messageListRenderCount);
   });
 

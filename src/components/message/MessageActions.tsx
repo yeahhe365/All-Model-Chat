@@ -90,7 +90,9 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   const showRetryButton = message.role === 'model' || (message.role === 'error' && message.generationStartTime);
   const showContinueGenerationAction = message.role === 'model' && !message.isLoading;
   const showForkAction = message.role === 'model' && !message.isLoading;
-  const showCanvasAction = Boolean(message.content && !message.isLoading && message.role === 'model' && !message.audioSrc);
+  const showCanvasAction = Boolean(
+    message.content && !message.isLoading && message.role === 'model' && !message.audioSrc,
+  );
   const showOverflowActions = showContinueGenerationAction || showForkAction || showCanvasAction;
 
   // Enhanced button styling: lighter default, distinct hover, rounded corners
@@ -248,11 +250,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         )}
 
         {(message.content || message.thoughts) && !message.isLoading && (
-          <MessageCopyButton
-            textToCopy={message.content}
-            className={actionButtonClasses}
-            iconSize={actionIconSize}
-          />
+          <MessageCopyButton textToCopy={message.content} className={actionButtonClasses} iconSize={actionIconSize} />
         )}
 
         {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (

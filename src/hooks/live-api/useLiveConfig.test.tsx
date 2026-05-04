@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOCAL_PYTHON_SYSTEM_PROMPT } from '../../constants/promptConstants';
+import { LOCAL_PYTHON_SYSTEM_PROMPT } from '../../constants/prompts/localPython';
 import { useLiveConfig } from './useLiveConfig';
 import { renderHook } from '@/test/testUtils';
 

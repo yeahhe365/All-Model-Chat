@@ -14,18 +14,18 @@ export const ImageOutputModeSelector: React.FC<ImageOutputModeSelectorProps> = (
 }) => {
   const { t } = useI18n();
   return (
-  <Select
-    id="image-output-mode-selector"
-    label={t('imageOutputMode_title')}
-    hideLabel
-    value={imageOutputMode}
-    onChange={(e) => setImageOutputMode(e.target.value as ImageOutputMode)}
-    className="mb-0"
-    wrapperClassName="relative w-[150px]"
-    direction="up"
-  >
-    <option value="IMAGE_TEXT">{t('imageOutputMode_textAndImage')}</option>
-    <option value="IMAGE_ONLY">{t('imageOutputMode_imageOnly')}</option>
-  </Select>
-);
+    <Select
+      id="image-output-mode-selector"
+      label={t('imageOutputMode_title')}
+      hideLabel
+      value={imageOutputMode}
+      onChange={(e) => setImageOutputMode(e.target.value as ImageOutputMode)}
+      className="mb-0"
+      wrapperClassName="relative w-[150px]"
+      direction="up"
+    >
+      <option value="IMAGE_TEXT">{t('imageOutputMode_textAndImage')}</option>
+      <option value="IMAGE_ONLY">{t('imageOutputMode_imageOnly')}</option>
+    </Select>
+  );
 };

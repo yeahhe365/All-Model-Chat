@@ -143,12 +143,7 @@ const MessageListComponent: React.FC = () => {
         )}
 
         {/* Floating Toolbars & Navigation */}
-        <TextSelectionToolbar
-          onQuote={onQuote}
-          onInsert={onInsert}
-          onTTS={onQuickTTS}
-          containerRef={scrollerRef}
-        />
+        <TextSelectionToolbar onQuote={onQuote} onInsert={onInsert} onTTS={onQuickTTS} containerRef={scrollerRef} />
 
         <ScrollNavigation
           showUp={showScrollUp}

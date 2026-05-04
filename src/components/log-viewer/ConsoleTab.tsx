@@ -5,6 +5,8 @@ import { LOG_LEVEL_COLORS, CATEGORY_COLORS } from './constants';
 import { LogRow } from './LogRow';
 import { useI18n } from '../../contexts/I18nContext';
 import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
+import { triggerDownload } from '../../utils/export/core';
 
 interface ConsoleTabProps {
   logs: LogEntry[];
@@ -42,13 +44,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
   const handleExport = () => {
     const dataStr = JSON.stringify(filteredLogs, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `logs-export-${new Date().toISOString()}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    triggerDownload(createManagedObjectUrl(blob), `logs-export-${new Date().toISOString()}.json`);
   };
 
   return (

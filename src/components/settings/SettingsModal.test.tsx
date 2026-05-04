@@ -137,14 +137,7 @@ describe('SettingsModal', () => {
 
     const tabLabels = Array.from(document.querySelectorAll('[role="tab"]')).map((tab) => tab.textContent?.trim());
 
-    expect(tabLabels).toEqual([
-      'Models',
-      'API',
-      'Interface & Interaction',
-      'Data & App',
-      'Shortcuts',
-      'About',
-    ]);
+    expect(tabLabels).toEqual(['Models', 'API', 'Interface & Interaction', 'Data & App', 'Shortcuts', 'About']);
     expect(document.body.textContent).not.toContain('Chat');
   });
 
@@ -182,11 +175,7 @@ describe('SettingsModal', () => {
       Array.from(group.querySelectorAll('[role="tab"]')).map((tab) => tab.textContent?.trim()),
     );
 
-    expect(groups).toEqual([
-      ['Models', 'API', 'Interface & Interaction', 'Data & App'],
-      ['Shortcuts'],
-      ['About'],
-    ]);
+    expect(groups).toEqual([['Models', 'API', 'Interface & Interaction', 'Data & App'], ['Shortcuts'], ['About']]);
 
     for (const group of document.querySelectorAll('[data-settings-group]')) {
       expect(group.className).not.toContain('border-l');

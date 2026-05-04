@@ -6,6 +6,7 @@ const THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/gi;
 const THINKING_BLOCK_PRESENCE_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/i;
 const RAW_THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/thinking>/gi;
 const RAW_OPEN_THINKING_BLOCK_REGEX = /<thinking>([\s\S]*)$/i;
+const INCOMPLETE_THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)$/i;
 
 const normalizeReasoningWhitespace = (text: string): string =>
   text
@@ -111,3 +112,45 @@ export const stripReasoningMarkup = (text: string): string => {
 
   return normalizeReasoningWhitespace(content);
 };
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const createThinkingBlockMarkup = (innerContent: string, isLoading: boolean): string => {
+  const escapedContent = escapeHtml(innerContent.trim());
+  const openAttribute = isLoading ? ' open' : '';
+
+  return `<details${openAttribute}><summary>Raw Thinking Process</summary><div>${escapedContent}</div></details>`;
+};
+
+const transformMarkdownTextSegments = (value: string, transform: (segment: string) => string): string =>
+  splitMarkdownSegments(value)
+    .map((segment) => (segment.type === 'literal' ? segment.value : transform(segment.value)))
+    .join('');
+
+export const wrapReasoningMarkup = (value: string, isLoading: boolean): string =>
+  transformMarkdownTextSegments(value, (segment) => {
+    let nextValue = segment.replace(THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
+      createThinkingBlockMarkup(innerContent, isLoading),
+    );
+
+    if (isLoading) {
+      nextValue = nextValue.replace(INCOMPLETE_THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
+        createThinkingBlockMarkup(innerContent, true),
+      );
+    }
+
+    nextValue = nextValue.replace(GEMMA_THOUGHT_CHANNEL_REGEX, (_match, innerContent: string) =>
+      createThinkingBlockMarkup(innerContent, isLoading),
+    );
+
+    return nextValue;
+  });
+
+export const stripGemmaThoughtMarkup = (value: string): string =>
+  transformMarkdownTextSegments(value, (segment) => segment.replace(GEMMA_THOUGHT_CHANNEL_REGEX, ' '));

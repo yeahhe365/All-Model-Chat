@@ -2,6 +2,7 @@ import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useStandardChat } from './useStandardChat';
 import { renderHook } from '@/test/testUtils';
+import type { PreparedModelRequest } from './useModelRequestRunner';
 
 const {
   mockBuildContentParts,
@@ -161,6 +162,100 @@ describe('useStandardChat', () => {
     }));
   });
 
+  const createPreparedRequest = (overrides: Partial<PreparedModelRequest> = {}): PreparedModelRequest => ({
+    ok: true,
+    keyToUse: 'api-key',
+    isNewKey: false,
+    shouldLockKey: false,
+    generationId: 'prepared-generation-id',
+    generationStartTime: new Date('2026-05-04T09:00:00.000Z'),
+    abortController: new AbortController(),
+    ...overrides,
+  });
+
+  it('uses a prepared request context without looking up the API key again', async () => {
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError: vi.fn(),
+      streamOnComplete: vi.fn(),
+      streamOnPart: vi.fn(),
+      onThoughtChunk: vi.fn(),
+    }));
+
+    const { result, unmount } = renderHook(() =>
+      useStandardChat({
+        appSettings: {
+          hideThinkingInContext: false,
+          isRawModeEnabled: false,
+          autoCanvasVisualization: false,
+          isStreamingEnabled: true,
+        } as any,
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: 'Custom system instruction',
+          temperature: 1,
+          topP: 0.95,
+          topK: 64,
+          showThoughts: true,
+          thinkingBudget: 0,
+          thinkingLevel: 'LOW',
+          isGoogleSearchEnabled: false,
+          isCodeExecutionEnabled: false,
+          isLocalPythonEnabled: false,
+          isUrlContextEnabled: false,
+          isDeepSearchEnabled: false,
+          safetySettings: [],
+          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+          hideThinkingInContext: false,
+          lockedApiKey: null,
+        } as any,
+        messages: [],
+        setEditingMessageId: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        userScrolledUpRef: { current: false },
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        activeJobs: { current: new Map() },
+        setSessionLoading: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        sessionKeyMapRef: { current: new Map() },
+        handleGenerateCanvas: vi.fn(),
+        setAppFileError: vi.fn(),
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await (result.current.sendStandardMessage as any)({
+        text: 'analyze the csv',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest({ keyToUse: 'prepared-key' }),
+      });
+    });
+
+    expect(mockGetKeyForRequest).not.toHaveBeenCalled();
+    expect(mockSendMessageStream).toHaveBeenCalledWith(
+      'prepared-key',
+      'gemini-3-flash-preview',
+      [],
+      [{ text: 'analyze the csv' }],
+      expect.any(Object),
+      expect.any(AbortSignal),
+      expect.any(Function),
+      expect.any(Function),
+      expect.any(Function),
+      expect.any(Function),
+      'user',
+    );
+
+    unmount();
+  });
+
   it('passes the local-python flag into generation config when the client tool is enabled', async () => {
     const getStreamHandlers = vi.fn(() => ({
       streamOnError: vi.fn(),
@@ -217,7 +312,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('analyze the csv', [], null, 'gemini-3-flash-preview');
+      await result.current.sendStandardMessage({
+        text: 'analyze the csv',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
@@ -310,7 +411,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('hello through compat', [], null, 'gemini-3-flash-preview');
+      await result.current.sendStandardMessage({
+        text: 'hello through compat',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(mockBuildGenerationConfig).not.toHaveBeenCalled();
@@ -403,7 +510,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('hello through compat', [], null, 'gemini-3-flash-preview');
+      await result.current.sendStandardMessage({
+        text: 'hello through compat',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(mockBuildGenerationConfig).not.toHaveBeenCalled();
@@ -484,7 +597,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('make it cinematic', [], null, 'gemini-3-pro-image-preview');
+      await result.current.sendStandardMessage({
+        text: 'make it cinematic',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-pro-image-preview',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(mockCreateStandardClientFunctions).toHaveBeenCalledWith(
@@ -570,7 +689,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('analyze the csv', [], null, 'gemini-2.5-flash');
+      await result.current.sendStandardMessage({
+        text: 'analyze the csv',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-2.5-flash',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
@@ -673,7 +798,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('summarize this url', [], null, 'gemini-2.5-flash');
+      await result.current.sendStandardMessage({
+        text: 'summarize this url',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-2.5-flash',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(streamOnComplete).toHaveBeenCalledWith(
@@ -757,7 +888,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('show raw reasoning', [], null, 'gemini-3-flash-preview');
+      await result.current.sendStandardMessage({
+        text: 'show raw reasoning',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(mockCreateChatHistoryForApi).toHaveBeenCalledWith(
@@ -873,7 +1010,13 @@ describe('useStandardChat', () => {
     );
 
     await act(async () => {
-      await result.current.sendStandardMessage('用 Python 画图', [], null, 'gemini-3-flash-preview');
+      await result.current.sendStandardMessage({
+        text: '用 Python 画图',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
     });
 
     expect(streamOnComplete).toHaveBeenCalledWith(undefined, undefined, undefined, [generatedFile]);

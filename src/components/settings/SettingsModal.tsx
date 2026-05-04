@@ -9,6 +9,7 @@ import { SettingsContent } from './SettingsContent';
 import { SettingsTransferProps } from './settingsTypes';
 import type { LogViewerProps } from '../log-viewer/LogViewer';
 import { buildSettingsForModal, SettingsScope, splitScopedSettingsUpdate } from '../layout/mainContentModels';
+import { useSettingsTransferActions } from '../../hooks/data-management/useSettingsTransferActions';
 
 interface SettingsModalProps extends SettingsTransferProps {
   isOpen: boolean;
@@ -23,6 +24,10 @@ interface SettingsModalProps extends SettingsTransferProps {
   onClearCache: () => void;
   onOpenLogViewer: (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => void;
   setAvailableModels: (models: ModelOption[]) => void;
+  onImportSettings?: (file: File) => void;
+  onExportSettings?: () => void;
+  onImportHistory?: (file: File) => void;
+  onExportHistory?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -39,10 +44,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onOpenLogViewer,
   onInstallPwa,
   installState,
-  onImportSettings,
-  onExportSettings,
-  onImportHistory,
-  onExportHistory,
   onImportScenarios,
   onExportScenarios,
   setAvailableModels,
@@ -80,6 +81,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }),
     [canEditCurrentChat, effectiveScope, liveCurrentChatSettings, liveSettings],
   );
+  const settingsTransferActions = useSettingsTransferActions();
 
   const saveScopedSettings = (nextSettings: AppSettings) => {
     const previousSettings = buildSettingsForModal({
@@ -128,7 +130,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onSave: saveScopedSettings,
     onClearAllHistory,
     onClearCache,
-    onImportHistory,
+    onImportHistory: settingsTransferActions.onImportHistory,
     t,
   });
 
@@ -215,10 +217,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onReset={handleResetToDefaults}
               onInstallPwa={onInstallPwa}
               installState={installState}
-              onImportSettings={onImportSettings}
-              onExportSettings={onExportSettings}
+              onImportSettings={settingsTransferActions.onImportSettings}
+              onExportSettings={settingsTransferActions.onExportSettings}
               onImportHistory={handleRequestImportHistory}
-              onExportHistory={onExportHistory}
+              onExportHistory={settingsTransferActions.onExportHistory}
               onImportScenarios={onImportScenarios}
               onExportScenarios={onExportScenarios}
             />

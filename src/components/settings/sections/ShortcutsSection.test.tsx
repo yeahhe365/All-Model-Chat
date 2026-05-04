@@ -29,10 +29,7 @@ describe('ShortcutsSection', () => {
       useSettingsStore.setState({ language: 'en' });
       root.render(
         <I18nProvider>
-          <ShortcutsSection
-            currentSettings={useSettingsStore.getState().appSettings}
-            onUpdateSettings={vi.fn()}
-          />
+          <ShortcutsSection currentSettings={useSettingsStore.getState().appSettings} onUpdateSettings={vi.fn()} />
         </I18nProvider>,
       );
     });

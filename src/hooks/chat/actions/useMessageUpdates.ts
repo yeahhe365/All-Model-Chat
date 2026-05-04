@@ -9,6 +9,7 @@ import {
 } from '../../../types';
 import { logService } from '../../../services/logService';
 import { createNewSession, createMessage } from '../../../utils/chat/session';
+import { updateFileInMessage, updateMessageInSession, updateSessionById } from '../../../utils/chat/sessionMutations';
 import { MediaResolution } from '../../../types/settings';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 
@@ -21,6 +22,12 @@ interface UseMessageUpdatesProps {
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
     options?: { persist?: boolean },
   ) => void;
+  updateMessageInActiveSession?: (
+    messageId: string,
+    updater: Partial<ChatMessage> | ((message: ChatMessage) => ChatMessage),
+    options?: { persist?: boolean },
+  ) => void;
+  appendMessageToSession?: (sessionId: string, message: ChatMessage, options?: { persist?: boolean }) => void;
   userScrolledUpRef: React.MutableRefObject<boolean>;
 }
 
@@ -30,6 +37,8 @@ export const useMessageUpdates = ({
   appSettings,
   currentChatSettings,
   updateAndPersistSessions,
+  updateMessageInActiveSession,
+  appendMessageToSession,
   userScrolledUpRef,
 }: UseMessageUpdatesProps) => {
   // Track active message IDs for the live session within the closure of the hook instance
@@ -52,21 +61,14 @@ export const useMessageUpdates = ({
     (messageId: string, newContent: string) => {
       if (!activeSessionId) return;
       logService.info('Tampering message content', { messageId });
-      updateAndPersistSessions((prev) =>
-        prev.map((s) => {
-          if (s.id === activeSessionId) {
-            return {
-              ...s,
-              messages: s.messages.map((m) =>
-                m.id === messageId ? { ...m, content: newContent, apiParts: undefined } : m,
-              ),
-            };
-          }
-          return s;
-        }),
-      );
+      const updateActiveMessage =
+        updateMessageInActiveSession ??
+        ((id: string, updater: Partial<ChatMessage> | ((message: ChatMessage) => ChatMessage)) =>
+          updateAndPersistSessions((prev) => updateMessageInSession(prev, activeSessionId, id, updater)));
+
+      updateActiveMessage(messageId, (message) => ({ ...message, content: newContent, apiParts: undefined }));
     },
-    [activeSessionId, updateAndPersistSessions],
+    [activeSessionId, updateAndPersistSessions, updateMessageInActiveSession],
   );
 
   const handleUpdateMessageFile = useCallback(
@@ -76,27 +78,23 @@ export const useMessageUpdates = ({
       updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution },
     ) => {
       if (!activeSessionId) return;
+      if (updateMessageInActiveSession) {
+        updateMessageInActiveSession(messageId, (message) =>
+          message.files
+            ? {
+                ...message,
+                files: message.files.map((file) => (file.id === fileId ? { ...file, ...updates } : file)),
+              }
+            : message,
+        );
+        return;
+      }
+
       updateAndPersistSessions((prev) =>
-        prev.map((s) => {
-          if (s.id === activeSessionId) {
-            return {
-              ...s,
-              messages: s.messages.map((m) => {
-                if (m.id === messageId && m.files) {
-                  return {
-                    ...m,
-                    files: m.files.map((f) => (f.id === fileId ? { ...f, ...updates } : f)),
-                  };
-                }
-                return m;
-              }),
-            };
-          }
-          return s;
-        }),
+        updateFileInMessage(prev, activeSessionId, messageId, fileId, updates as Partial<UploadedFile>),
       );
     },
-    [activeSessionId, updateAndPersistSessions],
+    [activeSessionId, updateAndPersistSessions, updateMessageInActiveSession],
   );
 
   const handleAddUserMessage = useCallback(
@@ -115,18 +113,17 @@ export const useMessageUpdates = ({
 
       const newMessage = createMessage('user', text, { files });
 
-      updateAndPersistSessions((prev) =>
-        prev.map((s) => {
-          if (s.id === currentSessionId) {
-            return {
-              ...s,
-              messages: [...s.messages, newMessage],
-              timestamp: Date.now(), // Update timestamp to move to top
-            };
-          }
-          return s;
-        }),
-      );
+      if (appendMessageToSession) {
+        appendMessageToSession(currentSessionId, newMessage);
+      } else {
+        updateAndPersistSessions((prev) =>
+          updateSessionById(prev, currentSessionId, (s) => ({
+            ...s,
+            messages: [...s.messages, newMessage],
+            timestamp: Date.now(), // Update timestamp to move to top
+          })),
+        );
+      }
       userScrolledUpRef.current = false;
     },
     [
@@ -136,6 +133,7 @@ export const useMessageUpdates = ({
       appSettings,
       currentChatSettings,
       setActiveSessionId,
+      appendMessageToSession,
     ],
   );
 
@@ -168,9 +166,7 @@ export const useMessageUpdates = ({
       if (!currentSessionId) return;
 
       updateAndPersistSessions((prev) =>
-        prev.map((s) => {
-          if (s.id !== currentSessionId) return s;
-
+        updateSessionById(prev, currentSessionId, (s) => {
           // Determine which ID we are currently tracking for this role
           const currentId =
             role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;

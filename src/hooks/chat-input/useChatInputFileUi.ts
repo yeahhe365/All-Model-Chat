@@ -3,6 +3,7 @@ import type React from 'react';
 
 import type { UploadedFile } from '../../types';
 import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { cleanupFilePreviewUrl, cleanupReplacedFilePreviewUrl } from '../../utils/fileHelpers';
 import { isTextFile } from '../../utils/fileTypeUtils';
 import { useFileModalState } from '../ui/useFileModalState';
@@ -161,7 +162,7 @@ export const useChatInputFileUi = ({
         const type = content instanceof Blob ? content.type : 'text/markdown';
         const finalName = filename.includes('.') ? filename : `${filename}.md`;
         const nextRawFile = new File([content], finalName, { type });
-        const nextDataUrl = URL.createObjectURL(nextRawFile);
+        const nextDataUrl = createManagedObjectUrl(nextRawFile, { ownerId: `selected-file:${editingFile.id}` });
 
         setSelectedFiles((prev) =>
           prev.map((file) =>
@@ -203,7 +204,7 @@ export const useChatInputFileUi = ({
                   name: newName,
                   textContent: content,
                   size: content.length,
-                  dataUrl: URL.createObjectURL(nextRawFile),
+                  dataUrl: createManagedObjectUrl(nextRawFile, { ownerId: `selected-file:${fileId}` }),
                   rawFile: nextRawFile,
                 };
                 cleanupReplacedFilePreviewUrl(file, nextFile);

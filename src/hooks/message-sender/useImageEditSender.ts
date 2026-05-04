@@ -1,10 +1,5 @@
 import React, { useCallback } from 'react';
-import {
-  AppSettings,
-  ChatMessage,
-  UploadedFile,
-  ChatSettings as IndividualChatSettings,
-} from '../../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
 import { editImageApi } from '../../services/api/generation/imageEditApi';
 import { logService } from '../../services/logService';
@@ -12,11 +7,10 @@ import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/bui
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { shouldStripThinkingFromContext } from '../../utils/modelHelpers';
 import { isImageMimeType } from '../../utils/fileTypeUtils';
-import { playCompletionSound } from '../../utils/uiUtils';
 import type { Part } from '@google/genai';
 import { appendApiPart } from '../chat-stream/processors';
 import { useMessageLifecycle } from './useMessageLifecycle';
-import { startOptimisticMessageTurn } from './messagePipeline';
+import { runOptimisticMessagePipeline } from './messagePipeline';
 import type { SessionsUpdater } from './types';
 
 const stripGeneratedInlinePayload = (part: Part): Part => {
@@ -70,7 +64,8 @@ export const useImageEditSender = ({
       options: { shouldLockKey?: boolean } = {},
     ) => {
       const imageFiles = files.filter((f) => isImageMimeType(f.type));
-      const { finalSessionId, modelMessageId } = startOptimisticMessageTurn({
+
+      await runOptimisticMessagePipeline({
         activeSessionId,
         appSettings,
         currentChatSettings,
@@ -83,14 +78,9 @@ export const useImageEditSender = ({
         shouldGenerateTitle: !activeSessionId || (!!effectiveEditingId && messages.length === 0),
         shouldLockKey: options.shouldLockKey,
         keyToLock: keyToUse,
-      });
-
-      await runMessageLifecycle({
-        sessionId: finalSessionId,
-        generationId,
         abortController: newAbortController,
-        modelMessageId,
         errorPrefix: 'Image Edit Error',
+        runMessageLifecycle,
         execute: async () => {
           const { contentParts: promptParts } = await buildContentParts(text, imageFiles, currentChatSettings.modelId);
           const shouldStripThinking = shouldStripThinkingFromContext(
@@ -190,31 +180,15 @@ export const useImageEditSender = ({
             combinedText = '[Error: Image generation failed with no specific message.]';
           }
 
-          updateAndPersistSessions((p) =>
-            p.map((s) =>
-              s.id === finalSessionId
-                ? {
-                    ...s,
-                    messages: s.messages.map((m) =>
-                      m.id === modelMessageId
-                        ? {
-                            ...m,
-                            isLoading: false,
-                            content: combinedText.trim(),
-                            files: combinedFiles,
-                            apiParts: combinedApiParts,
-                            generationEndTime: new Date(),
-                          }
-                        : m,
-                    ),
-                  }
-                : s,
-            ),
-          );
-
-          if (appSettings.isCompletionSoundEnabled) {
-            playCompletionSound();
-          }
+          return {
+            patch: {
+              isLoading: false,
+              content: combinedText.trim(),
+              files: combinedFiles,
+              apiParts: combinedApiParts,
+              generationEndTime: new Date(),
+            },
+          };
         },
       });
     },

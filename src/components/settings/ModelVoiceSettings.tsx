@@ -9,7 +9,7 @@ import { VoiceControl } from './controls/VoiceControl';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { MediaResolution } from '../../types/settings';
-import { getModelCapabilities } from '../../utils/modelHelpers';
+import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 import { useI18n } from '../../contexts/I18nContext';
 import { SMALL_ICON_BUTTON_CLASS } from '../../constants/appConstants';
 
@@ -142,7 +142,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     'w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm';
   const isSystemPromptSet = localPrompt && localPrompt.trim() !== '';
 
-  const capabilities = getModelCapabilities(modelId);
+  const capabilities = getCachedModelCapabilities(modelId);
   const isNativeAudio = capabilities.isNativeAudioModel;
   const supportsUltraHighResolution = capabilities.isGemini3 || modelId.toLowerCase().includes('gemini-robotics-er');
 

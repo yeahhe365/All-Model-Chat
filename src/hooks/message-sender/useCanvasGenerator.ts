@@ -8,6 +8,7 @@ import { buildGenerationConfig } from '../../services/api/generationConfig';
 import { CanvasGeneratorProps } from './types';
 import { loadCanvasSystemPrompt } from '../../constants/promptHelpers';
 import { useMessageLifecycle } from './useMessageLifecycle';
+import { insertMessageAfter } from '../../utils/chat/sessionMutations';
 
 export const useCanvasGenerator = ({
   appSettings,
@@ -43,24 +44,16 @@ export const useCanvasGenerator = ({
       const newAbortController = new AbortController();
 
       updateAndPersistSessions((prev) =>
-        prev.map((s) => {
-          if (s.id === activeSessionId) {
-            const sourceIndex = s.messages.findIndex((m) => m.id === sourceMessageId);
-            const insertIndex = sourceIndex !== -1 ? sourceIndex + 1 : s.messages.length;
-
-            const newMsg = createLoadingModelMessage({
-              id: generationId,
-              generationStartTime,
-              excludeFromContext: true,
-            });
-
-            const newMessages = [...s.messages];
-            newMessages.splice(insertIndex, 0, newMsg);
-
-            return { ...s, messages: newMessages };
-          }
-          return s;
-        }),
+        insertMessageAfter(
+          prev,
+          activeSessionId,
+          sourceMessageId,
+          createLoadingModelMessage({
+            id: generationId,
+            generationStartTime,
+            excludeFromContext: true,
+          }),
+        ),
       );
 
       const canvasModelId = appSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChatMessage } from '../types';
 import { serializeMessageForPortableExport } from '../utils/chat/session';
+import { createManagedObjectUrl } from '../services/objectUrlManager';
 import { triggerDownload } from '../utils/export/core';
 import { buildMessageExportFilenameBase, createExportDateMeta, loadExportRuntime } from '../utils/export/runtime';
 
@@ -115,7 +116,7 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
       } else if (type === 'json') {
         const portableMessage = await serializeMessageForPortableExport(message);
         const blob = new Blob([JSON.stringify(portableMessage, null, 2)], { type: 'application/json' });
-        triggerDownload(URL.createObjectURL(blob), `${filenameBase}.json`);
+        triggerDownload(createManagedObjectUrl(blob), `${filenameBase}.json`);
       }
 
       if (onSuccess) onSuccess();

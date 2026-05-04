@@ -11,6 +11,7 @@ import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 import { buildExactPricingFromUsageMetadata } from '../../utils/usagePricingTelemetry';
 import { resolveChatExactPricing } from '../../utils/chatPricingEvidence';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
+import { updateMessageInSession, updateSessionById } from '../../utils/chat/sessionMutations';
 import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '../../utils/fileTypeUtils';
 
 type SessionsUpdater = (
@@ -75,23 +76,7 @@ export const useChatStreamHandler = ({
           const ttft = firstTokenTime.getTime() - generationStartTime.getTime();
 
           updateAndPersistSessions(
-            (prev) => {
-              const sessionIndex = prev.findIndex((s) => s.id === currentSessionId);
-              if (sessionIndex === -1) return prev;
-              const newSessions = [...prev];
-              const sessionToUpdate = { ...newSessions[sessionIndex] };
-
-              // Update only the specific message with TTFT to trigger UI update
-              sessionToUpdate.messages = sessionToUpdate.messages.map((m) => {
-                if (m.id === generationId) {
-                  return { ...m, firstTokenTimeMs: ttft };
-                }
-                return m;
-              });
-
-              newSessions[sessionIndex] = sessionToUpdate;
-              return newSessions;
-            },
+            (prev) => updateMessageInSession(prev, currentSessionId, generationId, { firstTokenTimeMs: ttft }),
             { persist: false },
           );
         }
@@ -156,65 +141,60 @@ export const useChatStreamHandler = ({
 
         // Perform the Final Update to State (and DB)
         updateAndPersistSessions(
-          (prev) => {
-            const sessionIndex = prev.findIndex((s) => s.id === currentSessionId);
-            if (sessionIndex === -1) return prev;
+          (prev) =>
+            updateSessionById(prev, currentSessionId, (sessionToUpdate) => {
+              const updatedMessages = sessionToUpdate.messages.map((msg) => {
+                if (msg.id === generationId) {
+                  return {
+                    ...msg,
+                    content: (msg.content || '') + accumulatedText,
+                    thoughts: (msg.thoughts || '') + accumulatedThoughts,
+                    files: [...accumulatedGeneratedFiles, ...(generatedFiles || [])].length
+                      ? mergeUniqueFiles(msg.files, [...accumulatedGeneratedFiles, ...(generatedFiles || [])])
+                      : msg.files,
+                    apiParts: msg.apiParts ? [...msg.apiParts, ...accumulatedApiParts] : accumulatedApiParts,
+                  };
+                }
+                return msg;
+              });
 
-            const newSessions = [...prev];
-            const sessionToUpdate = { ...newSessions[sessionIndex] };
+              // Finalize (mark loading false, set stats)
+              const finalizationResult = finalizeMessages(
+                updatedMessages,
+                generationStartTime,
+                newModelMessageIds,
+                currentChatSettings,
+                lang,
+                firstContentPartTime,
+                usageMetadata,
+                groundingMetadata,
+                urlContextMetadata,
+                abortController.signal.aborted,
+              );
 
-            const updatedMessages = sessionToUpdate.messages.map((msg) => {
-              if (msg.id === generationId) {
-                return {
-                  ...msg,
-                  content: (msg.content || '') + accumulatedText,
-                  thoughts: (msg.thoughts || '') + accumulatedThoughts,
-                  files: [...accumulatedGeneratedFiles, ...(generatedFiles || [])].length
-                    ? mergeUniqueFiles(msg.files, [...accumulatedGeneratedFiles, ...(generatedFiles || [])])
-                    : msg.files,
-                  apiParts: msg.apiParts ? [...msg.apiParts, ...accumulatedApiParts] : accumulatedApiParts,
-                };
-              }
-              return msg;
-            });
-
-            // Finalize (mark loading false, set stats)
-            const finalizationResult = finalizeMessages(
-              updatedMessages,
-              generationStartTime,
-              newModelMessageIds,
-              currentChatSettings,
-              lang,
-              firstContentPartTime,
-              usageMetadata,
-              groundingMetadata,
-              urlContextMetadata,
-              abortController.signal.aborted,
-            );
-
-            sessionToUpdate.messages = finalizationResult.updatedMessages;
-            newSessions[sessionIndex] = sessionToUpdate;
-
-            if (finalizationResult.completedMessageForNotification) {
-              if (appSettings.isCompletionSoundEnabled) {
-                playCompletionSound();
-              }
-              if (appSettings.isCompletionNotificationEnabled && document.hidden) {
-                const msg = finalizationResult.completedMessageForNotification;
-                const notificationBody =
-                  (msg.content || 'Media or tool response received').substring(0, 150) +
-                  (msg.content && msg.content.length > 150 ? '...' : '');
-                void import('../../constants/assets').then(({ APP_LOGO_SVG_DATA_URI }) => {
-                  showNotification('Response Ready', {
-                    body: notificationBody,
-                    icon: APP_LOGO_SVG_DATA_URI,
+              if (finalizationResult.completedMessageForNotification) {
+                if (appSettings.isCompletionSoundEnabled) {
+                  playCompletionSound();
+                }
+                if (appSettings.isCompletionNotificationEnabled && document.hidden) {
+                  const msg = finalizationResult.completedMessageForNotification;
+                  const notificationBody =
+                    (msg.content || 'Media or tool response received').substring(0, 150) +
+                    (msg.content && msg.content.length > 150 ? '...' : '');
+                  void import('../../constants/assets').then(({ APP_LOGO_SVG_DATA_URI }) => {
+                    showNotification('Response Ready', {
+                      body: notificationBody,
+                      icon: APP_LOGO_SVG_DATA_URI,
+                    });
                   });
-                });
+                }
               }
-            }
 
-            return newSessions;
-          },
+              return {
+                ...sessionToUpdate,
+                messages: finalizationResult.updatedMessages,
+              };
+            }),
           { persist: true },
         );
 
@@ -294,25 +274,13 @@ export const useChatStreamHandler = ({
 
             // Save to files array instead of hardcoding base64 into text to prevent critical performance issues
             updateAndPersistSessions(
-              (prev) => {
-                const sessionIndex = prev.findIndex((s) => s.id === currentSessionId);
-                if (sessionIndex === -1) return prev;
-                const newSessions = [...prev];
-                const sessionToUpdate = { ...newSessions[sessionIndex] };
-
-                sessionToUpdate.messages = sessionToUpdate.messages.map((message) => {
-                  if (message.id !== generationId || !generatedFile) {
-                    return message;
-                  }
-
-                  return {
-                    ...message,
-                    files: mergeUniqueFiles(message.files, [generatedFile]),
-                  };
-                });
-                newSessions[sessionIndex] = sessionToUpdate;
-                return newSessions;
-              },
+              (prev) =>
+                generatedFile
+                  ? updateMessageInSession(prev, currentSessionId, generationId, (message) => ({
+                      ...message,
+                      files: mergeUniqueFiles(message.files, [generatedFile]),
+                    }))
+                  : prev,
               { persist: false },
             );
           }

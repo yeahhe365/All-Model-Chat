@@ -18,6 +18,7 @@ import { createStandardClientFunctions } from '../../features/standard-chat/stan
 import { runStandardToolLoop } from '../../features/standard-chat/standardToolLoop';
 import { collectLocalPythonInputFiles } from '../../features/local-python/helpers';
 import { getPyodideService } from '../../services/loadPyodideService';
+import { updateSessionById } from '../../utils/chat/sessionMutations';
 import type { ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
 import type { ContentPart } from '../../types/chat';
 import type { GetStreamHandlers, SessionsUpdater, StandardChatProps } from './types';
@@ -69,7 +70,7 @@ export const useStandardChatApiCall = ({
   personGeneration,
   resolveTurn,
 }: UseStandardChatApiCallParams) => {
-  const { startMessageLifecycle, finishMessageLifecycle } = useMessageLifecycle({
+  const { runMessageLifecycle, finishMessageLifecycle } = useMessageLifecycle({
     updateAndPersistSessions,
     setSessionLoading,
     activeJobs,
@@ -149,232 +150,240 @@ export const useStandardChatApiCall = ({
         },
       );
 
-      startMessageLifecycle(finalSessionId, generationId, newAbortController);
+      await runMessageLifecycle({
+        sessionId: finalSessionId,
+        generationId,
+        abortController: newAbortController,
+        onError: (error) => {
+          streamOnError(error instanceof Error ? error : new Error(String(error)));
+        },
+        execute: async () => {
+          if (appSettings.apiMode === 'openai-compatible') {
+            const openAICompatibleConfig = {
+              baseUrl: appSettings.openaiCompatibleBaseUrl,
+              systemInstruction: sessionToUpdate.systemInstruction,
+              temperature: sessionToUpdate.temperature,
+              topP: sessionToUpdate.topP,
+            };
 
-      if (appSettings.apiMode === 'openai-compatible') {
-        const openAICompatibleConfig = {
-          baseUrl: appSettings.openaiCompatibleBaseUrl,
-          systemInstruction: sessionToUpdate.systemInstruction,
-          temperature: sessionToUpdate.temperature,
-          topP: sessionToUpdate.topP,
-        };
+            if (appSettings.isStreamingEnabled) {
+              await sendOpenAICompatibleMessageStream(
+                keyToUse,
+                apiModelId,
+                historyForChat,
+                finalParts,
+                openAICompatibleConfig,
+                newAbortController.signal,
+                streamOnPart,
+                onThoughtChunk,
+                streamOnError,
+                streamOnComplete,
+                finalRole,
+              );
+              return;
+            }
 
-        if (appSettings.isStreamingEnabled) {
-          await sendOpenAICompatibleMessageStream(
+            await sendOpenAICompatibleMessageNonStream(
+              keyToUse,
+              apiModelId,
+              historyForChat,
+              finalParts,
+              openAICompatibleConfig,
+              newAbortController.signal,
+              streamOnError,
+              (parts, thoughts, usage, grounding, urlContext) => {
+                for (const part of parts) {
+                  streamOnPart(part);
+                }
+                if (thoughts) {
+                  onThoughtChunk(thoughts);
+                }
+                streamOnComplete(usage, grounding, urlContext);
+              },
+              finalRole,
+            );
+            return;
+          }
+
+          const localPythonContextMessages =
+            finalRole === 'user'
+              ? [
+                  ...baseMessagesForApi,
+                  {
+                    id: 'temp-standard-user',
+                    role: 'user' as const,
+                    content: textToUse.trim(),
+                    files: enrichedFiles,
+                    timestamp: new Date(),
+                  },
+                ]
+              : baseMessagesForApi;
+          const standardClientFunctions = createStandardClientFunctions({
+            isLocalPythonEnabled:
+              !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode && !isImageModel(apiModelId),
+            inputFiles: collectLocalPythonInputFiles(
+              [
+                ...localPythonContextMessages,
+                {
+                  id: 'temp-standard-tool-target',
+                  role: 'model',
+                  content: '',
+                  timestamp: new Date(),
+                },
+              ],
+              'temp-standard-tool-target',
+            ),
+            runPython: async (code, options) => {
+              const pyodideService = await getPyodideService();
+              return pyodideService.runPython(code, options);
+            },
+          });
+          const standardFunctionDeclarations = Object.values(standardClientFunctions).map(
+            ({ declaration }) => declaration,
+          );
+          const hasRequestedServerSideToolThatNeedsCombination =
+            !!sessionToUpdate.isGoogleSearchEnabled ||
+            !!sessionToUpdate.isDeepSearchEnabled ||
+            !!sessionToUpdate.isUrlContextEnabled;
+          const isLocalPythonEnabledForTurn =
+            standardFunctionDeclarations.length > 0 &&
+            (isGemini3Model(apiModelId) || !hasRequestedServerSideToolThatNeedsCombination);
+
+          const config = await buildGenerationConfig({
+            modelId: apiModelId,
+            systemInstruction: sessionToUpdate.systemInstruction,
+            config: {
+              temperature: sessionToUpdate.temperature,
+              topP: sessionToUpdate.topP,
+              topK: sessionToUpdate.topK,
+            },
+            showThoughts: sessionToUpdate.showThoughts,
+            thinkingBudget: sessionToUpdate.thinkingBudget,
+            isGoogleSearchEnabled: !!sessionToUpdate.isGoogleSearchEnabled,
+            isCodeExecutionEnabled: !!sessionToUpdate.isCodeExecutionEnabled,
+            isUrlContextEnabled: !!sessionToUpdate.isUrlContextEnabled,
+            thinkingLevel: sessionToUpdate.thinkingLevel,
+            aspectRatio,
+            isDeepSearchEnabled: sessionToUpdate.isDeepSearchEnabled,
+            imageSize,
+            safetySettings: sessionToUpdate.safetySettings,
+            mediaResolution: sessionToUpdate.mediaResolution,
+            isLocalPythonEnabled: isLocalPythonEnabledForTurn,
+            imageOutputMode,
+            personGeneration,
+          });
+
+          const requestConfig = appendFunctionDeclarationsToTools(
+            apiModelId,
+            config,
+            isLocalPythonEnabledForTurn ? standardFunctionDeclarations : [],
+          );
+          const hasFunctionDeclarationsInRequest = !!requestConfig.tools?.some(
+            (tool) => 'functionDeclarations' in tool,
+          );
+
+          if (hasFunctionDeclarationsInRequest) {
+            try {
+              const toolLoopResult = await runStandardToolLoop({
+                initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
+                clientFunctions: standardClientFunctions,
+                runTurn: (contents) =>
+                  generateContentTurnApi(keyToUse, apiModelId, contents, requestConfig, newAbortController.signal),
+              });
+
+              if (toolLoopResult.toolMessages.length > 0) {
+                const internalMessages = toolLoopResult.toolMessages.flatMap(
+                  ({ modelContent, functionResponseParts }) => [
+                    createMessage('model', '', {
+                      apiParts: modelContent.parts,
+                      isInternalToolMessage: true,
+                      toolParentMessageId: generationId,
+                    }),
+                    createMessage('user', '', {
+                      apiParts: functionResponseParts,
+                      isInternalToolMessage: true,
+                      toolParentMessageId: generationId,
+                    }),
+                  ],
+                );
+
+                updateAndPersistSessions(
+                  (prev) =>
+                    updateSessionById(prev, finalSessionId, (session) => ({
+                      ...session,
+                      messages: session.messages.flatMap((message) => {
+                        if (message.id !== generationId) {
+                          return [message];
+                        }
+
+                        return [
+                          ...internalMessages,
+                          {
+                            ...message,
+                          },
+                        ];
+                      }),
+                    })),
+                  { persist: false },
+                );
+              }
+
+              for (const part of toolLoopResult.finalTurn.parts) {
+                streamOnPart(part);
+              }
+              if (toolLoopResult.finalTurn.thoughts) {
+                onThoughtChunk(toolLoopResult.finalTurn.thoughts);
+              }
+              streamOnComplete(
+                toolLoopResult.finalTurn.usage,
+                toolLoopResult.finalTurn.grounding,
+                toolLoopResult.finalTurn.urlContext,
+                toolLoopResult.generatedFiles,
+              );
+            } catch (error) {
+              streamOnError(error instanceof Error ? error : new Error(String(error)));
+            }
+            return;
+          }
+
+          if (appSettings.isStreamingEnabled) {
+            await sendStatelessMessageStreamApi(
+              keyToUse,
+              apiModelId,
+              historyForChat,
+              finalParts,
+              requestConfig,
+              newAbortController.signal,
+              streamOnPart,
+              onThoughtChunk,
+              streamOnError,
+              streamOnComplete,
+              finalRole,
+            );
+            return;
+          }
+
+          await sendStatelessMessageNonStreamApi(
             keyToUse,
             apiModelId,
             historyForChat,
             finalParts,
-            openAICompatibleConfig,
+            requestConfig,
             newAbortController.signal,
-            streamOnPart,
-            onThoughtChunk,
             streamOnError,
-            streamOnComplete,
+            (parts, thoughts, usage, grounding, urlContext) => {
+              for (const part of parts) {
+                streamOnPart(part);
+              }
+              if (thoughts) {
+                onThoughtChunk(thoughts);
+              }
+              streamOnComplete(usage, grounding, urlContext);
+            },
             finalRole,
           );
-          return;
-        }
-
-        await sendOpenAICompatibleMessageNonStream(
-          keyToUse,
-          apiModelId,
-          historyForChat,
-          finalParts,
-          openAICompatibleConfig,
-          newAbortController.signal,
-          streamOnError,
-          (parts, thoughts, usage, grounding, urlContext) => {
-            for (const part of parts) {
-              streamOnPart(part);
-            }
-            if (thoughts) {
-              onThoughtChunk(thoughts);
-            }
-            streamOnComplete(usage, grounding, urlContext);
-          },
-          finalRole,
-        );
-        return;
-      }
-
-      const localPythonContextMessages =
-        finalRole === 'user'
-          ? [
-              ...baseMessagesForApi,
-              {
-                id: 'temp-standard-user',
-                role: 'user' as const,
-                content: textToUse.trim(),
-                files: enrichedFiles,
-                timestamp: new Date(),
-              },
-            ]
-          : baseMessagesForApi;
-      const standardClientFunctions = createStandardClientFunctions({
-        isLocalPythonEnabled:
-          !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode && !isImageModel(apiModelId),
-        inputFiles: collectLocalPythonInputFiles(
-          [
-            ...localPythonContextMessages,
-            {
-              id: 'temp-standard-tool-target',
-              role: 'model',
-              content: '',
-              timestamp: new Date(),
-            },
-          ],
-          'temp-standard-tool-target',
-        ),
-        runPython: async (code, options) => {
-          const pyodideService = await getPyodideService();
-          return pyodideService.runPython(code, options);
         },
       });
-      const standardFunctionDeclarations = Object.values(standardClientFunctions).map(({ declaration }) => declaration);
-      const hasRequestedServerSideToolThatNeedsCombination =
-        !!sessionToUpdate.isGoogleSearchEnabled ||
-        !!sessionToUpdate.isDeepSearchEnabled ||
-        !!sessionToUpdate.isUrlContextEnabled;
-      const isLocalPythonEnabledForTurn =
-        standardFunctionDeclarations.length > 0 &&
-        (isGemini3Model(apiModelId) || !hasRequestedServerSideToolThatNeedsCombination);
-
-      const config = await buildGenerationConfig({
-        modelId: apiModelId,
-        systemInstruction: sessionToUpdate.systemInstruction,
-        config: {
-          temperature: sessionToUpdate.temperature,
-          topP: sessionToUpdate.topP,
-          topK: sessionToUpdate.topK,
-        },
-        showThoughts: sessionToUpdate.showThoughts,
-        thinkingBudget: sessionToUpdate.thinkingBudget,
-        isGoogleSearchEnabled: !!sessionToUpdate.isGoogleSearchEnabled,
-        isCodeExecutionEnabled: !!sessionToUpdate.isCodeExecutionEnabled,
-        isUrlContextEnabled: !!sessionToUpdate.isUrlContextEnabled,
-        thinkingLevel: sessionToUpdate.thinkingLevel,
-        aspectRatio,
-        isDeepSearchEnabled: sessionToUpdate.isDeepSearchEnabled,
-        imageSize,
-        safetySettings: sessionToUpdate.safetySettings,
-        mediaResolution: sessionToUpdate.mediaResolution,
-        isLocalPythonEnabled: isLocalPythonEnabledForTurn,
-        imageOutputMode,
-        personGeneration,
-      });
-
-      const requestConfig = appendFunctionDeclarationsToTools(
-        apiModelId,
-        config,
-        isLocalPythonEnabledForTurn ? standardFunctionDeclarations : [],
-      );
-      const hasFunctionDeclarationsInRequest = !!requestConfig.tools?.some((tool) => 'functionDeclarations' in tool);
-
-      if (hasFunctionDeclarationsInRequest) {
-        try {
-          const toolLoopResult = await runStandardToolLoop({
-            initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
-            clientFunctions: standardClientFunctions,
-            runTurn: (contents) =>
-              generateContentTurnApi(keyToUse, apiModelId, contents, requestConfig, newAbortController.signal),
-          });
-
-          if (toolLoopResult.toolMessages.length > 0) {
-            const internalMessages = toolLoopResult.toolMessages.flatMap(({ modelContent, functionResponseParts }) => [
-              createMessage('model', '', {
-                apiParts: modelContent.parts,
-                isInternalToolMessage: true,
-                toolParentMessageId: generationId,
-              }),
-              createMessage('user', '', {
-                apiParts: functionResponseParts,
-                isInternalToolMessage: true,
-                toolParentMessageId: generationId,
-              }),
-            ]);
-
-            updateAndPersistSessions(
-              (prev) =>
-                prev.map((session) => {
-                  if (session.id !== finalSessionId) {
-                    return session;
-                  }
-
-                  return {
-                    ...session,
-                    messages: session.messages.flatMap((message) => {
-                      if (message.id !== generationId) {
-                        return [message];
-                      }
-
-                      return [
-                        ...internalMessages,
-                        {
-                          ...message,
-                        },
-                      ];
-                    }),
-                  };
-                }),
-              { persist: false },
-            );
-          }
-
-          for (const part of toolLoopResult.finalTurn.parts) {
-            streamOnPart(part);
-          }
-          if (toolLoopResult.finalTurn.thoughts) {
-            onThoughtChunk(toolLoopResult.finalTurn.thoughts);
-          }
-          streamOnComplete(
-            toolLoopResult.finalTurn.usage,
-            toolLoopResult.finalTurn.grounding,
-            toolLoopResult.finalTurn.urlContext,
-            toolLoopResult.generatedFiles,
-          );
-        } catch (error) {
-          streamOnError(error instanceof Error ? error : new Error(String(error)));
-        }
-        return;
-      }
-
-      if (appSettings.isStreamingEnabled) {
-        await sendStatelessMessageStreamApi(
-          keyToUse,
-          apiModelId,
-          historyForChat,
-          finalParts,
-          requestConfig,
-          newAbortController.signal,
-          streamOnPart,
-          onThoughtChunk,
-          streamOnError,
-          streamOnComplete,
-          finalRole,
-        );
-        return;
-      }
-
-      await sendStatelessMessageNonStreamApi(
-        keyToUse,
-        apiModelId,
-        historyForChat,
-        finalParts,
-        requestConfig,
-        newAbortController.signal,
-        streamOnError,
-        (parts, thoughts, usage, grounding, urlContext) => {
-          for (const part of parts) {
-            streamOnPart(part);
-          }
-          if (thoughts) {
-            onThoughtChunk(thoughts);
-          }
-          streamOnComplete(usage, grounding, urlContext);
-        },
-        finalRole,
-      );
     },
     [
       appSettings,
@@ -387,7 +396,7 @@ export const useStandardChatApiCall = ({
       messages,
       personGeneration,
       resolveTurn,
-      startMessageLifecycle,
+      runMessageLifecycle,
       updateAndPersistSessions,
     ],
   );

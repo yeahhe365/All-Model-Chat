@@ -14,7 +14,8 @@ import {
   Speech,
 } from 'lucide-react';
 import { useClickOutside } from '../../hooks/useClickOutside';
-import { getModelCapabilities, isGeminiRoboticsModel } from '../../utils/modelHelpers';
+import { isGeminiRoboticsModel } from '../../utils/modelHelpers';
+import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 import {
   buildModelCatalog,
   filterModelCatalog,
@@ -29,7 +30,7 @@ export const getModelIcon = (model: ModelOption | undefined) => {
   const { id, isPinned } = model;
   const normalizedId = id.toLowerCase();
   const { isNativeAudioModel, isTtsModel, isRealImagenModel, isGemini3ImageModel, isFlashImageModel, isGemmaModel } =
-    getModelCapabilities(id);
+    getCachedModelCapabilities(id);
 
   // Native Audio (Live)
   if (isNativeAudioModel)
@@ -142,10 +143,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
   const sections = useMemo(() => {
     const hasProviderSections = filteredEntries.some((entry) => entry.model.apiMode);
     if (hasProviderSections) {
-      const providerOrder: Array<NonNullable<PickerSection['providerKey']>> = [
-        'gemini-native',
-        'openai-compatible',
-      ];
+      const providerOrder: Array<NonNullable<PickerSection['providerKey']>> = ['gemini-native', 'openai-compatible'];
 
       return providerOrder.reduce<PickerSection[]>((nextSections, providerKey) => {
         const entries = filteredEntries.filter((entry) => entry.model.apiMode === providerKey);
@@ -218,11 +216,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                   </div>
                 ) : (
                   sections.map((section) => (
-                    <div
-                      key={section.key}
-                      className="space-y-1"
-                      data-provider-section={section.providerKey}
-                    >
+                    <div key={section.key} className="space-y-1" data-provider-section={section.providerKey}>
                       {section.providerKey && (
                         <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--theme-text-tertiary)]">
                           {t(getProviderSectionLabelKey(section.providerKey))}

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { createMessage, generateSessionTitle, performOptimisticSessionUpdate } from '../../utils/chat/session';
+import { updateMessageInSession } from '../../utils/chat/sessionMutations';
 import type { SessionsUpdater } from './types';
 import { createLoadingModelMessage } from './useMessageLifecycle';
 
@@ -52,25 +53,14 @@ export const useStandardChatSession = ({
     }: UpdateSessionStateParams) => {
       updateAndPersistSessions((prev) => {
         if (isContinueMode) {
-          return prev.map((session) => {
-            if (session.id !== finalSessionId) {
-              return session;
-            }
-
-            return {
-              ...session,
-              messages: session.messages.map((message) =>
-                message.id === effectiveEditingId
-                  ? {
-                      ...message,
-                      isLoading: true,
-                      generationEndTime: undefined,
-                      stoppedByUser: false,
-                    }
-                  : message,
-              ),
-            };
-          });
+          return effectiveEditingId
+            ? updateMessageInSession(prev, finalSessionId, effectiveEditingId, (message) => ({
+                ...message,
+                isLoading: true,
+                generationEndTime: undefined,
+                stoppedByUser: false,
+              }))
+            : prev;
         }
 
         const existingSession = prev.find((session) => session.id === activeSessionId);

@@ -76,11 +76,6 @@ export interface ChatAreaInputActionsModel {
   onAddFileById: (fileId: string) => Promise<void>;
   onCancelUpload: (fileId: string) => void;
   onTranscribeAudio: (file: File) => Promise<string | null>;
-  onToggleGoogleSearch: () => void;
-  onToggleCodeExecution: () => void;
-  onToggleLocalPython?: () => void;
-  onToggleUrlContext: () => void;
-  onToggleDeepSearch: () => void;
   onClearChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
@@ -109,11 +104,6 @@ export interface ChatAreaFeaturesModel {
   isBBoxModeActive: boolean;
   isGuideModeActive: boolean;
   generateQuadImages: boolean;
-  isGoogleSearchEnabled: boolean;
-  isCodeExecutionEnabled: boolean;
-  isLocalPythonEnabled?: boolean;
-  isUrlContextEnabled: boolean;
-  isDeepSearchEnabled: boolean;
 }
 
 export interface ChatAreaModel {

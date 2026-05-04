@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useState, useEffect, useRef, useCallback } from 
 import { X, Code, Eye, Download, FileCode2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SideViewContent } from '../../types';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { useIsMobile } from '../../hooks/useDevice';
 import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
@@ -118,7 +119,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
   const handleDownload = () => {
     const ext = content.type === 'html' ? 'html' : content.type === 'mermaid' ? 'mmd' : 'txt';
     const blob = new Blob([localCode], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
+    const url = createManagedObjectUrl(blob);
     triggerDownload(url, `${sanitizeFilename(content.title || 'snippet')}.${ext}`);
   };
 

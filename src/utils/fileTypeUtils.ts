@@ -21,15 +21,15 @@ export type FileCategory =
   | 'archive'
   | 'error';
 
-export interface FileKindInput {
+interface FileKindInput {
   name?: string;
   type?: string;
   error?: string | null;
 }
 
-export type FileTypeInput = Pick<FileKindInput, 'name' | 'type'>;
+type FileTypeInput = Pick<FileKindInput, 'name' | 'type'>;
 
-export interface FileKindFlags {
+interface FileKindFlags {
   category: FileCategory;
   isImage: boolean;
   isAudio: boolean;

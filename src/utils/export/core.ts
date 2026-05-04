@@ -1,3 +1,5 @@
+import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
+
 /**
  * Triggers a file download in the browser.
  * @param href The URL or data URI of the file to download.
@@ -12,7 +14,7 @@ export const triggerDownload = (href: string, filename: string, revokeBlob: bool
   link.click();
   document.body.removeChild(link);
   if (revokeBlob && href.startsWith('blob:')) {
-    URL.revokeObjectURL(href);
+    releaseManagedObjectUrl(href);
   }
 };
 

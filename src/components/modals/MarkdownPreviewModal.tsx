@@ -5,6 +5,7 @@ import { useI18n } from '../../contexts/I18nContext';
 import { Modal } from '../shared/Modal';
 import { MarkdownFileViewer } from '../shared/file-preview/MarkdownFileViewer';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { triggerDownload } from '../../utils/export/core';
 
 interface MarkdownPreviewModalProps {
@@ -16,7 +17,7 @@ interface MarkdownPreviewModalProps {
 
 const getDownloadUrl = (file: UploadedFile, content: string) => {
   if (file.dataUrl) return file.dataUrl;
-  return URL.createObjectURL(new Blob([content], { type: file.type || 'text/markdown' }));
+  return createManagedObjectUrl(new Blob([content], { type: file.type || 'text/markdown' }));
 };
 
 export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({

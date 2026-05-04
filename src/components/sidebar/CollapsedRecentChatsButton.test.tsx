@@ -88,7 +88,7 @@ describe('CollapsedRecentChatsButton', () => {
     ]);
 
     act(() => {
-      recentLinks[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+      recentLinks[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
     });
 
     expect(onSelectSession).toHaveBeenCalledWith('1');

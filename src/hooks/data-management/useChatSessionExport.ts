@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
 import { logService } from '../../services/logService';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { serializeSessionForPortableExport } from '../../utils/chat/session';
 import { triggerDownload } from '../../utils/export/core';
 import { createChatExportElement } from '../../utils/export/conversation';
@@ -98,7 +99,7 @@ export const useChatSessionExport = ({ activeChat, currentTheme, language, t }: 
           };
           const jsonString = JSON.stringify(dataToExport, null, 2);
           const blob = new Blob([jsonString], { type: 'application/json' });
-          triggerDownload(URL.createObjectURL(blob), filename);
+          triggerDownload(createManagedObjectUrl(blob), filename);
         } catch (error) {
           logService.error('Failed to export chat as JSON', { error });
           alert(t('export_failed_title'));

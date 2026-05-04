@@ -92,13 +92,7 @@ export const useMessageQueue = ({
 
       completeSendSubmission(submission.textToSend, submission.isFastMode);
     },
-    [
-      completeEditSubmission,
-      completeSendSubmission,
-      setAppFileError,
-      setWaitingForUpload,
-      uploadFailureMessage,
-    ],
+    [completeEditSubmission, completeSendSubmission, setAppFileError, setWaitingForUpload, uploadFailureMessage],
   );
 
   const removeQueuedSubmission = useCallback(() => {

@@ -85,9 +85,7 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
         showTtsVoice ||
         showMediaResolution) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {showTtsVoice && (
-            <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} />
-          )}
+          {showTtsVoice && <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} />}
           {isTtsModel && onEditTtsContext && (
             <button
               onClick={onEditTtsContext}
@@ -137,23 +135,12 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
             />
           )}
           {showImageOutputMode && (
-            <ImageOutputModeSelector
-              imageOutputMode={imageOutputMode!}
-              setImageOutputMode={setImageOutputMode!}
-            />
+            <ImageOutputModeSelector imageOutputMode={imageOutputMode!} setImageOutputMode={setImageOutputMode!} />
           )}
           {showPersonGeneration && (
-            <PersonGenerationSelector
-              personGeneration={personGeneration!}
-              setPersonGeneration={setPersonGeneration!}
-            />
+            <PersonGenerationSelector personGeneration={personGeneration!} setPersonGeneration={setPersonGeneration!} />
           )}
-          {showQuadToggle && (
-            <QuadImageToggle
-              enabled={generateQuadImages!}
-              onToggle={onToggleQuadImages!}
-            />
-          )}
+          {showQuadToggle && <QuadImageToggle enabled={generateQuadImages!} onToggle={onToggleQuadImages!} />}
         </div>
       )}
       {fileError && (

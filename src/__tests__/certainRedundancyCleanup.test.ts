@@ -150,7 +150,7 @@ describe('certain redundancy cleanup guards', () => {
     for (const relativePath of sourceFiles) {
       const source = readProjectFile(relativePath);
       expect(source).not.toContain('geminiServiceInstance');
-      expect(source).not.toContain("services/geminiService");
+      expect(source).not.toContain('services/geminiService');
     }
   });
 
@@ -170,7 +170,7 @@ describe('certain redundancy cleanup guards', () => {
     ]) {
       const source = readProjectFile(relativePath);
 
-      expect(source).toContain('startOptimisticMessageTurn');
+      expect(source).toContain('runOptimisticMessagePipeline');
       expect(source).not.toContain('performOptimisticSessionUpdate');
       expect(source).not.toContain('generateSessionTitle');
       expect(source).not.toContain('DEFAULT_CHAT_SETTINGS');
@@ -214,5 +214,100 @@ describe('certain redundancy cleanup guards', () => {
     expect(liveConfigSource).not.toContain('appSettings: AppSettings;');
     expect(liveConnectionSource).not.toContain('chatSettings: ChatSettings;');
     expect(historySidebarSource).not.toContain("language?: 'en' | 'zh';");
+  });
+
+  it('keeps settings and history import/export actions local to settings modals', () => {
+    const appSource = readProjectFile('src/hooks/app/useApp.ts');
+    const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
+    const appModalsSource = readProjectFile('src/components/modals/AppModals.tsx');
+    const settingsModalSource = readProjectFile('src/components/settings/SettingsModal.tsx');
+
+    for (const propName of [
+      'handleImportSettings',
+      'handleExportSettings',
+      'handleImportHistory',
+      'handleExportHistory',
+    ]) {
+      expect(appSource).not.toContain(propName);
+      expect(mainContentViewModelSource).not.toContain(propName);
+      expect(appModalsSource).not.toContain(`${propName}:`);
+      expect(appModalsSource).not.toContain(`${propName},`);
+    }
+
+    expect(settingsModalSource).toContain('useSettingsTransferActions');
+  });
+
+  it('keeps store-backed chat input state out of ChatAreaInputContext', () => {
+    const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
+    const chatAreaSource = readProjectFile('src/components/layout/ChatArea.tsx');
+    const chatInputCoreSource = readProjectFile('src/hooks/chat-input/useChatInputCore.ts');
+
+    for (const field of [
+      'appSettings: AppSettings;',
+      'commandedInput: InputCommand | null;',
+      'selectedFiles: UploadedFile[];',
+      'setSelectedFiles:',
+      'setAppFileError:',
+      'editMode:',
+      'editingMessageId:',
+      'setEditingMessageId:',
+      'isProcessingFile:',
+      'fileError:',
+      'aspectRatio?:',
+      'imageSize?:',
+      'imageOutputMode?:',
+      'personGeneration?:',
+      'themeId: string;',
+    ]) {
+      expect(chatAreaContextSource).not.toContain(field);
+    }
+
+    expect(chatAreaSource).not.toContain('commandedInput = useChatStore');
+    expect(chatAreaSource).not.toContain('selectedFiles = useChatStore');
+    expect(chatInputCoreSource).toContain("from '../../stores/chatStore'");
+    expect(chatInputCoreSource).toContain("from '../../stores/settingsStore'");
+  });
+
+  it('keeps chat input tool state local to the input consumer instead of prop-drilling it through ChatArea', () => {
+    const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
+    const chatTypesSource = readProjectFile('src/types/chat.ts');
+    const chatInputActionsSource = readProjectFile('src/components/chat/input/ChatInputActions.tsx');
+    const toolsMenuSource = readProjectFile('src/components/chat/input/ToolsMenu.tsx');
+    const slashCommandsSource = readProjectFile('src/hooks/useSlashCommands.ts');
+    const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
+    const chatAreaSource = readProjectFile('src/components/layout/ChatArea.tsx');
+    const chatInputCoreSource = readProjectFile('src/hooks/chat-input/useChatInputCore.ts');
+
+    expect(chatAreaContextSource).not.toContain('toolStates: ChatToolToggleStates;');
+    expect(chatAreaSource).not.toContain('toolStates: features.toolStates');
+    expect(mainContentViewModelSource).not.toContain('toolStates: {');
+    expect(chatInputCoreSource).toContain('useChatInputToolStates');
+    expect(chatTypesSource).toContain('toolStates: ChatToolToggleStates;');
+    expect(chatInputActionsSource).toContain('toolStates');
+    expect(toolsMenuSource).toContain('getChatToolsForSurface');
+    expect(slashCommandsSource).toContain('getSlashCommandToolDefinitions');
+
+    for (const source of [chatTypesSource, toolsMenuSource]) {
+      expect(source).not.toContain('isGoogleSearchEnabled: boolean;');
+      expect(source).not.toContain('onToggleGoogleSearch: () => void;');
+      expect(source).not.toContain('isCodeExecutionEnabled: boolean;');
+      expect(source).not.toContain('onToggleCodeExecution: () => void;');
+      expect(source).not.toContain('isUrlContextEnabled: boolean;');
+      expect(source).not.toContain('onToggleUrlContext: () => void;');
+      expect(source).not.toContain('isDeepSearchEnabled: boolean;');
+      expect(source).not.toContain('onToggleDeepSearch: () => void;');
+    }
+  });
+
+  it('uses store-level message actions for repeated session/message updates', () => {
+    const chatStoreSource = readProjectFile('src/stores/chatStore.ts');
+    const suggestionsSource = readProjectFile('src/hooks/chat/useSuggestions.ts');
+    const messageUpdatesSource = readProjectFile('src/hooks/chat/actions/useMessageUpdates.ts');
+
+    expect(chatStoreSource).toContain('updateMessageInSession:');
+    expect(chatStoreSource).toContain('updateMessageInActiveSession:');
+    expect(chatStoreSource).toContain('appendMessageToSession:');
+    expect(suggestionsSource).toContain('updateMessageInSession');
+    expect(messageUpdatesSource).toContain('updateMessageInActiveSession');
   });
 });

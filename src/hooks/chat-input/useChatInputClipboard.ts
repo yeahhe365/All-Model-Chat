@@ -2,8 +2,7 @@ import { useCallback, type MutableRefObject, type RefObject } from 'react';
 import type { AppSettings, UploadedFile } from '../../types';
 import { processClipboardData } from '../../utils/clipboardUtils';
 
-const YOUTUBE_URL_REGEX =
-  /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
+const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
 

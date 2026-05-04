@@ -6,6 +6,10 @@ import { rehydrateSessionFiles } from '../utils/chat/session';
 import { syncActiveSessionRoute, type SessionHistoryMode } from './sessionRouteSync';
 import { broadcastSyncMessage } from './chatSyncChannel';
 import { sanitizeSessionModel, sortSessionsInPlace } from './sessionModels';
+import {
+  updateMessageInSession as updateMessageInSessions,
+  updateSessionById as updateSessionByIdInSessions,
+} from '../utils/chat/sessionMutations';
 import { mergeSessionMetadata } from './sessionRefresh';
 import {
   createVirtualFullSessions,
@@ -17,6 +21,8 @@ import { setupChatStoreSync } from './chatStoreSync';
 import { createChatUiSlice, type ChatUiSliceActions, type ChatUiSliceState } from './chatStoreSlices';
 
 type UpdaterOrValue<T> = T | ((prev: T) => T);
+type SessionUpdateOptions = { persist?: boolean };
+type MessagePatchOrUpdater = Partial<ChatMessage> | ((message: ChatMessage) => ChatMessage);
 export type { SessionHistoryMode };
 export interface SetActiveSessionOptions {
   history?: SessionHistoryMode;
@@ -55,8 +61,30 @@ interface ChatActions extends ChatUiSliceActions {
   // Persistence
   updateAndPersistSessions: (
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
-    options?: { persist?: boolean },
+    options?: SessionUpdateOptions,
   ) => void;
+  updateSessionById: (
+    sessionId: string,
+    updater: (session: SavedChatSession) => SavedChatSession,
+    options?: SessionUpdateOptions,
+  ) => void;
+  updateActiveSession: (
+    updater: (session: SavedChatSession) => SavedChatSession,
+    options?: SessionUpdateOptions,
+  ) => void;
+  updateMessageInSession: (
+    sessionId: string,
+    messageId: string,
+    updater: MessagePatchOrUpdater,
+    options?: SessionUpdateOptions,
+  ) => void;
+  updateMessageInActiveSession: (
+    messageId: string,
+    updater: MessagePatchOrUpdater,
+    options?: SessionUpdateOptions,
+  ) => void;
+  appendMessageToSession: (sessionId: string, message: ChatMessage, options?: SessionUpdateOptions) => void;
+  appendMessageToActiveSession: (message: ChatMessage, options?: SessionUpdateOptions) => void;
   updateAndPersistGroups: (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
   refreshSessions: () => Promise<void>;
   refreshGroups: () => Promise<void>;
@@ -218,6 +246,51 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     set({ savedSessions: metadataOnly });
   },
 
+  updateSessionById: (sessionId, updater, options) => {
+    get().updateAndPersistSessions(
+      (prevSessions) => updateSessionByIdInSessions(prevSessions, sessionId, updater),
+      options,
+    );
+  },
+
+  updateActiveSession: (updater, options) => {
+    const { activeSessionId } = get();
+    if (!activeSessionId) return;
+    get().updateSessionById(activeSessionId, updater, options);
+  },
+
+  updateMessageInSession: (sessionId, messageId, updater, options) => {
+    get().updateSessionById(
+      sessionId,
+      (session) => updateMessageInSessions([session], sessionId, messageId, updater)[0],
+      options,
+    );
+  },
+
+  updateMessageInActiveSession: (messageId, updater, options) => {
+    const { activeSessionId } = get();
+    if (!activeSessionId) return;
+    get().updateMessageInSession(activeSessionId, messageId, updater, options);
+  },
+
+  appendMessageToSession: (sessionId, message, options) => {
+    get().updateSessionById(
+      sessionId,
+      (session) => ({
+        ...session,
+        messages: [...session.messages, message],
+        timestamp: Date.now(),
+      }),
+      options,
+    );
+  },
+
+  appendMessageToActiveSession: (message, options) => {
+    const { activeSessionId } = get();
+    if (!activeSessionId) return;
+    get().appendMessageToSession(activeSessionId, message, options);
+  },
+
   updateAndPersistGroups: (updater) => {
     const { savedGroups } = get();
     const newGroups = updater(savedGroups);
@@ -232,7 +305,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     const { activeSessionId } = get();
     if (!activeSessionId) return;
     get().updateAndPersistSessions((prevSessions) =>
-      prevSessions.map((s) => (s.id === activeSessionId ? { ...s, settings: updater(s.settings) } : s)),
+      updateSessionByIdInSessions(prevSessions, activeSessionId, (s) => ({ ...s, settings: updater(s.settings) })),
     );
   },
 }));

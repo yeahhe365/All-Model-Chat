@@ -145,7 +145,9 @@ describe('transcribeAudioApi request config', () => {
     const request = generateContentMock.mock.calls[0][0];
     expect(request.config.systemInstruction).toContain('保持原始语言和混合语言');
     expect(request.config.systemInstruction).toContain('不要翻译、总结、回答、解释或描述音频');
-    expect(request.config.systemInstruction).toContain('尽量保留原词、语气词、代码、命令、URL、邮箱、数字、单位和专有名词');
+    expect(request.config.systemInstruction).toContain(
+      '尽量保留原词、语气词、代码、命令、URL、邮箱、数字、单位和专有名词',
+    );
     expect(request.config.systemInstruction).toContain('不要补写音频中不存在的内容');
   });
 

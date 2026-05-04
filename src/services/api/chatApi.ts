@@ -1,7 +1,8 @@
 import type { FunctionCall, GenerateContentResponse, Part, UsageMetadata } from '@google/genai';
 import { ChatHistoryItem, ThoughtSupportingPart, StreamMessageSender, NonStreamMessageSender } from '../../types';
 import { logService } from '../logService';
-import { getConfiguredApiClient, getHttpOptionsForContents } from './apiClient';
+import { getHttpOptionsForContents } from './apiClient';
+import { executeConfiguredApiRequest } from './apiExecutor';
 import { extractGemmaThoughtChannel } from '../../utils/chat/reasoning';
 
 type CandidateWithUrlContext = {
@@ -228,11 +229,18 @@ export const generateContentTurnApi = async (
     throw abortError;
   }
 
-  const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));
-  const response = await ai.models.generateContent({
-    model: modelId,
-    contents,
-    config: withAbortSignal(config as Parameters<typeof ai.models.generateContent>[0]['config'], abortSignal),
+  const response = await executeConfiguredApiRequest({
+    apiKey,
+    label: `Generating content turn for ${modelId}`,
+    errorLabel: `Error generating content turn for ${modelId}:`,
+    abortSignal,
+    httpOptions: getHttpOptionsForContents(contents),
+    run: async ({ client: ai }) =>
+      ai.models.generateContent({
+        model: modelId,
+        contents,
+        config: withAbortSignal(config as Parameters<typeof ai.models.generateContent>[0]['config'], abortSignal),
+      }),
   });
 
   if (abortSignal.aborted) {
@@ -276,71 +284,79 @@ export const sendStatelessMessageStreamApi: StreamMessageSender = async (
   const contents = [...history, { role: role, parts }];
 
   try {
-    const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));
-
-    if (abortSignal.aborted) {
-      logService.warn('Streaming aborted by signal before start.');
-      return;
-    }
-
-    const result = await ai.models.generateContentStream({
-      model: modelId,
-      contents,
-      config: withAbortSignal(config as Parameters<typeof ai.models.generateContentStream>[0]['config'], abortSignal),
-    });
-
-    for await (const chunkResponse of result) {
-      if (abortSignal.aborted) {
-        logService.warn('Streaming aborted by signal.');
-        break;
-      }
-      if (chunkResponse.usageMetadata) {
-        finalUsageMetadata = chunkResponse.usageMetadata;
-      }
-      const candidate = chunkResponse.candidates?.[0];
-
-      if (candidate) {
-        const metadataFromChunk = candidate.groundingMetadata;
-        finalGroundingMetadata = mergeGroundingMetadata(finalGroundingMetadata, metadataFromChunk);
-
-        const urlContextCandidate = candidate as CandidateWithUrlContext;
-        const urlMetadata = urlContextCandidate.urlContextMetadata || urlContextCandidate.url_context_metadata;
-        if (urlMetadata) {
-          finalUrlContextMetadata = urlMetadata;
+    await executeConfiguredApiRequest({
+      apiKey,
+      label: `Sending message via stateless generateContentStream for ${modelId} (Role: ${role})`,
+      errorLabel: 'Error sending message (stream):',
+      httpOptions: getHttpOptionsForContents(contents),
+      run: async ({ client: ai }) => {
+        if (abortSignal.aborted) {
+          logService.warn('Streaming aborted by signal before start.');
+          return;
         }
 
-        if (chunkResponse.functionCalls?.length) {
-          if (!finalGroundingMetadata) finalGroundingMetadata = {};
-          mergeFunctionCallUrlContextMetadata(finalGroundingMetadata, chunkResponse.functionCalls);
-        }
+        const result = await ai.models.generateContentStream({
+          model: modelId,
+          contents,
+          config: withAbortSignal(
+            config as Parameters<typeof ai.models.generateContentStream>[0]['config'],
+            abortSignal,
+          ),
+        });
 
-        if (candidate.content?.parts?.length) {
-          for (const part of candidate.content.parts) {
-            const pAsThoughtSupporting = part as ThoughtSupportingPart;
+        for await (const chunkResponse of result) {
+          if (abortSignal.aborted) {
+            logService.warn('Streaming aborted by signal.');
+            break;
+          }
+          if (chunkResponse.usageMetadata) {
+            finalUsageMetadata = chunkResponse.usageMetadata;
+          }
+          const candidate = chunkResponse.candidates?.[0];
 
-            if (pAsThoughtSupporting.thought) {
-              onThoughtChunk(part.text || '');
-              const signaturePart = createThoughtSignatureContextPart(part);
-              if (signaturePart) {
-                onPart(signaturePart);
+          if (candidate) {
+            const metadataFromChunk = candidate.groundingMetadata;
+            finalGroundingMetadata = mergeGroundingMetadata(finalGroundingMetadata, metadataFromChunk);
+
+            const urlContextCandidate = candidate as CandidateWithUrlContext;
+            const urlMetadata = urlContextCandidate.urlContextMetadata || urlContextCandidate.url_context_metadata;
+            if (urlMetadata) {
+              finalUrlContextMetadata = urlMetadata;
+            }
+
+            if (chunkResponse.functionCalls?.length) {
+              if (!finalGroundingMetadata) finalGroundingMetadata = {};
+              mergeFunctionCallUrlContextMetadata(finalGroundingMetadata, chunkResponse.functionCalls);
+            }
+
+            if (candidate.content?.parts?.length) {
+              for (const part of candidate.content.parts) {
+                const pAsThoughtSupporting = part as ThoughtSupportingPart;
+
+                if (pAsThoughtSupporting.thought) {
+                  onThoughtChunk(part.text || '');
+                  const signaturePart = createThoughtSignatureContextPart(part);
+                  if (signaturePart) {
+                    onPart(signaturePart);
+                  }
+                } else if (typeof part.text === 'string') {
+                  const { content, thoughts } = extractGemmaThoughtChannel(part.text);
+                  if (thoughts) {
+                    onThoughtChunk(thoughts);
+                  }
+                  if (content) {
+                    onPart({ ...part, text: content });
+                  }
+                } else {
+                  onPart(part);
+                }
               }
-            } else if (typeof part.text === 'string') {
-              const { content, thoughts } = extractGemmaThoughtChannel(part.text);
-              if (thoughts) {
-                onThoughtChunk(thoughts);
-              }
-              if (content) {
-                onPart({ ...part, text: content });
-              }
-            } else {
-              onPart(part);
             }
           }
         }
-      }
-    }
+      },
+    });
   } catch (error) {
-    logService.error('Error sending message (stream):', error);
     onError(error instanceof Error ? error : new Error(String(error) || 'Unknown error during streaming.'));
   } finally {
     logService.info('Streaming complete.', { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
@@ -363,34 +379,39 @@ export const sendStatelessMessageNonStreamApi: NonStreamMessageSender = async (
   const contents = [...history, { role, parts }];
 
   try {
-    const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));
+    await executeConfiguredApiRequest({
+      apiKey,
+      label: `Sending message via stateless generateContent (non-stream) for model ${modelId}`,
+      errorLabel: `Error in stateless non-stream for ${modelId}:`,
+      httpOptions: getHttpOptionsForContents(contents),
+      run: async ({ client: ai }) => {
+        if (abortSignal.aborted) {
+          onComplete([], '', undefined, undefined, undefined);
+          return;
+        }
 
-    if (abortSignal.aborted) {
-      onComplete([], '', undefined, undefined, undefined);
-      return;
-    }
+        const response = await ai.models.generateContent({
+          model: modelId,
+          contents,
+          config: withAbortSignal(config as Parameters<typeof ai.models.generateContent>[0]['config'], abortSignal),
+        });
 
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents,
-      config: withAbortSignal(config as Parameters<typeof ai.models.generateContent>[0]['config'], abortSignal),
+        if (abortSignal.aborted) {
+          onComplete([], '', undefined, undefined, undefined);
+          return;
+        }
+
+        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processResponse(response);
+
+        logService.info(`Stateless non-stream complete for ${modelId}.`, {
+          usage,
+          hasGrounding: !!grounding,
+          hasUrlContext: !!urlContext,
+        });
+        onComplete(responseParts, thoughts, usage, grounding, urlContext);
+      },
     });
-
-    if (abortSignal.aborted) {
-      onComplete([], '', undefined, undefined, undefined);
-      return;
-    }
-
-    const { parts: responseParts, thoughts, usage, grounding, urlContext } = processResponse(response);
-
-    logService.info(`Stateless non-stream complete for ${modelId}.`, {
-      usage,
-      hasGrounding: !!grounding,
-      hasUrlContext: !!urlContext,
-    });
-    onComplete(responseParts, thoughts, usage, grounding, urlContext);
   } catch (error) {
-    logService.error(`Error in stateless non-stream for ${modelId}:`, error);
     onError(
       error instanceof Error ? error : new Error(String(error) || 'Unknown error during stateless non-streaming call.'),
     );

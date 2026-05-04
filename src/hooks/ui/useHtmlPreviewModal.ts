@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, RefObject } from 'react';
 import { useWindowContext } from '../../contexts/WindowContext';
+import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { sanitizeFilename, triggerDownload } from '../../utils/export/core';
 import { useFullscreen } from './useFullscreen';
 import {
@@ -173,7 +174,7 @@ export const useHtmlPreviewModal = ({
     const title = getPreviewTitle();
     const filename = `${sanitizeFilename(title)}.html`;
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    const url = createManagedObjectUrl(blob);
     triggerDownload(url, filename);
   }, [htmlContent, getPreviewTitle]);
 

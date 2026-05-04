@@ -1,16 +1,24 @@
 import { useCallback } from 'react';
 import { logService } from '../../services/logService';
-import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildContentParts } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
-import { performOptimisticSessionUpdate } from '../../utils/chat/session';
 import { getModelCapabilities } from '../../utils/modelHelpers';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import type { ChatMessage, UploadedFile } from '../../types';
+import type { UploadedFile } from '../../types';
 import { StandardChatProps } from './types';
 import { useStandardChatSession } from './useStandardChatSession';
 import { useStandardChatApiCall } from './useStandardChatApiCall';
 import { resolveStandardChatTurn } from './standardChatTurn';
+import type { PreparedModelRequest } from './useModelRequestRunner';
+
+interface SendStandardMessageInput {
+  text: string;
+  files: UploadedFile[];
+  editingMessageId: string | null;
+  activeModelId: string;
+  isContinueMode?: boolean;
+  isFastMode?: boolean;
+  request: PreparedModelRequest;
+}
 
 export const useStandardChat = ({
   appSettings,
@@ -56,14 +64,15 @@ export const useStandardChat = ({
   });
 
   const sendStandardMessage = useCallback(
-    async (
-      textToUse: string,
-      filesToUse: UploadedFile[],
-      effectiveEditingId: string | null,
-      activeModelId: string,
+    async ({
+      text: textToUse,
+      files: filesToUse,
+      editingMessageId: effectiveEditingId,
+      activeModelId,
       isContinueMode = false,
       isFastMode = false,
-    ) => {
+      request,
+    }: SendStandardMessageInput) => {
       const effectiveActiveModelId =
         appSettings.apiMode === 'openai-compatible'
           ? appSettings.openaiCompatibleModelId || activeModelId
@@ -80,44 +89,13 @@ export const useStandardChat = ({
         logService.info(`Fast Mode activated (One-off): Overriding thinking level to ${targetLevel}.`);
       }
 
-      const keyResult = getKeyForRequest(appSettings, settingsForApi);
-      if ('error' in keyResult) {
-        logService.error('Send message failed: API Key not configured.');
-        const errorMessage: ChatMessage = {
-          id: generateUniqueId(),
-          role: 'error',
-          content: keyResult.error,
-          timestamp: new Date(),
-        };
-        const newSessionId = generateUniqueId();
-
-        updateAndPersistSessions((prev) =>
-          performOptimisticSessionUpdate(prev, {
-            activeSessionId: null,
-            newSessionId,
-            newMessages: [errorMessage],
-            settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
-            title: 'API Key Error',
-          }),
-        );
-        setActiveSessionId(newSessionId);
-        return;
-      }
-
-      const { key: keyToUse, isNewKey } = keyResult;
-      const shouldLockKey = isNewKey && filesToUse.some((file) => file.fileUri && file.uploadState === 'active');
-      const newAbortController = new AbortController();
-
-      let generationId: string;
-      let generationStartTime: Date;
-      if (isContinueMode && effectiveEditingId) {
-        generationId = effectiveEditingId;
-        const targetMessage = messages.find((message) => message.id === effectiveEditingId);
-        generationStartTime = targetMessage?.generationStartTime || new Date();
-      } else {
-        generationId = generateUniqueId();
-        generationStartTime = new Date();
-      }
+      const {
+        keyToUse,
+        shouldLockKey,
+        generationId,
+        generationStartTime,
+        abortController: newAbortController,
+      } = request;
 
       const successfullyProcessedFiles = filesToUse.filter(
         (file) => file.uploadState === 'active' && !file.error && !file.isProcessing,
@@ -172,17 +150,7 @@ export const useStandardChat = ({
         enrichedFiles,
       });
     },
-    [
-      activeSessionId,
-      appSettings,
-      currentChatSettings,
-      messages,
-      performApiCall,
-      setActiveSessionId,
-      updateAndPersistSessions,
-      updateSessionState,
-      userScrolledUpRef,
-    ],
+    [activeSessionId, appSettings, currentChatSettings, performApiCall, updateSessionState, userScrolledUpRef],
   );
 
   return { sendStandardMessage };

@@ -1,3 +1,5 @@
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '../services/objectUrlManager';
+
 // Web Worker code embedded as string to avoid extra file management
 const WORKER_CODE = `
 importScripts('/lame.min.js');
@@ -67,12 +69,12 @@ export const encodeMp3WithWorker = async ({
 }: EncodeMp3WithWorkerOptions): Promise<File> => {
   return new Promise((resolve, reject) => {
     const workerBlob = new Blob([createAudioCompressionWorkerCode()], { type: 'application/javascript' });
-    const workerUrl = (createObjectUrl ?? URL.createObjectURL)(workerBlob);
+    const workerUrl = (createObjectUrl ?? createManagedObjectUrl)(workerBlob);
     const worker = (createWorker ?? ((url: string) => new Worker(url)))(workerUrl);
 
     const cleanup = () => {
       worker.terminate();
-      (revokeObjectUrl ?? URL.revokeObjectURL)(workerUrl);
+      (revokeObjectUrl ?? releaseManagedObjectUrl)(workerUrl);
     };
 
     if (signal) {

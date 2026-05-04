@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRecorder } from './core/useRecorder';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '../services/objectUrlManager';
 
 export type RecorderState = 'idle' | 'recording' | 'review';
 
@@ -10,27 +11,23 @@ export const useAudioRecorder = () => {
   // Cleanup previous URL when component unmounts or url changes
   useEffect(() => {
     return () => {
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      releaseManagedObjectUrl(audioUrl);
     };
   }, [audioUrl]);
 
   const resetPreview = useCallback(() => {
     setAudioBlob(null);
     setAudioUrl((currentUrl) => {
-      if (currentUrl) {
-        URL.revokeObjectURL(currentUrl);
-      }
+      releaseManagedObjectUrl(currentUrl);
       return null;
     });
   }, []);
 
   const handleRecordingComplete = useCallback((blob: Blob) => {
-    const nextAudioUrl = URL.createObjectURL(blob);
+    const nextAudioUrl = createManagedObjectUrl(blob);
     setAudioBlob(blob);
     setAudioUrl((currentUrl) => {
-      if (currentUrl) {
-        URL.revokeObjectURL(currentUrl);
-      }
+      releaseManagedObjectUrl(currentUrl);
       return nextAudioUrl;
     });
   }, []);

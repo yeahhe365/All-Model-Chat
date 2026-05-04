@@ -45,15 +45,8 @@ export const editImageApi = async (
       return;
     }
 
-    sendStatelessMessageNonStreamApi(
-      apiKey,
-      modelId,
-      history,
-      parts,
-      config,
-      abortSignal,
-      reject,
-      (responseParts) => resolve(responseParts),
+    sendStatelessMessageNonStreamApi(apiKey, modelId, history, parts, config, abortSignal, reject, (responseParts) =>
+      resolve(responseParts),
     ).catch(reject);
   });
 };

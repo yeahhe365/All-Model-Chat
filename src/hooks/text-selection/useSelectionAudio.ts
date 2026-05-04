@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
 
 export const useSelectionAudio = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -8,12 +9,11 @@ export const useSelectionAudio = () => {
 
   useEffect(() => {
     return () => {
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      releaseManagedObjectUrl(audioUrl);
     };
   }, [audioUrl]);
 
   const play = (url: string) => {
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(url);
     setIsPlaying(true);
   };

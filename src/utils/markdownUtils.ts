@@ -1,4 +1,4 @@
-export type MarkdownSegment = {
+type MarkdownSegment = {
   type: 'text' | 'literal';
   value: string;
 };

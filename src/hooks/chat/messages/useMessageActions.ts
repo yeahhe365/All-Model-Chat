@@ -5,6 +5,7 @@ import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { getVisibleChatMessages } from '../../../utils/chat/visibility';
 import { createNewSession } from '../../../utils/chat/session';
 import { generateUniqueId } from '../../../utils/chat/ids';
+import { updateMessageInSession, updateSessionById } from '../../../utils/chat/sessionMutations';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -69,19 +70,10 @@ export const useMessageActions = ({
 
           if (!silent) {
             updateAndPersistSessions((prev) =>
-              prev.map((s) => {
-                if (s.id !== activeSessionId) return s;
-
-                // Just mark the message as complete without appending any text.
-                // The streamOnComplete handler will decide the final state of the message.
-                return {
-                  ...s,
-                  messages: s.messages.map((msg) =>
-                    msg.id === generationId
-                      ? { ...msg, isLoading: false, generationEndTime: new Date(), stoppedByUser: true }
-                      : msg,
-                  ),
-                };
+              updateMessageInSession(prev, activeSessionId, generationId, {
+                isLoading: false,
+                generationEndTime: new Date(),
+                stoppedByUser: true,
               }),
             );
           }
@@ -165,11 +157,10 @@ export const useMessageActions = ({
       relatedToolMessageIds.add(messageId);
 
       updateAndPersistSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeSessionId
-            ? { ...s, messages: s.messages.filter((msg) => !relatedToolMessageIds.has(msg.id)) }
-            : s,
-        ),
+        updateSessionById(prev, activeSessionId, (s) => ({
+          ...s,
+          messages: s.messages.filter((msg) => !relatedToolMessageIds.has(msg.id)),
+        })),
       );
 
       if (editingMessageId === messageId) handleCancelEdit();

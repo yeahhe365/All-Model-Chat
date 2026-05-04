@@ -14,7 +14,9 @@ vi.mock('./useFullscreen', () => ({
 }));
 
 const HtmlPreviewWrapper = ({ children }: PropsWithChildren) => (
-  <WindowProvider window={window} document={document}>{children}</WindowProvider>
+  <WindowProvider window={window} document={document}>
+    {children}
+  </WindowProvider>
 );
 
 describe('useHtmlPreviewModal', () => {
