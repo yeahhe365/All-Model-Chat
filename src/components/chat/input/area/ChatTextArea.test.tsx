@@ -57,4 +57,43 @@ describe('ChatTextArea', () => {
 
     expect(document.activeElement).toBe(textarea);
   });
+
+  it('does not overwrite browser-managed composition text during parent renders', () => {
+    const textareaRef = { current: null } as React.RefObject<HTMLTextAreaElement>;
+    const renderTextArea = (value: string) =>
+      root.render(
+        <ChatTextArea
+          textareaRef={textareaRef}
+          value={value}
+          onChange={() => {}}
+          onKeyDown={() => {}}
+          onPaste={() => {}}
+          onCompositionStart={() => {}}
+          onCompositionEnd={() => {}}
+          placeholder="Ask anything"
+          disabled={false}
+          isFullscreen={false}
+          isMobile={false}
+          initialTextareaHeight={44}
+          isConverting={false}
+        />,
+      );
+
+    act(() => {
+      renderTextArea('');
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]');
+    expect(textarea).not.toBeNull();
+
+    act(() => {
+      textarea?.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+      if (textarea) {
+        textarea.value = 'ni';
+      }
+      renderTextArea('');
+    });
+
+    expect(textarea?.value).toBe('ni');
+  });
 });

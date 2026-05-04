@@ -35,6 +35,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
   isConverting,
 }) => {
   const shadowRef = useRef<HTMLTextAreaElement>(null);
+  const isComposingRef = useRef(false);
 
   const handleShellClick = () => {
     if (disabled || isConverting) {
@@ -49,9 +50,13 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
     const shadow = shadowRef.current;
     if (!target || !shadow) return;
 
+    if (!isComposingRef.current && target.value !== value) {
+      target.value = value;
+    }
+
     // Reset shadow height to allow accurate shrinking measurement
     shadow.style.height = '0px';
-    shadow.value = value;
+    shadow.value = target.value;
 
     if (isFullscreen) {
       target.style.height = '100%';
@@ -71,6 +76,17 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
       }
     }
   }, [value, isFullscreen, isMobile, initialTextareaHeight, textareaRef]);
+
+  const handleCompositionStart = () => {
+    isComposingRef.current = true;
+    onCompositionStart();
+  };
+
+  const handleCompositionEnd = (event: React.CompositionEvent<HTMLTextAreaElement>) => {
+    isComposingRef.current = false;
+    onCompositionEnd();
+    onChange(event as unknown as React.ChangeEvent<HTMLTextAreaElement>);
+  };
 
   return (
     <div className="relative w-full flex-grow flex flex-col min-h-0 cursor-text" onClick={handleShellClick}>
@@ -92,12 +108,12 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
 
       <textarea
         ref={textareaRef}
-        value={value}
+        defaultValue={value}
         onChange={onChange}
         onKeyDown={onKeyDown}
         onPaste={onPaste}
-        onCompositionStart={onCompositionStart}
-        onCompositionEnd={onCompositionEnd}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
         placeholder={placeholder}
         className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px]"
         style={{
