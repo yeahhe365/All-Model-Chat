@@ -8,7 +8,7 @@ import type {
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { createMessage, generateSessionTitle, performOptimisticSessionUpdate } from '../../utils/chat/session';
-import { updateMessageInSession } from '../../utils/chat/sessionMutations';
+import { insertMessageAfter, updateMessageInSession } from '../../utils/chat/sessionMutations';
 import { playCompletionSound, showNotification } from '../../utils/uiUtils';
 import { createLoadingModelMessage } from './useMessageLifecycle';
 import type { SessionsUpdater } from './types';
@@ -24,17 +24,23 @@ interface StartOptimisticMessageTurnParams {
   generationId: string;
   generationStartTime?: Date;
   editingMessageId?: string | null;
-  shouldGenerateTitle?: boolean;
+  shouldGenerateTitle?: boolean | ((session: SavedChatSession | undefined) => boolean);
   shouldLockKey?: boolean;
   keyToLock?: string;
   createSessionId?: () => string;
+  placement?: OptimisticMessagePlacement;
+  userMessageOptions?: Partial<Omit<ChatMessage, 'id' | 'role' | 'content' | 'timestamp'>>;
+  modelMessageOptions?: {
+    content?: string;
+    excludeFromContext?: boolean;
+  };
 }
 
 interface StartedOptimisticMessageTurn {
   finalSessionId: string;
   modelMessageId: string;
-  userMessage: ChatMessage;
-  modelMessage: ChatMessage;
+  userMessage?: ChatMessage;
+  modelMessage?: ChatMessage;
   generationStartTime: Date;
 }
 
@@ -65,7 +71,7 @@ interface CompletionFeedback {
 }
 
 interface OptimisticPipelineResult {
-  patch: CompleteModelMessageParams['patch'];
+  patch?: CompleteModelMessageParams['patch'];
   feedback?: CompletionFeedback;
 }
 
@@ -74,8 +80,14 @@ interface RunOptimisticMessagePipelineParams extends Omit<StartOptimisticMessage
   abortController: AbortController;
   errorPrefix: string;
   runMessageLifecycle: MessageLifecycleRunner;
-  execute: (turn: StartedOptimisticMessageTurn) => Promise<OptimisticPipelineResult>;
+  execute: (turn: StartedOptimisticMessageTurn) => Promise<OptimisticPipelineResult | void>;
+  afterStart?: (turn: StartedOptimisticMessageTurn) => void;
 }
+
+type OptimisticMessagePlacement =
+  | { type: 'append-turn' }
+  | { type: 'continue-model'; targetMessageId: string }
+  | { type: 'insert-model-after'; sourceMessageId: string };
 
 export const completeModelMessage = (
   sessions: SavedChatSession[],
@@ -97,17 +109,47 @@ export const startOptimisticMessageTurn = ({
   shouldLockKey,
   keyToLock,
   createSessionId = generateUniqueId,
+  placement = { type: 'append-turn' },
+  userMessageOptions,
+  modelMessageOptions,
 }: StartOptimisticMessageTurnParams): StartedOptimisticMessageTurn => {
   const finalSessionId = activeSessionId || createSessionId();
-  const userMessage = createMessage('user', text, files ? { files } : undefined);
+  const modelMessageId = placement.type === 'continue-model' ? placement.targetMessageId : generationId;
+  const userMessage =
+    placement.type === 'append-turn'
+      ? createMessage('user', text, {
+          ...(files ? { files } : {}),
+          ...userMessageOptions,
+        })
+      : undefined;
   const modelMessage = createLoadingModelMessage({
-    id: generationId,
+    id: modelMessageId,
+    content: modelMessageOptions?.content,
     generationStartTime,
+    excludeFromContext: modelMessageOptions?.excludeFromContext,
   });
-  const title = shouldGenerateTitle ? generateSessionTitle([userMessage, modelMessage]) : undefined;
 
-  updateAndPersistSessions((prev) =>
-    performOptimisticSessionUpdate(prev, {
+  updateAndPersistSessions((prev) => {
+    if (placement.type === 'continue-model') {
+      return updateMessageInSession(prev, finalSessionId, placement.targetMessageId, (message) => ({
+        ...message,
+        isLoading: true,
+        generationEndTime: undefined,
+        stoppedByUser: false,
+      }));
+    }
+
+    if (placement.type === 'insert-model-after') {
+      return insertMessageAfter(prev, finalSessionId, placement.sourceMessageId, modelMessage);
+    }
+
+    const existingSession = prev.find((session) => session.id === activeSessionId);
+    const shouldSetTitle =
+      typeof shouldGenerateTitle === 'function' ? shouldGenerateTitle(existingSession) : shouldGenerateTitle;
+    const title = shouldSetTitle && userMessage ? generateSessionTitle([userMessage, modelMessage]) : undefined;
+    if (!userMessage) return prev;
+
+    return performOptimisticSessionUpdate(prev, {
       activeSessionId,
       newSessionId: finalSessionId,
       newMessages: [userMessage, modelMessage],
@@ -116,16 +158,16 @@ export const startOptimisticMessageTurn = ({
       title,
       shouldLockKey,
       keyToLock,
-    }),
-  );
+    });
+  });
 
-  if (!activeSessionId) {
+  if (placement.type === 'append-turn' && !activeSessionId) {
     setActiveSessionId(finalSessionId);
   }
 
   return {
     finalSessionId,
-    modelMessageId: generationId,
+    modelMessageId,
     userMessage,
     modelMessage,
     generationStartTime,
@@ -156,9 +198,11 @@ export const runOptimisticMessagePipeline = async ({
   errorPrefix,
   runMessageLifecycle,
   execute,
+  afterStart,
   ...turnParams
 }: RunOptimisticMessagePipelineParams) => {
   const turn = startOptimisticMessageTurn(turnParams);
+  afterStart?.(turn);
 
   await runMessageLifecycle({
     sessionId: turn.finalSessionId,
@@ -168,16 +212,21 @@ export const runOptimisticMessagePipeline = async ({
     errorPrefix,
     execute: async () => {
       const result = await execute(turn);
+      const patch = result?.patch;
 
-      turnParams.updateAndPersistSessions((prev) =>
-        completeModelMessage(prev, {
-          sessionId: turn.finalSessionId,
-          messageId: turn.modelMessageId,
-          patch: result.patch,
-        }),
-      );
+      if (patch) {
+        turnParams.updateAndPersistSessions((prev) =>
+          completeModelMessage(prev, {
+            sessionId: turn.finalSessionId,
+            messageId: turn.modelMessageId,
+            patch,
+          }),
+        );
+      }
 
-      await emitCompletionFeedback(turnParams.appSettings, result.feedback);
+      if (result) {
+        await emitCompletionFeedback(turnParams.appSettings, result.feedback);
+      }
       return result;
     },
   });

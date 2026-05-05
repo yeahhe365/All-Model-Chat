@@ -154,17 +154,23 @@ describe('certain redundancy cleanup guards', () => {
     }
   });
 
-  it('keeps standard chat sender delegated to session, turn, and API helpers', () => {
+  it('keeps standard chat sender on the shared optimistic message pipeline', () => {
     const source = readProjectFile('src/hooks/message-sender/useStandardChat.ts');
 
-    expect(source).toContain('useStandardChatSession');
+    expect(source).toContain('runOptimisticMessagePipeline');
+    expect(source).not.toContain('useStandardChatSession');
     expect(source).toContain('resolveStandardChatTurn');
     expect(source).toContain('useStandardChatApiCall');
+    expect(source).not.toContain('performOptimisticSessionUpdate');
+    expect(source).not.toContain('generateSessionTitle');
+    expect(fs.existsSync(path.join(projectRoot, 'src/hooks/message-sender/useStandardChatSession.ts'))).toBe(false);
     expect(source.length).toBeLessThan(21000);
   });
 
-  it('keeps one-off media senders on the shared optimistic message pipeline', () => {
+  it('keeps senders on the shared optimistic message pipeline', () => {
     for (const relativePath of [
+      'src/hooks/message-sender/useStandardChat.ts',
+      'src/hooks/message-sender/useCanvasGenerator.ts',
       'src/hooks/message-sender/useTtsImagenSender.ts',
       'src/hooks/message-sender/useImageEditSender.ts',
     ]) {

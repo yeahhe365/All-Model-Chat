@@ -8,7 +8,7 @@ import { buildGenerationConfig } from '../../services/api/generationConfig';
 import { CanvasGeneratorProps } from './types';
 import { loadCanvasSystemPrompt } from '../../constants/promptHelpers';
 import { useMessageLifecycle } from './useMessageLifecycle';
-import { insertMessageAfter } from '../../utils/chat/sessionMutations';
+import { runOptimisticMessagePipeline } from './messagePipeline';
 
 export const useCanvasGenerator = ({
   appSettings,
@@ -22,7 +22,7 @@ export const useCanvasGenerator = ({
   aspectRatio,
   language,
 }: CanvasGeneratorProps) => {
-  const { createLoadingModelMessage, runMessageLifecycle } = useMessageLifecycle({
+  const { runMessageLifecycle } = useMessageLifecycle({
     updateAndPersistSessions,
     setSessionLoading,
     activeJobs,
@@ -43,22 +43,8 @@ export const useCanvasGenerator = ({
       const generationStartTime = new Date();
       const newAbortController = new AbortController();
 
-      updateAndPersistSessions((prev) =>
-        insertMessageAfter(
-          prev,
-          activeSessionId,
-          sourceMessageId,
-          createLoadingModelMessage({
-            id: generationId,
-            generationStartTime,
-            excludeFromContext: true,
-          }),
-        ),
-      );
-
       const canvasModelId = appSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
       const canvasThinkingLevel = 'HIGH';
-      const canvasSystemPrompt = await loadCanvasSystemPrompt();
 
       const canvasSettings = {
         ...currentChatSettings,
@@ -68,52 +54,69 @@ export const useCanvasGenerator = ({
         showThoughts: true,
       };
 
-      const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
+      await runOptimisticMessagePipeline({
         activeSessionId,
+        appSettings,
+        currentChatSettings: canvasSettings,
+        updateAndPersistSessions,
+        setActiveSessionId: () => undefined,
+        text: '',
         generationId,
-        newAbortController,
         generationStartTime,
-        canvasSettings,
-      );
-
-      const config = await buildGenerationConfig({
-        modelId: canvasModelId,
-        systemInstruction: canvasSystemPrompt,
-        config: { temperature: 0.7, topP: 0.95 },
-        showThoughts: true,
-        thinkingBudget: 0,
-        isGoogleSearchEnabled: false,
-        isCodeExecutionEnabled: false,
-        isUrlContextEnabled: false,
-        thinkingLevel: canvasThinkingLevel,
-        aspectRatio,
-        isDeepSearchEnabled: false,
-        isLocalPythonEnabled: false,
-      });
-
-      const t = getTranslator(language);
-      const promptInstruction = t('suggestion_html_desc');
-
-      await runMessageLifecycle({
-        sessionId: activeSessionId,
-        generationId,
         abortController: newAbortController,
-        onError: (error) => {
-          streamOnError(error instanceof Error ? error : new Error(String(error)));
+        errorPrefix: 'Canvas Error',
+        runMessageLifecycle,
+        placement: {
+          type: 'insert-model-after',
+          sourceMessageId,
+        },
+        modelMessageOptions: {
+          excludeFromContext: true,
         },
         execute: async () => {
-          await sendStatelessMessageStreamApi(
-            keyToUse,
-            canvasModelId,
-            [],
-            [{ text: promptInstruction }, { text: content }],
-            config,
-            newAbortController.signal,
-            streamOnPart,
-            onThoughtChunk,
-            streamOnError,
-            streamOnComplete,
+          const canvasSystemPrompt = await loadCanvasSystemPrompt();
+          const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
+            activeSessionId,
+            generationId,
+            newAbortController,
+            generationStartTime,
+            canvasSettings,
           );
+
+          const config = await buildGenerationConfig({
+            modelId: canvasModelId,
+            systemInstruction: canvasSystemPrompt,
+            config: { temperature: 0.7, topP: 0.95 },
+            showThoughts: true,
+            thinkingBudget: 0,
+            isGoogleSearchEnabled: false,
+            isCodeExecutionEnabled: false,
+            isUrlContextEnabled: false,
+            thinkingLevel: canvasThinkingLevel,
+            aspectRatio,
+            isDeepSearchEnabled: false,
+            isLocalPythonEnabled: false,
+          });
+
+          const t = getTranslator(language);
+          const promptInstruction = t('suggestion_html_desc');
+
+          try {
+            await sendStatelessMessageStreamApi(
+              keyToUse,
+              canvasModelId,
+              [],
+              [{ text: promptInstruction }, { text: content }],
+              config,
+              newAbortController.signal,
+              streamOnPart,
+              onThoughtChunk,
+              streamOnError,
+              streamOnComplete,
+            );
+          } catch (error) {
+            streamOnError(error instanceof Error ? error : new Error(String(error)));
+          }
         },
       });
     },
@@ -126,7 +129,6 @@ export const useCanvasGenerator = ({
       setAppFileError,
       aspectRatio,
       language,
-      createLoadingModelMessage,
       runMessageLifecycle,
     ],
   );

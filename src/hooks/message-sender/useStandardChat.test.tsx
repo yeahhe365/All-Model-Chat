@@ -715,4 +715,39 @@ describe('useStandardChat', () => {
 
     unmount();
   });
+
+  it('routes thrown standard stream errors through the stream error handler', async () => {
+    const streamOnError = vi.fn();
+    const streamOnComplete = vi.fn();
+    const streamOnPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const thrownError = new Error('network broke');
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete,
+      streamOnPart,
+      onThoughtChunk,
+    }));
+
+    mockSendMessageStream.mockRejectedValue(thrownError);
+
+    const { result, unmount } = renderStandardChat({
+      getStreamHandlers,
+    });
+
+    await act(async () => {
+      await result.current.sendStandardMessage({
+        text: 'hello',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
+    });
+
+    expect(streamOnError).toHaveBeenCalledWith(thrownError);
+    expect(streamOnComplete).not.toHaveBeenCalled();
+
+    unmount();
+  });
 });

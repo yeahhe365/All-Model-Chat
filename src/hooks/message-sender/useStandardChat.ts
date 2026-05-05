@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import { logService } from '../../services/logService';
 import { buildContentParts } from '../../utils/chat/builder';
-import { generateUniqueId } from '../../utils/chat/ids';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 import type { UploadedFile } from '../../types';
 import { StandardChatProps } from './types';
-import { useStandardChatSession } from './useStandardChatSession';
 import { useStandardChatApiCall } from './useStandardChatApiCall';
 import { resolveStandardChatTurn } from './standardChatTurn';
 import type { PreparedModelRequest } from './useModelRequestRunner';
+import { useMessageLifecycle } from './useMessageLifecycle';
+import { runOptimisticMessagePipeline } from './messagePipeline';
 
 interface SendStandardMessageInput {
   text: string;
@@ -39,20 +39,15 @@ export const useStandardChat = ({
   sessionKeyMapRef,
   handleGenerateCanvas,
 }: StandardChatProps) => {
-  const { updateSessionState } = useStandardChatSession({
-    appSettings,
-    activeSessionId,
-    setActiveSessionId,
-    setEditingMessageId,
+  const { runMessageLifecycle } = useMessageLifecycle({
     updateAndPersistSessions,
-    sessionKeyMapRef,
+    setSessionLoading,
+    activeJobs,
   });
 
   const { performApiCall } = useStandardChatApiCall({
     appSettings,
     messages,
-    activeJobs,
-    setSessionLoading,
     updateAndPersistSessions,
     getStreamHandlers,
     handleGenerateCanvas,
@@ -111,46 +106,82 @@ export const useStandardChat = ({
         preferCodeExecutionFileInputs,
       );
 
-      const finalSessionId = activeSessionId || generateUniqueId();
       const isRawMode = Boolean(
         (settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled) &&
         !isContinueMode &&
         getModelCapabilities(effectiveActiveModelId).supportsRawReasoningPrefill,
       );
 
-      updateSessionState({
-        finalSessionId,
-        textToUse,
-        enrichedFiles,
-        effectiveEditingId,
+      const lastMessage = messages[messages.length - 1];
+      const cumulativeTotalTokens = lastMessage?.cumulativeTotalTokens || 0;
+      const placement =
+        isContinueMode && effectiveEditingId
+          ? ({ type: 'continue-model', targetMessageId: effectiveEditingId } as const)
+          : ({ type: 'append-turn' } as const);
+
+      await runOptimisticMessagePipeline({
+        activeSessionId,
+        appSettings,
+        currentChatSettings: settingsForPersistence,
+        updateAndPersistSessions,
+        setActiveSessionId,
+        text: textToUse.trim(),
+        files: enrichedFiles.length ? enrichedFiles : undefined,
         generationId,
         generationStartTime,
-        isContinueMode,
-        isRawMode,
-        sessionToUpdate: settingsForPersistence,
-        keyToUse,
+        editingMessageId: effectiveEditingId,
+        shouldGenerateTitle: (session) => !activeSessionId || session?.title === 'New Chat',
         shouldLockKey,
-      });
-
-      userScrolledUpRef.current = false;
-
-      await performApiCall({
-        finalSessionId,
-        generationId,
-        generationStartTime,
-        keyToUse,
-        activeModelId: effectiveActiveModelId,
-        promptParts,
-        effectiveEditingId,
-        isContinueMode,
-        isRawMode,
-        sessionToUpdate: settingsForApi,
-        newAbortController,
-        textToUse,
-        enrichedFiles,
+        keyToLock: keyToUse,
+        abortController: newAbortController,
+        errorPrefix: 'Error',
+        runMessageLifecycle,
+        placement,
+        userMessageOptions: {
+          cumulativeTotalTokens: cumulativeTotalTokens > 0 ? cumulativeTotalTokens : undefined,
+        },
+        modelMessageOptions: {
+          content: isRawMode ? '<thinking>' : '',
+        },
+        afterStart: (turn) => {
+          userScrolledUpRef.current = false;
+          sessionKeyMapRef.current.set(turn.finalSessionId, keyToUse);
+          if (effectiveEditingId) {
+            setEditingMessageId(null);
+          }
+        },
+        execute: async (turn) => {
+          await performApiCall({
+            finalSessionId: turn.finalSessionId,
+            generationId,
+            generationStartTime,
+            keyToUse,
+            activeModelId: effectiveActiveModelId,
+            promptParts,
+            effectiveEditingId,
+            isContinueMode,
+            isRawMode,
+            sessionToUpdate: settingsForApi,
+            newAbortController,
+            textToUse,
+            enrichedFiles,
+          });
+        },
       });
     },
-    [activeSessionId, appSettings, currentChatSettings, performApiCall, updateSessionState, userScrolledUpRef],
+    [
+      activeSessionId,
+      appSettings,
+      currentChatSettings,
+      messages,
+      performApiCall,
+      runMessageLifecycle,
+      setActiveSessionId,
+      setEditingMessageId,
+      sessionKeyMapRef,
+      updateAndPersistSessions,
+      userScrolledUpRef,
+    ],
   );
 
   return { sendStandardMessage };

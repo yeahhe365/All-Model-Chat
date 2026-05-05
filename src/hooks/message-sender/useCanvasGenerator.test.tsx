@@ -118,4 +118,42 @@ describe('useCanvasGenerator', () => {
 
     unmount();
   });
+
+  it('routes thrown canvas stream errors through the stream error handler', async () => {
+    const activeJobs = { current: new Map() };
+    const streamOnError = vi.fn();
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError,
+      streamOnComplete: vi.fn(),
+      streamOnPart: vi.fn(),
+      onThoughtChunk: vi.fn(),
+    }));
+    const thrownError = new Error('canvas stream broke');
+
+    mockSendMessageStream.mockRejectedValue(thrownError);
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasGenerator({
+        appSettings: createAppSettings({ autoCanvasModelId: 'gemini-canvas-default' }),
+        currentChatSettings: createChatSettings({ modelId: 'gemini-3-flash-preview' }),
+        messages: [],
+        activeSessionId: 'session-1',
+        updateAndPersistSessions: vi.fn(),
+        setSessionLoading: vi.fn(),
+        activeJobs,
+        getStreamHandlers,
+        setAppFileError: vi.fn(),
+        aspectRatio: '16:9',
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleGenerateCanvas('source-message-id', 'source content');
+    });
+
+    expect(streamOnError).toHaveBeenCalledWith(thrownError);
+
+    unmount();
+  });
 });

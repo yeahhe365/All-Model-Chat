@@ -23,13 +23,10 @@ import type { ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile 
 import type { ContentPart } from '../../types/chat';
 import type { GetStreamHandlers, SessionsUpdater, StandardChatProps } from './types';
 import type { resolveStandardChatTurn } from './standardChatTurn';
-import { useMessageLifecycle } from './useMessageLifecycle';
 
 interface UseStandardChatApiCallParams {
   appSettings: StandardChatProps['appSettings'];
   messages: ChatMessage[];
-  activeJobs: React.MutableRefObject<Map<string, AbortController>>;
-  setSessionLoading: (sessionId: string, isLoading: boolean) => void;
   updateAndPersistSessions: SessionsUpdater;
   getStreamHandlers: GetStreamHandlers;
   handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
@@ -56,11 +53,17 @@ interface PerformApiCallParams {
   enrichedFiles: UploadedFile[];
 }
 
+const routeThrownStreamError = async (run: () => Promise<void>, streamOnError: (error: Error) => void) => {
+  try {
+    await run();
+  } catch (error) {
+    streamOnError(error instanceof Error ? error : new Error(String(error)));
+  }
+};
+
 export const useStandardChatApiCall = ({
   appSettings,
   messages,
-  activeJobs,
-  setSessionLoading,
   updateAndPersistSessions,
   getStreamHandlers,
   handleGenerateCanvas,
@@ -70,12 +73,6 @@ export const useStandardChatApiCall = ({
   personGeneration,
   resolveTurn,
 }: UseStandardChatApiCallParams) => {
-  const { runMessageLifecycle, finishMessageLifecycle } = useMessageLifecycle({
-    updateAndPersistSessions,
-    setSessionLoading,
-    activeJobs,
-  });
-
   const performApiCall = useCallback(
     async ({
       finalSessionId,
@@ -108,7 +105,6 @@ export const useStandardChatApiCall = ({
       });
 
       if (shouldSkipApiCall) {
-        finishMessageLifecycle(finalSessionId, generationId);
         return;
       }
 
@@ -150,24 +146,18 @@ export const useStandardChatApiCall = ({
         },
       );
 
-      await runMessageLifecycle({
-        sessionId: finalSessionId,
-        generationId,
-        abortController: newAbortController,
-        onError: (error) => {
-          streamOnError(error instanceof Error ? error : new Error(String(error)));
-        },
-        execute: async () => {
           if (appSettings.apiMode === 'openai-compatible') {
             const openAICompatibleConfig = {
               baseUrl: appSettings.openaiCompatibleBaseUrl,
               systemInstruction: sessionToUpdate.systemInstruction,
               temperature: sessionToUpdate.temperature,
               topP: sessionToUpdate.topP,
-            };
+        };
 
-            if (appSettings.isStreamingEnabled) {
-              await sendOpenAICompatibleMessageStream(
+        if (appSettings.isStreamingEnabled) {
+          await routeThrownStreamError(
+            () =>
+              sendOpenAICompatibleMessageStream(
                 keyToUse,
                 apiModelId,
                 historyForChat,
@@ -179,11 +169,15 @@ export const useStandardChatApiCall = ({
                 streamOnError,
                 streamOnComplete,
                 finalRole,
-              );
-              return;
-            }
+              ),
+            streamOnError,
+          );
+          return;
+        }
 
-            await sendOpenAICompatibleMessageNonStream(
+        await routeThrownStreamError(
+          () =>
+            sendOpenAICompatibleMessageNonStream(
               keyToUse,
               apiModelId,
               historyForChat,
@@ -201,9 +195,11 @@ export const useStandardChatApiCall = ({
                 streamOnComplete(usage, grounding, urlContext);
               },
               finalRole,
-            );
-            return;
-          }
+            ),
+          streamOnError,
+        );
+        return;
+      }
 
           const localPythonContextMessages =
             finalRole === 'user'
@@ -346,8 +342,10 @@ export const useStandardChatApiCall = ({
             return;
           }
 
-          if (appSettings.isStreamingEnabled) {
-            await sendStatelessMessageStreamApi(
+      if (appSettings.isStreamingEnabled) {
+        await routeThrownStreamError(
+          () =>
+            sendStatelessMessageStreamApi(
               keyToUse,
               apiModelId,
               historyForChat,
@@ -359,11 +357,15 @@ export const useStandardChatApiCall = ({
               streamOnError,
               streamOnComplete,
               finalRole,
-            );
-            return;
-          }
+            ),
+          streamOnError,
+        );
+        return;
+      }
 
-          await sendStatelessMessageNonStreamApi(
+      await routeThrownStreamError(
+        () =>
+          sendStatelessMessageNonStreamApi(
             keyToUse,
             apiModelId,
             historyForChat,
@@ -381,14 +383,13 @@ export const useStandardChatApiCall = ({
               streamOnComplete(usage, grounding, urlContext);
             },
             finalRole,
-          );
-        },
-      });
+          ),
+        streamOnError,
+      );
     },
     [
       appSettings,
       aspectRatio,
-      finishMessageLifecycle,
       getStreamHandlers,
       handleGenerateCanvas,
       imageOutputMode,
@@ -396,7 +397,6 @@ export const useStandardChatApiCall = ({
       messages,
       personGeneration,
       resolveTurn,
-      runMessageLifecycle,
       updateAndPersistSessions,
     ],
   );
