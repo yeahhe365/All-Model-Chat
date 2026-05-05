@@ -1,20 +1,14 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { Header } from './Header';
-
-vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 vi.mock('./HeaderModelSelector', () => ({
   HeaderModelSelector: () => <div data-testid="header-model-selector" />,
 }));
 
 describe('Header', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   it('uses localized PiP labels from the translation layer', async () => {
     await act(async () => {
@@ -46,9 +40,9 @@ describe('Header', () => {
       );
     });
 
-    const pipButton = renderer.container.querySelector('button[aria-label="pipEnter"]');
+    const pipButton = renderer.container.querySelector('button[aria-label="Enter Picture-in-Picture"]');
     expect(pipButton).not.toBeNull();
-    expect(pipButton?.getAttribute('title')).toBe('pipEnter');
+    expect(pipButton?.getAttribute('title')).toBe('Enter Picture-in-Picture');
   });
 
   it('keeps the canvas helper hit target stable while pressing', async () => {
@@ -81,7 +75,7 @@ describe('Header', () => {
       );
     });
 
-    const canvasButton = renderer.container.querySelector('button[aria-label="canvasHelperInactive_aria"]');
+    const canvasButton = renderer.container.querySelector('button[aria-label="Load Canvas prompt and save settings"]');
 
     expect(canvasButton).not.toBeNull();
     expect(canvasButton?.className).toContain('w-9');

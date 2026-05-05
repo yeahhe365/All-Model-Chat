@@ -1,11 +1,13 @@
-import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
+import type { ComponentType, JSXElementConstructor, PropsWithChildren, ReactNode } from 'react';
 import { render as testingLibraryRender } from '@testing-library/react';
 import type { RenderOptions, RenderResult } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 
-type RenderHookOptions = Omit<RenderOptions, 'wrapper'> & {
+export type TestWrapper = ComponentType<PropsWithChildren> | JSXElementConstructor<{ children: ReactNode }>;
+
+export type RenderHookOptions = Omit<RenderOptions, 'wrapper'> & {
   attachToDocument?: boolean;
-  wrapper?: ComponentType<PropsWithChildren>;
+  wrapper?: TestWrapper;
 };
 
 export const render = (ui: ReactNode, options?: RenderOptions) => testingLibraryRender(ui, options);
@@ -20,7 +22,7 @@ type SetupTestRenderer = TestRenderer & {
   readonly root: TestRenderer;
 };
 
-type TestRendererOptions = RenderOptions & {
+export type TestRendererOptions = RenderOptions & {
   attachToDocument?: boolean;
 };
 

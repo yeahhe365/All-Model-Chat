@@ -1,7 +1,7 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { createProviderTestRenderer as createTestRenderer } from '@/test/providerTestUtils';
+import type { TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WindowProvider } from '../../contexts/WindowContext';
 import { CreateTextFileEditor } from '../modals/CreateTextFileEditor';
 
 describe('CreateTextFileEditor extension preference', () => {
@@ -27,16 +27,14 @@ describe('CreateTextFileEditor extension preference', () => {
 
     await act(async () => {
       root!.render(
-        <WindowProvider>
-          <CreateTextFileEditor
-            onConfirm={vi.fn()}
-            onCancel={vi.fn()}
-            isProcessing={false}
-            isLoading={false}
-            themeId="pearl"
-            {...props}
-          />
-        </WindowProvider>,
+        <CreateTextFileEditor
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+          isProcessing={false}
+          isLoading={false}
+          themeId="pearl"
+          {...props}
+        />,
       );
     });
   };

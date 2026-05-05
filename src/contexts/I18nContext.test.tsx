@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { setupStoreStateReset } from '../test/storeTestUtils';
 import { useSettingsStore } from '../stores/settingsStore';
 import { I18nProvider, useI18n } from './I18nContext';
 
@@ -11,11 +12,7 @@ const TranslationProbe = () => {
 
 describe('I18nContext', () => {
   const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
-
-  afterEach(() => {
-    useSettingsStore.setState(initialState);
-  });
+  setupStoreStateReset();
 
   it('updates translated text when the language in the settings store changes', () => {
     act(() => {

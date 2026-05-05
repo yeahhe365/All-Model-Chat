@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const attachmentMenuMock = vi.fn();
@@ -7,12 +7,6 @@ const toolsMenuMock = vi.fn();
 const liveControlsMock = vi.fn();
 const utilityControlsMock = vi.fn();
 const sendControlsMock = vi.fn();
-
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 vi.mock('./AttachmentMenu', () => ({
   AttachmentMenu: (props: { disabled: boolean }) => {
@@ -109,7 +103,7 @@ const baseProps = {
 };
 
 describe('ChatInputActions', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
 
   const mockActionRowMeasurements = ({

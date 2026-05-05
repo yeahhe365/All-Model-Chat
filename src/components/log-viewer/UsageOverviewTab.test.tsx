@@ -1,8 +1,6 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../contexts/I18nContext';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mockGetApiUsageByTimeRange,
@@ -39,8 +37,7 @@ vi.mock('../../utils/db', async () => {
 import { UsageOverviewTab } from './UsageOverviewTab';
 
 describe('UsageOverviewTab', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,10 +47,6 @@ describe('UsageOverviewTab', () => {
     mockAddApiUsageRecord.mockResolvedValue(undefined);
     mockGetLogs.mockResolvedValue([]);
     mockClearApiUsage.mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    useSettingsStore.setState(initialState);
   });
 
   it('aggregates request counts and per-model token totals for the selected range', async () => {
@@ -102,12 +95,7 @@ describe('UsageOverviewTab', () => {
     ]);
 
     await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <UsageOverviewTab />
-        </I18nProvider>,
-      );
+      renderer.root.render(<UsageOverviewTab />);
       await Promise.resolve();
       await Promise.resolve();
     });

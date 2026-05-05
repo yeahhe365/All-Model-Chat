@@ -1,8 +1,8 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { setupStoreStateReset } from '../../../test/storeTestUtils';
 import type { AppSettings } from '../../../types';
 import { AppearanceSection } from './AppearanceSection';
 
@@ -14,21 +14,25 @@ const settingsFixture: AppSettings = {
 
 describe('AppearanceSection', () => {
   const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  setupStoreStateReset();
 
-  afterEach(() => {
-    useSettingsStore.setState(initialState);
-  });
+  const renderAppearanceSection = async ({
+    language,
+    settings,
+    onUpdate = vi.fn(),
+  }: {
+    language: 'en' | 'zh';
+    settings?: Partial<AppSettings>;
+    onUpdate?: (key: keyof AppSettings, value: AppSettings[keyof AppSettings]) => void;
+  }) => {
+    await act(async () => {
+      useSettingsStore.setState({ language });
+      renderer.root.render(<AppearanceSection settings={{ ...settingsFixture, ...settings }} onUpdate={onUpdate} />);
+    });
+  };
 
   it('updates translated control labels from the global i18n context', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <AppearanceSection settings={settingsFixture} onUpdate={vi.fn()} />
-        </I18nProvider>,
-      );
-    });
+    await renderAppearanceSection({ language: 'en' });
 
     expect(renderer.container.textContent).toContain('Theme');
     expect(renderer.container.textContent).toContain('Reading Size');
@@ -58,19 +62,12 @@ describe('AppearanceSection', () => {
   it('updates the translate button visibility preference from the input toolbar group', async () => {
     const onUpdate = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AppearanceSection
-            settings={{
-              ...settingsFixture,
-              showInputTranslationButton: false,
-            }}
-            onUpdate={onUpdate}
-          />
-        </I18nProvider>,
-      );
+    await renderAppearanceSection({
+      language: 'zh',
+      settings: {
+        showInputTranslationButton: false,
+      },
+      onUpdate,
     });
 
     const toolbarHeading = Array.from(renderer.container.querySelectorAll('label')).find(
@@ -95,19 +92,12 @@ describe('AppearanceSection', () => {
   it('updates the paste button visibility preference', async () => {
     const onUpdate = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AppearanceSection
-            settings={{
-              ...settingsFixture,
-              showInputPasteButton: false,
-            }}
-            onUpdate={onUpdate}
-          />
-        </I18nProvider>,
-      );
+    await renderAppearanceSection({
+      language: 'zh',
+      settings: {
+        showInputPasteButton: false,
+      },
+      onUpdate,
     });
 
     const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>
@@ -128,19 +118,12 @@ describe('AppearanceSection', () => {
   it('updates the clear input button visibility preference', async () => {
     const onUpdate = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AppearanceSection
-            settings={{
-              ...settingsFixture,
-              showInputClearButton: false,
-            }}
-            onUpdate={onUpdate}
-          />
-        </I18nProvider>,
-      );
+    await renderAppearanceSection({
+      language: 'zh',
+      settings: {
+        showInputClearButton: false,
+      },
+      onUpdate,
     });
 
     const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>
@@ -161,19 +144,12 @@ describe('AppearanceSection', () => {
   it('updates the selected-text formatting copy preference', async () => {
     const onUpdate = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AppearanceSection
-            settings={{
-              ...settingsFixture,
-              isCopySelectionFormattingEnabled: false,
-            }}
-            onUpdate={onUpdate}
-          />
-        </I18nProvider>,
-      );
+    await renderAppearanceSection({
+      language: 'zh',
+      settings: {
+        isCopySelectionFormattingEnabled: false,
+      },
+      onUpdate,
     });
 
     const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>

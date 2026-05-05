@@ -1,9 +1,8 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { WindowProvider } from '../../contexts/WindowContext';
 import { TextEditorModalShell } from './TextEditorModalShell';
 
 const projectRoot = path.resolve(__dirname, '../../..');
@@ -11,7 +10,7 @@ const textEditorModalPath = path.join(projectRoot, 'src/components/modals/TextEd
 const createTextFileEditorPath = path.join(projectRoot, 'src/components/modals/CreateTextFileEditor.tsx');
 
 describe('TextEditorModalShell', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupTestRenderer({ providers: {} });
 
   afterEach(() => {
     vi.clearAllMocks();
@@ -20,15 +19,13 @@ describe('TextEditorModalShell', () => {
   it('renders shared header, body, and footer slots inside the modal surface', () => {
     act(() => {
       renderer.root.render(
-        <WindowProvider>
-          <TextEditorModalShell
-            onClose={vi.fn()}
-            contentClassName="max-w-xl"
-            header={<div>Shared Header</div>}
-            body={<div>Shared Body</div>}
-            footer={<button type="button">Shared Footer</button>}
-          />
-        </WindowProvider>,
+        <TextEditorModalShell
+          onClose={vi.fn()}
+          contentClassName="max-w-xl"
+          header={<div>Shared Header</div>}
+          body={<div>Shared Body</div>}
+          footer={<button type="button">Shared Footer</button>}
+        />,
       );
     });
 

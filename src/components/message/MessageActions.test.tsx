@@ -1,9 +1,7 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../contexts/I18nContext';
 import { MessageActions } from './MessageActions';
-import { WindowProvider } from '../../contexts/WindowContext';
 import type { ChatMessage } from '../../types';
 
 vi.mock('./buttons/ExportMessageButton', () => ({
@@ -36,27 +34,28 @@ describe('MessageActions', () => {
     vi.clearAllMocks();
   });
 
+  const renderMessageActions = (overrides: Partial<React.ComponentProps<typeof MessageActions>> = {}) => {
+    renderer.root.render(
+      <MessageActions
+        message={message}
+        sessionTitle="Session"
+        messageIndex={0}
+        isGrouped={false}
+        onEditMessage={() => {}}
+        onDeleteMessage={() => {}}
+        onRetryMessage={() => {}}
+        onGenerateCanvas={() => {}}
+        onContinueGeneration={() => {}}
+        onForkMessage={() => {}}
+        themeId="pearl"
+        {...overrides}
+      />,
+    );
+  };
+
   it('does not render a read-aloud action for model messages', () => {
     act(() => {
-      renderer.root.render(
-        <I18nProvider>
-          <WindowProvider window={window} document={document}>
-            <MessageActions
-              message={message}
-              sessionTitle="Session"
-              messageIndex={0}
-              isGrouped={false}
-              onEditMessage={() => {}}
-              onDeleteMessage={() => {}}
-              onRetryMessage={() => {}}
-              onGenerateCanvas={() => {}}
-              onContinueGeneration={() => {}}
-              onForkMessage={() => {}}
-              themeId="pearl"
-            />
-          </WindowProvider>
-        </I18nProvider>,
-      );
+      renderMessageActions();
     });
 
     expect(renderer.container.querySelector('[aria-label="Read message aloud"]')).not.toBeInTheDocument();
@@ -66,25 +65,7 @@ describe('MessageActions', () => {
     window.innerWidth = 390;
 
     act(() => {
-      renderer.root.render(
-        <I18nProvider>
-          <WindowProvider window={window} document={document}>
-            <MessageActions
-              message={message}
-              sessionTitle="Session"
-              messageIndex={0}
-              isGrouped={false}
-              onEditMessage={() => {}}
-              onDeleteMessage={() => {}}
-              onRetryMessage={() => {}}
-              onGenerateCanvas={() => {}}
-              onContinueGeneration={() => {}}
-              onForkMessage={() => {}}
-              themeId="pearl"
-            />
-          </WindowProvider>
-        </I18nProvider>,
-      );
+      renderMessageActions();
     });
 
     const actions = renderer.container.querySelector('.message-actions');
@@ -95,25 +76,7 @@ describe('MessageActions', () => {
 
   it('keeps compact message action buttons free of scale transforms', () => {
     act(() => {
-      renderer.root.render(
-        <I18nProvider>
-          <WindowProvider window={window} document={document}>
-            <MessageActions
-              message={message}
-              sessionTitle="Session"
-              messageIndex={0}
-              isGrouped={false}
-              onEditMessage={() => {}}
-              onDeleteMessage={() => {}}
-              onRetryMessage={() => {}}
-              onGenerateCanvas={() => {}}
-              onContinueGeneration={() => {}}
-              onForkMessage={() => {}}
-              themeId="pearl"
-            />
-          </WindowProvider>
-        </I18nProvider>,
-      );
+      renderMessageActions();
     });
 
     const deleteButton = renderer.container.querySelector('button[aria-label="Delete"]');
@@ -126,25 +89,11 @@ describe('MessageActions', () => {
     const handleForkMessage = vi.fn();
 
     act(() => {
-      renderer.root.render(
-        <I18nProvider>
-          <WindowProvider window={window} document={document}>
-            <MessageActions
-              message={message}
-              sessionTitle="Session"
-              messageIndex={0}
-              isGrouped={false}
-              onEditMessage={() => {}}
-              onDeleteMessage={() => {}}
-              onRetryMessage={() => {}}
-              onGenerateCanvas={handleGenerateCanvas}
-              onContinueGeneration={handleContinueGeneration}
-              onForkMessage={handleForkMessage}
-              themeId="pearl"
-            />
-          </WindowProvider>
-        </I18nProvider>,
-      );
+      renderMessageActions({
+        onGenerateCanvas: handleGenerateCanvas,
+        onContinueGeneration: handleContinueGeneration,
+        onForkMessage: handleForkMessage,
+      });
     });
 
     expect(renderer.container.querySelector('[aria-label="Continue Generating"]')).not.toBeInTheDocument();
@@ -219,38 +168,34 @@ describe('MessageActions', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <WindowProvider window={window} document={document}>
-            <>
-              <MessageActions
-                message={message}
-                sessionTitle="Session"
-                messageIndex={0}
-                isGrouped={false}
-                onEditMessage={() => {}}
-                onDeleteMessage={() => {}}
-                onRetryMessage={() => {}}
-                onGenerateCanvas={() => {}}
-                onContinueGeneration={() => {}}
-                onForkMessage={() => {}}
-                themeId="pearl"
-              />
-              <MessageActions
-                message={userMessage}
-                sessionTitle="Session"
-                messageIndex={1}
-                isGrouped={false}
-                onEditMessage={() => {}}
-                onDeleteMessage={() => {}}
-                onRetryMessage={() => {}}
-                onGenerateCanvas={() => {}}
-                onContinueGeneration={() => {}}
-                onForkMessage={() => {}}
-                themeId="pearl"
-              />
-            </>
-          </WindowProvider>
-        </I18nProvider>,
+        <>
+          <MessageActions
+            message={message}
+            sessionTitle="Session"
+            messageIndex={0}
+            isGrouped={false}
+            onEditMessage={() => {}}
+            onDeleteMessage={() => {}}
+            onRetryMessage={() => {}}
+            onGenerateCanvas={() => {}}
+            onContinueGeneration={() => {}}
+            onForkMessage={() => {}}
+            themeId="pearl"
+          />
+          <MessageActions
+            message={userMessage}
+            sessionTitle="Session"
+            messageIndex={1}
+            isGrouped={false}
+            onEditMessage={() => {}}
+            onDeleteMessage={() => {}}
+            onRetryMessage={() => {}}
+            onGenerateCanvas={() => {}}
+            onContinueGeneration={() => {}}
+            onForkMessage={() => {}}
+            themeId="pearl"
+          />
+        </>,
       );
     });
 

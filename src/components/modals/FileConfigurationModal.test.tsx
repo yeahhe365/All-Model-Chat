@@ -1,10 +1,9 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { I18nProvider } from '../../contexts/I18nContext';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { setupStoreStateReset } from '../../test/storeTestUtils';
 import { FileConfigurationModal } from './FileConfigurationModal';
 import { UploadedFile } from '../../types';
 
@@ -12,11 +11,8 @@ const projectRoot = path.resolve(__dirname, '../../..');
 const modalPath = path.join(projectRoot, 'src/components/modals/FileConfigurationModal.tsx');
 
 describe('FileConfigurationModal', () => {
-  const renderer = setupTestRenderer();
-
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'en' });
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   afterEach(() => {
     vi.clearAllMocks();
@@ -25,9 +21,7 @@ describe('FileConfigurationModal', () => {
   const renderModal = (file: UploadedFile, onSave = vi.fn(), onClose = vi.fn()) => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <FileConfigurationModal isOpen onClose={onClose} file={file} onSave={onSave} isGemini3={false} />
-        </I18nProvider>,
+        <FileConfigurationModal isOpen onClose={onClose} file={file} onSave={onSave} isGemini3={false} />,
       );
     });
 

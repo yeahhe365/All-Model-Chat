@@ -1,15 +1,15 @@
 import { act } from 'react';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { setupStoreStateReset } from '../../../test/storeTestUtils';
 import { AboutSection } from './AboutSection';
 
 describe('AboutSection', () => {
   const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  setupStoreStateReset();
   const fetchMock = vi.fn();
   const packageVersion = JSON.parse(readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8'))
     .version as string;
@@ -27,19 +27,18 @@ describe('AboutSection', () => {
   });
 
   afterEach(() => {
-    useSettingsStore.setState(initialState);
     vi.unstubAllGlobals();
   });
 
-  it('updates translated copy from the global i18n context', async () => {
+  const renderAboutSection = async (language: 'en' | 'zh' = 'zh') => {
     await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
+      useSettingsStore.setState({ language });
+      renderer.root.render(<AboutSection />);
     });
+  };
+
+  it('updates translated copy from the global i18n context', async () => {
+    await renderAboutSection('en');
 
     expect(renderer.container.textContent).toContain('View on GitHub');
 
@@ -51,27 +50,13 @@ describe('AboutSection', () => {
   });
 
   it('keeps the star card visible when GitHub data is unavailable', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
-    });
+    await renderAboutSection();
 
     expect(renderer.container.textContent).toContain('不可用');
   });
 
   it('renders the about panel logo from the PNG asset', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
-    });
+    await renderAboutSection();
 
     const logo = renderer.container.querySelector('img[alt="AMC WebUI 标志"]');
 
@@ -86,11 +71,7 @@ describe('AboutSection', () => {
         language: 'zh',
         themeId: 'onyx',
       }));
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
+      renderer.root.render(<AboutSection />);
     });
 
     const logo = renderer.container.querySelector('img[alt="AMC WebUI 标志"]');
@@ -99,14 +80,7 @@ describe('AboutSection', () => {
   });
 
   it('does not render a duplicate app title under the about logo', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
-    });
+    await renderAboutSection();
 
     expect(renderer.container.querySelector('h3')).toBeNull();
     expect(renderer.container.textContent).not.toContain('AMC WebUI');
@@ -123,14 +97,7 @@ describe('AboutSection', () => {
         json: async () => ({ tag_name: '1.8.7' }),
       });
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
-    });
+    await renderAboutSection();
 
     const releaseLink = renderer.container.querySelector('a[href="https://github.com/yeahhe365/AMC-WebUI/releases"]');
 
@@ -151,14 +118,7 @@ describe('AboutSection', () => {
         json: async () => ({ tag_name: nextPatchVersion }),
       });
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
-    });
+    await renderAboutSection();
 
     const releaseLink = renderer.container.querySelector('a[href="https://github.com/yeahhe365/AMC-WebUI/releases"]');
 
@@ -166,14 +126,7 @@ describe('AboutSection', () => {
   });
 
   it('does not render the manual update check controls in the about panel', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'zh' });
-      renderer.root.render(
-        <I18nProvider>
-          <AboutSection />
-        </I18nProvider>,
-      );
-    });
+    await renderAboutSection();
 
     const checkButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('检查更新'),

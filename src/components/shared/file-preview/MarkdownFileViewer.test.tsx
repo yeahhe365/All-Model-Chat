@@ -1,5 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { createProviderTestRenderer } from '@/test/providerTestUtils';
+import type { TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../../types';
 import { MarkdownFileViewer } from './MarkdownFileViewer';
@@ -9,12 +10,6 @@ const { mockLazyMarkdownRenderer } = vi.hoisted(() => ({
     <div data-testid="markdown-renderer">{content}</div>
   )),
 }));
-
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 vi.mock('../../message/LazyMarkdownRenderer', () => ({
   LazyMarkdownRenderer: mockLazyMarkdownRenderer,
@@ -34,7 +29,7 @@ describe('MarkdownFileViewer', () => {
   });
 
   beforeEach(() => {
-    root = createTestRenderer();
+    root = createProviderTestRenderer({ providers: { language: 'en' } });
     container = root.container;
     localStorage.clear();
     vi.clearAllMocks();
@@ -54,7 +49,7 @@ describe('MarkdownFileViewer', () => {
     expect(container.querySelector('[data-testid="markdown-renderer"]')).not.toBeNull();
 
     const sourceButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('markdownPreview_source'),
+      button.textContent?.includes('Source'),
     );
     expect(sourceButton).toBeDefined();
 
@@ -69,7 +64,7 @@ describe('MarkdownFileViewer', () => {
       root.unmount();
     });
 
-    root = createTestRenderer();
+    root = createProviderTestRenderer({ providers: { language: 'en' } });
     container = root.container;
 
     act(() => {

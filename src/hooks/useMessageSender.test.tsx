@@ -1,4 +1,5 @@
 import { act } from 'react';
+import { renderHookWithProviders } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockSendStandardMessage = vi.fn();
@@ -74,36 +75,15 @@ vi.mock('../services/logService', async () => {
   return createLogServiceMockModule();
 });
 
-vi.mock('../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../test/moduleMockDoubles');
-
-  return createI18nMockModule({
-    t: (key: string) =>
-      ({
-        messageSender_waitForFiles: '请等待文件处理完成。',
-        messageSender_fileUploadFailedBeforeSend: '附件上传失败。请移除失败文件或重新上传后再发送。',
-        messageSender_imageModelSupportsImageOnly: '这个图片模型仅支持图片附件。',
-        messageSender_imageModelSupportsImageAndPdfOnly: 'Nano Banana 2 仅支持图片和 PDF 附件。',
-        messageSender_imageReferenceLimit: 'Gemini 3 图片模型每次请求最多支持 14 张参考图。',
-        messageSender_imagenTextOnly: 'Imagen 模型仅支持文本提示词。',
-        messageSender_codeExecutionTextFileTooLarge: '代码执行文本/CSV 文件建议不超过 2MB。请拆分文件或关闭代码执行。',
-        messageSender_noModelSelected: '未选择模型。',
-        messageSender_errorSessionTitle: '错误',
-        messageSender_apiKeyErrorSessionTitle: 'API 密钥错误',
-        apiRuntime_keyNotConfigured: 'API 密钥未配置。',
-        apiRuntime_noValidKeysFound: '未找到有效的 API 密钥。',
-      })[key] ?? key,
-  });
-});
-
 import { useMessageSender } from './useMessageSender';
 import { createMessageSenderProps, type MessageSenderPropsOverrides } from '@/test/hookFactories';
 import { createUploadedFile } from '@/test/factories';
-import { renderHook } from '@/test/testUtils';
 
 describe('useMessageSender', () => {
   const renderMessageSender = (overrides: MessageSenderPropsOverrides = {}) =>
-    renderHook(() => useMessageSender(createMessageSenderProps({ language: 'zh', ...overrides })));
+    renderHookWithProviders(() => useMessageSender(createMessageSenderProps({ language: 'zh', ...overrides })), {
+      language: 'zh',
+    });
 
   beforeEach(() => {
     vi.clearAllMocks();

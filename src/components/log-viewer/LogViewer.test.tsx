@@ -1,8 +1,7 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { I18nProvider } from '../../contexts/I18nContext';
 
 const {
   mockGetRecentLogs,
@@ -41,7 +40,7 @@ const findButton = (label: string) =>
     | undefined;
 
 describe('LogViewer', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
   let emitLiveLogs:
     | ((logs: Array<{ timestamp: Date; level: string; category: string; message: string }>) => void)
     | null;
@@ -80,14 +79,12 @@ describe('LogViewer', () => {
   it('groups overview, tokens, and api key stats under the usage tab', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <LogViewer
-            isOpen
-            onClose={vi.fn()}
-            appSettings={{ ...DEFAULT_APP_SETTINGS, useCustomApiConfig: true, apiKey: 'key-a\nkey-b' }}
-            currentChatSettings={{ ...DEFAULT_CHAT_SETTINGS, lockedApiKey: 'key-a' }}
-          />
-        </I18nProvider>,
+        <LogViewer
+          isOpen
+          onClose={vi.fn()}
+          appSettings={{ ...DEFAULT_APP_SETTINGS, useCustomApiConfig: true, apiKey: 'key-a\nkey-b' }}
+          currentChatSettings={{ ...DEFAULT_CHAT_SETTINGS, lockedApiKey: 'key-a' }}
+        />,
       );
     });
 
@@ -106,16 +103,14 @@ describe('LogViewer', () => {
   it('can open directly to a requested usage sub-tab', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <LogViewer
-            isOpen
-            onClose={vi.fn()}
-            appSettings={{ ...DEFAULT_APP_SETTINGS, useCustomApiConfig: true, apiKey: 'key-a\nkey-b' }}
-            currentChatSettings={{ ...DEFAULT_CHAT_SETTINGS, lockedApiKey: 'key-a' }}
-            initialTab="usage"
-            initialUsageTab="tokens"
-          />
-        </I18nProvider>,
+        <LogViewer
+          isOpen
+          onClose={vi.fn()}
+          appSettings={{ ...DEFAULT_APP_SETTINGS, useCustomApiConfig: true, apiKey: 'key-a\nkey-b' }}
+          currentChatSettings={{ ...DEFAULT_CHAT_SETTINGS, lockedApiKey: 'key-a' }}
+          initialTab="usage"
+          initialUsageTab="tokens"
+        />,
       );
     });
 
@@ -127,14 +122,12 @@ describe('LogViewer', () => {
   it('keeps the usage tab active after live logs arrive', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <LogViewer
-            isOpen
-            onClose={vi.fn()}
-            appSettings={{ ...DEFAULT_APP_SETTINGS, useCustomApiConfig: true, apiKey: 'key-a\nkey-b' }}
-            currentChatSettings={{ ...DEFAULT_CHAT_SETTINGS, lockedApiKey: 'key-a' }}
-          />
-        </I18nProvider>,
+        <LogViewer
+          isOpen
+          onClose={vi.fn()}
+          appSettings={{ ...DEFAULT_APP_SETTINGS, useCustomApiConfig: true, apiKey: 'key-a\nkey-b' }}
+          currentChatSettings={{ ...DEFAULT_CHAT_SETTINGS, lockedApiKey: 'key-a' }}
+        />,
       );
     });
 

@@ -1,8 +1,8 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../contexts/I18nContext';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { setupStoreStateReset } from '../../test/storeTestUtils';
 import { ModelVoiceSettings } from './ModelVoiceSettings';
 import { MediaResolution } from '../../types/settings';
 
@@ -23,8 +23,8 @@ vi.mock('../shared/Tooltip', () => ({
 }));
 
 describe('ModelVoiceSettings interactions', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   const baseProps = {
     modelId: 'gemini-3-flash-preview',
@@ -51,13 +51,8 @@ describe('ModelVoiceSettings interactions', () => {
     onUpdateSetting: vi.fn(),
   };
 
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'en' });
-  });
-
   afterEach(() => {
     vi.clearAllMocks();
-    useSettingsStore.setState(initialState);
   });
 
   it('selects a model and commits pending prompt edits when clicking a model row', async () => {
@@ -66,9 +61,7 @@ describe('ModelVoiceSettings interactions', () => {
 
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ModelVoiceSettings {...baseProps} setModelId={setModelId} onUpdateSetting={onUpdateSetting} />
-        </I18nProvider>,
+        <ModelVoiceSettings {...baseProps} setModelId={setModelId} onUpdateSetting={onUpdateSetting} />,
       );
     });
 
@@ -104,13 +97,11 @@ describe('ModelVoiceSettings interactions', () => {
 
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ModelVoiceSettings
-            {...baseProps}
-            currentSettings={{ ...baseProps.currentSettings, systemInstruction: 'Stay concise.' }}
-            onUpdateSetting={onUpdateSetting}
-          />
-        </I18nProvider>,
+        <ModelVoiceSettings
+          {...baseProps}
+          currentSettings={{ ...baseProps.currentSettings, systemInstruction: 'Stay concise.' }}
+          onUpdateSetting={onUpdateSetting}
+        />,
       );
     });
 

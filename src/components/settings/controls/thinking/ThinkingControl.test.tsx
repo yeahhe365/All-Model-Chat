@@ -1,8 +1,7 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../../contexts/I18nContext';
-import { useSettingsStore } from '../../../../stores/settingsStore';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setupStoreStateReset } from '../../../../test/storeTestUtils';
 import { ThinkingControl } from './ThinkingControl';
 
 vi.mock('../../../shared/Tooltip', () => ({
@@ -10,16 +9,11 @@ vi.mock('../../../shared/Tooltip', () => ({
 }));
 
 describe('ThinkingControl image model behavior', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
-
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'en' });
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   afterEach(() => {
     vi.clearAllMocks();
-    useSettingsStore.setState(initialState);
   });
 
   it('limits Gemini 3.1 Flash Image to MINIMAL/HIGH and normalizes unsupported settings', async () => {
@@ -28,17 +22,15 @@ describe('ThinkingControl image model behavior', () => {
 
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemini-3.1-flash-image-preview"
-            thinkingBudget={0}
-            setThinkingBudget={setThinkingBudget}
-            thinkingLevel="LOW"
-            setThinkingLevel={setThinkingLevel}
-            showThoughts
-            setShowThoughts={vi.fn()}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemini-3.1-flash-image-preview"
+          thinkingBudget={0}
+          setThinkingBudget={setThinkingBudget}
+          thinkingLevel="LOW"
+          setThinkingLevel={setThinkingLevel}
+          showThoughts
+          setShowThoughts={vi.fn()}
+        />,
       );
     });
 
@@ -55,17 +47,15 @@ describe('ThinkingControl image model behavior', () => {
   it('hides ThinkingControl for Gemini 3 Pro Image because the request config does not use it', async () => {
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemini-3-pro-image-preview"
-            thinkingBudget={-1}
-            setThinkingBudget={vi.fn()}
-            thinkingLevel="HIGH"
-            setThinkingLevel={vi.fn()}
-            showThoughts
-            setShowThoughts={vi.fn()}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemini-3-pro-image-preview"
+          thinkingBudget={-1}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="HIGH"
+          setThinkingLevel={vi.fn()}
+          showThoughts
+          setShowThoughts={vi.fn()}
+        />,
       );
     });
 
@@ -75,17 +65,15 @@ describe('ThinkingControl image model behavior', () => {
   it('hides ThinkingControl for Gemini 3.1 Flash TTS Preview because the model does not support thinking', async () => {
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemini-3.1-flash-tts-preview"
-            thinkingBudget={-1}
-            setThinkingBudget={vi.fn()}
-            thinkingLevel="HIGH"
-            setThinkingLevel={vi.fn()}
-            showThoughts={false}
-            setShowThoughts={vi.fn()}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemini-3.1-flash-tts-preview"
+          thinkingBudget={-1}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="HIGH"
+          setThinkingLevel={vi.fn()}
+          showThoughts={false}
+          setShowThoughts={vi.fn()}
+        />,
       );
     });
 
@@ -95,17 +83,15 @@ describe('ThinkingControl image model behavior', () => {
   it('shows Gemma reasoning as MINIMAL/HIGH level choices', async () => {
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemma-4-31b-it"
-            thinkingBudget={0}
-            setThinkingBudget={vi.fn()}
-            thinkingLevel="HIGH"
-            setThinkingLevel={vi.fn()}
-            showThoughts
-            setShowThoughts={vi.fn()}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemma-4-31b-it"
+          thinkingBudget={0}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="HIGH"
+          setThinkingLevel={vi.fn()}
+          showThoughts
+          setShowThoughts={vi.fn()}
+        />,
       );
     });
 
@@ -126,17 +112,15 @@ describe('ThinkingControl image model behavior', () => {
 
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemma-4-31b-it"
-            thinkingBudget={0}
-            setThinkingBudget={vi.fn()}
-            thinkingLevel="HIGH"
-            setThinkingLevel={vi.fn()}
-            showThoughts={false}
-            setShowThoughts={setShowThoughts}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemma-4-31b-it"
+          thinkingBudget={0}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="HIGH"
+          setThinkingLevel={vi.fn()}
+          showThoughts={false}
+          setShowThoughts={setShowThoughts}
+        />,
       );
     });
 
@@ -157,17 +141,15 @@ describe('ThinkingControl image model behavior', () => {
   it('shows full thinking level options for Gemini Robotics-ER 1.6 in auto mode', async () => {
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemini-robotics-er-1.6-preview"
-            thinkingBudget={-1}
-            setThinkingBudget={vi.fn()}
-            thinkingLevel="LOW"
-            setThinkingLevel={vi.fn()}
-            showThoughts
-            setShowThoughts={vi.fn()}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemini-robotics-er-1.6-preview"
+          thinkingBudget={-1}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="LOW"
+          setThinkingLevel={vi.fn()}
+          showThoughts
+          setShowThoughts={vi.fn()}
+        />,
       );
     });
 
@@ -180,17 +162,15 @@ describe('ThinkingControl image model behavior', () => {
   it('does not show the reasoning badge in the standard thinking header', async () => {
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemini-robotics-er-1.6-preview"
-            thinkingBudget={-1}
-            setThinkingBudget={vi.fn()}
-            thinkingLevel="HIGH"
-            setThinkingLevel={vi.fn()}
-            showThoughts
-            setShowThoughts={vi.fn()}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemini-robotics-er-1.6-preview"
+          thinkingBudget={-1}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="HIGH"
+          setThinkingLevel={vi.fn()}
+          showThoughts
+          setShowThoughts={vi.fn()}
+        />,
       );
     });
 
@@ -204,17 +184,15 @@ describe('ThinkingControl image model behavior', () => {
 
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <ThinkingControl
-            modelId="gemini-robotics-er-1.6-preview"
-            thinkingBudget={0}
-            setThinkingBudget={setThinkingBudget}
-            thinkingLevel="HIGH"
-            setThinkingLevel={setThinkingLevel}
-            showThoughts
-            setShowThoughts={vi.fn()}
-          />
-        </I18nProvider>,
+        <ThinkingControl
+          modelId="gemini-robotics-er-1.6-preview"
+          thinkingBudget={0}
+          setThinkingBudget={setThinkingBudget}
+          thinkingLevel="HIGH"
+          setThinkingLevel={setThinkingLevel}
+          showThoughts
+          setShowThoughts={vi.fn()}
+        />,
       );
     });
 

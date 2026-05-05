@@ -1,16 +1,44 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import type { ComponentProps } from 'react';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { I18nProvider } from '../../contexts/I18nContext';
-import { WindowProvider } from '../../contexts/WindowContext';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { setupStoreStateReset } from '../../test/storeTestUtils';
 import { SettingsModal } from './SettingsModal';
 
 describe('SettingsModal', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
+
+  const createSettingsModalProps = (
+    overrides: Partial<ComponentProps<typeof SettingsModal>> = {},
+  ): ComponentProps<typeof SettingsModal> => ({
+    isOpen: true,
+    onClose: vi.fn(),
+    currentSettings: DEFAULT_APP_SETTINGS,
+    availableModels: [],
+    onSave: vi.fn(),
+    onClearAllHistory: vi.fn(),
+    onClearCache: vi.fn(),
+    onOpenLogViewer: vi.fn(),
+    setAvailableModels: vi.fn(),
+    onInstallPwa: vi.fn(),
+    installState: 'installed',
+    onImportSettings: vi.fn(),
+    onExportSettings: vi.fn(),
+    onImportHistory: vi.fn(),
+    onExportHistory: vi.fn(),
+    onImportScenarios: vi.fn(),
+    onExportScenarios: vi.fn(),
+    ...overrides,
+  });
+
+  const renderSettingsModal = async (overrides: Partial<ComponentProps<typeof SettingsModal>> = {}) => {
+    await act(async () => {
+      renderer.root.render(<SettingsModal {...createSettingsModalProps(overrides)} />);
+    });
+  };
 
   beforeEach(() => {
     localStorage.setItem('chatSettingsLastTab', 'api');
@@ -18,38 +46,10 @@ describe('SettingsModal', () => {
 
   afterEach(() => {
     localStorage.clear();
-    useSettingsStore.setState(initialState);
   });
 
   it('renders the active desktop section title inside the scrollable content area', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <SettingsModal
-              isOpen
-              onClose={vi.fn()}
-              currentSettings={DEFAULT_APP_SETTINGS}
-              availableModels={[]}
-              onSave={vi.fn()}
-              onClearAllHistory={vi.fn()}
-              onClearCache={vi.fn()}
-              onOpenLogViewer={vi.fn()}
-              setAvailableModels={vi.fn()}
-              onInstallPwa={vi.fn()}
-              installState="installed"
-              onImportSettings={vi.fn()}
-              onExportSettings={vi.fn()}
-              onImportHistory={vi.fn()}
-              onExportHistory={vi.fn()}
-              onImportScenarios={vi.fn()}
-              onExportScenarios={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
-      );
-    });
+    await renderSettingsModal();
 
     const fixedDesktopTitle = document.querySelector('main > header h2');
     const scrollingDesktopTitle = document.querySelector('main > div h2');
@@ -60,34 +60,7 @@ describe('SettingsModal', () => {
   });
 
   it('opens the settings surface without any enter animation class', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <SettingsModal
-              isOpen
-              onClose={vi.fn()}
-              currentSettings={DEFAULT_APP_SETTINGS}
-              availableModels={[]}
-              onSave={vi.fn()}
-              onClearAllHistory={vi.fn()}
-              onClearCache={vi.fn()}
-              onOpenLogViewer={vi.fn()}
-              setAvailableModels={vi.fn()}
-              onInstallPwa={vi.fn()}
-              installState="installed"
-              onImportSettings={vi.fn()}
-              onExportSettings={vi.fn()}
-              onImportHistory={vi.fn()}
-              onExportHistory={vi.fn()}
-              onImportScenarios={vi.fn()}
-              onExportScenarios={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
-      );
-    });
+    await renderSettingsModal();
 
     const settingsSurface = document.querySelector('[role="dialog"] > div');
 
@@ -97,34 +70,7 @@ describe('SettingsModal', () => {
   });
 
   it('shows the granular settings navigation for each settings section', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <SettingsModal
-              isOpen
-              onClose={vi.fn()}
-              currentSettings={DEFAULT_APP_SETTINGS}
-              availableModels={[]}
-              onSave={vi.fn()}
-              onClearAllHistory={vi.fn()}
-              onClearCache={vi.fn()}
-              onOpenLogViewer={vi.fn()}
-              setAvailableModels={vi.fn()}
-              onInstallPwa={vi.fn()}
-              installState="installed"
-              onImportSettings={vi.fn()}
-              onExportSettings={vi.fn()}
-              onImportHistory={vi.fn()}
-              onExportHistory={vi.fn()}
-              onImportScenarios={vi.fn()}
-              onExportScenarios={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
-      );
-    });
+    await renderSettingsModal();
 
     const tabLabels = Array.from(document.querySelectorAll('[role="tab"]')).map((tab) => tab.textContent?.trim());
 
@@ -133,34 +79,7 @@ describe('SettingsModal', () => {
   });
 
   it('renders shortcuts in its own sidebar group', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <SettingsModal
-              isOpen
-              onClose={vi.fn()}
-              currentSettings={DEFAULT_APP_SETTINGS}
-              availableModels={[]}
-              onSave={vi.fn()}
-              onClearAllHistory={vi.fn()}
-              onClearCache={vi.fn()}
-              onOpenLogViewer={vi.fn()}
-              setAvailableModels={vi.fn()}
-              onInstallPwa={vi.fn()}
-              installState="installed"
-              onImportSettings={vi.fn()}
-              onExportSettings={vi.fn()}
-              onImportHistory={vi.fn()}
-              onExportHistory={vi.fn()}
-              onImportScenarios={vi.fn()}
-              onExportScenarios={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
-      );
-    });
+    await renderSettingsModal();
 
     const groups = Array.from(document.querySelectorAll('[data-settings-group]')).map((group) =>
       Array.from(group.querySelectorAll('[role="tab"]')).map((tab) => tab.textContent?.trim()),
@@ -181,46 +100,23 @@ describe('SettingsModal', () => {
     const onSave = vi.fn();
     const onSaveCurrentChatSettings = vi.fn();
 
-    await act(async () => {
-      localStorage.setItem('chatSettingsLastTab', 'models');
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <SettingsModal
-              isOpen
-              onClose={vi.fn()}
-              currentSettings={{
-                ...DEFAULT_APP_SETTINGS,
-                modelId: 'default-model',
-              }}
-              currentChatSettings={{
-                ...DEFAULT_CHAT_SETTINGS,
-                modelId: 'current-model',
-              }}
-              hasActiveSession
-              availableModels={[
-                { id: 'current-model', name: 'Current Model' },
-                { id: 'next-chat-model', name: 'Next Chat Model' },
-              ]}
-              onSave={onSave}
-              onSaveCurrentChatSettings={onSaveCurrentChatSettings}
-              onClearAllHistory={vi.fn()}
-              onClearCache={vi.fn()}
-              onOpenLogViewer={vi.fn()}
-              setAvailableModels={vi.fn()}
-              onInstallPwa={vi.fn()}
-              installState="installed"
-              onImportSettings={vi.fn()}
-              onExportSettings={vi.fn()}
-              onImportHistory={vi.fn()}
-              onExportHistory={vi.fn()}
-              onImportScenarios={vi.fn()}
-              onExportScenarios={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
-      );
+    localStorage.setItem('chatSettingsLastTab', 'models');
+    await renderSettingsModal({
+      currentSettings: {
+        ...DEFAULT_APP_SETTINGS,
+        modelId: 'default-model',
+      },
+      currentChatSettings: {
+        ...DEFAULT_CHAT_SETTINGS,
+        modelId: 'current-model',
+      },
+      hasActiveSession: true,
+      availableModels: [
+        { id: 'current-model', name: 'Current Model' },
+        { id: 'next-chat-model', name: 'Next Chat Model' },
+      ],
+      onSave,
+      onSaveCurrentChatSettings,
     });
 
     await act(async () => {
@@ -240,37 +136,11 @@ describe('SettingsModal', () => {
   });
 
   it('shows the scope toggle only on chat-scoped settings tabs', async () => {
-    await act(async () => {
-      localStorage.setItem('chatSettingsLastTab', 'models');
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <SettingsModal
-              isOpen
-              onClose={vi.fn()}
-              currentSettings={DEFAULT_APP_SETTINGS}
-              currentChatSettings={DEFAULT_CHAT_SETTINGS}
-              hasActiveSession
-              availableModels={[]}
-              onSave={vi.fn()}
-              onSaveCurrentChatSettings={vi.fn()}
-              onClearAllHistory={vi.fn()}
-              onClearCache={vi.fn()}
-              onOpenLogViewer={vi.fn()}
-              setAvailableModels={vi.fn()}
-              onInstallPwa={vi.fn()}
-              installState="installed"
-              onImportSettings={vi.fn()}
-              onExportSettings={vi.fn()}
-              onImportHistory={vi.fn()}
-              onExportHistory={vi.fn()}
-              onImportScenarios={vi.fn()}
-              onExportScenarios={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
-      );
+    localStorage.setItem('chatSettingsLastTab', 'models');
+    await renderSettingsModal({
+      currentChatSettings: DEFAULT_CHAT_SETTINGS,
+      hasActiveSession: true,
+      onSaveCurrentChatSettings: vi.fn(),
     });
 
     expect(document.body.textContent).toContain('Current Chat');

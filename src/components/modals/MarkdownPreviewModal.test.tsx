@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createUploadedFile } from '../../test/factories';
 
@@ -25,15 +25,10 @@ const { mockMarkdownFileViewer, mockSettingsState } = vi.hoisted(() => ({
     ),
   ),
   mockSettingsState: {
+    language: 'en',
     currentTheme: { id: 'pearl' },
   },
 }));
-
-vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 vi.mock('../../stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
@@ -54,7 +49,7 @@ vi.mock('../../utils/export/core', () => ({
 import { MarkdownPreviewModal } from './MarkdownPreviewModal';
 
 describe('MarkdownPreviewModal', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer();
   let confirmSpy: ReturnType<typeof vi.spyOn>;
 
   const createMarkdownFile = () =>
@@ -94,7 +89,7 @@ describe('MarkdownPreviewModal', () => {
     });
 
     const closeButton = Array.from(renderer.container.querySelectorAll('button')).find(
-      (button) => button.getAttribute('title') === 'filePreview_cancel_edit',
+      (button) => button.getAttribute('title') === 'Cancel Edit',
     );
     expect(closeButton).toBeDefined();
 

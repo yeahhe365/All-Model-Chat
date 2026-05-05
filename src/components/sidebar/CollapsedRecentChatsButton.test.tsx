@@ -1,10 +1,7 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { describe, expect, it, vi } from 'vitest';
 
-import { I18nProvider } from '../../contexts/I18nContext';
-import { WindowProvider } from '../../contexts/WindowContext';
-import { useSettingsStore } from '../../stores/settingsStore';
 import type { SavedChatSession } from '../../types';
 import { createChatSettings } from '../../test/factories';
 import { CollapsedRecentChatsButton } from './CollapsedRecentChatsButton';
@@ -18,11 +15,7 @@ const createSession = (id: string, timestamp: string): SavedChatSession => ({
 });
 
 describe('CollapsedRecentChatsButton', () => {
-  const renderer = setupTestRenderer();
-
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'zh' });
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'zh' } });
 
   it('shows the most recent sessions except the active session and limits the list to eight items', () => {
     const onSelectSession = vi.fn();
@@ -42,17 +35,9 @@ describe('CollapsedRecentChatsButton', () => {
 
     act(() => {
       renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <div onClick={onParentClick}>
-              <CollapsedRecentChatsButton
-                sessions={sessions}
-                activeSessionId="active"
-                onSelectSession={onSelectSession}
-              />
-            </div>
-          </I18nProvider>
-        </WindowProvider>,
+        <div onClick={onParentClick}>
+          <CollapsedRecentChatsButton sessions={sessions} activeSessionId="active" onSelectSession={onSelectSession} />
+        </div>,
       );
     });
 
@@ -88,15 +73,11 @@ describe('CollapsedRecentChatsButton', () => {
   it('uses the project history icon instead of the generic chat bubble icon', () => {
     act(() => {
       renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <CollapsedRecentChatsButton
-              sessions={[createSession('1', '2026-04-20T09:00:00.000Z')]}
-              activeSessionId={null}
-              onSelectSession={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
+        <CollapsedRecentChatsButton
+          sessions={[createSession('1', '2026-04-20T09:00:00.000Z')]}
+          activeSessionId={null}
+          onSelectSession={vi.fn()}
+        />,
       );
     });
 
@@ -109,15 +90,11 @@ describe('CollapsedRecentChatsButton', () => {
   it('closes after an outside click', () => {
     act(() => {
       renderer.root.render(
-        <WindowProvider>
-          <I18nProvider>
-            <CollapsedRecentChatsButton
-              sessions={[createSession('1', '2026-04-20T09:00:00.000Z')]}
-              activeSessionId={null}
-              onSelectSession={vi.fn()}
-            />
-          </I18nProvider>
-        </WindowProvider>,
+        <CollapsedRecentChatsButton
+          sessions={[createSession('1', '2026-04-20T09:00:00.000Z')]}
+          activeSessionId={null}
+          onSelectSession={vi.fn()}
+        />,
       );
     });
 

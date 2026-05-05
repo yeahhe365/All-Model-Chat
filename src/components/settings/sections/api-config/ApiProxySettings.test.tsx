@@ -1,7 +1,6 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../../contexts/I18nContext';
 import { ApiProxySettings } from './ApiProxySettings';
 
 describe('ApiProxySettings', () => {
@@ -10,14 +9,12 @@ describe('ApiProxySettings', () => {
   it('renders the SDK request preview for a renderer.root proxy URL', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ApiProxySettings
-            useApiProxy
-            setUseApiProxy={vi.fn()}
-            apiProxyUrl="https://api-proxy.de/gemini/v1beta"
-            setApiProxyUrl={vi.fn()}
-          />
-        </I18nProvider>,
+        <ApiProxySettings
+          useApiProxy
+          setUseApiProxy={vi.fn()}
+          apiProxyUrl="https://api-proxy.de/gemini/v1beta"
+          setApiProxyUrl={vi.fn()}
+        />,
       );
     });
 
@@ -29,14 +26,12 @@ describe('ApiProxySettings', () => {
   it('collapses proxy URL details while proxy usage is off', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ApiProxySettings
-            useApiProxy={false}
-            setUseApiProxy={vi.fn()}
-            apiProxyUrl="http://localhost:7860/v1beta"
-            setApiProxyUrl={vi.fn()}
-          />
-        </I18nProvider>,
+        <ApiProxySettings
+          useApiProxy={false}
+          setUseApiProxy={vi.fn()}
+          apiProxyUrl="http://localhost:7860/v1beta"
+          setApiProxyUrl={vi.fn()}
+        />,
       );
     });
 

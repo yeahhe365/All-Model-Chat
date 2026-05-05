@@ -1,8 +1,9 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
+import type { ComponentProps } from 'react';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { setupStoreStateReset } from '../../../test/storeTestUtils';
 import { DataManagementSection } from './DataManagementSection';
 
 const { estimateAppDataSizeMock } = vi.hoisted(() => ({
@@ -19,39 +20,44 @@ vi.mock('../../../utils/db', async () => {
 
 describe('DataManagementSection', () => {
   const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  setupStoreStateReset();
+
+  const createDataManagementProps = (
+    overrides: Partial<ComponentProps<typeof DataManagementSection>> = {},
+  ): ComponentProps<typeof DataManagementSection> => ({
+    onClearHistory: vi.fn(),
+    onClearCache: vi.fn(),
+    onOpenLogViewer: vi.fn(),
+    onClearLogs: vi.fn(),
+    installState: 'installed',
+    onInstallPwa: vi.fn(),
+    onImportSettings: vi.fn(),
+    onExportSettings: vi.fn(),
+    onImportHistory: vi.fn(),
+    onExportHistory: vi.fn(),
+    onImportScenarios: vi.fn(),
+    onExportScenarios: vi.fn(),
+    onReset: vi.fn(),
+    ...overrides,
+  });
+
+  const renderDataManagementSection = async (
+    overrides: Partial<ComponentProps<typeof DataManagementSection>> & { language?: 'en' | 'zh' } = {},
+  ) => {
+    const { language = 'en', ...props } = overrides;
+
+    await act(async () => {
+      useSettingsStore.setState({ language });
+      renderer.root.render(<DataManagementSection {...createDataManagementProps(props)} />);
+    });
+  };
 
   beforeEach(() => {
     estimateAppDataSizeMock.mockReset();
   });
 
-  afterEach(() => {
-    useSettingsStore.setState(initialState);
-  });
-
   it('updates translated actions from the global i18n context', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <DataManagementSection
-            onClearHistory={vi.fn()}
-            onClearCache={vi.fn()}
-            onOpenLogViewer={vi.fn()}
-            onClearLogs={vi.fn()}
-            installState="installed"
-            onInstallPwa={vi.fn()}
-            onImportSettings={vi.fn()}
-            onExportSettings={vi.fn()}
-            onImportHistory={vi.fn()}
-            onExportHistory={vi.fn()}
-            onImportScenarios={vi.fn()}
-            onExportScenarios={vi.fn()}
-            onReset={vi.fn()}
-          />
-        </I18nProvider>,
-      );
-    });
+    await renderDataManagementSection();
 
     expect(renderer.container.textContent).toContain('Open Logs & Usage');
     expect(renderer.container.textContent).toContain('Destructive Actions');
@@ -67,28 +73,7 @@ describe('DataManagementSection', () => {
   });
 
   it('keeps the install action enabled when manual browser guidance is needed', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <DataManagementSection
-            onClearHistory={vi.fn()}
-            onClearCache={vi.fn()}
-            onOpenLogViewer={vi.fn()}
-            onClearLogs={vi.fn()}
-            installState="manual"
-            onInstallPwa={vi.fn()}
-            onImportSettings={vi.fn()}
-            onExportSettings={vi.fn()}
-            onImportHistory={vi.fn()}
-            onExportHistory={vi.fn()}
-            onImportScenarios={vi.fn()}
-            onExportScenarios={vi.fn()}
-            onReset={vi.fn()}
-          />
-        </I18nProvider>,
-      );
-    });
+    await renderDataManagementSection({ installState: 'manual' });
 
     const installButton = renderer.container.querySelector('button[aria-label="Install Progressive Web App"]');
 
@@ -103,28 +88,7 @@ describe('DataManagementSection', () => {
       localStorageBytes: 512,
     });
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <DataManagementSection
-            onClearHistory={vi.fn()}
-            onClearCache={vi.fn()}
-            onOpenLogViewer={vi.fn()}
-            onClearLogs={vi.fn()}
-            installState="installed"
-            onInstallPwa={vi.fn()}
-            onImportSettings={vi.fn()}
-            onExportSettings={vi.fn()}
-            onImportHistory={vi.fn()}
-            onExportHistory={vi.fn()}
-            onImportScenarios={vi.fn()}
-            onExportScenarios={vi.fn()}
-            onReset={vi.fn()}
-          />
-        </I18nProvider>,
-      );
-    });
+    await renderDataManagementSection();
 
     await vi.waitFor(() => {
       expect(renderer.container.textContent).toContain('Current Local App Data');

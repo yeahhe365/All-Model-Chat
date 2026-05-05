@@ -1,17 +1,11 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('../../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 import { SendControls } from './SendControls';
 
 describe('SendControls', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   it('renders the main send button with a more compact size than the shared input controls', () => {
     act(() => {

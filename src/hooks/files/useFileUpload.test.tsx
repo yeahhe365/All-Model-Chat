@@ -1,10 +1,11 @@
 import { act } from 'react';
+import { renderHookWithProviders } from '@/test/providerTestUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { UploadedFile } from '../../types';
 import { useChatStore } from '../../stores/chatStore';
 import { useFileUpload } from './useFileUpload';
-import { createDeferred, renderHook } from '@/test/testUtils';
+import { createDeferred } from '@/test/testUtils';
 
 const { mockUploadFileItem } = vi.hoisted(() => ({
   mockUploadFileItem: vi.fn(),
@@ -24,12 +25,6 @@ vi.mock('../../utils/db', async () => {
   const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
 
   return createDbServiceMockModule();
-});
-
-vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
 });
 
 describe('useFileUpload', () => {
@@ -63,15 +58,17 @@ describe('useFileUpload', () => {
       ]);
     });
 
-    const { result, unmount } = renderHook(() =>
-      useFileUpload({
-        appSettings: DEFAULT_APP_SETTINGS,
-        selectedFiles,
-        setSelectedFiles,
-        setAppFileError: vi.fn(),
-        currentChatSettings: DEFAULT_APP_SETTINGS,
-        setCurrentChatSettings: vi.fn(),
-      }),
+    const { result, unmount } = renderHookWithProviders(
+      () =>
+        useFileUpload({
+          appSettings: DEFAULT_APP_SETTINGS,
+          selectedFiles,
+          setSelectedFiles,
+          setAppFileError: vi.fn(),
+          currentChatSettings: DEFAULT_APP_SETTINGS,
+          setCurrentChatSettings: vi.fn(),
+        }),
+      { language: 'en' },
     );
 
     let uploadPromise: Promise<void>;
@@ -115,15 +112,17 @@ describe('useFileUpload', () => {
       ]);
     });
 
-    const { result, unmount } = renderHook(() =>
-      useFileUpload({
-        appSettings: DEFAULT_APP_SETTINGS,
-        selectedFiles,
-        setSelectedFiles,
-        setAppFileError: vi.fn(),
-        currentChatSettings: DEFAULT_APP_SETTINGS,
-        setCurrentChatSettings: vi.fn(),
-      }),
+    const { result, unmount } = renderHookWithProviders(
+      () =>
+        useFileUpload({
+          appSettings: DEFAULT_APP_SETTINGS,
+          selectedFiles,
+          setSelectedFiles,
+          setAppFileError: vi.fn(),
+          currentChatSettings: DEFAULT_APP_SETTINGS,
+          setCurrentChatSettings: vi.fn(),
+        }),
+      { language: 'en' },
     );
 
     let uploadPromise: Promise<void>;

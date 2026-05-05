@@ -1,7 +1,6 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WindowProvider } from '../../contexts/WindowContext';
 import { CreateTextFileEditor } from '../modals/CreateTextFileEditor';
 
 const createMarkdownPdfBlobMock = vi.hoisted(() => vi.fn(async () => new Blob(['pdf'], { type: 'application/pdf' })));
@@ -26,17 +25,15 @@ describe('CreateTextFileEditor PDF export', () => {
 
     await act(async () => {
       renderer.render(
-        <WindowProvider>
-          <CreateTextFileEditor
-            onConfirm={onConfirm}
-            onCancel={vi.fn()}
-            isProcessing={false}
-            isLoading={false}
-            initialContent={'# Exported\\n\\n![remote](https://example.com/remote.png)'}
-            initialFilename="article.pdf"
-            themeId="pearl"
-          />
-        </WindowProvider>,
+        <CreateTextFileEditor
+          onConfirm={onConfirm}
+          onCancel={vi.fn()}
+          isProcessing={false}
+          isLoading={false}
+          initialContent={'# Exported\\n\\n![remote](https://example.com/remote.png)'}
+          initialFilename="article.pdf"
+          themeId="pearl"
+        />,
       );
     });
 

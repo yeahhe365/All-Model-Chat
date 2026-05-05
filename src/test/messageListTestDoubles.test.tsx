@@ -20,7 +20,9 @@ describe('messageListTestDoubles', () => {
       },
     ];
 
-    render(<Virtuoso data={messages} itemContent={(_: number, message: ChatMessage) => <span>{message.content}</span>} />);
+    render(
+      <Virtuoso data={messages} itemContent={(_: number, message: ChatMessage) => <span>{message.content}</span>} />,
+    );
 
     expect(document.querySelector('[data-testid="virtuoso"]')).toHaveTextContent('Hello');
     expect(propsSpy).toHaveBeenCalledWith(expect.objectContaining({ data: messages }));

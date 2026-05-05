@@ -1,4 +1,5 @@
 import { act } from 'react';
+import { renderHookWithProviders } from '@/test/providerTestUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { UploadedFile } from '../../types';
@@ -31,25 +32,7 @@ vi.mock('../../services/api/fileApi', () => ({
   getFileMetadataApi: getFileMetadataMock,
 }));
 
-vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
-
-  return createI18nMockModule({
-    t: (key: string) =>
-      ({
-        fileIdAdder_invalidFileId: '无效的文件 ID 格式。',
-        fileIdAdder_duplicateFile: '文件 files/test-file 已经添加过了。',
-        fileIdAdder_loadingFile: '正在加载 files/test-file...',
-        fileIdAdder_notFound: '找不到文件 files/test-file，或您无权访问。',
-        fileIdAdder_notFoundShort: '文件不存在。',
-        fileIdAdder_notFoundLabel: '未找到：files/test-file',
-        apiRuntime_keyNotConfigured: 'API 密钥未配置。',
-      })[key] ?? key,
-  });
-});
-
 import { useFileIdAdder } from './useFileIdAdder';
-import { renderHook } from '@/test/testUtils';
 
 describe('useFileIdAdder', () => {
   beforeEach(() => {
@@ -79,15 +62,17 @@ describe('useFileIdAdder', () => {
     };
     const setCurrentChatSettings = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useFileIdAdder({
-        appSettings: DEFAULT_APP_SETTINGS,
-        setSelectedFiles,
-        setAppFileError,
-        currentChatSettings: DEFAULT_APP_SETTINGS,
-        setCurrentChatSettings,
-        selectedFiles,
-      }),
+    const { result, unmount } = renderHookWithProviders(
+      () =>
+        useFileIdAdder({
+          appSettings: DEFAULT_APP_SETTINGS,
+          setSelectedFiles,
+          setAppFileError,
+          currentChatSettings: DEFAULT_APP_SETTINGS,
+          setCurrentChatSettings,
+          selectedFiles,
+        }),
+      { language: 'zh' },
     );
 
     await act(async () => {
@@ -117,15 +102,17 @@ describe('useFileIdAdder', () => {
       appFileError = typeof updater === 'function' ? updater(appFileError) : updater;
     };
 
-    const { result, unmount } = renderHook(() =>
-      useFileIdAdder({
-        appSettings: DEFAULT_APP_SETTINGS,
-        setSelectedFiles: vi.fn(),
-        setAppFileError,
-        currentChatSettings: DEFAULT_APP_SETTINGS,
-        setCurrentChatSettings: vi.fn(),
-        selectedFiles: [],
-      }),
+    const { result, unmount } = renderHookWithProviders(
+      () =>
+        useFileIdAdder({
+          appSettings: DEFAULT_APP_SETTINGS,
+          setSelectedFiles: vi.fn(),
+          setAppFileError,
+          currentChatSettings: DEFAULT_APP_SETTINGS,
+          setCurrentChatSettings: vi.fn(),
+          selectedFiles: [],
+        }),
+      { language: 'zh' },
     );
 
     await act(async () => {

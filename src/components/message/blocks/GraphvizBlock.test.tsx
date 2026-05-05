@@ -1,20 +1,14 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { GraphvizBlock } from './GraphvizBlock';
-
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 vi.mock('@viz-js/viz', () => ({
   instance: vi.fn().mockRejectedValue(new Error('WASM failed')),
 }));
 
 describe('GraphvizBlock', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   it('shows an error when the Graphviz renderer fails to initialize', async () => {
     act(() => {

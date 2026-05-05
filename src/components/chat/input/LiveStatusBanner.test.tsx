@@ -1,16 +1,10 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { LiveStatusBanner } from './LiveStatusBanner';
 
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createRealI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createRealI18nMockModule('en');
-});
-
 describe('LiveStatusBanner', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
   const renderBanner = (props: React.ComponentProps<typeof LiveStatusBanner>) => {
     act(() => {
       renderer.render(<LiveStatusBanner {...props} />);

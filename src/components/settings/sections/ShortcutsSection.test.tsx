@@ -1,25 +1,18 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { setupStoreStateReset } from '../../../test/storeTestUtils';
 import { ShortcutsSection } from './ShortcutsSection';
 
 describe('ShortcutsSection', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
-
-  afterEach(() => {
-    useSettingsStore.setState(initialState);
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   it('renders distinct previous and next file labels', async () => {
     await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
       renderer.root.render(
-        <I18nProvider>
-          <ShortcutsSection currentSettings={useSettingsStore.getState().appSettings} onUpdateSettings={vi.fn()} />
-        </I18nProvider>,
+        <ShortcutsSection currentSettings={useSettingsStore.getState().appSettings} onUpdateSettings={vi.fn()} />,
       );
     });
 
@@ -31,22 +24,19 @@ describe('ShortcutsSection', () => {
     const onUpdateSettings = vi.fn();
 
     await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
       renderer.root.render(
-        <I18nProvider>
-          <ShortcutsSection
-            currentSettings={{
-              ...useSettingsStore.getState().appSettings,
-              tabModelCycleIds: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
-            }}
-            availableModels={[
-              { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
-              { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
-              { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
-            ]}
-            onUpdateSettings={onUpdateSettings}
-          />
-        </I18nProvider>,
+        <ShortcutsSection
+          currentSettings={{
+            ...useSettingsStore.getState().appSettings,
+            tabModelCycleIds: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
+          }}
+          availableModels={[
+            { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
+            { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
+            { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
+          ]}
+          onUpdateSettings={onUpdateSettings}
+        />,
       );
     });
 

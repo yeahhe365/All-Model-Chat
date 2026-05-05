@@ -1,7 +1,6 @@
 import React, { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
 import { createChatAreaProviderValue } from '../../../test/chatAreaFixtures';
 import {
   ChatAreaProvider,
@@ -95,11 +94,9 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ChatAreaProvider value={value}>
-            <HookProbe />
-          </ChatAreaProvider>
-        </I18nProvider>,
+        <ChatAreaProvider value={value}>
+          <HookProbe />
+        </ChatAreaProvider>,
       );
     });
 
@@ -113,11 +110,9 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ChatAreaProvider value={initialValue}>
-            <MessageListRenderProbe onRender={onRender} />
-          </ChatAreaProvider>
-        </I18nProvider>,
+        <ChatAreaProvider value={initialValue}>
+          <MessageListRenderProbe onRender={onRender} />
+        </ChatAreaProvider>,
       );
     });
 
@@ -133,11 +128,9 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ChatAreaProvider value={updatedValue}>
-            <MessageListRenderProbe onRender={onRender} />
-          </ChatAreaProvider>
-        </I18nProvider>,
+        <ChatAreaProvider value={updatedValue}>
+          <MessageListRenderProbe onRender={onRender} />
+        </ChatAreaProvider>,
       );
     });
 

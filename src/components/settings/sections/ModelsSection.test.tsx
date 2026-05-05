@@ -1,8 +1,8 @@
 import { act, type ComponentProps } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { setupStoreStateReset } from '../../../test/storeTestUtils';
 import { ModelsSection } from './ModelsSection';
 import type { ModelSelector } from '../controls/ModelSelector';
 import type { LanguageVoiceSection } from './LanguageVoiceSection';
@@ -48,11 +48,26 @@ vi.mock('./SafetySection', () => ({
 }));
 
 describe('ModelsSection', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
+
+  const renderModelsSection = async (overrides: Partial<ComponentProps<typeof ModelsSection>> = {}) => {
+    await act(async () => {
+      renderer.root.render(
+        <ModelsSection
+          modelId="gemini-3.1-pro-preview"
+          setModelId={vi.fn()}
+          availableModels={[{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true }]}
+          setAvailableModels={vi.fn()}
+          currentSettings={useSettingsStore.getState().appSettings}
+          onUpdateSettings={vi.fn()}
+          {...overrides}
+        />,
+      );
+    });
+  };
 
   afterEach(() => {
-    useSettingsStore.setState(initialState);
     mockSafetySection.renderCount = 0;
     mockSafetySection.lastProps = null;
     mockLanguageVoiceSection.lastProps = null;
@@ -62,27 +77,17 @@ describe('ModelsSection', () => {
   it('keeps tab cycle model settings out of models settings', async () => {
     const onUpdateSettings = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ModelsSection
-            modelId="gemini-3.1-pro-preview"
-            setModelId={vi.fn()}
-            availableModels={[
-              { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
-              { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
-              { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
-            ]}
-            setAvailableModels={vi.fn()}
-            currentSettings={{
-              ...useSettingsStore.getState().appSettings,
-              tabModelCycleIds: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
-            }}
-            onUpdateSettings={onUpdateSettings}
-          />
-        </I18nProvider>,
-      );
+    await renderModelsSection({
+      availableModels: [
+        { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
+        { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
+        { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
+      ],
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        tabModelCycleIds: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview'],
+      },
+      onUpdateSettings,
     });
 
     expect(renderer.container.querySelector('[data-testid="model-selector"]')).not.toBeNull();
@@ -103,23 +108,12 @@ describe('ModelsSection', () => {
     const onUpdateSettings = vi.fn();
     const safetySettings = useSettingsStore.getState().appSettings.safetySettings;
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ModelsSection
-            modelId="gemini-3.1-pro-preview"
-            setModelId={vi.fn()}
-            availableModels={[{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true }]}
-            setAvailableModels={vi.fn()}
-            currentSettings={{
-              ...useSettingsStore.getState().appSettings,
-              safetySettings,
-            }}
-            onUpdateSettings={onUpdateSettings}
-          />
-        </I18nProvider>,
-      );
+    await renderModelsSection({
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        safetySettings,
+      },
+      onUpdateSettings,
     });
 
     const toggleButton = renderer.container.querySelector<HTMLButtonElement>(
@@ -147,24 +141,13 @@ describe('ModelsSection', () => {
   it('keeps canvas settings inside models settings', async () => {
     const onUpdateSettings = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ModelsSection
-            modelId="gemini-3.1-pro-preview"
-            setModelId={vi.fn()}
-            availableModels={[{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true }]}
-            setAvailableModels={vi.fn()}
-            currentSettings={{
-              ...useSettingsStore.getState().appSettings,
-              autoCanvasVisualization: false,
-              autoCanvasModelId: 'gemini-3-flash-preview',
-            }}
-            onUpdateSettings={onUpdateSettings}
-          />
-        </I18nProvider>,
-      );
+    await renderModelsSection({
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        autoCanvasVisualization: false,
+        autoCanvasModelId: 'gemini-3-flash-preview',
+      },
+      onUpdateSettings,
     });
 
     expect(renderer.container.textContent).toContain('Canvas Visualizations');
@@ -200,30 +183,20 @@ describe('ModelsSection', () => {
   it('keeps language, voice, and translation settings inside models settings', async () => {
     const onUpdateSettings = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ModelsSection
-            modelId="gemini-3.1-pro-preview"
-            setModelId={vi.fn()}
-            availableModels={[
-              { id: 'gemini-custom-input-translator', name: 'Input Translator' },
-              { id: 'gemini-custom-thought-translator', name: 'Thought Translator' },
-            ]}
-            setAvailableModels={vi.fn()}
-            currentSettings={{
-              ...useSettingsStore.getState().appSettings,
-              transcriptionModelId: 'gemini-3-flash-preview',
-              translationTargetLanguage: 'Japanese',
-              inputTranslationModelId: 'gemini-custom-input-translator',
-              thoughtTranslationTargetLanguage: 'Korean',
-              thoughtTranslationModelId: 'gemini-custom-thought-translator',
-            }}
-            onUpdateSettings={onUpdateSettings}
-          />
-        </I18nProvider>,
-      );
+    await renderModelsSection({
+      availableModels: [
+        { id: 'gemini-custom-input-translator', name: 'Input Translator' },
+        { id: 'gemini-custom-thought-translator', name: 'Thought Translator' },
+      ],
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        transcriptionModelId: 'gemini-3-flash-preview',
+        translationTargetLanguage: 'Japanese',
+        inputTranslationModelId: 'gemini-custom-input-translator',
+        thoughtTranslationTargetLanguage: 'Korean',
+        thoughtTranslationModelId: 'gemini-custom-thought-translator',
+      },
+      onUpdateSettings,
     });
 
     expect(renderer.container.querySelector('[data-testid="language-voice-section"]')).not.toBeNull();
@@ -259,25 +232,16 @@ describe('ModelsSection', () => {
       { id: 'gpt-4.1', name: 'GPT-4.1' },
     ];
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ModelsSection
-            modelId="gpt-5.5"
-            setModelId={vi.fn()}
-            availableModels={defaultModels}
-            setAvailableModels={vi.fn()}
-            defaultModels={defaultModels}
-            isOpenAICompatibleMode
-            currentSettings={{
-              ...useSettingsStore.getState().appSettings,
-              apiMode: 'openai-compatible',
-            }}
-            onUpdateSettings={onUpdateSettings}
-          />
-        </I18nProvider>,
-      );
+    await renderModelsSection({
+      modelId: 'gpt-5.5',
+      availableModels: defaultModels,
+      defaultModels,
+      isOpenAICompatibleMode: true,
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        apiMode: 'openai-compatible',
+      },
+      onUpdateSettings,
     });
 
     expect(renderer.container.querySelector('[data-testid="model-selector"]')).not.toBeNull();

@@ -1,45 +1,28 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
-const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockT, mockTextFileViewer } = vi.hoisted(
-  () => ({
-    mockCopyFileToClipboard: vi.fn(),
-    mockExtractDocxText: vi.fn(),
-    mockSettingsState: {
-      appSettings: {
-        customShortcuts: {},
-      },
-      currentTheme: {
-        id: 'pearl',
-      },
+const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockTextFileViewer } = vi.hoisted(() => ({
+  mockCopyFileToClipboard: vi.fn(),
+  mockExtractDocxText: vi.fn(),
+  mockSettingsState: {
+    language: 'en',
+    appSettings: {
+      customShortcuts: {},
     },
-    mockT: vi.fn((key: string) => {
-      const messages: Record<string, string> = {
-        imageZoom_title: 'Preview {filename}',
-        filePreview_loading_word: 'Loading Word preview...',
-        filePreview_word_unavailable: 'Unable to preview this Word document.',
-        filePreview_previous: 'Previous',
-        filePreview_next: 'Next',
-      };
-      return messages[key] ?? key;
-    }),
-    mockTextFileViewer: vi.fn(
-      ({ content, renderMode, themeId }: { content?: string | null; renderMode?: string; themeId?: string }) => (
-        <div data-testid="text-file-viewer" data-render-mode={renderMode} data-theme-id={themeId}>
-          {content ?? 'Preview text content'}
-        </div>
-      ),
+    currentTheme: {
+      id: 'pearl',
+    },
+  },
+  mockTextFileViewer: vi.fn(
+    ({ content, renderMode, themeId }: { content?: string | null; renderMode?: string; themeId?: string }) => (
+      <div data-testid="text-file-viewer" data-render-mode={renderMode} data-theme-id={themeId}>
+        {content ?? 'Preview text content'}
+      </div>
     ),
-  }),
-);
-
-vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
-
-  return createI18nMockModule({ t: mockT });
-});
+  ),
+}));
 
 vi.mock('../../stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
@@ -104,7 +87,7 @@ vi.mock('../../utils/docxPreview', () => ({
 import { FilePreviewModal } from './FilePreviewModal';
 
 describe('FilePreviewModal', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer();
 
   const createDocxFile = (): UploadedFile => ({
     id: 'docx-1',

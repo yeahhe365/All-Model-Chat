@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../../types';
 import { TextFileViewer } from './TextFileViewer';
@@ -14,18 +14,12 @@ const { mockLazyMarkdownRenderer } = vi.hoisted(() => ({
   ),
 }));
 
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
-
 vi.mock('../../message/LazyMarkdownRenderer', () => ({
   LazyMarkdownRenderer: mockLazyMarkdownRenderer,
 }));
 
 describe('TextFileViewer', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   const createMarkdownFile = (): UploadedFile => ({
     id: 'markdown-file',
@@ -65,12 +59,12 @@ describe('TextFileViewer', () => {
     });
 
     expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')).toBeNull();
-    expect(renderer.container.textContent).toContain('filePreview_large_markdown_notice');
-    expect(renderer.container.textContent).toContain('filePreview_render_markdown_anyway');
+    expect(renderer.container.textContent).toContain('Large Markdown file detected');
+    expect(renderer.container.textContent).toContain('Render Markdown anyway');
     expect(renderer.container.textContent).toContain('# Heading');
 
     const button = Array.from(renderer.container.querySelectorAll('button')).find((candidate) =>
-      candidate.textContent?.includes('filePreview_render_markdown_anyway'),
+      candidate.textContent?.includes('Render Markdown anyway'),
     );
 
     expect(button).not.toBeUndefined();

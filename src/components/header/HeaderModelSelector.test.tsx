@@ -1,16 +1,10 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HeaderModelSelector } from './HeaderModelSelector';
 
-vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
-
 describe('HeaderModelSelector', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   afterEach(() => {
     vi.clearAllMocks();
@@ -36,9 +30,9 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = renderer.container.querySelector('button[aria-label="headerReasoningToggleAria"]');
+    const toggleButton = renderer.container.querySelector('button[aria-label="Toggle reasoning mode"]');
     expect(toggleButton).not.toBeNull();
-    expect(toggleButton?.getAttribute('title')).toBe('headerReasoningHighTitle');
+    expect(toggleButton?.getAttribute('title')).toBe('Reasoning: High');
 
     await act(async () => {
       toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -65,8 +59,8 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = renderer.container.querySelector('button[aria-label="headerReasoningToggleAria"]');
-    expect(toggleButton?.getAttribute('title')).toBe('headerReasoningMinimalFastTitle');
+    const toggleButton = renderer.container.querySelector('button[aria-label="Toggle reasoning mode"]');
+    expect(toggleButton?.getAttribute('title')).toBe('Reasoning: Minimal (Fast Mode)');
   });
 
   it('does not render an icon inside the collapsed selector trigger', async () => {
@@ -138,7 +132,7 @@ describe('HeaderModelSelector', () => {
     });
 
     const triggerButton = renderer.container.querySelector('button[aria-haspopup="listbox"]');
-    const thinkingButton = renderer.container.querySelector('button[aria-label="headerThinkingToggleAria"]');
+    const thinkingButton = renderer.container.querySelector('button[aria-label="Toggle thinking level"]');
 
     expect(triggerButton?.className).toContain('min-h-9');
     expect(triggerButton?.className).not.toContain('scale');
@@ -191,9 +185,9 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = renderer.container.querySelector('button[aria-label="headerThinkingToggleAria"]');
+    const toggleButton = renderer.container.querySelector('button[aria-label="Toggle thinking level"]');
     expect(toggleButton).not.toBeNull();
-    expect(toggleButton?.getAttribute('title')).toBe('headerThinkingHighTitle');
+    expect(toggleButton?.getAttribute('title')).toBe('Thinking: High (Pro Mode)');
 
     await act(async () => {
       toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -220,7 +214,7 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    expect(renderer.container.querySelector('button[aria-label="headerThinkingToggleAria"]')).toBeNull();
-    expect(renderer.container.querySelector('button[aria-label="headerReasoningToggleAria"]')).toBeNull();
+    expect(renderer.container.querySelector('button[aria-label="Toggle thinking level"]')).toBeNull();
+    expect(renderer.container.querySelector('button[aria-label="Toggle reasoning mode"]')).toBeNull();
   });
 });

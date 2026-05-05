@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageText } from './MessageText';
 import { createAppSettings } from '@/test/factories';
@@ -10,12 +10,6 @@ const { mockUseMessageStream } = vi.hoisted(() => ({
     streamThoughts: '',
   })),
 }));
-
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 vi.mock('../GroundedResponse', () => ({
   GroundedResponse: () => <div data-testid="grounded-response" />,
@@ -38,7 +32,7 @@ vi.mock('../../../hooks/ui/useMessageStream', () => ({
 }));
 
 describe('MessageText', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   beforeEach(() => {
     vi.useFakeTimers();

@@ -1,8 +1,7 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
-import { useSettingsStore } from '../../../stores/settingsStore';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { describe, expect, it, vi } from 'vitest';
+import { setupStoreStateReset } from '../../../test/storeTestUtils';
 import { ToolsMenu } from './ToolsMenu';
 
 vi.mock('../../../services/logService', async () => {
@@ -29,23 +28,18 @@ const toolUtilityActions = {
 };
 
 describe('ToolsMenu', () => {
-  const renderer = setupTestRenderer();
-
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'en' });
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   it('keeps local Python available for native audio models', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ToolsMenu
-            currentModelId="gemini-3.1-flash-live-preview"
-            toolStates={createToolStates({ localPython: true })}
-            toolUtilityActions={toolUtilityActions}
-            disabled={false}
-          />
-        </I18nProvider>,
+        <ToolsMenu
+          currentModelId="gemini-3.1-flash-live-preview"
+          toolStates={createToolStates({ localPython: true })}
+          toolUtilityActions={toolUtilityActions}
+          disabled={false}
+        />,
       );
     });
 
@@ -64,14 +58,12 @@ describe('ToolsMenu', () => {
   it('hides code execution tooling for Gemini image-generation models', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ToolsMenu
-            currentModelId="gemini-3.1-flash-image-preview"
-            toolStates={createToolStates()}
-            toolUtilityActions={toolUtilityActions}
-            disabled={false}
-          />
-        </I18nProvider>,
+        <ToolsMenu
+          currentModelId="gemini-3.1-flash-image-preview"
+          toolStates={createToolStates()}
+          toolUtilityActions={toolUtilityActions}
+          disabled={false}
+        />,
       );
     });
 
@@ -94,14 +86,12 @@ describe('ToolsMenu', () => {
   it('hides unsupported built-in tools for Gemma models', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ToolsMenu
-            currentModelId="gemma-3-27b-it"
-            toolStates={createToolStates({ localPython: true })}
-            toolUtilityActions={toolUtilityActions}
-            disabled={false}
-          />
-        </I18nProvider>,
+        <ToolsMenu
+          currentModelId="gemma-3-27b-it"
+          toolStates={createToolStates({ localPython: true })}
+          toolUtilityActions={toolUtilityActions}
+          disabled={false}
+        />,
       );
     });
 
@@ -122,14 +112,12 @@ describe('ToolsMenu', () => {
   it('shows a combination notice when local Python and built-in tools are enabled on non-Gemini-3 models', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ToolsMenu
-            currentModelId="gemini-2.5-pro"
-            toolStates={createToolStates({ googleSearch: true, localPython: true })}
-            toolUtilityActions={toolUtilityActions}
-            disabled={false}
-          />
-        </I18nProvider>,
+        <ToolsMenu
+          currentModelId="gemini-2.5-pro"
+          toolStates={createToolStates({ googleSearch: true, localPython: true })}
+          toolUtilityActions={toolUtilityActions}
+          disabled={false}
+        />,
       );
     });
 
@@ -139,14 +127,12 @@ describe('ToolsMenu', () => {
   it('does not show a combination notice for Gemini 3 models', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ToolsMenu
-            currentModelId="gemini-3.1-pro-preview"
-            toolStates={createToolStates({ googleSearch: true, localPython: true })}
-            toolUtilityActions={toolUtilityActions}
-            disabled={false}
-          />
-        </I18nProvider>,
+        <ToolsMenu
+          currentModelId="gemini-3.1-pro-preview"
+          toolStates={createToolStates({ googleSearch: true, localPython: true })}
+          toolUtilityActions={toolUtilityActions}
+          disabled={false}
+        />,
       );
     });
 

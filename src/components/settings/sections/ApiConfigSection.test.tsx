@@ -1,8 +1,9 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import type { ComponentProps } from 'react';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { setupStoreStateReset } from '../../../test/storeTestUtils';
 import type { AppSettings } from '../../../types';
 import { SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
 import { ApiConfigSection } from './ApiConfigSection';
@@ -33,9 +34,38 @@ vi.mock('../../../services/logService', async () => {
 
 describe('ApiConfigSection', () => {
   const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  setupStoreStateReset();
   const settingsFixture: AppSettings = {
-    ...initialState.appSettings,
+    ...useSettingsStore.getState().appSettings,
+  };
+
+  const createApiConfigProps = (
+    overrides: Partial<ComponentProps<typeof ApiConfigSection>> = {},
+  ): ComponentProps<typeof ApiConfigSection> => ({
+    useCustomApiConfig: true,
+    setUseCustomApiConfig: vi.fn(),
+    apiKey: null,
+    setApiKey: vi.fn(),
+    apiProxyUrl: null,
+    setApiProxyUrl: vi.fn(),
+    useApiProxy: false,
+    setUseApiProxy: vi.fn(),
+    serverManagedApi: false,
+    availableModels: [],
+    settings: settingsFixture,
+    onUpdate: vi.fn(),
+    ...overrides,
+  });
+
+  const renderApiConfigSection = async (
+    overrides: Partial<ComponentProps<typeof ApiConfigSection>> & { language?: 'en' | 'zh' } = {},
+  ) => {
+    const { language = 'en', ...props } = overrides;
+
+    await act(async () => {
+      useSettingsStore.setState({ language });
+      renderer.root.render(<ApiConfigSection {...createApiConfigProps(props)} />);
+    });
   };
 
   beforeEach(() => {
@@ -50,30 +80,14 @@ describe('ApiConfigSection', () => {
   });
 
   afterEach(() => {
-    useSettingsStore.setState(initialState);
+    vi.restoreAllMocks();
   });
 
   it('allows running connection test in server-managed mode without a browser-held key', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ApiConfigSection
-            useCustomApiConfig
-            setUseCustomApiConfig={vi.fn()}
-            apiKey={null}
-            setApiKey={vi.fn()}
-            apiProxyUrl="https://proxy.example.com/v1beta"
-            setApiProxyUrl={vi.fn()}
-            useApiProxy
-            setUseApiProxy={vi.fn()}
-            serverManagedApi
-            availableModels={[]}
-            settings={settingsFixture}
-            onUpdate={vi.fn()}
-          />
-        </I18nProvider>,
-      );
+    await renderApiConfigSection({
+      apiProxyUrl: 'https://proxy.example.com/v1beta',
+      useApiProxy: true,
+      serverManagedApi: true,
     });
 
     expect(renderer.container.textContent).not.toContain('API & Connections');
@@ -103,27 +117,7 @@ describe('ApiConfigSection', () => {
   });
 
   it('updates translated labels when the global language changes', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ApiConfigSection
-            useCustomApiConfig
-            setUseCustomApiConfig={vi.fn()}
-            apiKey={null}
-            setApiKey={vi.fn()}
-            apiProxyUrl={null}
-            setApiProxyUrl={vi.fn()}
-            useApiProxy={false}
-            setUseApiProxy={vi.fn()}
-            serverManagedApi={false}
-            availableModels={[]}
-            settings={settingsFixture}
-            onUpdate={vi.fn()}
-          />
-        </I18nProvider>,
-      );
-    });
+    await renderApiConfigSection();
 
     expect(renderer.container.textContent).not.toContain('API & Connections');
     expect(renderer.container.textContent).toContain('Test Connection');
@@ -143,27 +137,7 @@ describe('ApiConfigSection', () => {
   });
 
   it('renders API mode choices as one segmented control surface', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ApiConfigSection
-            useCustomApiConfig
-            setUseCustomApiConfig={vi.fn()}
-            apiKey={null}
-            setApiKey={vi.fn()}
-            apiProxyUrl={null}
-            setApiProxyUrl={vi.fn()}
-            useApiProxy={false}
-            setUseApiProxy={vi.fn()}
-            serverManagedApi={false}
-            availableModels={[]}
-            settings={settingsFixture}
-            onUpdate={vi.fn()}
-          />
-        </I18nProvider>,
-      );
-    });
+    await renderApiConfigSection();
 
     const modeControl = renderer.container.querySelector('[role="group"][aria-label="API Mode"]');
     const modeButtons = Array.from(modeControl?.querySelectorAll('button') ?? []);
@@ -177,32 +151,15 @@ describe('ApiConfigSection', () => {
   });
 
   it('tests the OpenAI-compatible endpoint with the isolated OpenAI key when that global API mode is selected', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ApiConfigSection
-            useCustomApiConfig
-            setUseCustomApiConfig={vi.fn()}
-            apiKey="gemini-key"
-            setApiKey={vi.fn()}
-            apiProxyUrl={null}
-            setApiProxyUrl={vi.fn()}
-            useApiProxy={false}
-            setUseApiProxy={vi.fn()}
-            serverManagedApi={false}
-            availableModels={[]}
-            settings={{
-              ...settingsFixture,
-              apiMode: 'openai-compatible',
-              openaiCompatibleApiKey: 'openai-compatible-key',
-              openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
-              openaiCompatibleModelId: 'gpt-5.5',
-            }}
-            onUpdate={vi.fn()}
-          />
-        </I18nProvider>,
-      );
+    await renderApiConfigSection({
+      apiKey: 'gemini-key',
+      settings: {
+        ...settingsFixture,
+        apiMode: 'openai-compatible',
+        openaiCompatibleApiKey: 'openai-compatible-key',
+        openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+        openaiCompatibleModelId: 'gpt-5.5',
+      },
     });
 
     const testButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
@@ -233,31 +190,16 @@ describe('ApiConfigSection', () => {
     const setApiKey = vi.fn();
     const onUpdate = vi.fn();
 
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ApiConfigSection
-            useCustomApiConfig
-            setUseCustomApiConfig={vi.fn()}
-            apiKey="gemini-key"
-            setApiKey={setApiKey}
-            apiProxyUrl={null}
-            setApiProxyUrl={vi.fn()}
-            useApiProxy={false}
-            setUseApiProxy={vi.fn()}
-            serverManagedApi={false}
-            availableModels={[]}
-            settings={{
-              ...settingsFixture,
-              apiMode: 'openai-compatible',
-              openaiCompatibleApiKey: null,
-              openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
-            }}
-            onUpdate={onUpdate}
-          />
-        </I18nProvider>,
-      );
+    await renderApiConfigSection({
+      apiKey: 'gemini-key',
+      setApiKey,
+      settings: {
+        ...settingsFixture,
+        apiMode: 'openai-compatible',
+        openaiCompatibleApiKey: null,
+        openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+      },
+      onUpdate,
     });
 
     const apiKeyInput = renderer.container.querySelector('#api-key-input') as HTMLTextAreaElement | null;
@@ -275,26 +217,8 @@ describe('ApiConfigSection', () => {
   });
 
   it('explains that Live uses the browser API key directly without token endpoint settings', async () => {
-    await act(async () => {
-      useSettingsStore.setState({ language: 'en' });
-      renderer.root.render(
-        <I18nProvider>
-          <ApiConfigSection
-            useCustomApiConfig
-            setUseCustomApiConfig={vi.fn()}
-            apiKey="browser-key"
-            setApiKey={vi.fn()}
-            apiProxyUrl={null}
-            setApiProxyUrl={vi.fn()}
-            useApiProxy={false}
-            setUseApiProxy={vi.fn()}
-            serverManagedApi={false}
-            availableModels={[]}
-            settings={settingsFixture}
-            onUpdate={vi.fn()}
-          />
-        </I18nProvider>,
-      );
+    await renderApiConfigSection({
+      apiKey: 'browser-key',
     });
 
     expect(renderer.container.textContent).toContain('Live connects from this browser');

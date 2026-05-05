@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { pdfjs } from 'react-pdf';
 import { SelectedFileDisplay } from './SelectedFileDisplay';
 import type { UploadedFile } from '../../../types';
@@ -12,28 +12,6 @@ vi.mock('../../../hooks/useCopyToClipboard', () => ({
     copyToClipboard: vi.fn(),
   }),
 }));
-
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule({
-    t: (key: string) =>
-      ({
-        selectedFile_cancelUpload: 'Cancel Upload',
-        selectedFile_removeFile: 'Remove File',
-        selectedFile_editFile: 'Edit File',
-        selectedFile_configureFile: 'Configure File',
-        selectedFile_moveTextToInput: 'Move text to input',
-        selectedFile_moreActions: 'More file actions',
-        selectedFile_idCopied: 'ID Copied',
-        selectedFile_copyFileId: 'Copy File ID',
-        selectedFile_errorFallback: 'Error',
-        selectedFile_uploading: 'Uploading {percent}%',
-        selectedFile_processingGemini: 'Processing on Gemini',
-        selectedFile_cancelled: 'Cancelled',
-      })[key] ?? key,
-  });
-});
 
 vi.mock('react-pdf', () => ({
   Document: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-pdf-document">{children}</div>,
@@ -59,26 +37,9 @@ const createFile = (overrides: Partial<UploadedFile> = {}) =>
   });
 
 describe('SelectedFileDisplay', () => {
-  const renderer = setupTestRenderer();
-  let originalIntersectionObserver: typeof IntersectionObserver | undefined;
-
-  beforeEach(() => {
-    originalIntersectionObserver = globalThis.IntersectionObserver;
-    Object.defineProperty(globalThis, 'IntersectionObserver', {
-      configurable: true,
-      value: undefined,
-    });
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
 
   afterEach(() => {
-    if (originalIntersectionObserver) {
-      Object.defineProperty(globalThis, 'IntersectionObserver', {
-        configurable: true,
-        value: originalIntersectionObserver,
-      });
-    } else {
-      delete (globalThis as Partial<typeof globalThis>).IntersectionObserver;
-    }
     vi.clearAllMocks();
   });
 

@@ -1,6 +1,6 @@
 import { act } from 'react';
 import type React from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageThoughts } from './MessageThoughts';
 import { createAppSettings } from '@/test/factories';
@@ -12,12 +12,6 @@ const { mockUseMessageStream, mockTranslateText } = vi.hoisted(() => ({
   })),
   mockTranslateText: vi.fn(),
 }));
-
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
 
 vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
@@ -57,7 +51,7 @@ vi.mock('./thoughts/ThoughtContent', () => ({
 }));
 
 describe('MessageThoughts', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   beforeEach(() => {
     mockUseMessageStream.mockReturnValue({

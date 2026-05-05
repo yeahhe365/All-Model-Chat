@@ -1,21 +1,15 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../../contexts/I18nContext';
-import { useSettingsStore } from '../../../../stores/settingsStore';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setupStoreStateReset } from '../../../../test/storeTestUtils';
 import { ModelListEditor } from './ModelListEditor';
 
 describe('ModelListEditor', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
-
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'en' });
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   afterEach(() => {
     vi.restoreAllMocks();
-    useSettingsStore.setState(initialState);
   });
 
   it('keeps the editor open instead of saving an empty model list', () => {
@@ -24,9 +18,7 @@ describe('ModelListEditor', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ModelListEditor availableModels={[]} onSave={onSave} setIsEditingList={setIsEditingList} />
-        </I18nProvider>,
+        <ModelListEditor availableModels={[]} onSave={onSave} setIsEditingList={setIsEditingList} />,
       );
     });
 
@@ -47,13 +39,11 @@ describe('ModelListEditor', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ModelListEditor
-            availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: true }]}
-            onSave={onSave}
-            setIsEditingList={vi.fn()}
-          />
-        </I18nProvider>,
+        <ModelListEditor
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: true }]}
+          onSave={onSave}
+          setIsEditingList={vi.fn()}
+        />,
       );
     });
 
@@ -79,16 +69,14 @@ describe('ModelListEditor', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ModelListEditor
-            availableModels={[
-              { id: ' gemini-3-flash-preview ', name: 'Gemini 3 Flash', isPinned: true },
-              { id: 'gemini-3-flash-preview', name: 'Duplicate Gemini 3 Flash', isPinned: false },
-            ]}
-            onSave={onSave}
-            setIsEditingList={vi.fn()}
-          />
-        </I18nProvider>,
+        <ModelListEditor
+          availableModels={[
+            { id: ' gemini-3-flash-preview ', name: 'Gemini 3 Flash', isPinned: true },
+            { id: 'gemini-3-flash-preview', name: 'Duplicate Gemini 3 Flash', isPinned: false },
+          ]}
+          onSave={onSave}
+          setIsEditingList={vi.fn()}
+        />,
       );
     });
 
@@ -109,17 +97,15 @@ describe('ModelListEditor', () => {
 
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ModelListEditor
-            availableModels={[{ id: 'custom-openai-model', name: 'Custom OpenAI Model', isPinned: true }]}
-            defaultModels={[
-              { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
-              { id: 'gpt-4.1', name: 'GPT-4.1' },
-            ]}
-            onSave={onSave}
-            setIsEditingList={vi.fn()}
-          />
-        </I18nProvider>,
+        <ModelListEditor
+          availableModels={[{ id: 'custom-openai-model', name: 'Custom OpenAI Model', isPinned: true }]}
+          defaultModels={[
+            { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+            { id: 'gpt-4.1', name: 'GPT-4.1' },
+          ]}
+          onSave={onSave}
+          setIsEditingList={vi.fn()}
+        />,
       );
     });
 

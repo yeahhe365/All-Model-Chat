@@ -1,8 +1,8 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../contexts/I18nContext';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { setupStoreStateReset } from '../../test/storeTestUtils';
 import { ModelVoiceSettings } from './ModelVoiceSettings';
 import { MediaResolution } from '../../types/settings';
 
@@ -45,8 +45,8 @@ vi.mock('../shared/Select', () => ({
 }));
 
 describe('ModelVoiceSettings media resolution options', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   const baseProps = {
     setModelId: vi.fn(),
@@ -69,22 +69,13 @@ describe('ModelVoiceSettings media resolution options', () => {
     onUpdateSetting: vi.fn(),
   };
 
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'en' });
-  });
-
   afterEach(() => {
     vi.clearAllMocks();
-    useSettingsStore.setState(initialState);
   });
 
   const renderSettings = (modelId: string) => {
     act(() => {
-      renderer.root.render(
-        <I18nProvider>
-          <ModelVoiceSettings {...baseProps} modelId={modelId} />
-        </I18nProvider>,
-      );
+      renderer.root.render(<ModelVoiceSettings {...baseProps} modelId={modelId} />);
     });
   };
 

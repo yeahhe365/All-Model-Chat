@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
+import { setTestMatchMedia } from '@/test/browserEnvironment';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { WelcomeScreen } from './WelcomeScreen';
@@ -13,16 +14,7 @@ const advanceTypewriter = async (characterCount: number) => {
 };
 
 const setHoverCapablePointer = (matches: boolean) => {
-  vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({
-    matches: query === '(hover: hover) and (pointer: fine)' ? matches : false,
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
-  }));
+  setTestMatchMedia((query) => query === '(hover: hover) and (pointer: fine)' && matches);
 };
 
 describe('WelcomeScreen', () => {

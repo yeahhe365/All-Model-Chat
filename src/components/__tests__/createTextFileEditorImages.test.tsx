@@ -1,7 +1,6 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WindowProvider } from '../../contexts/WindowContext';
 import { CreateTextFileEditor } from '../modals/CreateTextFileEditor';
 
 describe('CreateTextFileEditor image insertion', () => {
@@ -44,16 +43,14 @@ describe('CreateTextFileEditor image insertion', () => {
 
     await act(async () => {
       renderer.render(
-        <WindowProvider>
-          <CreateTextFileEditor
-            onConfirm={onConfirm}
-            onCancel={vi.fn()}
-            isProcessing={false}
-            isLoading={false}
-            initialFilename="draft.md"
-            themeId="pearl"
-          />
-        </WindowProvider>,
+        <CreateTextFileEditor
+          onConfirm={onConfirm}
+          onCancel={vi.fn()}
+          isProcessing={false}
+          isLoading={false}
+          initialFilename="draft.md"
+          themeId="pearl"
+        />,
       );
     });
 

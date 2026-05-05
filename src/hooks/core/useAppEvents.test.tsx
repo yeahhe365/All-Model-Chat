@@ -4,6 +4,7 @@ import type { ModelOption } from '../../types';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 import { useAppEvents } from './useAppEvents';
 import { createAppSettings, createChatSettings } from '@/test/factories';
+import { setTestMatchMedia } from '@/test/browserEnvironment';
 import { renderHook } from '@/test/testUtils';
 
 const registerPwaMock = vi.fn();
@@ -66,15 +67,7 @@ describe('useAppEvents manual update checks', () => {
       },
     );
 
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      value: vi.fn(() => ({
-        matches: false,
-        media: '(display-mode: standalone)',
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })),
-    });
+    setTestMatchMedia(false);
   });
 
   afterEach(() => {

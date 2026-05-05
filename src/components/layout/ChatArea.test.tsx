@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
+import { setTestMatchMedia } from '@/test/browserEnvironment';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatAreaProps } from '../../test/chatAreaFixtures';
 import { ChatArea } from './ChatArea';
@@ -137,20 +138,7 @@ describe('ChatArea provider slice memoization', () => {
       writable: true,
       value: windowInnerWidth,
     });
-    Object.defineProperty(window, 'matchMedia', {
-      configurable: true,
-      writable: true,
-      value: vi.fn().mockImplementation((query: string) => ({
-        matches: matchMediaMatches,
-        media: query,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-        onchange: null,
-      })),
-    });
+    setTestMatchMedia(matchMediaMatches);
     Object.defineProperty(window.navigator, 'virtualKeyboard', {
       configurable: true,
       value: {

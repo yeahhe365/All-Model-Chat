@@ -1,7 +1,6 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../contexts/I18nContext';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 import { HistorySidebar } from './HistorySidebar';
 
@@ -10,41 +9,39 @@ vi.mock('@formkit/auto-animate/react', () => ({
 }));
 
 describe('HistorySidebar search shortcut', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
 
   it('opens and focuses chat search when the global focus event is dispatched', async () => {
     const onToggle = vi.fn();
 
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <HistorySidebar
-            isOpen={false}
-            onToggle={onToggle}
-            onAutoClose={vi.fn()}
-            sessions={[]}
-            groups={[]}
-            activeSessionId={null}
-            loadingSessionIds={new Set()}
-            generatingTitleSessionIds={new Set()}
-            onSelectSession={vi.fn()}
-            onNewChat={vi.fn()}
-            onDeleteSession={vi.fn()}
-            onRenameSession={vi.fn()}
-            onTogglePinSession={vi.fn()}
-            onDuplicateSession={vi.fn()}
-            onOpenExportModal={vi.fn()}
-            onAddNewGroup={vi.fn()}
-            onDeleteGroup={vi.fn()}
-            onRenameGroup={vi.fn()}
-            onMoveSessionToGroup={vi.fn()}
-            onToggleGroupExpansion={vi.fn()}
-            onOpenSettingsModal={vi.fn()}
-            themeId="pearl"
-            newChatShortcut=""
-            searchChatsShortcut="Ctrl + K"
-          />
-        </I18nProvider>,
+        <HistorySidebar
+          isOpen={false}
+          onToggle={onToggle}
+          onAutoClose={vi.fn()}
+          sessions={[]}
+          groups={[]}
+          activeSessionId={null}
+          loadingSessionIds={new Set()}
+          generatingTitleSessionIds={new Set()}
+          onSelectSession={vi.fn()}
+          onNewChat={vi.fn()}
+          onDeleteSession={vi.fn()}
+          onRenameSession={vi.fn()}
+          onTogglePinSession={vi.fn()}
+          onDuplicateSession={vi.fn()}
+          onOpenExportModal={vi.fn()}
+          onAddNewGroup={vi.fn()}
+          onDeleteGroup={vi.fn()}
+          onRenameGroup={vi.fn()}
+          onMoveSessionToGroup={vi.fn()}
+          onToggleGroupExpansion={vi.fn()}
+          onOpenSettingsModal={vi.fn()}
+          themeId="pearl"
+          newChatShortcut=""
+          searchChatsShortcut="Ctrl + K"
+        />,
       );
     });
 
@@ -62,34 +59,32 @@ describe('HistorySidebar search shortcut', () => {
   it('shows the chat search shortcut in the collapsed search tooltip', async () => {
     await act(async () => {
       renderer.root.render(
-        <I18nProvider>
-          <HistorySidebar
-            isOpen={false}
-            onToggle={vi.fn()}
-            onAutoClose={vi.fn()}
-            sessions={[]}
-            groups={[]}
-            activeSessionId={null}
-            loadingSessionIds={new Set()}
-            generatingTitleSessionIds={new Set()}
-            onSelectSession={vi.fn()}
-            onNewChat={vi.fn()}
-            onDeleteSession={vi.fn()}
-            onRenameSession={vi.fn()}
-            onTogglePinSession={vi.fn()}
-            onDuplicateSession={vi.fn()}
-            onOpenExportModal={vi.fn()}
-            onAddNewGroup={vi.fn()}
-            onDeleteGroup={vi.fn()}
-            onRenameGroup={vi.fn()}
-            onMoveSessionToGroup={vi.fn()}
-            onToggleGroupExpansion={vi.fn()}
-            onOpenSettingsModal={vi.fn()}
-            themeId="pearl"
-            newChatShortcut=""
-            searchChatsShortcut="Ctrl + K"
-          />
-        </I18nProvider>,
+        <HistorySidebar
+          isOpen={false}
+          onToggle={vi.fn()}
+          onAutoClose={vi.fn()}
+          sessions={[]}
+          groups={[]}
+          activeSessionId={null}
+          loadingSessionIds={new Set()}
+          generatingTitleSessionIds={new Set()}
+          onSelectSession={vi.fn()}
+          onNewChat={vi.fn()}
+          onDeleteSession={vi.fn()}
+          onRenameSession={vi.fn()}
+          onTogglePinSession={vi.fn()}
+          onDuplicateSession={vi.fn()}
+          onOpenExportModal={vi.fn()}
+          onAddNewGroup={vi.fn()}
+          onDeleteGroup={vi.fn()}
+          onRenameGroup={vi.fn()}
+          onMoveSessionToGroup={vi.fn()}
+          onToggleGroupExpansion={vi.fn()}
+          onOpenSettingsModal={vi.fn()}
+          themeId="pearl"
+          newChatShortcut=""
+          searchChatsShortcut="Ctrl + K"
+        />,
       );
     });
 

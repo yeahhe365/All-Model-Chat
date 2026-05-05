@@ -1,37 +1,29 @@
 import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../../contexts/I18nContext';
-import { useSettingsStore } from '../../../../stores/settingsStore';
+import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setupStoreStateReset } from '../../../../test/storeTestUtils';
 import { ModelListView } from './ModelListView';
 
 describe('ModelListView', () => {
-  const renderer = setupTestRenderer();
-  const initialState = useSettingsStore.getState();
-
-  beforeEach(() => {
-    useSettingsStore.setState({ language: 'en' });
-  });
+  const renderer = setupTestRenderer({ providers: { language: 'en' } });
+  setupStoreStateReset();
 
   afterEach(() => {
     vi.clearAllMocks();
-    useSettingsStore.setState(initialState);
   });
 
   it('renders a plain model list without search, badges, or section labels', () => {
     act(() => {
       renderer.root.render(
-        <I18nProvider>
-          <ModelListView
-            availableModels={[
-              { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
-              { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
-              { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image Preview' },
-            ]}
-            selectedModelId="gemini-3-flash-preview"
-            onSelectModel={vi.fn()}
-          />
-        </I18nProvider>,
+        <ModelListView
+          availableModels={[
+            { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
+            { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
+            { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image Preview' },
+          ]}
+          selectedModelId="gemini-3-flash-preview"
+          onSelectModel={vi.fn()}
+        />,
       );
     });
 

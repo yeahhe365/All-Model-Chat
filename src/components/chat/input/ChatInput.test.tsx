@@ -1,5 +1,5 @@
-import { act } from 'react';
-import { setupTestRenderer } from '@/test/testUtils';
+import { act, type ReactNode } from 'react';
+import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type InputCommand, type UploadedFile } from '../../../types';
 import { createChatAreaProviderValue } from '../../../test/chatAreaFixtures';
@@ -63,18 +63,13 @@ const mockChatStoreSubscribers = vi.hoisted(
   () => new Set<(state: typeof mockChatStoreState, previousState: typeof mockChatStoreState) => void>(),
 );
 
-vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
-
-  return createI18nMockModule();
-});
-
 vi.mock('../../../hooks/useDevice', () => ({
   useIsDesktop: () => true,
   useIsMobile: () => false,
 }));
 
 vi.mock('../../../contexts/WindowContext', () => ({
+  WindowProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useWindowContext: () => ({
     document,
   }),
@@ -267,7 +262,7 @@ const createProviderValue = (commandedInput: InputCommand | null) =>
   });
 
 describe('ChatInput', () => {
-  const renderer = setupTestRenderer();
+  const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
 
   const setTextareaValue = (textarea: HTMLTextAreaElement, value: string) => {
     const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
@@ -664,9 +659,7 @@ describe('ChatInput', () => {
     });
 
     expect(renderer.container.querySelector('[data-testid="queued-card"]')?.textContent).toContain('Queue this next');
-    expect(renderer.container.querySelector('[data-testid="queued-title"]')?.textContent).toBe(
-      'queuedSubmission_title',
-    );
+    expect(renderer.container.querySelector('[data-testid="queued-title"]')?.textContent).toBe('Next up');
     expect(textarea?.value).toBe('');
 
     const completedProviderValue = {
@@ -1283,6 +1276,8 @@ describe('ChatInput', () => {
     });
 
     expect(onSendMessage).not.toHaveBeenCalled();
-    expect(setAppFileError).toHaveBeenCalledWith('messageSender_fileUploadFailedBeforeSend');
+    expect(setAppFileError).toHaveBeenCalledWith(
+      'Attachment upload failed. Remove the failed file or upload it again before sending.',
+    );
   });
 });
