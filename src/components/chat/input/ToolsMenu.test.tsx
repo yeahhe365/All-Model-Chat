@@ -5,9 +5,11 @@ import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { ToolsMenu } from './ToolsMenu';
 
-vi.mock('../../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
-}));
+vi.mock('../../../services/logService', async () => {
+  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 const createToolStates = (
   enabled: Partial<

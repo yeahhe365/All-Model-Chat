@@ -1,9 +1,11 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../services/logService', () => ({
-  logService: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 vi.mock('../../utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: vi.fn(),

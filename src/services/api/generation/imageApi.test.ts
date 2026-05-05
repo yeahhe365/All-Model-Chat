@@ -9,9 +9,11 @@ vi.mock('../apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 
-vi.mock('../../logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
-}));
+vi.mock('../../logService', async () => {
+  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 import { generateImagesApi } from './imageApi';
 

@@ -14,20 +14,17 @@ vi.mock('../file-upload/uploadFileItem', () => ({
   uploadFileItem: mockUploadFileItem,
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
 
-vi.mock('../../utils/db', () => ({
-  dbService: {
-    getAllSessionMetadata: vi.fn().mockResolvedValue([]),
-    getSession: vi.fn().mockResolvedValue(null),
-    getAllGroups: vi.fn().mockResolvedValue([]),
-    saveSession: vi.fn().mockResolvedValue(undefined),
-    deleteSession: vi.fn().mockResolvedValue(undefined),
-    setAllGroups: vi.fn().mockResolvedValue(undefined),
-  },
-}));
+  return { logService: createMockLogService() };
+});
+
+vi.mock('../../utils/db', async () => {
+  const { createMockDbService } = await import('../../test/serviceTestDoubles');
+
+  return { dbService: createMockDbService() };
+});
 
 vi.mock('../../contexts/I18nContext', () => ({
   useI18n: () => ({

@@ -11,15 +11,11 @@ vi.mock('../apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 
-vi.mock('../../logService', () => ({
-  logService: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-    recordTokenUsage: recordTokenUsageMock,
-  },
-}));
+vi.mock('../../logService', async () => {
+  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService({ recordTokenUsage: recordTokenUsageMock }) };
+});
 
 vi.mock('../../../utils/fileHelpers', () => ({
   blobToBase64: blobToBase64Mock,

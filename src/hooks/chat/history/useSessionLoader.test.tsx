@@ -24,21 +24,17 @@ const {
   mockResolveSupportedModelId: vi.fn((modelId: string | undefined, fallback: string) => modelId ?? fallback),
 }));
 
-vi.mock('../../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('../../../services/logService', async () => {
+  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
 
-vi.mock('../../../utils/db', () => ({
-  dbService: {
-    getSession: mockGetSession,
-    getAllSessionMetadata: vi.fn(),
-    getAllGroups: vi.fn(),
-  },
-}));
+  return { logService: createMockLogService() };
+});
+
+vi.mock('../../../utils/db', async () => {
+  const { createMockDbService } = await import('../../../test/serviceTestDoubles');
+
+  return { dbService: createMockDbService({ getSession: mockGetSession }) };
+});
 
 vi.mock('../../../utils/chat/session', () => ({
   createNewSession: mockCreateNewSession,

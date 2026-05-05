@@ -12,8 +12,10 @@ vi.mock('../../../hooks/useCopyToClipboard', () => ({
   }),
 }));
 
-vi.mock('../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
+vi.mock('../../../contexts/I18nContext', async () => {
+  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+
+  return createI18nMock({
     t: (key: string) =>
       ({
         selectedFile_cancelUpload: 'Cancel Upload',
@@ -29,8 +31,8 @@ vi.mock('../../../contexts/I18nContext', () => ({
         selectedFile_processingGemini: 'Processing on Gemini',
         selectedFile_cancelled: 'Cancelled',
       })[key] ?? key,
-  }),
-}));
+  });
+});
 
 vi.mock('react-pdf', () => ({
   Document: ({ children }: { children: React.ReactNode }) => <div data-testid="mock-pdf-document">{children}</div>,

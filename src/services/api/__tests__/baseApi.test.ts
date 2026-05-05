@@ -21,17 +21,17 @@ vi.mock('@google/genai', () => ({
   }),
 }));
 
-// Mock dbService
-vi.mock('../../../utils/db', () => ({
-  dbService: {
-    getAppSettings: vi.fn(),
-  },
-}));
+vi.mock('../../../utils/db', async () => {
+  const { createMockDbService } = await import('../../../test/serviceTestDoubles');
 
-// Mock logService
-vi.mock('../../logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
-}));
+  return { dbService: createMockDbService() };
+});
+
+vi.mock('../../logService', async () => {
+  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 // Mock model classifiers while preserving normalization helpers.
 vi.mock('../../../utils/modelHelpers', async () => {

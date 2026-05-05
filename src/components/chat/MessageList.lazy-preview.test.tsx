@@ -1,22 +1,8 @@
-import type { ComponentType, ReactNode } from 'react';
 import { act } from 'react';
 import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage, UploadedFile } from '../../types';
 import { createChatAreaProviderValue } from '../../test/chatAreaFixtures';
-
-interface VirtuosoMockProps<T> {
-  data: T[];
-  itemContent: (index: number, item: T) => ReactNode;
-  components?: {
-    Footer?: ComponentType;
-  };
-}
-
-interface MessageMockProps {
-  message: ChatMessage;
-  onImageClick: (file: UploadedFile) => void;
-}
 
 const file: UploadedFile = {
   id: 'file-1',
@@ -60,67 +46,37 @@ const mockedModuleIds = [
 
 const loadMessageList = async (moduleLoadTracker: { count: number }) => {
   vi.resetModules();
+  const {
+    createFilePreviewModalMock,
+    createMessageListScrollMock,
+    createMessagePreviewButtonMock,
+    createNullComponentMock,
+    createVirtuosoMock,
+  } = await import('../../test/messageListTestDoubles');
 
-  vi.doMock('react-virtuoso', () => ({
-    Virtuoso: ({ data, itemContent, components }: VirtuosoMockProps<ChatMessage>) => (
-      <div data-testid="virtuoso">
-        {data.map((item, index) => itemContent(index, item))}
-        {components?.Footer ? <components.Footer /> : null}
-      </div>
-    ),
-  }));
+  vi.doMock('react-virtuoso', () => createVirtuosoMock<ChatMessage>());
 
-  vi.doMock('../message/Message', () => ({
-    Message: ({ message, onImageClick }: MessageMockProps) => (
-      <button type="button" data-testid={`open-preview-${message.id}`} onClick={() => onImageClick(message.files![0])}>
-        Open preview
-      </button>
-    ),
-  }));
+  vi.doMock('../message/Message', () => createMessagePreviewButtonMock());
 
   vi.doMock('../modals/FilePreviewModal', () => {
-    moduleLoadTracker.count += 1;
-
-    return {
-      FilePreviewModal: ({ file: previewFile }: { file: UploadedFile | null }) =>
-        previewFile ? <div data-testid="file-preview-modal">{previewFile.name}</div> : null,
-    };
+    return createFilePreviewModalMock({
+      onModuleLoad: () => {
+        moduleLoadTracker.count += 1;
+      },
+    });
   });
 
-  vi.doMock('../modals/FileConfigurationModal', () => ({
-    FileConfigurationModal: () => null,
-  }));
+  vi.doMock('../modals/FileConfigurationModal', () => createNullComponentMock('FileConfigurationModal'));
 
-  vi.doMock('./message-list/hooks/useMessageListScroll', () => ({
-    useMessageListScroll: () => ({
-      virtuosoRef: { current: null },
-      handleScrollerRef: () => {},
-      handleScroll: () => {},
-      setAtBottom: () => {},
-      onRangeChanged: () => {},
-      scrollToPrevTurn: () => {},
-      scrollToNextTurn: () => {},
-      showScrollDown: false,
-      showScrollUp: false,
-      scrollerRef: { current: null },
-    }),
-  }));
+  vi.doMock('./message-list/hooks/useMessageListScroll', () => createMessageListScrollMock());
 
-  vi.doMock('./message-list/ScrollNavigation', () => ({
-    ScrollNavigation: () => null,
-  }));
+  vi.doMock('./message-list/ScrollNavigation', () => createNullComponentMock('ScrollNavigation'));
 
-  vi.doMock('./message-list/TextSelectionToolbar', () => ({
-    TextSelectionToolbar: () => null,
-  }));
+  vi.doMock('./message-list/TextSelectionToolbar', () => createNullComponentMock('TextSelectionToolbar'));
 
-  vi.doMock('./message-list/MessageListFooter', () => ({
-    MessageListFooter: () => null,
-  }));
+  vi.doMock('./message-list/MessageListFooter', () => createNullComponentMock('MessageListFooter'));
 
-  vi.doMock('./message-list/WelcomeScreen', () => ({
-    WelcomeScreen: () => null,
-  }));
+  vi.doMock('./message-list/WelcomeScreen', () => createNullComponentMock('WelcomeScreen'));
 
   const module = await import('./MessageList');
   const contextModule = await import('../layout/chat-area/ChatAreaContext');

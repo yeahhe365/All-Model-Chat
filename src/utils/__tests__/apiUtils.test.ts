@@ -4,13 +4,11 @@ import { ChatSettings } from '../../types';
 import { getKeyForRequest, isServerManagedApiEnabledForProxyRequests, SERVER_MANAGED_API_KEY } from '../apiUtils';
 import { logService } from '../../services/logService';
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    recordApiKeyUsage: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 describe('getKeyForRequest', () => {
   beforeEach(() => {

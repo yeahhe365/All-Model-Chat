@@ -12,11 +12,11 @@ const { mockUseMessageStream, mockTranslateText } = vi.hoisted(() => ({
   mockTranslateText: vi.fn(),
 }));
 
-vi.mock('../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock('../../../contexts/I18nContext', async () => {
+  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+
+  return createI18nMock();
+});
 
 vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),

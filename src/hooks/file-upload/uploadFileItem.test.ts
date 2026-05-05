@@ -25,9 +25,11 @@ vi.mock('../../utils/fileHelpers', async (importOriginal) => {
   };
 });
 
-vi.mock('../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 import { uploadFileItem } from './uploadFileItem';
 

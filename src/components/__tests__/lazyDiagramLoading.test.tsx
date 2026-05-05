@@ -2,15 +2,11 @@ import { act } from 'react';
 import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    recordApiKeyUsage: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 interface MountedRoot {
   container: HTMLDivElement;

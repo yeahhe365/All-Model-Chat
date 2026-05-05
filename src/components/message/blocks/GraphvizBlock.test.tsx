@@ -3,11 +3,11 @@ import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GraphvizBlock } from './GraphvizBlock';
 
-vi.mock('../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock('../../../contexts/I18nContext', async () => {
+  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+
+  return createI18nMock();
+});
 
 vi.mock('@viz-js/viz', () => ({
   instance: vi.fn().mockRejectedValue(new Error('WASM failed')),

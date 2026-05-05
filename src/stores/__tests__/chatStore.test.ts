@@ -26,21 +26,17 @@ window.history.pushState = vi.fn();
 delete (window as any).location;
 window.location = { pathname: '/' } as any;
 
-// Mock dbService
-vi.mock('../../utils/db', () => ({
-  dbService: {
-    getAllSessionMetadata: vi.fn().mockResolvedValue([]),
-    getSession: vi.fn().mockResolvedValue(null),
-    getAllGroups: vi.fn().mockResolvedValue([]),
-    saveSession: vi.fn().mockResolvedValue(undefined),
-    deleteSession: vi.fn().mockResolvedValue(undefined),
-    setAllGroups: vi.fn().mockResolvedValue(undefined),
-  },
-}));
+vi.mock('../../utils/db', async () => {
+  const { createMockDbService } = await import('../../test/serviceTestDoubles');
 
-vi.mock('../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
-}));
+  return { dbService: createMockDbService() };
+});
+
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 vi.mock('../../utils/chat/session', () => ({
   rehydrateSessionFiles: vi.fn((session: any) => session),

@@ -14,11 +14,11 @@ const { mockLazyMarkdownRenderer } = vi.hoisted(() => ({
   ),
 }));
 
-vi.mock('../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock('../../../contexts/I18nContext', async () => {
+  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+
+  return createI18nMock();
+});
 
 vi.mock('../../message/LazyMarkdownRenderer', () => ({
   LazyMarkdownRenderer: mockLazyMarkdownRenderer,

@@ -10,11 +10,11 @@ const { mockUseMessageStream } = vi.hoisted(() => ({
   })),
 }));
 
-vi.mock('../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock('../../../contexts/I18nContext', async () => {
+  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+
+  return createI18nMock();
+});
 
 vi.mock('../GroundedResponse', () => ({
   GroundedResponse: () => <div data-testid="grounded-response" />,

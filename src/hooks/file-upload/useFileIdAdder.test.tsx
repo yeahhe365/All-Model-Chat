@@ -21,16 +21,20 @@ vi.mock('../../utils/apiUtils', () => ({
   ),
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 vi.mock('../../services/api/fileApi', () => ({
   getFileMetadataApi: getFileMetadataMock,
 }));
 
-vi.mock('../../contexts/I18nContext', () => ({
-  useI18n: () => ({
+vi.mock('../../contexts/I18nContext', async () => {
+  const { createI18nMock } = await import('../../test/i18nTestDoubles');
+
+  return createI18nMock({
     t: (key: string) =>
       ({
         fileIdAdder_invalidFileId: '无效的文件 ID 格式。',
@@ -41,8 +45,8 @@ vi.mock('../../contexts/I18nContext', () => ({
         fileIdAdder_notFoundLabel: '未找到：files/test-file',
         apiRuntime_keyNotConfigured: 'API 密钥未配置。',
       })[key] ?? key,
-  }),
-}));
+  });
+});
 
 import { useFileIdAdder } from './useFileIdAdder';
 import { renderHook } from '@/test/testUtils';

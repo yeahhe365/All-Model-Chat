@@ -10,15 +10,11 @@ vi.mock('./apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 
-vi.mock('../logService', () => ({
-  logService: {
-    error: errorMock,
-    warn: vi.fn(),
-    info: infoMock,
-    debug: vi.fn(),
-    recordTokenUsage: vi.fn(),
-  },
-}));
+vi.mock('../logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService({ error: errorMock, info: infoMock }) };
+});
 
 import { executeConfiguredApiRequest } from './apiExecutor';
 

@@ -6,14 +6,11 @@ const { mockGetLiveApiClient, mockFloat32ToPCM16Base64 } = vi.hoisted(() => ({
   mockFloat32ToPCM16Base64: vi.fn(() => 'pcm-base64'),
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 vi.mock('../../services/api/liveApiAuth', () => ({
   LiveApiAuthConfigurationError: class LiveApiAuthConfigurationError extends Error {

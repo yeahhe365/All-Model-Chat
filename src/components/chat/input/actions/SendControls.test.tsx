@@ -2,11 +2,11 @@ import { act } from 'react';
 import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
-  }),
-}));
+vi.mock('../../../../contexts/I18nContext', async () => {
+  const { createI18nMock } = await import('../../../../test/i18nTestDoubles');
+
+  return createI18nMock();
+});
 
 import { SendControls } from './SendControls';
 

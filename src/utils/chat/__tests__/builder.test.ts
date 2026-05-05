@@ -19,10 +19,11 @@ vi.mock('../../../utils/fileHelpers', () => ({
   base64ToBlob: vi.fn(() => new Blob(['data'])),
 }));
 
-// Mock logService
-vi.mock('../../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-}));
+vi.mock('../../../services/logService', async () => {
+  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 // Mock modelHelpers
 vi.mock('../../../utils/modelHelpers', () => ({

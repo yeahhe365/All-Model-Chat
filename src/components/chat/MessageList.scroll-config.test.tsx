@@ -1,98 +1,64 @@
-import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '../../types';
 import { createChatAreaProviderValue, renderWithChatAreaProviders } from '../../test/chatAreaFixtures';
 import { MessageList } from './MessageList';
+import type { VirtuosoMockProps } from '../../test/messageListTestDoubles';
 
-const virtuosoPropsSpy = vi.fn();
-
-interface VirtuosoMockProps<T> {
-  data: T[];
-  itemContent: (index: number, item: T) => ReactNode;
-  computeItemKey?: (index: number, item: T) => React.Key;
-}
+const virtuosoPropsSpy = vi.hoisted(() => vi.fn());
 
 vi.mock('react-virtuoso', async () => {
-  const { forwardRef: reactForwardRef } = await import('react');
+  const { createVirtuosoMock } = await import('../../test/messageListTestDoubles');
 
-  return {
-    Virtuoso: reactForwardRef<HTMLDivElement, VirtuosoMockProps<ChatMessage> & Record<string, unknown>>(
-      (props, ref) => {
-        const typedProps = props as VirtuosoMockProps<ChatMessage> & Record<string, unknown>;
-
-        virtuosoPropsSpy(typedProps);
-
-        return (
-          <div ref={ref} data-testid="virtuoso">
-            {typedProps.data.map((item: ChatMessage, index: number) => (
-              <div key={item.id}>{typedProps.itemContent(index, item)}</div>
-            ))}
-          </div>
-        );
-      },
-    ),
-  };
+  return createVirtuosoMock<ChatMessage>(virtuosoPropsSpy);
 });
 
-vi.mock('../message/Message', () => ({
-  Message: () => <div data-testid="message-row" />,
-}));
+vi.mock('../message/Message', async () => {
+  const { createMessageRowMock } = await import('../../test/messageListTestDoubles');
 
-vi.mock('../modals/FileConfigurationModal', () => ({
-  FileConfigurationModal: () => null,
-}));
+  return createMessageRowMock();
+});
 
-vi.mock('../../hooks/useMessageListUI', () => ({
-  useMessageListUI: () => ({
-    previewFile: null,
-    isHtmlPreviewModalOpen: false,
-    htmlToPreview: null,
-    initialTrueFullscreenRequest: false,
-    configuringFile: null,
-    setConfiguringFile: () => {},
-    handleFileClick: () => {},
-    closeFilePreviewModal: () => {},
-    allImages: [],
-    currentImageIndex: -1,
-    handlePrevImage: () => {},
-    handleNextImage: () => {},
-    handleOpenHtmlPreview: () => {},
-    handleCloseHtmlPreview: () => {},
-    handleConfigureFile: () => {},
-    handleSaveFileConfig: () => {},
-  }),
-}));
+vi.mock('../modals/FileConfigurationModal', async () => {
+  const { createNullComponentMock } = await import('../../test/messageListTestDoubles');
 
-vi.mock('./message-list/hooks/useMessageListScroll', () => ({
-  useMessageListScroll: () => ({
-    virtuosoRef: { current: null },
-    handleScrollerRef: () => {},
-    handleScroll: () => {},
-    setAtBottom: () => {},
-    onRangeChanged: () => {},
-    scrollToPrevTurn: () => {},
-    scrollToNextTurn: () => {},
-    showScrollDown: false,
-    showScrollUp: false,
-    scrollerRef: null,
-  }),
-}));
+  return createNullComponentMock('FileConfigurationModal');
+});
 
-vi.mock('./message-list/ScrollNavigation', () => ({
-  ScrollNavigation: () => null,
-}));
+vi.mock('../../hooks/useMessageListUI', async () => {
+  const { createMessageListUIMock } = await import('../../test/messageListTestDoubles');
 
-vi.mock('./message-list/TextSelectionToolbar', () => ({
-  TextSelectionToolbar: () => null,
-}));
+  return createMessageListUIMock();
+});
 
-vi.mock('./message-list/MessageListFooter', () => ({
-  MessageListFooter: () => null,
-}));
+vi.mock('./message-list/hooks/useMessageListScroll', async () => {
+  const { createMessageListScrollMock } = await import('../../test/messageListTestDoubles');
 
-vi.mock('./message-list/WelcomeScreen', () => ({
-  WelcomeScreen: () => null,
-}));
+  return createMessageListScrollMock({ scrollerRef: null });
+});
+
+vi.mock('./message-list/ScrollNavigation', async () => {
+  const { createNullComponentMock } = await import('../../test/messageListTestDoubles');
+
+  return createNullComponentMock('ScrollNavigation');
+});
+
+vi.mock('./message-list/TextSelectionToolbar', async () => {
+  const { createNullComponentMock } = await import('../../test/messageListTestDoubles');
+
+  return createNullComponentMock('TextSelectionToolbar');
+});
+
+vi.mock('./message-list/MessageListFooter', async () => {
+  const { createNullComponentMock } = await import('../../test/messageListTestDoubles');
+
+  return createNullComponentMock('MessageListFooter');
+});
+
+vi.mock('./message-list/WelcomeScreen', async () => {
+  const { createNullComponentMock } = await import('../../test/messageListTestDoubles');
+
+  return createNullComponentMock('WelcomeScreen');
+});
 
 const messages: ChatMessage[] = [
   {

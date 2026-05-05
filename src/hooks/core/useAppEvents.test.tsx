@@ -28,13 +28,11 @@ vi.mock('../ui/useFullscreen', () => ({
   }),
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 vi.mock('../../pwa/install', () => ({
   getPwaInstallState: vi.fn(() => ({ state: 'installed' })),

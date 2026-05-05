@@ -2,14 +2,12 @@ import { act } from 'react';
 import { createTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LiveStatusBanner } from './LiveStatusBanner';
-import { getTranslator } from '../../../utils/translations';
 
-vi.mock('../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    language: 'en',
-    t: getTranslator('en'),
-  }),
-}));
+vi.mock('../../../contexts/I18nContext', async () => {
+  const { createRealI18nMock } = await import('../../../test/i18nTestDoubles');
+
+  return createRealI18nMock('en');
+});
 
 const renderBanner = (props: React.ComponentProps<typeof LiveStatusBanner>) => {
   const root = createTestRenderer();

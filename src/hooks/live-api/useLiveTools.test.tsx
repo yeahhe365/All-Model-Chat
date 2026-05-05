@@ -3,14 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLiveTools } from './useLiveTools';
 import { renderHook } from '@/test/testUtils';
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+
+  return { logService: createMockLogService() };
+});
 
 describe('useLiveTools', () => {
   beforeEach(() => {
