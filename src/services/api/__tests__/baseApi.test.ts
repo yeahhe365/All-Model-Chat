@@ -22,15 +22,15 @@ vi.mock('@google/genai', () => ({
 }));
 
 vi.mock('../../../utils/db', async () => {
-  const { createMockDbService } = await import('../../../test/serviceTestDoubles');
+  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { dbService: createMockDbService() };
+  return createDbServiceMockModule();
 });
 
 vi.mock('../../logService', async () => {
-  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 // Mock model classifiers while preserving normalization helpers.

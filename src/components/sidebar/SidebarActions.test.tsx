@@ -1,26 +1,8 @@
 import React, { useState } from 'react';
 import { act } from 'react';
-import { createTestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SidebarActions } from './SidebarActions';
-
-const render = (node: React.ReactNode) => {
-  const root = createTestRenderer();
-  const { container } = root;
-
-  act(() => {
-    root.render(node);
-  });
-
-  return {
-    container,
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
 
 const setInputValue = (input: HTMLInputElement, value: string) => {
   const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
@@ -52,12 +34,21 @@ const SidebarActionsHarness = ({
 };
 
 describe('SidebarActions', () => {
+  const renderer = setupTestRenderer();
+  const render = (node: React.ReactNode) => {
+    act(() => {
+      renderer.render(node);
+    });
+
+    return renderer.container;
+  };
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it('renders New Group as its own full-row action below Search', () => {
-    const { container, unmount } = render(
+    const container = render(
       <SidebarActions
         onNewChat={vi.fn()}
         onAddNewGroup={vi.fn()}
@@ -86,12 +77,10 @@ describe('SidebarActions', () => {
     expect(folderIcon?.querySelectorAll('path')[1]?.getAttribute('d')).toBe('M3 7.5V18c0 .83.67 1.5 1.5 1.5h8');
     expect(folderIcon?.querySelectorAll('path')[2]?.getAttribute('d')).toBe('M18 15v6M15 18h6');
     expect(container.querySelector('[data-testid="new-group-icon"]')).toBeNull();
-
-    unmount();
   });
 
   it('uses a tighter shared vertical stack for the primary sidebar actions', () => {
-    const { container, unmount } = render(
+    const container = render(
       <SidebarActions
         onNewChat={vi.fn()}
         onAddNewGroup={vi.fn()}
@@ -104,12 +93,10 @@ describe('SidebarActions', () => {
 
     const actionStack = container.querySelector('[data-testid="sidebar-actions-stack"]');
     expect(actionStack?.className).toContain('space-y-1');
-
-    unmount();
   });
 
   it('clears the search query when Escape closes the search input', () => {
-    const { container, unmount } = render(<SidebarActionsHarness />);
+    const container = render(<SidebarActionsHarness />);
 
     const openSearchButton = Array.from(container.querySelectorAll('button')).find(
       (element) => element.textContent?.trim() === 'Search',
@@ -143,12 +130,10 @@ describe('SidebarActions', () => {
 
     const reopenedInput = container.querySelector('input');
     expect((reopenedInput as HTMLInputElement).value).toBe('');
-
-    unmount();
   });
 
   it('only applies the focused search border while the input is actually focused', () => {
-    const { container, unmount } = render(<SidebarActionsHarness />);
+    const container = render(<SidebarActionsHarness />);
 
     const openSearchButton = Array.from(container.querySelectorAll('button')).find(
       (element) => element.textContent?.trim() === 'Search',
@@ -166,8 +151,6 @@ describe('SidebarActions', () => {
     expect(searchShell?.className).toContain('border-[var(--theme-border-secondary)]');
     expect(searchShell?.className).toContain('focus-within:border-[var(--theme-border-focus)]');
     expect(searchShell?.className).not.toContain('border-[var(--theme-border-focus)] rounded-lg');
-
-    unmount();
   });
 
   it('closes the sidebar after starting a new chat on mobile', () => {
@@ -179,9 +162,7 @@ describe('SidebarActions', () => {
 
     const onNewChat = vi.fn();
     const onCloseSidebar = vi.fn();
-    const { container, unmount } = render(
-      <SidebarActionsHarness onNewChat={onNewChat} onCloseSidebar={onCloseSidebar} />,
-    );
+    const container = render(<SidebarActionsHarness onNewChat={onNewChat} onCloseSidebar={onCloseSidebar} />);
 
     const newChatLink = container.querySelector('a');
     expect(newChatLink).not.toBeNull();
@@ -192,7 +173,5 @@ describe('SidebarActions', () => {
 
     expect(onNewChat).toHaveBeenCalledTimes(1);
     expect(onCloseSidebar).toHaveBeenCalledTimes(1);
-
-    unmount();
   });
 });

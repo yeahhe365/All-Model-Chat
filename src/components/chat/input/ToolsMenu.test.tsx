@@ -1,14 +1,14 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { ToolsMenu } from './ToolsMenu';
 
 vi.mock('../../../services/logService', async () => {
-  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 const createToolStates = (
@@ -29,22 +29,15 @@ const toolUtilityActions = {
 };
 
 describe('ToolsMenu', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('keeps local Python available for native audio models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-3.1-flash-live-preview"
@@ -70,7 +63,7 @@ describe('ToolsMenu', () => {
 
   it('hides code execution tooling for Gemini image-generation models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-3.1-flash-image-preview"
@@ -100,7 +93,7 @@ describe('ToolsMenu', () => {
 
   it('hides unsupported built-in tools for Gemma models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemma-3-27b-it"
@@ -128,7 +121,7 @@ describe('ToolsMenu', () => {
 
   it('shows a combination notice when local Python and built-in tools are enabled on non-Gemini-3 models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-2.5-pro"
@@ -145,7 +138,7 @@ describe('ToolsMenu', () => {
 
   it('does not show a combination notice for Gemini 3 models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ToolsMenu
             currentModelId="gemini-3.1-pro-preview"

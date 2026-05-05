@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
@@ -25,26 +25,20 @@ vi.mock('../../../services/api/openaiCompatibleApi', () => ({
   sendOpenAICompatibleMessageNonStream: sendOpenAICompatibleMessageNonStreamMock,
 }));
 
-vi.mock('../../../services/logService', () => ({
-  logService: {
-    recordApiKeyUsage: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('../../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 describe('ApiConfigSection', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
   const settingsFixture: AppSettings = {
     ...initialState.appSettings,
   };
 
   beforeEach(() => {
-    Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true);
     vi.clearAllMocks();
     generateContentMock.mockResolvedValue({});
     sendOpenAICompatibleMessageNonStreamMock.mockResolvedValue(undefined);
@@ -53,22 +47,16 @@ describe('ApiConfigSection', () => {
         generateContent: generateContentMock,
       },
     });
-
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     useSettingsStore.setState(initialState);
   });
 
   it('allows running connection test in server-managed mode without a browser-held key', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ApiConfigSection
             useCustomApiConfig
@@ -88,9 +76,9 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    expect(container.textContent).not.toContain('API & Connections');
+    expect(renderer.container.textContent).not.toContain('API & Connections');
 
-    const testButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const testButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Test Connection'),
     );
 
@@ -117,7 +105,7 @@ describe('ApiConfigSection', () => {
   it('updates translated labels when the global language changes', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ApiConfigSection
             useCustomApiConfig
@@ -137,27 +125,27 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    expect(container.textContent).not.toContain('API & Connections');
-    expect(container.textContent).toContain('Test Connection');
-    expect(container.textContent).toContain('File Transfer Method');
-    expect(container.textContent).not.toContain('API Mode');
-    expect(container.textContent).toContain('Gemini Native');
-    expect(container.textContent).toContain('OpenAI Compatible');
+    expect(renderer.container.textContent).not.toContain('API & Connections');
+    expect(renderer.container.textContent).toContain('Test Connection');
+    expect(renderer.container.textContent).toContain('File Transfer Method');
+    expect(renderer.container.textContent).not.toContain('API Mode');
+    expect(renderer.container.textContent).toContain('Gemini Native');
+    expect(renderer.container.textContent).toContain('OpenAI Compatible');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
     });
 
-    expect(container.textContent).not.toContain('API 与连接');
-    expect(container.textContent).toContain('测试连通性');
-    expect(container.textContent).toContain('文件传输方式');
-    expect(container.textContent).not.toContain('API 模式');
+    expect(renderer.container.textContent).not.toContain('API 与连接');
+    expect(renderer.container.textContent).toContain('测试连通性');
+    expect(renderer.container.textContent).toContain('文件传输方式');
+    expect(renderer.container.textContent).not.toContain('API 模式');
   });
 
   it('renders API mode choices as one segmented control surface', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ApiConfigSection
             useCustomApiConfig
@@ -177,7 +165,7 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    const modeControl = container.querySelector('[role="group"][aria-label="API Mode"]');
+    const modeControl = renderer.container.querySelector('[role="group"][aria-label="API Mode"]');
     const modeButtons = Array.from(modeControl?.querySelectorAll('button') ?? []);
 
     expect(modeControl).not.toBeNull();
@@ -191,7 +179,7 @@ describe('ApiConfigSection', () => {
   it('tests the OpenAI-compatible endpoint with the isolated OpenAI key when that global API mode is selected', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ApiConfigSection
             useCustomApiConfig
@@ -217,7 +205,7 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    const testButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const testButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Test Connection'),
     );
 
@@ -247,7 +235,7 @@ describe('ApiConfigSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ApiConfigSection
             useCustomApiConfig
@@ -272,7 +260,7 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    const apiKeyInput = container.querySelector('#api-key-input') as HTMLTextAreaElement | null;
+    const apiKeyInput = renderer.container.querySelector('#api-key-input') as HTMLTextAreaElement | null;
     expect(apiKeyInput).not.toBeNull();
 
     await act(async () => {
@@ -289,7 +277,7 @@ describe('ApiConfigSection', () => {
   it('explains that Live uses the browser API key directly without token endpoint settings', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ApiConfigSection
             useCustomApiConfig
@@ -309,10 +297,10 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('Live connects from this browser');
-    expect(container.textContent).toContain('uses your browser API key directly');
-    expect(container.textContent).not.toContain('/api/live-token');
-    expect(container.textContent).not.toContain('Advanced Live Settings');
-    expect(container.querySelector('#live-token-endpoint-input')).toBeNull();
+    expect(renderer.container.textContent).toContain('Live connects from this browser');
+    expect(renderer.container.textContent).toContain('uses your browser API key directly');
+    expect(renderer.container.textContent).not.toContain('/api/live-token');
+    expect(renderer.container.textContent).not.toContain('Advanced Live Settings');
+    expect(renderer.container.querySelector('#live-token-endpoint-input')).toBeNull();
   });
 });

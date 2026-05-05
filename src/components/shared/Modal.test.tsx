@@ -1,24 +1,14 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { Modal } from './Modal';
 
 describe('Modal', () => {
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('uses Tailwind v4 compatible default backdrop classes', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <Modal isOpen onClose={() => {}}>
           <div>Content</div>
         </Modal>,
@@ -35,7 +25,7 @@ describe('Modal', () => {
     const onClose = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <Modal isOpen onClose={onClose}>
           <div>Content</div>
         </Modal>,
@@ -45,7 +35,7 @@ describe('Modal', () => {
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <Modal isOpen={false} onClose={onClose}>
           <div>Content</div>
         </Modal>,

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createChatSettings } from '../../test/factories';
 
 const createSession = () => {
   const rawFile = new Blob(['hello world from indexeddb'], { type: 'text/plain' });
@@ -7,7 +8,7 @@ const createSession = () => {
     id: 'session-1',
     title: 'Stored Session',
     timestamp: 1,
-    settings: {} as any,
+    settings: createChatSettings(),
     messages: [
       {
         id: 'message-1',
@@ -52,7 +53,7 @@ describe('dbService estimateAppDataSize', () => {
     await dbService.setAllSessions([createSession()]);
     await dbService.setAllGroups([{ id: 'group-1', title: 'Pinned', timestamp: 1 }]);
 
-    const estimate = await (dbService as any).estimateAppDataSize();
+    const estimate = await dbService.estimateAppDataSize();
 
     expect(estimate.localStorageBytes).toBeGreaterThan(0);
     expect(estimate.indexedDbBytes).toBeGreaterThan(0);

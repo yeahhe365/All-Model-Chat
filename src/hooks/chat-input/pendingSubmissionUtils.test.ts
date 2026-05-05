@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createUploadedFile } from '@/test/factories';
 import type { UploadedFile } from '../../types';
 import {
   getBlockingFileUploadFailure,
@@ -7,14 +8,8 @@ import {
   shouldFlushPendingSubmission,
 } from './pendingSubmissionUtils';
 
-const makeFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
-  id: 'file-1',
-  name: 'file.png',
-  type: 'image/png',
-  size: 100,
-  uploadState: 'active',
-  ...overrides,
-});
+const makeFile = (overrides: Partial<UploadedFile> = {}) =>
+  createUploadedFile({ name: 'file.png', size: 100, ...overrides });
 
 describe('buildPendingChatInputSubmission', () => {
   it('captures a send snapshot with formatted text and fast mode', () => {

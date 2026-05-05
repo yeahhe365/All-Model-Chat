@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatMessage, SavedChatSession } from '../../types';
+import { createChatSettings } from '../../test/factories';
 import {
   createVirtualFullSessions,
   getSessionPersistenceChanges,
@@ -20,7 +21,7 @@ const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSessio
   title: 'Session',
   timestamp: 0,
   messages: [],
-  settings: {} as SavedChatSession['settings'],
+  settings: createChatSettings(),
   ...overrides,
 });
 

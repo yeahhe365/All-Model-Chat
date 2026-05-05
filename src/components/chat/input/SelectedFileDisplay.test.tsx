@@ -1,9 +1,10 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { pdfjs } from 'react-pdf';
 import { SelectedFileDisplay } from './SelectedFileDisplay';
 import type { UploadedFile } from '../../../types';
+import { createUploadedFile } from '../../../test/factories';
 
 vi.mock('../../../hooks/useCopyToClipboard', () => ({
   useCopyToClipboard: () => ({
@@ -13,9 +14,9 @@ vi.mock('../../../hooks/useCopyToClipboard', () => ({
 }));
 
 vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return createI18nMock({
+  return createI18nMockModule({
     t: (key: string) =>
       ({
         selectedFile_cancelUpload: 'Cancel Upload',
@@ -48,19 +49,17 @@ vi.mock('react-pdf', () => ({
   },
 }));
 
-const createFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
-  id: 'file-1',
-  name: 'notes.txt',
-  type: 'text/plain',
-  size: 128,
-  uploadState: 'active',
-  isProcessing: false,
-  ...overrides,
-});
+const createFile = (overrides: Partial<UploadedFile> = {}) =>
+  createUploadedFile({
+    name: 'notes.txt',
+    type: 'text/plain',
+    size: 128,
+    isProcessing: false,
+    ...overrides,
+  });
 
 describe('SelectedFileDisplay', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let originalIntersectionObserver: typeof IntersectionObserver | undefined;
 
   beforeEach(() => {
@@ -69,14 +68,9 @@ describe('SelectedFileDisplay', () => {
       configurable: true,
       value: undefined,
     });
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     if (originalIntersectionObserver) {
       Object.defineProperty(globalThis, 'IntersectionObserver', {
         configurable: true,
@@ -90,15 +84,15 @@ describe('SelectedFileDisplay', () => {
 
   it('keeps the preview frame on a dedicated class so success animations can target it', () => {
     act(() => {
-      root.render(<SelectedFileDisplay file={createFile()} onRemove={() => {}} onCancelUpload={() => {}} />);
+      renderer.root.render(<SelectedFileDisplay file={createFile()} onRemove={() => {}} onCancelUpload={() => {}} />);
     });
 
-    expect(container.querySelector('.file-preview-box')).not.toBeNull();
+    expect(renderer.container.querySelector('.file-preview-box')).not.toBeNull();
   });
 
   it('shows upload percentage and speed while a file is uploading', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             uploadState: 'uploading',
@@ -112,13 +106,13 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    expect(container.textContent).toContain('42%');
-    expect(container.textContent).toContain('1.8 MB/s');
+    expect(renderer.container.textContent).toContain('42%');
+    expect(renderer.container.textContent).toContain('1.8 MB/s');
   });
 
   it('shows a dedicated Gemini processing stage after upload completes', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             uploadState: 'processing_api',
@@ -131,7 +125,7 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    expect(container.textContent).toContain('Processing on Gemini');
+    expect(renderer.container.textContent).toContain('Processing on Gemini');
   });
 
   it('renders primary file controls in a right-side action rail with larger targets', () => {
@@ -139,7 +133,7 @@ describe('SelectedFileDisplay', () => {
     const onRemove = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile()}
           onRemove={onRemove}
@@ -149,7 +143,7 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    const actionRail = container.querySelector('[data-file-action-rail="true"]');
+    const actionRail = renderer.container.querySelector('[data-file-action-rail="true"]');
     const editButton = actionRail?.querySelector('[aria-label="Edit File"]');
     const removeButton = actionRail?.querySelector('[aria-label="Remove File"]');
 
@@ -163,10 +157,10 @@ describe('SelectedFileDisplay', () => {
 
   it('uses a trash icon for the remove file action', () => {
     act(() => {
-      root.render(<SelectedFileDisplay file={createFile()} onRemove={() => {}} onCancelUpload={() => {}} />);
+      renderer.root.render(<SelectedFileDisplay file={createFile()} onRemove={() => {}} onCancelUpload={() => {}} />);
     });
 
-    const removeButton = container.querySelector('[aria-label="Remove File"]');
+    const removeButton = renderer.container.querySelector('[aria-label="Remove File"]');
 
     expect(removeButton?.querySelector('.lucide-trash2')).not.toBeNull();
   });
@@ -175,19 +169,17 @@ describe('SelectedFileDisplay', () => {
     const onMoveTextToInput = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
-          {...({
-            file: createFile({ fileApiName: 'files/abc123' }),
-            onRemove: () => {},
-            onCancelUpload: () => {},
-            onMoveTextToInput,
-          } as any)}
+          file={createFile({ fileApiName: 'files/abc123' })}
+          onRemove={() => {}}
+          onCancelUpload={() => {}}
+          onMoveTextToInput={onMoveTextToInput}
         />,
       );
     });
 
-    const actionRail = container.querySelector('[data-file-action-rail="true"]');
+    const actionRail = renderer.container.querySelector('[data-file-action-rail="true"]');
     const moveButton = actionRail?.querySelector('[aria-label="Move text to input"]') as HTMLButtonElement | null;
     const moreButton = actionRail?.querySelector('[aria-label="More file actions"]') as HTMLButtonElement | null;
 
@@ -199,13 +191,13 @@ describe('SelectedFileDisplay', () => {
     });
 
     expect(onMoveTextToInput).toHaveBeenCalledWith(expect.objectContaining({ id: 'file-1' }));
-    expect(container.querySelector('[role="menu"]')).toBeNull();
+    expect(renderer.container.querySelector('[role="menu"]')).toBeNull();
 
     act(() => {
       moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const menu = container.querySelector('[role="menu"]');
+    const menu = renderer.container.querySelector('[role="menu"]');
 
     expect(menu).not.toBeNull();
     expect(menu?.textContent).not.toContain('Move text to input');
@@ -214,22 +206,20 @@ describe('SelectedFileDisplay', () => {
 
   it('does not show the move-to-input action for non-text files', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
-          {...({
-            file: createFile({
-              name: 'diagram.png',
-              type: 'image/png',
-            }),
-            onRemove: () => {},
-            onCancelUpload: () => {},
-            onMoveTextToInput: vi.fn(),
-          } as any)}
+          file={createFile({
+            name: 'diagram.png',
+            type: 'image/png',
+          })}
+          onRemove={() => {}}
+          onCancelUpload={() => {}}
+          onMoveTextToInput={vi.fn()}
         />,
       );
     });
 
-    const moveButton = Array.from(container.querySelectorAll('button')).find(
+    const moveButton = Array.from(renderer.container.querySelectorAll('button')).find(
       (button) => button.getAttribute('aria-label') === 'Move text to input',
     );
 
@@ -238,7 +228,7 @@ describe('SelectedFileDisplay', () => {
 
   it('renders a text snippet thumbnail for text files', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             textContent: 'first line\nsecond line\nthird line',
@@ -249,13 +239,13 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    expect(container.querySelector('[data-thumbnail-kind="text"]')).not.toBeNull();
-    expect(container.textContent).toContain('first line');
+    expect(renderer.container.querySelector('[data-thumbnail-kind="text"]')).not.toBeNull();
+    expect(renderer.container.textContent).toContain('first line');
   });
 
   it('renders a first-page thumbnail for PDF files', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             name: 'paper.pdf',
@@ -268,15 +258,15 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    expect(container.querySelector('[data-thumbnail-kind="pdf"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-thumbnail-kind="pdf"]')).not.toBeNull();
     await vi.waitFor(() => {
-      expect(container.querySelector('[data-testid="mock-pdf-page"]')).not.toBeNull();
+      expect(renderer.container.querySelector('[data-testid="mock-pdf-page"]')).not.toBeNull();
     });
   });
 
   it('overrides the pdf.js default worker module specifier for PDF thumbnails', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             name: 'paper.pdf',
@@ -295,7 +285,7 @@ describe('SelectedFileDisplay', () => {
 
   it('renders an inline video thumbnail for video files', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             name: 'clip.mp4',
@@ -308,13 +298,13 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    expect(container.querySelector('[data-thumbnail-kind="video"]')).not.toBeNull();
-    expect(container.querySelector('video')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-thumbnail-kind="video"]')).not.toBeNull();
+    expect(renderer.container.querySelector('video')).not.toBeNull();
   });
 
   it('renders a waveform thumbnail for audio files', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             name: 'voice.mp3',
@@ -327,13 +317,13 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    expect(container.querySelector('[data-thumbnail-kind="audio"]')).not.toBeNull();
-    expect(container.querySelectorAll('[data-waveform-bar="true"]').length).toBeGreaterThan(0);
+    expect(renderer.container.querySelector('[data-thumbnail-kind="audio"]')).not.toBeNull();
+    expect(renderer.container.querySelectorAll('[data-waveform-bar="true"]').length).toBeGreaterThan(0);
   });
 
   it('renders a cover thumbnail for spreadsheet and other document files', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SelectedFileDisplay
           file={createFile({
             name: 'metrics.csv',
@@ -345,6 +335,6 @@ describe('SelectedFileDisplay', () => {
       );
     });
 
-    expect(container.querySelector('[data-thumbnail-kind="spreadsheet"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-thumbnail-kind="spreadsheet"]')).not.toBeNull();
   });
 });

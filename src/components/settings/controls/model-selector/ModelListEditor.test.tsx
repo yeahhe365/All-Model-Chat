@@ -1,25 +1,19 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../../stores/settingsStore';
 import { ModelListEditor } from './ModelListEditor';
 
 describe('ModelListEditor', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.restoreAllMocks();
     useSettingsStore.setState(initialState);
   });
@@ -29,7 +23,7 @@ describe('ModelListEditor', () => {
     const setIsEditingList = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelListEditor availableModels={[]} onSave={onSave} setIsEditingList={setIsEditingList} />
         </I18nProvider>,
@@ -37,7 +31,7 @@ describe('ModelListEditor', () => {
     });
 
     act(() => {
-      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      const saveButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Save List'),
       );
       saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -45,14 +39,14 @@ describe('ModelListEditor', () => {
 
     expect(onSave).not.toHaveBeenCalled();
     expect(setIsEditingList).not.toHaveBeenCalled();
-    expect(container.textContent).toContain('Add at least one model before saving.');
+    expect(renderer.container.textContent).toContain('Add at least one model before saving.');
   });
 
   it('lets the user change whether a model is pinned', () => {
     const onSave = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelListEditor
             availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: true }]}
@@ -64,14 +58,14 @@ describe('ModelListEditor', () => {
     });
 
     act(() => {
-      const pinButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      const pinButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
         button.getAttribute('title')?.includes('Pinned'),
       );
       pinButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     act(() => {
-      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      const saveButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Save List'),
       );
       saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -84,7 +78,7 @@ describe('ModelListEditor', () => {
     const onSave = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelListEditor
             availableModels={[
@@ -99,14 +93,14 @@ describe('ModelListEditor', () => {
     });
 
     act(() => {
-      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      const saveButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Save List'),
       );
       saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(onSave).not.toHaveBeenCalled();
-    expect(container.textContent).toContain('Model IDs must be unique.');
+    expect(renderer.container.textContent).toContain('Model IDs must be unique.');
   });
 
   it('resets to caller-provided defaults for independent model lists', async () => {
@@ -114,7 +108,7 @@ describe('ModelListEditor', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelListEditor
             availableModels={[{ id: 'custom-openai-model', name: 'Custom OpenAI Model', isPinned: true }]}
@@ -130,14 +124,14 @@ describe('ModelListEditor', () => {
     });
 
     await act(async () => {
-      const resetButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      const resetButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Reset'),
       );
       resetButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     act(() => {
-      const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      const saveButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Save List'),
       );
       saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));

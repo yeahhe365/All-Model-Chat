@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SavedChatSession, UploadedFile } from '../../types';
+import type { SavedChatSession } from '../../types';
+import { createAppSettings, createChatSettings, createUploadedFile } from '@/test/factories';
 
 const { playCompletionSoundMock } = vi.hoisted(() => ({
   playCompletionSoundMock: vi.fn(),
@@ -20,24 +21,21 @@ describe('messagePipeline', () => {
     });
     const setActiveSessionId = vi.fn();
     const generationStartTime = new Date('2026-05-02T01:15:00.000Z');
-    const file = {
-      id: 'file-1',
+    const file = createUploadedFile({
       name: 'source.png',
-      type: 'image/png',
-      size: 123,
-    } as UploadedFile;
+    });
 
     const result = startOptimisticMessageTurn({
       activeSessionId: null,
-      appSettings: {
+      appSettings: createAppSettings({
         modelId: 'app-default-model',
         temperature: 0.9,
         topP: 0.8,
-      } as any,
-      currentChatSettings: {
+      }),
+      currentChatSettings: createChatSettings({
         modelId: 'turn-model',
         temperature: 0.2,
-      } as any,
+      }),
       updateAndPersistSessions,
       setActiveSessionId,
       text: 'edit this image',
@@ -93,7 +91,7 @@ describe('messagePipeline', () => {
           title: 'Chat',
           timestamp: 1,
           groupId: null,
-          settings: {} as any,
+          settings: createChatSettings(),
           messages: [
             {
               id: 'model-message',
@@ -137,13 +135,13 @@ describe('messagePipeline', () => {
 
     const turn = await runOptimisticMessagePipeline({
       activeSessionId: null,
-      appSettings: {
+      appSettings: createAppSettings({
         isCompletionSoundEnabled: true,
         isCompletionNotificationEnabled: false,
-      } as any,
-      currentChatSettings: {
+      }),
+      currentChatSettings: createChatSettings({
         modelId: 'imagen-4.0-generate-001',
-      } as any,
+      }),
       updateAndPersistSessions,
       setActiveSessionId,
       text: 'draw a foxglove',

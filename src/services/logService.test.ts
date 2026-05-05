@@ -12,16 +12,18 @@ const { mockAddApiUsageRecord, mockAddLogs, mockPruneLogs, mockClearLogs, mockCl
   }),
 );
 
-vi.mock('../utils/db', () => ({
-  dbService: {
+vi.mock('../utils/db', async () => {
+  const { createDbServiceMockModule } = await import('../test/moduleMockDoubles');
+
+  return createDbServiceMockModule({
     addApiUsageRecord: mockAddApiUsageRecord,
     addLogs: mockAddLogs,
     pruneLogs: mockPruneLogs,
     clearLogs: mockClearLogs,
     clearApiUsage: mockClearApiUsage,
     getLogs: mockGetLogs,
-  },
-}));
+  });
+});
 
 const flushMicrotasks = async () => {
   await Promise.resolve();

@@ -1,11 +1,12 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '../../contexts/I18nContext';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { useSettingsStore } from '../../stores/settingsStore';
 import type { SavedChatSession } from '../../types';
+import { createChatSettings } from '../../test/factories';
 import { CollapsedRecentChatsButton } from './CollapsedRecentChatsButton';
 
 const createSession = (id: string, timestamp: string): SavedChatSession => ({
@@ -13,23 +14,14 @@ const createSession = (id: string, timestamp: string): SavedChatSession => ({
   title: `Chat ${id}`,
   timestamp: new Date(timestamp).getTime(),
   messages: [],
-  settings: {} as SavedChatSession['settings'],
+  settings: createChatSettings(),
 });
 
 describe('CollapsedRecentChatsButton', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'zh' });
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('shows the most recent sessions except the active session and limits the list to eight items', () => {
@@ -49,7 +41,7 @@ describe('CollapsedRecentChatsButton', () => {
     ];
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <div onClick={onParentClick}>
@@ -64,7 +56,7 @@ describe('CollapsedRecentChatsButton', () => {
       );
     });
 
-    const button = container.querySelector('button[aria-label="最近聊天"]');
+    const button = renderer.container.querySelector('button[aria-label="最近聊天"]');
     expect(button).not.toBeNull();
 
     act(() => {
@@ -95,7 +87,7 @@ describe('CollapsedRecentChatsButton', () => {
 
   it('uses the project history icon instead of the generic chat bubble icon', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <CollapsedRecentChatsButton
@@ -108,7 +100,7 @@ describe('CollapsedRecentChatsButton', () => {
       );
     });
 
-    const button = container.querySelector('button[aria-label="最近聊天"]');
+    const button = renderer.container.querySelector('button[aria-label="最近聊天"]');
     expect(button).not.toBeNull();
     expect(button?.querySelector('svg')).not.toBeNull();
     expect(button?.querySelector('svg.lucide-message-square-text')).toBeNull();
@@ -116,7 +108,7 @@ describe('CollapsedRecentChatsButton', () => {
 
   it('closes after an outside click', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <CollapsedRecentChatsButton
@@ -129,7 +121,7 @@ describe('CollapsedRecentChatsButton', () => {
       );
     });
 
-    const button = container.querySelector('button[aria-label="最近聊天"]');
+    const button = renderer.container.querySelector('button[aria-label="最近聊天"]');
     expect(button).not.toBeNull();
 
     act(() => {

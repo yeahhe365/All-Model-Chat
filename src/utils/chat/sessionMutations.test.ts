@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SavedChatSession } from '../../types';
+import { MediaResolution } from '../../types';
+import { createChatSettings, createUploadedFile } from '../../test/factories';
 import { insertMessageAfter, updateFileInMessage, updateMessageInSession, updateSessionById } from './sessionMutations';
 
 const makeSession = (id: string): SavedChatSession => ({
@@ -7,7 +9,7 @@ const makeSession = (id: string): SavedChatSession => ({
   title: id,
   timestamp: 1,
   groupId: null,
-  settings: {} as any,
+  settings: createChatSettings(),
   messages: [],
 });
 
@@ -34,9 +36,9 @@ describe('sessionMutations', () => {
             content: 'hello',
             timestamp: new Date('2026-05-04T00:00:00.000Z'),
             files: [
-              { id: 'file-1', name: 'a.png', type: 'image/png', size: 1 },
-              { id: 'file-2', name: 'b.png', type: 'image/png', size: 2 },
-            ] as any,
+              createUploadedFile({ id: 'file-1', name: 'a.png', type: 'image/png', size: 1 }),
+              createUploadedFile({ id: 'file-2', name: 'b.png', type: 'image/png', size: 2 }),
+            ],
           },
         ],
       },
@@ -44,13 +46,13 @@ describe('sessionMutations', () => {
 
     const withMessage = updateMessageInSession(sessions, 'session-1', 'message-1', { content: 'updated' });
     const withFile = updateFileInMessage(withMessage, 'session-1', 'message-1', 'file-2', {
-      mediaResolution: 'low',
-    } as any);
+      mediaResolution: MediaResolution.MEDIA_RESOLUTION_LOW,
+    });
 
     expect(withFile[0].messages[0]).toEqual(expect.objectContaining({ content: 'updated' }));
     expect(withFile[0].messages[0].files?.[0]).toBe(sessions[0].messages[0].files?.[0]);
     expect(withFile[0].messages[0].files?.[1]).toEqual(
-      expect.objectContaining({ id: 'file-2', mediaResolution: 'low' }),
+      expect.objectContaining({ id: 'file-2', mediaResolution: MediaResolution.MEDIA_RESOLUTION_LOW }),
     );
   });
 

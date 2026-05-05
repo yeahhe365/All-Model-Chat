@@ -1,26 +1,14 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { CodeHeader } from './CodeHeader';
 
 describe('CodeHeader', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('uses the dedicated code block header chrome and keeps all controls visible', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <CodeHeader
           language="python"
           showPreview
@@ -39,8 +27,8 @@ describe('CodeHeader', () => {
       );
     });
 
-    const header = container.firstElementChild as HTMLElement | null;
-    const toolbar = container.querySelector('[data-code-header-toolbar]');
+    const header = renderer.container.firstElementChild as HTMLElement | null;
+    const toolbar = renderer.container.querySelector('[data-code-header-toolbar]');
 
     expect(header).not.toBeNull();
     expect(header?.className).toContain('bg-[var(--theme-bg-code-block-header)]');
@@ -53,22 +41,26 @@ describe('CodeHeader', () => {
     expect(toolbar).not.toBeNull();
     expect(toolbar?.className.split(/\s+/)).toContain('gap-0.5');
     expect(toolbar?.className).not.toContain('border');
-    expect(container.querySelector('[title="Run Python Code"]')).not.toBeNull();
-    expect(container.querySelector('[title="Open in Side Panel"]')).not.toBeNull();
-    expect(container.querySelector('[title="Monitor Fullscreen"]')).not.toBeNull();
-    expect(container.querySelector('[title="Preview Overlay"]')).not.toBeNull();
-    expect(container.querySelector('[title="Download PYTHON"]')).not.toBeNull();
-    expect(container.querySelector('[title="Copy content"]')).not.toBeNull();
-    expect(container.querySelector('[title="Expand"]')).not.toBeNull();
-    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain('!min-h-10');
-    expect((container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain('!min-w-10');
-    expect(container.querySelector('[title="Copy content"] svg')?.getAttribute('width')).toBe('16');
-    expect(container.querySelector('[title="Copy content"] svg')?.getAttribute('height')).toBe('16');
+    expect(renderer.container.querySelector('[title="Run Python Code"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[title="Open in Side Panel"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[title="Monitor Fullscreen"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[title="Preview Overlay"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[title="Download PYTHON"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[title="Copy content"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[title="Expand"]')).not.toBeNull();
+    expect((renderer.container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain(
+      '!min-h-10',
+    );
+    expect((renderer.container.querySelector('[title="Copy content"]') as HTMLElement | null)?.className).toContain(
+      '!min-w-10',
+    );
+    expect(renderer.container.querySelector('[title="Copy content"] svg')?.getAttribute('width')).toBe('16');
+    expect(renderer.container.querySelector('[title="Copy content"] svg')?.getAttribute('height')).toBe('16');
   });
 
   it('shows the upgraded TSX language badge inside the header', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <CodeHeader
           language="tsx"
           showPreview={false}
@@ -84,7 +76,7 @@ describe('CodeHeader', () => {
       );
     });
 
-    const badge = container.querySelector('[data-language-badge="tsx"]');
+    const badge = renderer.container.querySelector('[data-language-badge="tsx"]');
 
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toContain('TypeScript React');

@@ -1,21 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import type { AppSettings, ChatSettings } from '../../types';
+import { createAppSettings, createChatSettings } from '../../test/factories';
 import { buildSettingsForModal, splitScopedSettingsUpdate } from './mainContentModels';
 
 describe('settings modal models', () => {
-  const appSettings = {
-    ...DEFAULT_APP_SETTINGS,
+  const appSettings = createAppSettings({
     modelId: 'default-model',
     temperature: 0.6,
     language: 'en',
-  } as AppSettings;
+  });
 
-  const currentChatSettings = {
-    ...DEFAULT_CHAT_SETTINGS,
+  const currentChatSettings = createChatSettings({
     modelId: 'current-model',
     temperature: 1.2,
-  } as ChatSettings;
+  });
 
   it('builds default scoped settings from app settings only', () => {
     const settings = buildSettingsForModal({
@@ -49,12 +46,12 @@ describe('settings modal models', () => {
       currentChatSettings,
       scope: 'currentChat',
     });
-    const nextSettings = {
+    const nextSettings = createAppSettings({
       ...previousSettings,
       modelId: 'next-current-model',
       temperature: 0.3,
       language: 'zh',
-    } as AppSettings;
+    });
 
     const result = splitScopedSettingsUpdate({
       scope: 'currentChat',

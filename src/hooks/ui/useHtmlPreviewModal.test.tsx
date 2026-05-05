@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { PropsWithChildren, RefObject } from 'react';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { useHtmlPreviewModal } from './useHtmlPreviewModal';
@@ -20,10 +20,6 @@ const HtmlPreviewWrapper = ({ children }: PropsWithChildren) => (
 );
 
 describe('useHtmlPreviewModal', () => {
-  beforeEach(() => {});
-
-  afterEach(() => {});
-
   it('tracks iframe readiness from bridge messages', () => {
     const iframe = document.createElement('iframe');
     const contentWindowStub = {} as Window;

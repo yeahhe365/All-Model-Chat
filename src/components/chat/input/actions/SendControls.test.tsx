@@ -1,33 +1,21 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../../../test/moduleMockDoubles');
 
-  return createI18nMock();
+  return createI18nMockModule();
 });
 
 import { SendControls } from './SendControls';
 
 describe('SendControls', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('renders the main send button with a more compact size than the shared input controls', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SendControls
           isLoading={false}
           isEditing={false}
@@ -39,7 +27,7 @@ describe('SendControls', () => {
       );
     });
 
-    const submitButton = container.querySelector('button[type="submit"]');
+    const submitButton = renderer.container.querySelector('button[type="submit"]');
 
     expect(submitButton).not.toBeNull();
     expect(submitButton?.className).toContain('!h-9');

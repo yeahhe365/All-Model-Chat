@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const attachmentMenuMock = vi.fn();
@@ -8,11 +8,11 @@ const liveControlsMock = vi.fn();
 const utilityControlsMock = vi.fn();
 const sendControlsMock = vi.fn();
 
-vi.mock('../../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
-  }),
-}));
+vi.mock('../../../contexts/I18nContext', async () => {
+  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
+
+  return createI18nMockModule();
+});
 
 vi.mock('./AttachmentMenu', () => ({
   AttachmentMenu: (props: { disabled: boolean }) => {
@@ -109,8 +109,7 @@ const baseProps = {
 };
 
 describe('ChatInputActions', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
 
   const mockActionRowMeasurements = ({
@@ -154,8 +153,6 @@ describe('ChatInputActions', () => {
   };
 
   beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     attachmentMenuMock.mockClear();
     toolsMenuMock.mockClear();
@@ -165,16 +162,13 @@ describe('ChatInputActions', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
     vi.restoreAllMocks();
   });
 
   it('disables attachments for Imagen models', () => {
     act(() => {
-      root.render(<ChatInputActions {...baseProps} isRealImagenModel />);
+      renderer.root.render(<ChatInputActions {...baseProps} isRealImagenModel />);
     });
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));
@@ -182,7 +176,7 @@ describe('ChatInputActions', () => {
 
   it('keeps attachments enabled for Gemini image models that support reference images', () => {
     act(() => {
-      root.render(<ChatInputActions {...baseProps} isImageModel />);
+      renderer.root.render(<ChatInputActions {...baseProps} isImageModel />);
     });
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
@@ -190,7 +184,7 @@ describe('ChatInputActions', () => {
 
   it('keeps attachments enabled for Live models because selected files are sent through Live text turns', () => {
     act(() => {
-      root.render(<ChatInputActions {...baseProps} isNativeAudioModel />);
+      renderer.root.render(<ChatInputActions {...baseProps} isNativeAudioModel />);
     });
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
@@ -198,7 +192,9 @@ describe('ChatInputActions', () => {
 
   it('forwards Live disconnect and video controls into the live controls', () => {
     act(() => {
-      root.render(<ChatInputActions {...baseProps} isNativeAudioModel isLiveConnected liveVideoSource="camera" />);
+      renderer.root.render(
+        <ChatInputActions {...baseProps} isNativeAudioModel isLiveConnected liveVideoSource="camera" />,
+      );
     });
 
     expect(liveControlsMock).toHaveBeenCalledWith(
@@ -216,7 +212,7 @@ describe('ChatInputActions', () => {
 
   it('forwards only the current model id into the tools menu for capability derivation', () => {
     act(() => {
-      root.render(<ChatInputActions {...baseProps} currentModelId="gemma-3-27b-it" />);
+      renderer.root.render(<ChatInputActions {...baseProps} currentModelId="gemma-3-27b-it" />);
     });
 
     expect(toolsMenuMock).toHaveBeenCalledWith(expect.objectContaining({ currentModelId: 'gemma-3-27b-it' }));
@@ -229,7 +225,7 @@ describe('ChatInputActions', () => {
     mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <ChatInputActions
           {...baseProps}
           inputText="Translate or send this"
@@ -257,16 +253,16 @@ describe('ChatInputActions', () => {
     expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('onClearInput');
     expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('showInputPasteButton');
     expect(sendControlsMock.mock.calls[0]?.[0]).not.toHaveProperty('showInputClearButton');
-    expect(container.querySelector('[data-testid="clear-input-button"]')).not.toBeNull();
-    expect(container.querySelector('[data-testid="paste-button"]')).not.toBeNull();
-    expect(container.querySelector('[data-testid="composer-more-menu"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="clear-input-button"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-testid="paste-button"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-testid="composer-more-menu"]')).toBeNull();
   });
 
   it('moves auxiliary composer actions into the more menu only when the direct row overflows', async () => {
     mockActionRowMeasurements({ containerWidth: 300, leftWidth: 88, rightWidth: 292 });
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <ChatInputActions
           {...baseProps}
           inputText="Translate or send this"
@@ -284,8 +280,8 @@ describe('ChatInputActions', () => {
         canQueueMessage: true,
       }),
     );
-    expect(container.querySelector('[data-testid="clear-input-button"]')).toBeNull();
-    expect(container.querySelector('[data-testid="paste-button"]')).toBeNull();
-    expect(container.querySelector('[data-testid="composer-more-menu"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-testid="clear-input-button"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="paste-button"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="composer-more-menu"]')).not.toBeNull();
   });
 });

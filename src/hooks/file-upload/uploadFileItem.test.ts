@@ -26,9 +26,9 @@ vi.mock('../../utils/fileHelpers', async (importOriginal) => {
 });
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 import { uploadFileItem } from './uploadFileItem';

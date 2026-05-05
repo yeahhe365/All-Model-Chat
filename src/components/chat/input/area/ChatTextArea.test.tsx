@@ -1,28 +1,16 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it } from 'vitest';
 import { ChatTextArea } from './ChatTextArea';
 
 describe('ChatTextArea', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('focuses the textarea when the shell is clicked', () => {
     const textareaRef = { current: null } as React.RefObject<HTMLTextAreaElement>;
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <ChatTextArea
           textareaRef={textareaRef}
           value=""
@@ -41,7 +29,7 @@ describe('ChatTextArea', () => {
       );
     });
 
-    const textarea = container.querySelector('textarea[aria-label="Chat message input"]');
+    const textarea = renderer.container.querySelector('textarea[aria-label="Chat message input"]');
     const shell = textarea?.parentElement;
 
     expect(textarea).toBeInstanceOf(HTMLTextAreaElement);
@@ -58,7 +46,7 @@ describe('ChatTextArea', () => {
   it('does not overwrite browser-managed composition text during parent renders', () => {
     const textareaRef = { current: null } as React.RefObject<HTMLTextAreaElement>;
     const renderTextArea = (value: string) =>
-      root.render(
+      renderer.root.render(
         <ChatTextArea
           textareaRef={textareaRef}
           value={value}
@@ -80,7 +68,7 @@ describe('ChatTextArea', () => {
       renderTextArea('');
     });
 
-    const textarea = container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]');
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]');
     expect(textarea).not.toBeNull();
 
     act(() => {

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ChatHistoryItem } from '../../types';
+import { createUploadedFile } from '../../test/factories';
 import { runStandardToolLoop } from './standardToolLoop';
 
 describe('runStandardToolLoop', () => {
@@ -41,7 +42,7 @@ describe('runStandardToolLoop', () => {
         },
       ],
     };
-    const generatedFile = { id: 'file-1', name: 'chart.png', type: 'image/png' } as any;
+    const generatedFile = createUploadedFile({ name: 'chart.png' });
     const runTurn = vi
       .fn()
       .mockResolvedValueOnce({
@@ -76,11 +77,7 @@ describe('runStandardToolLoop', () => {
           declaration: {
             name: 'run_local_python',
             description: 'Run Python locally.',
-            parameters: {
-              type: 'object',
-              properties: {},
-            },
-          } as any,
+          },
           handler: vi.fn(async () => ({
             response: { result: { output: '42' } },
             generatedFiles: [generatedFile],
@@ -193,7 +190,7 @@ describe('runStandardToolLoop', () => {
           declaration: {
             name: 'run_local_python',
             description: 'Run Python locally.',
-          } as any,
+          },
           handler: vi.fn(async () => ({
             response: { output: '42' },
             generatedFiles: [],
@@ -301,7 +298,7 @@ describe('runStandardToolLoop', () => {
           declaration: {
             name: 'run_local_python',
             description: 'Run Python locally.',
-          } as any,
+          },
           handler: vi.fn(async () => ({
             response: { output: '42' },
             generatedFiles: [],
@@ -398,7 +395,7 @@ describe('runStandardToolLoop', () => {
           declaration: {
             name: 'run_local_python',
             description: 'Run Python locally.',
-          } as any,
+          },
           handler: vi.fn(async () => ({
             response: { output: '42' },
             generatedFiles: [],
@@ -493,7 +490,7 @@ describe('runStandardToolLoop', () => {
           declaration: {
             name: 'run_local_python',
             description: 'Run Python locally.',
-          } as any,
+          },
           handler: vi.fn(async () => ({
             response: { output: '42' },
             generatedFiles: [],

@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import type { AppSettings } from '../../../types';
@@ -13,55 +13,46 @@ const settingsFixture: AppSettings = {
 };
 
 describe('AppearanceSection', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     useSettingsStore.setState(initialState);
   });
 
   it('updates translated control labels from the global i18n context', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <AppearanceSection settings={settingsFixture} onUpdate={vi.fn()} />
         </I18nProvider>,
       );
     });
 
-    expect(container.textContent).toContain('Theme');
-    expect(container.textContent).toContain('Reading Size');
-    expect(container.textContent).toContain('Input Toolbar');
-    expect(container.textContent).toContain('Streaming Responses');
-    expect(container.textContent).toContain('Show Translate Button');
-    expect(container.textContent).toContain('Show Paste Button');
-    expect(container.textContent).toContain('Show Clear Input Button');
-    expect(container.textContent).toContain('Preserve Formatting When Copying Selection');
-    expect(container.textContent).not.toContain('File Transfer Method');
+    expect(renderer.container.textContent).toContain('Theme');
+    expect(renderer.container.textContent).toContain('Reading Size');
+    expect(renderer.container.textContent).toContain('Input Toolbar');
+    expect(renderer.container.textContent).toContain('Streaming Responses');
+    expect(renderer.container.textContent).toContain('Show Translate Button');
+    expect(renderer.container.textContent).toContain('Show Paste Button');
+    expect(renderer.container.textContent).toContain('Show Clear Input Button');
+    expect(renderer.container.textContent).toContain('Preserve Formatting When Copying Selection');
+    expect(renderer.container.textContent).not.toContain('File Transfer Method');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
     });
 
-    expect(container.textContent).toContain('主题');
-    expect(container.textContent).toContain('阅读字号');
-    expect(container.textContent).toContain('输入框工具栏');
-    expect(container.textContent).toContain('流式输出');
-    expect(container.textContent).toContain('显示翻译按钮');
-    expect(container.textContent).toContain('显示粘贴按钮');
-    expect(container.textContent).toContain('显示清空输入框按钮');
-    expect(container.textContent).toContain('复制选区时保留格式');
-    expect(container.textContent).not.toContain('文件传输方式');
+    expect(renderer.container.textContent).toContain('主题');
+    expect(renderer.container.textContent).toContain('阅读字号');
+    expect(renderer.container.textContent).toContain('输入框工具栏');
+    expect(renderer.container.textContent).toContain('流式输出');
+    expect(renderer.container.textContent).toContain('显示翻译按钮');
+    expect(renderer.container.textContent).toContain('显示粘贴按钮');
+    expect(renderer.container.textContent).toContain('显示清空输入框按钮');
+    expect(renderer.container.textContent).toContain('复制选区时保留格式');
+    expect(renderer.container.textContent).not.toContain('文件传输方式');
   });
 
   it('updates the translate button visibility preference from the input toolbar group', async () => {
@@ -69,7 +60,7 @@ describe('AppearanceSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'zh' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <AppearanceSection
             settings={{
@@ -82,10 +73,10 @@ describe('AppearanceSection', () => {
       );
     });
 
-    const toolbarHeading = Array.from(container.querySelectorAll('label')).find(
+    const toolbarHeading = Array.from(renderer.container.querySelectorAll('label')).find(
       (element) => element.textContent?.trim() === '输入框工具栏',
     );
-    const toggleRow = Array.from(container.querySelectorAll('div')).find((element) =>
+    const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>
       element.textContent?.trim().startsWith('显示翻译按钮'),
     ) as HTMLDivElement | undefined;
     const toggle = toggleRow?.querySelector('input[type="checkbox"]') as HTMLInputElement | undefined;
@@ -106,7 +97,7 @@ describe('AppearanceSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'zh' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <AppearanceSection
             settings={{
@@ -119,7 +110,7 @@ describe('AppearanceSection', () => {
       );
     });
 
-    const toggleRow = Array.from(container.querySelectorAll('div')).find((element) =>
+    const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>
       element.textContent?.trim().startsWith('显示粘贴按钮'),
     ) as HTMLDivElement | undefined;
     const toggle = toggleRow?.querySelector('input[type="checkbox"]') as HTMLInputElement | undefined;
@@ -139,7 +130,7 @@ describe('AppearanceSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'zh' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <AppearanceSection
             settings={{
@@ -152,7 +143,7 @@ describe('AppearanceSection', () => {
       );
     });
 
-    const toggleRow = Array.from(container.querySelectorAll('div')).find((element) =>
+    const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>
       element.textContent?.trim().startsWith('显示清空输入框按钮'),
     ) as HTMLDivElement | undefined;
     const toggle = toggleRow?.querySelector('input[type="checkbox"]') as HTMLInputElement | undefined;
@@ -172,7 +163,7 @@ describe('AppearanceSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'zh' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <AppearanceSection
             settings={{
@@ -185,7 +176,7 @@ describe('AppearanceSection', () => {
       );
     });
 
-    const toggleRow = Array.from(container.querySelectorAll('div')).find((element) =>
+    const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>
       element.textContent?.trim().startsWith('复制选区时保留格式'),
     ) as HTMLDivElement | undefined;
     const toggle = toggleRow?.querySelector('input[type="checkbox"]') as HTMLInputElement | undefined;

@@ -19,7 +19,7 @@ describe('runtimeConfig', () => {
   it('reads the project URL from window runtime config', () => {
     window.__AMC_RUNTIME_CONFIG__ = {
       projectUrl: 'https://deploy.example/amc',
-    } as any;
+    };
 
     expect(getProjectUrl()).toBe('https://deploy.example/amc');
   });
@@ -27,7 +27,7 @@ describe('runtimeConfig', () => {
   it('falls back to the default project URL when runtime config projectUrl is blank', () => {
     window.__AMC_RUNTIME_CONFIG__ = {
       projectUrl: '   ',
-    } as any;
+    };
 
     expect(getProjectUrl()).toBe('https://all-model-chat.pages.dev/');
   });

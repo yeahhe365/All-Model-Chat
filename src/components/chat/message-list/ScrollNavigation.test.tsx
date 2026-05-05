@@ -1,24 +1,14 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { ScrollNavigation } from './ScrollNavigation';
 
 describe('ScrollNavigation', () => {
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('uses labels that match turn-based navigation behavior', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <ScrollNavigation showUp showDown onScrollToPrev={vi.fn()} onScrollToNext={vi.fn()} bottomOffset={0} />,
       );
     });

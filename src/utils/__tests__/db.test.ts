@@ -108,8 +108,8 @@ describe('requestToPromise pattern', () => {
     const mockReq = {
       result,
       error: null,
-      onsuccess: null as any,
-      onerror: null as any,
+      onsuccess: null as IDBRequest<typeof result>['onsuccess'],
+      onerror: null as IDBRequest<typeof result>['onerror'],
     } as unknown as IDBRequest<typeof result>;
 
     const promise = requestToPromise(mockReq);
@@ -129,8 +129,8 @@ describe('requestToPromise pattern', () => {
     const mockReq = {
       result: null,
       error,
-      onsuccess: null as any,
-      onerror: null as any,
+      onsuccess: null as IDBRequest['onsuccess'],
+      onerror: null as IDBRequest['onerror'],
     } as unknown as IDBRequest;
 
     const promise = requestToPromise(mockReq);

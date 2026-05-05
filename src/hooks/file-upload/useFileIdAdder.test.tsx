@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { UploadedFile } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
@@ -22,9 +22,9 @@ vi.mock('../../utils/apiUtils', () => ({
 }));
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../services/api/fileApi', () => ({
@@ -32,9 +32,9 @@ vi.mock('../../services/api/fileApi', () => ({
 }));
 
 vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
 
-  return createI18nMock({
+  return createI18nMockModule({
     t: (key: string) =>
       ({
         fileIdAdder_invalidFileId: '无效的文件 ID 格式。',
@@ -64,8 +64,6 @@ describe('useFileIdAdder', () => {
       displayName: 'clip.mp4',
     });
   });
-
-  afterEach(() => {});
 
   it('keeps file ids with an unspecified backend state in pollable processing', async () => {
     let selectedFiles: UploadedFile[] = [];

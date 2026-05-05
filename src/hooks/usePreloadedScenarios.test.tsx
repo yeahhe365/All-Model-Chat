@@ -30,13 +30,11 @@ const { localStorageMock } = vi.hoisted(() => {
   return { localStorageMock: mock };
 });
 
-vi.mock('../utils/db', () => ({
-  dbService: {
-    getAllScenarios: vi.fn().mockResolvedValue([]),
-    setAllScenarios: vi.fn().mockResolvedValue(undefined),
-    setActiveSessionId: vi.fn(),
-  },
-}));
+vi.mock('../utils/db', async () => {
+  const { createDbServiceMockModule } = await import('../test/moduleMockDoubles');
+
+  return createDbServiceMockModule();
+});
 
 vi.mock('../utils/chat/ids', () => ({
   generateUniqueId: () => 'generated-id',
@@ -53,14 +51,11 @@ vi.mock('../utils/chat/session', () => ({
   })),
 }));
 
-vi.mock('../services/logService', () => ({
-  logService: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 describe('usePreloadedScenarios', () => {
   beforeEach(() => {
@@ -97,7 +92,7 @@ describe('usePreloadedScenarios', () => {
       timestamp: 1,
       messages: [],
       settings: DEFAULT_APP_SETTINGS,
-    } as SavedChatSession;
+    };
     const newSession: SavedChatSession = {
       id: 'scenario-session',
       title: 'Scenario',

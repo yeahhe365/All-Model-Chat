@@ -15,16 +15,17 @@ const { dbServiceMock, cleanupFilePreviewUrlsMock } = vi.hoisted(() => ({
   cleanupFilePreviewUrlsMock: vi.fn(),
 }));
 
-vi.mock('../../../utils/db', () => ({
-  dbService: dbServiceMock,
-}));
+vi.mock('../../../utils/db', async () => {
+  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-vi.mock('../../../services/logService', () => ({
-  logService: {
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
-}));
+  return createDbServiceMockModule(dbServiceMock);
+});
+
+vi.mock('../../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 vi.mock('../../../utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: cleanupFilePreviewUrlsMock,

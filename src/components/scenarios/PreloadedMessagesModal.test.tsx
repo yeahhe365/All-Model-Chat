@@ -1,7 +1,7 @@
 import React from 'react';
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PreloadedMessagesModal } from './PreloadedMessagesModal';
 
 const { scenarioManagerState } = vi.hoisted(() => ({
@@ -52,28 +52,19 @@ vi.mock('./ScenarioEditor', () => ({
 }));
 
 describe('PreloadedMessagesModal', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
     vi.clearAllMocks();
     scenarioManagerState.view = 'list';
     scenarioManagerState.hasUnsavedChanges = true;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('closes without saving when the close button is clicked', () => {
     const onClose = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <PreloadedMessagesModal
           isOpen
           onClose={onClose}
@@ -84,7 +75,7 @@ describe('PreloadedMessagesModal', () => {
       );
     });
 
-    const closeButton = Array.from(container.querySelectorAll('button')).find(
+    const closeButton = Array.from(renderer.container.querySelectorAll('button')).find(
       (button) => button.getAttribute('aria-label') === 'Close scenarios manager',
     );
 
@@ -100,7 +91,7 @@ describe('PreloadedMessagesModal', () => {
 
   it('persists changes only when the explicit save button is clicked', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <PreloadedMessagesModal
           isOpen
           onClose={vi.fn()}
@@ -111,7 +102,7 @@ describe('PreloadedMessagesModal', () => {
       );
     });
 
-    const saveButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const saveButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Save'),
     );
 
@@ -126,7 +117,7 @@ describe('PreloadedMessagesModal', () => {
 
   it('uses compact desktop spacing in the scenario list content area', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <PreloadedMessagesModal
           isOpen
           onClose={vi.fn()}
@@ -137,7 +128,7 @@ describe('PreloadedMessagesModal', () => {
       );
     });
 
-    const scenarioList = container.querySelector('[data-testid="scenario-list"]');
+    const scenarioList = renderer.container.querySelector('[data-testid="scenario-list"]');
     const contentArea = scenarioList?.parentElement;
 
     expect(contentArea?.className).toContain('md:px-6');
@@ -147,7 +138,7 @@ describe('PreloadedMessagesModal', () => {
 
   it('matches the settings modal desktop corner radius', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <PreloadedMessagesModal
           isOpen
           onClose={vi.fn()}
@@ -158,7 +149,7 @@ describe('PreloadedMessagesModal', () => {
       );
     });
 
-    const modalShell = container.querySelector('[data-testid="modal-shell"]');
+    const modalShell = renderer.container.querySelector('[data-testid="modal-shell"]');
 
     expect(modalShell?.className).toContain('sm:rounded-xl');
     expect(modalShell?.className).not.toContain('sm:rounded-3xl');

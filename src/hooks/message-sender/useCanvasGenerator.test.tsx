@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCanvasGenerator } from './useCanvasGenerator';
+import { createAppSettings, createChatSettings } from '@/test/factories';
 import { renderHook } from '@/test/testUtils';
 
 const {
@@ -83,8 +84,8 @@ describe('useCanvasGenerator', () => {
 
     const { result, unmount } = renderHook(() =>
       useCanvasGenerator({
-        appSettings: {} as any,
-        currentChatSettings: { modelId: 'gemini-3-flash-preview' } as any,
+        appSettings: createAppSettings({ autoCanvasModelId: 'gemini-canvas-default' }),
+        currentChatSettings: createChatSettings({ modelId: 'gemini-3-flash-preview' }),
         messages: [],
         activeSessionId: 'session-1',
         updateAndPersistSessions: vi.fn(),

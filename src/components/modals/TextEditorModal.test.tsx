@@ -1,20 +1,13 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { TextEditorModal } from './TextEditorModal';
 
 describe('TextEditorModal', () => {
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
@@ -31,7 +24,7 @@ describe('TextEditorModal', () => {
     const onClose = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <TextEditorModal isOpen onClose={onClose} title="Editor" value="Original" onChange={onChange} />
         </WindowProvider>,
@@ -61,7 +54,7 @@ describe('TextEditorModal', () => {
 
   it('adds visible keyboard focus styles to the close and confirm actions', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <TextEditorModal isOpen onClose={vi.fn()} title="Editor" value="Original" onChange={vi.fn()} />
         </WindowProvider>,

@@ -5,9 +5,9 @@ import { getKeyForRequest, isServerManagedApiEnabledForProxyRequests, SERVER_MAN
 import { logService } from '../../services/logService';
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 describe('getKeyForRequest', () => {

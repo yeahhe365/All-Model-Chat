@@ -1,7 +1,9 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useStandardChat } from './useStandardChat';
+import { createStandardChatProps, type StandardChatPropsOverrides } from '@/test/hookFactories';
 import { renderHook } from '@/test/testUtils';
+import { MediaResolution } from '../../types';
 import type { PreparedModelRequest } from './useModelRequestRunner';
 
 const {
@@ -35,14 +37,11 @@ const {
   })),
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 vi.mock('../../utils/apiUtils', () => ({
   getKeyForRequest: mockGetKeyForRequest,
@@ -117,6 +116,40 @@ vi.mock('../../services/loadPyodideService', () => ({
 }));
 
 describe('useStandardChat', () => {
+  const createBaseStandardChatOverrides = (overrides: StandardChatPropsOverrides = {}): StandardChatPropsOverrides => ({
+    ...overrides,
+    appSettings: {
+      hideThinkingInContext: false,
+      isRawModeEnabled: false,
+      autoCanvasVisualization: false,
+      isStreamingEnabled: true,
+      ...overrides.appSettings,
+    },
+    currentChatSettings: {
+      modelId: 'gemini-3-flash-preview',
+      systemInstruction: 'Custom system instruction',
+      temperature: 1,
+      topP: 0.95,
+      topK: 64,
+      showThoughts: true,
+      thinkingBudget: 0,
+      thinkingLevel: 'LOW',
+      isGoogleSearchEnabled: false,
+      isCodeExecutionEnabled: false,
+      isLocalPythonEnabled: false,
+      isUrlContextEnabled: false,
+      isDeepSearchEnabled: false,
+      safetySettings: [],
+      mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
+      hideThinkingInContext: false,
+      lockedApiKey: null,
+      ...overrides.currentChatSettings,
+    },
+  });
+
+  const renderStandardChat = (overrides: StandardChatPropsOverrides = {}) =>
+    renderHook(() => useStandardChat(createStandardChatProps(createBaseStandardChatOverrides(overrides))));
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -181,55 +214,10 @@ describe('useStandardChat', () => {
       onThoughtChunk: vi.fn(),
     }));
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: true,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: false,
-          isCodeExecutionEnabled: false,
-          isLocalPythonEnabled: false,
-          isUrlContextEnabled: false,
-          isDeepSearchEnabled: false,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({ getStreamHandlers });
 
     await act(async () => {
-      await (result.current.sendStandardMessage as any)({
+      await result.current.sendStandardMessage({
         text: 'analyze the csv',
         files: [],
         editingMessageId: null,
@@ -264,52 +252,12 @@ describe('useStandardChat', () => {
       onThoughtChunk: vi.fn(),
     }));
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: true,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: false,
-          isCodeExecutionEnabled: false,
-          isLocalPythonEnabled: true,
-          isUrlContextEnabled: false,
-          isDeepSearchEnabled: false,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      currentChatSettings: {
+        isLocalPythonEnabled: true,
+      },
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({
@@ -358,57 +306,23 @@ describe('useStandardChat', () => {
       onThoughtChunk,
     }));
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          apiMode: 'openai-compatible',
-          apiKey: 'gemini-key',
-          openaiCompatibleApiKey: 'openai-key',
-          openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
-          openaiCompatibleModelId: 'gpt-5.5',
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: true,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: true,
-          isCodeExecutionEnabled: true,
-          isLocalPythonEnabled: true,
-          isUrlContextEnabled: true,
-          isDeepSearchEnabled: true,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      appSettings: {
+        apiMode: 'openai-compatible',
+        apiKey: 'gemini-key',
+        openaiCompatibleApiKey: 'openai-key',
+        openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+        openaiCompatibleModelId: 'gpt-5.5',
+      },
+      currentChatSettings: {
+        isGoogleSearchEnabled: true,
+        isCodeExecutionEnabled: true,
+        isLocalPythonEnabled: true,
+        isUrlContextEnabled: true,
+        isDeepSearchEnabled: true,
+      },
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({
@@ -457,57 +371,24 @@ describe('useStandardChat', () => {
       onThoughtChunk,
     }));
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          apiMode: 'openai-compatible',
-          apiKey: 'gemini-key',
-          openaiCompatibleApiKey: 'openai-key',
-          openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
-          openaiCompatibleModelId: 'gpt-4.1-custom',
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: true,
-          isCodeExecutionEnabled: true,
-          isLocalPythonEnabled: true,
-          isUrlContextEnabled: true,
-          isDeepSearchEnabled: true,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      appSettings: {
+        apiMode: 'openai-compatible',
+        apiKey: 'gemini-key',
+        openaiCompatibleApiKey: 'openai-key',
+        openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+        openaiCompatibleModelId: 'gpt-4.1-custom',
+        isStreamingEnabled: false,
+      },
+      currentChatSettings: {
+        isGoogleSearchEnabled: true,
+        isCodeExecutionEnabled: true,
+        isLocalPythonEnabled: true,
+        isUrlContextEnabled: true,
+        isDeepSearchEnabled: true,
+      },
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({
@@ -549,52 +430,13 @@ describe('useStandardChat', () => {
       onThoughtChunk: vi.fn(),
     }));
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: true,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-pro-image-preview',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: false,
-          isCodeExecutionEnabled: false,
-          isLocalPythonEnabled: true,
-          isUrlContextEnabled: false,
-          isDeepSearchEnabled: false,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      currentChatSettings: {
+        modelId: 'gemini-3-pro-image-preview',
+        isLocalPythonEnabled: true,
+      },
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({
@@ -641,52 +483,14 @@ describe('useStandardChat', () => {
       tools: [{ googleSearch: {} }],
     });
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: true,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-2.5-flash',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: true,
-          isCodeExecutionEnabled: false,
-          isLocalPythonEnabled: true,
-          isUrlContextEnabled: false,
-          isDeepSearchEnabled: false,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      currentChatSettings: {
+        modelId: 'gemini-2.5-flash',
+        isGoogleSearchEnabled: true,
+        isLocalPythonEnabled: true,
+      },
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({
@@ -750,52 +554,16 @@ describe('useStandardChat', () => {
       },
     );
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-2.5-flash',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: false,
-          isCodeExecutionEnabled: false,
-          isLocalPythonEnabled: false,
-          isUrlContextEnabled: true,
-          isDeepSearchEnabled: false,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      appSettings: {
+        isStreamingEnabled: false,
+      },
+      currentChatSettings: {
+        modelId: 'gemini-2.5-flash',
+        isUrlContextEnabled: true,
+      },
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({
@@ -839,53 +607,16 @@ describe('useStandardChat', () => {
       },
     );
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          hideThinkingInContext: false,
-          isRawModeEnabled: true,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: false,
-          isCodeExecutionEnabled: false,
-          isLocalPythonEnabled: false,
-          isUrlContextEnabled: false,
-          isDeepSearchEnabled: false,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          isRawModeEnabled: true,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      appSettings: {
+        isRawModeEnabled: true,
+        isStreamingEnabled: false,
+      },
+      currentChatSettings: {
+        isRawModeEnabled: true,
+      },
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({
@@ -936,7 +667,7 @@ describe('useStandardChat', () => {
       type: 'image/png',
       size: 12,
       dataUrl: 'blob:plot',
-      uploadState: 'active',
+      uploadState: 'active' as const,
     };
     const getStreamHandlers = vi.fn(() => ({
       streamOnError,
@@ -962,52 +693,13 @@ describe('useStandardChat', () => {
       generatedFiles: [generatedFile],
     });
 
-    const { result, unmount } = renderHook(() =>
-      useStandardChat({
-        appSettings: {
-          hideThinkingInContext: false,
-          isRawModeEnabled: false,
-          autoCanvasVisualization: false,
-          isStreamingEnabled: true,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: 'Custom system instruction',
-          temperature: 1,
-          topP: 0.95,
-          topK: 64,
-          showThoughts: true,
-          thinkingBudget: 0,
-          thinkingLevel: 'LOW',
-          isGoogleSearchEnabled: false,
-          isCodeExecutionEnabled: false,
-          isLocalPythonEnabled: true,
-          isUrlContextEnabled: false,
-          isDeepSearchEnabled: false,
-          safetySettings: [],
-          mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
-          hideThinkingInContext: false,
-          lockedApiKey: null,
-        } as any,
-        messages: [],
-        setEditingMessageId: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: 'session-1',
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        setSessionLoading: vi.fn(),
-        updateAndPersistSessions,
-        getStreamHandlers,
-        sessionKeyMapRef: { current: new Map() },
-        handleGenerateCanvas: vi.fn(),
-        setAppFileError: vi.fn(),
-        language: 'en',
-      }),
-    );
+    const { result, unmount } = renderStandardChat({
+      currentChatSettings: {
+        isLocalPythonEnabled: true,
+      },
+      updateAndPersistSessions,
+      getStreamHandlers,
+    });
 
     await act(async () => {
       await result.current.sendStandardMessage({

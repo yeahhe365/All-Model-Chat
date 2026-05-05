@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { ChatBehaviorSection } from './ChatBehaviorSection';
 
@@ -39,33 +39,23 @@ const baseProps = {
 };
 
 describe('ChatBehaviorSection', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('shows translation controls without extra subgroup headings and keeps language before model', () => {
     useSettingsStore.setState({ language: 'zh' });
 
     act(() => {
-      root.render(<ChatBehaviorSection {...baseProps} />);
+      renderer.root.render(<ChatBehaviorSection {...baseProps} />);
     });
 
-    const text = container.textContent || '';
+    const text = renderer.container.textContent || '';
     const inputLanguage = text.indexOf('输入框翻译语言');
     const inputModel = text.indexOf('输入框翻译模型');
     const thoughtLanguage = text.indexOf('思维链翻译语言');
     const thoughtModel = text.indexOf('思维链翻译模型');
-    const subgroupHeadings = Array.from(container.querySelectorAll('h5')).map((heading) => heading.textContent?.trim());
+    const subgroupHeadings = Array.from(renderer.container.querySelectorAll('h5')).map((heading) =>
+      heading.textContent?.trim(),
+    );
 
     expect(inputLanguage).toBeGreaterThan(-1);
     expect(inputModel).toBeGreaterThan(inputLanguage);

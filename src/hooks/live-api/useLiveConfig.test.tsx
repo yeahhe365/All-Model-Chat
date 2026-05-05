@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { LOCAL_PYTHON_SYSTEM_PROMPT } from '../../constants/prompts/localPython';
+import { MediaResolution } from '../../types';
+import type { LiveClientFunctions } from '../../types';
 import { useLiveConfig } from './useLiveConfig';
+import { createChatSettings } from '@/test/factories';
 import { renderHook } from '@/test/testUtils';
 
-const baseChatSettings = {
+const createLiveClientFunctions = (overrides: LiveClientFunctions): LiveClientFunctions => overrides;
+
+const baseChatSettings = createChatSettings({
   modelId: 'gemini-3.1-flash-live-preview',
   temperature: 1,
   topP: 0.95,
@@ -22,14 +27,14 @@ const baseChatSettings = {
   isRawModeEnabled: false,
   hideThinkingInContext: false,
   safetySettings: [],
-  mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED' as const,
-};
+  mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
+});
 
 describe('useLiveConfig', () => {
   it('enables session resumption from the first connection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConfig({
-        chatSettings: baseChatSettings as any,
+        chatSettings: baseChatSettings,
         sessionHandle: null,
       }),
     );
@@ -41,7 +46,7 @@ describe('useLiveConfig', () => {
   it('uses thinkingLevel for Gemini 3.1 Flash Live sessions', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConfig({
-        chatSettings: baseChatSettings as any,
+        chatSettings: baseChatSettings,
         sessionHandle: null,
       }),
     );
@@ -56,17 +61,17 @@ describe('useLiveConfig', () => {
   it('declares client-side function tools when provided', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConfig({
-        chatSettings: baseChatSettings as any,
+        chatSettings: baseChatSettings,
         sessionHandle: null,
-        clientFunctions: {
+        clientFunctions: createLiveClientFunctions({
           turn_on_the_lights: {
             declaration: {
               name: 'turn_on_the_lights',
               description: 'Turns on the lights.',
             },
-            handler: async () => 'ok',
+            handler: async () => ({ response: 'ok' }),
           },
-        } as any,
+        }),
       }),
     );
 
@@ -84,20 +89,20 @@ describe('useLiveConfig', () => {
   it('appends the local python execution prompt when the live session exposes run_local_python', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConfig({
-        chatSettings: {
+        chatSettings: createChatSettings({
           ...baseChatSettings,
           systemInstruction: 'Custom live instruction',
-        } as any,
+        }),
         sessionHandle: null,
-        clientFunctions: {
+        clientFunctions: createLiveClientFunctions({
           run_local_python: {
             declaration: {
               name: 'run_local_python',
               description: 'Runs Python locally.',
             },
-            handler: async () => 'ok',
+            handler: async () => ({ response: 'ok' }),
           },
-        } as any,
+        }),
       }),
     );
 

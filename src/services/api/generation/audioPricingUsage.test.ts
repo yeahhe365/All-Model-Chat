@@ -12,9 +12,9 @@ vi.mock('../apiClient', () => ({
 }));
 
 vi.mock('../../logService', async () => {
-  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService({ recordTokenUsage: recordTokenUsageMock }) };
+  return createLogServiceMockModule({ recordTokenUsage: recordTokenUsageMock });
 });
 
 vi.mock('../../../utils/fileHelpers', () => ({

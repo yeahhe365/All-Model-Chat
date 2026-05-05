@@ -1,8 +1,10 @@
-import { act } from 'react';
+import { act, type SetStateAction } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
+import type { AppViewModel } from '../../hooks/app/useApp';
+import type { AppSettings } from '../../types';
 import { useMainContentViewModel } from './useMainContentViewModel';
 import { renderHook } from '@/test/testUtils';
+import { createAppSettings, createChatSettings, createTheme } from '../../test/factories';
 
 const mockStores = vi.hoisted(() => {
   const ui = {
@@ -39,9 +41,8 @@ vi.mock('../../utils/shortcutUtils', () => ({
   getShortcutDisplay: vi.fn(() => 'shortcut'),
 }));
 
-const buildApp = (overrides: Record<string, unknown> = {}) => {
-  const appSettings = {
-    ...DEFAULT_APP_SETTINGS,
+const buildApp = (overrides: Partial<AppViewModel> = {}) => {
+  const appSettings = createAppSettings({
     apiMode: 'openai-compatible',
     modelId: 'gemini-3-flash-preview',
     openaiCompatibleModelId: 'gpt-5.5',
@@ -49,41 +50,76 @@ const buildApp = (overrides: Record<string, unknown> = {}) => {
       { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
       { id: 'gpt-4.1', name: 'GPT-4.1' },
     ],
-  };
+  });
   const handleSelectModelInHeader = vi.fn();
-  const setAppSettings = vi.fn();
+  const setAppSettings = vi.fn<(value: SetStateAction<AppSettings>) => void>();
 
   return {
     appSettings,
     setAppSettings,
-    currentTheme: { id: 'pearl' },
+    currentTheme: createTheme(),
+    language: 'en',
+    t: vi.fn((key: string) => key),
     uiState: {
       isHistorySidebarOpen: false,
       setIsHistorySidebarOpen: vi.fn(),
       setIsHistorySidebarOpenTransient: vi.fn(),
+      isSettingsModalOpen: false,
+      setIsSettingsModalOpen: vi.fn(),
+      isPreloadedMessagesModalOpen: false,
+      setIsPreloadedMessagesModalOpen: vi.fn(),
+      isLogViewerOpen: false,
+      setIsLogViewerOpen: vi.fn(),
+      handleTouchStart: vi.fn(),
+      handleTouchEnd: vi.fn(),
     },
     pipState: {
       isPipSupported: false,
       isPipActive: false,
       togglePip: vi.fn(),
+      pipContainer: null,
+      pipWindow: null,
     },
     eventsState: {
+      installPromptEvent: null,
       handleInstallPwa: vi.fn(),
-      installState: { state: 'installed' },
+      installState: { state: 'installed', canInstall: false },
+      needRefresh: false,
+      updateDismissed: false,
+      dismissUpdateBanner: vi.fn(),
+      handleRefreshApp: vi.fn(),
+      canCheckForUpdates: false,
+      manualUpdateCheckState: 'idle',
+      handleCheckForUpdates: vi.fn(),
     },
     chatState: {
+      activeChat: undefined,
       activeSessionId: 'session-1',
       apiModels: [{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }],
-      currentChatSettings: { ...DEFAULT_APP_SETTINGS, modelId: 'gemini-3-flash-preview' },
+      currentChatSettings: createChatSettings({ modelId: 'gemini-3-flash-preview' }),
       messages: [],
       isLoading: false,
       editingMessageId: null,
+      editMode: 'resend',
+      commandedInput: null,
       isAppDraggingOver: false,
+      isProcessingDrop: false,
+      selectedFiles: [],
+      appFileError: null,
+      isAppProcessingFile: false,
       savedSessions: [],
       savedGroups: [],
       savedScenarios: [],
       loadingSessionIds: new Set(),
       generatingTitleSessionIds: new Set(),
+      isModelsLoading: false,
+      modelsLoadingError: null,
+      isSwitchingModel: false,
+      aspectRatio: '1:1',
+      imageSize: '1K',
+      updateAndPersistSessions: vi.fn(),
+      updateAndPersistGroups: vi.fn(),
+      scrollContainerRef: { current: null },
       loadChatSession: vi.fn(),
       handleSendMessage: vi.fn(),
       setScrollContainerRef: vi.fn(),
@@ -97,9 +133,11 @@ const buildApp = (overrides: Record<string, unknown> = {}) => {
       handleQuickTTS: vi.fn(),
       handleStopGenerating: vi.fn(),
       handleCancelEdit: vi.fn(),
+      setCommandedInput: vi.fn(),
       handleProcessAndAddFiles: vi.fn(),
       handleAddFileById: vi.fn(),
       handleCancelFileUpload: vi.fn(),
+      handleCancelUpload: vi.fn(),
       handleTranscribeAudio: vi.fn(),
       toggleGoogleSearch: vi.fn(),
       toggleCodeExecution: vi.fn(),
@@ -108,6 +146,7 @@ const buildApp = (overrides: Record<string, unknown> = {}) => {
       toggleDeepSearch: vi.fn(),
       handleClearCurrentChat: vi.fn(),
       handleTogglePinCurrentSession: vi.fn(),
+      handleTogglePinSession: vi.fn(),
       handleRetryLastTurn: vi.fn(),
       handleEditLastUserMessage: vi.fn(),
       setCurrentChatSettings: vi.fn(),
@@ -135,6 +174,7 @@ const buildApp = (overrides: Record<string, unknown> = {}) => {
       handleAppDragLeave: vi.fn(),
       handleAppDrop: vi.fn(),
     },
+    activeChat: undefined,
     sidePanelContent: null,
     handleOpenSidePanel: vi.fn(),
     handleCloseSidePanel: vi.fn(),
@@ -153,14 +193,10 @@ const buildApp = (overrides: Record<string, unknown> = {}) => {
     isCanvasPromptBusy: false,
     handleSetThinkingLevel: vi.fn(),
     getCurrentModelDisplayName: vi.fn(() => 'GPT-5.5'),
-    handleExportSettings: vi.fn(),
-    handleExportHistory: vi.fn(),
     handleExportAllScenarios: vi.fn(),
-    handleImportSettings: vi.fn(),
-    handleImportHistory: vi.fn(),
     handleImportAllScenarios: vi.fn(),
     ...overrides,
-  } as any;
+  } satisfies AppViewModel;
 };
 
 describe('useMainContentViewModel', () => {
@@ -187,7 +223,11 @@ describe('useMainContentViewModel', () => {
 
     expect(app.chatState.handleSelectModelInHeader).not.toHaveBeenCalled();
     expect(app.setAppSettings).toHaveBeenCalledOnce();
-    const updater = app.setAppSettings.mock.calls[0][0];
+    const updater = vi.mocked(app.setAppSettings).mock.calls[0][0];
+    expect(typeof updater).toBe('function');
+    if (typeof updater !== 'function') {
+      throw new Error('Expected setAppSettings to receive an updater function');
+    }
     expect(updater(app.appSettings)).toEqual(
       expect.objectContaining({
         apiMode: 'openai-compatible',
@@ -202,7 +242,7 @@ describe('useMainContentViewModel', () => {
   it('shows Gemini and OpenAI-compatible models together while Gemini-native mode is active', () => {
     const app = buildApp({
       appSettings: {
-        ...DEFAULT_APP_SETTINGS,
+        ...createAppSettings(),
         apiMode: 'gemini-native',
         modelId: 'gemini-3-flash-preview',
         openaiCompatibleModelId: 'gpt-5.5',
@@ -232,7 +272,7 @@ describe('useMainContentViewModel', () => {
   it('switches API mode when selecting a model from the other provider list', () => {
     const app = buildApp({
       appSettings: {
-        ...DEFAULT_APP_SETTINGS,
+        ...createAppSettings(),
         apiMode: 'gemini-native',
         modelId: 'gemini-3-flash-preview',
         openaiCompatibleModelId: 'gpt-5.5',
@@ -248,7 +288,11 @@ describe('useMainContentViewModel', () => {
 
     expect(app.chatState.handleSelectModelInHeader).not.toHaveBeenCalled();
     expect(app.setAppSettings).toHaveBeenCalledOnce();
-    const switchToOpenAI = app.setAppSettings.mock.calls[0][0];
+    const switchToOpenAI = vi.mocked(app.setAppSettings).mock.calls[0][0];
+    expect(typeof switchToOpenAI).toBe('function');
+    if (typeof switchToOpenAI !== 'function') {
+      throw new Error('Expected setAppSettings to receive an updater function');
+    }
     expect(switchToOpenAI(app.appSettings)).toEqual(
       expect.objectContaining({
         apiMode: 'openai-compatible',
@@ -270,7 +314,11 @@ describe('useMainContentViewModel', () => {
 
     expect(app.chatState.handleSelectModelInHeader).toHaveBeenCalledWith('gemini-3-flash-preview');
     expect(app.setAppSettings).toHaveBeenCalledOnce();
-    const switchToGemini = app.setAppSettings.mock.calls[0][0];
+    const switchToGemini = vi.mocked(app.setAppSettings).mock.calls[0][0];
+    expect(typeof switchToGemini).toBe('function');
+    if (typeof switchToGemini !== 'function') {
+      throw new Error('Expected setAppSettings to receive an updater function');
+    }
     expect(switchToGemini(app.appSettings)).toEqual(
       expect.objectContaining({
         apiMode: 'gemini-native',

@@ -1,12 +1,12 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { GraphvizBlock } from './GraphvizBlock';
 
 vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return createI18nMock();
+  return createI18nMockModule();
 });
 
 vi.mock('@viz-js/viz', () => ({
@@ -14,23 +14,11 @@ vi.mock('@viz-js/viz', () => ({
 }));
 
 describe('GraphvizBlock', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('shows an error when the Graphviz renderer fails to initialize', async () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <GraphvizBlock
           code="digraph G { A -> B; }"
           isLoading={false}
@@ -43,7 +31,7 @@ describe('GraphvizBlock', () => {
     });
 
     await vi.waitFor(() => {
-      expect(container).toHaveTextContent('WASM failed');
+      expect(renderer.container).toHaveTextContent('WASM failed');
     });
   });
 });

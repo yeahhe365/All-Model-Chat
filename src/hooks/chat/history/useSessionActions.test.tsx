@@ -2,14 +2,15 @@ import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
 import { dbService } from '../../../utils/db';
+import { createChatSettings } from '../../../test/factories';
 import { useSessionActions } from './useSessionActions';
 import { renderHook } from '@/test/testUtils';
 
-vi.mock('../../../utils/db', () => ({
-  dbService: {
-    getSession: vi.fn(),
-  },
-}));
+vi.mock('../../../utils/db', async () => {
+  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
+
+  return createDbServiceMockModule();
+});
 
 vi.mock('../../../utils/chat/session', () => ({
   createNewSession: vi.fn((settings, messages, title) => ({
@@ -21,11 +22,11 @@ vi.mock('../../../utils/chat/session', () => ({
   })),
 }));
 
-vi.mock('../../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-  },
-}));
+vi.mock('../../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 vi.mock('../../../utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: vi.fn(),
@@ -58,7 +59,7 @@ const createSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSess
   title: 'Original',
   timestamp: 1,
   messages: [createMessage()],
-  settings: {} as SavedChatSession['settings'],
+  settings: createChatSettings(),
   ...overrides,
 });
 

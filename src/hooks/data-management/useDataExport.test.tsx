@@ -1,20 +1,21 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, SavedChatSession, UploadedFile } from '../../types';
+import type { SavedChatSession, UploadedFile } from '../../types';
 import { extractPersistedSessionFileRecords } from '../../utils/chat/session';
 import { useDataExport } from './useDataExport';
 import { useDataImport } from './useDataImport';
 import { renderHook } from '@/test/testUtils';
+import { createAppSettings, createChatSettings } from '@/test/factories';
 
 const mockGetAllSessions = vi.fn();
 
-vi.mock('../../utils/db', () => ({
-  dbService: {
-    getAllSessions: (...args: unknown[]) => mockGetAllSessions(...args),
-    addLogs: vi.fn().mockResolvedValue(undefined),
-    pruneLogs: vi.fn().mockResolvedValue(undefined),
-  },
-}));
+vi.mock('../../utils/db', async () => {
+  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createDbServiceMockModule({
+    getAllSessions: vi.fn((...args: unknown[]) => mockGetAllSessions(...args)),
+  });
+});
 
 vi.mock('../../utils/export/core', () => ({
   triggerDownload: vi.fn(),
@@ -99,16 +100,16 @@ describe('useDataExport history roundtrip', () => {
           files: [attachment],
         },
       ],
-      settings: {
+      settings: createChatSettings({
         modelId: 'gemini-test',
-      } as SavedChatSession['settings'],
+      }),
     };
 
     mockGetAllSessions.mockResolvedValue([exportedSession]);
 
     const exportHook = renderHook(() =>
       useDataExport({
-        appSettings: {} as AppSettings,
+        appSettings: createAppSettings(),
         savedGroups: [],
         savedScenarios: [],
         t: (key) => key,

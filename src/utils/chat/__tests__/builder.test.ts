@@ -20,9 +20,9 @@ vi.mock('../../../utils/fileHelpers', () => ({
 }));
 
 vi.mock('../../../services/logService', async () => {
-  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 // Mock modelHelpers
@@ -240,11 +240,7 @@ describe('createChatHistoryForApi', () => {
   });
 
   it('only includes user and model roles', async () => {
-    const msgs = [
-      makeMessage('user', 'Hi'),
-      makeMessage('error', 'Something broke') as any,
-      makeMessage('model', 'Hello'),
-    ];
+    const msgs = [makeMessage('user', 'Hi'), makeMessage('error', 'Something broke'), makeMessage('model', 'Hello')];
     const history = await createChatHistoryForApi(msgs);
     expect(history).toHaveLength(2);
   });
@@ -322,7 +318,7 @@ describe('createChatHistoryForApi', () => {
               name: 'run_local_python',
               response: { result: { output: '42' } },
             },
-          } as any,
+          },
         ],
       }),
     ];
@@ -358,7 +354,7 @@ describe('createChatHistoryForApi', () => {
           {
             text: '<|channel>thought\nPlan carefully.\n<channel|>Call the weather tool.',
           },
-          { functionCall: { id: 'call-1', name: 'get_weather', args: { location: 'Kyoto' } } as any },
+          { functionCall: { id: 'call-1', name: 'get_weather', args: { location: 'Kyoto' } } },
         ],
       }),
     ];
@@ -385,7 +381,7 @@ describe('createChatHistoryForApi', () => {
       }),
     ];
 
-    const history = await (createChatHistoryForApi as any)(msgs, false, 'gemini-3.1-pro-preview');
+    const history = await createChatHistoryForApi(msgs, false, 'gemini-3.1-pro-preview');
 
     expect(history[0].parts[0]).toEqual({
       fileData: { mimeType: 'image/png', fileUri: 'files/abc123' },
@@ -432,12 +428,12 @@ describe('createChatHistoryForApi', () => {
     const msgs = [
       makeMessage('model', '', {
         apiParts: [
-          { executableCode: { id: 'exec-1', language: Language.PYTHON, code: 'print(1)' } as any },
-          { codeExecutionResult: { id: 'exec-1', outcome: Outcome.OUTCOME_OK, output: '1\n' } as any },
+          { executableCode: { id: 'exec-1', language: Language.PYTHON, code: 'print(1)' } },
+          { codeExecutionResult: { id: 'exec-1', outcome: Outcome.OUTCOME_OK, output: '1\n' } },
           {
             inlineData: { mimeType: 'image/png', data: 'base64-chart' },
             thoughtSignature: 'sig-image',
-          } as any,
+          },
         ],
       }),
     ];
@@ -482,11 +478,11 @@ describe('createChatHistoryForApi', () => {
       makeMessage('model', '', {
         files: [generatedImage],
         apiParts: [
-          { text: 'Here is an updated result.', thoughtSignature: 'sig-text' } as any,
+          { text: 'Here is an updated result.', thoughtSignature: 'sig-text' },
           {
             inlineData: { mimeType: 'image/png', data: '' },
             thoughtSignature: 'sig-image',
-          } as any,
+          },
         ],
       }),
     ];

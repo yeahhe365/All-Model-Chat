@@ -1,39 +1,30 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { ShortcutsSection } from './ShortcutsSection';
 
 describe('ShortcutsSection', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     useSettingsStore.setState(initialState);
   });
 
   it('renders distinct previous and next file labels', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ShortcutsSection currentSettings={useSettingsStore.getState().appSettings} onUpdateSettings={vi.fn()} />
         </I18nProvider>,
       );
     });
 
-    expect(container.textContent).toContain('Previous File');
-    expect(container.textContent).toContain('Next File');
+    expect(renderer.container.textContent).toContain('Previous File');
+    expect(renderer.container.textContent).toContain('Next File');
   });
 
   it('renders tab cycle model settings in the shortcuts screen and updates the selected model list', async () => {
@@ -41,7 +32,7 @@ describe('ShortcutsSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ShortcutsSection
             currentSettings={{
@@ -59,11 +50,11 @@ describe('ShortcutsSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('Models Included In Tab Cycle');
-    expect(container.textContent).toContain('2 models selected');
-    expect(container.textContent).not.toContain('Gemini 3.1 Flash Lite Preview');
+    expect(renderer.container.textContent).toContain('Models Included In Tab Cycle');
+    expect(renderer.container.textContent).toContain('2 models selected');
+    expect(renderer.container.textContent).not.toContain('Gemini 3.1 Flash Lite Preview');
 
-    const toggleButton = container.querySelector<HTMLButtonElement>(
+    const toggleButton = renderer.container.querySelector<HTMLButtonElement>(
       'button[aria-label="Toggle Tab cycle model panel"]',
     );
     expect(toggleButton).not.toBeNull();
@@ -85,11 +76,11 @@ describe('ShortcutsSection', () => {
     });
 
     expect(toggleButton?.getAttribute('aria-expanded')).toBe('true');
-    expect(container.textContent).toContain('Gemini 3.1 Pro Preview');
-    expect(container.textContent).toContain('Gemini 3 Flash Preview');
-    expect(container.textContent).toContain('Gemini 3.1 Flash Lite Preview');
+    expect(renderer.container.textContent).toContain('Gemini 3.1 Pro Preview');
+    expect(renderer.container.textContent).toContain('Gemini 3 Flash Preview');
+    expect(renderer.container.textContent).toContain('Gemini 3.1 Flash Lite Preview');
 
-    const flashCheckbox = container.querySelector<HTMLInputElement>(
+    const flashCheckbox = renderer.container.querySelector<HTMLInputElement>(
       'input[aria-label="Toggle Tab cycle model: Gemini 3 Flash Preview"]',
     );
     expect(flashCheckbox).not.toBeNull();

@@ -1,39 +1,46 @@
-import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, type ComponentProps } from 'react';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { ModelsSection } from './ModelsSection';
+import type { ModelSelector } from '../controls/ModelSelector';
+import type { LanguageVoiceSection } from './LanguageVoiceSection';
+import type { SafetySection } from './SafetySection';
+
+type ModelSelectorProps = ComponentProps<typeof ModelSelector>;
+type LanguageVoiceSectionProps = ComponentProps<typeof LanguageVoiceSection>;
+type SafetySectionProps = ComponentProps<typeof SafetySection>;
 
 const mockSafetySection = vi.hoisted(() => ({
   renderCount: 0,
-  lastProps: null as any,
+  lastProps: null as SafetySectionProps | null,
 }));
 
 const mockLanguageVoiceSection = vi.hoisted(() => ({
-  lastProps: null as any,
+  lastProps: null as LanguageVoiceSectionProps | null,
 }));
 
 const mockModelSelector = vi.hoisted(() => ({
-  lastProps: null as any,
+  lastProps: null as ModelSelectorProps | null,
 }));
 
 vi.mock('../controls/ModelSelector', () => ({
-  ModelSelector: (props: any) => {
+  ModelSelector: (props: ModelSelectorProps) => {
     mockModelSelector.lastProps = props;
     return <div data-testid="model-selector">model selector</div>;
   },
 }));
 
 vi.mock('./LanguageVoiceSection', () => ({
-  LanguageVoiceSection: (props: any) => {
+  LanguageVoiceSection: (props: LanguageVoiceSectionProps) => {
     mockLanguageVoiceSection.lastProps = props;
     return <div data-testid="language-voice-section">language voice section</div>;
   },
 }));
 
 vi.mock('./SafetySection', () => ({
-  SafetySection: (props: any) => {
+  SafetySection: (props: SafetySectionProps) => {
     mockSafetySection.renderCount += 1;
     mockSafetySection.lastProps = props;
     return <div data-testid="safety-section">safety section</div>;
@@ -41,19 +48,10 @@ vi.mock('./SafetySection', () => ({
 }));
 
 describe('ModelsSection', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     useSettingsStore.setState(initialState);
     mockSafetySection.renderCount = 0;
     mockSafetySection.lastProps = null;
@@ -66,7 +64,7 @@ describe('ModelsSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelsSection
             modelId="gemini-3.1-pro-preview"
@@ -87,11 +85,13 @@ describe('ModelsSection', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="model-selector"]')).not.toBeNull();
-    expect(container.textContent).not.toContain('Models Included In Tab Cycle');
-    expect(container.textContent).not.toContain('2 models selected');
-    expect(container.textContent).not.toContain('Gemini 3.1 Flash Lite Preview');
-    expect(container.querySelector<HTMLButtonElement>('button[aria-label="Toggle Tab cycle model panel"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="model-selector"]')).not.toBeNull();
+    expect(renderer.container.textContent).not.toContain('Models Included In Tab Cycle');
+    expect(renderer.container.textContent).not.toContain('2 models selected');
+    expect(renderer.container.textContent).not.toContain('Gemini 3.1 Flash Lite Preview');
+    expect(
+      renderer.container.querySelector<HTMLButtonElement>('button[aria-label="Toggle Tab cycle model panel"]'),
+    ).toBeNull();
     expect(onUpdateSettings).not.toHaveBeenCalledWith(
       expect.objectContaining({
         tabModelCycleIds: expect.anything(),
@@ -105,7 +105,7 @@ describe('ModelsSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelsSection
             modelId="gemini-3.1-pro-preview"
@@ -122,22 +122,24 @@ describe('ModelsSection', () => {
       );
     });
 
-    const toggleButton = container.querySelector<HTMLButtonElement>('button[aria-label="Toggle safety settings"]');
+    const toggleButton = renderer.container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Toggle safety settings"]',
+    );
 
     expect(toggleButton).not.toBeNull();
     expect(toggleButton?.getAttribute('aria-expanded')).toBe('false');
-    expect(container.textContent).toContain('Safety Settings');
-    expect(container.querySelector('[data-testid="safety-section"]')).toBeNull();
+    expect(renderer.container.textContent).toContain('Safety Settings');
+    expect(renderer.container.querySelector('[data-testid="safety-section"]')).toBeNull();
 
     await act(async () => {
       toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(toggleButton?.getAttribute('aria-expanded')).toBe('true');
-    expect(container.querySelector('[data-testid="safety-section"]')).not.toBeNull();
-    expect(mockSafetySection.lastProps.safetySettings).toBe(safetySettings);
+    expect(renderer.container.querySelector('[data-testid="safety-section"]')).not.toBeNull();
+    expect(mockSafetySection.lastProps!.safetySettings).toBe(safetySettings);
 
-    mockSafetySection.lastProps.setSafetySettings([]);
+    mockSafetySection.lastProps!.setSafetySettings([]);
 
     expect(onUpdateSettings).toHaveBeenCalledWith({ safetySettings: [] });
   });
@@ -147,7 +149,7 @@ describe('ModelsSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelsSection
             modelId="gemini-3.1-pro-preview"
@@ -165,11 +167,11 @@ describe('ModelsSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('Canvas Visualizations');
-    expect(container.textContent).toContain('Auto-open Canvas Visualization');
-    expect(container.textContent).toContain('Canvas Model');
+    expect(renderer.container.textContent).toContain('Canvas Visualizations');
+    expect(renderer.container.textContent).toContain('Auto-open Canvas Visualization');
+    expect(renderer.container.textContent).toContain('Canvas Model');
 
-    const toggleLabel = Array.from(container.querySelectorAll('span')).find(
+    const toggleLabel = Array.from(renderer.container.querySelectorAll('span')).find(
       (element) => element.textContent?.trim() === 'Auto-open Canvas Visualization',
     );
     const toggleInput = toggleLabel?.closest('.group')?.querySelector<HTMLInputElement>('input[type="checkbox"]');
@@ -181,13 +183,13 @@ describe('ModelsSection', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith({ autoCanvasVisualization: true });
 
     await act(async () => {
-      container
+      renderer.container
         .querySelector<HTMLButtonElement>('#canvas-model-select')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     await act(async () => {
-      Array.from(container.querySelectorAll('button'))
+      Array.from(renderer.container.querySelectorAll('button'))
         .find((button) => button.textContent?.trim() === 'Gemini 3.1 Pro')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
@@ -200,7 +202,7 @@ describe('ModelsSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelsSection
             modelId="gemini-3.1-pro-preview"
@@ -224,23 +226,23 @@ describe('ModelsSection', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="language-voice-section"]')).not.toBeNull();
-    expect(mockLanguageVoiceSection.lastProps.currentSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
-    expect(mockLanguageVoiceSection.lastProps.currentSettings.translationTargetLanguage).toBe('Japanese');
-    expect(mockLanguageVoiceSection.lastProps.currentSettings.inputTranslationModelId).toBe(
+    expect(renderer.container.querySelector('[data-testid="language-voice-section"]')).not.toBeNull();
+    expect(mockLanguageVoiceSection.lastProps!.currentSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
+    expect(mockLanguageVoiceSection.lastProps!.currentSettings.translationTargetLanguage).toBe('Japanese');
+    expect(mockLanguageVoiceSection.lastProps!.currentSettings.inputTranslationModelId).toBe(
       'gemini-custom-input-translator',
     );
-    expect(mockLanguageVoiceSection.lastProps.currentSettings.thoughtTranslationTargetLanguage).toBe('Korean');
-    expect(mockLanguageVoiceSection.lastProps.currentSettings.thoughtTranslationModelId).toBe(
+    expect(mockLanguageVoiceSection.lastProps!.currentSettings.thoughtTranslationTargetLanguage).toBe('Korean');
+    expect(mockLanguageVoiceSection.lastProps!.currentSettings.thoughtTranslationModelId).toBe(
       'gemini-custom-thought-translator',
     );
 
     act(() => {
-      mockLanguageVoiceSection.lastProps.onUpdateSetting('transcriptionModelId', 'gemini-3.1-flash-lite-preview');
-      mockLanguageVoiceSection.lastProps.onUpdateSetting('translationTargetLanguage', 'Simplified Chinese');
-      mockLanguageVoiceSection.lastProps.onUpdateSetting('inputTranslationModelId', 'gemini-3-flash-preview');
-      mockLanguageVoiceSection.lastProps.onUpdateSetting('thoughtTranslationTargetLanguage', 'English');
-      mockLanguageVoiceSection.lastProps.onUpdateSetting('thoughtTranslationModelId', 'gemini-3.1-pro-preview');
+      mockLanguageVoiceSection.lastProps!.onUpdateSetting('transcriptionModelId', 'gemini-3.1-flash-lite-preview');
+      mockLanguageVoiceSection.lastProps!.onUpdateSetting('translationTargetLanguage', 'Simplified Chinese');
+      mockLanguageVoiceSection.lastProps!.onUpdateSetting('inputTranslationModelId', 'gemini-3-flash-preview');
+      mockLanguageVoiceSection.lastProps!.onUpdateSetting('thoughtTranslationTargetLanguage', 'English');
+      mockLanguageVoiceSection.lastProps!.onUpdateSetting('thoughtTranslationModelId', 'gemini-3.1-pro-preview');
     });
 
     expect(onUpdateSettings).toHaveBeenCalledWith({ transcriptionModelId: 'gemini-3.1-flash-lite-preview' });
@@ -259,7 +261,7 @@ describe('ModelsSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelsSection
             modelId="gpt-5.5"
@@ -278,15 +280,17 @@ describe('ModelsSection', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="model-selector"]')).not.toBeNull();
-    expect(mockModelSelector.lastProps.defaultModels).toBe(defaultModels);
-    expect(container.textContent).toContain('Default System Prompt');
-    expect(container.textContent).toContain('Temperature');
-    expect(container.textContent).toContain('Top P');
-    expect(container.textContent).not.toContain('Top K');
-    expect(container.textContent).not.toContain('Canvas Visualizations');
-    expect(container.textContent).not.toContain('Safety Settings');
-    expect(container.querySelector('[data-testid="language-voice-section"]')).toBeNull();
-    expect(container.querySelector<HTMLButtonElement>('button[aria-label="Toggle safety settings"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="model-selector"]')).not.toBeNull();
+    expect(mockModelSelector.lastProps!.defaultModels).toBe(defaultModels);
+    expect(renderer.container.textContent).toContain('Default System Prompt');
+    expect(renderer.container.textContent).toContain('Temperature');
+    expect(renderer.container.textContent).toContain('Top P');
+    expect(renderer.container.textContent).not.toContain('Top K');
+    expect(renderer.container.textContent).not.toContain('Canvas Visualizations');
+    expect(renderer.container.textContent).not.toContain('Safety Settings');
+    expect(renderer.container.querySelector('[data-testid="language-voice-section"]')).toBeNull();
+    expect(
+      renderer.container.querySelector<HTMLButtonElement>('button[aria-label="Toggle safety settings"]'),
+    ).toBeNull();
   });
 });

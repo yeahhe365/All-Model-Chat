@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../../contexts/I18nContext';
 import { PdfToolbar } from './PdfToolbar';
@@ -85,13 +85,9 @@ const PdfToolbarHarness: React.FC<{ file: UploadedFile }> = ({ file }) => (
 );
 
 describe('PdfToolbar', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-    root = createTestRenderer();
-    container = root.container;
     Object.defineProperty(globalThis, 'IntersectionObserver', {
       configurable: true,
       value: class {
@@ -107,19 +103,16 @@ describe('PdfToolbar', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.restoreAllMocks();
   });
 
   it('keeps the typed page draft while the current page changes before commit', async () => {
     await act(async () => {
-      root.render(<PdfToolbarHarness file={file} />);
+      renderer.root.render(<PdfToolbarHarness file={file} />);
     });
 
-    const input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
-    const jumpButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const input = renderer.container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
+    const jumpButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Jump to page 4'),
     );
 
@@ -145,10 +138,10 @@ describe('PdfToolbar', () => {
 
   it('resets to the first page when a new keyed file is mounted', async () => {
     await act(async () => {
-      root.render(<PdfToolbarHarness file={file} />);
+      renderer.root.render(<PdfToolbarHarness file={file} />);
     });
 
-    const jumpButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const jumpButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Jump to page 4'),
     );
 
@@ -158,14 +151,14 @@ describe('PdfToolbar', () => {
       jumpButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    let input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
+    let input = renderer.container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
     expect(input?.value).toBe('4');
 
     await act(async () => {
-      root.render(<PdfToolbarHarness file={secondFile} />);
+      renderer.root.render(<PdfToolbarHarness file={secondFile} />);
     });
 
-    input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
+    input = renderer.container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
     expect(input?.value).toBe('1');
   });
 });

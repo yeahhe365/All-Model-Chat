@@ -52,7 +52,7 @@ describe('useSelectionPosition', () => {
 
     const { unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: null as any,
+        containerRef: null,
         isAudioActive: false,
         toolbarRef,
       }),
@@ -85,7 +85,7 @@ describe('useSelectionPosition', () => {
 
     const { result, unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef,
       }),
@@ -119,7 +119,7 @@ describe('useSelectionPosition', () => {
     const toolbarRef = createToolbarRef();
     const { result, unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef,
       }),
@@ -156,7 +156,7 @@ describe('useSelectionPosition', () => {
     const toolbarRef = createToolbarRef();
     const { result, unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef,
         preserveFormattingOnCopy: false,
@@ -197,7 +197,7 @@ describe('useSelectionPosition', () => {
     const toolbarRef = createToolbarRef();
     const { result, unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef,
         preserveFormattingOnCopy: false,
@@ -233,7 +233,7 @@ describe('useSelectionPosition', () => {
     const toolbarRef = createToolbarRef();
     const { unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef,
         onCopySuccess,
@@ -271,7 +271,7 @@ describe('useSelectionPosition', () => {
     const toolbarRef = createToolbarRef();
     const { unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef,
       }),
@@ -311,7 +311,7 @@ describe('useSelectionPosition', () => {
     const toolbarRef = createToolbarRef();
     const { result, unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef,
       }),
@@ -340,7 +340,7 @@ describe('useSelectionPosition', () => {
 
     const { result, rerender, unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive,
         toolbarRef,
       }),
@@ -354,7 +354,7 @@ describe('useSelectionPosition', () => {
     isAudioActive = true;
     rerender(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive,
         toolbarRef,
       }),
@@ -386,7 +386,7 @@ describe('useSelectionPosition', () => {
 
     const { result, rerender, unmount } = renderHook(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef: toolbarRef as React.RefObject<HTMLDivElement>,
       }),
@@ -417,7 +417,7 @@ describe('useSelectionPosition', () => {
 
     rerender(() =>
       useSelectionPosition({
-        containerRef: host as any,
+        containerRef: host,
         isAudioActive: false,
         toolbarRef: toolbarRef as React.RefObject<HTMLDivElement>,
       }),

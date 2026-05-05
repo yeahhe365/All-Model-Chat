@@ -1,7 +1,7 @@
 import React from 'react';
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useChatInputFile } from './useChatInputFile';
 
 vi.mock('./useFilePreProcessingEffects', () => ({
@@ -24,16 +24,9 @@ vi.mock('./useChatInputFileUi', () => ({
 }));
 
 describe('useChatInputFile', () => {
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
@@ -87,7 +80,7 @@ describe('useChatInputFile', () => {
     const harnessRef = React.createRef<HarnessHandle>();
 
     act(() => {
-      root.render(<Harness ref={harnessRef} />);
+      renderer.root.render(<Harness ref={harnessRef} />);
     });
 
     await expect(harnessRef.current?.submit()).rejects.toThrow('metadata lookup failed');

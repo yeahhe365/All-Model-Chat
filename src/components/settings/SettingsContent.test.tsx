@@ -1,19 +1,29 @@
-import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, type ComponentProps } from 'react';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { SettingsContent } from './SettingsContent';
+import type { SettingsTab } from '../../hooks/features/useSettingsLogic';
+import type { ModelsSection } from './sections/ModelsSection';
+import type { GenerationSection } from './sections/GenerationSection';
+import type { ShortcutsSection } from './sections/ShortcutsSection';
+
+type ModelsSectionProps = ComponentProps<typeof ModelsSection>;
+type GenerationSectionProps = ComponentProps<typeof GenerationSection>;
+type ShortcutsSectionProps = ComponentProps<typeof ShortcutsSection>;
+
+const removedSettingsTab = (tab: string): SettingsTab => tab as SettingsTab;
 
 const mockModelsSection = vi.hoisted(() => ({
-  lastProps: null as any,
+  lastProps: null as ModelsSectionProps | null,
 }));
 
 const mockGenerationSection = vi.hoisted(() => ({
-  lastProps: null as any,
+  lastProps: null as GenerationSectionProps | null,
 }));
 
 const mockShortcutsSection = vi.hoisted(() => ({
-  lastProps: null as any,
+  lastProps: null as ShortcutsSectionProps | null,
 }));
 
 vi.mock('./sections/UsageSection', () => ({
@@ -25,7 +35,7 @@ vi.mock('./sections/AppearanceSection', () => ({
 }));
 
 vi.mock('./sections/ModelsSection', () => ({
-  ModelsSection: (props: any) => {
+  ModelsSection: (props: ModelsSectionProps) => {
     mockModelsSection.lastProps = props;
     return (
       <>
@@ -49,32 +59,23 @@ vi.mock('./sections/ModelsSection', () => ({
 }));
 
 vi.mock('./sections/GenerationSection', () => ({
-  GenerationSection: (props: any) => {
+  GenerationSection: (props: GenerationSectionProps) => {
     mockGenerationSection.lastProps = props;
     return <div data-testid="generation-section">generation</div>;
   },
 }));
 
 vi.mock('./sections/ShortcutsSection', () => ({
-  ShortcutsSection: (props: any) => {
+  ShortcutsSection: (props: ShortcutsSectionProps) => {
     mockShortcutsSection.lastProps = props;
     return <div data-testid="shortcuts-section">shortcuts</div>;
   },
 }));
 
 describe('SettingsContent', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     mockModelsSection.lastProps = null;
     mockGenerationSection.lastProps = null;
     mockShortcutsSection.lastProps = null;
@@ -82,9 +83,9 @@ describe('SettingsContent', () => {
 
   it('does not render the obsolete usage section when the removed tab is requested', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
-          activeTab={'usage' as any}
+          activeTab={removedSettingsTab('usage')}
           currentSettings={DEFAULT_APP_SETTINGS}
           availableModels={[]}
           updateSetting={vi.fn()}
@@ -107,7 +108,7 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="usage-section"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="usage-section"]')).toBeNull();
   });
 
   it('switches to a fallback model when the current model is removed from the edited list', () => {
@@ -116,7 +117,7 @@ describe('SettingsContent', () => {
     const handleModelChange = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
           activeTab="models"
           currentSettings={{
@@ -145,7 +146,7 @@ describe('SettingsContent', () => {
     });
 
     act(() => {
-      container
+      renderer.container
         .querySelector('[data-testid="save-model-list"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
@@ -162,7 +163,7 @@ describe('SettingsContent', () => {
     const updateSetting = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
           activeTab="models"
           currentSettings={{
@@ -197,14 +198,14 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(mockModelsSection.lastProps.currentSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
-    expect(mockModelsSection.lastProps.currentSettings.translationTargetLanguage).toBe('Japanese');
-    expect(mockModelsSection.lastProps.currentSettings.inputTranslationModelId).toBe('gemini-custom-input-translator');
-    expect(mockModelsSection.lastProps.currentSettings.thoughtTranslationTargetLanguage).toBe('Korean');
-    expect(mockModelsSection.lastProps.currentSettings.thoughtTranslationModelId).toBe(
+    expect(mockModelsSection.lastProps!.currentSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
+    expect(mockModelsSection.lastProps!.currentSettings.translationTargetLanguage).toBe('Japanese');
+    expect(mockModelsSection.lastProps!.currentSettings.inputTranslationModelId).toBe('gemini-custom-input-translator');
+    expect(mockModelsSection.lastProps!.currentSettings.thoughtTranslationTargetLanguage).toBe('Korean');
+    expect(mockModelsSection.lastProps!.currentSettings.thoughtTranslationModelId).toBe(
       'gemini-custom-thought-translator',
     );
-    expect(mockModelsSection.lastProps.availableModels).toEqual([
+    expect(mockModelsSection.lastProps!.availableModels).toEqual([
       { id: 'gemini-custom-input-translator', name: 'Input Translator' },
       { id: 'gemini-custom-thought-translator', name: 'Thought Translator' },
     ]);
@@ -222,7 +223,7 @@ describe('SettingsContent', () => {
     const geminiModels = [{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }];
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
           activeTab="models"
           currentSettings={{
@@ -253,17 +254,17 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(mockModelsSection.lastProps.modelId).toBe('gpt-5.5');
-    expect(mockModelsSection.lastProps.availableModels).toBe(openAIModels);
-    expect(mockModelsSection.lastProps.defaultModels).toEqual([
+    expect(mockModelsSection.lastProps!.modelId).toBe('gpt-5.5');
+    expect(mockModelsSection.lastProps!.availableModels).toBe(openAIModels);
+    expect(mockModelsSection.lastProps!.defaultModels).toEqual([
       { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
       { id: 'gpt-5.1', name: 'GPT-5.1', isPinned: true },
       { id: 'gpt-4.1', name: 'GPT-4.1' },
     ]);
-    expect(mockModelsSection.lastProps.isOpenAICompatibleMode).toBe(true);
+    expect(mockModelsSection.lastProps!.isOpenAICompatibleMode).toBe(true);
 
     act(() => {
-      container
+      renderer.container
         .querySelector('[data-testid="save-model-list"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
@@ -277,7 +278,7 @@ describe('SettingsContent', () => {
     expect(handleModelChange).not.toHaveBeenCalled();
 
     act(() => {
-      container
+      renderer.container
         .querySelector('[data-testid="select-model"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
@@ -289,9 +290,9 @@ describe('SettingsContent', () => {
 
   it('does not render the removed model behavior section when the obsolete tab is requested', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
-          activeTab={'generation' as any}
+          activeTab={removedSettingsTab('generation')}
           currentSettings={DEFAULT_APP_SETTINGS}
           availableModels={[]}
           updateSetting={vi.fn()}
@@ -314,14 +315,14 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="generation-section"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="generation-section"]')).toBeNull();
   });
 
   it('keeps tts voice and raw reasoning controls inside models settings', () => {
     const updateSetting = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
           activeTab="models"
           currentSettings={{
@@ -351,14 +352,14 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(mockModelsSection.lastProps.currentSettings.ttsVoice).toBe('Aoede');
-    expect(mockModelsSection.lastProps.currentSettings.isRawModeEnabled).toBe(true);
-    expect(mockModelsSection.lastProps.currentSettings.hideThinkingInContext).toBe(true);
+    expect(mockModelsSection.lastProps!.currentSettings.ttsVoice).toBe('Aoede');
+    expect(mockModelsSection.lastProps!.currentSettings.isRawModeEnabled).toBe(true);
+    expect(mockModelsSection.lastProps!.currentSettings.hideThinkingInContext).toBe(true);
   });
 
   it('does not apply zoom-based enter animation to the active settings panel', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
           activeTab="models"
           currentSettings={DEFAULT_APP_SETTINGS}
@@ -383,7 +384,7 @@ describe('SettingsContent', () => {
       );
     });
 
-    const panelSurface = container.querySelector('[data-testid="save-model-list"]')?.closest('div');
+    const panelSurface = renderer.container.querySelector('[data-testid="save-model-list"]')?.closest('div');
 
     expect(panelSurface).not.toBeNull();
     expect(panelSurface?.className).not.toContain('zoom-in-95');
@@ -391,7 +392,7 @@ describe('SettingsContent', () => {
 
   it('keeps shortcuts out of the workspace tab', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
           activeTab="interface"
           currentSettings={DEFAULT_APP_SETTINGS}
@@ -416,15 +417,15 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="appearance-section"]')).not.toBeNull();
-    expect(container.querySelector('[data-testid="shortcuts-section"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="appearance-section"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-testid="shortcuts-section"]')).toBeNull();
   });
 
   it('renders shortcuts inside the shortcuts tab', () => {
     const availableModels = [{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }];
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <SettingsContent
           activeTab="shortcuts"
           currentSettings={DEFAULT_APP_SETTINGS}
@@ -449,7 +450,7 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="shortcuts-section"]')).not.toBeNull();
-    expect(mockShortcutsSection.lastProps.availableModels).toBe(availableModels);
+    expect(renderer.container.querySelector('[data-testid="shortcuts-section"]')).not.toBeNull();
+    expect(mockShortcutsSection.lastProps!.availableModels).toBe(availableModels);
   });
 });

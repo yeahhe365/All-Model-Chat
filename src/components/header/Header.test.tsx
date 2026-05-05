@@ -1,12 +1,12 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { Header } from './Header';
 
 vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
 
-  return createI18nMock();
+  return createI18nMockModule();
 });
 
 vi.mock('./HeaderModelSelector', () => ({
@@ -14,23 +14,11 @@ vi.mock('./HeaderModelSelector', () => ({
 }));
 
 describe('Header', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('uses localized PiP labels from the translation layer', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <Header
           onNewChat={vi.fn()}
           onOpenScenariosModal={vi.fn()}
@@ -58,14 +46,14 @@ describe('Header', () => {
       );
     });
 
-    const pipButton = container.querySelector('button[aria-label="pipEnter"]');
+    const pipButton = renderer.container.querySelector('button[aria-label="pipEnter"]');
     expect(pipButton).not.toBeNull();
     expect(pipButton?.getAttribute('title')).toBe('pipEnter');
   });
 
   it('keeps the canvas helper hit target stable while pressing', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <Header
           onNewChat={vi.fn()}
           onOpenScenariosModal={vi.fn()}
@@ -93,7 +81,7 @@ describe('Header', () => {
       );
     });
 
-    const canvasButton = container.querySelector('button[aria-label="canvasHelperInactive_aria"]');
+    const canvasButton = renderer.container.querySelector('button[aria-label="canvasHelperInactive_aria"]');
 
     expect(canvasButton).not.toBeNull();
     expect(canvasButton?.className).toContain('w-9');
@@ -104,7 +92,7 @@ describe('Header', () => {
 
   it('uses compact vertical chrome for the top header', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <Header
           onNewChat={vi.fn()}
           onOpenScenariosModal={vi.fn()}
@@ -132,7 +120,7 @@ describe('Header', () => {
       );
     });
 
-    const header = container.querySelector('header');
+    const header = renderer.container.querySelector('header');
 
     expect(header?.className).toContain('py-[0.32rem]');
     expect(header?.className).toContain('sm:py-[0.48rem]');

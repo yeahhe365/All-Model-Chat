@@ -1,24 +1,17 @@
 import { act } from 'react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { UploadedFile } from '../../types';
+import { describe, expect, it } from 'vitest';
+import { createUploadedFile } from '@/test/factories';
 import { useFileModalState } from './useFileModalState';
 import { renderHook } from '@/test/testUtils';
 
-const files: UploadedFile[] = [
-  {
-    id: 'file-1',
+const files = [
+  createUploadedFile({
     name: 'preview.png',
-    type: 'image/png',
     size: 1,
-    uploadState: 'active',
-  },
+  }),
 ];
 
 describe('useFileModalState', () => {
-  beforeEach(() => {});
-
-  afterEach(() => {});
-
   it('tracks preview state and resets editability when the preview closes', () => {
     const { result, unmount } = renderHook(() => useFileModalState<string>(files));
 

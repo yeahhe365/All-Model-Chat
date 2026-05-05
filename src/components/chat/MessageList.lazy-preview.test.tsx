@@ -1,17 +1,15 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChatMessage, UploadedFile } from '../../types';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ChatMessage } from '../../types';
 import { createChatAreaProviderValue } from '../../test/chatAreaFixtures';
+import { createUploadedFile } from '../../test/factories';
 
-const file: UploadedFile = {
-  id: 'file-1',
+const file = createUploadedFile({
   name: 'demo.png',
-  type: 'image/png',
   size: 128,
   dataUrl: 'blob:demo',
-  uploadState: 'active',
-};
+});
 
 const messages: ChatMessage[] = [
   {
@@ -90,16 +88,9 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
 };
 
 describe('MessageList preview chunking', () => {
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
     vi.resetModules();
 
@@ -115,7 +106,7 @@ describe('MessageList preview chunking', () => {
     expect(moduleLoadTracker.count).toBe(0);
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ChatAreaProvider value={createProviderValue()}>
             <MessageList />

@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WindowProvider } from '../../../contexts/WindowContext';
 import { TableBlock } from './TableBlock';
 
@@ -11,24 +11,15 @@ vi.mock('../../../utils/export/core', () => ({
 }));
 
 describe('TableBlock', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     triggerDownloadMock.mockReset();
   });
 
   it('renders tables with natural-width scrolling classes instead of forcing full-width compression', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <WindowProvider window={window} document={document}>
           <TableBlock>
             <thead>
@@ -48,7 +39,7 @@ describe('TableBlock', () => {
       );
     });
 
-    const table = container.querySelector('table');
+    const table = renderer.container.querySelector('table');
     const tableClasses = table?.className.split(/\s+/) ?? [];
 
     expect(tableClasses).toContain('w-max');
@@ -58,7 +49,7 @@ describe('TableBlock', () => {
 
   it('keeps inline action controls available without hover on compact viewports', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <WindowProvider window={window} document={document}>
           <TableBlock>
             <tbody>
@@ -72,7 +63,7 @@ describe('TableBlock', () => {
       );
     });
 
-    const actionBar = container.querySelector('.absolute.top-2.right-2');
+    const actionBar = renderer.container.querySelector('.absolute.top-2.right-2');
 
     expect(actionBar?.className).toContain('opacity-100');
     expect(actionBar?.className).toContain('pointer-events-auto');
@@ -84,7 +75,7 @@ describe('TableBlock', () => {
     const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:table-export');
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <WindowProvider window={window} document={document}>
           <TableBlock>
             <tbody>
@@ -98,14 +89,14 @@ describe('TableBlock', () => {
       );
     });
 
-    const downloadButton = container.querySelector('button[title="Download"]');
+    const downloadButton = renderer.container.querySelector('button[title="Download"]');
     expect(downloadButton).not.toBeNull();
 
     await act(async () => {
       downloadButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const excelButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const excelButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Export to Excel'),
     );
     expect(excelButton).not.toBeUndefined();

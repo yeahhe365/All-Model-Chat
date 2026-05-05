@@ -1,36 +1,23 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it } from 'vitest';
 import { MessageFiles } from './MessageFiles';
-import type { UploadedFile } from '../../../types';
+import { createUploadedFile } from '../../../test/factories';
 
-const createImageFile = (id: string, name: string): UploadedFile => ({
-  id,
-  name,
-  type: 'image/png',
-  size: 1024,
-  dataUrl: `data:image/png;base64,${id}`,
-  uploadState: 'active',
-});
+const createImageFile = (id: string, name: string) =>
+  createUploadedFile({
+    id,
+    name,
+    size: 1024,
+    dataUrl: `data:image/png;base64,${id}`,
+  });
 
 describe('MessageFiles', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('renders non-quad multi-image rows as fixed-height cover thumbnails', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <MessageFiles
           files={[createImageFile('image-1', 'first.png'), createImageFile('image-2', 'second.png')]}
           onImageClick={() => {}}
@@ -40,8 +27,8 @@ describe('MessageFiles', () => {
       );
     });
 
-    const heightLockedItems = container.querySelectorAll('.h-40');
-    const images = Array.from(container.querySelectorAll('img'));
+    const heightLockedItems = renderer.container.querySelectorAll('.h-40');
+    const images = Array.from(renderer.container.querySelectorAll('img'));
 
     expect(heightLockedItems).toHaveLength(2);
     expect(images).toHaveLength(2);
@@ -50,7 +37,7 @@ describe('MessageFiles', () => {
 
   it('hides generated files in the top attachment strip when tool results render them inline', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <MessageFiles
           files={[
             createImageFile('generated-1', 'generated-image-1.png'),
@@ -64,7 +51,7 @@ describe('MessageFiles', () => {
       );
     });
 
-    const images = Array.from(container.querySelectorAll('img'));
+    const images = Array.from(renderer.container.querySelectorAll('img'));
     const sources = images.map((image) => image.getAttribute('src'));
 
     expect(images).toHaveLength(1);

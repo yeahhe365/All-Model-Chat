@@ -1,7 +1,7 @@
 import React from 'react';
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScenarioMessageInput } from './ScenarioMessageInput';
 
 const { mockSettingsState } = vi.hoisted(() => ({
@@ -17,19 +17,10 @@ vi.mock('../../../stores/settingsStore', () => ({
 }));
 
 describe('ScenarioMessageInput', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
     mockSettingsState.appSettings.customShortcuts = {};
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('uses the configured save/confirm shortcut to add a message', async () => {
@@ -41,7 +32,7 @@ describe('ScenarioMessageInput', () => {
     const inputRef = React.createRef<HTMLTextAreaElement>();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <ScenarioMessageInput
           role="user"
           setRole={() => {}}
@@ -54,7 +45,7 @@ describe('ScenarioMessageInput', () => {
       );
     });
 
-    const textarea = container.querySelector('textarea');
+    const textarea = renderer.container.querySelector('textarea');
     expect(textarea).not.toBeNull();
 
     await act(async () => {

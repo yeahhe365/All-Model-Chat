@@ -7,9 +7,9 @@ const { mockGetLiveApiClient, mockFloat32ToPCM16Base64 } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../services/api/liveApiAuth', () => ({
@@ -27,6 +27,8 @@ vi.mock('../../utils/audio/audioProcessing', () => ({
 }));
 
 import { useLiveConnection } from './useLiveConnection';
+import { createAppSettings } from '@/test/factories';
+import { createLiveSessionRef, createLiveSessionStub } from '@/test/liveApiFixtures';
 import { renderHook } from '@/test/testUtils';
 
 const flushAsyncConnect = async () => {
@@ -48,7 +50,7 @@ describe('useLiveConnection', () => {
   it('sends text with sendRealtimeInput for live sessions', async () => {
     const sendRealtimeInput = vi.fn();
     const sendClientContent = vi.fn();
-    const sessionRef = { current: null as any };
+    const sessionRef = createLiveSessionRef();
 
     mockGetLiveApiClient.mockResolvedValue({
       live: {
@@ -66,7 +68,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -76,7 +78,7 @@ describe('useLiveConnection', () => {
         handleMessage: vi.fn(),
         setSessionHandle: vi.fn(),
         sessionHandleRef: { current: null },
-        sessionRef: sessionRef as any,
+        sessionRef,
       }),
     );
 
@@ -98,7 +100,7 @@ describe('useLiveConnection', () => {
   it('sends multipart client content for live text turns with attachments', async () => {
     const sendRealtimeInput = vi.fn();
     const sendClientContent = vi.fn();
-    const sessionRef = { current: null as any };
+    const sessionRef = createLiveSessionRef();
 
     mockGetLiveApiClient.mockResolvedValue({
       live: {
@@ -116,7 +118,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -126,7 +128,7 @@ describe('useLiveConnection', () => {
         handleMessage: vi.fn(),
         setSessionHandle: vi.fn(),
         sessionHandleRef: { current: null },
-        sessionRef: sessionRef as any,
+        sessionRef,
       }),
     );
 
@@ -172,7 +174,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         liveApiKeyForConnection: 'browser-key',
@@ -191,7 +193,11 @@ describe('useLiveConnection', () => {
       await result.current.connect();
     });
 
-    expect(mockGetLiveApiClient).toHaveBeenCalledWith({}, { apiVersion: 'v1alpha' }, 'browser-key');
+    expect(mockGetLiveApiClient).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: 'api-key' }),
+      { apiVersion: 'v1alpha' },
+      'browser-key',
+    );
     unmount();
   });
 
@@ -199,17 +205,17 @@ describe('useLiveConnection', () => {
     const sendRealtimeInput = vi.fn();
     const close = vi.fn();
 
-    const sessionRef = {
-      current: Promise.resolve({
+    const sessionRef = createLiveSessionRef(
+      createLiveSessionStub({
         sendRealtimeInput,
         sendClientContent: vi.fn(),
         close,
       }),
-    };
+    );
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -219,7 +225,7 @@ describe('useLiveConnection', () => {
         handleMessage: vi.fn(),
         setSessionHandle: vi.fn(),
         sessionHandleRef: { current: null },
-        sessionRef: sessionRef as any,
+        sessionRef,
       }),
     );
 
@@ -255,11 +261,11 @@ describe('useLiveConnection', () => {
       },
     });
 
-    const sessionRef = { current: null as any };
+    const sessionRef = createLiveSessionRef();
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -306,7 +312,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -368,7 +374,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -438,7 +444,7 @@ describe('useLiveConnection', () => {
       onclose?: (event: unknown) => void;
     }> = [];
     const close = vi.fn();
-    const sessionRef = { current: null as any };
+    const sessionRef = createLiveSessionRef();
     const sessionHandleRef = { current: null as string | null };
 
     const connectLiveSession = vi.fn(({ callbacks }) => {
@@ -460,7 +466,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -533,7 +539,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -600,7 +606,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -655,7 +661,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -697,7 +703,7 @@ describe('useLiveConnection', () => {
       onclose?: (event: unknown) => void;
     }> = [];
     const close = vi.fn();
-    const sessionRef = { current: null as any };
+    const sessionRef = createLiveSessionRef();
     const sessionHandleRef = { current: 'resumable-handle' as string | null };
 
     const connectLiveSession = vi.fn(({ callbacks }) => {
@@ -717,7 +723,7 @@ describe('useLiveConnection', () => {
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
-        appSettings: {} as any,
+        appSettings: createAppSettings(),
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],

@@ -42,7 +42,6 @@ describe('CreateTextFileEditor extension preference', () => {
   };
 
   beforeEach(() => {
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       value: storage,

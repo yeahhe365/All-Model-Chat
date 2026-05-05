@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
 const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockT, mockTextFileViewer } = vi.hoisted(
@@ -35,11 +35,11 @@ const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockT, 
   }),
 );
 
-vi.mock('../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: mockT,
-  }),
-}));
+vi.mock('../../contexts/I18nContext', async () => {
+  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createI18nMockModule({ t: mockT });
+});
 
 vi.mock('../../stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
@@ -104,7 +104,7 @@ vi.mock('../../utils/docxPreview', () => ({
 import { FilePreviewModal } from './FilePreviewModal';
 
 describe('FilePreviewModal', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   const createDocxFile = (): UploadedFile => ({
     id: 'docx-1',
@@ -127,15 +127,8 @@ describe('FilePreviewModal', () => {
   });
 
   beforeEach(() => {
-    root = createTestRenderer();
     vi.clearAllMocks();
     mockSettingsState.appSettings.customShortcuts = {};
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('renders extracted docx text in the text preview surface', async () => {
@@ -145,7 +138,7 @@ describe('FilePreviewModal', () => {
     });
 
     await act(async () => {
-      root.render(<FilePreviewModal file={createDocxFile()} onClose={() => {}} />);
+      renderer.root.render(<FilePreviewModal file={createDocxFile()} onClose={() => {}} />);
     });
 
     await vi.waitFor(() => {
@@ -160,7 +153,7 @@ describe('FilePreviewModal', () => {
     mockExtractDocxText.mockRejectedValue(new Error('preview failed'));
 
     await act(async () => {
-      root.render(<FilePreviewModal file={createDocxFile()} onClose={() => {}} />);
+      renderer.root.render(<FilePreviewModal file={createDocxFile()} onClose={() => {}} />);
     });
 
     await vi.waitFor(() => {
@@ -178,7 +171,7 @@ describe('FilePreviewModal', () => {
     const onNext = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <FilePreviewModal file={createDocxFile()} onClose={() => {}} onPrev={onPrev} onNext={onNext} hasPrev hasNext />,
       );
     });
@@ -194,7 +187,7 @@ describe('FilePreviewModal', () => {
 
   it('routes .md uploads into markdown preview mode with the active theme id', async () => {
     await act(async () => {
-      root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
+      renderer.root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
     });
 
     const viewer = document.querySelector('[data-testid="text-file-viewer"]');
@@ -206,7 +199,7 @@ describe('FilePreviewModal', () => {
 
   it('does not hijack copy shortcuts when the user has selected preview text', async () => {
     await act(async () => {
-      root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
+      renderer.root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
     });
 
     const previewNode = document.querySelector('[data-testid="text-file-viewer"]');
@@ -236,7 +229,7 @@ describe('FilePreviewModal', () => {
 
   it('shows copy button feedback when the file is copied with the keyboard shortcut', async () => {
     await act(async () => {
-      root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
+      renderer.root.render(<FilePreviewModal file={createMarkdownFile()} onClose={() => {}} />);
     });
 
     expect(document.querySelector('[data-testid="file-preview-copy-button"]')?.getAttribute('data-copied')).toBe(

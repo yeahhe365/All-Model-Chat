@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock BroadcastChannel
 globalThis.BroadcastChannel = vi.fn(() => ({
   postMessage: vi.fn(),
-  onmessage: null as any,
+  onmessage: null as BroadcastChannel['onmessage'],
   close: vi.fn(),
-})) as any;
+})) as unknown as typeof BroadcastChannel;
 
 // Mock sessionStorage
 const sessionStore: Record<string, string> = {};
@@ -23,19 +23,22 @@ Object.defineProperty(window, 'sessionStorage', { value: mockSessionStorage });
 // Mock history
 window.history.replaceState = vi.fn();
 window.history.pushState = vi.fn();
-delete (window as any).location;
-window.location = { pathname: '/' } as any;
+Object.defineProperty(window, 'location', {
+  configurable: true,
+  writable: true,
+  value: { pathname: '/' } as Location,
+});
 
 vi.mock('../../utils/db', async () => {
-  const { createMockDbService } = await import('../../test/serviceTestDoubles');
+  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { dbService: createMockDbService() };
+  return createDbServiceMockModule();
 });
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../utils/chat/session', () => ({
@@ -57,12 +60,13 @@ vi.mock('../../utils/modelHelpers', () => ({
 import { useChatStore } from '../chatStore';
 import { dbService } from '../../utils/db';
 import { SavedChatSession, ChatGroup } from '../../types';
+import { createChatSettings, createUploadedFile } from '../../test/factories';
 
 const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSession => ({
   id: `sess-${Math.random().toString(36).slice(2, 8)}`,
   title: 'Test Session',
   messages: [],
-  settings: {} as any,
+  settings: createChatSettings(),
   timestamp: Date.now(),
   ...overrides,
 });
@@ -181,7 +185,7 @@ describe('chatStore', () => {
     });
 
     it('setSelectedFiles', () => {
-      useChatStore.getState().setSelectedFiles([{ id: 'f1' }] as any);
+      useChatStore.getState().setSelectedFiles([createUploadedFile({ id: 'f1' })]);
       expect(useChatStore.getState().selectedFiles).toHaveLength(1);
     });
 
@@ -536,7 +540,7 @@ describe('chatStore', () => {
       useChatStore.getState().setSavedSessions([
         makeSession({
           id: 's1',
-          settings: { modelId: 'old-model' } as any,
+          settings: createChatSettings({ modelId: 'old-model' }),
         }),
       ]);
 

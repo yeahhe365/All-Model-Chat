@@ -1,27 +1,18 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HeaderModelSelector } from './HeaderModelSelector';
 
 vi.mock('../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
 
-  return createI18nMock();
+  return createI18nMockModule();
 });
 
 describe('HeaderModelSelector', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
@@ -29,7 +20,7 @@ describe('HeaderModelSelector', () => {
     const onToggleGemmaReasoning = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Gemma 4 31B IT"
           availableModels={[{ id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' }]}
@@ -45,7 +36,7 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = container.querySelector('button[aria-label="headerReasoningToggleAria"]');
+    const toggleButton = renderer.container.querySelector('button[aria-label="headerReasoningToggleAria"]');
     expect(toggleButton).not.toBeNull();
     expect(toggleButton?.getAttribute('title')).toBe('headerReasoningHighTitle');
 
@@ -58,7 +49,7 @@ describe('HeaderModelSelector', () => {
 
   it('shows Gemma fast mode as minimal reasoning instead of reasoning off', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Gemma 4 31B IT"
           availableModels={[{ id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' }]}
@@ -74,13 +65,13 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = container.querySelector('button[aria-label="headerReasoningToggleAria"]');
+    const toggleButton = renderer.container.querySelector('button[aria-label="headerReasoningToggleAria"]');
     expect(toggleButton?.getAttribute('title')).toBe('headerReasoningMinimalFastTitle');
   });
 
   it('does not render an icon inside the collapsed selector trigger', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Custom Model"
           availableModels={[{ id: 'custom-model', name: 'Custom Model' }]}
@@ -96,13 +87,13 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
+    const triggerButton = renderer.container.querySelector('button[aria-haspopup="listbox"]');
     expect(triggerButton?.querySelectorAll('svg')).toHaveLength(0);
   });
 
   it('hides the selector chevron while the model menu is expanded', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Custom Model"
           availableModels={[{ id: 'custom-model', name: 'Custom Model' }]}
@@ -118,7 +109,7 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
+    const triggerButton = renderer.container.querySelector('button[aria-haspopup="listbox"]');
 
     await act(async () => {
       triggerButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -130,7 +121,7 @@ describe('HeaderModelSelector', () => {
 
   it('keeps compact header controls stable by avoiding scale transforms', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Gemini 3 Flash Preview"
           availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }]}
@@ -146,8 +137,8 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
-    const thinkingButton = container.querySelector('button[aria-label="headerThinkingToggleAria"]');
+    const triggerButton = renderer.container.querySelector('button[aria-haspopup="listbox"]');
+    const thinkingButton = renderer.container.querySelector('button[aria-label="headerThinkingToggleAria"]');
 
     expect(triggerButton?.className).toContain('min-h-9');
     expect(triggerButton?.className).not.toContain('scale');
@@ -158,7 +149,7 @@ describe('HeaderModelSelector', () => {
 
   it('renders the collapsed model name with stronger emphasis', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Gemini Robotics-ER 1.6 Preview"
           availableModels={[{ id: 'gemini-robotics-er-1.6-preview', name: 'Gemini Robotics-ER 1.6 Preview' }]}
@@ -174,7 +165,9 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const label = Array.from(container.querySelectorAll('span')).find((node) => node.textContent === 'Robotics-ER 1.6');
+    const label = Array.from(renderer.container.querySelectorAll('span')).find(
+      (node) => node.textContent === 'Robotics-ER 1.6',
+    );
     expect(label?.className).toContain('font-semibold');
   });
 
@@ -182,7 +175,7 @@ describe('HeaderModelSelector', () => {
     const onSetThinkingLevel = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Gemini Robotics-ER 1.6 Preview"
           availableModels={[{ id: 'gemini-robotics-er-1.6-preview', name: 'Gemini Robotics-ER 1.6 Preview' }]}
@@ -198,7 +191,7 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = container.querySelector('button[aria-label="headerThinkingToggleAria"]');
+    const toggleButton = renderer.container.querySelector('button[aria-label="headerThinkingToggleAria"]');
     expect(toggleButton).not.toBeNull();
     expect(toggleButton?.getAttribute('title')).toBe('headerThinkingHighTitle');
 
@@ -211,7 +204,7 @@ describe('HeaderModelSelector', () => {
 
   it('does not show the thinking fast toggle for Gemini 3.1 Flash TTS Preview', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HeaderModelSelector
           currentModelName="Gemini 3.1 Flash TTS Preview"
           availableModels={[{ id: 'gemini-3.1-flash-tts-preview', name: 'Gemini 3.1 Flash TTS Preview' }]}
@@ -227,7 +220,7 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    expect(container.querySelector('button[aria-label="headerThinkingToggleAria"]')).toBeNull();
-    expect(container.querySelector('button[aria-label="headerReasoningToggleAria"]')).toBeNull();
+    expect(renderer.container.querySelector('button[aria-label="headerThinkingToggleAria"]')).toBeNull();
+    expect(renderer.container.querySelector('button[aria-label="headerReasoningToggleAria"]')).toBeNull();
   });
 });

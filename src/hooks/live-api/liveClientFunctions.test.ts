@@ -1,5 +1,6 @@
 import { Type } from '@google/genai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createUploadedFile } from '@/test/factories';
 import { createLiveClientFunctions } from './liveClientFunctions';
 
 describe('createLiveClientFunctions', () => {
@@ -26,12 +27,12 @@ describe('createLiveClientFunctions', () => {
 
   it('registers a local Python tool and mounts selected files before execution', async () => {
     const selectedFiles = [
-      {
+      createUploadedFile({
         id: 'file-1',
         name: 'dataset.csv',
         rawFile: new File(['a,b\n1,2\n'], 'dataset.csv', { type: 'text/csv' }),
-      },
-    ] as any;
+      }),
+    ];
     const runPython = vi.fn(async () => ({
       output: '42',
       result: '42',

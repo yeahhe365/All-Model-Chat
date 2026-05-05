@@ -11,9 +11,9 @@ vi.mock('./apiClient', () => ({
 }));
 
 vi.mock('../logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService({ error: errorMock, info: infoMock }) };
+  return createLogServiceMockModule({ error: errorMock, info: infoMock });
 });
 
 import { executeConfiguredApiRequest } from './apiExecutor';

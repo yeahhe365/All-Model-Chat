@@ -1,5 +1,6 @@
 import { Type } from '@google/genai';
 import { describe, expect, it, vi } from 'vitest';
+import { createUploadedFile } from '@/test/factories';
 import { createStandardClientFunctions } from './standardClientFunctions';
 
 describe('createStandardClientFunctions', () => {
@@ -15,13 +16,13 @@ describe('createStandardClientFunctions', () => {
 
   it('registers a local Python tool with structured response payload and generated files', async () => {
     const inputFiles = [
-      {
+      createUploadedFile({
         id: 'file-1',
         name: 'dataset.csv',
         rawFile: new File(['a,b\n1,2\n'], 'dataset.csv', { type: 'text/csv' }),
         uploadState: 'active',
-      },
-    ] as any;
+      }),
+    ];
     const runPython = vi.fn(async () => ({
       output: '42',
       result: '42',

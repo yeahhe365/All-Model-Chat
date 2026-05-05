@@ -1,14 +1,13 @@
 import { act } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage, SavedChatSession } from '../../../types';
+import { createChatSettings } from '../../../test/factories';
 
-vi.mock('../../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('../../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 import { useMessageActions } from './useMessageActions';
 import { renderHook } from '@/test/testUtils';
@@ -17,8 +16,6 @@ describe('useMessageActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   it('does not abort unrelated active jobs when the current session has no loading message', () => {
     const otherAbort = vi.fn();
@@ -89,7 +86,7 @@ describe('useMessageActions', () => {
         title: 'Original chat',
         timestamp: 1,
         messages,
-        settings: {} as SavedChatSession['settings'],
+        settings: createChatSettings(),
       },
     ];
     const updateAndPersistSessions = vi.fn((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {

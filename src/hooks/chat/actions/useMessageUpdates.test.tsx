@@ -1,18 +1,19 @@
 import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { SavedChatSession } from '../../../types';
 import { useMessageUpdates } from './useMessageUpdates';
+import { createAppSettings, createChatSettings, createSavedChatSession, createUploadedFile } from '@/test/factories';
 import { renderHook } from '@/test/testUtils';
 
 describe('useMessageUpdates', () => {
   it('creates and updates a live model message when generated files arrive before text', () => {
-    let sessions = [
-      {
+    let sessions: SavedChatSession[] = [
+      createSavedChatSession({
         id: 'session-1',
         title: 'Live Session',
         timestamp: Date.now(),
         messages: [],
-        settings: {} as any,
-      },
+      }),
     ];
 
     const updateAndPersistSessions = vi.fn(
@@ -27,20 +28,16 @@ describe('useMessageUpdates', () => {
       useMessageUpdates({
         activeSessionId: 'session-1',
         setActiveSessionId: vi.fn(),
-        appSettings: {} as any,
-        currentChatSettings: {} as any,
-        updateAndPersistSessions: updateAndPersistSessions as any,
+        appSettings: createAppSettings(),
+        currentChatSettings: createChatSettings(),
+        updateAndPersistSessions,
         userScrolledUpRef: { current: false },
       }),
     );
 
-    const generatedFile = {
-      id: 'file-1',
+    const generatedFile = createUploadedFile({
       name: 'chart.png',
-      type: 'image/png',
-      size: 123,
-      uploadState: 'active',
-    } as any;
+    });
 
     act(() => {
       result.current.handleLiveTranscript('', 'model', false, 'content', undefined, [generatedFile]);
@@ -73,7 +70,7 @@ describe('useMessageUpdates', () => {
   });
 
   it('creates a new live session when generated files arrive before any transcript text', () => {
-    let sessions: any[] = [];
+    let sessions: SavedChatSession[] = [];
 
     const updateAndPersistSessions = vi.fn(
       (updater: typeof sessions | ((prev: typeof sessions) => typeof sessions)) => {
@@ -88,20 +85,16 @@ describe('useMessageUpdates', () => {
       useMessageUpdates({
         activeSessionId: null,
         setActiveSessionId,
-        appSettings: {} as any,
-        currentChatSettings: {} as any,
-        updateAndPersistSessions: updateAndPersistSessions as any,
+        appSettings: createAppSettings(),
+        currentChatSettings: createChatSettings(),
+        updateAndPersistSessions,
         userScrolledUpRef: { current: false },
       }),
     );
 
-    const generatedFile = {
-      id: 'file-1',
+    const generatedFile = createUploadedFile({
       name: 'chart.png',
-      type: 'image/png',
-      size: 123,
-      uploadState: 'active',
-    } as any;
+    });
 
     act(() => {
       result.current.handleLiveTranscript('', 'model', false, 'content', undefined, [generatedFile]);

@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../contexts/I18nContext';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -22,8 +22,10 @@ const {
   mockClearApiUsage: vi.fn(),
 }));
 
-vi.mock('../../utils/db', () => ({
-  dbService: {
+vi.mock('../../utils/db', async () => {
+  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createDbServiceMockModule({
     getApiUsageByTimeRange: mockGetApiUsageByTimeRange,
     pruneLogs: mockPruneLogs,
     addLogs: mockAddLogs,
@@ -31,19 +33,16 @@ vi.mock('../../utils/db', () => ({
     addApiUsageRecord: mockAddApiUsageRecord,
     getLogs: mockGetLogs,
     clearApiUsage: mockClearApiUsage,
-  },
-}));
+  });
+});
 
 import { UsageOverviewTab } from './UsageOverviewTab';
 
 describe('UsageOverviewTab', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
     vi.clearAllMocks();
     mockPruneLogs.mockResolvedValue(undefined);
     mockAddLogs.mockResolvedValue(undefined);
@@ -54,9 +53,6 @@ describe('UsageOverviewTab', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     useSettingsStore.setState(initialState);
   });
 
@@ -107,7 +103,7 @@ describe('UsageOverviewTab', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <UsageOverviewTab />
         </I18nProvider>,
@@ -116,20 +112,20 @@ describe('UsageOverviewTab', () => {
       await Promise.resolve();
     });
 
-    expect(container.textContent).toContain('Time Range');
-    expect(container.textContent).toContain('All Time');
-    expect(container.textContent).toContain('3');
-    expect(container.textContent).toContain('1,005,010');
-    expect(container.textContent).toContain('550,000');
-    expect(container.textContent).toContain('530,020');
-    expect(container.textContent).toContain('2,085,030');
-    expect(container.textContent).toContain('Cached Tokens');
-    expect(container.textContent).toContain('$2.48');
-    expect(container.textContent).toContain('2 unavailable');
-    expect(container.textContent).toContain('—');
-    expect(container.textContent).toContain('gemini-3.1-pro-preview');
-    expect(container.textContent).toContain('gemini-3-flash-preview');
-    expect(container.textContent).toContain('imagen-4.0-generate-001');
-    expect(container.textContent).toContain('Strict official mode');
+    expect(renderer.container.textContent).toContain('Time Range');
+    expect(renderer.container.textContent).toContain('All Time');
+    expect(renderer.container.textContent).toContain('3');
+    expect(renderer.container.textContent).toContain('1,005,010');
+    expect(renderer.container.textContent).toContain('550,000');
+    expect(renderer.container.textContent).toContain('530,020');
+    expect(renderer.container.textContent).toContain('2,085,030');
+    expect(renderer.container.textContent).toContain('Cached Tokens');
+    expect(renderer.container.textContent).toContain('$2.48');
+    expect(renderer.container.textContent).toContain('2 unavailable');
+    expect(renderer.container.textContent).toContain('—');
+    expect(renderer.container.textContent).toContain('gemini-3.1-pro-preview');
+    expect(renderer.container.textContent).toContain('gemini-3-flash-preview');
+    expect(renderer.container.textContent).toContain('imagen-4.0-generate-001');
+    expect(renderer.container.textContent).toContain('Strict official mode');
   });
 });

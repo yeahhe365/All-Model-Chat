@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../contexts/I18nContext';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -23,8 +23,7 @@ vi.mock('../shared/Tooltip', () => ({
 }));
 
 describe('ModelVoiceSettings interactions', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   const baseProps = {
@@ -54,14 +53,9 @@ describe('ModelVoiceSettings interactions', () => {
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
     useSettingsStore.setState(initialState);
   });
@@ -71,14 +65,14 @@ describe('ModelVoiceSettings interactions', () => {
     const onUpdateSetting = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelVoiceSettings {...baseProps} setModelId={setModelId} onUpdateSetting={onUpdateSetting} />
         </I18nProvider>,
       );
     });
 
-    const textarea = container.querySelector<HTMLTextAreaElement>('#system-prompt-input');
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('#system-prompt-input');
     expect(textarea).not.toBeNull();
 
     await act(async () => {
@@ -89,7 +83,7 @@ describe('ModelVoiceSettings interactions', () => {
       textarea?.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    const modelButton = container.querySelector<HTMLButtonElement>(
+    const modelButton = renderer.container.querySelector<HTMLButtonElement>(
       '[data-testid="settings-model-option-gemma-4-31b-it"]',
     );
     expect(modelButton).not.toBeNull();
@@ -109,7 +103,7 @@ describe('ModelVoiceSettings interactions', () => {
     const onUpdateSetting = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelVoiceSettings
             {...baseProps}
@@ -120,11 +114,11 @@ describe('ModelVoiceSettings interactions', () => {
       );
     });
 
-    const textarea = container.querySelector<HTMLTextAreaElement>('#system-prompt-input');
-    const clearButton = container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]');
-    const expandButton = container.querySelector<HTMLButtonElement>('[aria-label="Full editor"]');
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('#system-prompt-input');
+    const clearButton = renderer.container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]');
+    const expandButton = renderer.container.querySelector<HTMLButtonElement>('[aria-label="Full editor"]');
 
-    expect(container.textContent).toContain('Enabled');
+    expect(renderer.container.textContent).toContain('Enabled');
     expect(textarea?.className).toContain('min-h-[112px]');
     expect(clearButton).not.toBeNull();
     expect(clearButton?.className).toContain('hover:text-[var(--theme-text-danger)]');
@@ -138,7 +132,7 @@ describe('ModelVoiceSettings interactions', () => {
 
     expect(onUpdateSetting).toHaveBeenCalledWith('systemInstruction', '');
     expect(textarea?.value).toBe('');
-    expect(container.textContent).toContain('Not set');
-    expect(container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]')).toBeNull();
+    expect(renderer.container.textContent).toContain('Not set');
+    expect(renderer.container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]')).toBeNull();
   });
 });

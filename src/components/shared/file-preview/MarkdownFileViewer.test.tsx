@@ -11,9 +11,9 @@ const { mockLazyMarkdownRenderer } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return createI18nMock();
+  return createI18nMockModule();
 });
 
 vi.mock('../../message/LazyMarkdownRenderer', () => ({
@@ -41,9 +41,6 @@ describe('MarkdownFileViewer', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     localStorage.clear();
   });
 

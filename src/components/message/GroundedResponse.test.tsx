@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./LazyMarkdownRenderer', () => ({
   LazyMarkdownRenderer: ({ content }: { content: string }) => <div data-testid="markdown">{content}</div>,
@@ -9,23 +9,11 @@ vi.mock('./LazyMarkdownRenderer', () => ({
 import { GroundedResponse } from './GroundedResponse';
 
 describe('GroundedResponse', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('does not render fallback search query pills without an API-provided search entry point', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <GroundedResponse
           text="Grounded image"
           metadata={{ imageSearchQueries: ['resplendent quetzal reference'] }}
@@ -42,13 +30,13 @@ describe('GroundedResponse', () => {
       );
     });
 
-    expect(container.textContent).not.toContain('resplendent quetzal reference');
-    expect(container.querySelector('a[href*="google.com/search"]')).toBeNull();
+    expect(renderer.container.textContent).not.toContain('resplendent quetzal reference');
+    expect(renderer.container.querySelector('a[href*="google.com/search"]')).toBeNull();
   });
 
   it('renders the API-provided search entry point widget when available', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <GroundedResponse
           text="Grounded text"
           metadata={{
@@ -70,14 +58,14 @@ describe('GroundedResponse', () => {
       );
     });
 
-    const surface = container.querySelector('.search-entry-surface') as HTMLDivElement | null;
+    const surface = renderer.container.querySelector('.search-entry-surface') as HTMLDivElement | null;
     expect(surface).not.toBeNull();
     expect(surface?.shadowRoot).not.toBeNull();
     expect(surface?.shadowRoot?.querySelector('[data-testid="search-entry-widget"]')?.textContent).toContain(
       'Suggested follow-up search',
     );
-    expect(container.querySelector('[data-testid="search-entry-google-logo"]')).not.toBeNull();
-    expect(container.textContent).not.toContain('.container { display: flex; }');
+    expect(renderer.container.querySelector('[data-testid="search-entry-google-logo"]')).not.toBeNull();
+    expect(renderer.container.textContent).not.toContain('.container { display: flex; }');
     expect(surface?.shadowRoot?.querySelector('.google-logo')).toBeNull();
     expect(surface?.shadowRoot?.querySelector('.secondary-logo')).toBeNull();
     expect(surface?.shadowRoot?.querySelector('.separator')).toBeNull();
@@ -89,7 +77,7 @@ describe('GroundedResponse', () => {
 
   it('hides fallback search query pills when the API-provided search entry point is available', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <GroundedResponse
           text="Grounded text"
           metadata={{
@@ -111,8 +99,8 @@ describe('GroundedResponse', () => {
       );
     });
 
-    const surface = container.querySelector('.search-entry-surface') as HTMLDivElement | null;
+    const surface = renderer.container.querySelector('.search-entry-surface') as HTMLDivElement | null;
     expect(surface?.shadowRoot?.querySelector('[data-testid="search-entry-widget"]')).not.toBeNull();
-    expect(container.textContent).not.toContain('latest world news April 18 2026');
+    expect(renderer.container.textContent).not.toContain('latest world news April 18 2026');
   });
 });

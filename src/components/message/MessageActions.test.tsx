@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../contexts/I18nContext';
 import { MessageActions } from './MessageActions';
 import { WindowProvider } from '../../contexts/WindowContext';
@@ -23,8 +23,7 @@ vi.mock('./buttons/MessageCopyButton', () => ({
 }));
 
 describe('MessageActions', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   const message: ChatMessage = {
     id: 'message-1',
@@ -33,21 +32,13 @@ describe('MessageActions', () => {
     timestamp: new Date('2026-04-13T00:00:00.000Z'),
   };
 
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
   it('does not render a read-aloud action for model messages', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <WindowProvider window={window} document={document}>
             <MessageActions
@@ -68,14 +59,14 @@ describe('MessageActions', () => {
       );
     });
 
-    expect(container.querySelector('[aria-label="Read message aloud"]')).not.toBeInTheDocument();
+    expect(renderer.container.querySelector('[aria-label="Read message aloud"]')).not.toBeInTheDocument();
   });
 
   it('shows the action column by default on mobile without relying on hover', () => {
     window.innerWidth = 390;
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <WindowProvider window={window} document={document}>
             <MessageActions
@@ -96,7 +87,7 @@ describe('MessageActions', () => {
       );
     });
 
-    const actions = container.querySelector('.message-actions');
+    const actions = renderer.container.querySelector('.message-actions');
     expect(actions?.className).toContain('opacity-100');
     expect(actions?.className).not.toContain('opacity-0');
     expect(actions?.className).toContain('pointer-events-auto');
@@ -104,7 +95,7 @@ describe('MessageActions', () => {
 
   it('keeps compact message action buttons free of scale transforms', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <WindowProvider window={window} document={document}>
             <MessageActions
@@ -125,7 +116,7 @@ describe('MessageActions', () => {
       );
     });
 
-    const deleteButton = container.querySelector('button[aria-label="Delete"]');
+    const deleteButton = renderer.container.querySelector('button[aria-label="Delete"]');
     expect(deleteButton?.className).not.toContain('scale');
   });
 
@@ -135,7 +126,7 @@ describe('MessageActions', () => {
     const handleForkMessage = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <WindowProvider window={window} document={document}>
             <MessageActions
@@ -156,10 +147,10 @@ describe('MessageActions', () => {
       );
     });
 
-    expect(container.querySelector('[aria-label="Continue Generating"]')).not.toBeInTheDocument();
-    expect(container.querySelector('[aria-label="Visualize with Canvas"]')).not.toBeInTheDocument();
+    expect(renderer.container.querySelector('[aria-label="Continue Generating"]')).not.toBeInTheDocument();
+    expect(renderer.container.querySelector('[aria-label="Visualize with Canvas"]')).not.toBeInTheDocument();
 
-    const moreButton = container.querySelector<HTMLButtonElement>('[aria-label="More message actions"]');
+    const moreButton = renderer.container.querySelector<HTMLButtonElement>('[aria-label="More message actions"]');
     expect(moreButton).toBeInTheDocument();
     expect(moreButton?.getAttribute('aria-expanded')).toBe('false');
 
@@ -168,16 +159,18 @@ describe('MessageActions', () => {
     });
 
     expect(moreButton?.getAttribute('aria-expanded')).toBe('true');
-    const menu = container.querySelector('[role="menu"]');
+    const menu = renderer.container.querySelector('[role="menu"]');
     expect(menu).toBeInTheDocument();
 
-    const continueItem = container.querySelector<HTMLButtonElement>(
+    const continueItem = renderer.container.querySelector<HTMLButtonElement>(
       '[role="menuitem"][aria-label="Continue Generating"]',
     );
-    const canvasItem = container.querySelector<HTMLButtonElement>(
+    const canvasItem = renderer.container.querySelector<HTMLButtonElement>(
       '[role="menuitem"][aria-label="Visualize with Canvas"]',
     );
-    const forkItem = container.querySelector<HTMLButtonElement>('[role="menuitem"][aria-label="Fork from here"]');
+    const forkItem = renderer.container.querySelector<HTMLButtonElement>(
+      '[role="menuitem"][aria-label="Fork from here"]',
+    );
     expect(continueItem).toBeInTheDocument();
     expect(canvasItem).toBeInTheDocument();
     expect(forkItem).toBeInTheDocument();
@@ -187,12 +180,12 @@ describe('MessageActions', () => {
     });
 
     expect(handleForkMessage).toHaveBeenCalledWith('message-1');
-    expect(container.querySelector('[role="menu"]')).not.toBeInTheDocument();
+    expect(renderer.container.querySelector('[role="menu"]')).not.toBeInTheDocument();
 
     act(() => {
       moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    const reopenedContinueItem = container.querySelector<HTMLButtonElement>(
+    const reopenedContinueItem = renderer.container.querySelector<HTMLButtonElement>(
       '[role="menuitem"][aria-label="Continue Generating"]',
     );
 
@@ -201,12 +194,12 @@ describe('MessageActions', () => {
     });
 
     expect(handleContinueGeneration).toHaveBeenCalledWith('message-1');
-    expect(container.querySelector('[role="menu"]')).not.toBeInTheDocument();
+    expect(renderer.container.querySelector('[role="menu"]')).not.toBeInTheDocument();
 
     act(() => {
       moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    const reopenedCanvasItem = container.querySelector<HTMLButtonElement>(
+    const reopenedCanvasItem = renderer.container.querySelector<HTMLButtonElement>(
       '[role="menuitem"][aria-label="Visualize with Canvas"]',
     );
     act(() => {
@@ -225,7 +218,7 @@ describe('MessageActions', () => {
     };
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <WindowProvider window={window} document={document}>
             <>
@@ -261,12 +254,12 @@ describe('MessageActions', () => {
       );
     });
 
-    const assistantAvatar = container.querySelector<HTMLImageElement>('img[alt="Assistant avatar"]');
+    const assistantAvatar = renderer.container.querySelector<HTMLImageElement>('img[alt="Assistant avatar"]');
 
     expect(assistantAvatar).toBeInTheDocument();
     expect(assistantAvatar?.getAttribute('src')).toBe('/assets/assistant-avatar.png');
     expect(assistantAvatar?.className).toContain('object-contain');
     expect(assistantAvatar?.className).not.toContain('rounded-full');
-    expect(container.querySelectorAll('img[alt="Assistant avatar"]')).toHaveLength(1);
+    expect(renderer.container.querySelectorAll('img[alt="Assistant avatar"]')).toHaveLength(1);
   });
 });

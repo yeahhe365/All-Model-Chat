@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SavedChatSession } from '../../types';
 import type { SyncMessage } from '../../types/sync';
+import { createChatSettings } from '../../test/factories';
 import { setupChatStoreSync } from '../chatStoreSync';
 
 const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSession => ({
@@ -8,7 +9,7 @@ const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSessio
   title: 'Session',
   timestamp: 0,
   messages: [],
-  settings: {} as SavedChatSession['settings'],
+  settings: createChatSettings(),
   ...overrides,
 });
 

@@ -1,26 +1,14 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { HtmlPreviewHeader } from './HtmlPreviewHeader';
 
 describe('HtmlPreviewHeader', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('disables screenshot until the preview reports ready', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <HtmlPreviewHeader
           title="Preview"
           scale={1}
@@ -40,7 +28,7 @@ describe('HtmlPreviewHeader', () => {
       );
     });
 
-    const screenshotButton = Array.from(container.querySelectorAll('button')).find(
+    const screenshotButton = Array.from(renderer.container.querySelectorAll('button')).find(
       (button) => button.getAttribute('title') === 'Screenshot',
     );
 
@@ -50,7 +38,7 @@ describe('HtmlPreviewHeader', () => {
 
   it('adds visible keyboard focus styles to the close action', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <HtmlPreviewHeader
           title="Preview"
           scale={1}
@@ -70,7 +58,7 @@ describe('HtmlPreviewHeader', () => {
       );
     });
 
-    const closeButton = Array.from(container.querySelectorAll('button')).find(
+    const closeButton = Array.from(renderer.container.querySelectorAll('button')).find(
       (button) => button.getAttribute('title') === 'Close',
     );
 

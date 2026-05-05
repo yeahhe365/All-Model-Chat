@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ModelOption } from '../../types';
 import { ModelPicker } from './ModelPicker';
 
@@ -31,8 +31,7 @@ const renderPicker = ({
 );
 
 describe('ModelPicker behavior', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   const models: ModelOption[] = [
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
@@ -41,48 +40,40 @@ describe('ModelPicker behavior', () => {
     { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image Preview' },
   ];
 
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
   it('renders a plain model list without search, badges, or section labels', () => {
     act(() => {
-      root.render(renderPicker({ models, selectedId: 'gemini-3-flash-preview' }));
+      renderer.root.render(renderPicker({ models, selectedId: 'gemini-3-flash-preview' }));
     });
 
     act(() => {
-      container
+      renderer.container
         .querySelector('[data-testid="model-picker-trigger"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(container.querySelector('input[placeholder="Search models..."]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="pinned"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="flash"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="pro"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="gemma"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="live"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="tts"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="image"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="robotics"]')).toBeNull();
-    expect(container.querySelector('[data-provider-section="gemini-native"]')).toBeNull();
-    expect(container.querySelector('[data-provider-section="openai-compatible"]')).toBeNull();
-    expect(container.textContent).not.toContain('Pinned');
-    expect(container.textContent).not.toContain('Speech');
-    expect(container.textContent).toContain('Gemini 3.1 Flash TTS Preview');
+    expect(renderer.container.querySelector('input[placeholder="Search models..."]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="pinned"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="flash"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="pro"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="gemma"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="live"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="tts"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="image"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="robotics"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-provider-section="gemini-native"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-provider-section="openai-compatible"]')).toBeNull();
+    expect(renderer.container.textContent).not.toContain('Pinned');
+    expect(renderer.container.textContent).not.toContain('Speech');
+    expect(renderer.container.textContent).toContain('Gemini 3.1 Flash TTS Preview');
   });
 
   it('groups models by provider when provider metadata is available', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         renderPicker({
           models: [
             { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
@@ -94,13 +85,13 @@ describe('ModelPicker behavior', () => {
     });
 
     act(() => {
-      container
+      renderer.container
         .querySelector('[data-testid="model-picker-trigger"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const geminiSection = container.querySelector('[data-provider-section="gemini-native"]');
-    const openAISection = container.querySelector('[data-provider-section="openai-compatible"]');
+    const geminiSection = renderer.container.querySelector('[data-provider-section="gemini-native"]');
+    const openAISection = renderer.container.querySelector('[data-provider-section="openai-compatible"]');
 
     expect(geminiSection?.textContent).toContain('Gemini');
     expect(geminiSection?.textContent).toContain('Gemini 3 Flash Preview');

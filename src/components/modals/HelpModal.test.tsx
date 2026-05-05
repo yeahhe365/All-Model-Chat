@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { HelpModal } from './HelpModal';
 
 vi.mock('../../hooks/useCopyToClipboard', () => ({
@@ -10,21 +10,11 @@ vi.mock('../../hooks/useCopyToClipboard', () => ({
 }));
 
 describe('HelpModal', () => {
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('localizes the search, copy, and empty-state text', async () => {
     await act(async () => {
-      root.render(<HelpModal isOpen onClose={vi.fn()} commands={[]} />);
+      renderer.root.render(<HelpModal isOpen onClose={vi.fn()} commands={[]} />);
     });
 
     const searchInput = document.querySelector('input');
@@ -35,11 +25,11 @@ describe('HelpModal', () => {
 
   it('adds visible keyboard focus styles to close and copy actions', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <HelpModal
           isOpen
           onClose={vi.fn()}
-          commands={[{ name: '/canvas', description: 'Toggle canvas', icon: 'canvas' } as any]}
+          commands={[{ name: '/canvas', description: 'Toggle canvas', icon: 'canvas' }]}
         />,
       );
     });

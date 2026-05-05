@@ -393,4 +393,104 @@ describe('certain redundancy cleanup guards', () => {
     expect(suggestionsSource).toContain('updateMessageInSession');
     expect(messageUpdatesSource).toContain('updateMessageInActiveSession');
   });
+
+  it('keeps React act environment configuration centralized in test setup', () => {
+    const testFiles = listProjectSourceFiles('src').filter(
+      (relativePath) =>
+        /\.(test|spec)\.(ts|tsx)$/.test(relativePath) &&
+        relativePath !== 'src/__tests__/certainRedundancyCleanup.test.ts',
+    );
+
+    for (const relativePath of testFiles) {
+      const source = readProjectFile(relativePath);
+
+      expect(source, relativePath).not.toContain('IS_REACT_ACT_ENVIRONMENT');
+    }
+
+    expect(readProjectFile('src/test/setup.ts')).toContain('IS_REACT_ACT_ENVIRONMENT');
+  });
+
+  it('keeps shared test renderer cleanup out of individual test suites', () => {
+    const explicitRendererLifecycleFiles = new Set([
+      'src/components/__tests__/createTextFileEditorPreferences.test.tsx',
+      'src/components/__tests__/lazyDiagramLoading.test.tsx',
+      'src/components/shared/file-preview/MarkdownFileViewer.test.tsx',
+    ]);
+    const testFiles = listProjectSourceFiles('src').filter(
+      (relativePath) =>
+        /\.(test|spec)\.(ts|tsx)$/.test(relativePath) &&
+        relativePath !== 'src/__tests__/certainRedundancyCleanup.test.ts',
+    );
+
+    for (const relativePath of testFiles) {
+      const source = readProjectFile(relativePath);
+
+      expect(source, relativePath).not.toMatch(
+        /afterEach\(\(\)\s*=>\s*{\s*act\(\(\)\s*=>\s*{\s*root\.unmount\(\);\s*}\);\s*}\);/s,
+      );
+      expect(source, relativePath).not.toMatch(
+        /afterEach\(\(\)\s*=>\s*{\s*act\(\(\)\s*=>\s*{\s*root\.unmount\(\);\s*}\);\s*vi\.(?:clearAllMocks|restoreAllMocks)\(\);\s*}\);/s,
+      );
+
+      if (!explicitRendererLifecycleFiles.has(relativePath)) {
+        expect(source, relativePath).not.toMatch(
+          /afterEach\(\(\)\s*=>\s*{[\s\S]*?\b(?:root\??|mounted\.root)\.unmount\(\)/,
+        );
+      }
+    }
+  });
+
+  it('keeps core infrastructure mocks on shared test doubles', () => {
+    const testFiles = listProjectSourceFiles('src').filter(
+      (relativePath) =>
+        /\.(test|spec)\.(ts|tsx)$/.test(relativePath) &&
+        relativePath !== 'src/__tests__/certainRedundancyCleanup.test.ts',
+    );
+
+    for (const relativePath of testFiles) {
+      const source = readProjectFile(relativePath);
+
+      expect(source, relativePath).not.toMatch(/\b(?:logService|dbService):\s*{/);
+      expect(source, relativePath).not.toMatch(/\buseI18n:\s*\(\)\s*=>/);
+
+      if (!relativePath.startsWith('src/test/')) {
+        expect(source, relativePath).not.toMatch(/\bcreate(?:MockLogService|MockDbService|I18nMock|RealI18nMock)\(\)/);
+      }
+    }
+  });
+
+  it('keeps core mock modules behind moduleMockDoubles outside the test-double suites', () => {
+    const testFiles = listProjectSourceFiles('src').filter(
+      (relativePath) =>
+        /\.(test|spec)\.(ts|tsx)$/.test(relativePath) &&
+        !relativePath.startsWith('src/test/') &&
+        relativePath !== 'src/__tests__/certainRedundancyCleanup.test.ts',
+    );
+
+    for (const relativePath of testFiles) {
+      const source = readProjectFile(relativePath);
+
+      expect(source, relativePath).not.toContain('serviceTestDoubles');
+      expect(source, relativePath).not.toContain('i18nTestDoubles');
+    }
+  });
+
+  it('keeps complex hook test inputs on typed shared factories', () => {
+    const senderSource = readProjectFile('src/hooks/useMessageSender.test.tsx');
+    const standardChatSource = readProjectFile('src/hooks/message-sender/useStandardChat.test.tsx');
+    const sessionLoaderSource = readProjectFile('src/hooks/chat/history/useSessionLoader.test.tsx');
+
+    expect(senderSource).toContain('createMessageSenderProps');
+    expect(senderSource).toContain('createUploadedFile');
+    expect(senderSource).not.toContain('useMessageSender({');
+    expect(senderSource).not.toContain('as any');
+
+    expect(standardChatSource).toContain('createStandardChatProps');
+    expect(standardChatSource).not.toContain('useStandardChat({');
+    expect(standardChatSource).not.toContain('as any');
+
+    expect(sessionLoaderSource).toContain('createSessionLoaderProps');
+    expect(sessionLoaderSource).not.toContain('useSessionLoader({');
+    expect(sessionLoaderSource).not.toContain('as any');
+  });
 });

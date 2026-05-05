@@ -1,32 +1,26 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../../stores/settingsStore';
 import { ModelListView } from './ModelListView';
 
 describe('ModelListView', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
     useSettingsStore.setState(initialState);
   });
 
   it('renders a plain model list without search, badges, or section labels', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelListView
             availableModels={[
@@ -41,18 +35,18 @@ describe('ModelListView', () => {
       );
     });
 
-    expect(container.querySelector('input[placeholder="Search models..."]')).toBeNull();
-    expect(container.textContent).toContain('Gemini 3 Pro Image Preview');
-    expect(container.textContent).toContain('Gemma 4 31B IT');
-    expect(container.querySelector('[data-badge-key="pinned"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="flash"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="pro"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="gemma"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="live"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="tts"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="image"]')).toBeNull();
-    expect(container.querySelector('[data-badge-key="robotics"]')).toBeNull();
-    expect(container.textContent).not.toContain('Pinned');
-    expect(container.textContent).not.toContain('Speech');
+    expect(renderer.container.querySelector('input[placeholder="Search models..."]')).toBeNull();
+    expect(renderer.container.textContent).toContain('Gemini 3 Pro Image Preview');
+    expect(renderer.container.textContent).toContain('Gemma 4 31B IT');
+    expect(renderer.container.querySelector('[data-badge-key="pinned"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="flash"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="pro"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="gemma"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="live"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="tts"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="image"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-badge-key="robotics"]')).toBeNull();
+    expect(renderer.container.textContent).not.toContain('Pinned');
+    expect(renderer.container.textContent).not.toContain('Speech');
   });
 });

@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { WindowProvider } from '../../contexts/WindowContext';
@@ -11,22 +11,15 @@ const textEditorModalPath = path.join(projectRoot, 'src/components/modals/TextEd
 const createTextFileEditorPath = path.join(projectRoot, 'src/components/modals/CreateTextFileEditor.tsx');
 
 describe('TextEditorModalShell', () => {
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
   it('renders shared header, body, and footer slots inside the modal surface', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <TextEditorModalShell
             onClose={vi.fn()}

@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createAppSettings, createChatSettings } from '@/test/factories';
 
 const { handleApiErrorMock, generateImagesMock, performOptimisticSessionUpdateMock, createUploadedFileFromBase64Mock } =
   vi.hoisted(() => ({
@@ -89,14 +90,14 @@ describe('useTtsImagenSender', () => {
         'session-1',
         'generation-1',
         abortController,
-        {
+        createAppSettings({
           generateQuadImages: true,
           isCompletionSoundEnabled: false,
           isCompletionNotificationEnabled: false,
-        } as any,
-        {
+        }),
+        createChatSettings({
           modelId: 'imagen-4.0-generate-001',
-        } as any,
+        }),
         'draw a robot skateboard squad',
         '1:1',
         '2K',

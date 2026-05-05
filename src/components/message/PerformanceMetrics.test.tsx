@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it } from 'vitest';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import type { ChatMessage } from '../../types';
 
@@ -19,33 +19,21 @@ const createMessage = (overrides: Partial<ChatMessage> = {}): ChatMessage => ({
 });
 
 describe('PerformanceMetrics', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('shows cached prompt token hits when available', () => {
     act(() => {
-      root.render(<PerformanceMetrics message={createMessage()} />);
+      renderer.root.render(<PerformanceMetrics message={createMessage()} />);
     });
 
-    expect(container.textContent).toContain('C: 40');
-    expect(container.textContent).toContain('U: 80');
-    expect(container.textContent).toContain('O: 80');
+    expect(renderer.container.textContent).toContain('C: 40');
+    expect(renderer.container.textContent).toContain('U: 80');
+    expect(renderer.container.textContent).toContain('O: 80');
   });
 
   it('shows tool-use and thought buckets when available', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <PerformanceMetrics
           message={createMessage({
             toolUsePromptTokens: 12,
@@ -56,9 +44,9 @@ describe('PerformanceMetrics', () => {
       );
     });
 
-    expect(container.textContent).toContain('T: 12');
-    expect(container.textContent).toContain('R: 7');
-    expect(container.textContent).not.toContain('Σ: 219');
-    expect(container.querySelectorAll('.w-px.h-3').length).toBe(4);
+    expect(renderer.container.textContent).toContain('T: 12');
+    expect(renderer.container.textContent).toContain('R: 7');
+    expect(renderer.container.textContent).not.toContain('Σ: 219');
+    expect(renderer.container.querySelectorAll('.w-px.h-3').length).toBe(4);
   });
 });

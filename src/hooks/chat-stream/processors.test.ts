@@ -31,6 +31,7 @@ vi.mock('../../utils/translations', () => ({
   getTranslator: () => (key: string) => key,
 }));
 
+import { createChatSettings } from '../../test/factories';
 import { appendApiPart, finalizeMessages, updateMessagesWithBatch } from './processors';
 
 describe('appendApiPart', () => {
@@ -87,7 +88,7 @@ describe('finalizeMessages', () => {
       ],
       generationStartTime,
       new Set(['model-message']),
-      {} as any,
+      createChatSettings(),
       'zh',
       generationStartTime,
     );
@@ -119,7 +120,7 @@ describe('finalizeMessages', () => {
       messages,
       generationStartTime,
       new Set(['model-message']),
-      {} as any,
+      createChatSettings(),
       'zh',
       generationStartTime,
     );

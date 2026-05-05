@@ -10,12 +10,12 @@ export interface VirtuosoMockProps<T> {
   computeItemKey?: (index: number, item: T) => React.Key;
 }
 
-export interface MessagePreviewButtonMockProps {
+interface MessagePreviewButtonMockProps {
   message: ChatMessage;
   onImageClick: (file: UploadedFile) => void;
 }
 
-export type MessageListScrollMockResult = {
+type MessageListScrollMockResult = {
   virtuosoRef: { current: null };
   handleScrollerRef: () => void;
   handleScroll: () => void;

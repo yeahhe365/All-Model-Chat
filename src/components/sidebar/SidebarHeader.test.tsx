@@ -1,40 +1,32 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SidebarHeader } from './SidebarHeader';
 
 describe('SidebarHeader', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     delete window.__AMC_RUNTIME_CONFIG__;
   });
 
   it('renders the sidebar logo from the PNG asset', () => {
     act(() => {
-      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="pearl" />);
+      renderer.root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="pearl" />);
     });
 
-    const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="AMC WebUI"]');
+    const logo = renderer.container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="AMC WebUI"]');
 
     expect(logo?.getAttribute('src')).toBe('/sidebar-logo.png');
-    expect(container.querySelector('a[href="https://all-model-chat.pages.dev/"] svg')).toBeNull();
+    expect(renderer.container.querySelector('a[href="https://all-model-chat.pages.dev/"] svg')).toBeNull();
   });
 
   it('uses the dark sidebar logo for the onyx theme', () => {
     act(() => {
-      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="onyx" />);
+      renderer.root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="onyx" />);
     });
 
-    const logo = container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="AMC WebUI"]');
+    const logo = renderer.container.querySelector('a[href="https://all-model-chat.pages.dev/"] img[alt="AMC WebUI"]');
 
     expect(logo?.getAttribute('src')).toBe('/sidebar-logo-dark.png');
   });
@@ -42,13 +34,13 @@ describe('SidebarHeader', () => {
   it('uses the runtime-config project URL for the sidebar logo link', () => {
     window.__AMC_RUNTIME_CONFIG__ = {
       projectUrl: 'https://deploy.example/amc',
-    } as any;
+    };
 
     act(() => {
-      root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="pearl" />);
+      renderer.root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="pearl" />);
     });
 
-    const logo = container.querySelector('a[href="https://deploy.example/amc"] img[alt="AMC WebUI"]');
+    const logo = renderer.container.querySelector('a[href="https://deploy.example/amc"] img[alt="AMC WebUI"]');
 
     expect(logo).not.toBeNull();
   });

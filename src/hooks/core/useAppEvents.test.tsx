@@ -1,8 +1,9 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ChatSettings, ModelOption } from '../../types';
+import type { ModelOption } from '../../types';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 import { useAppEvents } from './useAppEvents';
+import { createAppSettings, createChatSettings } from '@/test/factories';
 import { renderHook } from '@/test/testUtils';
 
 const registerPwaMock = vi.fn();
@@ -29,9 +30,9 @@ vi.mock('../ui/useFullscreen', () => ({
 }));
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../pwa/install', () => ({
@@ -40,14 +41,14 @@ vi.mock('../../pwa/install', () => ({
 }));
 
 describe('useAppEvents manual update checks', () => {
-  const appSettings = {
+  const appSettings = createAppSettings({
     language: 'en',
     customShortcuts: {},
-  } as AppSettings;
+  });
 
-  const currentChatSettings = {
+  const currentChatSettings = createChatSettings({
     modelId: 'gemini-3-flash-preview',
-  } as ChatSettings;
+  });
   const availableModels: ModelOption[] = [
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
     { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
@@ -227,10 +228,10 @@ describe('useAppEvents manual update checks', () => {
 
     const { unmount } = renderHook(() =>
       useAppEvents({
-        appSettings: {
+        appSettings: createAppSettings({
           ...appSettings,
           tabModelCycleIds: ['imagen-4.0-generate-001', 'gemini-3-flash-preview'],
-        } as AppSettings,
+        }),
         startNewChat: vi.fn(),
         currentChatSettings,
         availableModels,

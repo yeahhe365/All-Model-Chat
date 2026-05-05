@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import React from 'react';
 import { act } from 'react';
-import { createTestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ChatInputViewProvider,
@@ -13,28 +13,94 @@ import {
   useQueuedSubmissionView,
 } from './ChatInputViewContext';
 
-const render = (node: React.ReactNode) => {
-  const root = createTestRenderer();
-  const { container } = root;
-
-  act(() => {
-    root.render(node);
-  });
-
-  return {
-    container,
-    rerender: (nextNode: React.ReactNode) => {
-      act(() => {
-        root.render(nextNode);
-      });
+const createViewModel = (overrides: Partial<ChatInputViewModel> = {}): ChatInputViewModel => ({
+  toolbarProps: {
+    isImagenModel: false,
+    fileError: null,
+    showAddByIdInput: false,
+    fileIdInput: '',
+    setFileIdInput: vi.fn(),
+    onAddFileByIdSubmit: vi.fn(),
+    onCancelAddById: vi.fn(),
+    isAddingById: false,
+    showAddByUrlInput: false,
+    urlInput: '',
+    setUrlInput: vi.fn(),
+    onAddUrlSubmit: vi.fn(),
+    onCancelAddUrl: vi.fn(),
+    isAddingByUrl: false,
+    isLoading: false,
+  },
+  actionsProps: {
+    onAttachmentAction: vi.fn(),
+    disabled: false,
+    currentModelId: 'gemini-3.1-pro-preview',
+    toolStates: {},
+    toolUtilityActions: {
+      onAddYouTubeVideo: vi.fn(),
+      onCountTokens: vi.fn(),
     },
-    unmount: () => {
-      act(() => {
-        root.unmount();
-      });
-    },
-  };
-};
+    onRecordButtonClick: vi.fn(),
+    isTranscribing: false,
+    isLoading: false,
+    onStopGenerating: vi.fn(),
+    isEditing: false,
+    onCancelEdit: vi.fn(),
+    canSend: false,
+    isWaitingForUpload: false,
+    onCancelRecording: vi.fn(),
+    onTranslate: vi.fn(),
+    isTranslating: false,
+    inputText: '',
+  },
+  slashCommandProps: {
+    isOpen: false,
+    commands: [],
+    onSelect: vi.fn(),
+    selectedIndex: 0,
+  },
+  fileDisplayProps: {
+    selectedFiles: [],
+    onRemove: vi.fn(),
+    onCancelUpload: vi.fn(),
+    onConfigure: vi.fn(),
+    onMoveTextToInput: vi.fn(async () => undefined),
+    onPreview: vi.fn(),
+  },
+  inputProps: {
+    value: '',
+    onChange: vi.fn(),
+    onKeyDown: vi.fn(),
+    onPaste: vi.fn(),
+    textareaRef: React.createRef<HTMLTextAreaElement>(),
+    placeholder: '',
+    disabled: false,
+    onCompositionStart: vi.fn(),
+    onCompositionEnd: vi.fn(),
+  },
+  layoutProps: {
+    isFullscreen: false,
+    isPipActive: false,
+    isAnimatingSend: false,
+    isMobile: false,
+    initialTextareaHeight: 28,
+    isConverting: false,
+  },
+  fileInputs: {
+    fileInputRef: React.createRef<HTMLInputElement>(),
+    imageInputRef: React.createRef<HTMLInputElement>(),
+    folderInputRef: React.createRef<HTMLInputElement>(),
+    zipInputRef: React.createRef<HTMLInputElement>(),
+    cameraInputRef: React.createRef<HTMLInputElement>(),
+    handleFileChange: vi.fn(),
+    handleFolderChange: vi.fn(),
+  },
+  formProps: {
+    onSubmit: vi.fn(),
+  },
+  themeId: 'pearl',
+  ...overrides,
+});
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: string | null }> {
   state = { error: null };
@@ -53,6 +119,27 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 }
 
 describe('ChatInputViewContext', () => {
+  const renderer = setupTestRenderer();
+  const render = (node: React.ReactNode) => {
+    act(() => {
+      renderer.render(node);
+    });
+
+    return {
+      container: renderer.container,
+      rerender: (nextNode: React.ReactNode) => {
+        act(() => {
+          renderer.render(nextNode);
+        });
+      },
+      unmount: () => {
+        act(() => {
+          renderer.unmount();
+        });
+      },
+    };
+  };
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -89,27 +176,17 @@ describe('ChatInputViewContext', () => {
   });
 
   it('provides focused view slices to chat input children', () => {
-    const value = {
-      toolbarProps: {} as any,
+    const value = createViewModel({
       actionsProps: {
+        ...createViewModel().actionsProps,
         canSend: true,
-        isLoading: false,
       },
-      slashCommandProps: {} as any,
-      fileDisplayProps: {} as any,
-      inputProps: {} as any,
       layoutProps: {
+        ...createViewModel().layoutProps,
         isFullscreen: true,
-        isPipActive: false,
-        isAnimatingSend: false,
-        isMobile: false,
-        initialTextareaHeight: 28,
-        isConverting: false,
       },
-      fileInputs: {} as any,
-      formProps: {} as any,
       themeId: 'onyx',
-    } as any;
+    });
 
     const Consumer = () => {
       const actions = useChatInputActionsView();
@@ -123,7 +200,7 @@ describe('ChatInputViewContext', () => {
       );
     };
 
-    const { container, unmount } = render(
+    const { container } = render(
       <ChatInputViewProvider value={value}>
         <Consumer />
       </ChatInputViewProvider>,
@@ -131,17 +208,10 @@ describe('ChatInputViewContext', () => {
 
     expect(container.querySelector('[data-testid="can-send"]')?.textContent).toBe('true');
     expect(container.querySelector('[data-testid="fullscreen"]')?.textContent).toBe('true');
-
-    unmount();
   });
 
   it('provides focused status slices to chat input children', () => {
-    const value = {
-      toolbarProps: {} as any,
-      actionsProps: {} as any,
-      slashCommandProps: {} as any,
-      fileDisplayProps: {} as any,
-      inputProps: {} as any,
+    const value = createViewModel({
       queuedSubmissionProps: {
         title: 'Queued',
         previewText: 'Queued preview',
@@ -157,18 +227,7 @@ describe('ChatInputViewContext', () => {
         error: null,
         onDisconnect: vi.fn(),
       },
-      layoutProps: {
-        isFullscreen: false,
-        isPipActive: false,
-        isAnimatingSend: false,
-        isMobile: false,
-        initialTextareaHeight: 28,
-        isConverting: false,
-      },
-      fileInputs: {} as any,
-      formProps: {} as any,
-      themeId: 'pearl',
-    } as any;
+    });
 
     const Consumer = () => {
       const queuedSubmission = useQueuedSubmissionView();
@@ -182,7 +241,7 @@ describe('ChatInputViewContext', () => {
       );
     };
 
-    const { container, unmount } = render(
+    const { container } = render(
       <ChatInputViewProvider value={value}>
         <Consumer />
       </ChatInputViewProvider>,
@@ -190,33 +249,17 @@ describe('ChatInputViewContext', () => {
 
     expect(container.querySelector('[data-testid="queued-preview"]')?.textContent).toBe('Queued preview');
     expect(container.querySelector('[data-testid="live-connected"]')?.textContent).toBe('true');
-
-    unmount();
   });
 
   it('isolates focused consumers when unrelated view slices change', () => {
     const actionsProps = {
+      ...createViewModel().actionsProps,
       canSend: true,
       isLoading: false,
-    } as any;
-    const baseValue = {
-      toolbarProps: {} as any,
+    };
+    const baseValue = createViewModel({
       actionsProps,
-      slashCommandProps: {} as any,
-      fileDisplayProps: {} as any,
-      inputProps: {} as any,
-      layoutProps: {
-        isFullscreen: false,
-        isPipActive: false,
-        isAnimatingSend: false,
-        isMobile: false,
-        initialTextareaHeight: 28,
-        isConverting: false,
-      },
-      fileInputs: {} as any,
-      formProps: {} as any,
-      themeId: 'pearl',
-    } satisfies ChatInputViewModel;
+    });
     const renderCounts = {
       actions: 0,
       queuedSubmission: 0,
@@ -250,7 +293,7 @@ describe('ChatInputViewContext', () => {
       </ChatInputViewProvider>
     );
 
-    const { container, rerender, unmount } = render(<View value={createValue('First queued text')} />);
+    const { container, rerender } = render(<View value={createValue('First queued text')} />);
 
     expect(container.querySelector('[data-testid="isolated-can-send"]')?.textContent).toBe('true');
     expect(container.querySelector('[data-testid="isolated-queued-preview"]')?.textContent).toBe('First queued text');
@@ -260,8 +303,6 @@ describe('ChatInputViewContext', () => {
 
     expect(container.querySelector('[data-testid="isolated-queued-preview"]')?.textContent).toBe('Second queued text');
     expect(renderCounts).toEqual({ actions: 1, queuedSubmission: 2 });
-
-    unmount();
   });
 
   it('keeps the chat input area on focused view hooks instead of the full view object', () => {

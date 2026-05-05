@@ -1,6 +1,6 @@
 import { act } from 'react';
 import type { MutableRefObject } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCodeBlock } from './useCodeBlock';
 
@@ -63,8 +63,7 @@ const TestCodeBlock = ({
 };
 
 describe('useCodeBlock', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let measurements: Measurements;
 
   beforeEach(() => {
@@ -74,9 +73,6 @@ describe('useCodeBlock', () => {
       return 1;
     });
 
-    root = createTestRenderer();
-    container = root.container;
-
     measurements = {
       scrollTop: 0,
       scrollHeight: 400,
@@ -85,22 +81,19 @@ describe('useCodeBlock', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
   it('keeps auto-follow enabled when layout growth fires scroll without the user moving upward', () => {
     act(() => {
-      root.render(<TestCodeBlock text={'a'.repeat(400)} measurements={measurements} />);
+      renderer.root.render(<TestCodeBlock text={'a'.repeat(400)} measurements={measurements} />);
     });
 
     measurements.scrollHeight = 500;
 
     act(() => {
-      root.render(<TestCodeBlock text={'b'.repeat(500)} measurements={measurements} />);
+      renderer.root.render(<TestCodeBlock text={'b'.repeat(500)} measurements={measurements} />);
     });
 
     expect(measurements.scrollTop).toBe(500);
@@ -112,13 +105,13 @@ describe('useCodeBlock', () => {
     measurements.scrollHeight = 650;
 
     act(() => {
-      container.querySelector('pre')?.dispatchEvent(new Event('scroll'));
+      renderer.container.querySelector('pre')?.dispatchEvent(new Event('scroll'));
     });
 
     measurements.scrollHeight = 700;
 
     act(() => {
-      root.render(<TestCodeBlock text={'c'.repeat(700)} measurements={measurements} />);
+      renderer.root.render(<TestCodeBlock text={'c'.repeat(700)} measurements={measurements} />);
     });
 
     expect(measurements.scrollTop).toBe(700);
@@ -126,7 +119,7 @@ describe('useCodeBlock', () => {
 
   it('does not expose html preview controls for embedded html inside javascript code', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <TestCodeBlock
           text={'const template = `<html><body>Hello</body></html>`;'}
           measurements={measurements}
@@ -135,19 +128,19 @@ describe('useCodeBlock', () => {
       );
     });
 
-    const pre = container.querySelector('pre');
+    const pre = renderer.container.querySelector('pre');
     expect(pre?.dataset.showPreview).toBe('false');
     expect(pre?.dataset.language).toBe('js');
   });
 
   it('does not treat generic xml blocks as previewable html', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <TestCodeBlock text={'<note><to>Jane</to></note>'} measurements={measurements} className="language-xml" />,
       );
     });
 
-    const pre = container.querySelector('pre');
+    const pre = renderer.container.querySelector('pre');
     expect(pre?.dataset.showPreview).toBe('false');
     expect(pre?.dataset.language).toBe('xml');
   });

@@ -13,6 +13,7 @@ import {
 } from '../session';
 import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import { createUploadedFile } from '../../../test/factories';
 
 const makeMessage = (role: 'user' | 'model' | 'error', content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
   id: `msg-${Math.random().toString(36).slice(2, 8)}`,
@@ -107,7 +108,7 @@ describe('generateSessionTitle', () => {
   });
 
   it('falls back to file name when no text messages', () => {
-    const msgs = [makeMessage('user', '', { files: [{ name: 'report.pdf' } as any] })];
+    const msgs = [makeMessage('user', '', { files: [createUploadedFile({ name: 'report.pdf' })] })];
     expect(generateSessionTitle(msgs)).toBe('Chat with report.pdf');
   });
 
@@ -251,13 +252,13 @@ describe('sanitizeSessionForExport', () => {
       messages: [
         makeMessage('user', 'Hi', {
           files: [
-            {
+            createUploadedFile({
               id: 'f1',
               name: 'test.png',
               type: 'image/png',
               size: 100,
               rawFile: new Blob(['data']),
-            } as any,
+            }),
           ],
         }),
       ],
@@ -271,13 +272,13 @@ describe('sanitizeSessionForExport', () => {
       messages: [
         makeMessage('user', 'Hi', {
           files: [
-            {
+            createUploadedFile({
               id: 'f1',
               name: 'test.png',
               type: 'image/png',
               size: 100,
               dataUrl: 'blob:http://localhost/abc',
-            } as any,
+            }),
           ],
         }),
       ],
@@ -291,13 +292,13 @@ describe('sanitizeSessionForExport', () => {
       messages: [
         makeMessage('user', 'Hi', {
           files: [
-            {
+            createUploadedFile({
               id: 'f1',
               name: 'test.png',
               type: 'image/png',
               size: 100,
               dataUrl: 'data:image/png;base64,abc123',
-            } as any,
+            }),
           ],
         }),
       ],
@@ -311,13 +312,13 @@ describe('sanitizeSessionForExport', () => {
       messages: [
         makeMessage('user', 'Hi', {
           files: [
-            {
+            createUploadedFile({
               id: 'f1',
               name: 'test.png',
               type: 'image/png',
               size: 100,
               abortController: new AbortController(),
-            } as any,
+            }),
           ],
         }),
       ],
@@ -340,14 +341,14 @@ describe('serializeMessageForPortableExport', () => {
     const rawFile = new File(['hello'], 'note.txt', { type: 'text/plain' });
     const message = makeMessage('user', 'with attachment', {
       files: [
-        {
+        createUploadedFile({
           id: 'file-1',
           name: 'note.txt',
           type: 'text/plain',
           size: rawFile.size,
           rawFile,
           dataUrl: 'blob:http://localhost/ephemeral',
-        } as any,
+        }),
       ],
     });
 
@@ -366,13 +367,13 @@ describe('session file persistence helpers', () => {
       messages: [
         makeMessage('user', 'Hi', {
           files: [
-            {
+            createUploadedFile({
               id: 'file-1',
               name: 'note.txt',
               type: 'text/plain',
               size: rawFile.size,
               rawFile,
-            } as any,
+            }),
           ],
         }),
       ],
@@ -396,7 +397,7 @@ describe('session file persistence helpers', () => {
       messages: [
         makeMessage('user', 'Hi', {
           files: [
-            {
+            createUploadedFile({
               id: 'file-1',
               name: 'note.txt',
               type: 'text/plain',
@@ -404,7 +405,7 @@ describe('session file persistence helpers', () => {
               rawFile,
               dataUrl: 'blob:http://localhost/file-1',
               abortController: new AbortController(),
-            } as any,
+            }),
           ],
         }),
       ],
@@ -423,12 +424,12 @@ describe('session file persistence helpers', () => {
       messages: [
         makeMessage('user', 'Hi', {
           files: [
-            {
+            createUploadedFile({
               id: 'file-1',
               name: 'note.txt',
               type: 'text/plain',
               size: rawFile.size,
-            } as any,
+            }),
           ],
         }),
       ],

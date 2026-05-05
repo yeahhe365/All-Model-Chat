@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const personGenerationSelectorMock = vi.fn();
 
@@ -41,22 +41,15 @@ const baseProps: ChatInputToolbarProps = {
 };
 
 describe('ChatInputToolbar', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
-    root = createTestRenderer();
     personGenerationSelectorMock.mockClear();
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('shows person generation selector for real Imagen models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <ChatInputToolbar
           {...baseProps}
           isImagenModel
@@ -74,7 +67,7 @@ describe('ChatInputToolbar', () => {
 
   it('hides person generation selector for Gemini image models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <ChatInputToolbar
           {...baseProps}
           isImagenModel

@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Outcome } from '@google/genai';
 
 const { mockHandleToolCall, mockCancelToolCalls, mockCreateWavBlobFromPCMChunks } = vi.hoisted(() => ({
   mockHandleToolCall: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('../../utils/audio/audioProcessing', () => ({
 }));
 
 import { useLiveMessageProcessing } from './useLiveMessageProcessing';
+import { createLiveServerMessage } from '@/test/liveApiFixtures';
 import { renderHook } from '@/test/testUtils';
 
 describe('useLiveMessageProcessing', () => {
@@ -42,19 +44,21 @@ describe('useLiveMessageProcessing', () => {
     );
 
     await act(async () => {
-      await result.current.handleMessage({
-        serverContent: {
-          modelTurn: {
-            parts: [
-              { text: 'preface' },
-              { inlineData: { data: 'audio-1' } },
-              { inlineData: { data: 'audio-2' } },
-              { text: 'suffix' },
-            ],
+      await result.current.handleMessage(
+        createLiveServerMessage({
+          serverContent: {
+            modelTurn: {
+              parts: [
+                { text: 'preface' },
+                { inlineData: { data: 'audio-1' } },
+                { inlineData: { data: 'audio-2' } },
+                { text: 'suffix' },
+              ],
+            },
+            turnComplete: true,
           },
-          turnComplete: true,
-        },
-      } as any);
+        }),
+      );
     });
 
     expect(playAudioChunk).toHaveBeenCalledTimes(2);
@@ -84,13 +88,15 @@ describe('useLiveMessageProcessing', () => {
     );
 
     await act(async () => {
-      await result.current.handleMessage({
-        serverContent: {
-          modelTurn: {
-            parts: [{ inlineData: { data: 'stale-audio' } }],
+      await result.current.handleMessage(
+        createLiveServerMessage({
+          serverContent: {
+            modelTurn: {
+              parts: [{ inlineData: { data: 'stale-audio' } }],
+            },
           },
-        },
-      } as any);
+        }),
+      );
     });
 
     act(() => {
@@ -98,11 +104,13 @@ describe('useLiveMessageProcessing', () => {
     });
 
     await act(async () => {
-      await result.current.handleMessage({
-        serverContent: {
-          turnComplete: true,
-        },
-      } as any);
+      await result.current.handleMessage(
+        createLiveServerMessage({
+          serverContent: {
+            turnComplete: true,
+          },
+        }),
+      );
     });
 
     expect(mockCreateWavBlobFromPCMChunks).not.toHaveBeenCalled();
@@ -128,20 +136,22 @@ describe('useLiveMessageProcessing', () => {
     );
 
     await act(async () => {
-      await result.current.handleMessage({
-        serverContent: {
-          modelTurn: {
-            parts: [
-              {
-                codeExecutionResult: {
-                  outcome: 'OUTCOME_OK',
-                  output: '42\n',
+      await result.current.handleMessage(
+        createLiveServerMessage({
+          serverContent: {
+            modelTurn: {
+              parts: [
+                {
+                  codeExecutionResult: {
+                    outcome: Outcome.OUTCOME_OK,
+                    output: '42\n',
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        },
-      } as any);
+        }),
+      );
     });
 
     expect(onTranscript).toHaveBeenCalledWith(
@@ -169,11 +179,13 @@ describe('useLiveMessageProcessing', () => {
     );
 
     await act(async () => {
-      await result.current.handleMessage({
-        goAway: {
-          timeLeft: '5s',
-        },
-      } as any);
+      await result.current.handleMessage(
+        createLiveServerMessage({
+          goAway: {
+            timeLeft: '5s',
+          },
+        }),
+      );
     });
 
     expect(onGoAway).toHaveBeenCalledWith({ timeLeft: '5s' });
@@ -193,11 +205,13 @@ describe('useLiveMessageProcessing', () => {
     );
 
     await act(async () => {
-      await result.current.handleMessage({
-        toolCallCancellation: {
-          ids: ['call-1', 'call-2'],
-        },
-      } as any);
+      await result.current.handleMessage(
+        createLiveServerMessage({
+          toolCallCancellation: {
+            ids: ['call-1', 'call-2'],
+          },
+        }),
+      );
     });
 
     expect(mockCancelToolCalls).toHaveBeenCalledWith(['call-1', 'call-2']);

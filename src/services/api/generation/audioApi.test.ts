@@ -15,9 +15,9 @@ vi.mock('../../../utils/fileHelpers', () => ({
 }));
 
 vi.mock('../../logService', async () => {
-  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 import { generateSpeechApi, transcribeAudioApi } from './audioApi';

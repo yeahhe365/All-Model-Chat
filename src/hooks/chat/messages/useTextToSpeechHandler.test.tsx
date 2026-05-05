@@ -18,12 +18,11 @@ vi.mock('../../../utils/audio/audioProcessing', () => ({
   pcmBase64ToWavUrl: pcmBase64ToWavUrlMock,
 }));
 
-vi.mock('../../../services/logService', () => ({
-  logService: {
-    info: logInfoMock,
-    error: logErrorMock,
-  },
-}));
+vi.mock('../../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule({ info: logInfoMock, error: logErrorMock });
+});
 
 vi.mock('../../../services/api/generation/audioApi', () => ({
   generateSpeechApi: generateSpeechMock,

@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSmoothStreaming } from './useSmoothStreaming';
 
@@ -11,8 +11,7 @@ const TestComponent = ({ text, isStreaming }: { text: string; isStreaming: boole
 };
 
 describe('useSmoothStreaming', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let nextAnimationFrameId: number;
   let scheduledFrames: Map<number, FrameRequestCallback>;
   let currentTime: number;
@@ -37,7 +36,7 @@ describe('useSmoothStreaming', () => {
 
   const flushUntilTextMatches = (expectedText: string, maxFrames = 20) => {
     for (let i = 0; i < maxFrames; i += 1) {
-      if (container.querySelector(OUTPUT_SELECTOR)?.textContent === expectedText) {
+      if (renderer.container.querySelector(OUTPUT_SELECTOR)?.textContent === expectedText) {
         return;
       }
 
@@ -48,9 +47,6 @@ describe('useSmoothStreaming', () => {
   };
 
   beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-
     nextAnimationFrameId = 0;
     scheduledFrames = new Map<number, FrameRequestCallback>();
     currentTime = 0;
@@ -78,44 +74,41 @@ describe('useSmoothStreaming', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.unstubAllGlobals();
   });
 
   it('stops scheduling animation frames after catching up to the current text', () => {
     act(() => {
-      root.render(<TestComponent text="abc" isStreaming />);
+      renderer.root.render(<TestComponent text="abc" isStreaming />);
     });
 
     expect(scheduledFrames.size).toBe(1);
 
     flushUntilTextMatches('abc');
 
-    expect(container.querySelector(OUTPUT_SELECTOR)).toHaveTextContent('abc');
+    expect(renderer.container.querySelector(OUTPUT_SELECTOR)).toHaveTextContent('abc');
     expect(scheduledFrames.size).toBe(0);
   });
 
   it('restarts animation when new streamed text arrives after the previous text finished rendering', () => {
     act(() => {
-      root.render(<TestComponent text="abc" isStreaming />);
+      renderer.root.render(<TestComponent text="abc" isStreaming />);
     });
 
     flushUntilTextMatches('abc');
 
-    expect(container.querySelector(OUTPUT_SELECTOR)).toHaveTextContent('abc');
+    expect(renderer.container.querySelector(OUTPUT_SELECTOR)).toHaveTextContent('abc');
     expect(scheduledFrames.size).toBe(0);
 
     act(() => {
-      root.render(<TestComponent text="abcdef" isStreaming />);
+      renderer.root.render(<TestComponent text="abcdef" isStreaming />);
     });
 
     expect(scheduledFrames.size).toBe(1);
 
     flushUntilTextMatches('abcdef');
 
-    expect(container.querySelector(OUTPUT_SELECTOR)).toHaveTextContent('abcdef');
+    expect(renderer.container.querySelector(OUTPUT_SELECTOR)).toHaveTextContent('abcdef');
     expect(scheduledFrames.size).toBe(0);
   });
 
@@ -123,10 +116,10 @@ describe('useSmoothStreaming', () => {
     const tableMarkdown = ['| Name | Score |', '| --- | --- |', '| Alice | 42 |'].join('\n');
 
     act(() => {
-      root.render(<TestComponent text={tableMarkdown} isStreaming />);
+      renderer.root.render(<TestComponent text={tableMarkdown} isStreaming />);
     });
 
-    expect(container.querySelector(OUTPUT_SELECTOR)?.textContent).toBe(tableMarkdown);
+    expect(renderer.container.querySelector(OUTPUT_SELECTOR)?.textContent).toBe(tableMarkdown);
     expect(scheduledFrames.size).toBe(0);
   });
 });

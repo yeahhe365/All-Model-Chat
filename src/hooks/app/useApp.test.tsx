@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppSettings, ChatMessage, ModelOption, SavedChatSession } from '../../types';
 import { createAppSettings, createChatSettings } from '../../test/chatAreaFixtures';
 import { useApp } from './useApp';
@@ -174,13 +174,11 @@ vi.mock('../../utils/uiUtils', () => ({
   applyThemeToDocument: vi.fn(),
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 describe('useApp', () => {
   beforeEach(() => {
@@ -197,8 +195,6 @@ describe('useApp', () => {
     currentChatState = buildChatState();
     mockSetCurrentChatSettings.mockClear();
   });
-
-  afterEach(() => {});
 
   it('exposes the hydrated active chat instead of sidebar metadata when exporting', () => {
     const { result, unmount } = renderHook(() => useApp());

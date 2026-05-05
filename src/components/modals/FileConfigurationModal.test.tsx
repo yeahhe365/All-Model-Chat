@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
@@ -12,23 +12,19 @@ const projectRoot = path.resolve(__dirname, '../../..');
 const modalPath = path.join(projectRoot, 'src/components/modals/FileConfigurationModal.tsx');
 
 describe('FileConfigurationModal', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
   const renderModal = (file: UploadedFile, onSave = vi.fn(), onClose = vi.fn()) => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <FileConfigurationModal isOpen onClose={onClose} file={file} onSave={onSave} isGemini3={false} />
         </I18nProvider>,

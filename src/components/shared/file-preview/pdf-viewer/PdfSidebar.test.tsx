@@ -1,7 +1,7 @@
 import React from 'react';
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfSidebar } from './PdfSidebar';
 
 const pageRenderSpy = vi.fn(({ pageNumber }: { pageNumber: number }) => (
@@ -14,22 +14,15 @@ vi.mock('react-pdf', () => ({
 }));
 
 describe('PdfSidebar', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
-    root = createTestRenderer();
     pageRenderSpy.mockClear();
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('only renders thumbnails near the current page', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <PdfSidebar
           fileUrl="blob:test-pdf"
           numPages={20}

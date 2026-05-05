@@ -2,6 +2,7 @@ import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '../../types';
+import { createAppSettings, createChatSettings, createSavedChatSession } from '@/test/factories';
 
 const { mockLoadCanvasSystemPrompt } = vi.hoisted(() => ({
   mockLoadCanvasSystemPrompt: vi.fn(),
@@ -21,6 +22,26 @@ import { createDeferred, renderHook } from '@/test/testUtils';
 
 const CANVAS_PROMPT = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
 const CANVAS_PROMPT_EN = '<title>Canvas Assistant: Responsive Visual Guide</title>\ncanvas prompt';
+
+const createCanvasChatSettings = (overrides: Partial<ChatSettings> = {}) =>
+  createChatSettings({
+    modelId: 'gemini-3-flash-preview',
+    systemInstruction: '',
+    ...overrides,
+  });
+
+const createCanvasSession = (
+  overrides: Partial<SavedChatSession> = {},
+  settingsOverrides: Partial<ChatSettings> = {},
+): SavedChatSession =>
+  createSavedChatSession({
+    id: 'session-1',
+    title: 'Session',
+    timestamp: Date.now(),
+    messages: [],
+    settings: createCanvasChatSettings(settingsOverrides),
+    ...overrides,
+  });
 
 describe('useAppPromptModes', () => {
   beforeEach(() => {
@@ -51,23 +72,11 @@ describe('useAppPromptModes', () => {
     const setCurrentChatSettings = vi.fn();
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
-        appSettings: {} as AppSettings,
+        appSettings: createAppSettings(),
         setAppSettings,
-        activeChat: {
-          id: 'session-1',
-          title: 'Session',
-          timestamp: Date.now(),
-          messages: [],
-          settings: {
-            modelId: 'gemini-3-flash-preview',
-            systemInstruction: '',
-          } as ChatSettings,
-        } as SavedChatSession,
+        activeChat: createCanvasSession(),
         activeSessionId: 'session-1',
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: '',
-        } as ChatSettings,
+        currentChatSettings: createCanvasChatSettings(),
         setCurrentChatSettings,
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -99,23 +108,11 @@ describe('useAppPromptModes', () => {
     const setCurrentChatSettings = vi.fn();
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
-        appSettings: {} as AppSettings,
+        appSettings: createAppSettings(),
         setAppSettings,
-        activeChat: {
-          id: 'session-1',
-          title: 'Session',
-          timestamp: Date.now(),
-          messages: [],
-          settings: {
-            modelId: 'gemini-3-flash-preview',
-            systemInstruction: '',
-          } as ChatSettings,
-        } as SavedChatSession,
+        activeChat: createCanvasSession(),
         activeSessionId: 'session-1',
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: '',
-        } as ChatSettings,
+        currentChatSettings: createCanvasChatSettings(),
         setCurrentChatSettings,
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -130,7 +127,7 @@ describe('useAppPromptModes', () => {
     expect(mockLoadCanvasSystemPrompt).toHaveBeenCalledWith('en');
     expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
     const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
-    expect(appSettingsUpdater({} as AppSettings).systemInstruction).toBe(CANVAS_PROMPT_EN);
+    expect(appSettingsUpdater(createAppSettings()).systemInstruction).toBe(CANVAS_PROMPT_EN);
 
     unmount();
   });
@@ -141,23 +138,11 @@ describe('useAppPromptModes', () => {
 
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
-        appSettings: {} as AppSettings,
+        appSettings: createAppSettings(),
         setAppSettings: vi.fn(),
-        activeChat: {
-          id: 'session-1',
-          title: 'Session',
-          timestamp: Date.now(),
-          messages: [],
-          settings: {
-            modelId: 'gemini-3-flash-preview',
-            systemInstruction: '',
-          } as ChatSettings,
-        } as SavedChatSession,
+        activeChat: createCanvasSession(),
         activeSessionId: 'session-1',
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: '',
-        } as ChatSettings,
+        currentChatSettings: createCanvasChatSettings(),
         setCurrentChatSettings: vi.fn(),
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -190,23 +175,11 @@ describe('useAppPromptModes', () => {
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
     const options = {
-      appSettings: {} as AppSettings,
+      appSettings: createAppSettings(),
       setAppSettings,
-      activeChat: {
-        id: 'session-1',
-        title: 'Session 1',
-        timestamp: Date.now(),
-        messages: [],
-        settings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: '',
-        } as ChatSettings,
-      } as SavedChatSession,
+      activeChat: createCanvasSession({ title: 'Session 1' }),
       activeSessionId: 'session-1' as string | null,
-      currentChatSettings: {
-        modelId: 'gemini-3-flash-preview',
-        systemInstruction: '',
-      } as ChatSettings,
+      currentChatSettings: createCanvasChatSettings(),
       setCurrentChatSettings,
       handleSendMessage: vi.fn(),
       setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -218,21 +191,12 @@ describe('useAppPromptModes', () => {
       void result.current.handleLoadCanvasPromptAndSave();
     });
 
-    options.activeChat = {
+    options.activeChat = createCanvasSession({
       id: 'session-2',
       title: 'Session 2',
-      timestamp: Date.now(),
-      messages: [],
-      settings: {
-        modelId: 'gemini-3-flash-preview',
-        systemInstruction: '',
-      } as ChatSettings,
-    } as SavedChatSession;
+    });
     options.activeSessionId = 'session-2';
-    options.currentChatSettings = {
-      modelId: 'gemini-3-flash-preview',
-      systemInstruction: '',
-    } as ChatSettings;
+    options.currentChatSettings = createCanvasChatSettings();
     rerender();
 
     await act(async () => {
@@ -256,23 +220,11 @@ describe('useAppPromptModes', () => {
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
     const options = {
-      appSettings: {} as AppSettings,
+      appSettings: createAppSettings(),
       setAppSettings,
-      activeChat: {
-        id: 'session-1',
-        title: 'Session 1',
-        timestamp: Date.now(),
-        messages: [],
-        settings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: '',
-        } as ChatSettings,
-      } as SavedChatSession,
+      activeChat: createCanvasSession({ title: 'Session 1' }),
       activeSessionId: 'session-1' as string | null,
-      currentChatSettings: {
-        modelId: 'gemini-3-flash-preview',
-        systemInstruction: '',
-      } as ChatSettings,
+      currentChatSettings: createCanvasChatSettings(),
       setCurrentChatSettings,
       handleSendMessage: vi.fn(),
       setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -284,21 +236,12 @@ describe('useAppPromptModes', () => {
       void result.current.handleLoadCanvasPromptAndSave();
     });
 
-    options.activeChat = {
+    options.activeChat = createCanvasSession({
       id: 'session-2',
       title: 'Session 2',
-      timestamp: Date.now(),
-      messages: [],
-      settings: {
-        modelId: 'gemini-3-flash-preview',
-        systemInstruction: '',
-      } as ChatSettings,
-    } as SavedChatSession;
+    });
     options.activeSessionId = 'session-2';
-    options.currentChatSettings = {
-      modelId: 'gemini-3-flash-preview',
-      systemInstruction: '',
-    } as ChatSettings;
+    options.currentChatSettings = createCanvasChatSettings();
     rerender();
 
     await act(async () => {
@@ -314,25 +257,11 @@ describe('useAppPromptModes', () => {
   it('keeps the canvas button active while app settings already contain the canvas prompt', () => {
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
-        appSettings: {
-          systemInstruction: CANVAS_PROMPT,
-        } as AppSettings,
+        appSettings: createAppSettings({ systemInstruction: CANVAS_PROMPT }),
         setAppSettings: vi.fn(),
-        activeChat: {
-          id: 'session-1',
-          title: 'Session 1',
-          timestamp: Date.now(),
-          messages: [],
-          settings: {
-            modelId: 'gemini-3-flash-preview',
-            systemInstruction: '',
-          } as ChatSettings,
-        } as SavedChatSession,
+        activeChat: createCanvasSession({ title: 'Session 1' }),
         activeSessionId: 'session-1',
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: '',
-        } as ChatSettings,
+        currentChatSettings: createCanvasChatSettings(),
         setCurrentChatSettings: vi.fn(),
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -346,25 +275,11 @@ describe('useAppPromptModes', () => {
 
   it('stays inactive after disabling the canvas prompt once persisted settings are cleared', async () => {
     const options = {
-      appSettings: {
-        systemInstruction: CANVAS_PROMPT,
-      } as AppSettings,
+      appSettings: createAppSettings({ systemInstruction: CANVAS_PROMPT }),
       setAppSettings: vi.fn(),
-      activeChat: {
-        id: 'session-1',
-        title: 'Session 1',
-        timestamp: Date.now(),
-        messages: [],
-        settings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: CANVAS_PROMPT,
-        } as ChatSettings,
-      } as SavedChatSession,
+      activeChat: createCanvasSession({ title: 'Session 1' }, { systemInstruction: CANVAS_PROMPT }),
       activeSessionId: 'session-1' as string | null,
-      currentChatSettings: {
-        modelId: 'gemini-3-flash-preview',
-        systemInstruction: CANVAS_PROMPT,
-      } as ChatSettings,
+      currentChatSettings: createCanvasChatSettings({ systemInstruction: CANVAS_PROMPT }),
       setCurrentChatSettings: vi.fn(),
       handleSendMessage: vi.fn(),
       setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -378,20 +293,12 @@ describe('useAppPromptModes', () => {
 
     expect(result.current.isCanvasPromptActive).toBe(false);
 
-    options.appSettings = {
-      systemInstruction: '',
-    } as AppSettings;
+    options.appSettings = createAppSettings({ systemInstruction: '' });
     options.activeChat = {
       ...options.activeChat,
-      settings: {
-        modelId: 'gemini-3-flash-preview',
-        systemInstruction: '',
-      } as ChatSettings,
-    } as SavedChatSession;
-    options.currentChatSettings = {
-      modelId: 'gemini-3-flash-preview',
-      systemInstruction: '',
-    } as ChatSettings;
+      settings: createCanvasChatSettings(),
+    };
+    options.currentChatSettings = createCanvasChatSettings();
 
     rerender();
     await act(async () => {
@@ -410,25 +317,11 @@ describe('useAppPromptModes', () => {
 
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
-        appSettings: {
-          systemInstruction: CANVAS_PROMPT,
-        } as AppSettings,
+        appSettings: createAppSettings({ systemInstruction: CANVAS_PROMPT }),
         setAppSettings,
-        activeChat: {
-          id: 'session-1',
-          title: 'Session 1',
-          timestamp: Date.now(),
-          messages: [],
-          settings: {
-            modelId: 'gemini-3-flash-preview',
-            systemInstruction: CANVAS_PROMPT,
-          } as ChatSettings,
-        } as SavedChatSession,
+        activeChat: createCanvasSession({ title: 'Session 1' }, { systemInstruction: CANVAS_PROMPT }),
         activeSessionId: 'session-1',
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          systemInstruction: CANVAS_PROMPT,
-        } as ChatSettings,
+        currentChatSettings: createCanvasChatSettings({ systemInstruction: CANVAS_PROMPT }),
         setCurrentChatSettings,
         handleSendMessage: vi.fn(),
         setCommandedInput,
@@ -444,8 +337,10 @@ describe('useAppPromptModes', () => {
 
     const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
     const chatSettingsUpdater = setCurrentChatSettings.mock.calls.at(-1)?.[0] as (prev: ChatSettings) => ChatSettings;
-    expect(appSettingsUpdater({ systemInstruction: CANVAS_PROMPT } as AppSettings).systemInstruction).toBe('');
-    expect(chatSettingsUpdater({ systemInstruction: CANVAS_PROMPT } as ChatSettings).systemInstruction).toBe('');
+    expect(appSettingsUpdater(createAppSettings({ systemInstruction: CANVAS_PROMPT })).systemInstruction).toBe('');
+    expect(chatSettingsUpdater(createCanvasChatSettings({ systemInstruction: CANVAS_PROMPT })).systemInstruction).toBe(
+      '',
+    );
     expect(setCommandedInput).toHaveBeenCalledWith({
       text: '',
       id: expect.any(Number),

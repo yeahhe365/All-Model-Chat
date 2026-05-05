@@ -6,7 +6,7 @@ type MockRecord = Record<string, MockFn>;
 const mockFn = () => vi.fn() as MockFn;
 const asyncMockFn = (value: unknown) => vi.fn().mockResolvedValue(value) as MockFn;
 
-export type MockDbService = MockRecord & {
+type MockDbService = MockRecord & {
   getAllSessions: MockFn;
   getAllSessionMetadata: MockFn;
   getSession: MockFn;
@@ -33,7 +33,7 @@ export type MockDbService = MockRecord & {
   clearAllData: MockFn;
 };
 
-export type MockLogService = MockRecord & {
+type MockLogService = MockRecord & {
   error: MockFn;
   warn: MockFn;
   info: MockFn;
@@ -44,7 +44,7 @@ export type MockLogService = MockRecord & {
   clearLogs: MockFn;
 };
 
-export interface MockBroadcastChannelInstance {
+interface MockBroadcastChannelInstance {
   name: string;
   postMessage: MockFn;
   close: MockFn;

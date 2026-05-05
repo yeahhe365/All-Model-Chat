@@ -6,7 +6,9 @@ import { I18nProvider } from '../contexts/I18nContext';
 import { WindowProvider } from '../contexts/WindowContext';
 import type { ChatAreaProps } from '../components/layout/chat-area/ChatAreaProps';
 import type { AppSettings, ChatSettings, ChatToolToggleStates } from '../types';
-import { MediaResolution } from '../types';
+import { createAppSettings, createChatSettings, createChatMessage } from './factories';
+
+export { createAppSettings, createChatSettings } from './factories';
 
 type ChatAreaInputOverrides = Omit<
   Partial<ChatAreaProviderValue['input']>,
@@ -34,58 +36,6 @@ interface ChatAreaPropsOverrides {
   inputActions?: Partial<ChatAreaProps['chatArea']['inputActions']>;
   features?: Partial<ChatAreaProps['chatArea']['features']>;
 }
-
-export const createChatSettings = (overrides: Partial<ChatSettings> = {}): ChatSettings => ({
-  modelId: 'gemini-3.1-pro-preview',
-  temperature: 1,
-  topP: 1,
-  topK: 1,
-  showThoughts: false,
-  systemInstruction: '',
-  ttsVoice: 'Aoede',
-  thinkingBudget: 0,
-  thinkingLevel: 'MEDIUM',
-  mediaResolution: MediaResolution.MEDIA_RESOLUTION_MEDIUM,
-  ...overrides,
-});
-
-export const createAppSettings = (overrides: Partial<AppSettings> = {}): AppSettings => ({
-  ...createChatSettings(),
-  themeId: 'pearl',
-  baseFontSize: 14,
-  apiMode: 'gemini-native',
-  useCustomApiConfig: false,
-  apiKey: 'api-key',
-  apiProxyUrl: null,
-  openaiCompatibleApiKey: null,
-  openaiCompatibleBaseUrl: null,
-  openaiCompatibleModelId: '',
-  openaiCompatibleModels: [],
-  language: 'en',
-  translationTargetLanguage: 'English',
-  isStreamingEnabled: true,
-  transcriptionModelId: 'gemini-2.5-flash',
-  filesApiConfig: {
-    images: true,
-    pdfs: true,
-    audio: true,
-    video: true,
-    text: true,
-  },
-  expandCodeBlocksByDefault: false,
-  isAutoTitleEnabled: true,
-  isMermaidRenderingEnabled: true,
-  isGraphvizRenderingEnabled: true,
-  isCompletionNotificationEnabled: false,
-  isCompletionSoundEnabled: false,
-  isSuggestionsEnabled: true,
-  isAudioCompressionEnabled: false,
-  autoCanvasModelId: 'gemini-3.1-pro-preview',
-  isPasteRichTextAsMarkdownEnabled: true,
-  isSystemAudioRecordingEnabled: false,
-  customShortcuts: {},
-  ...overrides,
-});
 
 const createToolStates = (overrides: Partial<ChatToolToggleStates> = {}): ChatToolToggleStates => ({
   googleSearch: { isEnabled: false, onToggle: vi.fn() },
@@ -203,14 +153,7 @@ export const createChatAreaProps = (overrides: ChatAreaPropsOverrides = {}): Cha
         activeSessionId: 'session-1',
         sessionTitle: 'Session',
         currentChatSettings: createChatSettings(currentChatSettings),
-        messages: [
-          {
-            id: 'message-1',
-            role: 'user',
-            content: 'hello',
-            timestamp: new Date('2026-04-12T00:00:00.000Z'),
-          },
-        ],
+        messages: [createChatMessage()],
         isLoading: false,
         isEditing: false,
         showThoughts: false,

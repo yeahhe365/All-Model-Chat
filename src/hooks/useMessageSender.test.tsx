@@ -68,12 +68,16 @@ vi.mock('../utils/chat/session', () => ({
   createNewSession: mockCreateNewSession,
 }));
 
-vi.mock('../services/logService', () => ({
-  logService: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}));
+vi.mock('../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../test/moduleMockDoubles');
 
-vi.mock('../contexts/I18nContext', () => ({
-  useI18n: () => ({
+  return createLogServiceMockModule();
+});
+
+vi.mock('../contexts/I18nContext', async () => {
+  const { createI18nMockModule } = await import('../test/moduleMockDoubles');
+
+  return createI18nMockModule({
     t: (key: string) =>
       ({
         messageSender_waitForFiles: '请等待文件处理完成。',
@@ -89,13 +93,18 @@ vi.mock('../contexts/I18nContext', () => ({
         apiRuntime_keyNotConfigured: 'API 密钥未配置。',
         apiRuntime_noValidKeysFound: '未找到有效的 API 密钥。',
       })[key] ?? key,
-  }),
-}));
+  });
+});
 
 import { useMessageSender } from './useMessageSender';
+import { createMessageSenderProps, type MessageSenderPropsOverrides } from '@/test/hookFactories';
+import { createUploadedFile } from '@/test/factories';
 import { renderHook } from '@/test/testUtils';
 
 describe('useMessageSender', () => {
+  const renderMessageSender = (overrides: MessageSenderPropsOverrides = {}) =>
+    renderHook(() => useMessageSender(createMessageSenderProps({ language: 'zh', ...overrides })));
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockCreateNewSession.mockReturnValue({ id: 'new-session' });
@@ -114,43 +123,18 @@ describe('useMessageSender', () => {
   it('blocks attachments for Imagen models instead of silently ignoring them', async () => {
     const setAppFileError = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'imagen-4.0-generate-001',
-        } as any,
-        messages: [],
-        selectedFiles: [
-          {
-            id: 'file-1',
-            name: 'reference.png',
-            type: 'image/png',
-            size: 123,
-            uploadState: 'active',
-          } as any,
-        ],
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError,
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions: vi.fn(),
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
-      }),
-    );
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'imagen-4.0-generate-001',
+      },
+      selectedFiles: [
+        createUploadedFile({
+          name: 'reference.png',
+          type: 'image/png',
+        }),
+      ],
+      setAppFileError,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({
@@ -174,43 +158,21 @@ describe('useMessageSender', () => {
     });
 
     const setAppFileError = vi.fn();
-    const selectedFiles = Array.from({ length: 15 }, (_, index) => ({
-      id: `file-${index + 1}`,
-      name: `reference-${index + 1}.png`,
-      type: 'image/png',
-      size: 123,
-      uploadState: 'active',
-    })) as any;
-
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3.1-flash-image-preview',
-        } as any,
-        messages: [],
-        selectedFiles,
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError,
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions: vi.fn(),
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
+    const selectedFiles = Array.from({ length: 15 }, (_, index) =>
+      createUploadedFile({
+        id: `file-${index + 1}`,
+        name: `reference-${index + 1}.png`,
+        type: 'image/png',
       }),
     );
+
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'gemini-3.1-flash-image-preview',
+      },
+      selectedFiles,
+      setAppFileError,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({
@@ -235,47 +197,25 @@ describe('useMessageSender', () => {
 
     const setAppFileError = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-          isCodeExecutionEnabled: true,
-          isLocalPythonEnabled: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-          isCodeExecutionEnabled: true,
-          isLocalPythonEnabled: false,
-        } as any,
-        messages: [],
-        selectedFiles: [
-          {
-            id: 'file-1',
-            name: 'large.csv',
-            type: 'text/csv',
-            size: 2 * 1024 * 1024 + 1,
-            uploadState: 'active',
-          } as any,
-        ],
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError,
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions: vi.fn(),
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
-      }),
-    );
+    const { result, unmount } = renderMessageSender({
+      appSettings: {
+        isCodeExecutionEnabled: true,
+        isLocalPythonEnabled: false,
+      },
+      currentChatSettings: {
+        modelId: 'gemini-3-flash-preview',
+        isCodeExecutionEnabled: true,
+        isLocalPythonEnabled: false,
+      },
+      selectedFiles: [
+        createUploadedFile({
+          name: 'large.csv',
+          type: 'text/csv',
+          size: 2 * 1024 * 1024 + 1,
+        }),
+      ],
+      setAppFileError,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({ text: 'analyze this file' });
@@ -296,44 +236,20 @@ describe('useMessageSender', () => {
 
     const setAppFileError = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-flash-preview',
-        } as any,
-        messages: [],
-        selectedFiles: [
-          {
-            id: 'file-1',
-            name: 'failed.pdf',
-            type: 'application/pdf',
-            size: 123,
-            uploadState: 'failed',
-            error: 'Backend processing failed.',
-          } as any,
-        ],
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError,
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions: vi.fn(),
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
-      }),
-    );
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'gemini-3-flash-preview',
+      },
+      selectedFiles: [
+        createUploadedFile({
+          name: 'failed.pdf',
+          type: 'application/pdf',
+          uploadState: 'failed',
+          error: 'Backend processing failed.',
+        }),
+      ],
+      setAppFileError,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({ text: 'summarize this' });
@@ -354,43 +270,18 @@ describe('useMessageSender', () => {
 
     const setAppFileError = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-pro-image-preview',
-        } as any,
-        messages: [],
-        selectedFiles: [
-          {
-            id: 'file-1',
-            name: 'reference.pdf',
-            type: 'application/pdf',
-            size: 123,
-            uploadState: 'active',
-          } as any,
-        ],
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError,
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions: vi.fn(),
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
-      }),
-    );
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'gemini-3-pro-image-preview',
+      },
+      selectedFiles: [
+        createUploadedFile({
+          name: 'reference.pdf',
+          type: 'application/pdf',
+        }),
+      ],
+      setAppFileError,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({
@@ -414,43 +305,18 @@ describe('useMessageSender', () => {
 
     const setAppFileError = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3.1-flash-image-preview',
-        } as any,
-        messages: [],
-        selectedFiles: [
-          {
-            id: 'file-1',
-            name: 'reference.pdf',
-            type: 'application/pdf',
-            size: 123,
-            uploadState: 'active',
-          } as any,
-        ],
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError,
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions: vi.fn(),
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
-      }),
-    );
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'gemini-3.1-flash-image-preview',
+      },
+      selectedFiles: [
+        createUploadedFile({
+          name: 'reference.pdf',
+          type: 'application/pdf',
+        }),
+      ],
+      setAppFileError,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({
@@ -473,46 +339,23 @@ describe('useMessageSender', () => {
 
     const setAppFileError = vi.fn();
     const selectedFiles = [
-      {
-        id: 'file-1',
+      createUploadedFile({
         name: 'reference.pdf',
         type: 'application/pdf',
-        size: 123,
-        uploadState: 'active',
-      } as any,
+      }),
     ];
 
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          apiMode: 'openai-compatible',
-          openaiCompatibleModelId: 'gpt-5.5',
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-        } as any,
-        currentChatSettings: {
-          modelId: 'gemini-3-pro-image-preview',
-        } as any,
-        messages: [],
-        selectedFiles,
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError,
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId: vi.fn(),
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions: vi.fn(),
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
-      }),
-    );
+    const { result, unmount } = renderMessageSender({
+      appSettings: {
+        apiMode: 'openai-compatible',
+        openaiCompatibleModelId: 'gpt-5.5',
+      },
+      currentChatSettings: {
+        modelId: 'gemini-3-pro-image-preview',
+      },
+      selectedFiles,
+      setAppFileError,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({ text: 'summarize this PDF' });
@@ -551,35 +394,13 @@ describe('useMessageSender', () => {
       isGemini3ImageModel: false,
     });
 
-    const { result, unmount } = renderHook(() =>
-      useMessageSender({
-        appSettings: {
-          isAutoScrollOnSendEnabled: true,
-          generateQuadImages: false,
-        } as any,
-        currentChatSettings: {
-          modelId: '',
-        } as any,
-        messages: [],
-        selectedFiles: [],
-        setSelectedFiles: vi.fn(),
-        editingMessageId: null,
-        setEditingMessageId: vi.fn(),
-        setAppFileError: vi.fn(),
-        aspectRatio: '1:1',
-        imageSize: '1K',
-        imageOutputMode: 'IMAGE_TEXT',
-        personGeneration: 'ALLOW_ADULT',
-        userScrolledUpRef: { current: false },
-        activeSessionId: null,
-        setActiveSessionId,
-        activeJobs: { current: new Map() },
-        updateAndPersistSessions,
-        sessionKeyMapRef: { current: new Map() },
-        language: 'zh',
-        setSessionLoading: vi.fn(),
-      }),
-    );
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: '',
+      },
+      setActiveSessionId,
+      updateAndPersistSessions,
+    });
 
     await act(async () => {
       await result.current.handleSendMessage({ text: 'hello' });

@@ -1,6 +1,6 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../contexts/I18nContext';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 import { HistorySidebar } from './HistorySidebar';
@@ -10,26 +10,13 @@ vi.mock('@formkit/auto-animate/react', () => ({
 }));
 
 describe('HistorySidebar search shortcut', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true);
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('opens and focuses chat search when the global focus event is dispatched', async () => {
     const onToggle = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <HistorySidebar
             isOpen={false}
@@ -67,14 +54,14 @@ describe('HistorySidebar search shortcut', () => {
     });
 
     expect(onToggle).toHaveBeenCalledTimes(1);
-    const searchInput = container.querySelector<HTMLInputElement>('input[aria-label="Search chat history"]');
+    const searchInput = renderer.container.querySelector<HTMLInputElement>('input[aria-label="Search chat history"]');
     expect(searchInput).not.toBeNull();
     expect(document.activeElement).toBe(searchInput);
   });
 
   it('shows the chat search shortcut in the collapsed search tooltip', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <HistorySidebar
             isOpen={false}
@@ -106,7 +93,7 @@ describe('HistorySidebar search shortcut', () => {
       );
     });
 
-    const searchButton = container.querySelector<HTMLButtonElement>('button[aria-label="Search (Ctrl + K)"]');
+    const searchButton = renderer.container.querySelector<HTMLButtonElement>('button[aria-label="Search (Ctrl + K)"]');
     expect(searchButton).not.toBeNull();
     expect(searchButton?.getAttribute('title')).toBe('Search (Ctrl + K)');
   });

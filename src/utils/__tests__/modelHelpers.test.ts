@@ -12,6 +12,13 @@ import {
   adjustThinkingBudget,
 } from '../modelHelpers';
 import { ModelOption } from '../../types';
+import type { UsageMetadata } from '@google/genai';
+
+type LegacyUsageMetadata = UsageMetadata & {
+  candidatesTokenCount?: number;
+};
+
+const createUsageMetadata = (overrides: LegacyUsageMetadata): UsageMetadata => overrides;
 
 describe('raw mode support', () => {
   it('includes Gemini Robotics-ER 1.6', () => {
@@ -270,11 +277,13 @@ describe('calculateTokenStats', () => {
   });
 
   it('extracts token counts from metadata', () => {
-    const result = calculateTokenStats({
-      totalTokenCount: 100,
-      promptTokenCount: 30,
-      candidatesTokenCount: 70,
-    } as any);
+    const result = calculateTokenStats(
+      createUsageMetadata({
+        totalTokenCount: 100,
+        promptTokenCount: 30,
+        candidatesTokenCount: 70,
+      }),
+    );
     expect(result).toEqual({
       promptTokens: 30,
       uncachedPromptTokens: 30,
@@ -289,31 +298,37 @@ describe('calculateTokenStats', () => {
   });
 
   it('calculates completionTokens as total - prompt when candidatesTokenCount is missing', () => {
-    const result = calculateTokenStats({
-      totalTokenCount: 100,
-      promptTokenCount: 40,
-    } as any);
+    const result = calculateTokenStats(
+      createUsageMetadata({
+        totalTokenCount: 100,
+        promptTokenCount: 40,
+      }),
+    );
     expect(result.completionTokens).toBe(60);
   });
 
   it('extracts thought tokens', () => {
-    const result = calculateTokenStats({
-      totalTokenCount: 200,
-      promptTokenCount: 50,
-      candidatesTokenCount: 150,
-      thoughtsTokenCount: 40,
-    } as any);
+    const result = calculateTokenStats(
+      createUsageMetadata({
+        totalTokenCount: 200,
+        promptTokenCount: 50,
+        candidatesTokenCount: 150,
+        thoughtsTokenCount: 40,
+      }),
+    );
     expect(result.thoughtTokens).toBe(40);
     expect(result.outputTokens).toBe(190);
   });
 
   it('extracts cached prompt tokens when usage metadata includes cache hits', () => {
-    const result = calculateTokenStats({
-      totalTokenCount: 120,
-      promptTokenCount: 80,
-      candidatesTokenCount: 40,
-      cachedContentTokenCount: 32,
-    } as any);
+    const result = calculateTokenStats(
+      createUsageMetadata({
+        totalTokenCount: 120,
+        promptTokenCount: 80,
+        candidatesTokenCount: 40,
+        cachedContentTokenCount: 32,
+      }),
+    );
 
     expect(result.cachedPromptTokens).toBe(32);
     expect(result.uncachedPromptTokens).toBe(48);
@@ -322,13 +337,15 @@ describe('calculateTokenStats', () => {
   });
 
   it('supports responseTokenCount and tool-use prompt buckets from newer SDK responses', () => {
-    const result = calculateTokenStats({
-      promptTokenCount: 27,
-      responseTokenCount: 45,
-      thoughtsTokenCount: 31,
-      toolUsePromptTokenCount: 10309,
-      totalTokenCount: 10412,
-    } as any);
+    const result = calculateTokenStats(
+      createUsageMetadata({
+        promptTokenCount: 27,
+        responseTokenCount: 45,
+        thoughtsTokenCount: 31,
+        toolUsePromptTokenCount: 10309,
+        totalTokenCount: 10412,
+      }),
+    );
 
     expect(result).toEqual({
       promptTokens: 27,
@@ -344,12 +361,14 @@ describe('calculateTokenStats', () => {
   });
 
   it('does not infer completion from total when thought or tool-use buckets are present but response tokens are missing', () => {
-    const result = calculateTokenStats({
-      promptTokenCount: 20,
-      thoughtsTokenCount: 5,
-      toolUsePromptTokenCount: 11,
-      totalTokenCount: 100,
-    } as any);
+    const result = calculateTokenStats(
+      createUsageMetadata({
+        promptTokenCount: 20,
+        thoughtsTokenCount: 5,
+        toolUsePromptTokenCount: 11,
+        totalTokenCount: 100,
+      }),
+    );
 
     expect(result.completionTokens).toBe(0);
     expect(result.totalTokens).toBe(36);

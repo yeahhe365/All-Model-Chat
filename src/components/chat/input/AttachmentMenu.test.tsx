@@ -1,14 +1,14 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 
 vi.mock('../../../services/logService', async () => {
-  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../../hooks/ui/usePortaledMenu', () => ({
@@ -27,22 +27,15 @@ vi.mock('../../../hooks/ui/usePortaledMenu', () => ({
 import { AttachmentMenu } from './AttachmentMenu';
 
 describe('AttachmentMenu', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('shows only image-relevant actions for Gemini image models', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <AttachmentMenu onAction={() => {}} disabled={false} isImageModel />
         </I18nProvider>,

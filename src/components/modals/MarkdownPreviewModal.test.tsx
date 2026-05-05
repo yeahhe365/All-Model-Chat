@@ -1,7 +1,7 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { UploadedFile } from '../../types';
+import { createUploadedFile } from '../../test/factories';
 
 const { mockMarkdownFileViewer, mockSettingsState } = vi.hoisted(() => ({
   mockMarkdownFileViewer: vi.fn(
@@ -29,11 +29,11 @@ const { mockMarkdownFileViewer, mockSettingsState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock('../../contexts/I18nContext', async () => {
+  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createI18nMockModule();
+});
 
 vi.mock('../../stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
@@ -54,43 +54,37 @@ vi.mock('../../utils/export/core', () => ({
 import { MarkdownPreviewModal } from './MarkdownPreviewModal';
 
 describe('MarkdownPreviewModal', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let confirmSpy: ReturnType<typeof vi.spyOn>;
 
-  const createMarkdownFile = (): UploadedFile => ({
-    id: 'md-1',
-    name: 'notes.md',
-    type: 'text/markdown',
-    size: 128,
-    uploadState: 'active',
-    textContent: '# Original',
-  });
+  const createMarkdownFile = () =>
+    createUploadedFile({
+      id: 'md-1',
+      name: 'notes.md',
+      type: 'text/markdown',
+      size: 128,
+      textContent: '# Original',
+    });
 
   beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
     vi.clearAllMocks();
     confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
   });
 
   afterEach(() => {
     confirmSpy.mockRestore();
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('asks before discarding unsaved markdown edits when cancelling edit mode', () => {
     const onClose = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <MarkdownPreviewModal file={createMarkdownFile()} onClose={onClose} onSaveText={vi.fn()} initialEditMode />,
       );
     });
 
-    const changeButton = Array.from(container.querySelectorAll('button')).find((button) =>
+    const changeButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('change content'),
     );
     expect(changeButton).toBeDefined();
@@ -99,7 +93,7 @@ describe('MarkdownPreviewModal', () => {
       changeButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    const closeButton = Array.from(container.querySelectorAll('button')).find(
+    const closeButton = Array.from(renderer.container.querySelectorAll('button')).find(
       (button) => button.getAttribute('title') === 'filePreview_cancel_edit',
     );
     expect(closeButton).toBeDefined();

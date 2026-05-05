@@ -15,22 +15,22 @@ vi.mock('../file-upload/uploadFileItem', () => ({
 }));
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../utils/db', async () => {
-  const { createMockDbService } = await import('../../test/serviceTestDoubles');
+  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { dbService: createMockDbService() };
+  return createDbServiceMockModule();
 });
 
-vi.mock('../../contexts/I18nContext', () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}));
+vi.mock('../../contexts/I18nContext', async () => {
+  const { createI18nMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createI18nMockModule();
+});
 
 describe('useFileUpload', () => {
   beforeEach(() => {
@@ -133,7 +133,7 @@ describe('useFileUpload', () => {
     });
 
     act(() => {
-      (useChatStore.getState() as any).invalidateFileOperations?.();
+      useChatStore.getState().invalidateFileOperations();
     });
 
     await act(async () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SavedChatSession } from '../types';
+import { createChatSettings } from '../test/factories';
 import { categorizeSessionsByDate } from './useHistorySidebarLogic';
 
 const createSession = (id: string, iso: string): SavedChatSession => ({
@@ -7,7 +8,7 @@ const createSession = (id: string, iso: string): SavedChatSession => ({
   title: id,
   timestamp: new Date(iso).getTime(),
   messages: [],
-  settings: {} as SavedChatSession['settings'],
+  settings: createChatSettings(),
 });
 
 describe('categorizeSessionsByDate', () => {

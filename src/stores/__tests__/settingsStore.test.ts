@@ -5,15 +5,15 @@ const { mockGetRuntimeConfigAppSettingsOverrides } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../utils/db', async () => {
-  const { createMockDbService } = await import('../../test/serviceTestDoubles');
+  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { dbService: createMockDbService() };
+  return createDbServiceMockModule();
 });
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../runtime/runtimeConfig', () => ({
@@ -23,6 +23,10 @@ vi.mock('../../runtime/runtimeConfig', () => ({
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { useSettingsStore } from '../settingsStore';
 import { dbService } from '../../utils/db';
+import { createTheme } from '../../test/factories';
+import type { AppSettings } from '../../types';
+
+const createStoredSettingsSnapshot = (overrides: Partial<AppSettings>): AppSettings => overrides as AppSettings;
 
 describe('settingsStore', () => {
   beforeEach(() => {
@@ -30,7 +34,7 @@ describe('settingsStore', () => {
     mockGetRuntimeConfigAppSettingsOverrides.mockReturnValue({});
     useSettingsStore.setState({
       appSettings: DEFAULT_APP_SETTINGS,
-      currentTheme: { id: 'pearl', name: 'Pearl', colors: {} } as any,
+      currentTheme: createTheme(),
       language: 'en',
       isSettingsLoaded: false,
       pendingPreloadSettingsOverrides: null,
@@ -133,10 +137,12 @@ describe('settingsStore', () => {
 
     it('preserves user edits made before settings finish loading', async () => {
       const canvasPrompt = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
-      vi.mocked(dbService.getAppSettings).mockResolvedValue({
-        temperature: 0.5,
-        language: 'zh',
-      } as any);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(
+        createStoredSettingsSnapshot({
+          temperature: 0.5,
+          language: 'zh',
+        }),
+      );
 
       useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
@@ -161,10 +167,12 @@ describe('settingsStore', () => {
     });
 
     it('loads settings from DB and merges with defaults', async () => {
-      vi.mocked(dbService.getAppSettings).mockResolvedValue({
-        temperature: 0.5,
-        language: 'zh',
-      } as any);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(
+        createStoredSettingsSnapshot({
+          temperature: 0.5,
+          language: 'zh',
+        }),
+      );
       await useSettingsStore.getState().loadSettings();
       const state = useSettingsStore.getState();
       expect(state.appSettings.temperature).toBe(0.5);
@@ -174,11 +182,13 @@ describe('settingsStore', () => {
     });
 
     it('loads OpenAI-compatible model settings without changing the Gemini model setting', async () => {
-      vi.mocked(dbService.getAppSettings).mockResolvedValue({
-        modelId: 'gemini-3.1-pro-preview',
-        openaiCompatibleModelId: 'openai/custom-gpt',
-        openaiCompatibleModels: [{ id: 'openai/custom-gpt', name: 'Custom GPT', isPinned: true }],
-      } as any);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(
+        createStoredSettingsSnapshot({
+          modelId: 'gemini-3.1-pro-preview',
+          openaiCompatibleModelId: 'openai/custom-gpt',
+          openaiCompatibleModels: [{ id: 'openai/custom-gpt', name: 'Custom GPT', isPinned: true }],
+        }),
+      );
 
       await useSettingsStore.getState().loadSettings();
 
@@ -231,17 +241,19 @@ describe('settingsStore', () => {
     it('resolves system language to zh when browser is Chinese', async () => {
       const originalLang = navigator.language;
       Object.defineProperty(navigator, 'language', { value: 'zh-CN', configurable: true });
-      vi.mocked(dbService.getAppSettings).mockResolvedValue({ language: 'system' } as any);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(createStoredSettingsSnapshot({ language: 'system' }));
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().language).toBe('zh');
       Object.defineProperty(navigator, 'language', { value: originalLang, configurable: true });
     });
 
     it('preserves stored settings that reference legacy Gemini 2.5 preview models', async () => {
-      vi.mocked(dbService.getAppSettings).mockResolvedValue({
-        modelId: 'gemini-2.5-flash-preview-09-2025',
-        transcriptionModelId: 'gemini-2.5-flash-lite-preview-09-2025',
-      } as any);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(
+        createStoredSettingsSnapshot({
+          modelId: 'gemini-2.5-flash-preview-09-2025',
+          transcriptionModelId: 'gemini-2.5-flash-lite-preview-09-2025',
+        }),
+      );
 
       await useSettingsStore.getState().loadSettings();
 

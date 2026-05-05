@@ -1,6 +1,6 @@
 import React, { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { createChatAreaProviderValue } from '../../../test/chatAreaFixtures';
 import {
@@ -59,18 +59,9 @@ const MessageListRenderProbe = React.memo(({ onRender }: { onRender: () => void 
 });
 
 describe('ChatAreaContext', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
+  const renderer = setupTestRenderer();
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
@@ -90,7 +81,7 @@ describe('ChatAreaContext', () => {
     try {
       expect(() => {
         act(() => {
-          root.render(<OutsideProviderProbe />);
+          renderer.root.render(<OutsideProviderProbe />);
         });
       }).toThrow(/ChatAreaProvider/);
     } finally {
@@ -103,7 +94,7 @@ describe('ChatAreaContext', () => {
     const value = createProviderValue();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ChatAreaProvider value={value}>
             <HookProbe />
@@ -112,8 +103,8 @@ describe('ChatAreaContext', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="message-count"]')?.textContent).toBe('2');
-    expect(container.querySelector('[data-testid="input-model"]')?.textContent).toBe('gemini-3.1-pro-preview');
+    expect(renderer.container.querySelector('[data-testid="message-count"]')?.textContent).toBe('2');
+    expect(renderer.container.querySelector('[data-testid="input-model"]')?.textContent).toBe('gemini-3.1-pro-preview');
   });
 
   it('does not re-render message-list consumers when only the input slice changes', () => {
@@ -121,7 +112,7 @@ describe('ChatAreaContext', () => {
     const onRender = vi.fn();
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ChatAreaProvider value={initialValue}>
             <MessageListRenderProbe onRender={onRender} />
@@ -141,7 +132,7 @@ describe('ChatAreaContext', () => {
     };
 
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ChatAreaProvider value={updatedValue}>
             <MessageListRenderProbe onRender={onRender} />

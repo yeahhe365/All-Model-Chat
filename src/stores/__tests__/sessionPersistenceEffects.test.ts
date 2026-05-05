@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SavedChatSession } from '../../types';
+import { createChatSettings } from '../../test/factories';
 import { persistSessionChanges } from '../sessionPersistenceEffects';
 
 const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSession => ({
@@ -7,7 +8,7 @@ const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSessio
   title: 'Session',
   timestamp: 0,
   messages: [],
-  settings: {} as SavedChatSession['settings'],
+  settings: createChatSettings(),
   ...overrides,
 });
 

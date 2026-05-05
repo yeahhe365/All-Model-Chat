@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../../stores/settingsStore';
@@ -10,20 +10,14 @@ vi.mock('../../../shared/Tooltip', () => ({
 }));
 
 describe('ThinkingControl image model behavior', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
     useSettingsStore.setState(initialState);
   });
@@ -33,7 +27,7 @@ describe('ThinkingControl image model behavior', () => {
     const setThinkingLevel = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemini-3.1-flash-image-preview"
@@ -48,19 +42,19 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('Minimal');
-    expect(container.textContent).toContain('High');
-    expect(container.textContent).not.toContain('Low');
-    expect(container.textContent).not.toContain('Medium');
-    expect(container.textContent).not.toContain('Token Budget');
-    expect(container.textContent).not.toContain('Off');
+    expect(renderer.container.textContent).toContain('Minimal');
+    expect(renderer.container.textContent).toContain('High');
+    expect(renderer.container.textContent).not.toContain('Low');
+    expect(renderer.container.textContent).not.toContain('Medium');
+    expect(renderer.container.textContent).not.toContain('Token Budget');
+    expect(renderer.container.textContent).not.toContain('Off');
     expect(setThinkingBudget).toHaveBeenCalledWith(-1);
     expect(setThinkingLevel).toHaveBeenCalledWith('MINIMAL');
   });
 
   it('hides ThinkingControl for Gemini 3 Pro Image because the request config does not use it', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemini-3-pro-image-preview"
@@ -75,12 +69,12 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent?.trim()).toBe('');
+    expect(renderer.container.textContent?.trim()).toBe('');
   });
 
   it('hides ThinkingControl for Gemini 3.1 Flash TTS Preview because the model does not support thinking', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemini-3.1-flash-tts-preview"
@@ -95,12 +89,12 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent?.trim()).toBe('');
+    expect(renderer.container.textContent?.trim()).toBe('');
   });
 
   it('shows Gemma reasoning as MINIMAL/HIGH level choices', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemma-4-31b-it"
@@ -115,13 +109,15 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('Gemma Reasoning Level');
-    expect(container.textContent).toContain('Minimal');
-    expect(container.textContent).toContain('High');
-    expect(container.textContent).not.toContain('Low');
-    expect(container.textContent).not.toContain('Medium');
-    expect(container.textContent).toContain('Gemma uses HIGH reasoning for better results, with higher latency.');
-    const toggleButton = container.querySelector('button[aria-pressed]');
+    expect(renderer.container.textContent).toContain('Gemma Reasoning Level');
+    expect(renderer.container.textContent).toContain('Minimal');
+    expect(renderer.container.textContent).toContain('High');
+    expect(renderer.container.textContent).not.toContain('Low');
+    expect(renderer.container.textContent).not.toContain('Medium');
+    expect(renderer.container.textContent).toContain(
+      'Gemma uses HIGH reasoning for better results, with higher latency.',
+    );
+    const toggleButton = renderer.container.querySelector('button[aria-pressed]');
     expect(toggleButton).toBeNull();
   });
 
@@ -129,7 +125,7 @@ describe('ThinkingControl image model behavior', () => {
     const setShowThoughts = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemma-4-31b-it"
@@ -144,9 +140,9 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('Gemma uses MINIMAL reasoning for faster responses.');
+    expect(renderer.container.textContent).toContain('Gemma uses MINIMAL reasoning for faster responses.');
 
-    const highButton = Array.from(container.querySelectorAll('button')).find((node) =>
+    const highButton = Array.from(renderer.container.querySelectorAll('button')).find((node) =>
       node.textContent?.includes('High'),
     );
     expect(highButton).not.toBeNull();
@@ -160,7 +156,7 @@ describe('ThinkingControl image model behavior', () => {
 
   it('shows full thinking level options for Gemini Robotics-ER 1.6 in auto mode', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemini-robotics-er-1.6-preview"
@@ -175,15 +171,15 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('Minimal');
-    expect(container.textContent).toContain('Low');
-    expect(container.textContent).toContain('Medium');
-    expect(container.textContent).toContain('High');
+    expect(renderer.container.textContent).toContain('Minimal');
+    expect(renderer.container.textContent).toContain('Low');
+    expect(renderer.container.textContent).toContain('Medium');
+    expect(renderer.container.textContent).toContain('High');
   });
 
   it('does not show the reasoning badge in the standard thinking header', async () => {
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemini-robotics-er-1.6-preview"
@@ -198,8 +194,8 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).not.toContain('settingsReasoningBadgeGemini3');
-    expect(container.textContent).not.toContain('settingsReasoningBadgeEnabled');
+    expect(renderer.container.textContent).not.toContain('settingsReasoningBadgeGemini3');
+    expect(renderer.container.textContent).not.toContain('settingsReasoningBadgeEnabled');
   });
 
   it('hides the off mode for Gemini Robotics-ER 1.6 and normalizes legacy off state to minimal', async () => {
@@ -207,7 +203,7 @@ describe('ThinkingControl image model behavior', () => {
     const setThinkingLevel = vi.fn();
 
     await act(async () => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ThinkingControl
             modelId="gemini-robotics-er-1.6-preview"
@@ -222,9 +218,9 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('Auto');
-    expect(container.textContent).toContain('Token Budget');
-    expect(container.textContent).not.toContain('Off');
+    expect(renderer.container.textContent).toContain('Auto');
+    expect(renderer.container.textContent).toContain('Token Budget');
+    expect(renderer.container.textContent).not.toContain('Off');
     expect(setThinkingBudget).toHaveBeenCalledWith(-1);
     expect(setThinkingLevel).toHaveBeenCalledWith('MINIMAL');
   });

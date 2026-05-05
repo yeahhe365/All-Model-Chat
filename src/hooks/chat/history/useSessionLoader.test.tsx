@@ -1,7 +1,7 @@
 import { act } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
+import type { ChatGroup, ChatMessage, SavedChatSession } from '../../../types';
 import { MediaResolution } from '../../../types';
 
 const {
@@ -25,15 +25,15 @@ const {
 }));
 
 vi.mock('../../../services/logService', async () => {
-  const { createMockLogService } = await import('../../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../../utils/db', async () => {
-  const { createMockDbService } = await import('../../../test/serviceTestDoubles');
+  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return { dbService: createMockDbService({ getSession: mockGetSession }) };
+  return createDbServiceMockModule({ getSession: mockGetSession });
 });
 
 vi.mock('../../../utils/chat/session', () => ({
@@ -51,48 +51,45 @@ vi.mock('../../../utils/modelHelpers', () => ({
 
 import { useSessionLoader } from './useSessionLoader';
 import { dbService } from '../../../utils/db';
+import { createChatMessage, createChatSettings, createSavedChatSession } from '@/test/factories';
+import { createSessionLoaderProps, type SessionLoaderPropsOverrides } from '@/test/hookFactories';
 import { createDeferred, flushPromises, renderHook } from '@/test/testUtils';
 
-const createSession = (id: string, title: string): SavedChatSession => ({
-  id,
-  title,
-  timestamp: Date.now(),
-  messages: [
-    {
-      id: `${id}-message`,
-      role: 'user',
-      content: `${title} content`,
-      timestamp: new Date(),
-    },
-  ],
-  settings: {
-    modelId: 'gemini-2.5-flash',
-    temperature: 1,
-    topP: 0.95,
-    topK: 64,
-    showThoughts: true,
-    systemInstruction: '',
-    ttsVoice: 'Aoede',
-    thinkingBudget: 0,
-    thinkingLevel: 'HIGH',
-    lockedApiKey: null,
-    isGoogleSearchEnabled: false,
-    isCodeExecutionEnabled: false,
-    isUrlContextEnabled: false,
-    isDeepSearchEnabled: false,
-    isRawModeEnabled: false,
-    hideThinkingInContext: false,
-    safetySettings: [],
-    mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
-  },
-});
+const createSession = (id: string, title: string): SavedChatSession =>
+  createSavedChatSession({
+    id,
+    title,
+    timestamp: Date.now(),
+    messages: [
+      createChatMessage({
+        id: `${id}-message`,
+        content: `${title} content`,
+      }),
+    ],
+    settings: createChatSettings({
+      modelId: 'gemini-2.5-flash',
+      topP: 0.95,
+      topK: 64,
+      showThoughts: true,
+      thinkingLevel: 'HIGH',
+      mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
+    }),
+  });
 
 describe('useSessionLoader', () => {
+  const renderSessionLoader = (overrides: SessionLoaderPropsOverrides = {}) =>
+    renderHook(() =>
+      useSessionLoader(
+        createSessionLoaderProps({
+          appSettings: { modelId: 'gemini-2.5-flash', ...overrides.appSettings },
+          ...overrides,
+        }),
+      ),
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   it('keeps the newest session selection when earlier loads resolve later', async () => {
     const olderRequest = createDeferred<SavedChatSession | null>();
@@ -111,25 +108,17 @@ describe('useSessionLoader', () => {
     const setCommandedInput = vi.fn();
     const updateAndPersistSessions = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: { modelId: 'gemini-2.5-flash' } as any,
-        setSavedSessions,
-        setSavedGroups,
-        setActiveSessionId,
-        setActiveMessages,
-        setSelectedFiles,
-        setEditingMessageId,
-        setCommandedInput,
-        updateAndPersistSessions,
-        activeChat: undefined,
-        userScrolledUpRef: { current: false },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'sidebar-active',
-        savedSessions: [] as SavedChatSession[],
-      }),
-    );
+    const { result, unmount } = renderSessionLoader({
+      setSavedSessions,
+      setSavedGroups,
+      setActiveSessionId,
+      setActiveMessages,
+      setSelectedFiles,
+      setEditingMessageId,
+      setCommandedInput,
+      updateAndPersistSessions,
+      activeSessionId: 'sidebar-active',
+    });
 
     act(() => {
       void result.current.loadChatSession('older-session');
@@ -163,25 +152,10 @@ describe('useSessionLoader', () => {
 
     const setActiveSessionId = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: { modelId: 'gemini-2.5-flash' } as any,
-        setSavedSessions: vi.fn(),
-        setSavedGroups: vi.fn(),
-        setActiveSessionId,
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        activeChat: undefined,
-        userScrolledUpRef: { current: false },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-current',
-        savedSessions: [] as SavedChatSession[],
-      }),
-    );
+    const { result, unmount } = renderSessionLoader({
+      setActiveSessionId,
+      activeSessionId: 'session-current',
+    });
 
     await act(async () => {
       await result.current.loadChatSession('session-next');
@@ -198,25 +172,10 @@ describe('useSessionLoader', () => {
 
     const setActiveSessionId = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: { modelId: 'gemini-2.5-flash' } as any,
-        setSavedSessions: vi.fn(),
-        setSavedGroups: vi.fn(),
-        setActiveSessionId,
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        activeChat: undefined,
-        userScrolledUpRef: { current: false },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-current',
-        savedSessions: [] as SavedChatSession[],
-      }),
-    );
+    const { result, unmount } = renderSessionLoader({
+      setActiveSessionId,
+      activeSessionId: 'session-current',
+    });
 
     await act(async () => {
       await result.current.loadChatSession('session-back', { history: 'none' });
@@ -235,25 +194,12 @@ describe('useSessionLoader', () => {
     const setSavedSessions = vi.fn();
     const activeChat = createSession('session-active', 'Active Session');
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: { modelId: 'gemini-2.5-flash' } as any,
-        setSavedSessions,
-        setSavedGroups: vi.fn(),
-        setActiveSessionId: vi.fn(),
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        activeChat,
-        userScrolledUpRef: { current: false },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-active',
-        savedSessions: [{ ...activeChat, messages: [] }] as SavedChatSession[],
-      }),
-    );
+    const { result, unmount } = renderSessionLoader({
+      setSavedSessions,
+      activeChat,
+      activeSessionId: 'session-active',
+      savedSessions: [{ ...activeChat, messages: [] }],
+    });
 
     act(() => {
       void result.current.loadChatSession('session-next');
@@ -275,10 +221,10 @@ describe('useSessionLoader', () => {
 
   it('does not overwrite newer in-memory session settings when initial metadata resolves late', async () => {
     const metadataDeferred = createDeferred<SavedChatSession[]>();
-    const groupsDeferred = createDeferred<any[]>();
+    const groupsDeferred = createDeferred<ChatGroup[]>();
 
-    vi.mocked(dbService.getAllSessionMetadata).mockReturnValueOnce(metadataDeferred.promise as Promise<any>);
-    vi.mocked(dbService.getAllGroups).mockReturnValueOnce(groupsDeferred.promise as Promise<any>);
+    vi.mocked(dbService.getAllSessionMetadata).mockReturnValueOnce(metadataDeferred.promise);
+    vi.mocked(dbService.getAllGroups).mockReturnValueOnce(groupsDeferred.promise);
     mockGetSession.mockResolvedValue(null);
 
     const setSavedSessions = vi.fn();
@@ -292,25 +238,12 @@ describe('useSessionLoader', () => {
     freshSession.messages = [];
     freshSession.settings.systemInstruction = '';
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: { modelId: 'gemini-2.5-flash' } as any,
-        setSavedSessions,
-        setSavedGroups,
-        setActiveSessionId: vi.fn(),
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        activeChat: undefined,
-        userScrolledUpRef: { current: false },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-1',
-        savedSessions: [freshSession] as SavedChatSession[],
-      }),
-    );
+    const { result, unmount } = renderSessionLoader({
+      setSavedSessions,
+      setSavedGroups,
+      activeSessionId: 'session-1',
+      savedSessions: [freshSession],
+    });
 
     await act(async () => {
       void result.current.loadInitialData();
@@ -332,26 +265,11 @@ describe('useSessionLoader', () => {
   it('clears stale file errors when starting a fresh chat', () => {
     const setAppFileError = vi.fn();
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: { modelId: 'gemini-2.5-flash' } as any,
-        setSavedSessions: vi.fn(),
-        setSavedGroups: vi.fn(),
-        setActiveSessionId: vi.fn(),
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        activeChat: undefined,
-        userScrolledUpRef: { current: true },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-current',
-        savedSessions: [] as SavedChatSession[],
-        setAppFileError,
-      } as any),
-    );
+    const { result, unmount } = renderSessionLoader({
+      userScrolledUpRef: { current: true },
+      activeSessionId: 'session-current',
+      setAppFileError,
+    });
 
     act(() => {
       result.current.startNewChat();
@@ -375,30 +293,18 @@ describe('useSessionLoader', () => {
       },
     };
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: {
-          modelId: 'global-model',
-          isGoogleSearchEnabled: false,
-          lockedApiKey: null,
-        } as any,
-        setSavedSessions: vi.fn(),
-        setSavedGroups: vi.fn(),
-        setActiveSessionId: vi.fn(),
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions,
-        activeChat: emptyActiveSession,
-        userScrolledUpRef: { current: true },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-empty',
-        savedSessions: [emptyActiveSession] as SavedChatSession[],
-        setAppFileError: vi.fn(),
-      } as any),
-    );
+    const { result, unmount } = renderSessionLoader({
+      appSettings: {
+        modelId: 'global-model',
+        isGoogleSearchEnabled: false,
+        lockedApiKey: null,
+      },
+      updateAndPersistSessions,
+      activeChat: emptyActiveSession,
+      userScrolledUpRef: { current: true },
+      activeSessionId: 'session-empty',
+      savedSessions: [emptyActiveSession],
+    });
 
     act(() => {
       result.current.startNewChat();
@@ -428,30 +334,18 @@ describe('useSessionLoader', () => {
       },
     };
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: {
-          modelId: 'gemini-3-flash-preview',
-          isGoogleSearchEnabled: false,
-          lockedApiKey: null,
-        } as any,
-        setSavedSessions: vi.fn(),
-        setSavedGroups: vi.fn(),
-        setActiveSessionId: vi.fn(),
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions,
-        activeChat: emptyActiveSession,
-        userScrolledUpRef: { current: true },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-empty',
-        savedSessions: [emptyActiveSession] as SavedChatSession[],
-        setAppFileError: vi.fn(),
-      } as any),
-    );
+    const { result, unmount } = renderSessionLoader({
+      appSettings: {
+        modelId: 'gemini-3-flash-preview',
+        isGoogleSearchEnabled: false,
+        lockedApiKey: null,
+      },
+      updateAndPersistSessions,
+      activeChat: emptyActiveSession,
+      userScrolledUpRef: { current: true },
+      activeSessionId: 'session-empty',
+      savedSessions: [emptyActiveSession],
+    });
 
     act(() => {
       result.current.startNewChat();
@@ -475,26 +369,13 @@ describe('useSessionLoader', () => {
     recentSession.isPinned = false;
     recentSession.settings.modelId = 'recent-model';
 
-    const { result, unmount } = renderHook(() =>
-      useSessionLoader({
-        appSettings: { modelId: 'global-model' } as any,
-        setSavedSessions: vi.fn(),
-        setSavedGroups: vi.fn(),
-        setActiveSessionId: vi.fn(),
-        setActiveMessages: vi.fn(),
-        setSelectedFiles: vi.fn(),
-        setEditingMessageId: vi.fn(),
-        setCommandedInput: vi.fn(),
-        updateAndPersistSessions: vi.fn(),
-        activeChat: createSession('session-current', 'Current Session'),
-        userScrolledUpRef: { current: true },
-        selectedFiles: [] as UploadedFile[],
-        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
-        activeSessionId: 'session-current',
-        savedSessions: [pinnedSession, recentSession] as SavedChatSession[],
-        setAppFileError: vi.fn(),
-      } as any),
-    );
+    const { result, unmount } = renderSessionLoader({
+      appSettings: { modelId: 'global-model' },
+      activeChat: createSession('session-current', 'Current Session'),
+      userScrolledUpRef: { current: true },
+      activeSessionId: 'session-current',
+      savedSessions: [pinnedSession, recentSession],
+    });
 
     act(() => {
       result.current.startNewChat();

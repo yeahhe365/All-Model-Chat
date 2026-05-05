@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
@@ -10,39 +10,29 @@ const { estimateAppDataSizeMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../utils/db', async () => {
-  const actual = await vi.importActual<typeof import('../../../utils/db')>('../../../utils/db');
+  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return {
-    ...actual,
-    dbService: {
-      ...actual.dbService,
-      estimateAppDataSize: estimateAppDataSizeMock,
-    },
-  };
+  return createDbServiceMockModule({
+    estimateAppDataSize: estimateAppDataSizeMock,
+  });
 });
 
 describe('DataManagementSection', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     estimateAppDataSizeMock.mockReset();
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     useSettingsStore.setState(initialState);
   });
 
   it('updates translated actions from the global i18n context', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <DataManagementSection
             onClearHistory={vi.fn()}
@@ -63,23 +53,23 @@ describe('DataManagementSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('Open Logs & Usage');
-    expect(container.textContent).toContain('Destructive Actions');
-    expect(container.textContent).toContain('Export');
+    expect(renderer.container.textContent).toContain('Open Logs & Usage');
+    expect(renderer.container.textContent).toContain('Destructive Actions');
+    expect(renderer.container.textContent).toContain('Export');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
     });
 
-    expect(container.textContent).toContain('打开日志与用量');
-    expect(container.textContent).toContain('高风险操作');
-    expect(container.textContent).toContain('导出');
+    expect(renderer.container.textContent).toContain('打开日志与用量');
+    expect(renderer.container.textContent).toContain('高风险操作');
+    expect(renderer.container.textContent).toContain('导出');
   });
 
   it('keeps the install action enabled when manual browser guidance is needed', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <DataManagementSection
             onClearHistory={vi.fn()}
@@ -100,10 +90,10 @@ describe('DataManagementSection', () => {
       );
     });
 
-    const installButton = container.querySelector('button[aria-label="Install Progressive Web App"]');
+    const installButton = renderer.container.querySelector('button[aria-label="Install Progressive Web App"]');
 
     expect(installButton?.hasAttribute('disabled')).toBe(false);
-    expect(container.textContent).toContain('Use your browser menu to install this app.');
+    expect(renderer.container.textContent).toContain('Use your browser menu to install this app.');
   });
 
   it('shows the current local app data size and offers a refresh action', async () => {
@@ -115,7 +105,7 @@ describe('DataManagementSection', () => {
 
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <DataManagementSection
             onClearHistory={vi.fn()}
@@ -137,11 +127,11 @@ describe('DataManagementSection', () => {
     });
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Current Local App Data');
-      expect(container.textContent).toContain('2.0 KB');
+      expect(renderer.container.textContent).toContain('Current Local App Data');
+      expect(renderer.container.textContent).toContain('2.0 KB');
     });
 
-    const refreshButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
+    const refreshButtons = Array.from(renderer.container.querySelectorAll('button')).filter((button) =>
       button.textContent?.includes('Refresh'),
     );
 

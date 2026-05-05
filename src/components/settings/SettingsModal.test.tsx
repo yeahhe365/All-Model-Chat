@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
@@ -9,18 +9,14 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { SettingsModal } from './SettingsModal';
 
 describe('SettingsModal', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     localStorage.setItem('chatSettingsLastTab', 'api');
-    root = createTestRenderer();
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     localStorage.clear();
     useSettingsStore.setState(initialState);
   });
@@ -28,7 +24,7 @@ describe('SettingsModal', () => {
   it('renders the active desktop section title inside the scrollable content area', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <SettingsModal
@@ -66,7 +62,7 @@ describe('SettingsModal', () => {
   it('opens the settings surface without any enter animation class', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <SettingsModal
@@ -103,7 +99,7 @@ describe('SettingsModal', () => {
   it('shows the granular settings navigation for each settings section', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <SettingsModal
@@ -139,7 +135,7 @@ describe('SettingsModal', () => {
   it('renders shortcuts in its own sidebar group', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <SettingsModal
@@ -188,7 +184,7 @@ describe('SettingsModal', () => {
     await act(async () => {
       localStorage.setItem('chatSettingsLastTab', 'models');
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <SettingsModal
@@ -247,7 +243,7 @@ describe('SettingsModal', () => {
     await act(async () => {
       localStorage.setItem('chatSettingsLastTab', 'models');
       useSettingsStore.setState({ language: 'en' });
-      root.render(
+      renderer.root.render(
         <WindowProvider>
           <I18nProvider>
             <SettingsModal

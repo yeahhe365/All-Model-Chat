@@ -1,8 +1,9 @@
 import { act } from 'react';
 import type React from 'react';
-import { createTestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageThoughts } from './MessageThoughts';
+import { createAppSettings } from '@/test/factories';
 
 const { mockUseMessageStream, mockTranslateText } = vi.hoisted(() => ({
   mockUseMessageStream: vi.fn(() => ({
@@ -13,9 +14,9 @@ const { mockUseMessageStream, mockTranslateText } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return createI18nMock();
+  return createI18nMockModule();
 });
 
 vi.mock('../../../utils/apiUtils', () => ({
@@ -56,6 +57,8 @@ vi.mock('./thoughts/ThoughtContent', () => ({
 }));
 
 describe('MessageThoughts', () => {
+  const renderer = setupTestRenderer();
+
   beforeEach(() => {
     mockUseMessageStream.mockReturnValue({
       streamContent: '',
@@ -68,12 +71,10 @@ describe('MessageThoughts', () => {
   });
 
   it('uses the configured thought translation model when translating thoughts', async () => {
-    const root = createTestRenderer();
-    const { container } = root;
     mockTranslateText.mockResolvedValue('已翻译的思维链');
 
     await act(async () => {
-      root.render(
+      renderer.render(
         <MessageThoughts
           message={{
             id: 'message-thought-translation',
@@ -83,7 +84,7 @@ describe('MessageThoughts', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={true}
-          appSettings={{ thoughtTranslationModelId: 'gemini-custom-thought-translator' } as any}
+          appSettings={createAppSettings({ thoughtTranslationModelId: 'gemini-custom-thought-translator' })}
           themeId="pearl"
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -96,7 +97,7 @@ describe('MessageThoughts', () => {
     });
 
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('[data-testid="thinking-translate"]')?.click();
+      renderer.container.querySelector<HTMLButtonElement>('[data-testid="thinking-translate"]')?.click();
       await Promise.resolve();
     });
 
@@ -106,19 +107,13 @@ describe('MessageThoughts', () => {
       'Simplified Chinese',
       'gemini-custom-thought-translator',
     );
-
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('uses the configured thought translation target language when translating thoughts', async () => {
-    const root = createTestRenderer();
-    const { container } = root;
     mockTranslateText.mockResolvedValue('翻訳済みの思考');
 
     await act(async () => {
-      root.render(
+      renderer.render(
         <MessageThoughts
           message={{
             id: 'message-thought-translation-language',
@@ -128,7 +123,7 @@ describe('MessageThoughts', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={true}
-          appSettings={{ thoughtTranslationTargetLanguage: 'Japanese' } as any}
+          appSettings={createAppSettings({ thoughtTranslationTargetLanguage: 'Japanese' })}
           themeId="pearl"
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -141,7 +136,7 @@ describe('MessageThoughts', () => {
     });
 
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('[data-testid="thinking-translate"]')?.click();
+      renderer.container.querySelector<HTMLButtonElement>('[data-testid="thinking-translate"]')?.click();
       await Promise.resolve();
     });
 
@@ -151,18 +146,11 @@ describe('MessageThoughts', () => {
       'Japanese',
       'gemini-3.1-flash-lite-preview',
     );
-
-    act(() => {
-      root.unmount();
-    });
   });
 
   it('renders raw thinking blocks using the normal thought panel', () => {
-    const root = createTestRenderer();
-    const { container } = root;
-
     act(() => {
-      root.render(
+      renderer.render(
         <MessageThoughts
           message={{
             id: 'message-raw',
@@ -171,7 +159,7 @@ describe('MessageThoughts', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={true}
-          appSettings={{} as any}
+          appSettings={createAppSettings()}
           themeId="pearl"
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -183,25 +171,18 @@ describe('MessageThoughts', () => {
       );
     });
 
-    expect(container.querySelector('.message-thoughts-block')).not.toBeNull();
-    expect(container.querySelector('[data-testid="thought-content"]')?.textContent).toBe('Plan carefully.');
-
-    act(() => {
-      root.unmount();
-    });
+    expect(renderer.container.querySelector('.message-thoughts-block')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-testid="thought-content"]')?.textContent).toBe('Plan carefully.');
   });
 
   it('renders live unclosed raw thinking from the stream store', () => {
-    const root = createTestRenderer();
-    const { container } = root;
-
     mockUseMessageStream.mockReturnValue({
       streamContent: 'Drafting the answer',
       streamThoughts: '',
     });
 
     act(() => {
-      root.render(
+      renderer.render(
         <MessageThoughts
           message={{
             id: 'message-live-raw',
@@ -211,7 +192,7 @@ describe('MessageThoughts', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={true}
-          appSettings={{} as any}
+          appSettings={createAppSettings()}
           themeId="pearl"
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -223,10 +204,8 @@ describe('MessageThoughts', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="thought-content"]')?.textContent).toBe('Drafting the answer');
-
-    act(() => {
-      root.unmount();
-    });
+    expect(renderer.container.querySelector('[data-testid="thought-content"]')?.textContent).toBe(
+      'Drafting the answer',
+    );
   });
 });

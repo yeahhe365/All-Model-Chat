@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook } from '@/test/testUtils';
-import type { SavedChatSession, UploadedFile } from '../../types';
+import type { SavedChatSession } from '../../types';
+import { createAppSettings, createChatSettings, createUploadedFile } from '@/test/factories';
 import { useModelRequestRunner } from './useModelRequestRunner';
 
 const { mockGetKeyForRequest, mockGenerateUniqueId } = vi.hoisted(() => ({
@@ -33,20 +34,16 @@ describe('useModelRequestRunner', () => {
   it('returns a prepared request with one API key lookup, generation metadata, and key-lock intent', () => {
     mockGetKeyForRequest.mockReturnValue({ key: 'api-key', isNewKey: true });
     const updateAndPersistSessions = vi.fn();
-    const activeFile = {
-      id: 'file-1',
+    const activeFile = createUploadedFile({
       name: 'sample.png',
-      type: 'image/png',
-      size: 10,
       fileUri: 'files/abc',
-      uploadState: 'active',
-    } as UploadedFile;
+    });
     const generationStartTime = new Date('2026-05-04T08:00:00.000Z');
 
     const { result, unmount } = renderHook(() =>
       useModelRequestRunner({
-        appSettings: { modelId: 'gemini-default', apiKey: 'stored-key' } as any,
-        currentChatSettings: { modelId: 'gemini-3-pro' } as any,
+        appSettings: createAppSettings({ modelId: 'gemini-default', apiKey: 'stored-key' }),
+        currentChatSettings: createChatSettings({ modelId: 'gemini-3-pro' }),
         updateAndPersistSessions,
         setActiveSessionId: vi.fn(),
         translateApiKeyError: (error) => `translated:${error}`,
@@ -92,8 +89,8 @@ describe('useModelRequestRunner', () => {
 
     const { result, unmount } = renderHook(() =>
       useModelRequestRunner({
-        appSettings: { modelId: 'gemini-default', apiKey: '' } as any,
-        currentChatSettings: { modelId: 'gemini-3-pro' } as any,
+        appSettings: createAppSettings({ modelId: 'gemini-default', apiKey: '' }),
+        currentChatSettings: createChatSettings({ modelId: 'gemini-3-pro' }),
         updateAndPersistSessions,
         setActiveSessionId,
         translateApiKeyError: (error) => `translated:${error}`,

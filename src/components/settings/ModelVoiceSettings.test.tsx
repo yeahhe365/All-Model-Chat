@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../contexts/I18nContext';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -45,7 +45,7 @@ vi.mock('../shared/Select', () => ({
 }));
 
 describe('ModelVoiceSettings media resolution options', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   const initialState = useSettingsStore.getState();
 
   const baseProps = {
@@ -71,20 +71,16 @@ describe('ModelVoiceSettings media resolution options', () => {
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    root = createTestRenderer();
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
     useSettingsStore.setState(initialState);
   });
 
   const renderSettings = (modelId: string) => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <ModelVoiceSettings {...baseProps} modelId={modelId} />
         </I18nProvider>,

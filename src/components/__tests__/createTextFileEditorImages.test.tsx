@@ -1,16 +1,15 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { CreateTextFileEditor } from '../modals/CreateTextFileEditor';
 
 describe('CreateTextFileEditor image insertion', () => {
-  let root: TestRenderer | null = null;
+  const renderer = setupTestRenderer();
   let originalFileReader: typeof FileReader;
 
   beforeEach(() => {
     vi.useFakeTimers();
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     originalFileReader = globalThis.FileReader;
 
     class MockFileReader {
@@ -32,10 +31,6 @@ describe('CreateTextFileEditor image insertion', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root?.unmount();
-    });
-    root = null;
     globalThis.FileReader = originalFileReader;
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -47,10 +42,8 @@ describe('CreateTextFileEditor image insertion', () => {
       .spyOn(URL, 'createObjectURL')
       .mockReturnValue('blob:http://127.0.0.1:4173/stale-image');
 
-    root = createTestRenderer();
-
     await act(async () => {
-      root!.render(
+      renderer.render(
         <WindowProvider>
           <CreateTextFileEditor
             onConfirm={onConfirm}

@@ -3,9 +3,9 @@ import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 interface MountedRoot {
@@ -79,7 +79,6 @@ const installMockIntersectionObserver = () => {
 const renderIntoDom = (ui: JSX.Element) => {
   const root = createTestRenderer();
   const { container } = root;
-  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
   act(() => {
     root.render(ui);

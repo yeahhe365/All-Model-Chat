@@ -1,15 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./logService', () => ({
-  logService: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('./logService', async () => {
+  const { createLogServiceMockModule } = await import('../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 import { buildPyodideWorkerScript, PyodideService, type ExecutionResult } from './pyodideService';
+import { createUploadedFile } from '../test/factories';
+
+type PyodideServiceInternals = {
+  pendingPromises: Map<string, unknown>;
+  activeRequestId: string | null;
+};
 
 class FakeWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
@@ -59,6 +62,40 @@ const waitForWorkerPost = async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
+class DelayedBlob extends Blob {
+  streamCancelled = false;
+
+  constructor(private readonly delayMs = 1000) {
+    super(['']);
+  }
+
+  override stream(): ReadableStream<Uint8Array<ArrayBuffer>> {
+    return new ReadableStream<Uint8Array<ArrayBuffer>>({
+      start: (controller) => {
+        setTimeout(() => {
+          const chunk = new Uint8Array<ArrayBuffer>(new ArrayBuffer(3));
+          chunk.set([1, 2, 3]);
+          controller.enqueue(chunk);
+          controller.close();
+        }, this.delayMs);
+      },
+      cancel: () => {
+        this.streamCancelled = true;
+      },
+    });
+  }
+
+  override arrayBuffer(): Promise<ArrayBuffer> {
+    return new Promise<ArrayBuffer>((resolve) => {
+      setTimeout(() => {
+        const buffer = new ArrayBuffer(3);
+        new Uint8Array(buffer).set([1, 2, 3]);
+        resolve(buffer);
+      }, this.delayMs);
+    });
+  }
+}
+
 describe('buildPyodideWorkerScript', () => {
   it('injects the resolved pyodide base URL into the worker code', () => {
     const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript('https://example.com/nested/app/index.html');
@@ -83,11 +120,13 @@ describe('PyodideService', () => {
     const csvFile = new File(['a,b\n1,2\n'], 'dataset.csv', { type: 'text/csv' });
 
     const mountPromise = service.mountFiles([
-      {
+      createUploadedFile({
         id: 'file-1',
         name: 'dataset.csv',
+        type: 'text/csv',
+        size: csvFile.size,
         rawFile: csvFile,
-      } as any,
+      }),
     ]);
 
     await waitForWorkerPost();
@@ -155,11 +194,13 @@ describe('PyodideService', () => {
 
     const runPromise = service.runPython('print("hello")', {
       files: [
-        {
+        createUploadedFile({
           id: 'file-1',
           name: 'dataset.csv',
+          type: 'text/csv',
+          size: csvFile.size,
           rawFile: csvFile,
-        } as any,
+        }),
       ],
     });
 
@@ -229,38 +270,19 @@ describe('PyodideService', () => {
 
     const { service, workers } = createService();
     const [worker] = workers;
-    let streamCancelled = false;
-
-    const delayedFile = {
-      stream: () =>
-        new ReadableStream<Uint8Array>({
-          start(controller) {
-            setTimeout(() => {
-              controller.enqueue(new Uint8Array([1, 2, 3]));
-              controller.close();
-            }, 1000);
-          },
-          cancel() {
-            streamCancelled = true;
-          },
-        }),
-      arrayBuffer: vi.fn(
-        () =>
-          new Promise<ArrayBuffer>((resolve) => {
-            setTimeout(() => resolve(new Uint8Array([1, 2, 3]).buffer), 1000);
-          }),
-      ),
-    };
+    const delayedFile = new DelayedBlob();
 
     const abortController = new AbortController();
     const runPromise = service.runPython('print("slow files")', {
       abortSignal: abortController.signal,
       files: [
-        {
+        createUploadedFile({
           id: 'file-1',
           name: 'large.bin',
-          rawFile: delayedFile as any,
-        } as any,
+          type: 'application/octet-stream',
+          size: delayedFile.size,
+          rawFile: delayedFile,
+        }),
       ],
     });
     const rejectionExpectation = expect(runPromise).rejects.toMatchObject({
@@ -274,7 +296,7 @@ describe('PyodideService', () => {
 
     await rejectionExpectation;
     expect(worker.postMessage).not.toHaveBeenCalled();
-    expect(streamCancelled).toBe(true);
+    expect(delayedFile.streamCancelled).toBe(true);
   });
 
   it('rejects overlapping requests while attachment preparation is still in progress', async () => {
@@ -282,22 +304,17 @@ describe('PyodideService', () => {
 
     const { service, workers } = createService();
     const [worker] = workers;
-    const delayedFile = {
-      arrayBuffer: vi.fn(
-        () =>
-          new Promise<ArrayBuffer>((resolve) => {
-            setTimeout(() => resolve(new Uint8Array([1, 2, 3]).buffer), 1000);
-          }),
-      ),
-    };
+    const delayedFile = new DelayedBlob();
 
     const firstRun = service.runPython('print("first")', {
       files: [
-        {
+        createUploadedFile({
           id: 'file-1',
           name: 'large.bin',
-          rawFile: delayedFile as any,
-        } as any,
+          type: 'application/octet-stream',
+          size: delayedFile.size,
+          rawFile: delayedFile,
+        }),
       ],
     });
     const secondRun = service.runPython('print("second")');
@@ -347,8 +364,9 @@ describe('PyodideService', () => {
     });
 
     await expect(service.runPython('print("boom")')).rejects.toThrow('structured clone failed');
-    expect((service as any).pendingPromises.size).toBe(0);
-    expect((service as any).activeRequestId).toBeNull();
+    const serviceInternals = service as unknown as PyodideServiceInternals;
+    expect(serviceInternals.pendingPromises.size).toBe(0);
+    expect(serviceInternals.activeRequestId).toBeNull();
 
     const recoveredRun = service.runPython('print("after clone error")');
     await flushMicrotasks();

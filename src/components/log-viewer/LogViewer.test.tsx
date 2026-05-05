@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { I18nProvider } from '../../contexts/I18nContext';
@@ -20,16 +20,18 @@ const {
   mockClearLogs: vi.fn(),
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: {
+vi.mock('../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule({
     getRecentLogs: mockGetRecentLogs,
     subscribe: mockSubscribe,
     subscribeToApiKeys: mockSubscribeToApiKeys,
     subscribeToTokenUsage: mockSubscribeToTokenUsage,
     subscribeToUsageRefresh: mockSubscribeToUsageRefresh,
     clearLogs: mockClearLogs,
-  },
-}));
+  });
+});
 
 import { LogViewer } from './LogViewer';
 
@@ -39,13 +41,12 @@ const findButton = (label: string) =>
     | undefined;
 
 describe('LogViewer', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let emitLiveLogs:
     | ((logs: Array<{ timestamp: Date; level: string; category: string; message: string }>) => void)
     | null;
 
   beforeEach(() => {
-    root = createTestRenderer();
     emitLiveLogs = null;
 
     mockGetRecentLogs.mockResolvedValue([]);
@@ -73,15 +74,12 @@ describe('LogViewer', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.clearAllMocks();
   });
 
   it('groups overview, tokens, and api key stats under the usage tab', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <LogViewer
             isOpen
@@ -107,7 +105,7 @@ describe('LogViewer', () => {
 
   it('can open directly to a requested usage sub-tab', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <LogViewer
             isOpen
@@ -128,7 +126,7 @@ describe('LogViewer', () => {
 
   it('keeps the usage tab active after live logs arrive', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <I18nProvider>
           <LogViewer
             isOpen

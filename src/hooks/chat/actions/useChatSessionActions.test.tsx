@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { SavedChatSession } from '../../../types';
+import { createChatSettings } from '../../../test/factories';
 import { useChatSessionActions } from './useChatSessionActions';
 import { renderHook } from '@/test/testUtils';
 
@@ -20,7 +21,7 @@ const createSession = (timestamp: number): SavedChatSession => ({
       timestamp: new Date('2026-04-18T00:00:00.000Z'),
     },
   ],
-  settings: {} as SavedChatSession['settings'],
+  settings: createChatSettings(),
 });
 
 describe('useChatSessionActions', () => {

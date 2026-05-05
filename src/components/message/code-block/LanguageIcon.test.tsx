@@ -1,31 +1,19 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestRenderer } from '@/test/testUtils';
+import { describe, expect, it } from 'vitest';
 import { LanguageIcon } from './LanguageIcon';
 
 describe('LanguageIcon', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
-
-  beforeEach(() => {
-    root = createTestRenderer();
-    container = root.container;
-  });
-
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-  });
+  const renderer = setupTestRenderer();
 
   it('renders a branded Python badge with a normalized display label', () => {
     act(() => {
-      root.render(<LanguageIcon language="py" />);
+      renderer.root.render(<LanguageIcon language="py" />);
     });
 
-    const badge = container.querySelector('[data-language-badge="python"]');
-    const icon = container.querySelector('[data-language-icon="python"]');
-    const meta = container.querySelector('[data-language-meta]');
+    const badge = renderer.container.querySelector('[data-language-badge="python"]');
+    const icon = renderer.container.querySelector('[data-language-icon="python"]');
+    const meta = renderer.container.querySelector('[data-language-meta]');
 
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toContain('Python');
@@ -45,11 +33,11 @@ describe('LanguageIcon', () => {
 
   it('renders framework-aware labels for TSX code blocks', () => {
     act(() => {
-      root.render(<LanguageIcon language="tsx" />);
+      renderer.root.render(<LanguageIcon language="tsx" />);
     });
 
-    const badge = container.querySelector('[data-language-badge="tsx"]');
-    const icon = container.querySelector('[data-language-icon="tsx"]');
+    const badge = renderer.container.querySelector('[data-language-badge="tsx"]');
+    const icon = renderer.container.querySelector('[data-language-icon="tsx"]');
 
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toContain('TypeScript React');
@@ -60,11 +48,11 @@ describe('LanguageIcon', () => {
 
   it('renders TypeScript code blocks with the SVG language icon', () => {
     act(() => {
-      root.render(<LanguageIcon language="typescript" />);
+      renderer.root.render(<LanguageIcon language="typescript" />);
     });
 
-    const badge = container.querySelector('[data-language-badge="typescript"]');
-    const icon = container.querySelector('[data-language-icon="typescript"]');
+    const badge = renderer.container.querySelector('[data-language-badge="typescript"]');
+    const icon = renderer.container.querySelector('[data-language-icon="typescript"]');
 
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toContain('TypeScript');
@@ -104,11 +92,11 @@ describe('LanguageIcon', () => {
 
     cases.forEach(([language, iconId, label]) => {
       act(() => {
-        root.render(<LanguageIcon language={language} />);
+        renderer.root.render(<LanguageIcon language={language} />);
       });
 
-      const icon = container.querySelector(`[data-language-icon="${iconId}"]`);
-      const badge = container.querySelector('[data-language-badge]');
+      const icon = renderer.container.querySelector(`[data-language-icon="${iconId}"]`);
+      const badge = renderer.container.querySelector('[data-language-badge]');
 
       expect(badge?.textContent).toContain(label);
       expect(icon?.querySelector('svg')?.getAttribute('width')).toBe('20');
@@ -118,13 +106,13 @@ describe('LanguageIcon', () => {
 
   it('falls back to a generic code badge for unknown languages', () => {
     act(() => {
-      root.render(<LanguageIcon language="brainfuck" />);
+      renderer.root.render(<LanguageIcon language="brainfuck" />);
     });
 
-    const badge = container.querySelector('[data-language-badge="brainfuck"]');
+    const badge = renderer.container.querySelector('[data-language-badge="brainfuck"]');
 
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toContain('brainfuck');
-    expect(container.querySelector('[data-language-icon="generic"]')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-language-icon="generic"]')).not.toBeNull();
   });
 });

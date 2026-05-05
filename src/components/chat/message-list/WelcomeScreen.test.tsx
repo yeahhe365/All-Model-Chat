@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { WelcomeScreen } from './WelcomeScreen';
@@ -26,30 +26,24 @@ const setHoverCapablePointer = (matches: boolean) => {
 };
 
 describe('WelcomeScreen', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    root = createTestRenderer();
-    container = root.container;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
   it('exposes the welcome greeting as an accessible button', async () => {
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector('button');
+    const trigger = renderer.container.querySelector('button');
 
     expect(trigger).not.toBeNull();
     expect(trigger).toHaveAttribute('type', 'button');
@@ -59,10 +53,10 @@ describe('WelcomeScreen', () => {
 
   it('keeps the default cursor so the desktop hover trigger feels hidden', async () => {
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector('button');
+    const trigger = renderer.container.querySelector('button');
 
     expect(trigger?.className).not.toContain('cursor-pointer');
   });
@@ -71,10 +65,10 @@ describe('WelcomeScreen', () => {
     setHoverCapablePointer(false);
 
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector<HTMLButtonElement>('button');
+    const trigger = renderer.container.querySelector<HTMLButtonElement>('button');
     expect(trigger).not.toBeNull();
 
     await act(async () => {
@@ -90,10 +84,10 @@ describe('WelcomeScreen', () => {
     setHoverCapablePointer(false);
 
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector<HTMLButtonElement>('button');
+    const trigger = renderer.container.querySelector<HTMLButtonElement>('button');
     expect(trigger).not.toBeNull();
 
     await act(async () => {
@@ -118,10 +112,10 @@ describe('WelcomeScreen', () => {
     setHoverCapablePointer(true);
 
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector<HTMLButtonElement>('button');
+    const trigger = renderer.container.querySelector<HTMLButtonElement>('button');
     expect(trigger).not.toBeNull();
 
     await act(async () => {
@@ -155,10 +149,10 @@ describe('WelcomeScreen', () => {
     setHoverCapablePointer(true);
 
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector<HTMLButtonElement>('button');
+    const trigger = renderer.container.querySelector<HTMLButtonElement>('button');
     expect(trigger).not.toBeNull();
 
     await act(async () => {
@@ -175,10 +169,10 @@ describe('WelcomeScreen', () => {
     setHoverCapablePointer(true);
 
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector<HTMLButtonElement>('button');
+    const trigger = renderer.container.querySelector<HTMLButtonElement>('button');
     expect(trigger).not.toBeNull();
 
     await act(async () => {
@@ -200,10 +194,10 @@ describe('WelcomeScreen', () => {
     setHoverCapablePointer(true);
 
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector<HTMLButtonElement>('button');
+    const trigger = renderer.container.querySelector<HTMLButtonElement>('button');
     expect(trigger).not.toBeNull();
 
     await act(async () => {
@@ -225,10 +219,10 @@ describe('WelcomeScreen', () => {
 
   it('supports keyboard activation for the easter egg', async () => {
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    const trigger = container.querySelector<HTMLButtonElement>('button');
+    const trigger = renderer.container.querySelector<HTMLButtonElement>('button');
     expect(trigger).not.toBeNull();
 
     await act(async () => {
@@ -241,16 +235,16 @@ describe('WelcomeScreen', () => {
 
   it('updates the displayed greeting when the translated welcome text changes', async () => {
     await act(async () => {
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    expect(container.querySelector('button')).toHaveTextContent('How can I help you today?');
+    expect(renderer.container.querySelector('button')).toHaveTextContent('How can I help you today?');
 
     await act(async () => {
       useSettingsStore.setState({ language: 'zh' });
-      root.render(<WelcomeScreen />);
+      renderer.root.render(<WelcomeScreen />);
     });
 
-    expect(container.querySelector('button')).toHaveTextContent('有什么可以帮忙的？');
+    expect(renderer.container.querySelector('button')).toHaveTextContent('有什么可以帮忙的？');
   });
 });

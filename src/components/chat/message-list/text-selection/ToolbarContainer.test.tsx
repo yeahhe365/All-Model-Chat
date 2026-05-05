@@ -1,14 +1,13 @@
 import { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolbarContainer } from './ToolbarContainer';
 
 describe('ToolbarContainer', () => {
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
 
   beforeEach(() => {
-    root = createTestRenderer();
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
@@ -31,15 +30,12 @@ describe('ToolbarContainer', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.restoreAllMocks();
   });
 
   it('renders on whole pixels without transform-based centering or zoom animation', () => {
     act(() => {
-      root.render(
+      renderer.root.render(
         <ToolbarContainer position={{ top: 40.4, left: 100.2 }} isDragging={false}>
           <button type="button">Quote</button>
         </ToolbarContainer>,

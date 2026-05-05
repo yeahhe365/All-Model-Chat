@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLiveFrameCapture } from './useLiveFrameCapture';
+import { createLiveSessionRef, createLiveSessionStub } from '@/test/liveApiFixtures';
 import { renderHook } from '@/test/testUtils';
 
 describe('useLiveFrameCapture', () => {
@@ -10,11 +11,7 @@ describe('useLiveFrameCapture', () => {
 
   it('sends frames through the video field at most once per second', async () => {
     const sendRealtimeInput = vi.fn();
-    const sessionRef = {
-      current: Promise.resolve({
-        sendRealtimeInput,
-      }),
-    };
+    const sessionRef = createLiveSessionRef(createLiveSessionStub({ sendRealtimeInput }));
 
     const videoStream = {} as MediaStream;
 
@@ -26,7 +23,7 @@ describe('useLiveFrameCapture', () => {
         volume: 0.2,
         isMuted: false,
         captureFrame: () => 'jpeg-base64',
-        sessionRef: sessionRef as any,
+        sessionRef,
       }),
     );
 
@@ -54,11 +51,7 @@ describe('useLiveFrameCapture', () => {
 
   it('does not send frames while the user is silent', async () => {
     const sendRealtimeInput = vi.fn();
-    const sessionRef = {
-      current: Promise.resolve({
-        sendRealtimeInput,
-      }),
-    };
+    const sessionRef = createLiveSessionRef(createLiveSessionStub({ sendRealtimeInput }));
 
     const videoStream = {} as MediaStream;
 
@@ -70,7 +63,7 @@ describe('useLiveFrameCapture', () => {
         volume: 0,
         isMuted: false,
         captureFrame: () => 'jpeg-base64',
-        sessionRef: sessionRef as any,
+        sessionRef,
       }),
     );
 
@@ -87,11 +80,7 @@ describe('useLiveFrameCapture', () => {
 
   it('continues sending screen-share frames while the user is silent', async () => {
     const sendRealtimeInput = vi.fn();
-    const sessionRef = {
-      current: Promise.resolve({
-        sendRealtimeInput,
-      }),
-    };
+    const sessionRef = createLiveSessionRef(createLiveSessionStub({ sendRealtimeInput }));
 
     const videoStream = {} as MediaStream;
 
@@ -103,7 +92,7 @@ describe('useLiveFrameCapture', () => {
         volume: 0,
         isMuted: false,
         captureFrame: () => 'screen-jpeg-base64',
-        sessionRef: sessionRef as any,
+        sessionRef,
       }),
     );
 

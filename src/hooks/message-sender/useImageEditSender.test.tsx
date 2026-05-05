@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createAppSettings, createChatSettings } from '@/test/factories';
 
 const {
   handleApiErrorMock,
@@ -37,14 +38,11 @@ vi.mock('../../utils/chat/builder', () => ({
   createChatHistoryForApi: createChatHistoryForApiMock,
 }));
 
-vi.mock('../../services/logService', () => ({
-  logService: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+vi.mock('../../services/logService', async () => {
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+
+  return createLogServiceMockModule();
+});
 
 vi.mock('../../utils/chat/session', () => ({
   performOptimisticSessionUpdate: performOptimisticSessionUpdateMock,
@@ -118,14 +116,14 @@ describe('useImageEditSender', () => {
         [],
         'generation-1',
         abortController,
-        {
+        createAppSettings({
           generateQuadImages: false,
           isCompletionSoundEnabled: false,
-        } as any,
-        {
+        }),
+        createChatSettings({
           modelId: 'gemini-3.1-flash-image-preview',
           systemInstruction: '',
-        } as any,
+        }),
         'edit this image',
         [],
         null,
@@ -144,7 +142,7 @@ describe('useImageEditSender', () => {
         id: 'session-1',
         title: 'Session',
         timestamp: 1,
-        settings: {} as any,
+        settings: createChatSettings(),
         messages: [
           {
             id: 'generation-1',

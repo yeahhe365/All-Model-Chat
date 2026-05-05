@@ -1,5 +1,5 @@
 import React, { act } from 'react';
-import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatAreaProps } from '../../test/chatAreaFixtures';
 import { ChatArea } from './ChatArea';
@@ -118,8 +118,7 @@ vi.mock('../chat/input/ChatInput', async () => {
 });
 
 describe('ChatArea provider slice memoization', () => {
-  let container: HTMLDivElement;
-  let root: TestRenderer;
+  const renderer = setupTestRenderer();
   let matchMediaMatches = false;
   let windowInnerWidth = 1024;
   const virtualKeyboardShow = vi.fn();
@@ -159,9 +158,6 @@ describe('ChatArea provider slice memoization', () => {
       },
     });
 
-    root = createTestRenderer();
-    container = root.container;
-
     mockState.chat.commandedInput = null;
     mockState.chat.selectedFiles = [];
     mockState.chat.editingMessageId = null;
@@ -174,9 +170,6 @@ describe('ChatArea provider slice memoization', () => {
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
     vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
@@ -185,7 +178,7 @@ describe('ChatArea provider slice memoization', () => {
     const props = createChatAreaProps();
 
     act(() => {
-      root.render(<ChatArea {...props} />);
+      renderer.root.render(<ChatArea {...props} />);
     });
 
     const messageListRenderCount = mockState.renders.messageList.mock.calls.length;
@@ -196,7 +189,7 @@ describe('ChatArea provider slice memoization', () => {
     };
 
     act(() => {
-      root.render(<ChatArea {...props} />);
+      renderer.root.render(<ChatArea {...props} />);
     });
 
     expect(mockState.renders.messageList.mock.calls.length).toBe(messageListRenderCount);
@@ -213,7 +206,7 @@ describe('ChatArea provider slice memoization', () => {
     const props = createChatAreaProps();
 
     act(() => {
-      root.render(<ChatArea {...props} />);
+      renderer.root.render(<ChatArea {...props} />);
     });
 
     expect(mockState.lastInputContext).toMatchObject({
@@ -244,7 +237,7 @@ describe('ChatArea provider slice memoization', () => {
     const props = createChatAreaProps();
 
     act(() => {
-      root.render(<ChatArea {...props} />);
+      renderer.root.render(<ChatArea {...props} />);
     });
 
     const messageListRenderCount = mockState.renders.messageList.mock.calls.length;
@@ -269,7 +262,7 @@ describe('ChatArea provider slice memoization', () => {
     };
 
     act(() => {
-      root.render(<ChatArea {...updatedProps} />);
+      renderer.root.render(<ChatArea {...updatedProps} />);
     });
 
     expect(mockState.renders.messageList.mock.calls.length).toBeGreaterThan(messageListRenderCount);
@@ -295,10 +288,10 @@ describe('ChatArea provider slice memoization', () => {
     const props = createChatAreaProps();
 
     act(() => {
-      root.render(<ChatArea {...props} />);
+      renderer.root.render(<ChatArea {...props} />);
     });
 
-    const chatArea = container.querySelector('.chat-bg-enhancement');
+    const chatArea = renderer.container.querySelector('.chat-bg-enhancement');
     expect(chatArea).not.toBeNull();
 
     act(() => {

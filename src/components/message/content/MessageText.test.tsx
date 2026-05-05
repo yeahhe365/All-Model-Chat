@@ -1,7 +1,8 @@
 import { act } from 'react';
-import { createTestRenderer } from '@/test/testUtils';
+import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageText } from './MessageText';
+import { createAppSettings } from '@/test/factories';
 
 const { mockUseMessageStream } = vi.hoisted(() => ({
   mockUseMessageStream: vi.fn(() => ({
@@ -11,9 +12,9 @@ const { mockUseMessageStream } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../../contexts/I18nContext', async () => {
-  const { createI18nMock } = await import('../../../test/i18nTestDoubles');
+  const { createI18nMockModule } = await import('../../../test/moduleMockDoubles');
 
-  return createI18nMock();
+  return createI18nMockModule();
 });
 
 vi.mock('../GroundedResponse', () => ({
@@ -37,6 +38,8 @@ vi.mock('../../../hooks/ui/useMessageStream', () => ({
 }));
 
 describe('MessageText', () => {
+  const renderer = setupTestRenderer();
+
   beforeEach(() => {
     vi.useFakeTimers();
     mockUseMessageStream.mockReturnValue({
@@ -52,11 +55,8 @@ describe('MessageText', () => {
   });
 
   it('renders grounded response metadata even when the message only contains images', () => {
-    const root = createTestRenderer();
-    const { container } = root;
-
     act(() => {
-      root.render(
+      renderer.render(
         <MessageText
           message={{
             id: 'message-1',
@@ -82,12 +82,7 @@ describe('MessageText', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={false}
-          appSettings={
-            {
-              autoFullscreenHtml: false,
-              hideThinkingInContext: false,
-            } as any
-          }
+          appSettings={createAppSettings({ autoFullscreenHtml: false, hideThinkingInContext: false })}
           themeId="pearl"
           baseFontSize={16}
           onImageClick={vi.fn()}
@@ -100,15 +95,10 @@ describe('MessageText', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="grounded-response"]')).not.toBeNull();
-
-    act(() => {
-      root.unmount();
-    });
+    expect(renderer.container.querySelector('[data-testid="grounded-response"]')).not.toBeNull();
   });
 
   it('cancels pending automatic HTML preview when unmounted', () => {
-    const root = createTestRenderer();
     const onOpenHtmlPreview = vi.fn();
     const loadingMessage = {
       id: 'message-html',
@@ -126,12 +116,7 @@ describe('MessageText', () => {
       <MessageText
         message={message}
         showThoughts={false}
-        appSettings={
-          {
-            autoFullscreenHtml: true,
-            hideThinkingInContext: false,
-          } as any
-        }
+        appSettings={createAppSettings({ autoFullscreenHtml: true, hideThinkingInContext: false })}
         themeId="pearl"
         baseFontSize={16}
         onImageClick={vi.fn()}
@@ -144,15 +129,15 @@ describe('MessageText', () => {
     );
 
     act(() => {
-      root.render(renderMessage(loadingMessage));
+      renderer.render(renderMessage(loadingMessage));
     });
 
     act(() => {
-      root.render(renderMessage(loadedMessage));
+      renderer.render(renderMessage(loadedMessage));
     });
 
     act(() => {
-      root.unmount();
+      renderer.unmount();
       vi.advanceTimersByTime(100);
     });
 
@@ -160,16 +145,13 @@ describe('MessageText', () => {
   });
 
   it('omits live raw reasoning markup from the visible answer body', () => {
-    const root = createTestRenderer();
-    const { container } = root;
-
     mockUseMessageStream.mockReturnValue({
       streamContent: 'drafting the answer',
       streamThoughts: '',
     });
 
     act(() => {
-      root.render(
+      renderer.render(
         <MessageText
           message={{
             id: 'message-raw',
@@ -179,12 +161,7 @@ describe('MessageText', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={false}
-          appSettings={
-            {
-              autoFullscreenHtml: false,
-              hideThinkingInContext: true,
-            } as any
-          }
+          appSettings={createAppSettings({ autoFullscreenHtml: false, hideThinkingInContext: true })}
           themeId="pearl"
           baseFontSize={16}
           onImageClick={vi.fn()}
@@ -197,19 +174,12 @@ describe('MessageText', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="markdown-renderer"]')).toBeNull();
-
-    act(() => {
-      root.unmount();
-    });
+    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')).toBeNull();
   });
 
   it('renders only the answer body when raw thinking is embedded in content', () => {
-    const root = createTestRenderer();
-    const { container } = root;
-
     act(() => {
-      root.render(
+      renderer.render(
         <MessageText
           message={{
             id: 'message-raw-complete',
@@ -218,12 +188,7 @@ describe('MessageText', () => {
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={true}
-          appSettings={
-            {
-              autoFullscreenHtml: false,
-              hideThinkingInContext: false,
-            } as any
-          }
+          appSettings={createAppSettings({ autoFullscreenHtml: false, hideThinkingInContext: false })}
           themeId="pearl"
           baseFontSize={16}
           onImageClick={vi.fn()}
@@ -236,10 +201,6 @@ describe('MessageText', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe('Final answer.');
-
-    act(() => {
-      root.unmount();
-    });
+    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe('Final answer.');
   });
 });

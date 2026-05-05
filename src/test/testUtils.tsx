@@ -1,6 +1,7 @@
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
 import { render as testingLibraryRender } from '@testing-library/react';
 import type { RenderOptions, RenderResult } from '@testing-library/react';
+import { afterEach, beforeEach } from 'vitest';
 
 type RenderHookOptions = Omit<RenderOptions, 'wrapper'> & {
   attachToDocument?: boolean;
@@ -15,22 +16,45 @@ export type TestRenderer = {
   unmount: () => void;
 };
 
+type SetupTestRenderer = TestRenderer & {
+  readonly root: TestRenderer;
+};
+
 type TestRendererOptions = RenderOptions & {
   attachToDocument?: boolean;
 };
 
+const activeTestRenderers = new Set<TestRenderer>();
+
+afterEach(() => {
+  for (const renderer of Array.from(activeTestRenderers)) {
+    renderer.unmount();
+  }
+  activeTestRenderers.clear();
+});
+
 export const createTestRenderer = (options: TestRendererOptions = {}): TestRenderer => {
   const { attachToDocument = true, ...renderOptions } = options;
-  const container = document.createElement('div');
+  let container = document.createElement('div');
   let view: RenderResult | null = null;
+  let hasUnmounted = false;
 
-  return {
-    container,
+  const renderer: TestRenderer = {
+    get container() {
+      return container;
+    },
     render: (ui: ReactNode) => {
       if (view) {
         view.rerender(ui);
         return;
       }
+
+      if (hasUnmounted) {
+        container = document.createElement('div');
+        hasUnmounted = false;
+      }
+
+      activeTestRenderers.add(renderer);
 
       if (attachToDocument && !container.isConnected) {
         document.body.appendChild(container);
@@ -46,6 +70,34 @@ export const createTestRenderer = (options: TestRendererOptions = {}): TestRende
       view?.unmount();
       view = null;
       container.remove();
+      hasUnmounted = true;
+      activeTestRenderers.delete(renderer);
+    },
+  };
+
+  activeTestRenderers.add(renderer);
+  return renderer;
+};
+
+export const setupTestRenderer = (options: TestRendererOptions = {}): SetupTestRenderer => {
+  let renderer: TestRenderer | null = null;
+
+  beforeEach(() => {
+    renderer = createTestRenderer(options);
+  });
+
+  return {
+    get root() {
+      return renderer!;
+    },
+    get container() {
+      return renderer!.container;
+    },
+    render: (ui: ReactNode) => {
+      renderer!.render(ui);
+    },
+    unmount: () => {
+      renderer!.unmount();
     },
   };
 };

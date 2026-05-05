@@ -2,9 +2,9 @@ import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../services/logService', async () => {
-  const { createMockLogService } = await import('../../test/serviceTestDoubles');
+  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
 
-  return { logService: createMockLogService() };
+  return createLogServiceMockModule();
 });
 
 vi.mock('../../utils/fileHelpers', () => ({
@@ -13,6 +13,7 @@ vi.mock('../../utils/fileHelpers', () => ({
 
 import { useChatEffects } from './useChatEffects';
 import { renderHook } from '@/test/testUtils';
+import { createChatSettings } from '../../test/factories';
 
 const createProps = (overrides: Partial<Parameters<typeof useChatEffects>[0]> = {}) => ({
   activeSessionId: null,
@@ -26,9 +27,7 @@ const createProps = (overrides: Partial<Parameters<typeof useChatEffects>[0]> = 
   updateAndPersistSessions: vi.fn(),
   isSwitchingModel: false,
   setIsSwitchingModel: vi.fn(),
-  currentChatSettings: {
-    modelId: 'gemini-3.1-pro-preview',
-  } as any,
+  currentChatSettings: createChatSettings(),
   aspectRatio: '1:1',
   setAspectRatio: vi.fn(),
   imageSize: '1K',
@@ -58,17 +57,17 @@ describe('useChatEffects', () => {
   it('switches Nano Banana 2 to Auto aspect ratio on model change', () => {
     const setAspectRatio = vi.fn();
     const props = createProps({
-      currentChatSettings: {
+      currentChatSettings: createChatSettings({
         modelId: 'gemini-3-pro-image-preview',
-      } as any,
+      }),
       setAspectRatio,
     });
 
     const hook = renderHook(() => useChatEffects(props));
 
-    props.currentChatSettings = {
+    props.currentChatSettings = createChatSettings({
       modelId: 'gemini-3.1-flash-image-preview',
-    } as any;
+    });
 
     hook.rerender();
 
@@ -80,9 +79,9 @@ describe('useChatEffects', () => {
     const setAspectRatio = vi.fn();
     const setImageSize = vi.fn();
     const props = createProps({
-      currentChatSettings: {
+      currentChatSettings: createChatSettings({
         modelId: 'gemini-3.1-flash-image-preview',
-      } as any,
+      }),
       aspectRatio: '1:4',
       imageSize: '4K',
       setAspectRatio,
@@ -91,9 +90,9 @@ describe('useChatEffects', () => {
 
     const hook = renderHook(() => useChatEffects(props));
 
-    props.currentChatSettings = {
+    props.currentChatSettings = createChatSettings({
       modelId: 'imagen-4.0-generate-001',
-    } as any;
+    });
 
     hook.rerender();
 
@@ -105,18 +104,18 @@ describe('useChatEffects', () => {
   it('resets Auto back to 1:1 when switching away from Banana models', () => {
     const setAspectRatio = vi.fn();
     const props = createProps({
-      currentChatSettings: {
+      currentChatSettings: createChatSettings({
         modelId: 'gemini-3.1-flash-image-preview',
-      } as any,
+      }),
       aspectRatio: 'Auto',
       setAspectRatio,
     });
 
     const hook = renderHook(() => useChatEffects(props));
 
-    props.currentChatSettings = {
+    props.currentChatSettings = createChatSettings({
       modelId: 'gemini-3.1-pro-preview',
-    } as any;
+    });
 
     hook.rerender();
 
