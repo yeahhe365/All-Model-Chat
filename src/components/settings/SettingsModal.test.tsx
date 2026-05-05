@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
@@ -9,23 +9,18 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { SettingsModal } from './SettingsModal';
 
 describe('SettingsModal', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     localStorage.setItem('chatSettingsLastTab', 'api');
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     localStorage.clear();
     useSettingsStore.setState(initialState);
   });

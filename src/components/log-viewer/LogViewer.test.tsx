@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { I18nProvider } from '../../contexts/I18nContext';
@@ -39,16 +39,13 @@ const findButton = (label: string) =>
     | undefined;
 
 describe('LogViewer', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   let emitLiveLogs:
     | ((logs: Array<{ timestamp: Date; level: string; category: string; message: string }>) => void)
     | null;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
     emitLiveLogs = null;
 
     mockGetRecentLogs.mockResolvedValue([]);
@@ -79,8 +76,6 @@ describe('LogViewer', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 

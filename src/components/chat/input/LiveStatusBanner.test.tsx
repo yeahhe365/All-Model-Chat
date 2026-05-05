@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LiveStatusBanner } from './LiveStatusBanner';
 import { getTranslator } from '../../../utils/translations';
@@ -12,9 +12,8 @@ vi.mock('../../../contexts/I18nContext', () => ({
 }));
 
 const renderBanner = (props: React.ComponentProps<typeof LiveStatusBanner>) => {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
+  const root = createTestRenderer();
+  const { container } = root;
 
   act(() => {
     root.render(<LiveStatusBanner {...props} />);
@@ -26,15 +25,12 @@ const renderBanner = (props: React.ComponentProps<typeof LiveStatusBanner>) => {
       act(() => {
         root.unmount();
       });
-      container.remove();
     },
   };
 };
 
 describe('LiveStatusBanner', () => {
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  afterEach(() => {});
 
   it('shows a reconnecting status instead of an error banner while the session refreshes', () => {
     const onDisconnect = vi.fn();

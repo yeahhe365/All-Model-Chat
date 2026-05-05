@@ -1,6 +1,6 @@
 import { act } from 'react';
 import type React from 'react';
-import { createRoot } from 'react-dom/client';
+import { createTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageThoughts } from './MessageThoughts';
 
@@ -68,8 +68,8 @@ describe('MessageThoughts', () => {
   });
 
   it('uses the configured thought translation model when translating thoughts', async () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
+    const { container } = root;
     mockTranslateText.mockResolvedValue('已翻译的思维链');
 
     await act(async () => {
@@ -113,8 +113,8 @@ describe('MessageThoughts', () => {
   });
 
   it('uses the configured thought translation target language when translating thoughts', async () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
+    const { container } = root;
     mockTranslateText.mockResolvedValue('翻訳済みの思考');
 
     await act(async () => {
@@ -158,8 +158,8 @@ describe('MessageThoughts', () => {
   });
 
   it('renders raw thinking blocks using the normal thought panel', () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
+    const { container } = root;
 
     act(() => {
       root.render(
@@ -192,8 +192,8 @@ describe('MessageThoughts', () => {
   });
 
   it('renders live unclosed raw thinking from the stream store', () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
+    const { container } = root;
 
     mockUseMessageStream.mockReturnValue({
       streamContent: 'Drafting the answer',

@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { CreateTextFileEditor } from '../modals/CreateTextFileEditor';
@@ -11,8 +11,7 @@ vi.mock('../../utils/export/markdownPdf', () => ({
 }));
 
 describe('CreateTextFileEditor PDF export', () => {
-  let container: HTMLDivElement | null = null;
-  let root: Root | null = null;
+  let root: TestRenderer | null = null;
 
   beforeEach(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -23,17 +22,13 @@ describe('CreateTextFileEditor PDF export', () => {
     act(() => {
       root?.unmount();
     });
-    container?.remove();
     root = null;
-    container = null;
     vi.restoreAllMocks();
   });
 
   it('creates PDF files from Markdown instead of the html2canvas/html2pdf screenshot path', async () => {
     const onConfirm = vi.fn();
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
 
     await act(async () => {
       root!.render(

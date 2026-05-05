@@ -1,12 +1,8 @@
 import type { ReactNode } from 'react';
-import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ChatMessage, ChatSettings } from '../../types';
-import type { ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
+import type { ChatMessage } from '../../types';
+import { createChatAreaProviderValue, renderWithChatAreaProviders } from '../../test/chatAreaFixtures';
 import { MessageList } from './MessageList';
-import { I18nProvider } from '../../contexts/I18nContext';
-import { ChatAreaProvider } from '../layout/chat-area/ChatAreaContext';
 
 const virtuosoPropsSpy = vi.fn();
 
@@ -107,138 +103,30 @@ const messages: ChatMessage[] = [
   },
 ];
 
-const createProviderValue = (): ChatAreaProviderValue => ({
-  messageList: {
-    messages,
-    sessionTitle: 'Test',
-    setScrollContainerRef: () => {},
-    onEditMessage: () => {},
-    onDeleteMessage: () => {},
-    onRetryMessage: () => {},
-    onUpdateMessageFile: () => {},
-    showThoughts: false,
-    onGenerateCanvas: () => {},
-    onContinueGeneration: () => {},
-    onForkMessage: () => {},
-    onQuickTTS: async () => null,
-    chatInputHeight: 0,
-    currentModelId: 'gemini-2.5-flash',
-    onOpenSidePanel: () => {},
-    onQuote: () => {},
-    onInsert: () => {},
-    activeSessionId: 'session-1',
-  },
-  input: {
-    appSettings: {
-      isSystemAudioRecordingEnabled: false,
-      isPasteRichTextAsMarkdownEnabled: true,
-    } as AppSettings,
-    currentChatSettings: {
-      modelId: 'gemini-3.1-pro-preview',
-      ttsVoice: 'Aoede',
-      thinkingLevel: 'MEDIUM',
-    } as ChatSettings,
-    setAppFileError: () => {},
-    activeSessionId: 'session-1',
-    commandedInput: null,
-    onMessageSent: () => {},
-    selectedFiles: [],
-    setSelectedFiles: () => {},
-    onSendMessage: () => {},
-    isLoading: false,
-    isEditing: false,
-    onStopGenerating: () => {},
-    onCancelEdit: () => {},
-    onProcessFiles: async () => {},
-    onAddFileById: async () => {},
-    onCancelUpload: () => {},
-    onTranscribeAudio: async () => null,
-    isProcessingFile: false,
-    fileError: null,
-    isImagenModel: false,
-    isImageEditModel: false,
-    aspectRatio: '1:1',
-    setAspectRatio: () => {},
-    imageSize: '1K',
-    setImageSize: () => {},
-    toolStates: {
-      googleSearch: { isEnabled: false, onToggle: () => {} },
-      deepSearch: { isEnabled: false, onToggle: () => {} },
-      codeExecution: { isEnabled: false, onToggle: () => {} },
-      localPython: { isEnabled: false, onToggle: () => {} },
-      urlContext: { isEnabled: false, onToggle: () => {} },
+const createProviderValue = () =>
+  createChatAreaProviderValue({
+    messageList: {
+      messages,
+      sessionTitle: 'Test',
+      currentModelId: 'gemini-2.5-flash',
     },
-    isGoogleSearchEnabled: false,
-    onToggleGoogleSearch: () => {},
-    isCodeExecutionEnabled: false,
-    onToggleCodeExecution: () => {},
-    isLocalPythonEnabled: false,
-    onToggleLocalPython: () => {},
-    isUrlContextEnabled: false,
-    onToggleUrlContext: () => {},
-    isDeepSearchEnabled: false,
-    onToggleDeepSearch: () => {},
-    onClearChat: () => {},
-    onNewChat: () => {},
-    onOpenSettings: () => {},
-    onToggleCanvasPrompt: () => {},
-    onTogglePinCurrentSession: () => {},
-    onRetryLastTurn: () => {},
-    onSelectModel: () => {},
-    availableModels: [],
-    onEditLastUserMessage: () => {},
-    onTogglePip: () => {},
-    isPipActive: false,
-    generateQuadImages: false,
-    onToggleQuadImages: () => {},
-    setCurrentChatSettings: vi.fn(),
-    onSuggestionClick: () => {},
-    onOrganizeInfoClick: () => {},
-    showEmptyStateSuggestions: false,
-    editMode: 'update',
-    onUpdateMessageContent: () => {},
-    editingMessageId: null,
-    setEditingMessageId: () => {},
-    onAddUserMessage: () => {},
-    onLiveTranscript: () => {},
-    onToggleBBox: () => {},
-    isBBoxModeActive: false,
-    onToggleGuide: () => {},
-    isGuideModeActive: false,
-    themeId: 'pearl',
-  },
-});
+  });
 
 describe('MessageList scroll configuration', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let unmount: (() => void) | null;
 
   beforeEach(() => {
     virtuosoPropsSpy.mockClear();
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    unmount = null;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-    document.body.innerHTML = '';
+    unmount?.();
     vi.clearAllMocks();
   });
 
   it('configures Virtuoso to pre-render below the viewport and use stable message keys', () => {
-    act(() => {
-      root.render(
-        <I18nProvider>
-          <ChatAreaProvider value={createProviderValue()}>
-            <MessageList />
-          </ChatAreaProvider>
-        </I18nProvider>,
-      );
-    });
+    ({ unmount } = renderWithChatAreaProviders(<MessageList />, { value: createProviderValue() }));
 
     expect(virtuosoPropsSpy).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -39,7 +39,6 @@ describe('useAppUI', () => {
 
   afterEach(() => {
     vi.useRealTimers();
-    document.body.innerHTML = '';
   });
 
   it('does not close the sidebar when a left swipe starts outside the sidebar', () => {

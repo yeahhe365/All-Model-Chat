@@ -80,7 +80,6 @@ describe('useAppEvents manual update checks', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    document.body.innerHTML = '';
   });
 
   it('reports up-to-date when no new service worker is found', async () => {

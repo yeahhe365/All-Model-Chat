@@ -1,11 +1,9 @@
 import type { ComponentType, ReactNode } from 'react';
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MessageList } from './MessageList';
-import { AppSettings, ChatMessage, ChatSettings, UploadedFile } from '../../types';
-import { I18nProvider } from '../../contexts/I18nContext';
-import { ChatAreaProvider, ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
+import { ChatMessage, UploadedFile } from '../../types';
+import { createChatAreaProviderValue, renderWithChatAreaProviders } from '../../test/chatAreaFixtures';
 
 const messagePropsSpy = vi.fn();
 
@@ -89,8 +87,7 @@ vi.mock('./message-list/WelcomeScreen', () => ({
 }));
 
 describe('MessageList image preview', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let unmount: (() => void) | null;
 
   const file: UploadedFile = {
     id: 'file-1',
@@ -111,132 +108,26 @@ describe('MessageList image preview', () => {
     },
   ];
 
-  const createProviderValue = (messageFiles: UploadedFile[] = [file]): ChatAreaProviderValue => ({
-    messageList: {
-      messages: [{ ...messages[0], files: messageFiles }],
-      sessionTitle: 'Test',
-      setScrollContainerRef: () => {},
-      onEditMessage: () => {},
-      onDeleteMessage: () => {},
-      onRetryMessage: () => {},
-      onUpdateMessageFile: () => {},
-      showThoughts: false,
-      onGenerateCanvas: () => {},
-      onContinueGeneration: () => {},
-      onForkMessage: () => {},
-      onQuickTTS: async () => null,
-      chatInputHeight: 0,
-      currentModelId: 'gemini-2.5-flash',
-      onOpenSidePanel: () => {},
-      onQuote: () => {},
-      activeSessionId: 'session-1',
-    },
-    input: {
-      appSettings: {
-        isSystemAudioRecordingEnabled: false,
-        isPasteRichTextAsMarkdownEnabled: true,
-      } as AppSettings,
-      currentChatSettings: {
-        modelId: 'gemini-3.1-pro-preview',
-        ttsVoice: 'Aoede',
-        thinkingLevel: 'MEDIUM',
-      } as ChatSettings,
-      setAppFileError: () => {},
-      activeSessionId: 'session-1',
-      commandedInput: null,
-      onMessageSent: () => {},
-      selectedFiles: [],
-      setSelectedFiles: () => {},
-      onSendMessage: () => {},
-      isLoading: false,
-      isEditing: false,
-      onStopGenerating: () => {},
-      onCancelEdit: () => {},
-      onProcessFiles: async () => {},
-      onAddFileById: async () => {},
-      onCancelUpload: () => {},
-      onTranscribeAudio: async () => null,
-      isProcessingFile: false,
-      fileError: null,
-      isImagenModel: false,
-      isImageEditModel: false,
-      aspectRatio: '1:1',
-      setAspectRatio: () => {},
-      imageSize: '1K',
-      setImageSize: () => {},
-      toolStates: {
-        googleSearch: { isEnabled: false, onToggle: () => {} },
-        deepSearch: { isEnabled: false, onToggle: () => {} },
-        codeExecution: { isEnabled: false, onToggle: () => {} },
-        localPython: { isEnabled: false, onToggle: () => {} },
-        urlContext: { isEnabled: false, onToggle: () => {} },
+  const createProviderValue = (messageFiles: UploadedFile[] = [file]) =>
+    createChatAreaProviderValue({
+      messageList: {
+        messages: [{ ...messages[0], files: messageFiles }],
+        sessionTitle: 'Test',
+        currentModelId: 'gemini-2.5-flash',
       },
-      isGoogleSearchEnabled: false,
-      onToggleGoogleSearch: () => {},
-      isCodeExecutionEnabled: false,
-      onToggleCodeExecution: () => {},
-      isLocalPythonEnabled: false,
-      onToggleLocalPython: () => {},
-      isUrlContextEnabled: false,
-      onToggleUrlContext: () => {},
-      isDeepSearchEnabled: false,
-      onToggleDeepSearch: () => {},
-      onClearChat: () => {},
-      onNewChat: () => {},
-      onOpenSettings: () => {},
-      onToggleCanvasPrompt: () => {},
-      onTogglePinCurrentSession: () => {},
-      onRetryLastTurn: () => {},
-      onSelectModel: () => {},
-      availableModels: [],
-      onEditLastUserMessage: () => {},
-      onTogglePip: () => {},
-      isPipActive: false,
-      generateQuadImages: false,
-      onToggleQuadImages: () => {},
-      setCurrentChatSettings: vi.fn(),
-      onSuggestionClick: () => {},
-      onOrganizeInfoClick: () => {},
-      showEmptyStateSuggestions: false,
-      editMode: 'update',
-      onUpdateMessageContent: () => {},
-      editingMessageId: null,
-      setEditingMessageId: () => {},
-      onAddUserMessage: () => {},
-      onLiveTranscript: () => {},
-      onToggleBBox: () => {},
-      isBBoxModeActive: false,
-      onToggleGuide: () => {},
-      isGuideModeActive: false,
-      themeId: 'pearl',
-    },
-  });
+    });
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    unmount = null;
   });
 
   afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
-    document.body.innerHTML = '';
+    unmount?.();
     vi.clearAllMocks();
   });
 
   it('shows the file preview after clicking an image', async () => {
-    act(() => {
-      root.render(
-        <I18nProvider>
-          <ChatAreaProvider value={createProviderValue()}>
-            <MessageList />
-          </ChatAreaProvider>
-        </I18nProvider>,
-      );
-    });
+    ({ unmount } = renderWithChatAreaProviders(<MessageList />, { value: createProviderValue() }));
 
     const trigger = document.querySelector('[data-testid="open-preview-message-1"]');
     expect(trigger).not.toBeNull();
@@ -261,15 +152,7 @@ describe('MessageList image preview', () => {
       uploadState: 'active',
     };
 
-    act(() => {
-      root.render(
-        <I18nProvider>
-          <ChatAreaProvider value={createProviderValue([markdownFile])}>
-            <MessageList />
-          </ChatAreaProvider>
-        </I18nProvider>,
-      );
-    });
+    ({ unmount } = renderWithChatAreaProviders(<MessageList />, { value: createProviderValue([markdownFile]) }));
 
     const trigger = document.querySelector('[data-testid="open-preview-message-1"]');
     expect(trigger).not.toBeNull();
@@ -285,15 +168,7 @@ describe('MessageList image preview', () => {
   });
 
   it('does not pass global display settings through MessageList to Message', () => {
-    act(() => {
-      root.render(
-        <I18nProvider>
-          <ChatAreaProvider value={createProviderValue()}>
-            <MessageList />
-          </ChatAreaProvider>
-        </I18nProvider>,
-      );
-    });
+    ({ unmount } = renderWithChatAreaProviders(<MessageList />, { value: createProviderValue() }));
 
     const props = messagePropsSpy.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
 

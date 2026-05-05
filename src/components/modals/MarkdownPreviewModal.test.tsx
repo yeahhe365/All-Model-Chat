@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
@@ -55,7 +55,7 @@ import { MarkdownPreviewModal } from './MarkdownPreviewModal';
 
 describe('MarkdownPreviewModal', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   let confirmSpy: ReturnType<typeof vi.spyOn>;
 
   const createMarkdownFile = (): UploadedFile => ({
@@ -68,9 +68,8 @@ describe('MarkdownPreviewModal', () => {
   });
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
     vi.clearAllMocks();
     confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
   });
@@ -80,7 +79,6 @@ describe('MarkdownPreviewModal', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
   });
 
   it('asks before discarding unsaved markdown edits when cancelling edit mode', () => {

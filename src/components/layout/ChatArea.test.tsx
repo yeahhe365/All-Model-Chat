@@ -1,6 +1,7 @@
 import React, { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createChatAreaProps } from '../../test/chatAreaFixtures';
 import { ChatArea } from './ChatArea';
 import type { ChatAreaProps } from './ChatArea';
 
@@ -116,103 +117,9 @@ vi.mock('../chat/input/ChatInput', async () => {
   return { ChatInput };
 });
 
-const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {}): ChatAreaProps => ({
-  chatArea: {
-    session: {
-      activeSessionId: 'session-1',
-      sessionTitle: 'Session',
-      currentChatSettings: {
-        modelId: 'gemini-3.1-pro-preview',
-        thinkingLevel: 'MEDIUM',
-        showThoughts: false,
-      } as any,
-      messages: [
-        {
-          id: 'message-1',
-          role: 'user',
-          content: 'hello',
-          timestamp: new Date('2026-04-12T00:00:00.000Z'),
-        },
-      ],
-      isLoading: false,
-      isEditing: false,
-      showThoughts: false,
-    },
-    shell: {
-      isAppDraggingOver: false,
-      modelsLoadingError: null,
-      handleAppDragEnter: vi.fn(),
-      handleAppDragOver: vi.fn(),
-      handleAppDragLeave: vi.fn(),
-      handleAppDrop: vi.fn(),
-    },
-    header: {
-      currentModelName: 'Gemini 3.1 Pro',
-      availableModels: [],
-      selectedModelId: 'gemini-3.1-pro-preview',
-      isCanvasPromptActive: false,
-      isPipSupported: false,
-      isPipActive: false,
-      onNewChat: vi.fn(),
-      onOpenScenariosModal: vi.fn(),
-      onToggleHistorySidebar: vi.fn(),
-      onLoadCanvasPrompt: vi.fn(),
-      onSelectModel: vi.fn(),
-      onSetThinkingLevel: vi.fn(),
-      onToggleGemmaReasoning: vi.fn(),
-      onTogglePip: vi.fn(),
-    },
-    messageActions: {
-      setScrollContainerRef: vi.fn(),
-      onEditMessage: vi.fn(),
-      onDeleteMessage: vi.fn(),
-      onRetryMessage: vi.fn(),
-      onUpdateMessageFile: vi.fn(),
-      onSuggestionClick: vi.fn(),
-      onOrganizeInfoClick: vi.fn(),
-      onFollowUpSuggestionClick: vi.fn(),
-      onGenerateCanvas: vi.fn(),
-      onContinueGeneration: vi.fn(),
-      onForkMessage: vi.fn(),
-      onQuickTTS: vi.fn(async () => null),
-      onOpenSidePanel: vi.fn(),
-    },
-    inputActions: {
-      onMessageSent: vi.fn(),
-      onSendMessage: vi.fn(),
-      onStopGenerating: vi.fn(),
-      onCancelEdit: vi.fn(),
-      onProcessFiles: vi.fn(async () => {}),
-      onAddFileById: vi.fn(async () => {}),
-      onCancelUpload: vi.fn(),
-      onTranscribeAudio: vi.fn(async () => null),
-      onClearChat: vi.fn(),
-      onOpenSettings: vi.fn(),
-      onToggleCanvasPrompt: vi.fn(),
-      onTogglePinCurrentSession: vi.fn(),
-      onRetryLastTurn: vi.fn(),
-      onEditLastUserMessage: vi.fn(),
-      onToggleQuadImages: vi.fn(),
-      setCurrentChatSettings: vi.fn(),
-      onAddUserMessage: vi.fn(),
-      onLiveTranscript: vi.fn(),
-      onEditMessageContent: vi.fn(),
-      onToggleBBox: vi.fn(),
-      onToggleGuide: vi.fn(),
-    },
-    features: {
-      isImageEditModel: false,
-      isBBoxModeActive: false,
-      isGuideModeActive: false,
-      generateQuadImages: false,
-    },
-    ...overrides,
-  },
-});
-
 describe('ChatArea provider slice memoization', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   let matchMediaMatches = false;
   let windowInnerWidth = 1024;
   const virtualKeyboardShow = vi.fn();
@@ -252,9 +159,8 @@ describe('ChatArea provider slice memoization', () => {
       },
     });
 
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
 
     mockState.chat.commandedInput = null;
     mockState.chat.selectedFiles = [];
@@ -271,8 +177,6 @@ describe('ChatArea provider slice memoization', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.unstubAllGlobals();
     vi.clearAllMocks();
   });

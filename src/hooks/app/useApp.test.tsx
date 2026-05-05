@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppSettings, ChatMessage, ModelOption, SavedChatSession } from '../../types';
+import { createAppSettings, createChatSettings } from '../../test/chatAreaFixtures';
 import { useApp } from './useApp';
 import { renderHook } from '@/test/testUtils';
 
@@ -23,9 +24,9 @@ const metadataOnlySession: SavedChatSession = {
   title: 'Portable Export',
   timestamp: Date.now(),
   messages: [],
-  settings: {
+  settings: createChatSettings({
     modelId: 'gemini-test',
-  } as SavedChatSession['settings'],
+  }),
 };
 
 const hydratedSession: SavedChatSession = {
@@ -33,12 +34,12 @@ const hydratedSession: SavedChatSession = {
   messages: fullMessages,
 };
 
-let currentAppSettings = {
+let currentAppSettings = createAppSettings({
   modelId: 'gemini-test',
   language: 'en',
   themeId: 'pearl',
   systemInstruction: '',
-} as AppSettings;
+});
 
 type MockChatState = ReturnType<typeof buildChatState>;
 
@@ -184,12 +185,12 @@ vi.mock('../../services/logService', () => ({
 describe('useApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    currentAppSettings = {
+    currentAppSettings = createAppSettings({
       modelId: 'gemini-test',
       language: 'en',
       themeId: 'pearl',
       systemInstruction: '',
-    } as AppSettings;
+    });
     mockSetAppSettings.mockImplementation((updater: AppSettings | ((prev: AppSettings) => AppSettings)) => {
       currentAppSettings = typeof updater === 'function' ? updater(currentAppSettings) : updater;
     });
@@ -197,9 +198,7 @@ describe('useApp', () => {
     mockSetCurrentChatSettings.mockClear();
   });
 
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  afterEach(() => {});
 
   it('exposes the hydrated active chat instead of sidebar metadata when exporting', () => {
     const { result, unmount } = renderHook(() => useApp());
@@ -229,10 +228,10 @@ describe('useApp', () => {
       title: 'New Chat',
       timestamp: Date.now(),
       messages: [],
-      settings: {
+      settings: createChatSettings({
         modelId: 'gemini-test',
         systemInstruction: '',
-      } as SavedChatSession['settings'],
+      }),
     };
     currentChatState.savedSessions = [{ ...currentChatState.activeChat, messages: [] }];
 
@@ -250,7 +249,7 @@ describe('useApp', () => {
       modelId: 'gemini-3-flash-preview',
       thinkingBudget: 4096,
       thinkingLevel: 'HIGH',
-    } as AppSettings;
+    };
 
     currentChatState.activeChat = {
       ...hydratedSession,
@@ -259,7 +258,7 @@ describe('useApp', () => {
         modelId: 'gemini-3-flash-preview',
         thinkingBudget: 4096,
         thinkingLevel: 'HIGH',
-      } as SavedChatSession['settings'],
+      },
     };
 
     const { result, unmount } = renderHook(() => useApp());
@@ -282,7 +281,7 @@ describe('useApp', () => {
       modelId: 'gemini-3.1-pro-preview',
       thinkingBudget: 2048,
       thinkingLevel: 'LOW',
-    } as AppSettings;
+    };
 
     currentChatState.activeChat = {
       ...hydratedSession,
@@ -291,7 +290,7 @@ describe('useApp', () => {
         modelId: 'gemini-3.1-pro-preview',
         thinkingBudget: 2048,
         thinkingLevel: 'LOW',
-      } as SavedChatSession['settings'],
+      },
     };
 
     const { result, unmount } = renderHook(() => useApp());
@@ -315,7 +314,7 @@ describe('useApp', () => {
         ...hydratedSession.settings,
         modelId: 'session-model',
         temperature: 0.2,
-      } as SavedChatSession['settings'],
+      },
     };
 
     const { result, unmount } = renderHook(() => useApp());
@@ -325,7 +324,7 @@ describe('useApp', () => {
         ...currentAppSettings,
         modelId: 'default-model',
         temperature: 1.4,
-      } as AppSettings);
+      });
     });
 
     expect(currentAppSettings.modelId).toBe('default-model');
@@ -341,14 +340,14 @@ describe('useApp', () => {
       ...currentAppSettings,
       modelId: 'default-model',
       temperature: 0.8,
-    } as AppSettings;
+    };
     currentChatState.activeChat = {
       ...hydratedSession,
       settings: {
         ...hydratedSession.settings,
         modelId: 'session-model',
         temperature: 0.2,
-      } as SavedChatSession['settings'],
+      },
     };
 
     const { result, unmount } = renderHook(() => useApp());
@@ -358,7 +357,7 @@ describe('useApp', () => {
         ...currentChatState.activeChat!.settings,
         modelId: 'current-model',
         temperature: 1.2,
-      } as SavedChatSession['settings']);
+      });
     });
 
     expect(currentChatState.activeChat.settings.modelId).toBe('current-model');
@@ -379,13 +378,13 @@ describe('useApp', () => {
         { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
         { id: 'gpt-4.1', name: 'GPT-4.1' },
       ],
-    } as AppSettings;
+    };
     currentChatState.activeChat = {
       ...hydratedSession,
       settings: {
         ...hydratedSession.settings,
         modelId: 'gemini-3-flash-preview',
-      } as SavedChatSession['settings'],
+      },
     };
     currentChatState.apiModels = [{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }];
 

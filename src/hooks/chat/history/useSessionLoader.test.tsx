@@ -96,9 +96,7 @@ describe('useSessionLoader', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  afterEach(() => {});
 
   it('keeps the newest session selection when earlier loads resolve later', async () => {
     const olderRequest = createDeferred<SavedChatSession | null>();

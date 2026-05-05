@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createTestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageText } from './MessageText';
 
@@ -52,8 +52,8 @@ describe('MessageText', () => {
   });
 
   it('renders grounded response metadata even when the message only contains images', () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
+    const { container } = root;
 
     act(() => {
       root.render(
@@ -108,8 +108,7 @@ describe('MessageText', () => {
   });
 
   it('cancels pending automatic HTML preview when unmounted', () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
     const onOpenHtmlPreview = vi.fn();
     const loadingMessage = {
       id: 'message-html',
@@ -161,8 +160,8 @@ describe('MessageText', () => {
   });
 
   it('omits live raw reasoning markup from the visible answer body', () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
+    const { container } = root;
 
     mockUseMessageStream.mockReturnValue({
       streamContent: 'drafting the answer',
@@ -206,8 +205,8 @@ describe('MessageText', () => {
   });
 
   it('renders only the answer body when raw thinking is embedded in content', () => {
-    const container = document.createElement('div');
-    const root = createRoot(container);
+    const root = createTestRenderer();
+    const { container } = root;
 
     act(() => {
       root.render(

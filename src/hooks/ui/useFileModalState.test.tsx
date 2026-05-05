@@ -15,13 +15,9 @@ const files: UploadedFile[] = [
 ];
 
 describe('useFileModalState', () => {
-  beforeEach(() => {
-    document.body.innerHTML = '';
-  });
+  beforeEach(() => {});
 
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  afterEach(() => {});
 
   it('tracks preview state and resets editability when the preview closes', () => {
     const { result, unmount } = renderHook(() => useFileModalState<string>(files));

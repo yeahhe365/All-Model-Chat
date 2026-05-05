@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
@@ -104,8 +104,7 @@ vi.mock('../../utils/docxPreview', () => ({
 import { FilePreviewModal } from './FilePreviewModal';
 
 describe('FilePreviewModal', () => {
-  let container: HTMLDivElement;
-  let root: ReturnType<typeof createRoot>;
+  let root: TestRenderer;
 
   const createDocxFile = (): UploadedFile => ({
     id: 'docx-1',
@@ -128,9 +127,7 @@ describe('FilePreviewModal', () => {
   });
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
     vi.clearAllMocks();
     mockSettingsState.appSettings.customShortcuts = {};
   });
@@ -139,8 +136,6 @@ describe('FilePreviewModal', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
   });
 
   it('renders extracted docx text in the text preview surface', async () => {

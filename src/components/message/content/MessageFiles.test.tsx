@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MessageFiles } from './MessageFiles';
 import type { UploadedFile } from '../../../types';
@@ -15,20 +15,17 @@ const createImageFile = (id: string, name: string): UploadedFile => ({
 
 describe('MessageFiles', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
   });
 
   it('renders non-quad multi-image rows as fixed-height cover thumbnails', () => {

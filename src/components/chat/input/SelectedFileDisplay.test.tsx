@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { pdfjs } from 'react-pdf';
 import { SelectedFileDisplay } from './SelectedFileDisplay';
@@ -58,7 +58,7 @@ const createFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
 
 describe('SelectedFileDisplay', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   let originalIntersectionObserver: typeof IntersectionObserver | undefined;
 
   beforeEach(() => {
@@ -67,17 +67,14 @@ describe('SelectedFileDisplay', () => {
       configurable: true,
       value: undefined,
     });
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     if (originalIntersectionObserver) {
       Object.defineProperty(globalThis, 'IntersectionObserver', {
         configurable: true,

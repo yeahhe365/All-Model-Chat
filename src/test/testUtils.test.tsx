@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createDeferred, flushPromises, renderHook } from './testUtils';
+import { createDeferred, createTestRenderer, flushPromises, render, renderHook } from './testUtils';
 
 describe('testUtils', () => {
   it('renders hooks and runs cleanup on unmount', () => {
@@ -18,6 +18,27 @@ describe('testUtils', () => {
     unmount();
 
     expect(cleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders components through the shared test renderer', () => {
+    const renderer = createTestRenderer();
+
+    renderer.render(<span>first</span>);
+    expect(renderer.container).toHaveTextContent('first');
+
+    renderer.render(<span>second</span>);
+    expect(renderer.container).toHaveTextContent('second');
+
+    renderer.unmount();
+    expect(renderer.container).toBeEmptyDOMElement();
+  });
+
+  it('exposes the shared React Testing Library render helper', () => {
+    const view = render(<span>shared render</span>);
+
+    expect(view.container).toHaveTextContent('shared render');
+
+    view.unmount();
   });
 
   it('creates controllable promises for async tests', async () => {

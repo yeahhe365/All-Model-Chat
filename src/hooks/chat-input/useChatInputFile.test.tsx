@@ -1,6 +1,6 @@
 import React from 'react';
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChatInputFile } from './useChatInputFile';
 
@@ -24,20 +24,16 @@ vi.mock('./useChatInputFileUi', () => ({
 }));
 
 describe('useChatInputFile', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     vi.clearAllMocks();
   });
 

@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
@@ -9,7 +9,7 @@ import { AboutSection } from './AboutSection';
 
 describe('AboutSection', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   const initialState = useSettingsStore.getState();
   const fetchMock = vi.fn();
   const packageVersion = JSON.parse(readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8'))
@@ -26,16 +26,14 @@ describe('AboutSection', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     useSettingsStore.setState(initialState);
     vi.unstubAllGlobals();
   });

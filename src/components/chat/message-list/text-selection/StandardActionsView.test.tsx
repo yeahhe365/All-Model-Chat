@@ -1,24 +1,22 @@
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../../stores/settingsStore';
 import { StandardActionsView } from './StandardActionsView';
 
 describe('StandardActionsView', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
   });
 
   it('renders localized Chinese action labels', () => {

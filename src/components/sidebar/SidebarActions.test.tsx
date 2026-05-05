@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SidebarActions } from './SidebarActions';
 
 const render = (node: React.ReactNode) => {
-  const container = document.createElement('div');
-  const root = createRoot(container);
+  const root = createTestRenderer();
+  const { container } = root;
 
   act(() => {
     root.render(node);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfSidebar } from './PdfSidebar';
 
@@ -14,13 +14,10 @@ vi.mock('react-pdf', () => ({
 }));
 
 describe('PdfSidebar', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
     pageRenderSpy.mockClear();
   });
 
@@ -28,7 +25,6 @@ describe('PdfSidebar', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
   });
 
   it('only renders thumbnails near the current page', () => {

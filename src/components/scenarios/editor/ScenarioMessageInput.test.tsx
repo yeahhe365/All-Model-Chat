@@ -1,6 +1,6 @@
 import React from 'react';
 import { act } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScenarioMessageInput } from './ScenarioMessageInput';
 
@@ -18,12 +18,11 @@ vi.mock('../../../stores/settingsStore', () => ({
 
 describe('ScenarioMessageInput', () => {
   let container: HTMLDivElement;
-  let root: ReturnType<typeof createRoot>;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
     mockSettingsState.appSettings.customShortcuts = {};
   });
 
@@ -31,8 +30,6 @@ describe('ScenarioMessageInput', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
   });
 
   it('uses the configured save/confirm shortcut to add a message', async () => {

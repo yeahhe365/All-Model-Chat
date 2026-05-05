@@ -1,6 +1,6 @@
 import React from 'react';
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PreloadedMessagesModal } from './PreloadedMessagesModal';
 
@@ -53,12 +53,11 @@ vi.mock('./ScenarioEditor', () => ({
 
 describe('PreloadedMessagesModal', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
     vi.clearAllMocks();
     scenarioManagerState.view = 'list';
     scenarioManagerState.hasUnsavedChanges = true;
@@ -68,8 +67,6 @@ describe('PreloadedMessagesModal', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
   });
 
   it('closes without saving when the close button is clicked', () => {

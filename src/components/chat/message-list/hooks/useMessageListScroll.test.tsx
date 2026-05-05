@@ -72,7 +72,6 @@ describe('useMessageListScroll', () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-    document.body.innerHTML = '';
   });
 
   it('syncs the scroller element, persists scroll position, and respects bottom-state updates', () => {

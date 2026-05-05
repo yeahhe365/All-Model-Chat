@@ -1,24 +1,21 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ChatTextArea } from './ChatTextArea';
 
 describe('ChatTextArea', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
   });
 
   it('focuses the textarea when the shell is clicked', () => {

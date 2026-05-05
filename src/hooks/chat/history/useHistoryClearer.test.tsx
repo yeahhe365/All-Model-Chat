@@ -40,13 +40,11 @@ const createSession = (id: string): SavedChatSession => ({
 
 describe('useHistoryClearer', () => {
   beforeEach(() => {
-    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    document.body.innerHTML = '';
   });
 
   it('clears known session-scoped localStorage keys without scanning unrelated entries', async () => {

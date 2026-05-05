@@ -1,12 +1,11 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { CreateTextFileEditor } from '../modals/CreateTextFileEditor';
 
 describe('CreateTextFileEditor extension preference', () => {
-  let container: HTMLDivElement | null = null;
-  let root: Root | null = null;
+  let root: TestRenderer | null = null;
   const storage = (() => {
     const values = new Map<string, string>();
     return {
@@ -24,9 +23,7 @@ describe('CreateTextFileEditor extension preference', () => {
   })();
 
   const renderEditor = async (props: Partial<React.ComponentProps<typeof CreateTextFileEditor>> = {}) => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
 
     await act(async () => {
       root!.render(
@@ -57,9 +54,7 @@ describe('CreateTextFileEditor extension preference', () => {
     act(() => {
       root?.unmount();
     });
-    container?.remove();
     root = null;
-    container = null;
     window.localStorage.clear();
   });
 
@@ -77,9 +72,7 @@ describe('CreateTextFileEditor extension preference', () => {
     act(() => {
       root?.unmount();
     });
-    container?.remove();
     root = null;
-    container = null;
 
     await renderEditor();
 

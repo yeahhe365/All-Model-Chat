@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
@@ -10,13 +10,12 @@ const deferredDiagramBlockPath = path.join(projectRoot, 'src/components/message/
 
 describe('DeferredDiagramBlock', () => {
   let container: HTMLDivElement | null = null;
-  let root: Root | null = null;
+  let root: TestRenderer | null = null;
 
   afterEach(() => {
     act(() => {
       root?.unmount();
     });
-    container?.remove();
     root = null;
     container = null;
   });
@@ -25,9 +24,8 @@ describe('DeferredDiagramBlock', () => {
     const Diagram = () => <div>Rendered diagram</div>;
     const load = vi.fn(async () => ({ default: Diagram }));
 
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
     await act(async () => {

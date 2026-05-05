@@ -18,9 +18,7 @@ describe('useMessageActions', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  afterEach(() => {});
 
   it('does not abort unrelated active jobs when the current session has no loading message', () => {
     const otherAbort = vi.fn();

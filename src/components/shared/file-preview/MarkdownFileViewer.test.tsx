@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../../types';
 import { MarkdownFileViewer } from './MarkdownFileViewer';
@@ -22,7 +22,7 @@ vi.mock('../../message/LazyMarkdownRenderer', () => ({
 
 describe('MarkdownFileViewer', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   const createMarkdownFile = (id = 'markdown-file'): UploadedFile => ({
     id,
@@ -34,9 +34,8 @@ describe('MarkdownFileViewer', () => {
   });
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
     localStorage.clear();
     vi.clearAllMocks();
   });
@@ -45,7 +44,6 @@ describe('MarkdownFileViewer', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     localStorage.clear();
   });
 
@@ -74,9 +72,8 @@ describe('MarkdownFileViewer', () => {
       root.unmount();
     });
 
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
 
     act(() => {
       root.render(<MarkdownFileViewer file={file} content="# Preview title" />);

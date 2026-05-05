@@ -41,7 +41,6 @@ const selectNode = (node: Node) => {
 
 afterEach(() => {
   window.getSelection()?.removeAllRanges();
-  document.body.innerHTML = '';
 });
 
 describe('useSelectionPosition', () => {

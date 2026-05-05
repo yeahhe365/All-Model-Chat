@@ -1,127 +1,35 @@
 import React, { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
-import type { AppSettings, ChatSettings } from '../../../types';
-import { ChatAreaProvider, ChatAreaProviderValue, useChatAreaInput, useChatAreaMessageList } from './ChatAreaContext';
+import { createChatAreaProviderValue } from '../../../test/chatAreaFixtures';
+import {
+  ChatAreaProvider,
+  type ChatAreaProviderValue,
+  useChatAreaInput,
+  useChatAreaMessageList,
+} from './ChatAreaContext';
 
-const createProviderValue = (): ChatAreaProviderValue => ({
-  messageList: {
-    messages: [
-      {
-        id: 'message-1',
-        role: 'user',
-        content: 'hello',
-        timestamp: new Date('2026-04-11T00:00:00.000Z'),
-      },
-      {
-        id: 'message-2',
-        role: 'model',
-        content: 'world',
-        timestamp: new Date('2026-04-11T00:00:01.000Z'),
-      },
-    ],
-    sessionTitle: 'Provider Test',
-    setScrollContainerRef: vi.fn(),
-    onEditMessage: vi.fn(),
-    onDeleteMessage: vi.fn(),
-    onRetryMessage: vi.fn(),
-    onUpdateMessageFile: vi.fn(),
-    showThoughts: false,
-    onSuggestionClick: vi.fn(),
-    onOrganizeInfoClick: vi.fn(),
-    onFollowUpSuggestionClick: vi.fn(),
-    onGenerateCanvas: vi.fn(),
-    onContinueGeneration: vi.fn(),
-    onForkMessage: vi.fn(),
-    onQuickTTS: vi.fn(async () => null),
-    chatInputHeight: 0,
-    currentModelId: 'gemini-3.1-pro-preview',
-    onOpenSidePanel: vi.fn(),
-    onQuote: vi.fn(),
-    onInsert: vi.fn(),
-    activeSessionId: 'session-1',
-  },
-  input: {
-    appSettings: {
-      isSystemAudioRecordingEnabled: false,
-      isPasteRichTextAsMarkdownEnabled: true,
-    } as AppSettings,
-    currentChatSettings: {
-      modelId: 'gemini-3.1-pro-preview',
-      ttsVoice: 'Aoede',
-      thinkingLevel: 'MEDIUM',
-    } as ChatSettings,
-    setAppFileError: vi.fn(),
-    activeSessionId: 'session-1',
-    commandedInput: null,
-    onMessageSent: vi.fn(),
-    selectedFiles: [],
-    setSelectedFiles: vi.fn(),
-    onSendMessage: vi.fn(),
-    isLoading: false,
-    isEditing: false,
-    onStopGenerating: vi.fn(),
-    onCancelEdit: vi.fn(),
-    onProcessFiles: vi.fn(async () => {}),
-    onAddFileById: vi.fn(async () => {}),
-    onCancelUpload: vi.fn(),
-    onTranscribeAudio: vi.fn(async () => null),
-    isProcessingFile: false,
-    fileError: null,
-    isImagenModel: false,
-    isImageEditModel: false,
-    toolStates: {
-      googleSearch: { isEnabled: false, onToggle: vi.fn() },
-      deepSearch: { isEnabled: false, onToggle: vi.fn() },
-      codeExecution: { isEnabled: false, onToggle: vi.fn() },
-      localPython: { isEnabled: false, onToggle: vi.fn() },
-      urlContext: { isEnabled: false, onToggle: vi.fn() },
+const createProviderValue = () =>
+  createChatAreaProviderValue({
+    messageList: {
+      messages: [
+        {
+          id: 'message-1',
+          role: 'user',
+          content: 'hello',
+          timestamp: new Date('2026-04-11T00:00:00.000Z'),
+        },
+        {
+          id: 'message-2',
+          role: 'model',
+          content: 'world',
+          timestamp: new Date('2026-04-11T00:00:01.000Z'),
+        },
+      ],
+      sessionTitle: 'Provider Test',
     },
-    aspectRatio: '1:1',
-    setAspectRatio: vi.fn(),
-    imageSize: '1K',
-    setImageSize: vi.fn(),
-    isGoogleSearchEnabled: false,
-    onToggleGoogleSearch: vi.fn(),
-    isCodeExecutionEnabled: false,
-    onToggleCodeExecution: vi.fn(),
-    isLocalPythonEnabled: false,
-    onToggleLocalPython: vi.fn(),
-    isUrlContextEnabled: false,
-    onToggleUrlContext: vi.fn(),
-    isDeepSearchEnabled: false,
-    onToggleDeepSearch: vi.fn(),
-    onClearChat: vi.fn(),
-    onNewChat: vi.fn(),
-    onOpenSettings: vi.fn(),
-    onToggleCanvasPrompt: vi.fn(),
-    onTogglePinCurrentSession: vi.fn(),
-    onRetryLastTurn: vi.fn(),
-    onSelectModel: vi.fn(),
-    availableModels: [],
-    onEditLastUserMessage: vi.fn(),
-    onTogglePip: vi.fn(),
-    isPipActive: false,
-    generateQuadImages: false,
-    onToggleQuadImages: vi.fn(),
-    setCurrentChatSettings: vi.fn(),
-    onSuggestionClick: vi.fn(),
-    onOrganizeInfoClick: vi.fn(),
-    showEmptyStateSuggestions: false,
-    editMode: 'update',
-    onUpdateMessageContent: vi.fn(),
-    editingMessageId: null,
-    setEditingMessageId: vi.fn(),
-    onAddUserMessage: vi.fn(),
-    onLiveTranscript: vi.fn(),
-    onToggleBBox: vi.fn(),
-    isBBoxModeActive: false,
-    onToggleGuide: vi.fn(),
-    isGuideModeActive: false,
-    themeId: 'pearl',
-  },
-});
+  });
 
 const HookProbe = () => {
   const messageList = useChatAreaMessageList();
@@ -152,20 +60,17 @@ const MessageListRenderProbe = React.memo(({ onRender }: { onRender: () => void 
 
 describe('ChatAreaContext', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 

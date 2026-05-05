@@ -1,13 +1,8 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  MediaResolution,
-  type AppSettings,
-  type ChatSettings,
-  type InputCommand,
-  type UploadedFile,
-} from '../../../types';
+import { type InputCommand, type UploadedFile } from '../../../types';
+import { createChatAreaProviderValue } from '../../../test/chatAreaFixtures';
 import { ChatAreaProvider, type ChatAreaProviderValue } from '../../layout/chat-area/ChatAreaContext';
 import { ChatInput } from './ChatInput';
 
@@ -255,123 +250,25 @@ vi.mock('./ChatInputArea', async () => {
 });
 
 const createProviderValue = (commandedInput: InputCommand | null) =>
-  ({
+  createChatAreaProviderValue({
     messageList: {
-      messages: [],
       sessionTitle: 'Session',
-      setScrollContainerRef: vi.fn(),
-      onEditMessage: vi.fn(),
-      onDeleteMessage: vi.fn(),
-      onRetryMessage: vi.fn(),
-      onUpdateMessageFile: vi.fn(),
-      showThoughts: false,
-      onSuggestionClick: vi.fn(),
-      onOrganizeInfoClick: vi.fn(),
-      onFollowUpSuggestionClick: vi.fn(),
-      onGenerateCanvas: vi.fn(),
-      onContinueGeneration: vi.fn(),
-      onForkMessage: vi.fn(),
-      onQuickTTS: vi.fn(async () => null),
-      chatInputHeight: 0,
-      currentModelId: 'gemini-3.1-pro-preview',
-      onOpenSidePanel: vi.fn(),
-      onQuote: vi.fn(),
-      onInsert: vi.fn(),
-      activeSessionId: 'session-1',
     },
     input: {
       appSettings: {
         isAudioCompressionEnabled: false,
         isSystemAudioRecordingEnabled: false,
         isPasteRichTextAsMarkdownEnabled: true,
-      } as AppSettings,
-      currentChatSettings: {
-        modelId: 'gemini-3.1-pro-preview',
-        temperature: 1,
-        topP: 1,
-        topK: 1,
-        showThoughts: false,
-        systemInstruction: '',
-        ttsVoice: 'Aoede',
-        thinkingBudget: 0,
-        thinkingLevel: 'MEDIUM',
-        mediaResolution: MediaResolution.MEDIA_RESOLUTION_MEDIUM,
-      } as ChatSettings,
-      setAppFileError: vi.fn(),
-      activeSessionId: 'session-1',
-      commandedInput,
-      onMessageSent: vi.fn(),
-      selectedFiles: [] as UploadedFile[],
-      setSelectedFiles: vi.fn(),
-      onSendMessage: vi.fn(),
-      isLoading: false as boolean,
-      isEditing: true as boolean,
-      onStopGenerating: vi.fn(),
-      onCancelEdit: vi.fn(),
-      onProcessFiles: vi.fn(async () => {}),
-      onAddFileById: vi.fn(async () => {}),
-      onCancelUpload: vi.fn(),
-      onTranscribeAudio: vi.fn(async () => null),
-      isProcessingFile: false,
-      fileError: null,
-      isImagenModel: false,
-      isImageEditModel: false,
-      aspectRatio: '1:1',
-      setAspectRatio: vi.fn(),
-      imageSize: '1K',
-      setImageSize: vi.fn(),
-      toolStates: {
-        googleSearch: { isEnabled: false, onToggle: vi.fn() },
-        deepSearch: { isEnabled: false, onToggle: vi.fn() },
-        codeExecution: { isEnabled: false, onToggle: vi.fn() },
-        localPython: { isEnabled: false, onToggle: vi.fn() },
-        urlContext: { isEnabled: false, onToggle: vi.fn() },
       },
-      isGoogleSearchEnabled: false,
-      onToggleGoogleSearch: vi.fn(),
-      isCodeExecutionEnabled: false,
-      onToggleCodeExecution: vi.fn(),
-      isLocalPythonEnabled: false,
-      onToggleLocalPython: vi.fn(),
-      isUrlContextEnabled: false,
-      onToggleUrlContext: vi.fn(),
-      isDeepSearchEnabled: false,
-      onToggleDeepSearch: vi.fn(),
-      onClearChat: vi.fn(),
-      onNewChat: vi.fn(),
-      onOpenSettings: vi.fn(),
-      onToggleCanvasPrompt: vi.fn(),
-      onTogglePinCurrentSession: vi.fn(),
-      onRetryLastTurn: vi.fn(),
-      onSelectModel: vi.fn(),
-      availableModels: [],
-      onEditLastUserMessage: vi.fn(),
-      onTogglePip: vi.fn(),
-      isPipActive: false,
-      generateQuadImages: false,
-      onToggleQuadImages: vi.fn(),
-      setCurrentChatSettings: vi.fn(),
-      onSuggestionClick: vi.fn(),
-      onOrganizeInfoClick: vi.fn(),
-      showEmptyStateSuggestions: false,
-      editMode: 'update' as 'update' | 'resend',
-      onUpdateMessageContent: vi.fn(),
-      editingMessageId: 'message-1' as string | null,
-      setEditingMessageId: vi.fn(),
-      onAddUserMessage: vi.fn(),
-      onLiveTranscript: vi.fn(),
-      liveClientFunctions: undefined,
-      onToggleBBox: vi.fn(),
-      isBBoxModeActive: false,
-      onToggleGuide: vi.fn(),
-      isGuideModeActive: false,
-      themeId: 'pearl',
+      commandedInput,
+      isEditing: true,
+      editingMessageId: 'message-1',
     },
-  }) satisfies ChatAreaProviderValue;
+  });
 
 describe('ChatInput', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   const setTextareaValue = (textarea: HTMLTextAreaElement, value: string) => {
     const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
@@ -387,9 +284,8 @@ describe('ChatInput', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
     mockChatStoreState.selectedFiles = [];
     mockChatStoreSubscribers.clear();
     mockModelCapabilities.value = {
@@ -439,8 +335,6 @@ describe('ChatInput', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 
@@ -1130,7 +1024,7 @@ describe('ChatInput', () => {
       translationTargetLanguage: 'French',
       inputTranslationModelId: 'gemini-custom-input-translator',
       showInputTranslationButton: true,
-    } as AppSettings;
+    };
     providerValue.input.isEditing = false;
     providerValue.input.editMode = 'resend';
     providerValue.input.editingMessageId = null;
@@ -1173,7 +1067,7 @@ describe('ChatInput', () => {
     providerValue.input.appSettings = {
       ...providerValue.input.appSettings,
       showInputTranslationButton: false,
-    } as AppSettings;
+    };
     providerValue.input.isEditing = false;
     providerValue.input.editMode = 'resend';
     providerValue.input.editingMessageId = null;
@@ -1194,7 +1088,7 @@ describe('ChatInput', () => {
     providerValue.input.appSettings = {
       ...providerValue.input.appSettings,
       showInputTranslationButton: undefined,
-    } as AppSettings;
+    };
     providerValue.input.isEditing = false;
     providerValue.input.editMode = 'resend';
     providerValue.input.editingMessageId = null;
@@ -1260,7 +1154,7 @@ describe('ChatInput', () => {
     providerValue.input.appSettings = {
       ...providerValue.input.appSettings,
       showInputPasteButton: false,
-    } as AppSettings;
+    };
     providerValue.input.isEditing = false;
     providerValue.input.editMode = 'resend';
     providerValue.input.editingMessageId = null;
@@ -1281,7 +1175,7 @@ describe('ChatInput', () => {
     providerValue.input.appSettings = {
       ...providerValue.input.appSettings,
       showInputClearButton: true,
-    } as AppSettings;
+    };
     providerValue.input.isEditing = false;
     providerValue.input.editMode = 'resend';
     providerValue.input.editingMessageId = null;

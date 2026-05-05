@@ -1,15 +1,14 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SidebarHeader } from './SidebarHeader';
 
 describe('SidebarHeader', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
@@ -17,7 +16,6 @@ describe('SidebarHeader', () => {
       root.unmount();
     });
     delete window.__AMC_RUNTIME_CONFIG__;
-    container.remove();
   });
 
   it('renders the sidebar logo from the PNG asset', () => {

@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { WelcomeScreen } from './WelcomeScreen';
@@ -27,14 +27,13 @@ const setHoverCapablePointer = (matches: boolean) => {
 
 describe('WelcomeScreen', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0);
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
@@ -43,8 +42,6 @@ describe('WelcomeScreen', () => {
     });
     vi.useRealTimers();
     vi.restoreAllMocks();
-    container.remove();
-    document.body.innerHTML = '';
   });
 
   it('exposes the welcome greeting as an accessible button', async () => {

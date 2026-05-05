@@ -30,7 +30,6 @@ describe('useAppPromptModes', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    document.body.innerHTML = '';
   });
 
   it('ignores delayed focus after the document has been torn down', () => {

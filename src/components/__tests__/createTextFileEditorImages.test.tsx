@@ -1,12 +1,11 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { CreateTextFileEditor } from '../modals/CreateTextFileEditor';
 
 describe('CreateTextFileEditor image insertion', () => {
-  let container: HTMLDivElement | null = null;
-  let root: Root | null = null;
+  let root: TestRenderer | null = null;
   let originalFileReader: typeof FileReader;
 
   beforeEach(() => {
@@ -36,10 +35,7 @@ describe('CreateTextFileEditor image insertion', () => {
     act(() => {
       root?.unmount();
     });
-
-    container?.remove();
     root = null;
-    container = null;
     globalThis.FileReader = originalFileReader;
     vi.useRealTimers();
     vi.restoreAllMocks();
@@ -51,9 +47,7 @@ describe('CreateTextFileEditor image insertion', () => {
       .spyOn(URL, 'createObjectURL')
       .mockReturnValue('blob:http://127.0.0.1:4173/stale-image');
 
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
 
     await act(async () => {
       root!.render(

@@ -1,9 +1,9 @@
 import type { ComponentType, ReactNode } from 'react';
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ChatMessage, ChatSettings, UploadedFile } from '../../types';
-import type { ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
+import type { ChatMessage, UploadedFile } from '../../types';
+import { createChatAreaProviderValue } from '../../test/chatAreaFixtures';
 
 interface VirtuosoMockProps<T> {
   data: T[];
@@ -37,106 +37,14 @@ const messages: ChatMessage[] = [
   },
 ];
 
-const createProviderValue = (): ChatAreaProviderValue => ({
-  messageList: {
-    messages,
-    sessionTitle: 'Test',
-    setScrollContainerRef: () => {},
-    onEditMessage: () => {},
-    onDeleteMessage: () => {},
-    onRetryMessage: () => {},
-    onUpdateMessageFile: () => {},
-    showThoughts: false,
-    onGenerateCanvas: () => {},
-    onContinueGeneration: () => {},
-    onForkMessage: () => {},
-    onQuickTTS: async () => null,
-    chatInputHeight: 0,
-    currentModelId: 'gemini-2.5-flash',
-    onOpenSidePanel: () => {},
-    onQuote: () => {},
-    activeSessionId: 'session-1',
-  },
-  input: {
-    appSettings: {
-      isSystemAudioRecordingEnabled: false,
-      isPasteRichTextAsMarkdownEnabled: true,
-    } as AppSettings,
-    currentChatSettings: {
-      modelId: 'gemini-3.1-pro-preview',
-      ttsVoice: 'Aoede',
-      thinkingLevel: 'MEDIUM',
-    } as ChatSettings,
-    setAppFileError: () => {},
-    activeSessionId: 'session-1',
-    commandedInput: null,
-    onMessageSent: () => {},
-    selectedFiles: [],
-    setSelectedFiles: () => {},
-    onSendMessage: () => {},
-    isLoading: false,
-    isEditing: false,
-    onStopGenerating: () => {},
-    onCancelEdit: () => {},
-    onProcessFiles: async () => {},
-    onAddFileById: async () => {},
-    onCancelUpload: () => {},
-    onTranscribeAudio: async () => null,
-    isProcessingFile: false,
-    fileError: null,
-    isImagenModel: false,
-    isImageEditModel: false,
-    aspectRatio: '1:1',
-    setAspectRatio: () => {},
-    imageSize: '1K',
-    setImageSize: () => {},
-    toolStates: {
-      googleSearch: { isEnabled: false, onToggle: () => {} },
-      deepSearch: { isEnabled: false, onToggle: () => {} },
-      codeExecution: { isEnabled: false, onToggle: () => {} },
-      localPython: { isEnabled: false, onToggle: () => {} },
-      urlContext: { isEnabled: false, onToggle: () => {} },
+const createProviderValue = () =>
+  createChatAreaProviderValue({
+    messageList: {
+      messages,
+      sessionTitle: 'Test',
+      currentModelId: 'gemini-2.5-flash',
     },
-    isGoogleSearchEnabled: false,
-    onToggleGoogleSearch: () => {},
-    isCodeExecutionEnabled: false,
-    onToggleCodeExecution: () => {},
-    isLocalPythonEnabled: false,
-    onToggleLocalPython: () => {},
-    isUrlContextEnabled: false,
-    onToggleUrlContext: () => {},
-    isDeepSearchEnabled: false,
-    onToggleDeepSearch: () => {},
-    onClearChat: () => {},
-    onNewChat: () => {},
-    onOpenSettings: () => {},
-    onToggleCanvasPrompt: () => {},
-    onTogglePinCurrentSession: () => {},
-    onRetryLastTurn: () => {},
-    onSelectModel: () => {},
-    availableModels: [],
-    onEditLastUserMessage: () => {},
-    onTogglePip: () => {},
-    isPipActive: false,
-    generateQuadImages: false,
-    onToggleQuadImages: () => {},
-    setCurrentChatSettings: vi.fn(),
-    onSuggestionClick: () => {},
-    onOrganizeInfoClick: () => {},
-    showEmptyStateSuggestions: false,
-    editMode: 'update',
-    onUpdateMessageContent: () => {},
-    editingMessageId: null,
-    setEditingMessageId: () => {},
-    onAddUserMessage: () => {},
-    onLiveTranscript: () => {},
-    onToggleBBox: () => {},
-    isBBoxModeActive: false,
-    onToggleGuide: () => {},
-    isGuideModeActive: false,
-    themeId: 'pearl',
-  },
-});
+  });
 
 const mockedModuleIds = [
   'react-virtuoso',
@@ -226,21 +134,16 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
 };
 
 describe('MessageList preview chunking', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.clearAllMocks();
     vi.resetModules();
 

@@ -20,13 +20,9 @@ const HtmlPreviewWrapper = ({ children }: PropsWithChildren) => (
 );
 
 describe('useHtmlPreviewModal', () => {
-  beforeEach(() => {
-    document.body.innerHTML = '';
-  });
+  beforeEach(() => {});
 
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  afterEach(() => {});
 
   it('tracks iframe readiness from bridge messages', () => {
     const iframe = document.createElement('iframe');

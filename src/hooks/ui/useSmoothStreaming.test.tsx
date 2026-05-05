@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSmoothStreaming } from './useSmoothStreaming';
 
@@ -12,7 +12,7 @@ const TestComponent = ({ text, isStreaming }: { text: string; isStreaming: boole
 
 describe('useSmoothStreaming', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   let nextAnimationFrameId: number;
   let scheduledFrames: Map<number, FrameRequestCallback>;
   let currentTime: number;
@@ -48,9 +48,8 @@ describe('useSmoothStreaming', () => {
   };
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
 
     nextAnimationFrameId = 0;
     scheduledFrames = new Map<number, FrameRequestCallback>();
@@ -82,7 +81,6 @@ describe('useSmoothStreaming', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     vi.unstubAllGlobals();
   });
 

@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
 import 'fake-indexeddb/auto';
+import { afterEach } from 'vitest';
 
 const createMemoryStorage = (): Storage => {
   const storage = new Map<string, string>();
@@ -77,3 +79,11 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     }),
   });
 }
+
+afterEach(() => {
+  cleanup();
+
+  if (typeof document !== 'undefined') {
+    document.body.innerHTML = '';
+  }
+});

@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useSettingsStore } from '../stores/settingsStore';
 import { I18nProvider, useI18n } from './I18nContext';
@@ -11,20 +11,18 @@ const TranslationProbe = () => {
 
 describe('I18nContext', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     useSettingsStore.setState(initialState);
   });
 

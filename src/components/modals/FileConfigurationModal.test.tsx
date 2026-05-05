@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
@@ -12,22 +12,17 @@ const projectRoot = path.resolve(__dirname, '../../..');
 const modalPath = path.join(projectRoot, 'src/components/modals/FileConfigurationModal.tsx');
 
 describe('FileConfigurationModal', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 

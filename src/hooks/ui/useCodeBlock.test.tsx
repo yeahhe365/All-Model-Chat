@@ -1,6 +1,6 @@
 import { act } from 'react';
 import type { MutableRefObject } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCodeBlock } from './useCodeBlock';
 
@@ -64,7 +64,7 @@ const TestCodeBlock = ({
 
 describe('useCodeBlock', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   let measurements: Measurements;
 
   beforeEach(() => {
@@ -74,9 +74,8 @@ describe('useCodeBlock', () => {
       return 1;
     });
 
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
 
     measurements = {
       scrollTop: 0,
@@ -89,7 +88,6 @@ describe('useCodeBlock', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });

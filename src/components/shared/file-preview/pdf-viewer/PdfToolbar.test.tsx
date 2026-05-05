@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../../contexts/I18nContext';
 import { PdfToolbar } from './PdfToolbar';
@@ -86,13 +86,12 @@ const PdfToolbarHarness: React.FC<{ file: UploadedFile }> = ({ file }) => (
 
 describe('PdfToolbar', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
     Object.defineProperty(globalThis, 'IntersectionObserver', {
       configurable: true,
       value: class {
@@ -111,7 +110,6 @@ describe('PdfToolbar', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     vi.restoreAllMocks();
   });
 

@@ -1,17 +1,14 @@
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolbarContainer } from './ToolbarContainer';
 
 describe('ToolbarContainer', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
@@ -37,7 +34,6 @@ describe('ToolbarContainer', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
     vi.restoreAllMocks();
   });
 

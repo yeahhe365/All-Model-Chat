@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '../../contexts/I18nContext';
@@ -18,20 +18,18 @@ const createSession = (id: string, timestamp: string): SavedChatSession => ({
 
 describe('CollapsedRecentChatsButton', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'zh' });
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    document.body.innerHTML = '';
   });
 
   it('shows the most recent sessions except the active session and limits the list to eight items', () => {

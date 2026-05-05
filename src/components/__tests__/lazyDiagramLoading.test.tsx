@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../services/logService', () => ({
@@ -14,7 +14,7 @@ vi.mock('../../services/logService', () => ({
 
 interface MountedRoot {
   container: HTMLDivElement;
-  root: Root;
+  root: TestRenderer;
 }
 
 const mountedRoots: MountedRoot[] = [];
@@ -81,9 +81,8 @@ const installMockIntersectionObserver = () => {
 };
 
 const renderIntoDom = (ui: JSX.Element) => {
-  const container = document.createElement('div');
-  document.body.appendChild(container);
-  const root = createRoot(container);
+  const root = createTestRenderer();
+  const { container } = root;
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
   act(() => {
@@ -101,7 +100,6 @@ afterEach(() => {
     act(() => {
       mounted.root.unmount();
     });
-    mounted.container.remove();
   }
   vi.resetModules();
   vi.doUnmock('../message/blocks/MermaidBlock');

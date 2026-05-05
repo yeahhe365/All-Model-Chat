@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const personGenerationSelectorMock = vi.fn();
@@ -41,13 +41,10 @@ const baseProps: ChatInputToolbarProps = {
 };
 
 describe('ChatInputToolbar', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
     personGenerationSelectorMock.mockClear();
   });
 
@@ -55,7 +52,6 @@ describe('ChatInputToolbar', () => {
     act(() => {
       root.unmount();
     });
-    container.remove();
   });
 
   it('shows person generation selector for real Imagen models', () => {

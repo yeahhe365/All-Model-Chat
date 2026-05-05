@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../../stores/settingsStore';
@@ -7,22 +7,19 @@ import { ModelListEditor } from './ModelListEditor';
 
 describe('ModelListEditor', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     useSettingsStore.setState({ language: 'en' });
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.restoreAllMocks();
     useSettingsStore.setState(initialState);
   });

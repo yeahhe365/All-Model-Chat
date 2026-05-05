@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
+import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../contexts/I18nContext';
 import { MessageActions } from './MessageActions';
@@ -24,7 +24,7 @@ vi.mock('./buttons/MessageCopyButton', () => ({
 
 describe('MessageActions', () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: TestRenderer;
 
   const message: ChatMessage = {
     id: 'message-1',
@@ -34,17 +34,14 @@ describe('MessageActions', () => {
   };
 
   beforeEach(() => {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+    root = createTestRenderer();
+    container = root.container;
   });
 
   afterEach(() => {
     act(() => {
       root.unmount();
     });
-    container.remove();
-    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 

@@ -49,7 +49,6 @@ import { renderHook } from '@/test/testUtils';
 
 describe('useFileIdAdder', () => {
   beforeEach(() => {
-    document.body.innerHTML = '';
     vi.clearAllMocks();
     generateUniqueIdMock.mockReturnValue('temp-file-1');
     getKeyForRequestMock.mockReturnValue({ key: 'api-key', isNewKey: false });
@@ -62,9 +61,7 @@ describe('useFileIdAdder', () => {
     });
   });
 
-  afterEach(() => {
-    document.body.innerHTML = '';
-  });
+  afterEach(() => {});
 
   it('keeps file ids with an unspecified backend state in pollable processing', async () => {
     let selectedFiles: UploadedFile[] = [];
