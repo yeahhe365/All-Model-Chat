@@ -77,6 +77,8 @@ export interface ChatSettings {
   mediaResolution?: MediaResolution;
 }
 
+export type ChatSettingsUpdater = (updater: (prevSettings: ChatSettings) => ChatSettings) => void;
+
 export interface AppSettings extends ChatSettings {
   themeId: 'system' | 'onyx' | 'pearl';
   baseFontSize: number;

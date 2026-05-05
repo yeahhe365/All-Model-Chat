@@ -5,53 +5,49 @@ import {
   DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
   TRANSLATION_TARGET_LANGUAGE_OPTIONS,
 } from '../../../constants/appConstants';
-import { ModelOption } from '../../../types';
+import { AppSettings, ModelOption } from '../../../types';
 import { TranslationTargetLanguage } from '../../../types/settings';
 import { Select } from '../../shared/Select';
 import { VoiceControl } from '../controls/VoiceControl';
+import type { SettingsUpdateHandler } from '../settingsTypes';
 
 interface LanguageVoiceSectionProps {
   availableModels: ModelOption[];
-  transcriptionModelId: string;
-  setTranscriptionModelId: (value: string) => void;
-  translationTargetLanguage: TranslationTargetLanguage;
-  setTranslationTargetLanguage: (value: TranslationTargetLanguage) => void;
-  inputTranslationModelId: string;
-  setInputTranslationModelId: (value: string) => void;
-  thoughtTranslationTargetLanguage: TranslationTargetLanguage;
-  setThoughtTranslationTargetLanguage: (value: TranslationTargetLanguage) => void;
-  thoughtTranslationModelId: string;
-  setThoughtTranslationModelId: (value: string) => void;
+  currentSettings: AppSettings;
+  onUpdateSetting: SettingsUpdateHandler;
 }
 
 export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props) => {
   const { t } = useI18n();
-  const inputTranslationModelOptions = props.availableModels.some((model) => model.id === props.inputTranslationModelId)
+  const inputTranslationModelId = props.currentSettings.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID;
+  const thoughtTranslationTargetLanguage =
+    props.currentSettings.thoughtTranslationTargetLanguage || 'Simplified Chinese';
+  const thoughtTranslationModelId =
+    props.currentSettings.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID;
+  const inputTranslationModelOptions = props.availableModels.some((model) => model.id === inputTranslationModelId)
     ? props.availableModels
     : [
         ...props.availableModels,
         {
-          id: props.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
-          name: props.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+          id: inputTranslationModelId,
+          name: inputTranslationModelId,
         },
       ];
-  const thoughtTranslationModelOptions = props.availableModels.some(
-    (model) => model.id === props.thoughtTranslationModelId,
-  )
+  const thoughtTranslationModelOptions = props.availableModels.some((model) => model.id === thoughtTranslationModelId)
     ? props.availableModels
     : [
         ...props.availableModels,
         {
-          id: props.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
-          name: props.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
+          id: thoughtTranslationModelId,
+          name: thoughtTranslationModelId,
         },
       ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <VoiceControl
-        transcriptionModelId={props.transcriptionModelId}
-        setTranscriptionModelId={props.setTranscriptionModelId}
+        transcriptionModelId={props.currentSettings.transcriptionModelId}
+        setTranscriptionModelId={(value) => props.onUpdateSetting('transcriptionModelId', value)}
         titleKey="settingsTranscriptionSectionTitle"
       />
 
@@ -74,8 +70,10 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
                   {t('settingsInputTranslationLanguageLabel')}
                 </div>
               }
-              value={props.translationTargetLanguage}
-              onChange={(event) => props.setTranslationTargetLanguage(event.target.value as TranslationTargetLanguage)}
+              value={props.currentSettings.translationTargetLanguage}
+              onChange={(event) =>
+                props.onUpdateSetting('translationTargetLanguage', event.target.value as TranslationTargetLanguage)
+              }
               className="py-3"
             >
               {TRANSLATION_TARGET_LANGUAGE_OPTIONS.map((option) => (
@@ -93,8 +91,8 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
                   {t('settings_inputTranslationModel_label')}
                 </div>
               }
-              value={props.inputTranslationModelId}
-              onChange={(event) => props.setInputTranslationModelId(event.target.value)}
+              value={inputTranslationModelId}
+              onChange={(event) => props.onUpdateSetting('inputTranslationModelId', event.target.value)}
               className="py-3"
             >
               {inputTranslationModelOptions.map((model) => (
@@ -118,9 +116,12 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
                   {t('settings_thoughtTranslationTargetLanguage_label')}
                 </div>
               }
-              value={props.thoughtTranslationTargetLanguage}
+              value={thoughtTranslationTargetLanguage}
               onChange={(event) =>
-                props.setThoughtTranslationTargetLanguage(event.target.value as TranslationTargetLanguage)
+                props.onUpdateSetting(
+                  'thoughtTranslationTargetLanguage',
+                  event.target.value as TranslationTargetLanguage,
+                )
               }
               className="py-3"
             >
@@ -139,8 +140,8 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
                   {t('settings_thoughtTranslationModel_label')}
                 </div>
               }
-              value={props.thoughtTranslationModelId}
-              onChange={(event) => props.setThoughtTranslationModelId(event.target.value)}
+              value={thoughtTranslationModelId}
+              onChange={(event) => props.onUpdateSetting('thoughtTranslationModelId', event.target.value)}
               className="py-3"
             >
               {thoughtTranslationModelOptions.map((model) => (

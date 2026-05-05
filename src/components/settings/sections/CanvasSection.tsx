@@ -4,21 +4,20 @@ import { Wand2 } from 'lucide-react';
 import { AVAILABLE_CANVAS_MODELS } from '../../../constants/settingsModelOptions';
 import { ToggleItem } from '../../shared/ToggleItem';
 import { Select } from '../../shared/Select';
+import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../../constants/appConstants';
+import type { AppSettings } from '../../../types';
+import type { SettingsUpdateHandler } from '../settingsTypes';
 
 interface CanvasSectionProps {
-  autoCanvasVisualization: boolean;
-  setAutoCanvasVisualization: (value: boolean) => void;
-  autoCanvasModelId: string;
-  setAutoCanvasModelId: (value: string) => void;
+  currentSettings: AppSettings;
+  onUpdateSetting: SettingsUpdateHandler;
 }
 
-export const CanvasSection: React.FC<CanvasSectionProps> = ({
-  autoCanvasVisualization,
-  setAutoCanvasVisualization,
-  autoCanvasModelId,
-  setAutoCanvasModelId,
-}) => {
+export const CanvasSection: React.FC<CanvasSectionProps> = ({ currentSettings, onUpdateSetting }) => {
   const { t } = useI18n();
+  const autoCanvasVisualization = currentSettings.autoCanvasVisualization ?? false;
+  const autoCanvasModelId = currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
+
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
@@ -29,7 +28,7 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({
         <ToggleItem
           label={t('settings_autoCanvasVisualization_label')}
           checked={autoCanvasVisualization}
-          onChange={setAutoCanvasVisualization}
+          onChange={(value) => onUpdateSetting('autoCanvasVisualization', value)}
           tooltip={t('settings_autoCanvasVisualization_tooltip')}
         />
 
@@ -43,7 +42,7 @@ export const CanvasSection: React.FC<CanvasSectionProps> = ({
             </div>
           }
           value={autoCanvasModelId}
-          onChange={(event) => setAutoCanvasModelId(event.target.value)}
+          onChange={(event) => onUpdateSetting('autoCanvasModelId', event.target.value)}
           className="py-3"
         >
           {AVAILABLE_CANVAS_MODELS.map((model) => (

@@ -3,6 +3,7 @@ import React, { createContext, useContext } from 'react';
 import type {
   AppSettings,
   ChatSettings,
+  ChatSettingsUpdater,
   ChatMessage,
   ChatToolToggleStates,
   InputCommand,
@@ -96,7 +97,7 @@ interface ChatAreaInputContextValue {
   isPipActive?: boolean;
   generateQuadImages: boolean;
   onToggleQuadImages: () => void;
-  setCurrentChatSettings: (updater: (prevSettings: ChatSettings) => ChatSettings) => void;
+  setCurrentChatSettings: ChatSettingsUpdater;
   onSuggestionClick?: (suggestion: string) => void;
   onOrganizeInfoClick?: (suggestion: string) => void;
   showEmptyStateSuggestions?: boolean;

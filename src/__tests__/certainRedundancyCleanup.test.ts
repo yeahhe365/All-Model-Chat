@@ -204,6 +204,88 @@ describe('certain redundancy cleanup guards', () => {
     }
   });
 
+  it('keeps model settings panels on the shared settings object contract', () => {
+    const chatBehaviorSectionSource = readProjectFile('src/components/settings/sections/ChatBehaviorSection.tsx');
+    const modelVoiceSettingsSource = readProjectFile('src/components/settings/ModelVoiceSettings.tsx');
+    const modelsSectionSource = readProjectFile('src/components/settings/sections/ModelsSection.tsx');
+    const languageVoiceSectionSource = readProjectFile('src/components/settings/sections/LanguageVoiceSection.tsx');
+    const canvasSectionSource = readProjectFile('src/components/settings/sections/CanvasSection.tsx');
+
+    for (const source of [
+      chatBehaviorSectionSource,
+      modelVoiceSettingsSource,
+      languageVoiceSectionSource,
+      canvasSectionSource,
+    ]) {
+      expect(source).toContain('currentSettings: AppSettings;');
+      expect(source).toContain('onUpdateSetting: SettingsUpdateHandler;');
+    }
+
+    for (const source of [
+      chatBehaviorSectionSource,
+      modelVoiceSettingsSource,
+      modelsSectionSource,
+      languageVoiceSectionSource,
+      canvasSectionSource,
+    ]) {
+      for (const propName of [
+        'setTranscriptionModelId',
+        'setTtsVoice',
+        'setSystemInstruction',
+        'setTemperature',
+        'setTopP',
+        'setTopK',
+        'setThinkingBudget',
+        'setThinkingLevel',
+        'setShowThoughts',
+        'setMediaResolution',
+        'setTranslationTargetLanguage',
+        'setInputTranslationModelId',
+        'setThoughtTranslationTargetLanguage',
+        'setThoughtTranslationModelId',
+        'setAutoCanvasVisualization',
+        'setAutoCanvasModelId',
+      ]) {
+        expect(source).not.toContain(`${propName}:`);
+      }
+    }
+
+    for (const source of [chatBehaviorSectionSource, modelsSectionSource]) {
+      for (const propName of [
+        'setTranscriptionModelId',
+        'setTtsVoice',
+        'setSystemInstruction',
+        'setTemperature',
+        'setTopP',
+        'setTopK',
+        'setThinkingBudget',
+        'setThinkingLevel',
+        'setShowThoughts',
+        'setMediaResolution',
+        'setTranslationTargetLanguage',
+        'setInputTranslationModelId',
+        'setThoughtTranslationTargetLanguage',
+        'setThoughtTranslationModelId',
+        'setAutoCanvasVisualization',
+        'setAutoCanvasModelId',
+      ]) {
+        expect(source).not.toContain(`${propName}={`);
+      }
+    }
+  });
+
+  it('reuses the shared chat settings updater type for chat area contracts', () => {
+    const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
+    const chatAreaPropsSource = readProjectFile('src/components/layout/chat-area/ChatAreaProps.ts');
+    const chatStoreSource = readProjectFile('src/stores/chatStore.ts');
+
+    for (const source of [chatAreaContextSource, chatAreaPropsSource, chatStoreSource]) {
+      expect(source).toContain('ChatSettingsUpdater');
+      expect(source).not.toContain('(updater: (prevSettings: ChatSettings) => ChatSettings) => void;');
+      expect(source).not.toContain('(updater: (prev: ChatSettings) => ChatSettings) => void;');
+    }
+  });
+
   it('removes low-risk unused interface surface from selected modules', () => {
     const modelSelectorSource = readProjectFile('src/components/settings/controls/ModelSelector.tsx');
     const liveConfigSource = readProjectFile('src/hooks/live-api/useLiveConfig.ts');

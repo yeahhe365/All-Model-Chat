@@ -227,18 +227,22 @@ describe('ModelsSection', () => {
     });
 
     expect(container.querySelector('[data-testid="language-voice-section"]')).not.toBeNull();
-    expect(mockLanguageVoiceSection.lastProps.transcriptionModelId).toBe('gemini-3-flash-preview');
-    expect(mockLanguageVoiceSection.lastProps.translationTargetLanguage).toBe('Japanese');
-    expect(mockLanguageVoiceSection.lastProps.inputTranslationModelId).toBe('gemini-custom-input-translator');
-    expect(mockLanguageVoiceSection.lastProps.thoughtTranslationTargetLanguage).toBe('Korean');
-    expect(mockLanguageVoiceSection.lastProps.thoughtTranslationModelId).toBe('gemini-custom-thought-translator');
+    expect(mockLanguageVoiceSection.lastProps.currentSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
+    expect(mockLanguageVoiceSection.lastProps.currentSettings.translationTargetLanguage).toBe('Japanese');
+    expect(mockLanguageVoiceSection.lastProps.currentSettings.inputTranslationModelId).toBe(
+      'gemini-custom-input-translator',
+    );
+    expect(mockLanguageVoiceSection.lastProps.currentSettings.thoughtTranslationTargetLanguage).toBe('Korean');
+    expect(mockLanguageVoiceSection.lastProps.currentSettings.thoughtTranslationModelId).toBe(
+      'gemini-custom-thought-translator',
+    );
 
     act(() => {
-      mockLanguageVoiceSection.lastProps.setTranscriptionModelId('gemini-3.1-flash-lite-preview');
-      mockLanguageVoiceSection.lastProps.setTranslationTargetLanguage('Simplified Chinese');
-      mockLanguageVoiceSection.lastProps.setInputTranslationModelId('gemini-3-flash-preview');
-      mockLanguageVoiceSection.lastProps.setThoughtTranslationTargetLanguage('English');
-      mockLanguageVoiceSection.lastProps.setThoughtTranslationModelId('gemini-3.1-pro-preview');
+      mockLanguageVoiceSection.lastProps.onUpdateSetting('transcriptionModelId', 'gemini-3.1-flash-lite-preview');
+      mockLanguageVoiceSection.lastProps.onUpdateSetting('translationTargetLanguage', 'Simplified Chinese');
+      mockLanguageVoiceSection.lastProps.onUpdateSetting('inputTranslationModelId', 'gemini-3-flash-preview');
+      mockLanguageVoiceSection.lastProps.onUpdateSetting('thoughtTranslationTargetLanguage', 'English');
+      mockLanguageVoiceSection.lastProps.onUpdateSetting('thoughtTranslationModelId', 'gemini-3.1-pro-preview');
     });
 
     expect(onUpdateSettings).toHaveBeenCalledWith({ transcriptionModelId: 'gemini-3.1-flash-lite-preview' });

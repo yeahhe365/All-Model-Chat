@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { ChevronDown, Shield } from 'lucide-react';
-import { DEFAULT_AUTO_CANVAS_MODEL_ID, DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/appConstants';
 import { AppSettings, ModelOption } from '../../../types';
 import { ModelSelector } from '../controls/ModelSelector';
 import { CanvasSection } from './CanvasSection';
 import { GenerationSection } from './GenerationSection';
 import { LanguageVoiceSection } from './LanguageVoiceSection';
 import { SafetySection } from './SafetySection';
+import type { SettingsUpdateHandler } from '../settingsTypes';
 
 interface ModelsSectionProps {
   modelId: string;
@@ -33,8 +33,8 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
   const { t } = useI18n();
   const [isSafetyExpanded, setIsSafetyExpanded] = useState(false);
 
-  const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-    onUpdateSettings({ [key]: value } as Pick<AppSettings, K>);
+  const updateSetting: SettingsUpdateHandler = (key, value) => {
+    onUpdateSettings({ [key]: value } as Partial<AppSettings>);
   };
 
   return (
@@ -56,27 +56,12 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
 
       {!isOpenAICompatibleMode && (
         <>
-          <CanvasSection
-            autoCanvasVisualization={currentSettings.autoCanvasVisualization ?? false}
-            setAutoCanvasVisualization={(value) => updateSetting('autoCanvasVisualization', value)}
-            autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
-            setAutoCanvasModelId={(value) => updateSetting('autoCanvasModelId', value)}
-          />
+          <CanvasSection currentSettings={currentSettings} onUpdateSetting={updateSetting} />
 
           <LanguageVoiceSection
-            transcriptionModelId={currentSettings.transcriptionModelId}
-            setTranscriptionModelId={(value) => updateSetting('transcriptionModelId', value)}
-            translationTargetLanguage={currentSettings.translationTargetLanguage}
-            setTranslationTargetLanguage={(value) => updateSetting('translationTargetLanguage', value)}
-            inputTranslationModelId={currentSettings.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID}
-            setInputTranslationModelId={(value) => updateSetting('inputTranslationModelId', value)}
-            thoughtTranslationTargetLanguage={currentSettings.thoughtTranslationTargetLanguage || 'Simplified Chinese'}
-            setThoughtTranslationTargetLanguage={(value) => updateSetting('thoughtTranslationTargetLanguage', value)}
-            thoughtTranslationModelId={
-              currentSettings.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID
-            }
-            setThoughtTranslationModelId={(value) => updateSetting('thoughtTranslationModelId', value)}
             availableModels={availableModels}
+            currentSettings={currentSettings}
+            onUpdateSetting={updateSetting}
           />
 
           <div className="rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)]/30 p-4">

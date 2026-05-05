@@ -2,6 +2,7 @@ import type { DragEvent } from 'react';
 import type {
   ChatMessage,
   ChatSettings,
+  ChatSettingsUpdater,
   LiveClientFunctions,
   ModelOption,
   SideViewContent,
@@ -83,7 +84,7 @@ export interface ChatAreaInputActionsModel {
   onRetryLastTurn: () => void;
   onEditLastUserMessage: () => void;
   onToggleQuadImages: () => void;
-  setCurrentChatSettings: (updater: (prevSettings: ChatSettings) => ChatSettings) => void;
+  setCurrentChatSettings: ChatSettingsUpdater;
   onAddUserMessage: (text: string, files?: UploadedFile[]) => void;
   onLiveTranscript: (
     text: string,

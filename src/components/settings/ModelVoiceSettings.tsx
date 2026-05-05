@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ModelOption } from '../../types';
+import { AppSettings, ModelOption } from '../../types';
 import { Info, SquarePen, X, Image as ImageIcon } from 'lucide-react';
 import { Tooltip } from '../shared/Tooltip';
 import { Select } from '../shared/Select';
@@ -12,61 +12,31 @@ import { MediaResolution } from '../../types/settings';
 import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 import { useI18n } from '../../contexts/I18nContext';
 import { SMALL_ICON_BUTTON_CLASS } from '../../constants/appConstants';
+import type { SettingsUpdateHandler } from './settingsTypes';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
   setModelId: (id: string) => void;
   availableModels: ModelOption[];
-  transcriptionModelId: string;
-  setTranscriptionModelId: (value: string) => void;
-  ttsVoice: string;
-  setTtsVoice: (value: string) => void;
-  systemInstruction: string;
-  setSystemInstruction: (value: string) => void;
-  thinkingBudget: number;
-  setThinkingBudget: (value: number) => void;
-  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
-  setThinkingLevel?: (value: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
-  showThoughts: boolean;
-  setShowThoughts: (value: boolean) => void;
-  temperature: number;
-  setTemperature: (value: number) => void;
-  topP: number;
-  setTopP: (value: number) => void;
-  topK: number;
-  setTopK: (value: number) => void;
   setAvailableModels: (models: ModelOption[]) => void;
-  mediaResolution?: MediaResolution;
-  setMediaResolution?: (resolution: MediaResolution) => void;
+  currentSettings: AppSettings;
+  onUpdateSetting: SettingsUpdateHandler;
 }
 
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => {
+  const { modelId, setModelId, availableModels, setAvailableModels, currentSettings, onUpdateSetting } = props;
   const {
-    modelId,
-    setModelId,
-    availableModels,
     transcriptionModelId,
-    setTranscriptionModelId,
     ttsVoice,
-    setTtsVoice,
     systemInstruction,
-    setSystemInstruction,
     thinkingBudget,
-    setThinkingBudget,
     thinkingLevel,
-    setThinkingLevel,
     showThoughts,
-    setShowThoughts,
     temperature,
-    setTemperature,
     topP,
-    setTopP,
-    topK,
-    setTopK,
-    setAvailableModels,
     mediaResolution,
-    setMediaResolution,
-  } = props;
+  } = currentSettings;
+  const topK = currentSettings.topK ?? 64;
   const { t } = useI18n();
 
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
@@ -93,15 +63,15 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
 
     // Commit changes to global state only when the user finishes typing
     if (localPrompt !== systemInstruction) {
-      setSystemInstruction(localPrompt);
+      onUpdateSetting('systemInstruction', localPrompt);
     }
   };
 
   const commitPromptIfNeeded = useCallback(() => {
     if (localPrompt !== systemInstruction) {
-      setSystemInstruction(localPrompt);
+      onUpdateSetting('systemInstruction', localPrompt);
     }
-  }, [localPrompt, setSystemInstruction, systemInstruction]);
+  }, [localPrompt, onUpdateSetting, systemInstruction]);
 
   const handleModelSelectorPointerDownCapture = () => {
     const activeElement = document.activeElement;
@@ -126,7 +96,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const handleOpenExpand = () => {
     // Sync current local edits before opening the separate editor modal
     if (localPrompt !== systemInstruction) {
-      setSystemInstruction(localPrompt);
+      onUpdateSetting('systemInstruction', localPrompt);
     }
     setIsSystemPromptExpanded(true);
   };
@@ -134,7 +104,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const handleClearPrompt = () => {
     setLocalPrompt('');
     if (localPrompt !== '' || systemInstruction !== '') {
-      setSystemInstruction('');
+      onUpdateSetting('systemInstruction', '');
     }
   };
 
@@ -166,11 +136,11 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
         <ThinkingControl
           modelId={modelId}
           thinkingBudget={thinkingBudget}
-          setThinkingBudget={setThinkingBudget}
+          setThinkingBudget={(value) => onUpdateSetting('thinkingBudget', value)}
           thinkingLevel={thinkingLevel}
-          setThinkingLevel={setThinkingLevel}
+          setThinkingLevel={(value) => onUpdateSetting('thinkingLevel', value)}
           showThoughts={showThoughts}
-          setShowThoughts={setShowThoughts}
+          setShowThoughts={(value) => onUpdateSetting('showThoughts', value)}
         />
 
         <div className="pt-2">
@@ -230,7 +200,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
           onClose={() => setIsSystemPromptExpanded(false)}
           title={t('settingsSystemPrompt')}
           value={systemInstruction}
-          onChange={setSystemInstruction}
+          onChange={(value) => onUpdateSetting('systemInstruction', value)}
           placeholder={t('chatBehavior_systemPrompt_placeholder')}
           confirmLabel={t('settingsSaveAndClose')}
         />
@@ -257,7 +227,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
               max="2"
               step="0.05"
               value={temperature}
-              onChange={(e) => setTemperature(parseFloat(e.target.value))}
+              onChange={(e) => onUpdateSetting('temperature', parseFloat(e.target.value))}
               className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
             />
           </div>
@@ -282,7 +252,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
               max="1"
               step="0.05"
               value={topP}
-              onChange={(e) => setTopP(parseFloat(e.target.value))}
+              onChange={(e) => onUpdateSetting('topP', parseFloat(e.target.value))}
               className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
             />
           </div>
@@ -307,12 +277,12 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
               max="128"
               step="1"
               value={topK}
-              onChange={(e) => setTopK(parseInt(e.target.value))}
+              onChange={(e) => onUpdateSetting('topK', parseInt(e.target.value, 10))}
               className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
             />
           </div>
 
-          {setMediaResolution && mediaResolution && (
+          {mediaResolution && (
             <Select
               id="media-resolution-select"
               label=""
@@ -333,7 +303,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                 </span>
               }
               value={mediaResolution}
-              onChange={(e) => setMediaResolution(e.target.value as MediaResolution)}
+              onChange={(e) => onUpdateSetting('mediaResolution', e.target.value as MediaResolution)}
             >
               <option value={MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED}>{t('mediaResolution_unspecified')}</option>
               <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
@@ -354,9 +324,9 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
       {/* Voice & Audio Group */}
       <VoiceControl
         transcriptionModelId={transcriptionModelId}
-        setTranscriptionModelId={setTranscriptionModelId}
+        setTranscriptionModelId={(value) => onUpdateSetting('transcriptionModelId', value)}
         ttsVoice={ttsVoice}
-        setTtsVoice={setTtsVoice}
+        setTtsVoice={(value) => onUpdateSetting('ttsVoice', value)}
       />
     </div>
   );

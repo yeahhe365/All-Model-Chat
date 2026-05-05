@@ -34,28 +34,22 @@ describe('ModelVoiceSettings interactions', () => {
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
       { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
     ],
-    transcriptionModelId: 'gemini-3-flash-preview',
-    setTranscriptionModelId: vi.fn(),
-    ttsVoice: 'Zephyr',
-    setTtsVoice: vi.fn(),
     t: (key: string) => key,
-    systemInstruction: '',
-    setSystemInstruction: vi.fn(),
-    thinkingBudget: -1,
-    setThinkingBudget: vi.fn(),
-    thinkingLevel: 'HIGH' as const,
-    setThinkingLevel: vi.fn(),
-    showThoughts: true,
-    setShowThoughts: vi.fn(),
-    temperature: 1,
-    setTemperature: vi.fn(),
-    topP: 0.95,
-    setTopP: vi.fn(),
-    topK: 64,
-    setTopK: vi.fn(),
     setAvailableModels: vi.fn(),
-    mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
-    setMediaResolution: vi.fn(),
+    currentSettings: {
+      ...useSettingsStore.getState().appSettings,
+      transcriptionModelId: 'gemini-3-flash-preview',
+      ttsVoice: 'Zephyr',
+      systemInstruction: '',
+      thinkingBudget: -1,
+      thinkingLevel: 'HIGH' as const,
+      showThoughts: true,
+      temperature: 1,
+      topP: 0.95,
+      topK: 64,
+      mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
+    },
+    onUpdateSetting: vi.fn(),
   };
 
   beforeEach(() => {
@@ -77,12 +71,12 @@ describe('ModelVoiceSettings interactions', () => {
 
   it('selects a model and commits pending prompt edits when clicking a model row', async () => {
     const setModelId = vi.fn();
-    const setSystemInstruction = vi.fn();
+    const onUpdateSetting = vi.fn();
 
     await act(async () => {
       root.render(
         <I18nProvider>
-          <ModelVoiceSettings {...baseProps} setModelId={setModelId} setSystemInstruction={setSystemInstruction} />
+          <ModelVoiceSettings {...baseProps} setModelId={setModelId} onUpdateSetting={onUpdateSetting} />
         </I18nProvider>,
       );
     });
@@ -111,19 +105,19 @@ describe('ModelVoiceSettings interactions', () => {
     });
 
     expect(setModelId).toHaveBeenCalledWith('gemma-4-31b-it');
-    expect(setSystemInstruction).toHaveBeenCalledWith('Persist this prompt');
+    expect(onUpdateSetting).toHaveBeenCalledWith('systemInstruction', 'Persist this prompt');
   });
 
   it('shows system prompt status, clear action, and a taller editor', async () => {
-    const setSystemInstruction = vi.fn();
+    const onUpdateSetting = vi.fn();
 
     await act(async () => {
       root.render(
         <I18nProvider>
           <ModelVoiceSettings
             {...baseProps}
-            systemInstruction="Stay concise."
-            setSystemInstruction={setSystemInstruction}
+            currentSettings={{ ...baseProps.currentSettings, systemInstruction: 'Stay concise.' }}
+            onUpdateSetting={onUpdateSetting}
           />
         </I18nProvider>,
       );
@@ -145,7 +139,7 @@ describe('ModelVoiceSettings interactions', () => {
       clearButton?.click();
     });
 
-    expect(setSystemInstruction).toHaveBeenCalledWith('');
+    expect(onUpdateSetting).toHaveBeenCalledWith('systemInstruction', '');
     expect(textarea?.value).toBe('');
     expect(container.textContent).toContain('Not set');
     expect(container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]')).toBeNull();

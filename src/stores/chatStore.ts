@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, ChatSettings } from '../types';
+import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, ChatSettingsUpdater } from '../types';
 import { dbService } from '../utils/db';
 import { logService } from '../services/logService';
 import { rehydrateSessionFiles } from '../utils/chat/session';
@@ -93,7 +93,7 @@ interface ChatActions extends ChatUiSliceActions {
   invalidateFileOperations: () => void;
 
   // Computed helpers (call getState inside)
-  setCurrentChatSettings: (updater: (prev: ChatSettings) => ChatSettings) => void;
+  setCurrentChatSettings: ChatSettingsUpdater;
 }
 
 export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
