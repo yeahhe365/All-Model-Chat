@@ -9,10 +9,12 @@ import { useMessageListUI } from '../../hooks/useMessageListUI';
 import { useMessageListScroll } from './message-list/hooks/useMessageListScroll';
 import { MessageListFooter } from './message-list/MessageListFooter';
 import { isGemini3Model } from '../../utils/modelHelpers';
-import { useChatAreaMessageList } from '../layout/chat-area/ChatAreaContext';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
 import { isMarkdownFile } from '../../utils/fileTypeUtils';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useChatStore } from '../../stores/chatStore';
+import { useChatRuntimeStore } from '../../stores/chatRuntimeStore';
+import { useChatState } from '../../hooks/chat/useChatState';
 
 const LazyHtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');
@@ -30,28 +32,36 @@ const LazyMarkdownPreviewModal = lazy(async () => {
 });
 
 const MessageListComponent: React.FC = () => {
-  const {
-    messages,
-    sessionTitle,
-    setScrollContainerRef,
-    onEditMessage,
-    onDeleteMessage,
-    onRetryMessage,
-    onUpdateMessageFile,
-    showThoughts,
-    onFollowUpSuggestionClick,
-    onGenerateCanvas,
-    onContinueGeneration,
-    onForkMessage,
-    onQuickTTS,
-    chatInputHeight,
-    currentModelId,
-    onOpenSidePanel,
-    onQuote,
-    onInsert,
-    activeSessionId,
-  } = useChatAreaMessageList();
+  const appSettings = useSettingsStore((state) => state.appSettings);
   const themeId = useSettingsStore((state) => state.currentTheme.id);
+  const messages = useChatStore((state) => state.activeMessages);
+  const setCommandedInput = useChatStore((state) => state.setCommandedInput);
+  const { activeSessionId, currentChatSettings } = useChatState(appSettings);
+  const sessionTitle = useChatRuntimeStore((state) => state.sessionTitle);
+  const setScrollContainerRef = useChatRuntimeStore((state) => state.setScrollContainerRef);
+  const onEditMessage = useChatRuntimeStore((state) => state.onEditMessage);
+  const onDeleteMessage = useChatRuntimeStore((state) => state.onDeleteMessage);
+  const onRetryMessage = useChatRuntimeStore((state) => state.onRetryMessage);
+  const onUpdateMessageFile = useChatRuntimeStore((state) => state.onUpdateMessageFile);
+  const onFollowUpSuggestionClick = useChatRuntimeStore((state) => state.onFollowUpSuggestionClick);
+  const onGenerateCanvas = useChatRuntimeStore((state) => state.onGenerateCanvas);
+  const onContinueGeneration = useChatRuntimeStore((state) => state.onContinueGeneration);
+  const onForkMessage = useChatRuntimeStore((state) => state.onForkMessage);
+  const onQuickTTS = useChatRuntimeStore((state) => state.onQuickTTS);
+  const chatInputHeight = useChatRuntimeStore((state) => state.chatInputHeight);
+  const onOpenSidePanel = useChatRuntimeStore((state) => state.onOpenSidePanel);
+  const handleQuote = React.useCallback(
+    (text: string) => {
+      setCommandedInput({ text, id: Date.now(), mode: 'quote' });
+    },
+    [setCommandedInput],
+  );
+  const handleInsert = React.useCallback(
+    (text: string) => {
+      setCommandedInput({ text, id: Date.now(), mode: 'insert' });
+    },
+    [setCommandedInput],
+  );
   const visibleMessages = useMemo(() => getVisibleChatMessages(messages), [messages]);
   // UI Logic (Modals, Previews, Configuration)
   const {
@@ -88,7 +98,7 @@ const MessageListComponent: React.FC = () => {
   } = useMessageListScroll({ messages: visibleMessages, setScrollContainerRef, activeSessionId });
 
   // Determine if current model is Gemini 3 to enable per-part resolution
-  const isGemini3 = useMemo(() => isGemini3Model(currentModelId), [currentModelId]);
+  const isGemini3 = useMemo(() => isGemini3Model(currentChatSettings.modelId), [currentChatSettings.modelId]);
   const markdownPreviewFile = previewFile && isMarkdownFile(previewFile) ? previewFile : null;
   const genericPreviewFile = previewFile && !isMarkdownFile(previewFile) ? previewFile : null;
 
@@ -128,7 +138,7 @@ const MessageListComponent: React.FC = () => {
                   onRetryMessage={onRetryMessage}
                   onImageClick={handleFileClick}
                   onOpenHtmlPreview={handleOpenHtmlPreview}
-                  showThoughts={showThoughts}
+                  showThoughts={currentChatSettings.showThoughts}
                   onGenerateCanvas={onGenerateCanvas}
                   onContinueGeneration={onContinueGeneration}
                   onForkMessage={onForkMessage}
@@ -143,7 +153,12 @@ const MessageListComponent: React.FC = () => {
         )}
 
         {/* Floating Toolbars & Navigation */}
-        <TextSelectionToolbar onQuote={onQuote} onInsert={onInsert} onTTS={onQuickTTS} containerRef={scrollerRef} />
+        <TextSelectionToolbar
+          onQuote={handleQuote}
+          onInsert={handleInsert}
+          onTTS={onQuickTTS}
+          containerRef={scrollerRef}
+        />
 
         <ScrollNavigation
           showUp={showScrollUp}

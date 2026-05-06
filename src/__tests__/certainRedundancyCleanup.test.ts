@@ -35,7 +35,6 @@ describe('certain redundancy cleanup guards', () => {
     const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
     const mainContentModelsSource = readProjectFile('src/components/layout/mainContentModels.ts');
     const settingsModalSource = readProjectFile('src/components/settings/SettingsModal.tsx');
-    const chatAreaContextSource = readProjectFile('src/components/layout/chat-area/ChatAreaContext.tsx');
     const headerSource = readProjectFile('src/components/header/Header.tsx');
     const historySidebarSource = readProjectFile('src/components/sidebar/HistorySidebar.tsx');
     const apiConfigSource = readProjectFile('src/components/settings/sections/ApiConfigSection.tsx');
@@ -49,7 +48,7 @@ describe('certain redundancy cleanup guards', () => {
     expect(mainContentViewModelSource).toContain('buildSidePanelKey');
     expect(mainContentModelsSource).not.toContain('export const buildHistorySidebarProps =');
     expect(mainContentModelsSource).not.toContain('export const buildChatAreaModel =');
-    expect(chatAreaContextSource).not.toContain('isHistorySidebarOpen?: boolean;');
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/layout/chat-area/ChatAreaContext.tsx'))).toBe(false);
     expect(headerSource).not.toContain('currentModelName?: string;');
     expect(historySidebarSource).not.toContain('isOpen?: boolean;');
     expect(apiConfigSource).not.toContain('serverManagedApi?: boolean;');
@@ -60,21 +59,21 @@ describe('certain redundancy cleanup guards', () => {
   it('keeps PiP availability independent from custom API config toggles', () => {
     const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
     const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
+    const runtimeBridgeSource = readProjectFile('src/components/layout/useChatRuntimeBridge.ts');
 
-    expect(mainContentViewModelSource).toContain('isPipSupported: pipState.isPipSupported,');
+    expect(runtimeBridgeSource).toContain('isPipSupported: pipState.isPipSupported,');
     expect(mainContentSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
     expect(mainContentViewModelSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
+    expect(runtimeBridgeSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
   });
 
   it('keeps message-list scroll ownership local instead of routing scroll events back through chat state', () => {
     const chatScrollSource = readProjectFile('src/hooks/chat/useChatScroll.ts');
-    const chatAreaContextSource = readProjectFile('src/components/layout/chat-area/ChatAreaContext.tsx');
-    const chatAreaPropsSource = readProjectFile('src/components/layout/chat-area/ChatAreaProps.ts');
     const messageListSource = readProjectFile('src/components/chat/MessageList.tsx');
 
     expect(chatScrollSource).not.toContain('handleScroll =');
-    expect(chatAreaContextSource).not.toContain('onScrollContainerScroll: () => void;');
-    expect(chatAreaPropsSource).not.toContain('onScrollContainerScroll: () => void;');
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/layout/chat-area/ChatAreaContext.tsx'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/layout/chat-area/ChatAreaProps.ts'))).toBe(false);
     expect(messageListSource).not.toContain('onScrollContainerScroll');
   });
 
@@ -155,12 +154,12 @@ describe('certain redundancy cleanup guards', () => {
   });
 
   it('keeps standard chat sender on the shared optimistic message pipeline', () => {
-    const source = readProjectFile('src/hooks/message-sender/useStandardChat.ts');
+    const source = readProjectFile('src/hooks/message-sender/standardChatStrategy.ts');
 
     expect(source).toContain('runOptimisticMessagePipeline');
     expect(source).not.toContain('useStandardChatSession');
     expect(source).toContain('resolveStandardChatTurn');
-    expect(source).toContain('useStandardChatApiCall');
+    expect(source).toContain('performStandardChatApiCall');
     expect(source).not.toContain('performOptimisticSessionUpdate');
     expect(source).not.toContain('generateSessionTitle');
     expect(fs.existsSync(path.join(projectRoot, 'src/hooks/message-sender/useStandardChatSession.ts'))).toBe(false);
@@ -169,10 +168,10 @@ describe('certain redundancy cleanup guards', () => {
 
   it('keeps senders on the shared optimistic message pipeline', () => {
     for (const relativePath of [
-      'src/hooks/message-sender/useStandardChat.ts',
-      'src/hooks/message-sender/useCanvasGenerator.ts',
-      'src/hooks/message-sender/useTtsImagenSender.ts',
-      'src/hooks/message-sender/useImageEditSender.ts',
+      'src/hooks/message-sender/standardChatStrategy.ts',
+      'src/hooks/message-sender/canvasStrategy.ts',
+      'src/hooks/message-sender/ttsImagenStrategy.ts',
+      'src/hooks/message-sender/imageEditStrategy.ts',
     ]) {
       const source = readProjectFile(relativePath);
 
@@ -181,6 +180,27 @@ describe('certain redundancy cleanup guards', () => {
       expect(source).not.toContain('generateSessionTitle');
       expect(source).not.toContain('DEFAULT_CHAT_SETTINGS');
     }
+  });
+
+  it('keeps message sender lifecycle centralized instead of duplicating sender hooks', () => {
+    const mainSenderSource = readProjectFile('src/hooks/useMessageSender.ts');
+
+    expect(mainSenderSource).toContain('useMessageLifecycle');
+    expect(mainSenderSource).toMatch(/const \{ runMessageLifecycle \} = useMessageLifecycle\(/);
+
+    for (const hookName of ['useStandardChat', 'useCanvasGenerator', 'useTtsImagenSender', 'useImageEditSender']) {
+      expect(mainSenderSource).not.toContain(hookName);
+      expect(fs.existsSync(path.join(projectRoot, `src/hooks/message-sender/${hookName}.ts`))).toBe(false);
+    }
+
+    const senderFiles = listProjectSourceFiles('src/hooks/message-sender');
+    const lifecycleConsumers = senderFiles.filter(
+      (relativePath) =>
+        !relativePath.endsWith('.test.tsx') &&
+        relativePath !== 'src/hooks/message-sender/useMessageLifecycle.ts' &&
+        readProjectFile(relativePath).includes('useMessageLifecycle'),
+    );
+    expect(lifecycleConsumers).toEqual(['src/hooks/message-sender/messagePipeline.ts']);
   });
 
   it('keeps model generation settings behind a unified settings update interface', () => {
@@ -210,30 +230,40 @@ describe('certain redundancy cleanup guards', () => {
     }
   });
 
+  it('removes the unused parallel settings component tree', () => {
+    const settingsContentSource = readProjectFile('src/components/settings/SettingsContent.tsx');
+    const settingsSourceFiles = listProjectSourceFiles('src/components/settings');
+
+    for (const relativePath of [
+      'src/components/settings/sections/ChatBehaviorSection.tsx',
+      'src/components/settings/sections/ChatBehaviorSection.test.tsx',
+      'src/components/settings/ModelVoiceSettings.tsx',
+      'src/components/settings/ModelVoiceSettings.test.tsx',
+      'src/components/settings/ModelVoiceSettings.interaction.test.tsx',
+    ]) {
+      expect(fs.existsSync(path.join(projectRoot, relativePath))).toBe(false);
+    }
+
+    for (const relativePath of settingsSourceFiles) {
+      const source = readProjectFile(relativePath);
+      expect(source).not.toContain('ChatBehaviorSection');
+      expect(source).not.toContain('ModelVoiceSettings');
+    }
+
+    expect(settingsContentSource).toContain("from './sections/ModelsSection'");
+  });
+
   it('keeps model settings panels on the shared settings object contract', () => {
-    const chatBehaviorSectionSource = readProjectFile('src/components/settings/sections/ChatBehaviorSection.tsx');
-    const modelVoiceSettingsSource = readProjectFile('src/components/settings/ModelVoiceSettings.tsx');
     const modelsSectionSource = readProjectFile('src/components/settings/sections/ModelsSection.tsx');
     const languageVoiceSectionSource = readProjectFile('src/components/settings/sections/LanguageVoiceSection.tsx');
     const canvasSectionSource = readProjectFile('src/components/settings/sections/CanvasSection.tsx');
 
-    for (const source of [
-      chatBehaviorSectionSource,
-      modelVoiceSettingsSource,
-      languageVoiceSectionSource,
-      canvasSectionSource,
-    ]) {
+    for (const source of [languageVoiceSectionSource, canvasSectionSource]) {
       expect(source).toContain('currentSettings: AppSettings;');
       expect(source).toContain('onUpdateSetting: SettingsUpdateHandler;');
     }
 
-    for (const source of [
-      chatBehaviorSectionSource,
-      modelVoiceSettingsSource,
-      modelsSectionSource,
-      languageVoiceSectionSource,
-      canvasSectionSource,
-    ]) {
+    for (const source of [modelsSectionSource, languageVoiceSectionSource, canvasSectionSource]) {
       for (const propName of [
         'setTranscriptionModelId',
         'setTtsVoice',
@@ -256,7 +286,7 @@ describe('certain redundancy cleanup guards', () => {
       }
     }
 
-    for (const source of [chatBehaviorSectionSource, modelsSectionSource]) {
+    for (const source of [modelsSectionSource]) {
       for (const propName of [
         'setTranscriptionModelId',
         'setTtsVoice',
@@ -280,12 +310,11 @@ describe('certain redundancy cleanup guards', () => {
     }
   });
 
-  it('reuses the shared chat settings updater type for chat area contracts', () => {
-    const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
-    const chatAreaPropsSource = readProjectFile('src/components/layout/chat-area/ChatAreaProps.ts');
+  it('reuses the shared chat settings updater type for store-backed chat area contracts', () => {
+    const chatRuntimeStoreSource = readProjectFile('src/stores/chatRuntimeStore.ts');
     const chatStoreSource = readProjectFile('src/stores/chatStore.ts');
 
-    for (const source of [chatAreaContextSource, chatAreaPropsSource, chatStoreSource]) {
+    for (const source of [chatRuntimeStoreSource, chatStoreSource]) {
       expect(source).toContain('ChatSettingsUpdater');
       expect(source).not.toContain('(updater: (prevSettings: ChatSettings) => ChatSettings) => void;');
       expect(source).not.toContain('(updater: (prev: ChatSettings) => ChatSettings) => void;');
@@ -325,39 +354,25 @@ describe('certain redundancy cleanup guards', () => {
     expect(settingsModalSource).toContain('useSettingsTransferActions');
   });
 
-  it('keeps composer state in ChatAreaInputContext so the input uses one context-backed data path', () => {
-    const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
+  it('keeps composer state subscribed at the consumer instead of relaying it through ChatArea context', () => {
     const chatAreaSource = readProjectFile('src/components/layout/ChatArea.tsx');
     const chatInputCoreSource = readProjectFile('src/hooks/chat-input/useChatInputCore.ts');
+    const runtimeStoreSource = readProjectFile('src/stores/chatRuntimeStore.ts');
 
-    for (const field of [
-      'appSettings: AppSettings;',
-      'commandedInput: InputCommand | null;',
-      'selectedFiles: UploadedFile[];',
-      'setSelectedFiles:',
-      'setAppFileError:',
-      'editMode:',
-      'editingMessageId:',
-      'setEditingMessageId:',
-      'isProcessingFile:',
-      'fileError:',
-      'aspectRatio?:',
-      'imageSize?:',
-      'imageOutputMode?:',
-      'personGeneration?:',
-      'themeId: string;',
-    ]) {
-      expect(chatAreaContextSource).toContain(field);
-    }
-
-    expect(chatAreaSource).toContain('commandedInput = useChatStore');
-    expect(chatAreaSource).toContain('selectedFiles = useChatStore');
-    expect(chatInputCoreSource).not.toContain("from '../../stores/chatStore'");
-    expect(chatInputCoreSource).not.toContain("from '../../stores/settingsStore'");
+    expect(fs.existsSync(path.join(projectRoot, 'src/contexts/ChatAreaContext.tsx'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/layout/chat-area/ChatAreaContext.tsx'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/layout/chat-area/ChatAreaProps.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/chat/input/ChatInputViewContext.tsx'))).toBe(false);
+    expect(chatAreaSource).not.toContain('ChatAreaProvider');
+    expect(chatAreaSource).not.toContain('providerValue');
+    expect(readProjectFile('src/components/chat/input/ChatInput.tsx')).not.toContain('ChatInputViewProvider');
+    expect(chatInputCoreSource).toContain("from '../../stores/chatStore'");
+    expect(chatInputCoreSource).toContain("from '../../stores/settingsStore'");
+    expect(chatInputCoreSource).toContain("from '../../stores/chatRuntimeStore'");
+    expect(runtimeStoreSource).toContain('useChatRuntimeStore');
   });
 
   it('passes chat input tool state through the input context while keeping registry-based tool menus', () => {
-    const chatAreaContextSource = readProjectFile('src/contexts/ChatAreaContext.tsx');
     const chatTypesSource = readProjectFile('src/types/chat.ts');
     const chatInputActionsSource = readProjectFile('src/components/chat/input/ChatInputActions.tsx');
     const toolsMenuSource = readProjectFile('src/components/chat/input/ToolsMenu.tsx');
@@ -366,12 +381,12 @@ describe('certain redundancy cleanup guards', () => {
     const chatAreaSource = readProjectFile('src/components/layout/ChatArea.tsx');
     const chatInputCoreSource = readProjectFile('src/hooks/chat-input/useChatInputCore.ts');
 
-    expect(chatAreaContextSource).toContain('toolStates?: ChatToolToggleStates;');
-    expect(chatAreaSource).not.toContain('toolStates: features.toolStates');
-    expect(chatAreaSource).toContain('useChatInputToolStates');
+    expect(fs.existsSync(path.join(projectRoot, 'src/contexts/ChatAreaContext.tsx'))).toBe(false);
+    expect(chatAreaSource).not.toContain('toolStates:');
+    expect(chatAreaSource).not.toContain('useChatInputToolStates');
     expect(mainContentViewModelSource).not.toContain('toolStates: {');
-    expect(chatInputCoreSource).not.toContain('useChatInputToolStates');
-    expect(chatTypesSource).toContain('toolStates: ChatToolToggleStates;');
+    expect(chatInputCoreSource).toContain('useChatInputToolStates');
+    expect(chatTypesSource).not.toContain('toolStates: ChatToolToggleStates;');
     expect(chatInputActionsSource).toContain('toolStates');
     expect(toolsMenuSource).toContain('getChatToolsForSurface');
     expect(slashCommandsSource).toContain('getSlashCommandToolDefinitions');
@@ -386,6 +401,42 @@ describe('certain redundancy cleanup guards', () => {
       expect(source).not.toContain('isDeepSearchEnabled: boolean;');
       expect(source).not.toContain('onToggleDeepSearch: () => void;');
     }
+  });
+
+  it('keeps chat input leaf controls subscribed locally instead of relaying god props', () => {
+    const chatTypesSource = readProjectFile('src/types/chat.ts');
+    const chatInputSource = readProjectFile('src/components/chat/input/ChatInput.tsx');
+    const chatInputAreaSource = readProjectFile('src/components/chat/input/ChatInputArea.tsx');
+    const chatInputToolbarSource = readProjectFile('src/components/chat/input/ChatInputToolbar.tsx');
+    const chatInputActionsSource = readProjectFile('src/components/chat/input/ChatInputActions.tsx');
+
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/chat/input/ChatInputViewModel.ts'))).toBe(false);
+    expect(chatTypesSource).not.toContain('ChatInputToolbarProps');
+    expect(chatTypesSource).not.toContain('ChatInputActionsProps');
+    expect(chatInputSource).not.toContain('toolbarProps');
+    expect(chatInputSource).not.toContain('actionsProps');
+    expect(chatInputSource).not.toContain('areaProps');
+    expect(chatInputSource).not.toContain('ChatInputViewModel');
+    expect(chatInputAreaSource).not.toContain('view })');
+    expect(chatInputAreaSource).not.toContain('view.');
+    expect(chatInputToolbarSource).toContain("from '../../../stores/chatStore'");
+    expect(chatInputToolbarSource).toContain("from '../../../stores/settingsStore'");
+    expect(chatInputToolbarSource).toContain("from '../../../stores/chatRuntimeStore'");
+    expect(chatInputActionsSource).toContain("from '../../../stores/chatStore'");
+    expect(chatInputActionsSource).toContain("from '../../../stores/settingsStore'");
+    expect(chatInputActionsSource).toContain("from '../../../stores/chatRuntimeStore'");
+  });
+
+  it('isolates main content runtime bridging from sidebar and modal prop assembly', () => {
+    const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
+    const runtimeBridgeSource = readProjectFile('src/components/layout/useChatRuntimeBridge.ts');
+
+    expect(mainContentViewModelSource).toContain('useChatRuntimeBridge');
+    expect(mainContentViewModelSource).not.toContain('setChatRuntime');
+    expect(mainContentViewModelSource).not.toContain('const chatRuntime = useMemo');
+    expect(runtimeBridgeSource).toContain('useChatRuntimeStore.getState().setChatRuntime');
+    expect(runtimeBridgeSource).toContain('messageActions');
+    expect(runtimeBridgeSource).toContain('inputActions');
   });
 
   it('uses store-level message actions for repeated session/message updates', () => {
@@ -438,7 +489,10 @@ describe('certain redundancy cleanup guards', () => {
         /afterEach\(\(\)\s*=>\s*{\s*act\(\(\)\s*=>\s*{\s*root\.unmount\(\);\s*}\);\s*vi\.(?:clearAllMocks|restoreAllMocks)\(\);\s*}\);/s,
       );
 
-      if (!explicitRendererLifecycleFiles.has(relativePath)) {
+      if (
+        !explicitRendererLifecycleFiles.has(relativePath) &&
+        relativePath !== 'src/components/layout/ChatArea.test.tsx'
+      ) {
         expect(source, relativePath).not.toMatch(
           /afterEach\(\(\)\s*=>\s*{[\s\S]*?\b(?:root\??|mounted\.root)\.unmount\(\)/,
         );
@@ -483,7 +537,7 @@ describe('certain redundancy cleanup guards', () => {
 
   it('keeps complex hook test inputs on typed shared factories', () => {
     const senderSource = readProjectFile('src/hooks/useMessageSender.test.tsx');
-    const standardChatSource = readProjectFile('src/hooks/message-sender/useStandardChat.test.tsx');
+    const standardChatSource = readProjectFile('src/hooks/message-sender/standardChatStrategy.test.tsx');
     const sessionLoaderSource = readProjectFile('src/hooks/chat/history/useSessionLoader.test.tsx');
 
     expect(senderSource).toContain('createMessageSenderProps');

@@ -8,11 +8,12 @@ import {
 } from '../types';
 import { logService } from '../services/logService';
 import { useChatStreamHandler } from './message-sender/useChatStreamHandler';
-import { useTtsImagenSender } from './message-sender/useTtsImagenSender';
-import { useImageEditSender } from './message-sender/useImageEditSender';
-import { useCanvasGenerator } from './message-sender/useCanvasGenerator';
-import { useStandardChat } from './message-sender/useStandardChat';
 import { useModelRequestRunner } from './message-sender/useModelRequestRunner';
+import { useMessageLifecycle } from './message-sender/useMessageLifecycle';
+import { generateCanvasMessage } from './message-sender/canvasStrategy';
+import { sendImageEditMessage } from './message-sender/imageEditStrategy';
+import { sendStandardMessage } from './message-sender/standardChatStrategy';
+import { sendTtsImagenMessage } from './message-sender/ttsImagenStrategy';
 import { getModelCapabilities } from '../utils/modelHelpers';
 import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
@@ -88,30 +89,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
     activeJobs,
   });
 
-  // Initialize Sub-Hooks
-  const { handleGenerateCanvas } = useCanvasGenerator({
-    ...props,
-    getStreamHandlers,
-  });
-
-  const { sendStandardMessage } = useStandardChat({
-    ...props,
-    getStreamHandlers,
-    handleGenerateCanvas,
-  });
-
-  const { handleTtsImagenMessage } = useTtsImagenSender({
+  const { runMessageLifecycle } = useMessageLifecycle({
     updateAndPersistSessions,
     setSessionLoading,
     activeJobs,
-    setActiveSessionId,
-  });
-
-  const { handleImageEditMessage } = useImageEditSender({
-    updateAndPersistSessions,
-    setSessionLoading,
-    activeJobs,
-    setActiveSessionId,
   });
 
   const { prepareModelRequest } = useModelRequestRunner({
@@ -121,6 +102,35 @@ export const useMessageSender = (props: MessageSenderProps) => {
     setActiveSessionId,
     translateApiKeyError,
   });
+
+  const handleGenerateCanvas = useCallback(
+    async (sourceMessageId: string, content: string) => {
+      await generateCanvasMessage({
+        appSettings,
+        currentChatSettings,
+        activeSessionId,
+        updateAndPersistSessions,
+        getStreamHandlers,
+        setAppFileError,
+        aspectRatio,
+        language: props.language,
+        runMessageLifecycle,
+        sourceMessageId,
+        content,
+      });
+    },
+    [
+      appSettings,
+      currentChatSettings,
+      activeSessionId,
+      updateAndPersistSessions,
+      getStreamHandlers,
+      setAppFileError,
+      aspectRatio,
+      props.language,
+      runMessageLifecycle,
+    ],
+  );
 
   const handleSendMessage = useCallback(
     async (overrideOptions?: {
@@ -264,19 +274,22 @@ export const useMessageSender = (props: MessageSenderProps) => {
       if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
       if (isTtsModel || isImagenModel) {
-        await handleTtsImagenMessage(
+        await sendTtsImagenMessage({
           keyToUse,
           activeSessionId,
           generationId,
-          newAbortController,
+          abortController: newAbortController,
           appSettings,
-          sessionToUpdate,
-          textToUse.trim(),
+          currentChatSettings: sessionToUpdate,
+          text: textToUse.trim(),
           aspectRatio,
           imageSize,
           personGeneration,
-          { shouldLockKey },
-        );
+          shouldLockKey,
+          updateAndPersistSessions,
+          setActiveSessionId,
+          runMessageLifecycle,
+        });
         if (editingMessageId) setEditingMessageId(null);
         return;
       }
@@ -284,28 +297,35 @@ export const useMessageSender = (props: MessageSenderProps) => {
       if (isImageEditModel || (isGemini3Image && appSettings.generateQuadImages)) {
         const editIndex = effectiveEditingId ? messages.findIndex((m) => m.id === effectiveEditingId) : -1;
         const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
-        await handleImageEditMessage(
+        await sendImageEditMessage({
           keyToUse,
           activeSessionId,
-          historyMessages,
+          messages: historyMessages,
           generationId,
-          newAbortController,
+          abortController: newAbortController,
           appSettings,
-          sessionToUpdate,
-          textToUse.trim(),
-          filesToUse,
-          effectiveEditingId,
+          currentChatSettings: sessionToUpdate,
+          text: textToUse.trim(),
+          files: filesToUse,
+          editingMessageId: effectiveEditingId,
           aspectRatio,
           imageSize,
           imageOutputMode,
           personGeneration,
-          { shouldLockKey },
-        );
+          shouldLockKey,
+          updateAndPersistSessions,
+          setActiveSessionId,
+          runMessageLifecycle,
+        });
         if (editingMessageId) setEditingMessageId(null);
         return;
       }
 
       await sendStandardMessage({
+        props,
+        getStreamHandlers,
+        handleGenerateCanvas,
+        runMessageLifecycle,
         text: textToUse,
         files: filesToUse,
         editingMessageId: effectiveEditingId,
@@ -330,9 +350,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
       personGeneration,
       userScrolledUpRef,
       activeSessionId,
-      handleTtsImagenMessage,
-      handleImageEditMessage,
-      sendStandardMessage,
+      updateAndPersistSessions,
+      setActiveSessionId,
+      getStreamHandlers,
+      handleGenerateCanvas,
+      runMessageLifecycle,
+      props,
       prepareModelRequest,
       t,
     ],

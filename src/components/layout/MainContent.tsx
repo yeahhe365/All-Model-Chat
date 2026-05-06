@@ -16,7 +16,6 @@ interface MainContentProps {
 
 export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   const {
-    chatArea,
     sidebarProps,
     appModalsProps,
     sidePanelContent,
@@ -38,7 +37,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       />
 
       <HistorySidebar {...sidebarProps} />
-      <ChatArea chatArea={chatArea} />
+      <ChatArea />
 
       {sidePanelContent && (
         <Suspense fallback={null}>

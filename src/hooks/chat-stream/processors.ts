@@ -1,41 +1,10 @@
 import { ChatMessage, ChatSettings } from '../../types';
 import type { Part, UsageMetadata } from '@google/genai';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { calculateTokenStats } from '../../utils/modelHelpers';
 import { getTranslator } from '../../utils/translations';
-import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
-import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '../../utils/fileTypeUtils';
+import { appendApiPart, getGeneratedFileFromPart } from '../../features/chat-streaming/messageStreamReducer';
 
-export const appendApiPart = (parts: Part[] = [], newPart: Part) => {
-  const newParts = [...parts];
-  const hasThoughtSignature = (part: Part) =>
-    Boolean(
-      (part as Part & { thoughtSignature?: string; thought_signature?: string }).thoughtSignature ||
-      (part as Part & { thoughtSignature?: string; thought_signature?: string }).thought_signature,
-    );
-  const isPlainTextOnlyPart = (part: Part) => Object.keys(part).every((key) => key === 'text');
-
-  if ('text' in newPart && typeof newPart.text === 'string') {
-    const lastPart = newParts[newParts.length - 1];
-    if (
-      lastPart &&
-      'text' in lastPart &&
-      typeof lastPart.text === 'string' &&
-      !('thought' in lastPart && lastPart.thought) &&
-      !hasThoughtSignature(lastPart) &&
-      !hasThoughtSignature(newPart) &&
-      isPlainTextOnlyPart(lastPart) &&
-      isPlainTextOnlyPart(newPart)
-    ) {
-      newParts[newParts.length - 1] = { ...lastPart, text: lastPart.text + newPart.text } as Part;
-      return newParts;
-    }
-  }
-
-  newParts.push({ ...newPart });
-  return newParts;
-};
+export { appendApiPart };
 
 const findLoadingModelMessageIndex = (messages: ChatMessage[], generationStartTime: Date) => {
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -83,28 +52,12 @@ const applyPartToMessages = (
     messages[lastMessageIndex] = lastMessage;
   }
 
-  const partWithInlineData = part as Part & { inlineData?: { mimeType: string; data?: string } };
-  if (partWithInlineData.inlineData) {
-    const { mimeType, data } = partWithInlineData.inlineData;
-
-    const isSupportedFile =
-      isImageMimeType(mimeType) ||
-      isAudioMimeType(mimeType) ||
-      isVideoMimeType(mimeType) ||
-      SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
-
-    if (isSupportedFile && data) {
-      let baseName = 'generated-file';
-      if (isImageMimeType(mimeType)) {
-        baseName = `generated-plot-${generateUniqueId().slice(-4)}`;
-      }
-
-      const newFile = createUploadedFileFromBase64(data, mimeType, baseName);
-      messages[lastMessageIndex] = {
-        ...lastMessage,
-        files: [...(lastMessage.files || []), newFile],
-      };
-    }
+  const generatedFile = getGeneratedFileFromPart(part);
+  if (generatedFile) {
+    messages[lastMessageIndex] = {
+      ...lastMessage,
+      files: [...(lastMessage.files || []), generatedFile],
+    };
   }
 
   // Capture thought signatures

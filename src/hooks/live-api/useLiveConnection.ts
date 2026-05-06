@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { LiveServerMessage, Part, Session as LiveSession, Tool } from '@google/genai';
-import { AppSettings } from '../../types';
+import type { AppSettings, UploadedFile } from '../../types';
 import { logService } from '../../services/logService';
 import { getLiveApiClient, LiveApiAuthConfigurationError } from '../../services/api/liveApiAuth';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
@@ -27,6 +27,8 @@ interface UseLiveConnectionProps {
     isFinal: boolean,
     type?: 'content' | 'thought',
     audioUrl?: string | null,
+    generatedFiles?: UploadedFile[],
+    apiPart?: Part,
   ) => void;
   setSessionHandle: (handle: string | null) => void;
   sessionHandleRef: React.MutableRefObject<string | null>;

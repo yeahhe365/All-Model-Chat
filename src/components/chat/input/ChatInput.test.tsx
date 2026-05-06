@@ -1,13 +1,52 @@
-import { act, type ReactNode } from 'react';
+import { act, cloneElement, isValidElement, type ReactNode } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type InputCommand, type UploadedFile } from '../../../types';
-import { createChatAreaProviderValue } from '../../../test/chatAreaFixtures';
-import { ChatAreaProvider, type ChatAreaProviderValue } from '../../layout/chat-area/ChatAreaContext';
+import { type ChatSettings, type InputCommand, type UploadedFile } from '../../../types';
+import {
+  applyChatAreaProviderValue,
+  createChatAreaProviderValue,
+  type ChatAreaProviderValue,
+} from '../../../test/chatAreaFixtures';
 import { ChatInput } from './ChatInput';
 
 const mockChatStoreState = vi.hoisted(() => ({
+  activeSessionId: 'session-1' as string | null,
+  savedSessions: [] as Array<{ id: string; title: string; timestamp: number; messages: unknown[]; settings: ChatSettings }>,
+  activeMessages: [] as unknown[],
   selectedFiles: [] as unknown[],
+  commandedInput: null as InputCommand | null,
+  editingMessageId: null as string | null,
+  editMode: 'resend' as 'update' | 'resend',
+  isAppProcessingFile: false,
+  appFileError: null as string | null,
+  aspectRatio: '1:1',
+  imageSize: '1K',
+  imageOutputMode: 'IMAGE_TEXT',
+  personGeneration: 'ALLOW_ADULT',
+  loadingSessionIds: new Set<string>(),
+  setSelectedFiles: vi.fn((value: unknown[] | ((previous: unknown[]) => unknown[])) => {
+    mockChatStoreState.selectedFiles =
+      typeof value === 'function' ? (value as (previous: unknown[]) => unknown[])(mockChatStoreState.selectedFiles) : value;
+  }),
+  setAppFileError: vi.fn((value: string | null) => {
+    mockChatStoreState.appFileError = value;
+  }),
+  setEditingMessageId: vi.fn((value: string | null) => {
+    mockChatStoreState.editingMessageId = value;
+  }),
+  setAspectRatio: vi.fn((value: string) => {
+    mockChatStoreState.aspectRatio = value;
+  }),
+  setImageSize: vi.fn((value: string) => {
+    mockChatStoreState.imageSize = value;
+  }),
+  setImageOutputMode: vi.fn((value: string) => {
+    mockChatStoreState.imageOutputMode = value;
+  }),
+  setPersonGeneration: vi.fn((value: string) => {
+    mockChatStoreState.personGeneration = value;
+  }),
+  setCurrentChatSettings: vi.fn(),
 }));
 const mockModelCapabilities = vi.hoisted(() => ({
   value: {
@@ -52,6 +91,11 @@ const mockLiveApiState = vi.hoisted(() => ({
   error: null as string | null,
   videoSource: null as 'camera' | 'screen' | null,
 }));
+const mockChatInputUiSettings = vi.hoisted(() => ({
+  showInputTranslationButton: undefined as boolean | undefined,
+  showInputPasteButton: undefined as boolean | undefined,
+  showInputClearButton: undefined as boolean | undefined,
+}));
 const mockApiUtils = vi.hoisted(() => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
 }));
@@ -60,7 +104,7 @@ const mockTextApi = vi.hoisted(() => ({
 }));
 
 const mockChatStoreSubscribers = vi.hoisted(
-  () => new Set<(state: typeof mockChatStoreState, previousState: typeof mockChatStoreState) => void>(),
+  () => new Set<(state: Partial<typeof mockChatStoreState>, previousState: Partial<typeof mockChatStoreState>) => void>(),
 );
 
 vi.mock('../../../hooks/useDevice', () => ({
@@ -124,7 +168,14 @@ vi.mock('../../../stores/chatStore', () => {
       selector ? selector(mockChatStoreState) : mockChatStoreState,
     {
       getState: () => mockChatStoreState,
-      subscribe: (listener: (state: typeof mockChatStoreState, previousState: typeof mockChatStoreState) => void) => {
+      setState: (partial: Partial<typeof mockChatStoreState>) => {
+        const previousState = { ...mockChatStoreState };
+        Object.assign(mockChatStoreState, partial);
+        mockChatStoreSubscribers.forEach((subscriber) => subscriber(mockChatStoreState, previousState));
+      },
+      subscribe: (
+        listener: (state: Partial<typeof mockChatStoreState>, previousState: Partial<typeof mockChatStoreState>) => void,
+      ) => {
         mockChatStoreSubscribers.add(listener);
         return () => mockChatStoreSubscribers.delete(listener);
       },
@@ -142,27 +193,11 @@ vi.mock('./ChatInputFileModals', () => ({
   ChatInputFileModals: () => null,
 }));
 
-vi.mock('./ChatInputArea', async () => {
-  const {
-    useChatInputActionsView,
-    useChatInputFileDisplayView,
-    useChatInputFormView,
-    useChatInputTextAreaView,
-    useLiveStatusView,
-    useQueuedSubmissionView,
-  } = await import('./ChatInputViewContext');
-
-  const ChatInputArea = () => {
-    const formProps = useChatInputFormView();
-    const inputProps = useChatInputTextAreaView();
-    const actionsProps = useChatInputActionsView();
-    const fileDisplayProps = useChatInputFileDisplayView();
-    const queuedProps = useQueuedSubmissionView();
-    const liveStatusProps = useLiveStatusView();
-    const extendedActionsProps = actionsProps as typeof actionsProps & {
-      canQueueMessage?: boolean;
-      onQueueMessage?: () => void;
-    };
+vi.mock('./ChatInputArea', () => {
+  const ChatInputArea = (props: import('./ChatInputArea').ChatInputAreaProps) => {
+    const { formProps, inputProps, actionsLocalProps, fileDisplayProps } = props;
+    const queuedProps = props.queuedSubmissionProps;
+    const liveStatusProps = props.liveStatusProps;
 
     return (
       <form onSubmit={formProps.onSubmit}>
@@ -201,30 +236,30 @@ vi.mock('./ChatInputArea', async () => {
         <button
           type="button"
           data-testid="queue-button"
-          onClick={() => extendedActionsProps.onQueueMessage?.()}
-          disabled={!extendedActionsProps.canQueueMessage}
+          onClick={() => actionsLocalProps.onQueueMessage?.()}
+          disabled={!actionsLocalProps.canQueueMessage}
         >
           queue
         </button>
-        {actionsProps.showInputTranslationButton === true && (
-          <button type="button" data-testid="translate-button" onClick={actionsProps.onTranslate}>
+        {mockChatInputUiSettings.showInputTranslationButton === true && (
+          <button type="button" data-testid="translate-button" onClick={actionsLocalProps.onTranslate}>
             translate
           </button>
         )}
-        {actionsProps.showInputPasteButton !== false && (
-          <button type="button" data-testid="paste-button" onClick={actionsProps.onPasteFromClipboard}>
+        {mockChatInputUiSettings.showInputPasteButton !== false && (
+          <button type="button" data-testid="paste-button" onClick={actionsLocalProps.onPasteFromClipboard}>
             paste
           </button>
         )}
-        {actionsProps.showInputClearButton === true && (
-          <button type="button" data-testid="clear-input-button" onClick={actionsProps.onClearInput}>
+        {mockChatInputUiSettings.showInputClearButton === true && (
+          <button type="button" data-testid="clear-input-button" onClick={actionsLocalProps.onClearInput}>
             clear
           </button>
         )}
-        <button type="button" data-testid="live-camera-button" onClick={actionsProps.onStartLiveCamera}>
+        <button type="button" data-testid="live-camera-button" onClick={actionsLocalProps.onStartLiveCamera}>
           camera
         </button>
-        <button type="button" data-testid="live-screen-button" onClick={actionsProps.onStartLiveScreenShare}>
+        <button type="button" data-testid="live-screen-button" onClick={actionsLocalProps.onStartLiveScreenShare}>
           screen
         </button>
         {fileDisplayProps.selectedFiles.map((file: UploadedFile) => (
@@ -243,6 +278,21 @@ vi.mock('./ChatInputArea', async () => {
 
   return { ChatInputArea };
 });
+
+const ChatAreaProvider = ({ value, children }: { value: ChatAreaProviderValue; children: ReactNode }) => {
+  applyChatAreaProviderValue(value);
+  mockChatInputUiSettings.showInputTranslationButton = value.input.appSettings.showInputTranslationButton;
+  mockChatInputUiSettings.showInputPasteButton = value.input.appSettings.showInputPasteButton;
+  mockChatInputUiSettings.showInputClearButton = value.input.appSettings.showInputClearButton;
+  mockChatStoreState.setSelectedFiles = value.input.setSelectedFiles as typeof mockChatStoreState.setSelectedFiles;
+  mockChatStoreState.setAppFileError = value.input.setAppFileError as typeof mockChatStoreState.setAppFileError;
+  mockChatStoreState.setEditingMessageId = value.input.setEditingMessageId as typeof mockChatStoreState.setEditingMessageId;
+  return isValidElement(children)
+    ? cloneElement(children, {
+        'data-provider-version': `${value.input.activeSessionId}-${value.input.isLoading}-${value.input.selectedFiles.length}`,
+      })
+    : children;
+};
 
 const createProviderValue = (commandedInput: InputCommand | null) =>
   createChatAreaProviderValue({
@@ -278,7 +328,16 @@ describe('ChatInput', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    mockChatStoreState.activeSessionId = 'session-1';
+    mockChatStoreState.savedSessions = [];
+    mockChatStoreState.activeMessages = [];
     mockChatStoreState.selectedFiles = [];
+    mockChatStoreState.commandedInput = null;
+    mockChatStoreState.editingMessageId = null;
+    mockChatStoreState.editMode = 'resend';
+    mockChatStoreState.isAppProcessingFile = false;
+    mockChatStoreState.appFileError = null;
+    mockChatStoreState.loadingSessionIds = new Set();
     mockChatStoreSubscribers.clear();
     mockModelCapabilities.value = {
       isImagenModel: false,

@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
-import type { Session as LiveSession } from '@google/genai';
+import type { Part, Session as LiveSession } from '@google/genai';
 import type { AppSettings, ChatSettings, LiveClientFunctions, UploadedFile } from '../types';
 import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
@@ -24,6 +24,8 @@ interface UseLiveAPIProps {
     isFinal: boolean,
     type?: 'content' | 'thought',
     audioUrl?: string | null,
+    generatedFiles?: UploadedFile[],
+    apiPart?: Part,
   ) => void;
   onGeneratedFiles?: (files: UploadedFile[]) => void;
   clientFunctions?: LiveClientFunctions;

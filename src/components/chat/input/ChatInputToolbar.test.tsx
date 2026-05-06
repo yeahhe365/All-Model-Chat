@@ -1,8 +1,22 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useChatStore } from '../../../stores/chatStore';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { createAppSettings } from '../../../test/factories';
 
 const personGenerationSelectorMock = vi.fn();
+const mockCapabilities = vi.hoisted(() => ({
+  value: {
+    isImagenModel: false,
+    isGemini3ImageModel: false,
+    isRealImagenModel: false,
+    isTtsModel: false,
+    isNativeAudioModel: false,
+    supportedAspectRatios: [] as string[],
+    supportedImageSizes: [] as string[],
+  },
+}));
 
 vi.mock('./toolbar/AddFileByIdInput', () => ({ AddFileByIdInput: () => null }));
 vi.mock('./toolbar/AddUrlInput', () => ({ AddUrlInput: () => null }));
@@ -18,13 +32,13 @@ vi.mock('./toolbar/PersonGenerationSelector', () => ({
     return <div data-testid="person-generation-selector" />;
   },
 }));
+vi.mock('../../../stores/modelCapabilitiesStore', () => ({
+  getCachedModelCapabilities: () => mockCapabilities.value,
+}));
 
 import { ChatInputToolbar } from './ChatInputToolbar';
-import type { ChatInputToolbarProps } from '../../../types';
 
-const baseProps: ChatInputToolbarProps = {
-  isImagenModel: false,
-  fileError: null,
+const localProps = {
   showAddByIdInput: false,
   fileIdInput: '',
   setFileIdInput: vi.fn(),
@@ -37,7 +51,6 @@ const baseProps: ChatInputToolbarProps = {
   onAddUrlSubmit: vi.fn(),
   onCancelAddUrl: vi.fn(),
   isAddingByUrl: false,
-  isLoading: false,
 };
 
 describe('ChatInputToolbar', () => {
@@ -45,19 +58,35 @@ describe('ChatInputToolbar', () => {
 
   beforeEach(() => {
     personGenerationSelectorMock.mockClear();
+    useSettingsStore.setState({
+      appSettings: createAppSettings({ modelId: 'imagen-test-model' }),
+    });
+    useChatStore.setState({
+      activeSessionId: null,
+      savedSessions: [],
+      activeMessages: [],
+      personGeneration: 'ALLOW_ADULT',
+    });
+    mockCapabilities.value = {
+      isImagenModel: false,
+      isGemini3ImageModel: false,
+      isRealImagenModel: false,
+      isTtsModel: false,
+      isNativeAudioModel: false,
+      supportedAspectRatios: [],
+      supportedImageSizes: [],
+    };
   });
 
   it('shows person generation selector for real Imagen models', () => {
+    mockCapabilities.value = {
+      ...mockCapabilities.value,
+      isImagenModel: true,
+      isRealImagenModel: true,
+    };
+
     act(() => {
-      renderer.root.render(
-        <ChatInputToolbar
-          {...baseProps}
-          isImagenModel
-          isRealImagenModel
-          personGeneration="ALLOW_ADULT"
-          setPersonGeneration={vi.fn()}
-        />,
-      );
+      renderer.root.render(<ChatInputToolbar {...localProps} />);
     });
 
     expect(personGenerationSelectorMock).toHaveBeenCalledWith(
@@ -66,16 +95,14 @@ describe('ChatInputToolbar', () => {
   });
 
   it('hides person generation selector for Gemini image models', () => {
+    mockCapabilities.value = {
+      ...mockCapabilities.value,
+      isImagenModel: true,
+      isRealImagenModel: false,
+    };
+
     act(() => {
-      renderer.root.render(
-        <ChatInputToolbar
-          {...baseProps}
-          isImagenModel
-          isRealImagenModel={false}
-          personGeneration="ALLOW_ADULT"
-          setPersonGeneration={vi.fn()}
-        />,
-      );
+      renderer.root.render(<ChatInputToolbar {...localProps} />);
     });
 
     expect(personGenerationSelectorMock).not.toHaveBeenCalled();

@@ -1,10 +1,20 @@
 /* eslint-disable react-hooks/refs */
 import React from 'react';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
-import type { ChatInputViewModel } from './ChatInputViewContext';
+
+interface ChatInputFileInputs {
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  imageInputRef: React.RefObject<HTMLInputElement>;
+  folderInputRef: React.RefObject<HTMLInputElement>;
+  zipInputRef: React.RefObject<HTMLInputElement>;
+  cameraInputRef: React.RefObject<HTMLInputElement>;
+  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFolderChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleZipChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
 
 interface HiddenFileInputsProps {
-  fileInputs: ChatInputViewModel['fileInputs'];
+  fileInputs: ChatInputFileInputs;
 }
 
 export const HiddenFileInputs: React.FC<HiddenFileInputsProps> = ({ fileInputs }) => (

@@ -1,12 +1,22 @@
 import { act } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useChatStore } from '../../../stores/chatStore';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { createAppSettings } from '../../../test/factories';
 
 const attachmentMenuMock = vi.fn();
 const toolsMenuMock = vi.fn();
 const liveControlsMock = vi.fn();
 const utilityControlsMock = vi.fn();
 const sendControlsMock = vi.fn();
+const mockCapabilities = vi.hoisted(() => ({
+  value: {
+    isImagenModel: false,
+    isRealImagenModel: false,
+    isNativeAudioModel: false,
+  },
+}));
 
 vi.mock('./AttachmentMenu', () => ({
   AttachmentMenu: (props: { disabled: boolean }) => {
@@ -50,32 +60,19 @@ vi.mock('./actions/SendControls', () => ({
     return <div data-testid="send-controls" />;
   },
 }));
+vi.mock('../../../stores/modelCapabilitiesStore', () => ({
+  getCachedModelCapabilities: () => mockCapabilities.value,
+}));
 
 import { ChatInputActions } from './ChatInputActions';
 
 const baseProps = {
   onAttachmentAction: vi.fn(),
   disabled: false,
-  currentModelId: 'gemini-3.1-pro-preview',
-  toolStates: {
-    googleSearch: { isEnabled: false, onToggle: vi.fn() },
-    deepSearch: { isEnabled: false, onToggle: vi.fn() },
-    codeExecution: { isEnabled: false, onToggle: vi.fn() },
-    localPython: { isEnabled: false, onToggle: vi.fn() },
-    urlContext: { isEnabled: false, onToggle: vi.fn() },
-  },
-  toolUtilityActions: {
-    onAddYouTubeVideo: vi.fn(),
-    onCountTokens: vi.fn(),
-  },
   onRecordButtonClick: vi.fn(),
   isRecording: false,
   isMicInitializing: false,
   isTranscribing: false,
-  isLoading: false,
-  onStopGenerating: vi.fn(),
-  isEditing: false,
-  onCancelEdit: vi.fn(),
   canSend: true,
   isWaitingForUpload: false,
   onCancelRecording: vi.fn(),
@@ -86,8 +83,6 @@ const baseProps = {
   inputText: '',
   onToggleFullscreen: vi.fn(),
   isFullscreen: false,
-  editMode: 'update' as const,
-  isNativeAudioModel: false,
   onStartLiveSession: vi.fn(),
   isLiveConnected: false,
   isLiveMuted: false,
@@ -100,6 +95,9 @@ const baseProps = {
   onFastSendMessage: vi.fn(),
   canQueueMessage: false,
   onQueueMessage: vi.fn(),
+  onToggleToolAndFocus: vi.fn((toggle: () => void) => toggle()),
+  onAddYouTubeVideo: vi.fn(),
+  onCountTokens: vi.fn(),
 };
 
 describe('ChatInputActions', () => {
@@ -147,6 +145,27 @@ describe('ChatInputActions', () => {
   };
 
   beforeEach(() => {
+    useSettingsStore.setState({
+      appSettings: createAppSettings({
+        modelId: 'gemini-3.1-pro-preview',
+        showInputTranslationButton: false,
+        showInputPasteButton: true,
+        showInputClearButton: false,
+      }),
+    });
+    useChatStore.setState({
+      activeSessionId: null,
+      savedSessions: [],
+      activeMessages: [],
+      editingMessageId: null,
+      editMode: 'update',
+      loadingSessionIds: new Set(),
+    });
+    mockCapabilities.value = {
+      isImagenModel: false,
+      isRealImagenModel: false,
+      isNativeAudioModel: false,
+    };
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     attachmentMenuMock.mockClear();
     toolsMenuMock.mockClear();
@@ -161,34 +180,54 @@ describe('ChatInputActions', () => {
   });
 
   it('disables attachments for Imagen models', () => {
+    mockCapabilities.value = {
+      ...mockCapabilities.value,
+      isImagenModel: true,
+      isRealImagenModel: true,
+    };
+
     act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} isRealImagenModel />);
+      renderer.root.render(<ChatInputActions {...baseProps} />);
     });
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));
   });
 
   it('keeps attachments enabled for Gemini image models that support reference images', () => {
+    mockCapabilities.value = {
+      ...mockCapabilities.value,
+      isImagenModel: true,
+      isRealImagenModel: false,
+    };
+
     act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} isImageModel />);
+      renderer.root.render(<ChatInputActions {...baseProps} />);
     });
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
   });
 
   it('keeps attachments enabled for Live models because selected files are sent through Live text turns', () => {
+    mockCapabilities.value = {
+      ...mockCapabilities.value,
+      isNativeAudioModel: true,
+    };
+
     act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} isNativeAudioModel />);
+      renderer.root.render(<ChatInputActions {...baseProps} />);
     });
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
   });
 
   it('forwards Live disconnect and video controls into the live controls', () => {
+    mockCapabilities.value = {
+      ...mockCapabilities.value,
+      isNativeAudioModel: true,
+    };
+
     act(() => {
-      renderer.root.render(
-        <ChatInputActions {...baseProps} isNativeAudioModel isLiveConnected liveVideoSource="camera" />,
-      );
+      renderer.root.render(<ChatInputActions {...baseProps} isLiveConnected liveVideoSource="camera" />);
     });
 
     expect(liveControlsMock).toHaveBeenCalledWith(
@@ -205,8 +244,12 @@ describe('ChatInputActions', () => {
   });
 
   it('forwards only the current model id into the tools menu for capability derivation', () => {
+    useSettingsStore.setState({
+      appSettings: createAppSettings({ modelId: 'gemma-3-27b-it' }),
+    });
+
     act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} currentModelId="gemma-3-27b-it" />);
+      renderer.root.render(<ChatInputActions {...baseProps} />);
     });
 
     expect(toolsMenuMock).toHaveBeenCalledWith(expect.objectContaining({ currentModelId: 'gemma-3-27b-it' }));
@@ -219,13 +262,18 @@ describe('ChatInputActions', () => {
     mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
 
     act(() => {
+      useSettingsStore.setState({
+        appSettings: createAppSettings({
+          modelId: 'gemini-3.1-pro-preview',
+          showInputTranslationButton: true,
+          showInputPasteButton: true,
+          showInputClearButton: true,
+        }),
+      });
       renderer.root.render(
         <ChatInputActions
           {...baseProps}
           inputText="Translate or send this"
-          showInputTranslationButton
-          showInputPasteButton
-          showInputClearButton
           canQueueMessage
         />,
       );
@@ -256,13 +304,18 @@ describe('ChatInputActions', () => {
     mockActionRowMeasurements({ containerWidth: 300, leftWidth: 88, rightWidth: 292 });
 
     act(() => {
+      useSettingsStore.setState({
+        appSettings: createAppSettings({
+          modelId: 'gemini-3.1-pro-preview',
+          showInputTranslationButton: true,
+          showInputPasteButton: true,
+          showInputClearButton: true,
+        }),
+      });
       renderer.root.render(
         <ChatInputActions
           {...baseProps}
           inputText="Translate or send this"
-          showInputTranslationButton
-          showInputPasteButton
-          showInputClearButton
           canQueueMessage
         />,
       );

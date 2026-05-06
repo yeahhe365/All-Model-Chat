@@ -366,6 +366,35 @@ describe('chatApi media resolution routing', () => {
     );
   });
 
+  it('extracts streamed top-level text responses through the shared response parser', async () => {
+    mockGenerateContentStream.mockResolvedValue(
+      (async function* () {
+        yield {
+          text: '<|channel>thought\nSketch privately.\n<channel|>Visible stream.',
+        };
+      })(),
+    );
+
+    const onPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+
+    await sendStatelessMessageStreamApi(
+      'key',
+      'gemma-4-31b-it',
+      [],
+      [{ text: 'Solve this.' }],
+      {},
+      new AbortController().signal,
+      onPart,
+      onThoughtChunk,
+      vi.fn(),
+      vi.fn(),
+    );
+
+    expect(onThoughtChunk).toHaveBeenCalledWith('Sketch privately.');
+    expect(onPart).toHaveBeenCalledWith({ text: 'Visible stream.' });
+  });
+
   it('preserves non-stream thought signatures as context parts without rendering thought text', async () => {
     mockGenerateContent.mockResolvedValue({
       candidates: [

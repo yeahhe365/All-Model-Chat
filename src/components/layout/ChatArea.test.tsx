@@ -2,50 +2,9 @@ import React, { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { setTestMatchMedia } from '@/test/browserEnvironment';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createChatAreaProps } from '../../test/chatAreaFixtures';
+import { createChatAreaProviderValue, applyChatAreaProviderValue } from '../../test/chatAreaFixtures';
+import { useChatStore } from '../../stores/chatStore';
 import { ChatArea } from './ChatArea';
-import type { ChatAreaProps } from './ChatArea';
-
-const mockState = vi.hoisted(() => ({
-  settings: {
-    appSettings: {
-      baseFontSize: 14,
-      expandCodeBlocksByDefault: false,
-      isMermaidRenderingEnabled: true,
-      isGraphvizRenderingEnabled: true,
-    },
-    currentTheme: { id: 'pearl' },
-    language: 'zh' as const,
-  },
-  chat: {
-    isSwitchingModel: false,
-    commandedInput: null as { id: number; text: string; mode?: 'replace' | 'append' | 'quote' | 'insert' } | null,
-    selectedFiles: [] as Array<{ id: string; name: string }>,
-    setSelectedFiles: vi.fn(),
-    editingMessageId: null as string | null,
-    setEditingMessageId: vi.fn(),
-    editMode: 'update' as const,
-    isAppProcessingFile: false,
-    appFileError: null as string | null,
-    setAppFileError: vi.fn(),
-    aspectRatio: '1:1',
-    setAspectRatio: vi.fn(),
-    imageSize: '1K',
-    setImageSize: vi.fn(),
-    imageOutputMode: 'IMAGE_TEXT',
-    setImageOutputMode: vi.fn(),
-    personGeneration: 'ALLOW_ADULT',
-    setPersonGeneration: vi.fn(),
-  },
-  ui: {
-    isHistorySidebarOpen: false,
-  },
-  renders: {
-    messageList: vi.fn(),
-    chatInput: vi.fn(),
-  },
-  lastInputContext: null as Record<string, unknown> | null,
-}));
 
 const dispatchTouchEvent = (
   node: Element,
@@ -64,61 +23,37 @@ const dispatchTouchEvent = (
   node.dispatchEvent(event);
 };
 
-vi.mock('../../stores/settingsStore', () => ({
-  useSettingsStore: (selector: (state: typeof mockState.settings) => unknown) => selector(mockState.settings),
-}));
-
-vi.mock('../../stores/chatStore', () => ({
-  useChatStore: (selector: (state: typeof mockState.chat) => unknown) => selector(mockState.chat),
-}));
-
-vi.mock('../../stores/uiStore', () => ({
-  useUIStore: (selector: (state: typeof mockState.ui) => unknown) => selector(mockState.ui),
-}));
-
-vi.mock('../../utils/shortcutUtils', () => ({
-  getShortcutDisplay: () => 'shortcut',
-}));
-
 vi.mock('../header/Header', () => ({
-  Header: () => null,
+  Header: ({ currentModelName }: { currentModelName: string }) => (
+    <div data-testid="header">{currentModelName || 'no-model'}</div>
+  ),
 }));
 
 vi.mock('../chat/overlays/DragDropOverlay', () => ({
-  DragDropOverlay: () => null,
+  DragDropOverlay: ({ isDraggingOver }: { isDraggingOver: boolean }) => (
+    <div data-testid="drag-overlay">{String(isDraggingOver)}</div>
+  ),
 }));
 
 vi.mock('../chat/overlays/ModelsErrorDisplay', () => ({
-  ModelsErrorDisplay: () => null,
+  ModelsErrorDisplay: ({ error }: { error: string | null }) => <div data-testid="models-error">{error}</div>,
 }));
 
-vi.mock('../chat/MessageList', async () => {
-  const { useChatAreaMessageList } = await import('./chat-area/ChatAreaContext');
-
-  const MessageList = React.memo(() => {
-    mockState.renders.messageList();
-    const { messages } = useChatAreaMessageList();
+vi.mock('../chat/MessageList', () => ({
+  MessageList: React.memo(() => {
+    const messages = useChatStore((state) => state.activeMessages);
     return <div data-testid="message-list">{messages.length}</div>;
-  });
+  }),
+}));
 
-  return { MessageList };
-});
-
-vi.mock('../chat/input/ChatInput', async () => {
-  const { useChatStore } = await import('../../stores/chatStore');
-  const { useChatAreaInput } = await import('./chat-area/ChatAreaContext');
-
-  const ChatInput = React.memo(() => {
-    mockState.renders.chatInput();
+vi.mock('../chat/input/ChatInput', () => ({
+  ChatInput: React.memo(() => {
     const commandedInput = useChatStore((state) => state.commandedInput);
-    mockState.lastInputContext = useChatAreaInput() as unknown as Record<string, unknown>;
     return <div data-testid="chat-input">{commandedInput?.text ?? 'empty'}</div>;
-  });
+  }),
+}));
 
-  return { ChatInput };
-});
-
-describe('ChatArea provider slice memoization', () => {
+describe('ChatArea', () => {
   const renderer = setupTestRenderer();
   let matchMediaMatches = false;
   let windowInnerWidth = 1024;
@@ -145,116 +80,44 @@ describe('ChatArea provider slice memoization', () => {
         show: virtualKeyboardShow,
       },
     });
-
-    mockState.chat.commandedInput = null;
-    mockState.chat.selectedFiles = [];
-    mockState.chat.editingMessageId = null;
-    mockState.chat.appFileError = null;
-    mockState.lastInputContext = null;
-    mockState.ui.isHistorySidebarOpen = false;
-    mockState.renders.messageList.mockClear();
-    mockState.renders.chatInput.mockClear();
     virtualKeyboardShow.mockClear();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+    renderer.root.unmount();
   });
 
-  it('does not re-render message-list consumers when only input slice state changes', () => {
-    const props = createChatAreaProps();
-
-    act(() => {
-      renderer.root.render(<ChatArea {...props} />);
-    });
-
-    const messageListRenderCount = mockState.renders.messageList.mock.calls.length;
-    mockState.chat.commandedInput = {
-      id: 1,
-      mode: 'replace',
-      text: 'updated input',
-    };
-
-    act(() => {
-      renderer.root.render(<ChatArea {...props} />);
-    });
-
-    expect(mockState.renders.messageList.mock.calls.length).toBe(messageListRenderCount);
-  });
-
-  it('provides store-backed composer state through the input context', () => {
-    mockState.chat.selectedFiles = [{ id: 'file-1', name: 'one.png' }];
-    mockState.chat.commandedInput = {
-      id: 1,
-      mode: 'replace',
-      text: 'context input',
-    };
-
-    const props = createChatAreaProps();
-
-    act(() => {
-      renderer.root.render(<ChatArea {...props} />);
-    });
-
-    expect(mockState.lastInputContext).toMatchObject({
-      appSettings: mockState.settings.appSettings,
-      activeSessionId: 'session-1',
-      commandedInput: mockState.chat.commandedInput,
-      selectedFiles: mockState.chat.selectedFiles,
-      setSelectedFiles: mockState.chat.setSelectedFiles,
-      setAppFileError: mockState.chat.setAppFileError,
-      editMode: mockState.chat.editMode,
-      editingMessageId: mockState.chat.editingMessageId,
-      setEditingMessageId: mockState.chat.setEditingMessageId,
-      isProcessingFile: mockState.chat.isAppProcessingFile,
-      fileError: mockState.chat.appFileError,
-      aspectRatio: mockState.chat.aspectRatio,
-      setAspectRatio: mockState.chat.setAspectRatio,
-      imageSize: mockState.chat.imageSize,
-      setImageSize: mockState.chat.setImageSize,
-      imageOutputMode: mockState.chat.imageOutputMode,
-      setImageOutputMode: mockState.chat.setImageOutputMode,
-      personGeneration: mockState.chat.personGeneration,
-      setPersonGeneration: mockState.chat.setPersonGeneration,
-      themeId: mockState.settings.currentTheme.id,
-    });
-  });
-
-  it('does not re-render chat-input consumers when only message-list slice data changes', () => {
-    const props = createChatAreaProps();
-
-    act(() => {
-      renderer.root.render(<ChatArea {...props} />);
-    });
-
-    const messageListRenderCount = mockState.renders.messageList.mock.calls.length;
-    const chatInputRenderCount = mockState.renders.chatInput.mock.calls.length;
-
-    const updatedProps: ChatAreaProps = {
-      chatArea: {
-        ...props.chatArea,
-        session: {
-          ...props.chatArea.session,
+  it('renders layout data from stores and runtime actions without ChatArea props', () => {
+    applyChatAreaProviderValue(
+      createChatAreaProviderValue({
+        messageList: {
           messages: [
-            ...props.chatArea.session.messages,
             {
-              id: 'message-2',
-              role: 'model',
-              content: 'world',
-              timestamp: new Date('2026-04-12T00:00:01.000Z'),
+              id: 'message-1',
+              role: 'user',
+              content: 'hello',
+              timestamp: new Date('2026-04-12T00:00:00.000Z'),
             },
           ],
         },
-      },
-    };
+        input: {
+          commandedInput: {
+            id: 1,
+            mode: 'replace',
+            text: 'store input',
+          },
+        },
+      }),
+    );
 
     act(() => {
-      renderer.root.render(<ChatArea {...updatedProps} />);
+      renderer.root.render(<ChatArea />);
     });
 
-    expect(mockState.renders.messageList.mock.calls.length).toBeGreaterThan(messageListRenderCount);
-    expect(mockState.renders.chatInput.mock.calls.length).toBe(chatInputRenderCount);
+    expect(renderer.container.querySelector('[data-testid="message-list"]')?.textContent).toBe('1');
+    expect(renderer.container.querySelector('[data-testid="chat-input"]')?.textContent).toBe('store input');
   });
 
   it('does not focus the composer after a downward swipe in the chat area on mobile', () => {
@@ -265,6 +128,7 @@ describe('ChatArea provider slice memoization', () => {
       writable: true,
       value: windowInnerWidth,
     });
+    applyChatAreaProviderValue(createChatAreaProviderValue());
 
     const composer = document.createElement('textarea');
     composer.setAttribute('aria-label', 'Chat message input');
@@ -273,10 +137,8 @@ describe('ChatArea provider slice memoization', () => {
     const focusSpy = vi.spyOn(composer, 'focus');
     const selectionSpy = vi.spyOn(composer, 'setSelectionRange');
 
-    const props = createChatAreaProps();
-
     act(() => {
-      renderer.root.render(<ChatArea {...props} />);
+      renderer.root.render(<ChatArea />);
     });
 
     const chatArea = renderer.container.querySelector('.chat-bg-enhancement');

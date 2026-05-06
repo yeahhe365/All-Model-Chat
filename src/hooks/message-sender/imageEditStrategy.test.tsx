@@ -72,10 +72,9 @@ vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generated-session'),
 }));
 
-import { useImageEditSender } from './useImageEditSender';
-import { renderHook } from '@/test/testUtils';
+import { sendImageEditMessage } from './imageEditStrategy';
 
-describe('useImageEditSender', () => {
+describe('imageEditStrategy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     buildContentPartsMock.mockResolvedValue({ contentParts: [{ text: 'edit this image' }] });
@@ -94,44 +93,37 @@ describe('useImageEditSender', () => {
 
   it('persists returned apiParts so image edits can participate in future turns', async () => {
     const updateAndPersistSessions = vi.fn();
-    const setSessionLoading = vi.fn();
-    const activeJobs = { current: new Map<string, AbortController>() };
     const setActiveSessionId = vi.fn();
-
-    const { result, unmount } = renderHook(() =>
-      useImageEditSender({
-        updateAndPersistSessions,
-        setSessionLoading,
-        activeJobs,
-        setActiveSessionId,
-      }),
-    );
+    const runMessageLifecycle = vi.fn(async ({ execute }) => execute());
 
     const abortController = new AbortController();
 
     await act(async () => {
-      await result.current.handleImageEditMessage(
-        'api-key',
-        'session-1',
-        [],
-        'generation-1',
+      await sendImageEditMessage({
+        keyToUse: 'api-key',
+        activeSessionId: 'session-1',
+        messages: [],
+        generationId: 'generation-1',
         abortController,
-        createAppSettings({
+        appSettings: createAppSettings({
           generateQuadImages: false,
           isCompletionSoundEnabled: false,
         }),
-        createChatSettings({
+        currentChatSettings: createChatSettings({
           modelId: 'gemini-3.1-flash-image-preview',
           systemInstruction: '',
         }),
-        'edit this image',
-        [],
-        null,
-        '1:1',
-        '2K',
-        'IMAGE_TEXT',
-        'ALLOW_ADULT',
-      );
+        text: 'edit this image',
+        files: [],
+        editingMessageId: null,
+        aspectRatio: '1:1',
+        imageSize: '2K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        updateAndPersistSessions,
+        setActiveSessionId,
+        runMessageLifecycle,
+      });
     });
 
     const finalUpdater = updateAndPersistSessions.mock.calls[1]?.[0];
@@ -170,7 +162,6 @@ describe('useImageEditSender', () => {
         ],
       }),
     );
-
-    unmount();
+    expect(runMessageLifecycle).toHaveBeenCalledOnce();
   });
 });

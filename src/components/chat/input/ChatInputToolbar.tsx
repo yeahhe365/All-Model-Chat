@@ -8,25 +8,31 @@ import { PersonGenerationSelector } from './toolbar/PersonGenerationSelector';
 import { QuadImageToggle } from './toolbar/QuadImageToggle';
 import { TtsVoiceSelector } from './toolbar/TtsVoiceSelector';
 import { MediaResolutionSelector } from './toolbar/MediaResolutionSelector';
-import { ChatInputToolbarProps } from '../../../types';
 import { Clapperboard } from 'lucide-react';
+import { useChatStore } from '../../../stores/chatStore';
+import { useChatRuntimeStore } from '../../../stores/chatRuntimeStore';
+import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { useChatState } from '../../../hooks/chat/useChatState';
 
-export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
-  isImagenModel,
-  isGemini3ImageModel,
-  isRealImagenModel,
-  isTtsModel,
-  ttsVoice,
-  setTtsVoice,
-  aspectRatio,
-  setAspectRatio,
-  imageSize,
-  setImageSize,
-  imageOutputMode,
-  setImageOutputMode,
-  personGeneration,
-  setPersonGeneration,
-  fileError,
+interface ChatInputToolbarLocalProps {
+  showAddByIdInput: boolean;
+  fileIdInput: string;
+  setFileIdInput: (value: string) => void;
+  onAddFileByIdSubmit: () => void;
+  onCancelAddById: () => void;
+  isAddingById: boolean;
+  showAddByUrlInput: boolean;
+  urlInput: string;
+  setUrlInput: (value: string) => void;
+  onAddUrlSubmit: () => void;
+  onCancelAddUrl: () => void;
+  isAddingByUrl: boolean;
+  ttsContext?: string;
+  onEditTtsContext?: () => void;
+}
+
+export const ChatInputToolbar: React.FC<ChatInputToolbarLocalProps> = ({
   showAddByIdInput,
   fileIdInput,
   setFileIdInput,
@@ -39,23 +45,43 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   onAddUrlSubmit,
   onCancelAddUrl,
   isAddingByUrl,
-  isLoading,
-  generateQuadImages,
-  onToggleQuadImages,
-  supportedAspectRatios,
-  supportedImageSizes,
-  isNativeAudioModel,
-  mediaResolution,
-  setMediaResolution,
   ttsContext,
   onEditTtsContext,
 }) => {
-  const showAspectRatio = (isImagenModel || isGemini3ImageModel) && setAspectRatio && aspectRatio;
-  const showImageSize = supportedImageSizes && supportedImageSizes.length > 0 && setImageSize && imageSize;
-  const showImageOutputMode = isImagenModel && !isRealImagenModel && setImageOutputMode && imageOutputMode;
-  const showPersonGeneration = isRealImagenModel && setPersonGeneration && personGeneration;
-  const showQuadToggle =
-    (isImagenModel || isGemini3ImageModel) && onToggleQuadImages && generateQuadImages !== undefined;
+  const appSettings = useSettingsStore((state) => state.appSettings);
+  const { currentChatSettings, isLoading } = useChatState(appSettings);
+  const capabilities = getCachedModelCapabilities(currentChatSettings.modelId);
+  const {
+    isImagenModel,
+    isGemini3ImageModel,
+    isRealImagenModel,
+    isTtsModel,
+    isNativeAudioModel,
+    supportedAspectRatios,
+    supportedImageSizes,
+  } = capabilities;
+  const aspectRatio = useChatStore((state) => state.aspectRatio);
+  const setAspectRatio = useChatStore((state) => state.setAspectRatio);
+  const imageSize = useChatStore((state) => state.imageSize);
+  const setImageSize = useChatStore((state) => state.setImageSize);
+  const imageOutputMode = useChatStore((state) => state.imageOutputMode);
+  const setImageOutputMode = useChatStore((state) => state.setImageOutputMode);
+  const personGeneration = useChatStore((state) => state.personGeneration);
+  const setPersonGeneration = useChatStore((state) => state.setPersonGeneration);
+  const fileError = useChatStore((state) => state.appFileError);
+  const onToggleQuadImages = useChatRuntimeStore((state) => state.onToggleQuadImages);
+  const setCurrentChatSettings = useChatRuntimeStore((state) => state.setCurrentChatSettings);
+  const ttsVoice = currentChatSettings.ttsVoice;
+  const mediaResolution = currentChatSettings.mediaResolution;
+  const generateQuadImages = appSettings.generateQuadImages ?? false;
+  const setTtsVoice = (voice: string) => setCurrentChatSettings((prev) => ({ ...prev, ttsVoice: voice }));
+  const setMediaResolution = (res: typeof mediaResolution) =>
+    setCurrentChatSettings((prev) => ({ ...prev, mediaResolution: res }));
+  const showAspectRatio = (isImagenModel || isGemini3ImageModel) && !!aspectRatio;
+  const showImageSize = supportedImageSizes && supportedImageSizes.length > 0 && !!imageSize;
+  const showImageOutputMode = isImagenModel && !isRealImagenModel && !!imageOutputMode;
+  const showPersonGeneration = isRealImagenModel && !!personGeneration;
+  const showQuadToggle = (isImagenModel || isGemini3ImageModel) && generateQuadImages !== undefined;
 
   // Allow voice selection for both explicit TTS models and Native Audio (Live) models
   const showTtsVoice = (isTtsModel || isNativeAudioModel) && ttsVoice && setTtsVoice;

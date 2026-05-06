@@ -1,6 +1,5 @@
-import { ChatSettings, ImageOutputMode, ImagePersonGeneration, MediaResolution } from './settings';
+import { ChatSettings, MediaResolution } from './settings';
 import type { Part } from '@google/genai';
-import type { ChatToolToggleStates, ChatToolUtilityActions } from './chatTools';
 
 export interface VideoMetadata {
   startOffset?: string;
@@ -146,90 +145,4 @@ export interface SideViewContent {
   content: string;
   language?: string;
   title?: string;
-}
-
-// Toolbar Props Definition
-export interface ChatInputToolbarProps {
-  isImagenModel: boolean;
-  isGemini3ImageModel?: boolean;
-  isRealImagenModel?: boolean;
-  isTtsModel?: boolean;
-  ttsVoice?: string;
-  setTtsVoice?: (voice: string) => void;
-  aspectRatio?: string;
-  setAspectRatio?: (ratio: string) => void;
-  imageSize?: string;
-  setImageSize?: (size: string) => void;
-  imageOutputMode?: ImageOutputMode;
-  setImageOutputMode?: (mode: ImageOutputMode) => void;
-  personGeneration?: ImagePersonGeneration;
-  setPersonGeneration?: (mode: ImagePersonGeneration) => void;
-  fileError: string | null;
-  showAddByIdInput: boolean;
-  fileIdInput: string;
-  setFileIdInput: (value: string) => void;
-  onAddFileByIdSubmit: () => void;
-  onCancelAddById: () => void;
-  isAddingById: boolean;
-  showAddByUrlInput: boolean;
-  urlInput: string;
-  setUrlInput: (value: string) => void;
-  onAddUrlSubmit: () => void;
-  onCancelAddUrl: () => void;
-  isAddingByUrl: boolean;
-  isLoading: boolean;
-  generateQuadImages?: boolean;
-  onToggleQuadImages?: () => void;
-  supportedAspectRatios?: string[];
-  supportedImageSizes?: string[]; // Added for configuring supported resolutions
-  isNativeAudioModel?: boolean;
-  mediaResolution?: MediaResolution;
-  setMediaResolution?: (resolution: MediaResolution) => void;
-  ttsContext?: string;
-  onEditTtsContext?: () => void;
-}
-
-export interface ChatInputActionsProps {
-  onAttachmentAction: (action: AttachmentAction) => void;
-  disabled: boolean;
-  currentModelId: string;
-  isImageModel?: boolean;
-  isRealImagenModel?: boolean;
-  toolStates: ChatToolToggleStates;
-  toolUtilityActions: ChatToolUtilityActions;
-  onRecordButtonClick: () => void;
-  isRecording?: boolean;
-  isMicInitializing?: boolean;
-  isTranscribing: boolean;
-  isLoading: boolean;
-  onStopGenerating: () => void;
-  isEditing: boolean;
-  onCancelEdit: () => void;
-  canSend: boolean;
-  isWaitingForUpload: boolean;
-  onCancelRecording: () => void;
-  onTranslate: () => void;
-  showInputTranslationButton?: boolean;
-  onPasteFromClipboard?: () => void;
-  showInputPasteButton?: boolean;
-  onClearInput?: () => void;
-  showInputClearButton?: boolean;
-  isTranslating: boolean;
-  inputText: string;
-  onToggleFullscreen?: () => void;
-  isFullscreen?: boolean;
-  editMode?: 'update' | 'resend';
-  isNativeAudioModel?: boolean;
-  onStartLiveSession?: () => void;
-  onDisconnectLiveSession?: () => void;
-  isLiveConnected?: boolean;
-  isLiveMuted?: boolean;
-  onToggleLiveMute?: () => void;
-  onStartLiveCamera?: () => void;
-  onStartLiveScreenShare?: () => void;
-  onStopLiveVideo?: () => void;
-  liveVideoSource?: 'camera' | 'screen' | null;
-  onFastSendMessage?: () => void;
-  canQueueMessage?: boolean;
-  onQueueMessage?: () => void;
 }

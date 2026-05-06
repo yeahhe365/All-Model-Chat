@@ -1,8 +1,9 @@
 import { useCallback, useRef } from 'react';
-import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
+import type { LiveServerMessage, Part, Session as LiveSession } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
 import type { LiveClientFunctions, ThoughtSupportingPart, UploadedFile } from '../../types';
 import { createWavBlobFromPCMChunks } from '../../utils/audio/audioProcessing';
+import { getContentDeltaFromPart } from '../../features/chat-streaming/messageStreamReducer';
 
 interface UseLiveMessageProcessingProps {
   playAudioChunk: (data: string) => Promise<void>;
@@ -13,6 +14,8 @@ interface UseLiveMessageProcessingProps {
     isFinal: boolean,
     type?: 'content' | 'thought',
     audioUrl?: string | null,
+    generatedFiles?: UploadedFile[],
+    apiPart?: Part,
   ) => void;
   onGoAway?: (goAway: NonNullable<LiveServerMessage['goAway']>) => void;
   onGeneratedFiles?: (files: UploadedFile[]) => void;
@@ -72,20 +75,18 @@ export const useLiveMessageProcessing = ({
               onTranscript(thoughtText, 'model', false, 'thought');
             }
           } else if (part.text && onTranscript) {
-            onTranscript(part.text, 'model', false, 'content');
+            onTranscript(part.text, 'model', false, 'content', undefined, undefined, part);
           }
 
           if (part.executableCode) {
-            const language = part.executableCode.language?.toLowerCase() || 'python';
-            const codeBlock = `\n\`\`\`${language}\n${part.executableCode.code}\n\`\`\`\n`;
-            if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
+            if (onTranscript) {
+              onTranscript(getContentDeltaFromPart(part), 'model', false, 'content', undefined, undefined, part);
+            }
           }
           if (part.codeExecutionResult) {
-            let resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
-            if (part.codeExecutionResult.output) {
-              resultBlock += `\n\`\`\`\n${part.codeExecutionResult.output}\n\`\`\`\n`;
+            if (onTranscript) {
+              onTranscript(getContentDeltaFromPart(part), 'model', false, 'content', undefined, undefined, part);
             }
-            if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
           }
         }
       }

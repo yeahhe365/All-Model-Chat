@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { ClipboardPaste, Eraser } from 'lucide-react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
-import { ChatInputActionsProps } from '../../../types';
+import type { AttachmentAction } from '../../../types';
 import { WebSearchToggle } from './actions/WebSearchToggle';
 import { LiveControls } from './actions/LiveControls';
 import { RecordControls } from './actions/RecordControls';
@@ -11,10 +11,30 @@ import { SendControls } from './actions/SendControls';
 import { ComposerMoreMenu } from './actions/ComposerMoreMenu';
 import { useI18n } from '../../../contexts/I18nContext';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
+import { useChatStore } from '../../../stores/chatStore';
+import { useChatRuntimeStore } from '../../../stores/chatRuntimeStore';
+import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { useChatState } from '../../../hooks/chat/useChatState';
+import { useChatInputToolStates } from '../../../hooks/chat-input/useChatInputToolStates';
 
-interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
-  editMode?: 'update' | 'resend';
-  isNativeAudioModel?: boolean;
+interface ChatInputActionsLocalProps {
+  onAttachmentAction: (action: AttachmentAction) => void;
+  disabled: boolean;
+  onRecordButtonClick: () => void;
+  isRecording?: boolean;
+  isMicInitializing?: boolean;
+  isTranscribing: boolean;
+  onCancelRecording: () => void;
+  canSend: boolean;
+  isWaitingForUpload: boolean;
+  onTranslate: () => void;
+  onPasteFromClipboard?: () => void;
+  onClearInput?: () => void;
+  isTranslating: boolean;
+  inputText: string;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
   onStartLiveSession?: () => void;
   onDisconnectLiveSession?: () => void;
   isLiveConnected?: boolean;
@@ -24,6 +44,12 @@ interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
   onStartLiveScreenShare?: () => void;
   onStopLiveVideo?: () => void;
   liveVideoSource?: 'camera' | 'screen' | null;
+  onFastSendMessage?: () => void;
+  canQueueMessage?: boolean;
+  onQueueMessage?: () => void;
+  onToggleToolAndFocus: (toggleFunc: () => void) => void;
+  onAddYouTubeVideo: () => void;
+  onCountTokens: () => void;
 }
 
 const ACTION_ROW_GAP_PX = 8;
@@ -34,37 +60,23 @@ interface AuxiliaryActionCollapseState {
   shouldCollapse: boolean;
 }
 
-export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
+export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
   onAttachmentAction,
   disabled,
-  currentModelId,
-  isImageModel,
-  isRealImagenModel,
-  toolStates,
-  toolUtilityActions,
   onRecordButtonClick,
   isRecording,
   isMicInitializing,
   isTranscribing,
-  isLoading,
-  onStopGenerating,
-  isEditing,
-  onCancelEdit,
   canSend,
   isWaitingForUpload,
   onCancelRecording,
   onTranslate,
-  showInputTranslationButton,
   onPasteFromClipboard,
-  showInputPasteButton,
   onClearInput,
-  showInputClearButton,
   isTranslating,
   inputText,
   onToggleFullscreen,
   isFullscreen,
-  editMode,
-  isNativeAudioModel,
   onStartLiveSession,
   onDisconnectLiveSession,
   isLiveConnected,
@@ -77,8 +89,70 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onFastSendMessage,
   canQueueMessage,
   onQueueMessage,
+  onToggleToolAndFocus,
+  onAddYouTubeVideo,
+  onCountTokens,
 }) => {
   const { t } = useI18n();
+  const appSettings = useSettingsStore((state) => state.appSettings);
+  const { currentChatSettings, isLoading } = useChatState(appSettings);
+  const currentModelId = currentChatSettings.modelId;
+  const capabilities = getCachedModelCapabilities(currentModelId);
+  const isImageModel = capabilities.isImagenModel || false;
+  const isRealImagenModel = capabilities.isRealImagenModel || false;
+  const isNativeAudioModel = capabilities.isNativeAudioModel || false;
+  const isEditing = !!useChatStore((state) => state.editingMessageId);
+  const editMode = useChatStore((state) => state.editMode);
+  const onStopGenerating = useChatRuntimeStore((state) => state.onStopGenerating);
+  const onCancelEdit = useChatRuntimeStore((state) => state.onCancelEdit);
+  const toolStates = useChatInputToolStates({
+    currentChatSettings,
+    isLoading,
+    onStopGenerating,
+  });
+  const focusedToolStates = useMemo(
+    () => ({
+      googleSearch: {
+        isEnabled: !!toolStates.googleSearch?.isEnabled,
+        onToggle: toolStates.googleSearch?.onToggle
+          ? () => onToggleToolAndFocus(toolStates.googleSearch!.onToggle!)
+          : undefined,
+      },
+      codeExecution: {
+        isEnabled: !!toolStates.codeExecution?.isEnabled,
+        onToggle: toolStates.codeExecution?.onToggle
+          ? () => onToggleToolAndFocus(toolStates.codeExecution!.onToggle!)
+          : undefined,
+      },
+      localPython: {
+        isEnabled: !!toolStates.localPython?.isEnabled,
+        onToggle: toolStates.localPython?.onToggle
+          ? () => onToggleToolAndFocus(toolStates.localPython!.onToggle!)
+          : undefined,
+      },
+      urlContext: {
+        isEnabled: !!toolStates.urlContext?.isEnabled,
+        onToggle: toolStates.urlContext?.onToggle ? () => onToggleToolAndFocus(toolStates.urlContext!.onToggle!) : undefined,
+      },
+      deepSearch: {
+        isEnabled: !!toolStates.deepSearch?.isEnabled,
+        onToggle: toolStates.deepSearch?.onToggle
+          ? () => onToggleToolAndFocus(toolStates.deepSearch!.onToggle!)
+          : undefined,
+      },
+    }),
+    [onToggleToolAndFocus, toolStates],
+  );
+  const toolUtilityActions = useMemo(
+    () => ({
+      onAddYouTubeVideo,
+      onCountTokens,
+    }),
+    [onAddYouTubeVideo, onCountTokens],
+  );
+  const showInputTranslationButton = appSettings.showInputTranslationButton ?? false;
+  const showInputPasteButton = appSettings.showInputPasteButton ?? true;
+  const showInputClearButton = appSettings.showInputClearButton ?? false;
   const canTranslate = !!inputText.trim() && !isEditing && !isTranscribing && !isMicInitializing;
   const canUseInputUtility = !disabled && !isLoading && !isWaitingForUpload;
   const showClearButton = showInputClearButton && onClearInput;
@@ -258,15 +332,15 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
 
         {isNativeAudioModel && (
           <WebSearchToggle
-            isGoogleSearchEnabled={!!toolStates.googleSearch?.isEnabled}
-            onToggleGoogleSearch={toolStates.googleSearch?.onToggle ?? (() => undefined)}
+            isGoogleSearchEnabled={!!focusedToolStates.googleSearch?.isEnabled}
+            onToggleGoogleSearch={focusedToolStates.googleSearch?.onToggle ?? (() => undefined)}
             disabled={disabled}
           />
         )}
 
         <ToolsMenu
           currentModelId={currentModelId}
-          toolStates={toolStates}
+          toolStates={focusedToolStates}
           toolUtilityActions={toolUtilityActions}
           disabled={disabled}
         />

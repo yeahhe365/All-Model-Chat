@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useEffect } from 'react';
+import type { Part } from '@google/genai';
 import {
   SavedChatSession,
   ChatMessage,
@@ -12,6 +13,12 @@ import { createNewSession, createMessage } from '../../../utils/chat/session';
 import { updateFileInMessage, updateMessageInSession, updateSessionById } from '../../../utils/chat/sessionMutations';
 import { MediaResolution } from '../../../types/settings';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import {
+  createMessageStreamState,
+  mergeUniqueFiles,
+  reduceMessageStreamEvent,
+  type MessageStreamState,
+} from '../../../features/chat-streaming/messageStreamReducer';
 
 interface UseMessageUpdatesProps {
   activeSessionId: string | null;
@@ -45,6 +52,10 @@ export const useMessageUpdates = ({
   const liveConversationRefs = useRef<{ userId: string | null; modelId: string | null }>({
     userId: null,
     modelId: null,
+  });
+  const liveStreamStateRefs = useRef<{ user: MessageStreamState | null; model: MessageStreamState | null }>({
+    user: null,
+    model: null,
   });
 
   // Track pending session ID creation to prevent duplicates during async state updates
@@ -145,11 +156,12 @@ export const useMessageUpdates = ({
       type: 'content' | 'thought' = 'content',
       audioUrl?: string | null,
       generatedFiles?: UploadedFile[],
+      apiPart?: Part,
     ) => {
       let currentSessionId = activeSessionId || pendingSessionIdRef.current;
 
       // Auto-create session if receiving any live output in New Chat state.
-      if (!currentSessionId && (text || audioUrl || (generatedFiles && generatedFiles.length > 0))) {
+      if (!currentSessionId && (text || audioUrl || (generatedFiles && generatedFiles.length > 0) || apiPart)) {
         const newSession = createNewSession(
           { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings },
           [],
@@ -177,17 +189,45 @@ export const useMessageUpdates = ({
 
           // Only create or update if there is actual text content (or thoughts)
           // OR if there is an audioUrl to attach (e.g. at the end of a turn even if no text change)
-          if (text || audioUrl || (generatedFiles && generatedFiles.length > 0)) {
+          if (text || audioUrl || (generatedFiles && generatedFiles.length > 0) || apiPart) {
             if (messageIndex === -1) {
+              const generationStartTime = new Date();
               // Start a new message for this turn
-              const newMessage = createMessage(role === 'user' ? 'user' : 'model', type === 'content' ? text : '', {
-                thoughts: type === 'thought' ? text : undefined,
+              const newMessage = createMessage(role === 'user' ? 'user' : 'model', '', {
                 isLoading: true, // Mark as loading to indicate active stream/live status
                 firstTokenTimeMs: 0, // Initialize TTFT to 0 for Live API
+                generationStartTime,
                 audioSrc: audioUrl || undefined,
                 audioAutoplay: audioUrl ? false : undefined,
-                files: generatedFiles?.length ? generatedFiles : undefined,
               });
+
+              if (role === 'model') {
+                let streamState = createMessageStreamState({
+                  generationId: newMessage.id,
+                  generationStartTime,
+                });
+                if (apiPart) {
+                  streamState = reduceMessageStreamEvent(streamState, { type: 'part', part: apiPart });
+                } else if (text) {
+                  streamState =
+                    type === 'thought'
+                      ? reduceMessageStreamEvent(streamState, { type: 'thought', text })
+                      : reduceMessageStreamEvent(streamState, { type: 'part', part: { text } as Part });
+                }
+                if (generatedFiles?.length) {
+                  streamState = reduceMessageStreamEvent(streamState, { type: 'files', files: generatedFiles });
+                }
+                liveStreamStateRefs.current.model = streamState;
+                newMessage.content = streamState.content;
+                newMessage.thoughts = streamState.thoughts || undefined;
+                newMessage.files = streamState.files.length ? streamState.files : undefined;
+                newMessage.apiParts = streamState.apiParts.length ? streamState.apiParts : undefined;
+                newMessage.firstTokenTimeMs = streamState.firstTokenTimeMs ?? 0;
+              } else {
+                newMessage.content = type === 'content' ? text : '';
+                newMessage.thoughts = type === 'thought' ? text : undefined;
+                newMessage.files = generatedFiles?.length ? generatedFiles : undefined;
+              }
 
               messages.push(newMessage);
 
@@ -202,7 +242,50 @@ export const useMessageUpdates = ({
               const msg = messages[messageIndex];
               const updates: Partial<ChatMessage> = {};
 
-              if (text) {
+              if (role === 'model' && (apiPart || text || generatedFiles?.length)) {
+                let streamState =
+                  liveStreamStateRefs.current.model ??
+                  createMessageStreamState({
+                    generationId: msg.id,
+                    generationStartTime: msg.generationStartTime || msg.timestamp,
+                  });
+
+                if (!liveStreamStateRefs.current.model) {
+                  streamState = {
+                    ...streamState,
+                    content: msg.content || '',
+                    thoughts: msg.thoughts || '',
+                    apiParts: msg.apiParts || [],
+                    files: msg.files || [],
+                    firstTokenTimeMs: msg.firstTokenTimeMs,
+                  };
+                }
+
+                if (apiPart) {
+                  streamState = reduceMessageStreamEvent(streamState, { type: 'part', part: apiPart });
+                } else if (text) {
+                  streamState =
+                    type === 'thought'
+                      ? reduceMessageStreamEvent(streamState, { type: 'thought', text })
+                      : reduceMessageStreamEvent(streamState, { type: 'part', part: { text } as Part });
+                }
+                if (generatedFiles?.length) {
+                  streamState = reduceMessageStreamEvent(streamState, { type: 'files', files: generatedFiles });
+                }
+
+                liveStreamStateRefs.current.model = streamState;
+                updates.content = streamState.content;
+                updates.thoughts = streamState.thoughts || undefined;
+                updates.files = streamState.files.length ? streamState.files : undefined;
+                updates.apiParts = streamState.apiParts.length ? streamState.apiParts : undefined;
+                updates.firstTokenTimeMs = streamState.firstTokenTimeMs ?? msg.firstTokenTimeMs;
+
+                if (streamState.thoughts && !msg.thinkingTimeMs && streamState.firstContentPartTime) {
+                  updates.thinkingTimeMs =
+                    streamState.firstContentPartTime.getTime() -
+                    (msg.generationStartTime || msg.timestamp).getTime();
+                }
+              } else if (text) {
                 if (type === 'thought') {
                   updates.thoughts = (msg.thoughts || '') + text;
                 } else {
@@ -220,7 +303,7 @@ export const useMessageUpdates = ({
                 updates.audioAutoplay = false; // Disable autoplay for Live API generated audio
               }
               if (generatedFiles?.length) {
-                updates.files = [...(msg.files || []), ...generatedFiles];
+                updates.files = mergeUniqueFiles(updates.files || msg.files, generatedFiles);
               }
 
               messages[messageIndex] = { ...msg, ...updates };
@@ -247,7 +330,10 @@ export const useMessageUpdates = ({
             }
             // Reset tracking ref for this role so next transcript starts a new message bubble
             if (role === 'user') liveConversationRefs.current.userId = null;
-            else liveConversationRefs.current.modelId = null;
+            else {
+              liveConversationRefs.current.modelId = null;
+              liveStreamStateRefs.current.model = null;
+            }
           }
 
           return {

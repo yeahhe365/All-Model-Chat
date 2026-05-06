@@ -5,33 +5,22 @@ import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService } from '../../services/logService';
 import { calculateTokenStats } from '../../utils/modelHelpers';
 import { showNotification, playCompletionSound } from '../../utils/uiUtils';
-import { finalizeMessages, appendApiPart } from '../chat-stream/processors';
+import { finalizeMessages } from '../chat-stream/processors';
 import { streamingStore } from '../../services/streamingStore';
-import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 import { buildExactPricingFromUsageMetadata } from '../../utils/usagePricingTelemetry';
 import { resolveChatExactPricing } from '../../utils/chatPricingEvidence';
-import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { updateMessageInSession, updateSessionById } from '../../utils/chat/sessionMutations';
-import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '../../utils/fileTypeUtils';
+import {
+  createMessageStreamState,
+  getContentDeltaFromPart,
+  mergeUniqueFiles,
+  reduceMessageStreamEvent,
+} from '../../features/chat-streaming/messageStreamReducer';
 
 type SessionsUpdater = (
   updater: (prev: SavedChatSession[]) => SavedChatSession[],
   options?: { persist?: boolean },
 ) => void;
-
-const mergeUniqueFiles = (existing: UploadedFile[] = [], incoming: UploadedFile[] = []) => {
-  const files = [...existing];
-  const seen = new Set(files.map((file) => file.id));
-
-  for (const file of incoming) {
-    if (!seen.has(file.id)) {
-      files.push(file);
-      seen.add(file.id);
-    }
-  }
-
-  return files;
-};
 
 interface ChatStreamHandlerProps {
   appSettings: AppSettings;
@@ -59,24 +48,18 @@ export const useChatStreamHandler = ({
       onSuccess?: (generationId: string, finalContent: string) => void,
     ) => {
       const newModelMessageIds = new Set<string>([generationId]);
-      let firstContentPartTime: Date | null = null;
-      let firstTokenTime: Date | null = null; // Track first token (thought or content) for TTFT
-      let accumulatedText = '';
-      let accumulatedThoughts = '';
-      let accumulatedApiParts: Part[] = [];
-      let accumulatedGeneratedFiles: UploadedFile[] = [];
+      let streamState = createMessageStreamState({ generationId, generationStartTime });
 
       // Reset store for this new generation
       streamingStore.clear(generationId);
 
-      // Helper to record TTFT immediately on first activity
-      const recordFirstToken = () => {
-        if (!firstTokenTime) {
-          firstTokenTime = new Date();
-          const ttft = firstTokenTime.getTime() - generationStartTime.getTime();
-
+      const syncFirstTokenTime = (previousFirstTokenTimeMs?: number) => {
+        if (previousFirstTokenTimeMs === undefined && streamState.firstTokenTimeMs !== undefined) {
           updateAndPersistSessions(
-            (prev) => updateMessageInSession(prev, currentSessionId, generationId, { firstTokenTimeMs: ttft }),
+            (prev) =>
+              updateMessageInSession(prev, currentSessionId, generationId, {
+                firstTokenTimeMs: streamState.firstTokenTimeMs,
+              }),
             { persist: false },
           );
         }
@@ -84,7 +67,7 @@ export const useChatStreamHandler = ({
 
       const streamOnError = (error: Error) => {
         // Pass accumulated content so it can be saved even on error/abort
-        handleApiError(error, currentSessionId, generationId, 'Error', accumulatedText, accumulatedThoughts);
+        handleApiError(error, currentSessionId, generationId, 'Error', streamState.content, streamState.thoughts);
         setSessionLoading(currentSessionId, false);
         activeJobs.current.delete(generationId);
         streamingStore.clear(generationId);
@@ -103,11 +86,23 @@ export const useChatStreamHandler = ({
               : 'en'
             : appSettings.language;
 
-        if (appSettings.isStreamingEnabled && !firstContentPartTime) {
-          firstContentPartTime = new Date();
+        streamState = reduceMessageStreamEvent(streamState, {
+          type: 'complete',
+          usage: usageMetadata,
+          grounding: groundingMetadata,
+          urlContext: urlContextMetadata,
+          generatedFiles,
+          aborted: abortController.signal.aborted,
+        });
+
+        if (appSettings.isStreamingEnabled && !streamState.firstContentPartTime) {
+          streamState = {
+            ...streamState,
+            firstContentPartTime: new Date(),
+          };
         }
 
-        if (usageMetadata) {
+        if (streamState.usage) {
           const {
             promptTokens,
             cachedPromptTokens,
@@ -115,11 +110,11 @@ export const useChatStreamHandler = ({
             thoughtTokens,
             toolUsePromptTokens,
             totalTokens,
-          } = calculateTokenStats(usageMetadata);
+          } = calculateTokenStats(streamState.usage);
           const exactPricing = resolveChatExactPricing({
-            providerExactPricing: buildExactPricingFromUsageMetadata('chat', usageMetadata),
+            providerExactPricing: buildExactPricingFromUsageMetadata('chat', streamState.usage),
             requestParts,
-            responseParts: accumulatedApiParts,
+            responseParts: streamState.apiParts,
             promptTokens,
             cachedPromptTokens,
             toolUsePromptTokens,
@@ -147,12 +142,12 @@ export const useChatStreamHandler = ({
                 if (msg.id === generationId) {
                   return {
                     ...msg,
-                    content: (msg.content || '') + accumulatedText,
-                    thoughts: (msg.thoughts || '') + accumulatedThoughts,
-                    files: [...accumulatedGeneratedFiles, ...(generatedFiles || [])].length
-                      ? mergeUniqueFiles(msg.files, [...accumulatedGeneratedFiles, ...(generatedFiles || [])])
+                    content: (msg.content || '') + streamState.content,
+                    thoughts: (msg.thoughts || '') + streamState.thoughts,
+                    files: streamState.files.length
+                      ? mergeUniqueFiles(msg.files, streamState.files)
                       : msg.files,
-                    apiParts: msg.apiParts ? [...msg.apiParts, ...accumulatedApiParts] : accumulatedApiParts,
+                    apiParts: msg.apiParts ? [...msg.apiParts, ...streamState.apiParts] : streamState.apiParts,
                   };
                 }
                 return msg;
@@ -165,10 +160,10 @@ export const useChatStreamHandler = ({
                 newModelMessageIds,
                 currentChatSettings,
                 lang,
-                firstContentPartTime,
-                usageMetadata,
-                groundingMetadata,
-                urlContextMetadata,
+                streamState.firstContentPartTime,
+                streamState.usage,
+                streamState.grounding,
+                streamState.urlContext,
                 abortController.signal.aborted,
               );
 
@@ -203,104 +198,47 @@ export const useChatStreamHandler = ({
         streamingStore.clear(generationId);
 
         if (onSuccess && !abortController.signal.aborted) {
-          setTimeout(() => onSuccess(generationId, accumulatedText), 0);
+          setTimeout(() => onSuccess(generationId, streamState.content), 0);
         }
       };
 
       const streamOnPart = (part: Part) => {
-        recordFirstToken(); // Capture TTFT
+        const previousFirstTokenTimeMs = streamState.firstTokenTimeMs;
+        const previousFiles = streamState.files;
+        const contentDelta = getContentDeltaFromPart(part);
 
-        accumulatedApiParts = appendApiPart(accumulatedApiParts, part);
+        streamState = reduceMessageStreamEvent(streamState, {
+          type: 'part',
+          part,
+          receivedAt: new Date(),
+        });
+        syncFirstTokenTime(previousFirstTokenTimeMs);
 
-        const anyPart = part as Part & {
-          text?: string;
-          executableCode?: { language: string; code: string };
-          codeExecutionResult?: { outcome: string; output?: string };
-          inlineData?: { mimeType: string; data?: string };
-        };
-
-        // 1. Accumulate plain text
-        if (anyPart.text) {
-          const chunkText = anyPart.text;
-          accumulatedText += chunkText;
-          streamingStore.updateContent(generationId, chunkText);
+        if (contentDelta) {
+          streamingStore.updateContent(generationId, contentDelta);
         }
 
-        // 2. Handle Tools / Code (Convert to text representation for the store)
-        if (anyPart.executableCode) {
-          const codePart = anyPart.executableCode as { language: string; code: string };
-          const toolContent = `\n\n\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\`\n\n`;
-          accumulatedText += toolContent;
-          streamingStore.updateContent(generationId, toolContent);
-        } else if (anyPart.codeExecutionResult) {
-          const resultPart = anyPart.codeExecutionResult as { outcome: string; output?: string };
-          const escapeHtml = (unsafe: string) => {
-            if (typeof unsafe !== 'string') return '';
-            return unsafe
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#039;');
-          };
-          let toolContent = `\n\n<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
-          if (resultPart.output) {
-            toolContent += `<pre><code class="language-text">${escapeHtml(resultPart.output)}</code></pre>`;
-          }
-          toolContent += '</div>\n\n';
-          accumulatedText += toolContent;
-          streamingStore.updateContent(generationId, toolContent);
-        } else if (anyPart.inlineData) {
-          const { mimeType, data } = anyPart.inlineData;
-
-          const isSupportedFile =
-            isImageMimeType(mimeType) ||
-            isAudioMimeType(mimeType) ||
-            isVideoMimeType(mimeType) ||
-            SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
-
-          if (isSupportedFile) {
-            const generatedFile = data
-              ? createUploadedFileFromBase64(
-                  data,
-                  mimeType,
-                  isImageMimeType(mimeType) ? `generated-plot-${Date.now()}` : 'generated-file',
-                )
-              : undefined;
-
-            if (generatedFile) {
-              accumulatedGeneratedFiles = [...accumulatedGeneratedFiles, generatedFile];
-            }
-
-            // Save to files array instead of hardcoding base64 into text to prevent critical performance issues
-            updateAndPersistSessions(
-              (prev) =>
-                generatedFile
-                  ? updateMessageInSession(prev, currentSessionId, generationId, (message) => ({
-                      ...message,
-                      files: mergeUniqueFiles(message.files, [generatedFile]),
-                    }))
-                  : prev,
-              { persist: false },
-            );
-          }
-        }
-
-        const hasMeaningfulContent =
-          (anyPart.text && anyPart.text.trim().length > 0) ||
-          anyPart.executableCode ||
-          anyPart.codeExecutionResult ||
-          anyPart.inlineData;
-
-        if (appSettings.isStreamingEnabled && !firstContentPartTime && hasMeaningfulContent) {
-          firstContentPartTime = new Date();
+        const newFiles = streamState.files.filter((file) => !previousFiles.some((existing) => existing.id === file.id));
+        if (newFiles.length > 0) {
+          updateAndPersistSessions(
+            (prev) =>
+              updateMessageInSession(prev, currentSessionId, generationId, (message) => ({
+                ...message,
+                files: mergeUniqueFiles(message.files, newFiles),
+              })),
+            { persist: false },
+          );
         }
       };
 
       const onThoughtChunk = (thoughtChunk: string) => {
-        recordFirstToken(); // Capture TTFT (thoughts usually come first)
-
-        accumulatedThoughts += thoughtChunk;
+        const previousFirstTokenTimeMs = streamState.firstTokenTimeMs;
+        streamState = reduceMessageStreamEvent(streamState, {
+          type: 'thought',
+          text: thoughtChunk,
+          receivedAt: new Date(),
+        });
+        syncFirstTokenTime(previousFirstTokenTimeMs);
         streamingStore.updateThoughts(generationId, thoughtChunk);
       };
 

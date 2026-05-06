@@ -1,5 +1,6 @@
 import { afterEach, beforeEach } from 'vitest';
 import { useChatStore } from '../stores/chatStore';
+import { useChatRuntimeStore } from '../stores/chatRuntimeStore';
 import { useSettingsStore } from '../stores/settingsStore';
 
 const initialSettingsState = useSettingsStore.getState();
@@ -46,9 +47,14 @@ export const resetChatStoreState = () => {
   });
 };
 
+export const resetChatRuntimeStoreState = () => {
+  useChatRuntimeStore.getState().resetChatRuntime();
+};
+
 export const resetAllStoreState = () => {
   resetSettingsStoreState();
   resetChatStoreState();
+  resetChatRuntimeStoreState();
 };
 
 export const setupStoreStateReset = () => {

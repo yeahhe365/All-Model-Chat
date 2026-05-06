@@ -2,10 +2,19 @@ import { act } from 'react';
 import { renderHookWithProviders } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockSendStandardMessage = vi.fn();
-const mockHandleTtsImagenMessage = vi.fn();
-const mockHandleImageEditMessage = vi.fn();
-const { mockGetModelCapabilities, mockCreateMessage, mockCreateNewSession } = vi.hoisted(() => ({
+const {
+  mockSendStandardMessage,
+  mockSendTtsImagenMessage,
+  mockSendImageEditMessage,
+  mockGenerateCanvasMessage,
+  mockGetModelCapabilities,
+  mockCreateMessage,
+  mockCreateNewSession,
+} = vi.hoisted(() => ({
+  mockSendStandardMessage: vi.fn(),
+  mockSendTtsImagenMessage: vi.fn(),
+  mockSendImageEditMessage: vi.fn(),
+  mockGenerateCanvasMessage: vi.fn(),
   mockGetModelCapabilities: vi.fn(),
   mockCreateMessage: vi.fn((role: string, content: string, options?: Record<string, unknown>) => ({
     id: 'error-message-id',
@@ -23,28 +32,20 @@ vi.mock('./message-sender/useChatStreamHandler', () => ({
   }),
 }));
 
-vi.mock('./message-sender/useCanvasGenerator', () => ({
-  useCanvasGenerator: () => ({
-    handleGenerateCanvas: vi.fn(),
-  }),
+vi.mock('./message-sender/canvasStrategy', () => ({
+  generateCanvasMessage: mockGenerateCanvasMessage,
 }));
 
-vi.mock('./message-sender/useStandardChat', () => ({
-  useStandardChat: () => ({
-    sendStandardMessage: mockSendStandardMessage,
-  }),
+vi.mock('./message-sender/standardChatStrategy', () => ({
+  sendStandardMessage: mockSendStandardMessage,
 }));
 
-vi.mock('./message-sender/useTtsImagenSender', () => ({
-  useTtsImagenSender: () => ({
-    handleTtsImagenMessage: mockHandleTtsImagenMessage,
-  }),
+vi.mock('./message-sender/ttsImagenStrategy', () => ({
+  sendTtsImagenMessage: mockSendTtsImagenMessage,
 }));
 
-vi.mock('./message-sender/useImageEditSender', () => ({
-  useImageEditSender: () => ({
-    handleImageEditMessage: mockHandleImageEditMessage,
-  }),
+vi.mock('./message-sender/imageEditStrategy', () => ({
+  sendImageEditMessage: mockSendImageEditMessage,
 }));
 
 vi.mock('../utils/modelHelpers', () => ({
@@ -123,9 +124,9 @@ describe('useMessageSender', () => {
     });
 
     expect(setAppFileError).toHaveBeenCalledWith('Imagen 模型仅支持文本提示词。');
-    expect(mockHandleTtsImagenMessage).not.toHaveBeenCalled();
+    expect(mockSendTtsImagenMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
-    expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
+    expect(mockSendImageEditMessage).not.toHaveBeenCalled();
     unmount();
   });
 
@@ -161,9 +162,9 @@ describe('useMessageSender', () => {
     });
 
     expect(setAppFileError).toHaveBeenCalledWith('Gemini 3 图片模型每次请求最多支持 14 张参考图。');
-    expect(mockHandleTtsImagenMessage).not.toHaveBeenCalled();
+    expect(mockSendTtsImagenMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
-    expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
+    expect(mockSendImageEditMessage).not.toHaveBeenCalled();
     unmount();
   });
 
@@ -271,7 +272,7 @@ describe('useMessageSender', () => {
 
     expect(setAppFileError).toHaveBeenCalledWith('这个图片模型仅支持图片附件。');
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
-    expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
+    expect(mockSendImageEditMessage).not.toHaveBeenCalled();
     unmount();
   });
 
@@ -343,7 +344,7 @@ describe('useMessageSender', () => {
 
     expect(mockGetModelCapabilities).toHaveBeenCalledWith('gpt-5.5');
     expect(setAppFileError).toHaveBeenCalledWith(null);
-    expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
+    expect(mockSendImageEditMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         text: 'summarize this PDF',

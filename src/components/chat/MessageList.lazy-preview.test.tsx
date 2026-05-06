@@ -77,12 +77,12 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
   vi.doMock('./message-list/WelcomeScreen', () => createNullComponentMock('WelcomeScreen'));
 
   const module = await import('./MessageList');
-  const contextModule = await import('../layout/chat-area/ChatAreaContext');
+  const fixtureModule = await import('../../test/chatAreaFixtures');
   const i18nModule = await import('../../contexts/I18nContext');
 
   return {
     MessageList: module.MessageList,
-    ChatAreaProvider: contextModule.ChatAreaProvider,
+    applyChatAreaProviderValue: fixtureModule.applyChatAreaProviderValue,
     I18nProvider: i18nModule.I18nProvider,
   };
 };
@@ -101,16 +101,15 @@ describe('MessageList preview chunking', () => {
 
   it('does not load the file preview modal module until the user opens a preview', async () => {
     const moduleLoadTracker = { count: 0 };
-    const { MessageList, ChatAreaProvider, I18nProvider } = await loadMessageList(moduleLoadTracker);
+    const { MessageList, applyChatAreaProviderValue, I18nProvider } = await loadMessageList(moduleLoadTracker);
 
     expect(moduleLoadTracker.count).toBe(0);
+    applyChatAreaProviderValue(createProviderValue());
 
     act(() => {
       renderer.root.render(
         <I18nProvider>
-          <ChatAreaProvider value={createProviderValue()}>
-            <MessageList />
-          </ChatAreaProvider>
+          <MessageList />
         </I18nProvider>,
       );
     });

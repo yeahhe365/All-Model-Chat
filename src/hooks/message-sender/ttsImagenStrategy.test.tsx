@@ -58,10 +58,9 @@ vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generated-session'),
 }));
 
-import { useTtsImagenSender } from './useTtsImagenSender';
-import { renderHook } from '@/test/testUtils';
+import { sendTtsImagenMessage } from './ttsImagenStrategy';
 
-describe('useTtsImagenSender', () => {
+describe('ttsImagenStrategy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     generateImagesMock.mockResolvedValue(['image-1', 'image-2', 'image-3', 'image-4']);
@@ -69,40 +68,33 @@ describe('useTtsImagenSender', () => {
 
   it('uses a single Imagen request with numberOfImages when quad generation is enabled', async () => {
     const updateAndPersistSessions = vi.fn();
-    const setSessionLoading = vi.fn();
-    const activeJobs = { current: new Map<string, AbortController>() };
     const setActiveSessionId = vi.fn();
-
-    const { result, unmount } = renderHook(() =>
-      useTtsImagenSender({
-        updateAndPersistSessions,
-        setSessionLoading,
-        activeJobs,
-        setActiveSessionId,
-      }),
-    );
+    const runMessageLifecycle = vi.fn(async ({ execute }) => execute());
 
     const abortController = new AbortController();
 
     await act(async () => {
-      await result.current.handleTtsImagenMessage(
-        'api-key',
-        'session-1',
-        'generation-1',
+      await sendTtsImagenMessage({
+        keyToUse: 'api-key',
+        activeSessionId: 'session-1',
+        generationId: 'generation-1',
         abortController,
-        createAppSettings({
+        appSettings: createAppSettings({
           generateQuadImages: true,
           isCompletionSoundEnabled: false,
           isCompletionNotificationEnabled: false,
         }),
-        createChatSettings({
+        currentChatSettings: createChatSettings({
           modelId: 'imagen-4.0-generate-001',
         }),
-        'draw a robot skateboard squad',
-        '1:1',
-        '2K',
-        'ALLOW_ADULT',
-      );
+        text: 'draw a robot skateboard squad',
+        aspectRatio: '1:1',
+        imageSize: '2K',
+        personGeneration: 'ALLOW_ADULT',
+        updateAndPersistSessions,
+        setActiveSessionId,
+        runMessageLifecycle,
+      });
     });
 
     expect(generateImagesMock).toHaveBeenCalledTimes(1);
@@ -118,6 +110,6 @@ describe('useTtsImagenSender', () => {
       }),
     );
 
-    unmount();
+    expect(runMessageLifecycle).toHaveBeenCalledOnce();
   });
 });

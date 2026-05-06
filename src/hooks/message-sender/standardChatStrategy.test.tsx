@@ -1,8 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useStandardChat } from './useStandardChat';
+import { sendStandardMessage } from './standardChatStrategy';
 import { createStandardChatProps, type StandardChatPropsOverrides } from '@/test/hookFactories';
-import { renderHook } from '@/test/testUtils';
 import { MediaResolution } from '../../types';
 import type { PreparedModelRequest } from './useModelRequestRunner';
 
@@ -115,7 +114,7 @@ vi.mock('../../services/loadPyodideService', () => ({
   getPyodideService: vi.fn(),
 }));
 
-describe('useStandardChat', () => {
+describe('standardChatStrategy', () => {
   const createBaseStandardChatOverrides = (overrides: StandardChatPropsOverrides = {}): StandardChatPropsOverrides => ({
     ...overrides,
     appSettings: {
@@ -147,8 +146,32 @@ describe('useStandardChat', () => {
     },
   });
 
-  const renderStandardChat = (overrides: StandardChatPropsOverrides = {}) =>
-    renderHook(() => useStandardChat(createStandardChatProps(createBaseStandardChatOverrides(overrides))));
+  const renderStandardChat = (overrides: StandardChatPropsOverrides = {}) => {
+    const props = createStandardChatProps(createBaseStandardChatOverrides(overrides));
+    const runMessageLifecycle = vi.fn(async ({ execute }) => execute());
+
+    return {
+      result: {
+        current: {
+          sendStandardMessage: (
+            input: Omit<
+              Parameters<typeof sendStandardMessage>[0],
+              'props' | 'getStreamHandlers' | 'handleGenerateCanvas' | 'runMessageLifecycle'
+            >,
+          ) =>
+            sendStandardMessage({
+              props,
+              getStreamHandlers: props.getStreamHandlers,
+              handleGenerateCanvas: props.handleGenerateCanvas,
+              runMessageLifecycle,
+              ...input,
+            }),
+        },
+      },
+      unmount: () => undefined,
+      runMessageLifecycle,
+    };
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();

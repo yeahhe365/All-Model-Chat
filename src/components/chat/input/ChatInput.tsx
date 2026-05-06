@@ -1,13 +1,11 @@
 import React from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { createPortal } from 'react-dom';
-import { ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import { useChatInput } from '../../../hooks/chat-input/useChatInput';
 import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
 import { ChatInputModals } from './ChatInputModals';
 import { ChatInputFileModals } from './ChatInputFileModals';
 import { ChatInputArea } from './ChatInputArea';
-import { ChatInputViewModel, ChatInputViewProvider } from './ChatInputViewContext';
 
 const ChatInputComponent: React.FC = () => {
   const { t } = useI18n();
@@ -43,248 +41,171 @@ const ChatInputComponent: React.FC = () => {
     }
   }, [liveAPI]);
 
-  const toolStates = chatInput.toolStates ?? {};
+  const inputDisabled =
+    isAnyModalOpen ||
+    voiceState.isTranscribing ||
+    inputState.isWaitingForUpload ||
+    voiceState.isRecording ||
+    localFileState.isConverting;
 
-  // 2. 组装 Toolbar 参数
-  const toolbarProps: ChatInputToolbarProps = {
-    isImagenModel: capabilities.isImagenModel || false,
-    isGemini3ImageModel: capabilities.isGemini3ImageModel,
-    isRealImagenModel: capabilities.isRealImagenModel,
-    isTtsModel: capabilities.isTtsModel,
-    ttsVoice: chatInput.currentChatSettings.ttsVoice,
-    setTtsVoice: (voice) => chatInput.setCurrentChatSettings((prev) => ({ ...prev, ttsVoice: voice })),
-    aspectRatio: chatInput.aspectRatio,
-    setAspectRatio: chatInput.setAspectRatio,
-    imageSize: chatInput.imageSize,
-    setImageSize: chatInput.setImageSize,
-    imageOutputMode: chatInput.imageOutputMode,
-    setImageOutputMode: chatInput.setImageOutputMode,
-    personGeneration: chatInput.personGeneration,
-    setPersonGeneration: chatInput.setPersonGeneration,
-    fileError: chatInput.fileError,
-    showAddByIdInput: modalsState.showAddByIdInput,
-    fileIdInput: inputState.fileIdInput,
-    setFileIdInput: inputState.setFileIdInput,
-    onAddFileByIdSubmit: handlers.handleAddFileByIdSubmit,
-    onCancelAddById: () => {
-      modalsState.setShowAddByIdInput(false);
-      inputState.setFileIdInput('');
-      inputState.textareaRef.current?.focus();
-    },
-    isAddingById: inputState.isAddingById,
-    showAddByUrlInput: modalsState.showAddByUrlInput,
-    urlInput: inputState.urlInput,
-    setUrlInput: inputState.setUrlInput,
-    onAddUrlSubmit: () => handlers.handleAddUrl(inputState.urlInput),
-    onCancelAddUrl: () => {
-      modalsState.setShowAddByUrlInput(false);
-      inputState.setUrlInput('');
-      inputState.textareaRef.current?.focus();
-    },
-    isAddingByUrl: inputState.isAddingByUrl,
-    isLoading: chatInput.isLoading,
-    generateQuadImages: chatInput.generateQuadImages,
-    onToggleQuadImages: chatInput.onToggleQuadImages,
-    supportedAspectRatios: capabilities.supportedAspectRatios,
-    supportedImageSizes: capabilities.supportedImageSizes,
-    isNativeAudioModel: capabilities.isNativeAudioModel || false,
-    mediaResolution: chatInput.currentChatSettings.mediaResolution,
-    setMediaResolution: (res) => chatInput.setCurrentChatSettings((prev) => ({ ...prev, mediaResolution: res })),
-    ttsContext: inputState.ttsContext,
-    onEditTtsContext: () => modalsState.setShowTtsContextEditor(true),
-  };
-
-  // 3. 组装操作按钮参数
-  const actionsProps: ChatInputActionsProps = {
-    onAttachmentAction: modalsState.handleAttachmentAction,
-    disabled: inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting,
-    currentModelId: chatInput.currentChatSettings.modelId,
-    isImageModel: capabilities.isImagenModel || false,
-    isRealImagenModel: capabilities.isRealImagenModel || false,
-    toolStates: {
-      googleSearch: {
-        isEnabled: !!toolStates.googleSearch?.isEnabled,
-        onToggle: toolStates.googleSearch?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(toolStates.googleSearch!.onToggle!)
-          : undefined,
-      },
-      codeExecution: {
-        isEnabled: !!toolStates.codeExecution?.isEnabled,
-        onToggle: toolStates.codeExecution?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(toolStates.codeExecution!.onToggle!)
-          : undefined,
-      },
-      localPython: {
-        isEnabled: !!toolStates.localPython?.isEnabled,
-        onToggle: toolStates.localPython?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(toolStates.localPython!.onToggle!)
-          : undefined,
-      },
-      urlContext: {
-        isEnabled: !!toolStates.urlContext?.isEnabled,
-        onToggle: toolStates.urlContext?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(toolStates.urlContext!.onToggle!)
-          : undefined,
-      },
-      deepSearch: {
-        isEnabled: !!toolStates.deepSearch?.isEnabled,
-        onToggle: toolStates.deepSearch?.onToggle
-          ? () => handlers.handleToggleToolAndFocus(toolStates.deepSearch!.onToggle!)
-          : undefined,
-      },
-    },
-    toolUtilityActions: {
-      onAddYouTubeVideo: () => {
-        modalsState.setShowAddByUrlInput(true);
-        inputState.textareaRef.current?.focus();
-      },
-      onCountTokens: () => localFileState.setShowTokenModal(true),
-    },
-    onRecordButtonClick: voiceState.handleVoiceInputClick,
-    onCancelRecording: voiceState.handleCancelRecording,
-    isRecording: voiceState.isRecording,
-    isMicInitializing: voiceState.isMicInitializing,
-    isTranscribing: voiceState.isTranscribing,
-    isLoading: chatInput.isLoading,
-    onStopGenerating: chatInput.onStopGenerating,
-    isEditing: chatInput.isEditing,
-    onCancelEdit: chatInput.onCancelEdit,
-    canSend: canSend,
-    isWaitingForUpload: inputState.isWaitingForUpload,
-    onTranslate: handlers.handleTranslate,
-    showInputTranslationButton: chatInput.appSettings.showInputTranslationButton ?? false,
-    onPasteFromClipboard: handlers.handlePasteFromClipboard,
-    showInputPasteButton: chatInput.appSettings.showInputPasteButton ?? true,
-    onClearInput: handlers.handleClearInput,
-    showInputClearButton: chatInput.appSettings.showInputClearButton ?? false,
-    isTranslating: inputState.isTranslating,
-    inputText: inputState.inputText,
-    onToggleFullscreen: inputState.handleToggleFullscreen,
-    isFullscreen: inputState.isFullscreen,
-    editMode: chatInput.editMode,
-    isNativeAudioModel: capabilities.isNativeAudioModel || false,
-    onStartLiveSession: liveAPI.connect,
-    onDisconnectLiveSession: liveAPI.disconnect,
-    isLiveConnected: liveAPI.isConnected,
-    isLiveMuted: liveAPI.isMuted,
-    onToggleLiveMute: liveAPI.toggleMute,
-    onStartLiveCamera: handleStartLiveCamera,
-    onStartLiveScreenShare: handleStartLiveScreenShare,
-    onStopLiveVideo: liveAPI.stopVideo,
-    liveVideoSource: liveAPI.videoSource,
-    onFastSendMessage: handlers.handleFastSubmit,
-    canQueueMessage,
-    onQueueMessage: handlers.queueCurrentSubmission,
-  };
-
-  // 4. 组装输入区域核心参数
-  const areaProps: ChatInputViewModel = {
-    toolbarProps,
-    actionsProps,
-    slashCommandProps: {
-      isOpen: slashCommandState.slashCommandState.isOpen,
-      commands: slashCommandState.slashCommandState.filteredCommands,
-      onSelect: slashCommandState.handleCommandSelect,
-      selectedIndex: slashCommandState.slashCommandState.selectedIndex,
-    },
-    fileDisplayProps: {
-      selectedFiles: chatInput.selectedFiles,
-      onRemove: handlers.removeSelectedFile,
-      onCancelUpload: chatInput.onCancelUpload,
-      onConfigure: localFileState.handleConfigureFile,
-      onMoveTextToInput: localFileState.handleMoveTextFileToInput,
-      onPreview: localFileState.handlePreviewFile,
-      isGemini3: capabilities.isGemini3,
-    },
-    inputProps: {
-      value: inputState.inputText,
-      onChange: handlers.handleInputChange,
-      onKeyDown: handlers.handleKeyDown,
-      onPaste: handlers.handlePaste,
-      textareaRef: inputState.textareaRef,
-      placeholder: t('chatInputPlaceholder'),
-      disabled:
-        isAnyModalOpen ||
-        voiceState.isTranscribing ||
-        inputState.isWaitingForUpload ||
-        voiceState.isRecording ||
-        localFileState.isConverting,
-      onCompositionStart: handlers.onCompositionStart,
-      onCompositionEnd: handlers.onCompositionEnd,
-    },
-    quoteProps: {
-      quotes: inputState.quotes,
-      onRemoveQuote: (index: number) => inputState.setQuotes((prev) => prev.filter((_, i) => i !== index)),
-    },
-    queuedSubmissionProps: queuedSubmission
-      ? {
-          title: t('queuedSubmission_title'),
-          previewText:
-            queuedSubmission.inputText.trim() ||
-            queuedSubmission.textToSend.trim() ||
-            t('queuedSubmission_attachmentOnlyPreview'),
-          fileCount: queuedSubmission.files.length,
-          onEdit: handlers.restoreQueuedSubmission,
-          onRemove: handlers.removeQueuedSubmission,
-        }
-      : undefined,
-    layoutProps: {
-      isFullscreen: inputState.isFullscreen,
-      isPipActive: chatInput.isPipActive,
-      isAnimatingSend: inputState.isAnimatingSend,
-      isMobile: inputState.isMobile,
-      initialTextareaHeight: INITIAL_TEXTAREA_HEIGHT_PX,
-      isConverting: localFileState.isConverting,
-    },
-    fileInputs: {
-      fileInputRef: modalsState.fileInputRef,
-      imageInputRef: modalsState.imageInputRef,
-      folderInputRef: modalsState.folderInputRef,
-      zipInputRef: modalsState.zipInputRef,
-      cameraInputRef: modalsState.cameraInputRef,
-      handleFileChange: handlers.handleFileChange,
-      handleFolderChange: handlers.handleFolderChange,
-      handleZipChange: handlers.handleZipChange,
-    },
-    formProps: {
-      onSubmit: handlers.handleSubmit,
-    },
-    suggestionsProps:
-      chatInput.showEmptyStateSuggestions &&
-      capabilities.permissions.canGenerateSuggestions &&
-      chatInput.onSuggestionClick &&
-      chatInput.onOrganizeInfoClick
-        ? {
-            show: chatInput.showEmptyStateSuggestions,
-            onSuggestionClick: chatInput.onSuggestionClick,
-            onOrganizeInfoClick: chatInput.onOrganizeInfoClick,
-            onToggleBBox: chatInput.onToggleBBox,
-            isBBoxModeActive: chatInput.isBBoxModeActive,
-            onToggleGuide: chatInput.onToggleGuide,
-            isGuideModeActive: chatInput.isGuideModeActive,
-          }
-        : undefined,
-    liveStatusProps: {
-      isConnected: liveAPI.isConnected,
-      isSpeaking: liveAPI.isSpeaking,
-      isReconnecting: liveAPI.isReconnecting,
-      volume: liveAPI.volume,
-      error: liveAPI.error,
-      onDisconnect: liveAPI.disconnect,
-    },
-    liveVideoProps: capabilities.isNativeAudioModel
-      ? {
-          videoRef: liveAPI.videoRef,
-        }
-      : undefined,
-    themeId: chatInput.themeId,
-  };
-
-  // 5. 渲染 UI
   const chatInputContent = (
-    <ChatInputViewProvider value={areaProps}>
-      <ChatInputArea />
-    </ChatInputViewProvider>
+    <ChatInputArea
+      toolbarLocalProps={{
+        showAddByIdInput: modalsState.showAddByIdInput,
+        fileIdInput: inputState.fileIdInput,
+        setFileIdInput: inputState.setFileIdInput,
+        onAddFileByIdSubmit: handlers.handleAddFileByIdSubmit,
+        onCancelAddById: () => {
+          modalsState.setShowAddByIdInput(false);
+          inputState.setFileIdInput('');
+          inputState.textareaRef.current?.focus();
+        },
+        isAddingById: inputState.isAddingById,
+        showAddByUrlInput: modalsState.showAddByUrlInput,
+        urlInput: inputState.urlInput,
+        setUrlInput: inputState.setUrlInput,
+        onAddUrlSubmit: () => handlers.handleAddUrl(inputState.urlInput),
+        onCancelAddUrl: () => {
+          modalsState.setShowAddByUrlInput(false);
+          inputState.setUrlInput('');
+          inputState.textareaRef.current?.focus();
+        },
+        isAddingByUrl: inputState.isAddingByUrl,
+        ttsContext: inputState.ttsContext,
+        onEditTtsContext: () => modalsState.setShowTtsContextEditor(true),
+      }}
+      actionsLocalProps={{
+        onAttachmentAction: modalsState.handleAttachmentAction,
+        disabled:
+          inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting,
+        onRecordButtonClick: voiceState.handleVoiceInputClick,
+        onCancelRecording: voiceState.handleCancelRecording,
+        isRecording: voiceState.isRecording,
+        isMicInitializing: voiceState.isMicInitializing,
+        isTranscribing: voiceState.isTranscribing,
+        canSend,
+        isWaitingForUpload: inputState.isWaitingForUpload,
+        onTranslate: handlers.handleTranslate,
+        onPasteFromClipboard: handlers.handlePasteFromClipboard,
+        onClearInput: handlers.handleClearInput,
+        isTranslating: inputState.isTranslating,
+        inputText: inputState.inputText,
+        onToggleFullscreen: inputState.handleToggleFullscreen,
+        isFullscreen: inputState.isFullscreen,
+        onStartLiveSession: liveAPI.connect,
+        onDisconnectLiveSession: liveAPI.disconnect,
+        isLiveConnected: liveAPI.isConnected,
+        isLiveMuted: liveAPI.isMuted,
+        onToggleLiveMute: liveAPI.toggleMute,
+        onStartLiveCamera: handleStartLiveCamera,
+        onStartLiveScreenShare: handleStartLiveScreenShare,
+        onStopLiveVideo: liveAPI.stopVideo,
+        liveVideoSource: liveAPI.videoSource,
+        onFastSendMessage: handlers.handleFastSubmit,
+        canQueueMessage,
+        onQueueMessage: handlers.queueCurrentSubmission,
+        onToggleToolAndFocus: handlers.handleToggleToolAndFocus,
+        onAddYouTubeVideo: () => {
+          modalsState.setShowAddByUrlInput(true);
+          inputState.textareaRef.current?.focus();
+        },
+        onCountTokens: () => localFileState.setShowTokenModal(true),
+      }}
+      slashCommandProps={{
+        isOpen: slashCommandState.slashCommandState.isOpen,
+        commands: slashCommandState.slashCommandState.filteredCommands,
+        onSelect: slashCommandState.handleCommandSelect,
+        selectedIndex: slashCommandState.slashCommandState.selectedIndex,
+      }}
+      fileDisplayProps={{
+        selectedFiles: chatInput.selectedFiles,
+        onRemove: handlers.removeSelectedFile,
+        onCancelUpload: chatInput.onCancelUpload,
+        onConfigure: localFileState.handleConfigureFile,
+        onMoveTextToInput: localFileState.handleMoveTextFileToInput,
+        onPreview: localFileState.handlePreviewFile,
+        isGemini3: capabilities.isGemini3,
+      }}
+      inputProps={{
+        value: inputState.inputText,
+        onChange: handlers.handleInputChange,
+        onKeyDown: handlers.handleKeyDown,
+        onPaste: handlers.handlePaste,
+        textareaRef: inputState.textareaRef,
+        placeholder: t('chatInputPlaceholder'),
+        disabled: inputDisabled,
+        onCompositionStart: handlers.onCompositionStart,
+        onCompositionEnd: handlers.onCompositionEnd,
+      }}
+      quoteProps={{
+        quotes: inputState.quotes,
+        onRemoveQuote: (index: number) => inputState.setQuotes((prev) => prev.filter((_, i) => i !== index)),
+      }}
+      queuedSubmissionProps={
+        queuedSubmission
+          ? {
+              title: t('queuedSubmission_title'),
+              previewText:
+                queuedSubmission.inputText.trim() ||
+                queuedSubmission.textToSend.trim() ||
+                t('queuedSubmission_attachmentOnlyPreview'),
+              fileCount: queuedSubmission.files.length,
+              onEdit: handlers.restoreQueuedSubmission,
+              onRemove: handlers.removeQueuedSubmission,
+            }
+          : undefined
+      }
+      layoutProps={{
+        isFullscreen: inputState.isFullscreen,
+        isPipActive: chatInput.isPipActive,
+        isAnimatingSend: inputState.isAnimatingSend,
+        isMobile: inputState.isMobile,
+        initialTextareaHeight: INITIAL_TEXTAREA_HEIGHT_PX,
+        isConverting: localFileState.isConverting,
+      }}
+      fileInputs={{
+        fileInputRef: modalsState.fileInputRef,
+        imageInputRef: modalsState.imageInputRef,
+        folderInputRef: modalsState.folderInputRef,
+        zipInputRef: modalsState.zipInputRef,
+        cameraInputRef: modalsState.cameraInputRef,
+        handleFileChange: handlers.handleFileChange,
+        handleFolderChange: handlers.handleFolderChange,
+        handleZipChange: handlers.handleZipChange,
+      }}
+      formProps={{
+        onSubmit: handlers.handleSubmit,
+      }}
+      suggestionsProps={
+        chatInput.showEmptyStateSuggestions && capabilities.permissions.canGenerateSuggestions
+          ? {
+              show: chatInput.showEmptyStateSuggestions,
+              onSuggestionClick: chatInput.onSuggestionClick,
+              onOrganizeInfoClick: chatInput.onOrganizeInfoClick,
+              onToggleBBox: chatInput.onToggleBBox,
+              isBBoxModeActive: chatInput.isBBoxModeActive,
+              onToggleGuide: chatInput.onToggleGuide,
+              isGuideModeActive: chatInput.isGuideModeActive,
+            }
+          : undefined
+      }
+      liveStatusProps={{
+        isConnected: liveAPI.isConnected,
+        isSpeaking: liveAPI.isSpeaking,
+        isReconnecting: liveAPI.isReconnecting,
+        volume: liveAPI.volume,
+        error: liveAPI.error,
+        onDisconnect: liveAPI.disconnect,
+      }}
+      liveVideoProps={
+        capabilities.isNativeAudioModel
+          ? {
+              videoRef: liveAPI.videoRef,
+            }
+          : undefined
+      }
+      themeId={chatInput.themeId}
+    />
   );
 
   return (

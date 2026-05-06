@@ -65,8 +65,18 @@ describe('useLiveMessageProcessing', () => {
     expect(playAudioChunk).toHaveBeenNthCalledWith(1, 'audio-1');
     expect(playAudioChunk).toHaveBeenNthCalledWith(2, 'audio-2');
     expect(mockCreateWavBlobFromPCMChunks).toHaveBeenCalledWith(['audio-1', 'audio-2']);
-    expect(onTranscript).toHaveBeenCalledWith('preface', 'model', false, 'content');
-    expect(onTranscript).toHaveBeenCalledWith('suffix', 'model', false, 'content');
+    expect(onTranscript).toHaveBeenCalledWith(
+      'preface',
+      'model',
+      false,
+      'content',
+      undefined,
+      undefined,
+      { text: 'preface' },
+    );
+    expect(onTranscript).toHaveBeenCalledWith('suffix', 'model', false, 'content', undefined, undefined, {
+      text: 'suffix',
+    });
     expect(onTranscript).toHaveBeenCalledWith('', 'model', true, 'content', 'blob:audio');
 
     unmount();
@@ -155,10 +165,57 @@ describe('useLiveMessageProcessing', () => {
     });
 
     expect(onTranscript).toHaveBeenCalledWith(
-      '\n> Execution Result: OUTCOME_OK\n\n```\n42\n\n```\n',
+      '\n\n<div class="tool-result outcome-outcome_ok"><strong>Execution Result (OUTCOME_OK):</strong><pre><code class="language-text">42\n</code></pre></div>\n\n',
       'model',
       false,
       'content',
+      undefined,
+      undefined,
+      {
+        codeExecutionResult: {
+          outcome: Outcome.OUTCOME_OK,
+          output: '42\n',
+        },
+      },
+    );
+
+    unmount();
+  });
+
+  it('forwards live text model parts as api parts for state replay', async () => {
+    const onTranscript = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useLiveMessageProcessing({
+        playAudioChunk: vi.fn(),
+        stopAudioPlayback: vi.fn(),
+        onTranscript,
+        sessionRef: { current: null },
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleMessage(
+        createLiveServerMessage({
+          serverContent: {
+            modelTurn: {
+              parts: [{ text: 'Hello live.' }],
+            },
+          },
+        }),
+      );
+    });
+
+    expect(onTranscript).toHaveBeenCalledWith(
+      'Hello live.',
+      'model',
+      false,
+      'content',
+      undefined,
+      undefined,
+      { text: 'Hello live.' },
     );
 
     unmount();

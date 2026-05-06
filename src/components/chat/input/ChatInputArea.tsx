@@ -9,42 +9,152 @@ import { ChatFilePreviewList } from './area/ChatFilePreviewList';
 import { ChatTextArea } from './area/ChatTextArea';
 import { LiveStatusBanner } from './LiveStatusBanner';
 import { QueuedSubmissionCard } from './QueuedSubmissionCard';
-import {
-  useChatInputActionsView,
-  useChatInputFileDisplayView,
-  useChatInputFileInputsView,
-  useChatInputFormView,
-  useChatInputLayoutView,
-  useChatInputLiveVideoView,
-  useChatInputQuoteView,
-  useChatInputSlashCommandView,
-  useChatInputSuggestionsView,
-  useChatInputTextAreaView,
-  useChatInputThemeView,
-  useChatInputToolbarView,
-  useLiveStatusView,
-  useQueuedSubmissionView,
-} from './ChatInputViewContext';
 import { HiddenFileInputs } from './HiddenFileInputs';
 import { useChatInputAreaLayout } from './useChatInputAreaLayout';
+import type { SlashCommand as Command } from '../../../types/slashCommands';
+import type { UploadedFile } from '../../../types';
 
-export const ChatInputArea: React.FC = () => {
-  const toolbarProps = useChatInputToolbarView();
-  const actionsProps = useChatInputActionsView();
-  const slashCommandProps = useChatInputSlashCommandView();
-  const fileDisplayProps = useChatInputFileDisplayView();
-  const inputProps = useChatInputTextAreaView();
-  const quoteProps = useChatInputQuoteView();
-  const layoutProps = useChatInputLayoutView();
-  const fileInputs = useChatInputFileInputsView();
-  const formProps = useChatInputFormView();
-  const suggestionsProps = useChatInputSuggestionsView();
-  const queuedSubmissionProps = useQueuedSubmissionView();
-  const liveStatusProps = useLiveStatusView();
-  const liveVideoProps = useChatInputLiveVideoView();
-  const themeId = useChatInputThemeView();
+export interface ChatInputAreaProps {
+  toolbarLocalProps: {
+    showAddByIdInput: boolean;
+    fileIdInput: string;
+    setFileIdInput: (value: string) => void;
+    onAddFileByIdSubmit: () => void;
+    onCancelAddById: () => void;
+    isAddingById: boolean;
+    showAddByUrlInput: boolean;
+    urlInput: string;
+    setUrlInput: (value: string) => void;
+    onAddUrlSubmit: () => void;
+    onCancelAddUrl: () => void;
+    isAddingByUrl: boolean;
+    ttsContext?: string;
+    onEditTtsContext?: () => void;
+  };
+  actionsLocalProps: {
+    onAttachmentAction: (action: import('../../../types').AttachmentAction) => void;
+    disabled: boolean;
+    onRecordButtonClick: () => void;
+    onCancelRecording: () => void;
+    isRecording?: boolean;
+    isMicInitializing?: boolean;
+    isTranscribing: boolean;
+    canSend: boolean;
+    isWaitingForUpload: boolean;
+    onTranslate: () => void;
+    onPasteFromClipboard?: () => void;
+    onClearInput?: () => void;
+    isTranslating: boolean;
+    inputText: string;
+    onToggleFullscreen?: () => void;
+    isFullscreen?: boolean;
+    onStartLiveSession?: () => void;
+    onDisconnectLiveSession?: () => void;
+    isLiveConnected?: boolean;
+    isLiveMuted?: boolean;
+    onToggleLiveMute?: () => void;
+    onStartLiveCamera?: () => void;
+    onStartLiveScreenShare?: () => void;
+    onStopLiveVideo?: () => void;
+    liveVideoSource?: 'camera' | 'screen' | null;
+    onFastSendMessage?: () => void;
+    canQueueMessage?: boolean;
+    onQueueMessage?: () => void;
+    onToggleToolAndFocus: (toggleFunc: () => void) => void;
+    onAddYouTubeVideo: () => void;
+    onCountTokens: () => void;
+  };
+  slashCommandProps: {
+    isOpen: boolean;
+    commands: Command[];
+    onSelect: (command: Command) => void;
+    selectedIndex: number;
+  };
+  fileDisplayProps: {
+    selectedFiles: UploadedFile[];
+    onRemove: (id: string) => void;
+    onCancelUpload: (id: string) => void;
+    onConfigure: (file: UploadedFile) => void;
+    onMoveTextToInput: (file: UploadedFile) => Promise<void>;
+    onPreview: (file: UploadedFile) => void;
+    isGemini3?: boolean;
+  };
+  inputProps: {
+    value: string;
+    onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
+    onKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+    onPaste: (event: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+    textareaRef: React.RefObject<HTMLTextAreaElement>;
+    placeholder: string;
+    disabled: boolean;
+    onCompositionStart: () => void;
+    onCompositionEnd: () => void;
+    onFocus?: () => void;
+  };
+  quoteProps?: {
+    quotes: string[];
+    onRemoveQuote: (index: number) => void;
+  };
+  queuedSubmissionProps?: {
+    title: string;
+    previewText: string;
+    fileCount: number;
+    onEdit: () => void;
+    onRemove: () => void;
+  };
+  layoutProps: {
+    isFullscreen: boolean;
+    isPipActive?: boolean;
+    isAnimatingSend: boolean;
+    isMobile: boolean;
+    initialTextareaHeight: number;
+    isConverting: boolean;
+  };
+  fileInputs: React.ComponentProps<typeof HiddenFileInputs>['fileInputs'];
+  formProps: {
+    onSubmit: (event: React.FormEvent) => void;
+  };
+  suggestionsProps?: {
+    show: boolean;
+    onSuggestionClick: (suggestion: string) => void;
+    onOrganizeInfoClick: (suggestion: string) => void;
+    onToggleBBox?: () => void;
+    isBBoxModeActive?: boolean;
+    onToggleGuide?: () => void;
+    isGuideModeActive?: boolean;
+  };
+  liveStatusProps?: {
+    isConnected: boolean;
+    isSpeaking: boolean;
+    isReconnecting: boolean;
+    volume: number;
+    onDisconnect: () => void;
+    error: string | null;
+  };
+  liveVideoProps?: {
+    videoRef: React.RefObject<HTMLVideoElement>;
+  };
+  themeId: string;
+}
+
+export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
+  toolbarLocalProps,
+  actionsLocalProps,
+  slashCommandProps,
+  fileDisplayProps,
+  inputProps,
+  quoteProps,
+  layoutProps,
+  fileInputs,
+  formProps,
+  suggestionsProps,
+  queuedSubmissionProps,
+  liveStatusProps,
+  liveVideoProps,
+  themeId,
+}) => {
   const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
-  const { isRecording } = actionsProps;
+  const { isRecording } = actionsLocalProps;
 
   const {
     isUIBlocked,
@@ -103,7 +213,7 @@ export const ChatInputArea: React.FC = () => {
       <div className={innerContainerClass}>
         {/* Wrap toolbar in z-indexed container to ensure dropdowns render above status banner */}
         <div className="relative z-50">
-          <ChatInputToolbar {...toolbarProps} />
+          <ChatInputToolbar {...toolbarLocalProps} />
         </div>
 
         {liveStatusProps && <LiveStatusBanner {...liveStatusProps} />}
@@ -162,7 +272,7 @@ export const ChatInputArea: React.FC = () => {
             />
 
             <div className={actionsContainerClass}>
-              <ChatInputActions {...actionsProps} />
+              <ChatInputActions {...actionsLocalProps} />
               <HiddenFileInputs fileInputs={fileInputs} />
             </div>
           </div>
