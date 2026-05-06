@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getTranslator } from '../../utils/translations';
+import { getTranslator } from '@/i18n/translations';
 import { resolveLiveErrorText } from './liveErrorState';
 
 describe('resolveLiveErrorText', () => {

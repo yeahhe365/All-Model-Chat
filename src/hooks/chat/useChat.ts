@@ -16,7 +16,7 @@ import { useBackgroundKeepAlive } from '../core/useBackgroundKeepAlive';
 import { useMessageActions } from './messages/useMessageActions';
 import { useTextToSpeechHandler } from './messages/useTextToSpeechHandler';
 import { createLiveClientFunctions } from '../live-api/liveClientFunctions';
-import { getPyodideService } from '../../services/loadPyodideService';
+import { getPyodideService } from '@/features/local-python/loadPyodideService';
 import { useChatStore } from '../../stores/chatStore';
 
 export const useChat = (

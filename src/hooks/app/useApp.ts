@@ -5,7 +5,7 @@ import { useAppUI } from '../core/useAppUI';
 import { useAppEvents } from '../core/useAppEvents';
 import { usePictureInPicture } from '../core/usePictureInPicture';
 import { logService } from '../../services/logService';
-import { getTranslator } from '../../utils/translations';
+import { getTranslator } from '@/i18n/translations';
 import { applyThemeToDocument } from '../../utils/uiUtils';
 import { useUIStore } from '../../stores/uiStore';
 import { AppSettings, ChatSettings, ModelOption, SideViewContent } from '../../types';

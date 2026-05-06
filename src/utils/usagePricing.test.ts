@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calculateApiUsageRecordPriceUsd } from './usagePricing';
-import type { ApiUsageRecord } from './db';
+import type { ApiUsageRecord } from '@/services/db/dbService';
 
 describe('calculateApiUsageRecordPriceUsd', () => {
   it('keeps legacy Gemini 3.1 Pro records unavailable when exact evidence is missing', () => {

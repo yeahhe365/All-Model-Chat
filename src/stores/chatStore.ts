@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, ChatSettingsUpdater } from '../types';
-import { dbService } from '../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { logService } from '../services/logService';
 import { rehydrateSessionFiles } from '../utils/chat/session';
 import { syncActiveSessionRoute, type SessionHistoryMode } from './sessionRouteSync';

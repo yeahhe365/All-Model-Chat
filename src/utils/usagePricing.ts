@@ -1,4 +1,4 @@
-import type { ApiUsageExactPricing, ApiUsageModalityTokenCount, ApiUsageRecord } from './db';
+import type { ApiUsageExactPricing, ApiUsageModalityTokenCount, ApiUsageRecord } from '@/services/db/dbService';
 
 const normalizeModelId = (modelId: string) => modelId.replace(/^models\//, '');
 

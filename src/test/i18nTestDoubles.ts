@@ -1,4 +1,4 @@
-import { getTranslator } from '../utils/translations';
+import { getTranslator } from '@/i18n/translations';
 
 type Language = 'en' | 'zh';
 type Translator = ReturnType<typeof getTranslator>;

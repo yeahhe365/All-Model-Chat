@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { SavedChatSession, ChatGroup } from '../types';
 import { useWindowContext } from '../contexts/WindowContext';
 import { useI18n } from '../contexts/I18nContext';
-import { dbService } from '../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../constants/shortcuts';
 
 type HistoryTranslator = (key: string, fallback?: string) => string;

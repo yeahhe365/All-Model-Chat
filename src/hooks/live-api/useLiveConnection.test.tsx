@@ -22,7 +22,7 @@ vi.mock('../../services/api/liveApiAuth', () => ({
   getLiveApiClient: mockGetLiveApiClient,
 }));
 
-vi.mock('../../utils/audio/audioProcessing', () => ({
+vi.mock('@/features/audio/audioProcessing', () => ({
   float32ToPCM16Base64: mockFloat32ToPCM16Base64,
 }));
 

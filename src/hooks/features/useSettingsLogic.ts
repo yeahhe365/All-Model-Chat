@@ -8,7 +8,7 @@ import {
   adjustThinkingBudget,
   getDefaultThinkingLevelForModel,
 } from '../../utils/modelHelpers';
-import { translations } from '../../utils/translations';
+import { translations } from '@/i18n/translations';
 import { MediaResolution } from '../../types/settings';
 
 export type SettingsTab = 'models' | 'interface' | 'api' | 'data' | 'shortcuts' | 'about';

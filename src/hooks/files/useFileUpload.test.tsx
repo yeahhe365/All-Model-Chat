@@ -21,7 +21,7 @@ vi.mock('../../services/logService', async () => {
   return createLogServiceMockModule();
 });
 
-vi.mock('../../utils/db', async () => {
+vi.mock('@/services/db/dbService', async () => {
   const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
 
   return createDbServiceMockModule();

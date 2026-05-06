@@ -1,7 +1,7 @@
 import type { LiveClientFunction, LiveClientFunctions, UploadedFile } from '../../types';
-import type { ExecutionResult } from '../../services/pyodideService';
+import type { ExecutionResult } from '@/features/local-python/pyodideService';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
-import { hasGeneratedImageFile } from '../../features/local-python/helpers';
+import { hasGeneratedImageFile } from '@/features/local-python/helpers';
 
 interface CreateLiveClientFunctionsOptions {
   isLocalPythonEnabled: boolean;

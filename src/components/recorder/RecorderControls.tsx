@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mic, Square, Trash2, Check, Loader2, X } from 'lucide-react';
-import { RecorderState } from '../../hooks/useAudioRecorder';
+import { RecorderState } from '@/features/audio/useAudioRecorder';
 
 interface RecorderControlsProps {
   viewState: RecorderState;

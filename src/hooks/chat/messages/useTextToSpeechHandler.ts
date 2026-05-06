@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings } from '../../../types';
 import { logService } from '../../../services/logService';
 import { getKeyForRequest } from '../../../utils/apiUtils';
-import { pcmBase64ToWavUrl } from '../../../utils/audio/audioProcessing';
+import { pcmBase64ToWavUrl } from '@/features/audio/audioProcessing';
 import { generateSpeechApi } from '../../../services/api/generation/audioApi';
 import { DEFAULT_TTS_MODEL_ID } from '../../../constants/appConstants';
 

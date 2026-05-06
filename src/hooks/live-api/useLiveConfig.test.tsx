@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOCAL_PYTHON_SYSTEM_PROMPT } from '../../constants/prompts/localPython';
+import { LOCAL_PYTHON_SYSTEM_PROMPT } from '@/features/prompts/localPython';
 import { MediaResolution } from '../../types';
 import type { LiveClientFunctions } from '../../types';
 import { useLiveConfig } from './useLiveConfig';

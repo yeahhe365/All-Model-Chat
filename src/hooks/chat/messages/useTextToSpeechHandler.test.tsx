@@ -14,7 +14,7 @@ vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: getKeyForRequestMock,
 }));
 
-vi.mock('../../../utils/audio/audioProcessing', () => ({
+vi.mock('@/features/audio/audioProcessing', () => ({
   pcmBase64ToWavUrl: pcmBase64ToWavUrlMock,
 }));
 

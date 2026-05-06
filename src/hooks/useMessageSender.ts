@@ -7,13 +7,13 @@ import {
   SavedChatSession,
 } from '../types';
 import { logService } from '../services/logService';
-import { useChatStreamHandler } from './message-sender/useChatStreamHandler';
-import { useModelRequestRunner } from './message-sender/useModelRequestRunner';
-import { useMessageLifecycle } from './message-sender/useMessageLifecycle';
-import { generateCanvasMessage } from './message-sender/canvasStrategy';
-import { sendImageEditMessage } from './message-sender/imageEditStrategy';
-import { sendStandardMessage } from './message-sender/standardChatStrategy';
-import { sendTtsImagenMessage } from './message-sender/ttsImagenStrategy';
+import { useChatStreamHandler } from '@/features/message-sender/useChatStreamHandler';
+import { useModelRequestRunner } from '@/features/message-sender/useModelRequestRunner';
+import { useMessageLifecycle } from '@/features/message-sender/useMessageLifecycle';
+import { generateCanvasMessage } from '@/features/message-sender/canvasStrategy';
+import { sendImageEditMessage } from '@/features/message-sender/imageEditStrategy';
+import { sendStandardMessage } from '@/features/message-sender/standardChatStrategy';
+import { sendTtsImagenMessage } from '@/features/message-sender/ttsImagenStrategy';
 import { getModelCapabilities } from '../utils/modelHelpers';
 import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';

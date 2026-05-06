@@ -4,7 +4,7 @@ import { logService } from '../services/logService';
 import { generateUniqueId } from '../utils/chat/ids';
 import { generateSessionTitle, createNewSession } from '../utils/chat/session';
 import { DEFAULT_CHAT_SETTINGS, DEFAULT_SYSTEM_INSTRUCTION } from '../constants/appConstants';
-import { dbService } from '../utils/db';
+import { dbService } from '@/services/db/dbService';
 import {
   buildSavedScenarios,
   getExportableUserScenarios,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { SavedScenario } from '../../types';
-import { translations } from '../../utils/translations';
+import { translations } from '@/i18n/translations';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';

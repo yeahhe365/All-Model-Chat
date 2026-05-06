@@ -4,7 +4,7 @@ import { logService } from '../../../services/logService';
 import { generateUniqueId } from '../../../utils/chat/ids';
 import { createNewSession } from '../../../utils/chat/session';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
-import { dbService } from '../../../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
 
 interface UseSessionActionsProps {

@@ -5,7 +5,7 @@ import { logService } from '../../services/logService';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { isAudioMimeType, isTextFile } from '../../utils/fileTypeUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
-import { compressAudioToMp3 } from '../../utils/audioCompression';
+import { compressAudioToMp3 } from '@/features/audio/audioCompression';
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
 
 interface UseFilePreProcessingProps {

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
-import { translations } from '../utils/translations';
+import { translations } from '@/i18n/translations';
 import { AttachmentAction, ModelOption } from '../types';
 import type { SlashCommand as Command } from '../types/slashCommands';
 import type { ChatToolToggleStates, ToggleableChatToolId } from '../types/chatTools';

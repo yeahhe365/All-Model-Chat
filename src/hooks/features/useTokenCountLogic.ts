@@ -11,7 +11,7 @@ import {
   buildGenerationConfig,
   toCountTokensConfig,
 } from '../../services/api/generationConfig';
-import { createRunLocalPythonDeclaration } from '../../features/standard-chat/standardClientFunctions';
+import { createRunLocalPythonDeclaration } from '@/features/standard-chat/standardClientFunctions';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { isServerManagedApiEnabledForProxyRequests, parseApiKeys, SERVER_MANAGED_API_KEY } from '../../utils/apiUtils';
 

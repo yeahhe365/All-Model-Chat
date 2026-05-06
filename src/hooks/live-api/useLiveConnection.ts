@@ -3,7 +3,7 @@ import type { LiveServerMessage, Part, Session as LiveSession, Tool } from '@goo
 import type { AppSettings, UploadedFile } from '../../types';
 import { logService } from '../../services/logService';
 import { getLiveApiClient, LiveApiAuthConfigurationError } from '../../services/api/liveApiAuth';
-import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
+import { float32ToPCM16Base64 } from '@/features/audio/audioProcessing';
 import type { LiveErrorState } from './liveErrorState';
 import { useStateWithRef } from '../useStateWithRef';
 

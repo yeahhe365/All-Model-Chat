@@ -166,7 +166,7 @@ vi.mock('../../stores/uiStore', () => ({
     }),
 }));
 
-vi.mock('../../utils/translations', () => ({
+vi.mock('@/i18n/translations', () => ({
   getTranslator: () => (key: string) => key,
 }));
 

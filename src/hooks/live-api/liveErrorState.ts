@@ -1,4 +1,4 @@
-import type { translations } from '../../utils/translations';
+import type { translations } from '@/i18n/translations';
 
 export type LiveTranslationValues = Record<string, string | number>;
 

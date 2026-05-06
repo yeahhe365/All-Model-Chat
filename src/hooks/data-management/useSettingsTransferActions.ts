@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { getTranslator } from '../../utils/translations';
+import { getTranslator } from '@/i18n/translations';
 import { useDataExport } from './useDataExport';
 import { useDataImport } from './useDataImport';
 

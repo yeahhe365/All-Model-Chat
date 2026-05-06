@@ -15,7 +15,7 @@ vi.mock('./useLiveTools', () => ({
   }),
 }));
 
-vi.mock('../../utils/audio/audioProcessing', () => ({
+vi.mock('@/features/audio/audioProcessing', () => ({
   createWavBlobFromPCMChunks: mockCreateWavBlobFromPCMChunks,
 }));
 

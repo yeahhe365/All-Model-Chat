@@ -1,5 +1,5 @@
 import type { StandardClientFunction, StandardClientFunctions, UploadedFile } from '../../types';
-import type { ExecutionResult } from '../../services/pyodideService';
+import type { ExecutionResult } from '@/features/local-python/pyodideService';
 import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { hasGeneratedImageFile } from '../local-python/helpers';
 

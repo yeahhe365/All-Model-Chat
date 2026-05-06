@@ -6,7 +6,7 @@ import { DEFAULT_FILES_API_CONFIG, getDefaultAppSettings } from '../constants/ap
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
 import { logService } from '../services/logService';
 import { resolveSupportedModelId, sanitizeModelOptions } from '../utils/modelHelpers';
-import { dbService } from '../utils/db';
+import { dbService } from '@/services/db/dbService';
 
 interface SettingsState {
   appSettings: AppSettings;

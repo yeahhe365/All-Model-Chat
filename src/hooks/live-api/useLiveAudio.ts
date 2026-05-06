@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
-import { audioWorkletCode } from '../../utils/audio/audioWorklet';
-import { decodeBase64ToArrayBuffer, decodeAudioData } from '../../utils/audio/audioProcessing';
+import { audioWorkletCode } from '@/features/audio/audioWorklet';
+import { decodeBase64ToArrayBuffer, decodeAudioData } from '@/features/audio/audioProcessing';
 import { logService } from '../../services/logService';
 import { createManagedObjectUrl, releaseManagedObjectUrl } from '../../services/objectUrlManager';
 import { useStateWithRef } from '../useStateWithRef';

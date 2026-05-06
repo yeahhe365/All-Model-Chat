@@ -1,5 +1,5 @@
 import type { Part } from '@google/genai';
-import type { ApiUsageExactPricing } from './db';
+import type { ApiUsageExactPricing } from '@/services/db/dbService';
 
 const isPlainTextPart = (part: Part) => {
   const keys = Object.keys(part).filter(

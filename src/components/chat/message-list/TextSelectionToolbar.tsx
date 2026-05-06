@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { translations } from '../../../utils/translations';
+import { translations } from '@/i18n/translations';
 import { useSettingsStore } from '../../../stores/settingsStore';
 
 // Hooks

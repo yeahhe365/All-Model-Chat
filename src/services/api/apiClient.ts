@@ -1,7 +1,7 @@
 import type { GoogleGenAI, Part } from '@google/genai';
 import type { AppSettings } from '../../types';
 import { DEFAULT_GEMINI_API_BASE_URL, normalizeGeminiApiBaseUrl } from '../../utils/apiProxyUrl';
-import { dbService } from '../../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { logService } from '../logService';
 
 export type ClientHttpOptions = {

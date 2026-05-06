@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ChevronDown, ChevronUp, X, Terminal, AlertTriangle, FileOutput, RotateCcw } from 'lucide-react';
 import { SideViewContent } from '../../../types';
 import { useCodeBlock } from '../../../hooks/ui/useCodeBlock';
-import { usePyodide } from '../../../hooks/usePyodide';
+import { usePyodide } from '@/features/local-python/usePyodide';
 import { CodeHeader } from './parts/CodeHeader';
 import { extractTextFromNode } from '../../../utils/uiUtils';
 import { isImageMimeType } from '../../../utils/fileTypeUtils';

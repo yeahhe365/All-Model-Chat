@@ -13,7 +13,7 @@ import { logService } from '../../../services/logService';
 import { createNewSession, rehydrateSessionFiles } from '../../../utils/chat/session';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { resolveSupportedModelId } from '../../../utils/modelHelpers';
-import { dbService } from '../../../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { useChatStore, type SetActiveSessionOptions } from '../../../stores/chatStore';
 
 type SessionLoaderHistoryOptions = Pick<SetActiveSessionOptions, 'history'>;

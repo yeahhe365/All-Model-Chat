@@ -9,7 +9,7 @@ import { createAppSettings, createChatSettings } from '@/test/factories';
 
 const mockGetAllSessions = vi.fn();
 
-vi.mock('../../utils/db', async () => {
+vi.mock('@/services/db/dbService', async () => {
   const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
 
   return createDbServiceMockModule({

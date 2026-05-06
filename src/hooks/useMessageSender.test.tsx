@@ -26,25 +26,25 @@ const {
   mockCreateNewSession: vi.fn(),
 }));
 
-vi.mock('./message-sender/useChatStreamHandler', () => ({
+vi.mock('@/features/message-sender/useChatStreamHandler', () => ({
   useChatStreamHandler: () => ({
     getStreamHandlers: vi.fn(),
   }),
 }));
 
-vi.mock('./message-sender/canvasStrategy', () => ({
+vi.mock('@/features/message-sender/canvasStrategy', () => ({
   generateCanvasMessage: mockGenerateCanvasMessage,
 }));
 
-vi.mock('./message-sender/standardChatStrategy', () => ({
+vi.mock('@/features/message-sender/standardChatStrategy', () => ({
   sendStandardMessage: mockSendStandardMessage,
 }));
 
-vi.mock('./message-sender/ttsImagenStrategy', () => ({
+vi.mock('@/features/message-sender/ttsImagenStrategy', () => ({
   sendTtsImagenMessage: mockSendTtsImagenMessage,
 }));
 
-vi.mock('./message-sender/imageEditStrategy', () => ({
+vi.mock('@/features/message-sender/imageEditStrategy', () => ({
   sendImageEditMessage: mockSendImageEditMessage,
 }));
 

@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { useMessageSender } from '../hooks/useMessageSender';
 import type { useSessionLoader } from '../hooks/chat/history/useSessionLoader';
-import type { StandardChatProps, StreamHandlerFunctions } from '../hooks/message-sender/types';
+import type { StandardChatProps, StreamHandlerFunctions } from '@/features/message-sender/types';
 import type { ChatGroup, ChatMessage, InputCommand, SavedChatSession, UploadedFile } from '../types';
 import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 import { createAppSettings, createChatSettings } from './factories';

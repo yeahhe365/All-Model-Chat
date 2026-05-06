@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { dbService, type AppDataSizeEstimate } from '../../utils/db';
+import { dbService, type AppDataSizeEstimate } from '@/services/db/dbService';
 
 const formatAppDataSize = (bytes: number): string => {
   if (bytes <= 0) {

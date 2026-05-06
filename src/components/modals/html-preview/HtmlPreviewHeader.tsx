@@ -60,7 +60,7 @@ export const HtmlPreviewHeader: React.FC<HtmlPreviewHeaderProps> = ({
   const iconBtnClass = `${ICON_BUTTON_CLASS} ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS} disabled:opacity-30 disabled:cursor-not-allowed`;
 
   return (
-    <header className="h-14 px-4 flex items-center justify-between gap-4 bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-secondary)] z-10 select-none">
+    <header className="h-[45px] px-4 flex items-center justify-between gap-4 bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-secondary)] z-10 select-none">
       <div className="flex items-center gap-3 min-w-0 overflow-hidden">
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
           <HeaderIcon size={20} />

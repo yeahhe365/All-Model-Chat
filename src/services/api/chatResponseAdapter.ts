@@ -4,7 +4,7 @@ import { extractGemmaThoughtChannel } from '../../utils/chat/reasoning';
 import {
   mergeGroundingMetadata as mergeSharedGroundingMetadata,
   type MetadataWithCitations,
-} from '../../features/chat-streaming/messageStreamReducer';
+} from '@/features/chat-streaming/messageStreamReducer';
 
 export type { MetadataWithCitations };
 

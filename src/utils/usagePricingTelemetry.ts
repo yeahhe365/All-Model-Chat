@@ -1,5 +1,5 @@
 import type { ModalityTokenCount, UsageMetadata } from '@google/genai';
-import type { ApiUsageExactPricing, ApiUsageModalityTokenCount, ApiUsageRequestKind } from './db';
+import type { ApiUsageExactPricing, ApiUsageModalityTokenCount, ApiUsageRequestKind } from '@/services/db/dbService';
 
 const normalizeDetail = (detail: ModalityTokenCount): ApiUsageModalityTokenCount | null => {
   const modality = detail.modality;

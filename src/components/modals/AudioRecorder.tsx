@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mic, X, Loader2, AlertCircle } from 'lucide-react';
 import { Modal } from '../shared/Modal';
 import { AudioPlayer } from '../shared/AudioPlayer';
-import { useAudioRecorder } from '../../hooks/useAudioRecorder';
+import { useAudioRecorder } from '@/features/audio/useAudioRecorder';
 import { AudioVisualizer } from '../recorder/AudioVisualizer';
 import { RecorderControls } from '../recorder/RecorderControls';
 import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';

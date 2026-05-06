@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { getMixedAudioStream } from '../../utils/audio/audioProcessing';
+import { getMixedAudioStream } from '@/features/audio/audioProcessing';
 
 type RecorderStatus = 'idle' | 'recording' | 'paused';
 

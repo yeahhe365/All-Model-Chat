@@ -1,12 +1,12 @@
 import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
-import { dbService } from '../../../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { createChatSettings } from '../../../test/factories';
 import { useSessionActions } from './useSessionActions';
 import { renderHook } from '@/test/testUtils';
 
-vi.mock('../../../utils/db', async () => {
+vi.mock('@/services/db/dbService', async () => {
   const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
   return createDbServiceMockModule();

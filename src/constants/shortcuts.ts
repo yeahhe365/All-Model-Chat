@@ -1,4 +1,4 @@
-import { translations } from '../utils/translations';
+import { translations } from '@/i18n/translations';
 
 interface ShortcutDefinition {
   id: string;

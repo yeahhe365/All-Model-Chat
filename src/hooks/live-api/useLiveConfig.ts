@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ChatSettings } from '../../types';
 import type { Tool } from '@google/genai';
 import type { LiveClientFunctions } from '../../types';
-import { LOCAL_PYTHON_SYSTEM_PROMPT } from '../../constants/prompts/localPython';
+import { LOCAL_PYTHON_SYSTEM_PROMPT } from '@/features/prompts/localPython';
 
 interface UseLiveConfigProps {
   chatSettings: ChatSettings;

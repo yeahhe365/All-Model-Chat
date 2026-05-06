@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { compressAudioToMp3 } from '../utils/audioCompression';
+import { compressAudioToMp3 } from '@/features/audio/audioCompression';
 import { useRecorder } from './core/useRecorder';
 import { useTextAreaInsert } from './useTextAreaInsert';
 

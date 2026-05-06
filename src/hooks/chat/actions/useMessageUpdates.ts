@@ -18,7 +18,7 @@ import {
   mergeUniqueFiles,
   reduceMessageStreamEvent,
   type MessageStreamState,
-} from '../../../features/chat-streaming/messageStreamReducer';
+} from '@/features/chat-streaming/messageStreamReducer';
 
 interface UseMessageUpdatesProps {
   activeSessionId: string | null;

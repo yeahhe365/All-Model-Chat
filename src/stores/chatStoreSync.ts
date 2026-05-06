@@ -1,7 +1,7 @@
 import type { SavedChatSession } from '../types';
 import type { SyncMessage } from '../types/sync';
 import { logService } from '../services/logService';
-import { dbService } from '../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { rehydrateSessionFiles } from '../utils/chat/session';
 import { getChatSyncChannel } from './chatSyncChannel';
 

@@ -1,4 +1,4 @@
-import { dbService, type ApiUsageExactPricing } from '../utils/db';
+import { dbService, type ApiUsageExactPricing } from '@/services/db/dbService';
 import type { LogCategory, LogEntry, LogLevel, TokenUsageStats } from '../types/logging';
 
 type LogListener = (newLogs: LogEntry[]) => void;

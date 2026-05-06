@@ -4,7 +4,7 @@ import { logService } from '../../services/logService';
 import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { serializeSessionForPortableExport } from '../../utils/chat/session';
 import { triggerDownload } from '../../utils/export/core';
-import { dbService } from '../../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { buildScenarioExportPayload } from '../../features/scenarios/scenarioLibrary';
 
 interface UseDataExportProps {

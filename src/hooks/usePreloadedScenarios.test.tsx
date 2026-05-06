@@ -30,7 +30,7 @@ const { localStorageMock } = vi.hoisted(() => {
   return { localStorageMock: mock };
 });
 
-vi.mock('../utils/db', async () => {
+vi.mock('@/services/db/dbService', async () => {
   const { createDbServiceMockModule } = await import('../test/moduleMockDoubles');
 
   return createDbServiceMockModule();

@@ -30,7 +30,7 @@ vi.mock('../../../services/logService', async () => {
   return createLogServiceMockModule();
 });
 
-vi.mock('../../../utils/db', async () => {
+vi.mock('@/services/db/dbService', async () => {
   const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
 
   return createDbServiceMockModule({ getSession: mockGetSession });
@@ -50,7 +50,7 @@ vi.mock('../../../utils/modelHelpers', () => ({
 }));
 
 import { useSessionLoader } from './useSessionLoader';
-import { dbService } from '../../../utils/db';
+import { dbService } from '@/services/db/dbService';
 import { createChatMessage, createChatSettings, createSavedChatSession } from '@/test/factories';
 import { createSessionLoaderProps, type SessionLoaderPropsOverrides } from '@/test/hookFactories';
 import { createDeferred, flushPromises, renderHook } from '@/test/testUtils';
