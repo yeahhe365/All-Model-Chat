@@ -47,7 +47,7 @@ export const resetChatStoreState = () => {
   });
 };
 
-export const resetChatRuntimeStoreState = () => {
+const resetChatRuntimeStoreState = () => {
   useChatRuntimeStore.getState().resetChatRuntime();
 };
 

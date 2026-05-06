@@ -1,4 +1,4 @@
-import { act, cloneElement, isValidElement, type ReactNode } from 'react';
+import { act, cloneElement, isValidElement, type ComponentProps, type ReactNode } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ChatSettings, type InputCommand, type UploadedFile } from '../../../types';
@@ -194,7 +194,7 @@ vi.mock('./ChatInputFileModals', () => ({
 }));
 
 vi.mock('./ChatInputArea', () => {
-  const ChatInputArea = (props: import('./ChatInputArea').ChatInputAreaProps) => {
+  const ChatInputArea = (props: ComponentProps<typeof import('./ChatInputArea').ChatInputArea>) => {
     const { formProps, inputProps, actionsLocalProps, fileDisplayProps } = props;
     const queuedProps = props.queuedSubmissionProps;
     const liveStatusProps = props.liveStatusProps;

@@ -14,7 +14,7 @@ import { useChatInputAreaLayout } from './useChatInputAreaLayout';
 import type { SlashCommand as Command } from '../../../types/slashCommands';
 import type { UploadedFile } from '../../../types';
 
-export interface ChatInputAreaProps {
+interface ChatInputAreaProps {
   toolbarLocalProps: {
     showAddByIdInput: boolean;
     fileIdInput: string;
