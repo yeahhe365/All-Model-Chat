@@ -286,4 +286,77 @@ describe('useDataImport', () => {
 
     unmount();
   });
+
+  it('imports valid settings fields that are not covered by legacy manual key lists', () => {
+    let importedSettings: AppSettings = DEFAULT_APP_SETTINGS;
+    let didImportSettings = false;
+
+    fileReaderResult = JSON.stringify({
+      type: 'AllModelChat-Settings',
+      settings: {
+        apiMode: 'openai-compatible',
+        openaiCompatibleApiKey: 'openai-key',
+        openaiCompatibleBaseUrl: 'https://openai-compatible.example.com/v1',
+        openaiCompatibleModelId: 'custom-model',
+        openaiCompatibleModels: [
+          {
+            id: 'custom-model',
+            name: 'Custom Model',
+            isPinned: true,
+            apiMode: 'openai-compatible',
+          },
+        ],
+        translationTargetLanguage: 'Japanese',
+        inputTranslationModelId: 'gemini-input-translation',
+        thoughtTranslationTargetLanguage: 'Korean',
+        thoughtTranslationModelId: 'gemini-thought-translation',
+        showInputTranslationButton: true,
+        showInputPasteButton: false,
+        showInputClearButton: true,
+        isCopySelectionFormattingEnabled: false,
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useDataImport({
+        setAppSettings: vi.fn((value: AppSettings | ((prev: AppSettings) => AppSettings)) => {
+          didImportSettings = true;
+          importedSettings = typeof value === 'function' ? value(DEFAULT_APP_SETTINGS) : value;
+        }),
+        updateAndPersistSessions: vi.fn(),
+        updateAndPersistGroups: vi.fn(),
+        savedScenarios: [],
+        handleSaveAllScenarios: vi.fn(),
+        t: (key) => key,
+      }),
+    );
+
+    act(() => {
+      result.current.handleImportSettings(new File(['settings'], 'settings.json', { type: 'application/json' }));
+    });
+
+    expect(didImportSettings).toBe(true);
+    expect(importedSettings.apiMode).toBe('openai-compatible');
+    expect(importedSettings.openaiCompatibleApiKey).toBe('openai-key');
+    expect(importedSettings.openaiCompatibleBaseUrl).toBe('https://openai-compatible.example.com/v1');
+    expect(importedSettings.openaiCompatibleModelId).toBe('custom-model');
+    expect(importedSettings.openaiCompatibleModels).toEqual([
+      {
+        id: 'custom-model',
+        name: 'Custom Model',
+        isPinned: true,
+        apiMode: 'openai-compatible',
+      },
+    ]);
+    expect(importedSettings.translationTargetLanguage).toBe('Japanese');
+    expect(importedSettings.inputTranslationModelId).toBe('gemini-input-translation');
+    expect(importedSettings.thoughtTranslationTargetLanguage).toBe('Korean');
+    expect(importedSettings.thoughtTranslationModelId).toBe('gemini-thought-translation');
+    expect(importedSettings.showInputTranslationButton).toBe(true);
+    expect(importedSettings.showInputPasteButton).toBe(false);
+    expect(importedSettings.showInputClearButton).toBe(true);
+    expect(importedSettings.isCopySelectionFormattingEnabled).toBe(false);
+
+    unmount();
+  });
 });

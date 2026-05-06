@@ -2,6 +2,7 @@ import type { Part } from '@google/genai';
 import type { ChatHistoryItem, EditImageRequestConfig } from '../../../types';
 import { buildGenerationConfig } from '../generationConfig';
 import { sendStatelessMessageNonStreamApi } from '../chatApi';
+import { DEFAULT_APP_SETTINGS } from '../../../constants/appConstants';
 
 export const editImageApi = async (
   apiKey: string,
@@ -20,19 +21,21 @@ export const editImageApi = async (
   }
 
   const config = await buildGenerationConfig({
-    modelId,
-    systemInstruction: requestConfig?.systemInstruction || '',
-    config: {},
-    showThoughts: requestConfig?.showThoughts ?? false,
-    thinkingBudget: requestConfig?.thinkingBudget ?? 0,
-    isGoogleSearchEnabled: !!requestConfig?.isGoogleSearchEnabled,
-    isCodeExecutionEnabled: false,
-    isUrlContextEnabled: false,
-    thinkingLevel: requestConfig?.thinkingLevel,
+    settings: {
+      ...DEFAULT_APP_SETTINGS,
+      modelId,
+      systemInstruction: requestConfig?.systemInstruction || '',
+      showThoughts: requestConfig?.showThoughts ?? false,
+      thinkingBudget: requestConfig?.thinkingBudget ?? 0,
+      isGoogleSearchEnabled: !!requestConfig?.isGoogleSearchEnabled,
+      isCodeExecutionEnabled: false,
+      isUrlContextEnabled: false,
+      isDeepSearchEnabled: !!requestConfig?.isDeepSearchEnabled,
+      thinkingLevel: requestConfig?.thinkingLevel,
+      safetySettings: requestConfig?.safetySettings,
+    },
     aspectRatio,
-    isDeepSearchEnabled: !!requestConfig?.isDeepSearchEnabled,
     imageSize,
-    safetySettings: requestConfig?.safetySettings,
     imageOutputMode: requestConfig?.imageOutputMode,
     personGeneration: requestConfig?.personGeneration,
   });

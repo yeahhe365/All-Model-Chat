@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator, AlertTriangle } from 'lucide-react';
 import { useI18n } from '../../../contexts/I18nContext';
-import { IconYoutube, IconPython } from '../../icons/CustomIcons';
+import { IconPython } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
@@ -65,8 +65,6 @@ const renderToolIcon = (icon: ChatToolIconKey, size: number) => {
       return <IconPython size={size} strokeWidth={2} />;
     case 'link':
       return <Link size={size} strokeWidth={2} />;
-    case 'youtube':
-      return <IconYoutube size={size} strokeWidth={2} />;
     case 'calculator':
       return <Calculator size={size} strokeWidth={2} />;
   }
@@ -96,9 +94,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({ currentModelId, toolStates
     }
 
     return () => {
-      if (toolId === 'youtubeUrl') {
-        toolUtilityActions.onAddYouTubeVideo();
-      } else if (toolId === 'tokenCount') {
+      if (toolId === 'tokenCount') {
         toolUtilityActions.onCountTokens();
       }
       closeMenu();

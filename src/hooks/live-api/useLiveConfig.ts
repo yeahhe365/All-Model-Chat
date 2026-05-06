@@ -3,6 +3,7 @@ import { ChatSettings } from '../../types';
 import type { Tool } from '@google/genai';
 import type { LiveClientFunctions } from '../../types';
 import { LOCAL_PYTHON_SYSTEM_PROMPT } from '@/features/prompts/localPython';
+import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 
 interface UseLiveConfigProps {
   chatSettings: ChatSettings;
@@ -37,8 +38,8 @@ interface LiveConfig {
 
 export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: UseLiveConfigProps) => {
   return useMemo(() => {
-    const modelId = chatSettings.modelId?.toLowerCase() ?? '';
-    const isGemini31FlashLive = modelId.includes('gemini-3.1-flash-live');
+    const capabilities = getCachedModelCapabilities(chatSettings.modelId);
+    const isGemini31FlashLive = capabilities.isGemini31FlashLiveModel;
 
     // Construct Tools Configuration
     const tools: Tool[] = [];

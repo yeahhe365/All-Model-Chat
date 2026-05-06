@@ -3,7 +3,6 @@ import { useI18n } from '../../../../contexts/I18nContext';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
-import { isGemini3Model } from '../../../../utils/modelHelpers';
 import { getCachedModelCapabilities } from '../../../../stores/modelCapabilitiesStore';
 import { ThinkingModeSelector } from './ThinkingModeSelector';
 import { ThinkingLevelSelector } from './ThinkingLevelSelector';
@@ -31,15 +30,15 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   setShowThoughts,
 }) => {
   const { t } = useI18n();
-  const isGemini3 = isGemini3Model(modelId);
   const capabilities = getCachedModelCapabilities(modelId);
+  const isGemini3 = capabilities.isGemini3;
   const supportsThinkingLevel = capabilities.supportsThinkingLevel;
-  const isFlash3 = isGemini3 && modelId.toLowerCase().includes('flash');
-  const isRobotics = modelId.toLowerCase().includes('gemini-robotics-er');
-  const isGemini31FlashImage = modelId.toLowerCase().includes('gemini-3.1-flash-image');
+  const isFlash3 = capabilities.isGemini3FlashModel;
+  const isRobotics = capabilities.isGeminiRoboticsModel;
+  const isGemini31FlashImage = capabilities.isGemini31FlashImageModel;
   const isGemini3ProImage = modelId === 'gemini-3-pro-image-preview';
   const isImageThinkingLevelOnly = isGemini31FlashImage;
-  const isGemma = modelId.toLowerCase().includes('gemma');
+  const isGemma = capabilities.isGemmaModel;
   const isTtsModel = capabilities.isTtsModel;
   const budgetConfig = THINKING_BUDGET_RANGES[modelId];
   const supportedThinkingLevels: ThinkingLevelOption[] = isImageThinkingLevelOnly

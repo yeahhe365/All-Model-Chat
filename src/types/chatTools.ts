@@ -6,7 +6,6 @@ export type ChatToolId =
   | 'codeExecution'
   | 'localPython'
   | 'urlContext'
-  | 'youtubeUrl'
   | 'tokenCount';
 
 export type ToggleableChatToolId = Extract<
@@ -22,7 +21,6 @@ export interface ChatToolToggleState {
 export type ChatToolToggleStates = Partial<Record<ToggleableChatToolId, ChatToolToggleState>>;
 
 export interface ChatToolUtilityActions {
-  onAddYouTubeVideo: () => void;
   onCountTokens: () => void;
 }
 

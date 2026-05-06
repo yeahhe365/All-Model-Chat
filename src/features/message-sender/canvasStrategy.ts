@@ -87,17 +87,18 @@ export const generateCanvasMessage = async ({
       );
 
       const config = await buildGenerationConfig({
-        modelId: canvasModelId,
-        systemInstruction: canvasSystemPrompt,
-        config: { temperature: 0.7, topP: 0.95 },
-        showThoughts: true,
-        thinkingBudget: 0,
-        isGoogleSearchEnabled: false,
-        isCodeExecutionEnabled: false,
-        isUrlContextEnabled: false,
-        thinkingLevel: canvasThinkingLevel,
+        settings: {
+          ...canvasSettings,
+          systemInstruction: canvasSystemPrompt,
+          temperature: 0.7,
+          topP: 0.95,
+          isGoogleSearchEnabled: false,
+          isCodeExecutionEnabled: false,
+          isUrlContextEnabled: false,
+          isDeepSearchEnabled: false,
+          isLocalPythonEnabled: false,
+        },
         aspectRatio,
-        isDeepSearchEnabled: false,
         isLocalPythonEnabled: false,
       });
 

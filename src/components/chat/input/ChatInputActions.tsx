@@ -48,7 +48,6 @@ interface ChatInputActionsLocalProps {
   canQueueMessage?: boolean;
   onQueueMessage?: () => void;
   onToggleToolAndFocus: (toggleFunc: () => void) => void;
-  onAddYouTubeVideo: () => void;
   onCountTokens: () => void;
 }
 
@@ -90,7 +89,6 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
   canQueueMessage,
   onQueueMessage,
   onToggleToolAndFocus,
-  onAddYouTubeVideo,
   onCountTokens,
 }) => {
   const { t } = useI18n();
@@ -101,6 +99,7 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
   const isImageModel = capabilities.isImagenModel || false;
   const isRealImagenModel = capabilities.isRealImagenModel || false;
   const isNativeAudioModel = capabilities.isNativeAudioModel || false;
+  const canAddYouTubeVideo = !!capabilities.permissions?.canUseYouTubeUrl;
   const isEditing = !!useChatStore((state) => state.editingMessageId);
   const editMode = useChatStore((state) => state.editMode);
   const onStopGenerating = useChatRuntimeStore((state) => state.onStopGenerating);
@@ -145,10 +144,9 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
   );
   const toolUtilityActions = useMemo(
     () => ({
-      onAddYouTubeVideo,
       onCountTokens,
     }),
-    [onAddYouTubeVideo, onCountTokens],
+    [onCountTokens],
   );
   const showInputTranslationButton = appSettings.showInputTranslationButton ?? false;
   const showInputPasteButton = appSettings.showInputPasteButton ?? true;
@@ -328,6 +326,7 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
           onAction={onAttachmentAction}
           disabled={disabled || !!isRealImagenModel}
           isImageModel={isImageModel}
+          canAddYouTubeVideo={canAddYouTubeVideo}
         />
 
         {isNativeAudioModel && (

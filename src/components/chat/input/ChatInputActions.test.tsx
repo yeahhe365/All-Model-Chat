@@ -96,7 +96,6 @@ const baseProps = {
   canQueueMessage: false,
   onQueueMessage: vi.fn(),
   onToggleToolAndFocus: vi.fn((toggle: () => void) => toggle()),
-  onAddYouTubeVideo: vi.fn(),
   onCountTokens: vi.fn(),
 };
 

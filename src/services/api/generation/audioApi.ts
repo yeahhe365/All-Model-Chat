@@ -3,7 +3,7 @@ import { executeConfiguredApiRequest } from '../apiExecutor';
 import { logService } from '../../logService';
 import type { Part } from '@google/genai';
 import { blobToBase64 } from '../../../utils/fileHelpers';
-import { calculateTokenStats } from '../../../utils/modelHelpers';
+import { calculateTokenStats, getModelCapabilities } from '../../../utils/modelHelpers';
 import { buildExactPricingFromUsageMetadata } from '../../../utils/usagePricingTelemetry';
 import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
 
@@ -181,15 +181,13 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
 
       const thinkingConfig: ThinkingConfig = {};
 
-      // Apply specific defaults based on model
-      if (modelId.includes('gemini-3')) {
+      const capabilities = getModelCapabilities(modelId);
+      if (capabilities.isGemini3) {
         thinkingConfig.includeThoughts = false;
         thinkingConfig.thinkingLevel = 'MINIMAL' as ThinkingConfig['thinkingLevel'];
-      } else if (modelId.includes('flash')) {
-        // Both 2.5 Flash and Flash Lite
+      } else if (capabilities.isFlashModel) {
         thinkingConfig.thinkingBudget = 512;
       } else {
-        // Disable thinking for other models by default
         thinkingConfig.thinkingBudget = 0;
       }
 

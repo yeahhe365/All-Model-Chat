@@ -137,6 +137,7 @@ interface ModelInteractionPermissions {
 }
 
 export const getModelCapabilities = (modelId: string) => {
+  const lowerId = modelId.toLowerCase();
   const isGemini3 = isGemini3Model(modelId);
   const supportsThinkingLevelSelection = supportsThinkingLevel(modelId);
   const gemini3ImageModel = isGemini3ImageModel(modelId);
@@ -144,6 +145,11 @@ export const getModelCapabilities = (modelId: string) => {
   const realImagenModel = isRealImagenModel(modelId);
   const ttsModel = isTtsModel(modelId);
   const nativeAudioModel = isNativeAudioModel(modelId);
+  const flashModel = lowerId.includes('flash');
+  const gemini25Model = lowerId.includes('gemini-2.5');
+  const gemini3FlashModel = isGemini3 && flashModel;
+  const gemini31FlashLiveModel = isGemini31FlashLiveModel(modelId);
+  const roboticsModel = isGeminiRoboticsModel(modelId);
   const imageModel = realImagenModel || flashImageModel || gemini3ImageModel;
   const canUseTextChatTools = !nativeAudioModel && !imageModel && !ttsModel;
   const canUseBuiltInCustomToolCombination = isGemini3;
@@ -201,7 +207,14 @@ export const getModelCapabilities = (modelId: string) => {
     isGemini3,
     supportsRawReasoningPrefill: MODELS_SUPPORTING_RAW_MODE.some((model) => modelId.includes(model)),
     supportsThinkingLevel: supportsThinkingLevelSelection,
+    supportsThinkingBudgetConfig: gemini25Model || roboticsModel,
     isGemmaModel: isGemmaModel(modelId),
+    isFlashModel: flashModel,
+    isGemini25Model: gemini25Model,
+    isGemini3FlashModel: gemini3FlashModel,
+    isGemini31FlashLiveModel: gemini31FlashLiveModel,
+    isGemini31FlashImageModel: isGemini31FlashImageModel(modelId),
+    isGeminiRoboticsModel: roboticsModel,
     isGemini3ImageModel: gemini3ImageModel,
     isFlashImageModel: flashImageModel,
     isRealImagenModel: realImagenModel,

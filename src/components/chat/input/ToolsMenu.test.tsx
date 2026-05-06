@@ -23,7 +23,6 @@ const createToolStates = (
 });
 
 const toolUtilityActions = {
-  onAddYouTubeVideo: () => {},
   onCountTokens: () => {},
 };
 

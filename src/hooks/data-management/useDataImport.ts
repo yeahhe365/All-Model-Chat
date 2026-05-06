@@ -1,16 +1,9 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup, ChatMessage } from '../../types';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { logService } from '../../services/logService';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { mergeImportedScenarios } from '../../features/scenarios/scenarioLibrary';
-import {
-  HarmBlockThreshold,
-  HarmCategory,
-  MediaResolution,
-  type FilesApiConfig,
-  type SafetySetting,
-} from '../../types/settings';
+import { sanitizeImportedAppSettings } from '../../schemas/appSettingsSchema';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
@@ -80,208 +73,6 @@ const normalizeImportedSession = (session: SavedChatSession): SavedChatSession =
   messages: Array.isArray(session.messages) ? session.messages.map((message) => normalizeImportedMessage(message)) : [],
 });
 
-const THEME_IDS = ['system', 'onyx', 'pearl'] as const;
-const LANGUAGE_IDS = ['en', 'zh', 'system'] as const;
-const THINKING_LEVELS = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] as const;
-const STRING_KEYS = [
-  'modelId',
-  'systemInstruction',
-  'ttsVoice',
-  'transcriptionModelId',
-  'autoCanvasModelId',
-] as const satisfies ReadonlyArray<keyof AppSettings>;
-const NULLABLE_STRING_KEYS = ['apiKey', 'apiProxyUrl', 'lockedApiKey'] as const satisfies ReadonlyArray<
-  keyof AppSettings
->;
-const BOOLEAN_KEYS = [
-  'showThoughts',
-  'isGoogleSearchEnabled',
-  'isCodeExecutionEnabled',
-  'isLocalPythonEnabled',
-  'isUrlContextEnabled',
-  'isDeepSearchEnabled',
-  'isRawModeEnabled',
-  'hideThinkingInContext',
-  'useCustomApiConfig',
-  'serverManagedApi',
-  'useApiProxy',
-  'isStreamingEnabled',
-  'expandCodeBlocksByDefault',
-  'isAutoTitleEnabled',
-  'isMermaidRenderingEnabled',
-  'isGraphvizRenderingEnabled',
-  'isCompletionNotificationEnabled',
-  'isCompletionSoundEnabled',
-  'isSuggestionsEnabled',
-  'isAutoScrollOnSendEnabled',
-  'isAutoSendOnSuggestionClick',
-  'generateQuadImages',
-  'autoFullscreenHtml',
-  'showWelcomeSuggestions',
-  'isAudioCompressionEnabled',
-  'autoCanvasVisualization',
-  'isPasteRichTextAsMarkdownEnabled',
-  'isPasteAsTextFileEnabled',
-  'isSystemAudioRecordingEnabled',
-] as const satisfies ReadonlyArray<keyof AppSettings>;
-const NUMBER_KEYS = ['temperature', 'topP', 'topK', 'thinkingBudget', 'baseFontSize'] as const satisfies ReadonlyArray<
-  keyof AppSettings
->;
-const FILE_API_CONFIG_KEYS = ['images', 'pdfs', 'audio', 'video', 'text'] as const;
-const HARM_CATEGORIES = new Set(Object.values(HarmCategory));
-const HARM_THRESHOLDS = new Set(Object.values(HarmBlockThreshold));
-const MEDIA_RESOLUTIONS = new Set(Object.values(MediaResolution));
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const sanitizeFilesApiConfig = (value: unknown, fallback: FilesApiConfig): FilesApiConfig | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  const nextConfig: FilesApiConfig = { ...fallback };
-  let hasValidOverride = false;
-
-  FILE_API_CONFIG_KEYS.forEach((key) => {
-    if (typeof value[key] === 'boolean') {
-      nextConfig[key] = value[key];
-      hasValidOverride = true;
-    }
-  });
-
-  return hasValidOverride ? nextConfig : undefined;
-};
-
-const sanitizeSafetySettings = (value: unknown, fallback: SafetySetting[] | undefined): SafetySetting[] | undefined => {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
-  const validSettings = value.filter(
-    (item): item is SafetySetting =>
-      isRecord(item) &&
-      typeof item.category === 'string' &&
-      typeof item.threshold === 'string' &&
-      HARM_CATEGORIES.has(item.category as HarmCategory) &&
-      HARM_THRESHOLDS.has(item.threshold as HarmBlockThreshold),
-  );
-
-  if (validSettings.length > 0) {
-    return validSettings;
-  }
-
-  return fallback;
-};
-
-const sanitizeCustomShortcuts = (value: unknown): Record<string, string> | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  const nextShortcuts: Record<string, string> = {};
-
-  Object.entries(value).forEach(([shortcutKey, shortcutValue]) => {
-    if (typeof shortcutValue === 'string') {
-      nextShortcuts[shortcutKey] = shortcutValue;
-    }
-  });
-
-  return nextShortcuts;
-};
-
-const sanitizeTabModelCycleIds = (value: unknown): string[] | undefined => {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
-  const seenIds = new Set<string>();
-  const nextIds = value.reduce<string[]>((ids, item) => {
-    if (typeof item !== 'string') {
-      return ids;
-    }
-
-    const normalizedId = item.trim();
-    if (!normalizedId || seenIds.has(normalizedId)) {
-      return ids;
-    }
-
-    seenIds.add(normalizedId);
-    ids.push(normalizedId);
-    return ids;
-  }, []);
-
-  return nextIds.length > 0 ? nextIds : undefined;
-};
-
-const sanitizeImportedSettings = (importedSettings: Partial<AppSettings>): AppSettings => {
-  const newSettings: AppSettings = { ...DEFAULT_APP_SETTINGS };
-
-  STRING_KEYS.forEach((key) => {
-    if (typeof importedSettings[key] === 'string') {
-      newSettings[key] = importedSettings[key] as never;
-    }
-  });
-
-  NULLABLE_STRING_KEYS.forEach((key) => {
-    const importedValue = importedSettings[key];
-    if (typeof importedValue === 'string' || importedValue === null) {
-      newSettings[key] = importedValue as never;
-    }
-  });
-
-  BOOLEAN_KEYS.forEach((key) => {
-    if (typeof importedSettings[key] === 'boolean') {
-      newSettings[key] = importedSettings[key] as never;
-    }
-  });
-
-  NUMBER_KEYS.forEach((key) => {
-    const importedValue = importedSettings[key];
-    if (typeof importedValue === 'number' && Number.isFinite(importedValue)) {
-      newSettings[key] = importedValue as never;
-    }
-  });
-
-  if (THEME_IDS.includes(importedSettings.themeId as (typeof THEME_IDS)[number])) {
-    newSettings.themeId = importedSettings.themeId as AppSettings['themeId'];
-  }
-
-  if (LANGUAGE_IDS.includes(importedSettings.language as (typeof LANGUAGE_IDS)[number])) {
-    newSettings.language = importedSettings.language as AppSettings['language'];
-  }
-
-  if (THINKING_LEVELS.includes(importedSettings.thinkingLevel as (typeof THINKING_LEVELS)[number])) {
-    newSettings.thinkingLevel = importedSettings.thinkingLevel;
-  }
-
-  if (MEDIA_RESOLUTIONS.has(importedSettings.mediaResolution as MediaResolution)) {
-    newSettings.mediaResolution = importedSettings.mediaResolution;
-  }
-
-  const filesApiConfig = sanitizeFilesApiConfig(importedSettings.filesApiConfig, DEFAULT_APP_SETTINGS.filesApiConfig);
-  if (filesApiConfig) {
-    newSettings.filesApiConfig = filesApiConfig;
-  }
-
-  const safetySettings = sanitizeSafetySettings(importedSettings.safetySettings, DEFAULT_APP_SETTINGS.safetySettings);
-  if (safetySettings) {
-    newSettings.safetySettings = safetySettings;
-  }
-
-  const customShortcuts = sanitizeCustomShortcuts(importedSettings.customShortcuts);
-  if (customShortcuts) {
-    newSettings.customShortcuts = customShortcuts;
-  }
-
-  const tabModelCycleIds = sanitizeTabModelCycleIds(importedSettings.tabModelCycleIds);
-  if (tabModelCycleIds) {
-    newSettings.tabModelCycleIds = tabModelCycleIds;
-  }
-
-  return newSettings;
-};
-
 export const useDataImport = ({
   setAppSettings,
   updateAndPersistSessions,
@@ -320,7 +111,7 @@ export const useDataImport = ({
   const handleImportSettings = useCallback(
     (file: File) => {
       handleImportFile<ImportedSettingsPayload>(file, 'AllModelChat-Settings', (data) => {
-        const newSettings = sanitizeImportedSettings(data.settings);
+        const newSettings = sanitizeImportedAppSettings(data.settings);
         setAppSettings(newSettings);
         alert(t('settingsImport_success'));
       });

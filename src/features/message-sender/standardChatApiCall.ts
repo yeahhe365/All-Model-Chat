@@ -238,24 +238,10 @@ export const performStandardChatApiCall = async ({
     (isGemini3Model(apiModelId) || !hasRequestedServerSideToolThatNeedsCombination);
 
   const config = await buildGenerationConfig({
+    settings: sessionToUpdate,
     modelId: apiModelId,
-    systemInstruction: sessionToUpdate.systemInstruction,
-    config: {
-      temperature: sessionToUpdate.temperature,
-      topP: sessionToUpdate.topP,
-      topK: sessionToUpdate.topK,
-    },
-    showThoughts: sessionToUpdate.showThoughts,
-    thinkingBudget: sessionToUpdate.thinkingBudget,
-    isGoogleSearchEnabled: !!sessionToUpdate.isGoogleSearchEnabled,
-    isCodeExecutionEnabled: !!sessionToUpdate.isCodeExecutionEnabled,
-    isUrlContextEnabled: !!sessionToUpdate.isUrlContextEnabled,
-    thinkingLevel: sessionToUpdate.thinkingLevel,
     aspectRatio,
-    isDeepSearchEnabled: sessionToUpdate.isDeepSearchEnabled,
     imageSize,
-    safetySettings: sessionToUpdate.safetySettings,
-    mediaResolution: sessionToUpdate.mediaResolution,
     isLocalPythonEnabled: isLocalPythonEnabledForTurn,
     imageOutputMode,
     personGeneration,

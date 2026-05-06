@@ -49,16 +49,15 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   const isSelectorDisabled = availableModels.length === 0 || isLoading || isSwitchingModel;
 
   // Check for Gemini 3 models (ignoring case) but exclude image models
-  const { supportsThinkingLevel, isImagenModel, isGemmaModel } = getCachedModelCapabilities(selectedModelId);
+  const { supportsThinkingLevel, isImagenModel, isGemmaModel, isFlashModel, isGeminiRoboticsModel } =
+    getCachedModelCapabilities(selectedModelId);
   const supportsThinkingToggle = (supportsThinkingLevel && !isImagenModel) || isGemmaModel;
 
   // Determine the target "Fast" level based on model capabilities
   // Gemini 3 Flash models support MINIMAL thinking for maximum speed
   // Gemini Robotics-ER 1.6 matches Flash here; other Gemini 3 models
   // (like Pro) typically bottom out at LOW.
-  const isFlash = selectedModelId.toLowerCase().includes('flash');
-  const isRobotics = selectedModelId.toLowerCase().includes('gemini-robotics-er');
-  const targetFastLevel = isFlash || isRobotics ? 'MINIMAL' : 'LOW';
+  const targetFastLevel = isFlashModel || isGeminiRoboticsModel ? 'MINIMAL' : 'LOW';
   const isGemmaReasoningEnabled = !!showThoughts;
 
   // Consider it "Fast Mode" active if the current level matches the target fast level

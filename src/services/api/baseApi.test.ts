@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getClient, getApiClient, getConfiguredApiClient } from './apiClient';
-import { appendFunctionDeclarationsToTools, buildGenerationConfig, toCountTokensConfig } from './generationConfig';
+import {
+  appendFunctionDeclarationsToTools,
+  buildGenerationConfig as buildGenerationConfigFromSettings,
+  toCountTokensConfig,
+} from './generationConfig';
 import { getLiveApiClient } from './liveApiAuth';
 import { MediaResolution } from '../../types/settings';
+import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 
 type MockGoogleGenAIConfig = {
   apiKey: string;
@@ -47,6 +52,109 @@ vi.mock('../../utils/modelHelpers', async () => {
 
 import { GoogleGenAI } from '@google/genai';
 import { dbService } from '@/services/db/dbService';
+
+type LegacyGenerationConfigTestOptions = {
+  modelId: string;
+  systemInstruction: string;
+  config: {
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+    responseMimeType?: string;
+    responseSchema?: Record<string, unknown>;
+  };
+  showThoughts: boolean;
+  thinkingBudget: number;
+  isGoogleSearchEnabled?: boolean;
+  isCodeExecutionEnabled?: boolean;
+  isUrlContextEnabled?: boolean;
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  aspectRatio?: string;
+  isDeepSearchEnabled?: boolean;
+  imageSize?: string;
+  safetySettings?: typeof DEFAULT_APP_SETTINGS.safetySettings;
+  mediaResolution?: MediaResolution;
+  isLocalPythonEnabled?: boolean;
+  imageOutputMode?: 'IMAGE_TEXT' | 'IMAGE_ONLY';
+  personGeneration?: 'ALLOW_ADULT' | 'ALLOW_ALL' | 'DONT_ALLOW';
+};
+
+const buildGenerationConfig = (
+  optionsOrModelId: Parameters<typeof buildGenerationConfigFromSettings>[0] | LegacyGenerationConfigTestOptions | string,
+  systemInstruction = '',
+  config: LegacyGenerationConfigTestOptions['config'] = {},
+  showThoughts = false,
+  thinkingBudget = 0,
+  isGoogleSearchEnabled?: boolean,
+  isCodeExecutionEnabled?: boolean,
+  isUrlContextEnabled?: boolean,
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
+  aspectRatio?: string,
+  isDeepSearchEnabled?: boolean,
+  imageSize?: string,
+  safetySettings?: typeof DEFAULT_APP_SETTINGS.safetySettings,
+  mediaResolution?: MediaResolution,
+  isLocalPythonEnabled?: boolean,
+  imageOutputMode?: 'IMAGE_TEXT' | 'IMAGE_ONLY',
+  personGeneration?: 'ALLOW_ADULT' | 'ALLOW_ALL' | 'DONT_ALLOW',
+) => {
+  if (typeof optionsOrModelId === 'object' && 'settings' in optionsOrModelId) {
+    return buildGenerationConfigFromSettings(optionsOrModelId);
+  }
+
+  const options =
+    typeof optionsOrModelId === 'string'
+      ? {
+          modelId: optionsOrModelId,
+          systemInstruction,
+          config,
+          showThoughts,
+          thinkingBudget,
+          isGoogleSearchEnabled,
+          isCodeExecutionEnabled,
+          isUrlContextEnabled,
+          thinkingLevel,
+          aspectRatio,
+          isDeepSearchEnabled,
+          imageSize,
+          safetySettings,
+          mediaResolution,
+          isLocalPythonEnabled,
+          imageOutputMode,
+          personGeneration,
+        }
+      : optionsOrModelId;
+
+  return buildGenerationConfigFromSettings({
+    settings: {
+      ...DEFAULT_APP_SETTINGS,
+      modelId: options.modelId,
+      systemInstruction: options.systemInstruction,
+      temperature: options.config.temperature ?? DEFAULT_APP_SETTINGS.temperature,
+      topP: options.config.topP ?? DEFAULT_APP_SETTINGS.topP,
+      topK: options.config.topK ?? DEFAULT_APP_SETTINGS.topK,
+      showThoughts: options.showThoughts,
+      thinkingBudget: options.thinkingBudget,
+      isGoogleSearchEnabled: options.isGoogleSearchEnabled,
+      isCodeExecutionEnabled: options.isCodeExecutionEnabled,
+      isUrlContextEnabled: options.isUrlContextEnabled,
+      thinkingLevel: options.thinkingLevel,
+      isDeepSearchEnabled: options.isDeepSearchEnabled,
+      safetySettings: options.safetySettings,
+      mediaResolution: options.mediaResolution,
+      isLocalPythonEnabled: options.isLocalPythonEnabled,
+    },
+    config: {
+      responseMimeType: options.config.responseMimeType,
+      responseSchema: options.config.responseSchema,
+    },
+    aspectRatio: options.aspectRatio,
+    imageSize: options.imageSize,
+    isLocalPythonEnabled: options.isLocalPythonEnabled,
+    imageOutputMode: options.imageOutputMode,
+    personGeneration: options.personGeneration,
+  });
+};
 
 // ── getClient ──
 
@@ -284,6 +392,36 @@ describe('buildGenerationConfig', () => {
       isCodeExecutionEnabled: false,
       isUrlContextEnabled: true,
       thinkingLevel: 'LOW',
+    });
+
+    expect(config).toEqual(
+      expect.objectContaining({
+        temperature: 1,
+        topP: 0.95,
+        topK: 64,
+        systemInstruction: 'sys',
+        thinkingConfig: { includeThoughts: true, thinkingLevel: 'LOW' },
+        tools: [{ googleSearch: {} }, { urlContext: {} }],
+      }),
+    );
+  });
+
+  it('derives generation config from aggregated chat settings', async () => {
+    const config = await buildGenerationConfig({
+      settings: {
+        ...DEFAULT_APP_SETTINGS,
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: 'sys',
+        temperature: 1,
+        topP: 0.95,
+        topK: 64,
+        showThoughts: true,
+        thinkingBudget: 0,
+        isGoogleSearchEnabled: true,
+        isCodeExecutionEnabled: false,
+        isUrlContextEnabled: true,
+        thinkingLevel: 'LOW',
+      },
     });
 
     expect(config).toEqual(

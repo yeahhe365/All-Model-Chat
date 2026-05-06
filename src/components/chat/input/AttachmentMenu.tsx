@@ -12,6 +12,7 @@ import {
   IconLink,
   IconFileEdit,
   IconZip,
+  IconYoutube,
 } from '../../icons/CustomIcons';
 import {
   CHAT_INPUT_BUTTON_CLASS,
@@ -24,12 +25,18 @@ interface AttachmentMenuProps {
   onAction: (action: AttachmentAction) => void;
   disabled: boolean;
   isImageModel?: boolean;
+  canAddYouTubeVideo?: boolean;
 }
 
 const attachIconSize = 20;
 const menuIconSize = 18;
 
-export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, isImageModel }) => {
+export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({
+  onAction,
+  disabled,
+  isImageModel,
+  canAddYouTubeVideo,
+}) => {
   const { t } = useI18n();
   const { isOpen, menuPosition, containerRef, buttonRef, menuRef, targetWindow, closeMenu, toggleMenu } =
     usePortaledMenu({ constrainHeight: true });
@@ -48,6 +55,9 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
     { labelKey: 'attachMenu_screenshot', icon: <IconScreenshot size={menuIconSize} />, action: 'screenshot' },
     { labelKey: 'attachMenu_recordAudio', icon: <IconMicrophone size={menuIconSize} />, action: 'recorder' },
     { labelKey: 'attachMenu_addById', icon: <IconLink size={menuIconSize} />, action: 'id' },
+    ...(canAddYouTubeVideo
+      ? [{ labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={menuIconSize} />, action: 'url' } as const]
+      : []),
     { labelKey: 'attachMenu_createText', icon: <IconFileEdit size={menuIconSize} />, action: 'text' },
   ] as const;
 

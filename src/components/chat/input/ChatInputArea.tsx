@@ -126,10 +126,6 @@ export const ChatInputArea: React.FC = () => {
     canQueueMessage,
     onQueueMessage: handlers.queueCurrentSubmission,
     onToggleToolAndFocus: handlers.handleToggleToolAndFocus,
-    onAddYouTubeVideo: () => {
-      modalsState.setShowAddByUrlInput(true);
-      inputState.textareaRef.current?.focus();
-    },
     onCountTokens: () => localFileState.setShowTokenModal(true),
   };
 

@@ -1,12 +1,13 @@
 import type { CountTokensConfig, FunctionDeclaration } from '@google/genai';
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from '../../constants/promptHelpers';
-import type { ImageOutputMode, ImagePersonGeneration, SafetySetting } from '../../types/settings';
+import type { ChatSettings, ImageOutputMode, ImagePersonGeneration, SafetySetting } from '../../types/settings';
 import { MediaResolution } from '../../types/settings';
 import { logService } from '../logService';
 import {
   isGemini3Model,
   isGeminiRoboticsModel,
   isGemmaModel,
+  getModelCapabilities,
   normalizeAspectRatioForModel,
   normalizeImageSizeForModel,
 } from '../../utils/modelHelpers';
@@ -57,7 +58,38 @@ type BuildGenerationConfigInput = Pick<
   'temperature' | 'topP' | 'topK' | 'responseMimeType' | 'responseSchema'
 >;
 
+type GenerationConfigSettings = Pick<
+  ChatSettings,
+  | 'modelId'
+  | 'systemInstruction'
+  | 'temperature'
+  | 'topP'
+  | 'topK'
+  | 'showThoughts'
+  | 'thinkingBudget'
+  | 'isGoogleSearchEnabled'
+  | 'isCodeExecutionEnabled'
+  | 'isUrlContextEnabled'
+  | 'thinkingLevel'
+  | 'isDeepSearchEnabled'
+  | 'safetySettings'
+  | 'mediaResolution'
+  | 'isLocalPythonEnabled'
+>;
+
 interface BuildGenerationConfigOptions {
+  settings: GenerationConfigSettings;
+  modelId?: string;
+  systemInstruction?: string;
+  config?: Partial<BuildGenerationConfigInput>;
+  aspectRatio?: string;
+  imageSize?: string;
+  isLocalPythonEnabled?: boolean;
+  imageOutputMode?: ImageOutputMode;
+  personGeneration?: ImagePersonGeneration;
+}
+
+type InternalBuildGenerationConfigOptions = {
   modelId: string;
   systemInstruction: string;
   config: BuildGenerationConfigInput;
@@ -75,10 +107,38 @@ interface BuildGenerationConfigOptions {
   isLocalPythonEnabled?: boolean;
   imageOutputMode?: ImageOutputMode;
   personGeneration?: ImagePersonGeneration;
-}
+};
 
-const isBuildGenerationConfigOptions = (value: unknown): value is BuildGenerationConfigOptions =>
-  typeof value === 'object' && value !== null && 'modelId' in value;
+const toInternalBuildGenerationConfigOptions = (
+  options: BuildGenerationConfigOptions,
+): InternalBuildGenerationConfigOptions => {
+  const { settings } = options;
+
+  return {
+    modelId: options.modelId ?? settings.modelId,
+    systemInstruction: options.systemInstruction ?? settings.systemInstruction,
+    config: {
+      temperature: settings.temperature,
+      topP: settings.topP,
+      topK: settings.topK,
+      ...options.config,
+    },
+    showThoughts: settings.showThoughts,
+    thinkingBudget: settings.thinkingBudget,
+    isGoogleSearchEnabled: settings.isGoogleSearchEnabled,
+    isCodeExecutionEnabled: settings.isCodeExecutionEnabled,
+    isUrlContextEnabled: settings.isUrlContextEnabled,
+    thinkingLevel: settings.thinkingLevel,
+    aspectRatio: options.aspectRatio,
+    isDeepSearchEnabled: settings.isDeepSearchEnabled,
+    imageSize: options.imageSize,
+    safetySettings: settings.safetySettings,
+    mediaResolution: settings.mediaResolution,
+    isLocalPythonEnabled: options.isLocalPythonEnabled ?? settings.isLocalPythonEnabled,
+    imageOutputMode: options.imageOutputMode,
+    personGeneration: options.personGeneration,
+  };
+};
 
 async function buildGenerationConfigFromOptions({
   modelId,
@@ -97,7 +157,7 @@ async function buildGenerationConfigFromOptions({
   mediaResolution,
   isLocalPythonEnabled,
   imageOutputMode = 'IMAGE_TEXT',
-}: BuildGenerationConfigOptions): Promise<GenerationConfig> {
+}: InternalBuildGenerationConfigOptions): Promise<GenerationConfig> {
   const normalizedAspectRatio = normalizeAspectRatioForModel(modelId, aspectRatio);
   const normalizedImageSize = normalizeImageSizeForModel(modelId, imageSize);
   const googleSearchTool =
@@ -211,7 +271,7 @@ async function buildGenerationConfigFromOptions({
       thinkingLevel: gemmaThinkingLevel,
     };
   } else {
-    const modelSupportsThinking = modelId.includes('gemini-2.5') || isGeminiRoboticsModel(modelId);
+    const modelSupportsThinking = getModelCapabilities(modelId).supportsThinkingBudgetConfig;
 
     if (modelSupportsThinking) {
       generationConfig.thinkingConfig = {
@@ -239,69 +299,8 @@ async function buildGenerationConfigFromOptions({
   return generationConfig;
 }
 
-export function buildGenerationConfig(options: BuildGenerationConfigOptions): Promise<GenerationConfig>;
-export function buildGenerationConfig(
-  modelId: string,
-  systemInstruction: string,
-  config: BuildGenerationConfigInput,
-  showThoughts: boolean,
-  thinkingBudget: number,
-  isGoogleSearchEnabled?: boolean,
-  isCodeExecutionEnabled?: boolean,
-  isUrlContextEnabled?: boolean,
-  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
-  aspectRatio?: string,
-  isDeepSearchEnabled?: boolean,
-  imageSize?: string,
-  safetySettings?: SafetySetting[],
-  mediaResolution?: MediaResolution,
-  isLocalPythonEnabled?: boolean,
-  imageOutputMode?: ImageOutputMode,
-  personGeneration?: ImagePersonGeneration,
-): Promise<GenerationConfig>;
-export function buildGenerationConfig(
-  optionsOrModelId: BuildGenerationConfigOptions | string,
-  systemInstruction?: string,
-  config?: BuildGenerationConfigInput,
-  showThoughts?: boolean,
-  thinkingBudget?: number,
-  isGoogleSearchEnabled?: boolean,
-  isCodeExecutionEnabled?: boolean,
-  isUrlContextEnabled?: boolean,
-  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
-  aspectRatio?: string,
-  isDeepSearchEnabled?: boolean,
-  imageSize?: string,
-  safetySettings?: SafetySetting[],
-  mediaResolution?: MediaResolution,
-  isLocalPythonEnabled?: boolean,
-  imageOutputMode?: ImageOutputMode,
-  personGeneration?: ImagePersonGeneration,
-): Promise<GenerationConfig> {
-  if (isBuildGenerationConfigOptions(optionsOrModelId)) {
-    return buildGenerationConfigFromOptions(optionsOrModelId);
-  }
-
-  return buildGenerationConfigFromOptions({
-    modelId: optionsOrModelId,
-    systemInstruction: systemInstruction ?? '',
-    config: config ?? {},
-    showThoughts: showThoughts ?? false,
-    thinkingBudget: thinkingBudget ?? 0,
-    isGoogleSearchEnabled,
-    isCodeExecutionEnabled,
-    isUrlContextEnabled,
-    thinkingLevel,
-    aspectRatio,
-    isDeepSearchEnabled,
-    imageSize,
-    safetySettings,
-    mediaResolution,
-    isLocalPythonEnabled,
-    imageOutputMode,
-    personGeneration,
-  });
-}
+export const buildGenerationConfig = (options: BuildGenerationConfigOptions): Promise<GenerationConfig> =>
+  buildGenerationConfigFromOptions(toInternalBuildGenerationConfigOptions(options));
 
 const hasBuiltInTools = (tools: GenerationConfig['tools'] | undefined): boolean =>
   !!tools?.some((tool) => 'googleSearch' in tool || 'codeExecution' in tool || 'urlContext' in tool);

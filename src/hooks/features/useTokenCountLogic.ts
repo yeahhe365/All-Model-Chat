@@ -110,22 +110,8 @@ export const useTokenCountLogic = ({
         }
 
         const generationConfig = await buildGenerationConfig({
+          settings: effectiveAppSettings,
           modelId,
-          systemInstruction: effectiveAppSettings.systemInstruction,
-          config: {
-            temperature: effectiveAppSettings.temperature,
-            topP: effectiveAppSettings.topP,
-            topK: effectiveAppSettings.topK,
-          },
-          showThoughts: effectiveAppSettings.showThoughts,
-          thinkingBudget: effectiveAppSettings.thinkingBudget,
-          isGoogleSearchEnabled: !!effectiveAppSettings.isGoogleSearchEnabled,
-          isCodeExecutionEnabled: !!effectiveAppSettings.isCodeExecutionEnabled,
-          isUrlContextEnabled: !!effectiveAppSettings.isUrlContextEnabled,
-          thinkingLevel: effectiveAppSettings.thinkingLevel,
-          isDeepSearchEnabled: !!effectiveAppSettings.isDeepSearchEnabled,
-          safetySettings: effectiveAppSettings.safetySettings,
-          mediaResolution: effectiveAppSettings.mediaResolution,
           isLocalPythonEnabled: false,
         });
 

@@ -58,8 +58,8 @@ export const sendStandardMessage = async ({
   const settingsForApi = { ...currentChatSettings };
 
   if (isFastMode) {
-    const isGemini3Flash = effectiveActiveModelId.includes('gemini-3') && effectiveActiveModelId.includes('flash');
-    const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
+    const capabilities = getModelCapabilities(effectiveActiveModelId);
+    const targetLevel = capabilities.isGemini3FlashModel ? 'MINIMAL' : 'LOW';
 
     settingsForApi.thinkingLevel = targetLevel;
     settingsForApi.thinkingBudget = 0;

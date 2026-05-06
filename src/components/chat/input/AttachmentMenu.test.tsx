@@ -28,6 +28,26 @@ describe('AttachmentMenu', () => {
   const renderer = setupTestRenderer({ providers: { language: 'en' } });
   setupStoreStateReset();
 
+  it('shows YouTube video attachment action when YouTube URLs are supported', () => {
+    const onAction = vi.fn();
+
+    act(() => {
+      renderer.root.render(<AttachmentMenu onAction={onAction} disabled={false} canAddYouTubeVideo />);
+    });
+
+    const youtubeButton = Array.from(document.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Add YouTube Video'),
+    );
+
+    expect(youtubeButton).not.toBeUndefined();
+
+    act(() => {
+      youtubeButton?.click();
+    });
+
+    expect(onAction).toHaveBeenCalledWith('url');
+  });
+
   it('shows only image-relevant actions for Gemini image models', () => {
     act(() => {
       renderer.root.render(<AttachmentMenu onAction={() => {}} disabled={false} isImageModel />);
@@ -43,5 +63,6 @@ describe('AttachmentMenu', () => {
     expect(document.body.textContent).not.toContain('Import Zip (as Text)');
     expect(document.body.textContent).not.toContain('Record Audio');
     expect(document.body.textContent).not.toContain('Create Text File');
+    expect(document.body.textContent).not.toContain('Add YouTube Video');
   });
 });

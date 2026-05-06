@@ -4,6 +4,7 @@ import { AttachmentAction, ModelOption } from '../types';
 import type { SlashCommand as Command } from '../types/slashCommands';
 import type { ChatToolToggleStates, ToggleableChatToolId } from '../types/chatTools';
 import { getSlashCommandToolDefinitions } from '../features/chat-tools/toolRegistry';
+import { getCachedModelCapabilities } from '../stores/modelCapabilitiesStore';
 
 export type SlashCommandState = {
   isOpen: boolean;
@@ -156,9 +157,9 @@ export const useSlashCommands = ({
               description,
               icon,
               action: () => {
-                const isGemini3Flash = currentModelId.includes('gemini-3') && currentModelId.includes('flash');
-                const isGeminiRobotics = currentModelId.includes('gemini-robotics-er');
-                const targetLevel = isGemini3Flash || isGeminiRobotics ? 'MINIMAL' : 'LOW';
+                const capabilities = getCachedModelCapabilities(currentModelId);
+                const targetLevel =
+                  capabilities.isGemini3FlashModel || capabilities.isGeminiRoboticsModel ? 'MINIMAL' : 'LOW';
                 onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
               },
             };

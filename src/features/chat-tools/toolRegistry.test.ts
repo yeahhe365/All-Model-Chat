@@ -71,6 +71,6 @@ describe('chat tool registry', () => {
         capabilities: gemmaCapabilities,
         hasLocalPythonHandler: true,
       }).map((tool) => tool.id),
-    ).toEqual(['deepSearch', 'googleSearch', 'localPython', 'youtubeUrl', 'tokenCount']);
+    ).toEqual(['deepSearch', 'googleSearch', 'localPython', 'tokenCount']);
   });
 });

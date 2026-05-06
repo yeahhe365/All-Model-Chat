@@ -3,7 +3,7 @@ import type { ChatToolId, ChatToolSettingKey, ToggleableChatToolId } from '../..
 
 type ChatToolSurface = 'tools-menu' | 'slash-command';
 
-export type ChatToolIconKey = 'telescope' | 'globe' | 'terminal' | 'python' | 'link' | 'youtube' | 'calculator';
+export type ChatToolIconKey = 'telescope' | 'globe' | 'terminal' | 'python' | 'link' | 'calculator';
 
 export interface ChatToolDefinition {
   id: ChatToolId;
@@ -73,12 +73,6 @@ export const CHAT_TOOL_REGISTRY: ChatToolDefinition[] = [
     settingKey: 'isUrlContextEnabled',
     slashCommand: { name: 'url', descriptionKey: 'help_cmd_url', icon: 'url' },
     isAvailable: ({ capabilities }) => capabilities.permissions.canUseUrlContext,
-  },
-  {
-    id: 'youtubeUrl',
-    labelKey: 'attachMenu_addByUrl',
-    icon: 'youtube',
-    isAvailable: ({ capabilities }) => capabilities.permissions.canUseYouTubeUrl,
   },
   {
     id: 'tokenCount',
