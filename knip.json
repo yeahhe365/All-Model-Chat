@@ -7,5 +7,5 @@
     "src/utils/export/image.ts",
     "src/utils/export/templates.ts"
   ],
-  "ignoreDependencies": ["pdfjs-dist", "pyodide"]
+  "ignoreDependencies": ["pdfjs-dist", "pyodide", "lamejs"]
 }

@@ -141,7 +141,7 @@ export const SYSTEM_AUDIO_NOT_SHARED_WARNING =
 export const SYSTEM_AUDIO_CAPTURE_FAILED_WARNING =
   'System audio capture was cancelled or failed. Recording continued with microphone audio only.';
 
-export interface MixedAudioStreamResult {
+interface MixedAudioStreamResult {
   stream: MediaStream;
   cleanup: () => void;
   warning?: string;
