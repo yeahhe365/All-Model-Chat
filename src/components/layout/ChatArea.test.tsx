@@ -120,6 +120,21 @@ describe('ChatArea', () => {
     expect(renderer.container.querySelector('[data-testid="chat-input"]')?.textContent).toBe('store input');
   });
 
+  it('keeps the pointer-enabled composer layer constrained so the message scrollbar remains reachable', () => {
+    applyChatAreaProviderValue(createChatAreaProviderValue());
+
+    act(() => {
+      renderer.root.render(<ChatArea />);
+    });
+
+    const input = renderer.container.querySelector('[data-testid="chat-input"]');
+    const pointerLayer = input?.parentElement;
+
+    expect(pointerLayer?.className).toContain('pointer-events-auto');
+    expect(pointerLayer?.className).toContain('max-w-[44.8rem]');
+    expect(pointerLayer?.className).toContain('mx-auto');
+  });
+
   it('does not focus the composer after a downward swipe in the chat area on mobile', () => {
     matchMediaMatches = true;
     windowInnerWidth = 390;

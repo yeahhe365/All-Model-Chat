@@ -10,6 +10,7 @@ const {
   mockGetModelCapabilities,
   mockCreateMessage,
   mockCreateNewSession,
+  mockSenderStoreActions,
 } = vi.hoisted(() => ({
   mockSendStandardMessage: vi.fn(),
   mockSendTtsImagenMessage: vi.fn(),
@@ -24,6 +25,12 @@ const {
     ...options,
   })),
   mockCreateNewSession: vi.fn(),
+  mockSenderStoreActions: {
+    updateAndPersistSessions: vi.fn((updater) => updater([])),
+    setActiveSessionId: vi.fn(),
+    setSessionLoading: vi.fn(),
+    activeJobs: { current: new Map() },
+  },
 }));
 
 vi.mock('@/features/message-sender/useChatStreamHandler', () => ({
@@ -46,6 +53,10 @@ vi.mock('@/features/message-sender/ttsImagenStrategy', () => ({
 
 vi.mock('@/features/message-sender/imageEditStrategy', () => ({
   sendImageEditMessage: mockSendImageEditMessage,
+}));
+
+vi.mock('@/features/message-sender/senderStoreActions', () => ({
+  createSenderStoreActions: () => mockSenderStoreActions,
 }));
 
 vi.mock('../utils/modelHelpers', () => ({
@@ -89,6 +100,7 @@ describe('useMessageSender', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCreateNewSession.mockReturnValue({ id: 'new-session' });
+    mockSenderStoreActions.updateAndPersistSessions.mockImplementation((updater) => updater([]));
     mockGetModelCapabilities.mockReturnValue({
       isTtsModel: false,
       isRealImagenModel: true,
@@ -365,9 +377,6 @@ describe('useMessageSender', () => {
   });
 
   it('creates a localized error session when no model is selected', async () => {
-    const setActiveSessionId = vi.fn();
-    const updateAndPersistSessions = vi.fn((updater) => updater([]));
-
     mockGetModelCapabilities.mockReturnValue({
       isTtsModel: false,
       isRealImagenModel: false,
@@ -379,8 +388,6 @@ describe('useMessageSender', () => {
       currentChatSettings: {
         modelId: '',
       },
-      setActiveSessionId,
-      updateAndPersistSessions,
     });
 
     await act(async () => {
@@ -397,7 +404,7 @@ describe('useMessageSender', () => {
       ],
       '错误',
     );
-    expect(setActiveSessionId).toHaveBeenCalledWith('new-session');
+    expect(mockSenderStoreActions.setActiveSessionId).toHaveBeenCalledWith('new-session');
     unmount();
   });
 });

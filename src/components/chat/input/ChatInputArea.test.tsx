@@ -52,12 +52,22 @@ describe('ChatInputArea default spacing', () => {
   it('mounts a hidden Live video element so screen and camera streams can be captured', () => {
     const source = fs.readFileSync(chatInputAreaPath, 'utf8');
 
-    expect(source).toContain('liveVideoProps');
+    expect(source).toContain('capabilities.isNativeAudioModel');
     expect(source).toContain('<video');
-    expect(source).toContain('ref={liveVideoProps.videoRef}');
+    expect(source).toContain('ref={liveAPI.videoRef}');
     expect(source).toContain('autoPlay');
     expect(source).toContain('playsInline');
     expect(source).toContain('aria-hidden="true"');
+  });
+
+  it('keeps action controls independently enabled while textarea-only states are blocked', () => {
+    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+
+    expect(source).toContain(
+      'const actionDisabled = inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || isConverting;',
+    );
+    expect(source).toContain('disabled: actionDisabled,');
+    expect(source).not.toContain('disabled: inputState.isAddingById || inputState.isWaitingForUpload || isConverting || inputDisabled,');
   });
 
   it('renders the queued submission strip above the input shell instead of inside it', () => {

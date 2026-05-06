@@ -7,6 +7,7 @@ export type RecorderState = 'idle' | 'recording' | 'review';
 export const useAudioRecorder = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [systemAudioWarning, setSystemAudioWarning] = useState<string | null>(null);
 
   // Cleanup previous URL when component unmounts or url changes
   useEffect(() => {
@@ -44,6 +45,7 @@ export const useAudioRecorder = () => {
   } = useRecorder({
     onStop: handleRecordingComplete,
     onError: resetPreview,
+    onSystemAudioWarning: setSystemAudioWarning,
   });
 
   const startRecording = useCallback(
@@ -67,6 +69,7 @@ export const useAudioRecorder = () => {
     audioBlob,
     audioUrl,
     error,
+    systemAudioWarning,
     stream,
     status,
     startRecording,

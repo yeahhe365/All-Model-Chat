@@ -180,6 +180,27 @@ describe('translation coverage for protected UI surfaces', () => {
         snippets: ['"Search commands..."', '"Click to copy"', 'No commands found matching', 'Tip: Type'],
       },
       {
+        file: 'src/components/modals/AudioRecorder.tsx',
+        snippets: [
+          'Voice Recorder',
+          'Preview Recording',
+          'Ready to record',
+          'Accessing microphone...',
+          'Record microphone',
+          'Mic input only',
+          'Record system audio',
+          'System audio + mic',
+          'Browser permission is required for system audio.',
+          'Total Duration',
+          '>Recording<',
+          'Failed to save recording.',
+        ],
+      },
+      {
+        file: 'src/components/recorder/RecorderControls.tsx',
+        snippets: ['Start Recording', 'Stop Recording', '>Discard<', 'Saving...', 'Save Recording'],
+      },
+      {
         file: 'src/components/chat/input/QueuedSubmissionCard.tsx',
         snippets: ['Edit queued message', 'Remove queued message'],
       },

@@ -20,7 +20,6 @@ interface ChatInputModalsProps {
   initialContent?: string;
   initialFilename?: string;
   editingFile?: UploadedFile | null;
-  isSystemAudioRecordingEnabled?: boolean;
   themeId: string;
   isPasteRichTextAsMarkdownEnabled?: boolean;
   showTtsContextEditor?: boolean;
@@ -53,7 +52,6 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   isLoading,
   initialContent,
   initialFilename,
-  isSystemAudioRecordingEnabled,
   themeId,
   isPasteRichTextAsMarkdownEnabled,
   showTtsContextEditor,
@@ -67,13 +65,7 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
 
   return (
     <>
-      {showRecorder && (
-        <AudioRecorder
-          onRecord={onAudioRecord}
-          onCancel={onRecorderCancel}
-          isSystemAudioRecordingEnabled={isSystemAudioRecordingEnabled}
-        />
-      )}
+      {showRecorder && <AudioRecorder onRecord={onAudioRecord} onCancel={onRecorderCancel} />}
       {showCreateTextFileEditor && (
         <CreateTextFileEditor
           onConfirm={onConfirmCreateTextFile}

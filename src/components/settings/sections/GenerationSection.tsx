@@ -67,7 +67,6 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
 
   const capabilities = getCachedModelCapabilities(modelId);
   const isNativeAudio = capabilities.isNativeAudioModel;
-  const supportsUltraHighResolution = capabilities.isGemini3 || modelId.toLowerCase().includes('gemini-robotics-er');
   const isSystemPromptSet = localPrompt.trim() !== '';
   const inputBaseClasses =
     'w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm';
@@ -265,9 +264,6 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
             )}
             {!isNativeAudio && (
               <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>
-            )}
-            {!isNativeAudio && supportsUltraHighResolution && (
-              <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>
             )}
           </Select>
         )}

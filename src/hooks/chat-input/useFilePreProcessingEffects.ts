@@ -1,4 +1,4 @@
-import { useCallback, useState, type MutableRefObject, type RefObject } from 'react';
+import { useCallback, useRef, useState, type MutableRefObject, type RefObject } from 'react';
 import type { UploadedFile } from '../../types';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { generateFolderContext } from '../../utils/folderImportUtils';
@@ -29,19 +29,35 @@ export const useFilePreProcessingEffects = ({
   setAppFileError,
 }: UseFilePreProcessingEffectsParams) => {
   const [isConverting, setIsConverting] = useState(false);
+  const [isScreenCapturing, setIsScreenCapturing] = useState(false);
+  const isScreenCapturingRef = useRef(false);
 
   const handleScreenshot = useCallback(async () => {
-    const blob = await captureScreenImage();
-
-    if (!blob) {
+    if (isScreenCapturingRef.current) {
       return;
     }
 
-    const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
-    const file = new File([blob], fileName, { type: 'image/png' });
-    justInitiatedFileOpRef.current = true;
-    await onProcessFiles([file]);
-  }, [justInitiatedFileOpRef, onProcessFiles]);
+    isScreenCapturingRef.current = true;
+    setIsScreenCapturing(true);
+    try {
+      const blob = await captureScreenImage();
+
+      if (!blob) {
+        return;
+      }
+
+      const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+      justInitiatedFileOpRef.current = true;
+      await onProcessFiles([file]);
+    } catch (error) {
+      console.error('Failed to capture screenshot:', error);
+      setAppFileError('Failed to capture screenshot.');
+    } finally {
+      isScreenCapturingRef.current = false;
+      setIsScreenCapturing(false);
+    }
+  }, [justInitiatedFileOpRef, onProcessFiles, setAppFileError]);
 
   const processFolderImport = useCallback(
     async (files: File[] | FileList, emptyDirectoryPaths: string[] = []) => {
@@ -148,6 +164,7 @@ export const useFilePreProcessingEffects = ({
 
   return {
     isConverting,
+    isScreenCapturing,
     setIsConverting,
     handleScreenshot,
     handleOpenFolderPicker,

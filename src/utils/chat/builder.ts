@@ -41,6 +41,14 @@ const toPartMediaResolutionLevel = (resolution: MediaResolution): PartMediaResol
   }
 };
 
+const normalizePartMediaResolution = (resolution: MediaResolution, isImage: boolean): MediaResolution => {
+  if (resolution === MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH && !isImage) {
+    return MediaResolution.MEDIA_RESOLUTION_HIGH;
+  }
+
+  return resolution;
+};
+
 export const buildContentParts = async (
   text: string,
   files?: UploadedFile[],
@@ -200,7 +208,9 @@ export const buildContentParts = async (
         const isResolutionEligibleMedia = isImage || isVideo || isYoutube || isPdf;
         const shouldInject = isResolutionEligibleMedia && Boolean(part.fileData || part.inlineData);
         if (shouldInject) {
-          part.mediaResolution = { level: toPartMediaResolutionLevel(effectiveResolution) };
+          part.mediaResolution = {
+            level: toPartMediaResolutionLevel(normalizePartMediaResolution(effectiveResolution, isImage)),
+          };
         }
       }
 

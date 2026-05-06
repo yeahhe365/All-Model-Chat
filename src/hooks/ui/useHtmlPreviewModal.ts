@@ -178,6 +178,15 @@ export const useHtmlPreviewModal = ({
     triggerDownload(url, filename);
   }, [htmlContent, getPreviewTitle]);
 
+  const getCurrentPreviewScreenshotTarget = useCallback((): HTMLElement | null => {
+    try {
+      const previewDocument = iframeRef.current?.contentDocument;
+      return previewDocument?.body || previewDocument?.documentElement || null;
+    } catch {
+      return null;
+    }
+  }, [iframeRef]);
+
   const handleScreenshot = useCallback(async () => {
     if (!htmlContent || !isPreviewReady || isScreenshotting) return;
 
@@ -185,12 +194,18 @@ export const useHtmlPreviewModal = ({
     let cleanup = () => {};
     try {
       const { exportElementAsPng } = await import('../../utils/export/image');
-      const snapshot = createStaticPreviewSnapshotContainer(htmlContent, targetDocument);
-      cleanup = snapshot.cleanup;
+      const target = getCurrentPreviewScreenshotTarget();
+      const screenshotTarget =
+        target ??
+        (() => {
+          const snapshot = createStaticPreviewSnapshotContainer(htmlContent, targetDocument);
+          cleanup = snapshot.cleanup;
+          return snapshot.container;
+        })();
       const title = getPreviewTitle();
       const filename = `${sanitizeFilename(title)}-screenshot.png`;
 
-      await exportElementAsPng(snapshot.container, filename, {
+      await exportElementAsPng(screenshotTarget, filename, {
         backgroundColor: null,
         scale: 2,
       });
@@ -201,7 +216,7 @@ export const useHtmlPreviewModal = ({
       cleanup();
       setIsScreenshotting(false);
     }
-  }, [getPreviewTitle, htmlContent, isPreviewReady, isScreenshotting, targetDocument]);
+  }, [getCurrentPreviewScreenshotTarget, getPreviewTitle, htmlContent, isPreviewReady, isScreenshotting, targetDocument]);
 
   const handleRefresh = useCallback(() => {
     if (iframeRef.current && htmlContent) {

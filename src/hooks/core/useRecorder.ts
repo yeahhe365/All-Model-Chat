@@ -6,10 +6,25 @@ type RecorderStatus = 'idle' | 'recording' | 'paused';
 interface UseRecorderOptions {
   onStop?: (blob: Blob) => void;
   onError?: (error: string) => void;
+  onSystemAudioWarning?: (warning: string | null) => void;
 }
 
+const RECORDING_MIME_TYPE_CANDIDATES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+
+const getSupportedRecordingMimeType = (): string | undefined => {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
+    return undefined;
+  }
+
+  return RECORDING_MIME_TYPE_CANDIDATES.find((mimeType) => MediaRecorder.isTypeSupported(mimeType));
+};
+
+const stopStreamTracks = (targetStream: MediaStream | null) => {
+  targetStream?.getTracks().forEach((track) => track.stop());
+};
+
 export const useRecorder = (options: UseRecorderOptions = {}) => {
-  const { onStop, onError } = options;
+  const { onStop, onError, onSystemAudioWarning } = options;
   const [status, setStatus] = useState<RecorderStatus>('idle');
   const [isInitializing, setIsInitializing] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -24,6 +39,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
   // Track resources for cleanup
   const micStreamRef = useRef<MediaStream | null>(null);
   const mixedStreamCleanupRef = useRef<(() => void) | null>(null);
+  const startRequestIdRef = useRef(0);
 
   // Sync stream state to ref for cleanup access
   useEffect(() => {
@@ -33,7 +49,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
   const cleanup = useCallback(() => {
     // Stop main recorder stream (could be mixed or raw mic)
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
+      stopStreamTracks(streamRef.current);
       setStream(null);
       streamRef.current = null;
     }
@@ -46,7 +62,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
 
     // Stop raw mic stream
     if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach((t) => t.stop());
+      stopStreamTracks(micStreamRef.current);
       micStreamRef.current = null;
     }
 
@@ -66,8 +82,11 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
 
   const startRecording = useCallback(
     async (opts?: { captureSystemAudio?: boolean }) => {
+      const requestId = startRequestIdRef.current + 1;
+      startRequestIdRef.current = requestId;
       setError(null);
       setIsInitializing(true);
+      onSystemAudioWarning?.(null);
       cleanup(); // Ensure fresh start
 
       try {
@@ -80,21 +99,39 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
           },
         });
 
+        if (startRequestIdRef.current !== requestId) {
+          stopStreamTracks(micStream);
+          return;
+        }
+
         // Store mic stream to stop it later
         micStreamRef.current = micStream;
 
         // 2. Mix with System Audio if requested
-        const { stream: finalStream, cleanup: streamCleanup } = await getMixedAudioStream(
-          micStream,
-          opts?.captureSystemAudio,
-        );
+        const {
+          stream: finalStream,
+          cleanup: streamCleanup,
+          warning: systemAudioWarning,
+        } = await getMixedAudioStream(micStream, opts?.captureSystemAudio);
+
+        if (startRequestIdRef.current !== requestId) {
+          streamCleanup();
+          stopStreamTracks(finalStream);
+          stopStreamTracks(micStream);
+          return;
+        }
+
+        onSystemAudioWarning?.(systemAudioWarning ?? null);
 
         // Store cleanup for mixed stream resources
         mixedStreamCleanupRef.current = streamCleanup;
 
         setStream(finalStream);
 
-        const recorder = new MediaRecorder(finalStream, { mimeType: 'audio/webm' });
+        const supportedMimeType = getSupportedRecordingMimeType();
+        const recorder = supportedMimeType
+          ? new MediaRecorder(finalStream, { mimeType: supportedMimeType })
+          : new MediaRecorder(finalStream);
         mediaRecorderRef.current = recorder;
         chunksRef.current = [];
 
@@ -103,7 +140,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         };
 
         recorder.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+          const blob = new Blob(chunksRef.current, { type: recorder.mimeType || supportedMimeType || 'audio/webm' });
           // Only fire callback if we have data
           if (blob.size > 0 && onStop) {
             onStop(blob);
@@ -123,10 +160,12 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         setStatus('idle');
         cleanup();
       } finally {
-        setIsInitializing(false);
+        if (startRequestIdRef.current === requestId) {
+          setIsInitializing(false);
+        }
       }
     },
-    [onStop, onError, cleanup],
+    [onStop, onError, onSystemAudioWarning, cleanup],
   );
 
   const stopRecording = useCallback(() => {
@@ -137,6 +176,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
   }, []);
 
   const cancelRecording = useCallback(() => {
+    startRequestIdRef.current += 1;
     if (mediaRecorderRef.current) {
       // Nullify handlers to prevent onStop callback from firing with data
       mediaRecorderRef.current.ondataavailable = null;
@@ -147,9 +187,11 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
       }
     }
     setStatus('idle');
+    setIsInitializing(false);
     setDuration(0);
+    onSystemAudioWarning?.(null);
     cleanup();
-  }, [cleanup]);
+  }, [cleanup, onSystemAudioWarning]);
 
   return {
     status,

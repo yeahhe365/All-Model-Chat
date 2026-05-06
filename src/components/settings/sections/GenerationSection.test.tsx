@@ -66,7 +66,7 @@ describe('GenerationSection', () => {
     expect(renderer.container.querySelector<HTMLButtonElement>('[aria-label="Clear system prompt"]')).toBeNull();
   });
 
-  it('keeps ultra-high media resolution available only for supported Gemini models', async () => {
+  it('does not expose ultra-high in the global media resolution setting', async () => {
     const ultraHighSettings = {
       ...baseSettings,
       mediaResolution: MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH,
@@ -90,7 +90,7 @@ describe('GenerationSection', () => {
       );
     });
 
-    expect(renderer.container.textContent).toContain('Ultra High');
+    expect(renderer.container.textContent).not.toContain('Ultra High');
 
     await act(async () => {
       renderer.root.render(
@@ -102,6 +102,6 @@ describe('GenerationSection', () => {
       );
     });
 
-    expect(renderer.container.textContent).toContain('Ultra High');
+    expect(renderer.container.textContent).not.toContain('Ultra High');
   });
 });

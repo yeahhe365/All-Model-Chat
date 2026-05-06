@@ -11,150 +11,38 @@ import { LiveStatusBanner } from './LiveStatusBanner';
 import { QueuedSubmissionCard } from './QueuedSubmissionCard';
 import { HiddenFileInputs } from './HiddenFileInputs';
 import { useChatInputAreaLayout } from './useChatInputAreaLayout';
-import type { SlashCommand as Command } from '../../../types/slashCommands';
-import type { UploadedFile } from '../../../types';
+import { useI18n } from '../../../contexts/I18nContext';
+import { useChatInputContext } from './ChatInputContext';
 
-interface ChatInputAreaProps {
-  toolbarLocalProps: {
-    showAddByIdInput: boolean;
-    fileIdInput: string;
-    setFileIdInput: (value: string) => void;
-    onAddFileByIdSubmit: () => void;
-    onCancelAddById: () => void;
-    isAddingById: boolean;
-    showAddByUrlInput: boolean;
-    urlInput: string;
-    setUrlInput: (value: string) => void;
-    onAddUrlSubmit: () => void;
-    onCancelAddUrl: () => void;
-    isAddingByUrl: boolean;
-    ttsContext?: string;
-    onEditTtsContext?: () => void;
-  };
-  actionsLocalProps: {
-    onAttachmentAction: (action: import('../../../types').AttachmentAction) => void;
-    disabled: boolean;
-    onRecordButtonClick: () => void;
-    onCancelRecording: () => void;
-    isRecording?: boolean;
-    isMicInitializing?: boolean;
-    isTranscribing: boolean;
-    canSend: boolean;
-    isWaitingForUpload: boolean;
-    onTranslate: () => void;
-    onPasteFromClipboard?: () => void;
-    onClearInput?: () => void;
-    isTranslating: boolean;
-    inputText: string;
-    onToggleFullscreen?: () => void;
-    isFullscreen?: boolean;
-    onStartLiveSession?: () => void;
-    onDisconnectLiveSession?: () => void;
-    isLiveConnected?: boolean;
-    isLiveMuted?: boolean;
-    onToggleLiveMute?: () => void;
-    onStartLiveCamera?: () => void;
-    onStartLiveScreenShare?: () => void;
-    onStopLiveVideo?: () => void;
-    liveVideoSource?: 'camera' | 'screen' | null;
-    onFastSendMessage?: () => void;
-    canQueueMessage?: boolean;
-    onQueueMessage?: () => void;
-    onToggleToolAndFocus: (toggleFunc: () => void) => void;
-    onAddYouTubeVideo: () => void;
-    onCountTokens: () => void;
-  };
-  slashCommandProps: {
-    isOpen: boolean;
-    commands: Command[];
-    onSelect: (command: Command) => void;
-    selectedIndex: number;
-  };
-  fileDisplayProps: {
-    selectedFiles: UploadedFile[];
-    onRemove: (id: string) => void;
-    onCancelUpload: (id: string) => void;
-    onConfigure: (file: UploadedFile) => void;
-    onMoveTextToInput: (file: UploadedFile) => Promise<void>;
-    onPreview: (file: UploadedFile) => void;
-    isGemini3?: boolean;
-  };
-  inputProps: {
-    value: string;
-    onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
-    onKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-    onPaste: (event: React.ClipboardEvent<HTMLTextAreaElement>) => void;
-    textareaRef: React.RefObject<HTMLTextAreaElement>;
-    placeholder: string;
-    disabled: boolean;
-    onCompositionStart: () => void;
-    onCompositionEnd: () => void;
-    onFocus?: () => void;
-  };
-  quoteProps?: {
-    quotes: string[];
-    onRemoveQuote: (index: number) => void;
-  };
-  queuedSubmissionProps?: {
-    title: string;
-    previewText: string;
-    fileCount: number;
-    onEdit: () => void;
-    onRemove: () => void;
-  };
-  layoutProps: {
-    isFullscreen: boolean;
-    isPipActive?: boolean;
-    isAnimatingSend: boolean;
-    isMobile: boolean;
-    initialTextareaHeight: number;
-    isConverting: boolean;
-  };
-  fileInputs: React.ComponentProps<typeof HiddenFileInputs>['fileInputs'];
-  formProps: {
-    onSubmit: (event: React.FormEvent) => void;
-  };
-  suggestionsProps?: {
-    show: boolean;
-    onSuggestionClick: (suggestion: string) => void;
-    onOrganizeInfoClick: (suggestion: string) => void;
-    onToggleBBox?: () => void;
-    isBBoxModeActive?: boolean;
-    onToggleGuide?: () => void;
-    isGuideModeActive?: boolean;
-  };
-  liveStatusProps?: {
-    isConnected: boolean;
-    isSpeaking: boolean;
-    isReconnecting: boolean;
-    volume: number;
-    onDisconnect: () => void;
-    error: string | null;
-  };
-  liveVideoProps?: {
-    videoRef: React.RefObject<HTMLVideoElement>;
-  };
-  themeId: string;
-}
+export const ChatInputArea: React.FC = () => {
+  const { t } = useI18n();
+  const {
+    chatInput,
+    inputState,
+    capabilities,
+    liveAPI,
+    modalsState,
+    localFileState,
+    voiceState,
+    slashCommandState,
+    handlers,
+    canSend,
+    canQueueMessage,
+    inputDisabled,
+    isAnyModalOpen,
+    initialTextareaHeight,
+    queuedSubmissionView,
+    handleStartLiveCamera,
+    handleStartLiveScreenShare,
+  } = useChatInputContext();
 
-export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
-  toolbarLocalProps,
-  actionsLocalProps,
-  slashCommandProps,
-  fileDisplayProps,
-  inputProps,
-  quoteProps,
-  layoutProps,
-  fileInputs,
-  formProps,
-  suggestionsProps,
-  queuedSubmissionProps,
-  liveStatusProps,
-  liveVideoProps,
-  themeId,
-}) => {
-  const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
-  const { isRecording } = actionsLocalProps;
+  const isFullscreen = inputState.isFullscreen;
+  const isPipActive = chatInput.isPipActive;
+  const isAnimatingSend = inputState.isAnimatingSend;
+  const isMobile = inputState.isMobile;
+  const isConverting = localFileState.isConverting;
+  const isRecording = voiceState.isRecording;
+  const actionDisabled = inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || isConverting;
 
   const {
     isUIBlocked,
@@ -169,7 +57,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     isPipActive,
     isAnimatingSend,
     isRecording: !!isRecording,
-    inputDisabled: inputProps.disabled,
+    inputDisabled,
   });
   const focusBlockingSelector =
     'button, a, input, textarea, select, label, summary, audio, video, [role="button"], [role="menuitem"], [contenteditable="true"]';
@@ -180,14 +68,87 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       return;
     }
 
-    inputProps.textareaRef.current?.focus();
+    inputState.textareaRef.current?.focus();
+  };
+
+  const toolbarState = {
+    showAddByIdInput: modalsState.showAddByIdInput,
+    fileIdInput: inputState.fileIdInput,
+    setFileIdInput: inputState.setFileIdInput,
+    onAddFileByIdSubmit: handlers.handleAddFileByIdSubmit,
+    onCancelAddById: () => {
+      modalsState.setShowAddByIdInput(false);
+      inputState.setFileIdInput('');
+      inputState.textareaRef.current?.focus();
+    },
+    isAddingById: inputState.isAddingById,
+    showAddByUrlInput: modalsState.showAddByUrlInput,
+    urlInput: inputState.urlInput,
+    setUrlInput: inputState.setUrlInput,
+    onAddUrlSubmit: () => handlers.handleAddUrl(inputState.urlInput),
+    onCancelAddUrl: () => {
+      modalsState.setShowAddByUrlInput(false);
+      inputState.setUrlInput('');
+      inputState.textareaRef.current?.focus();
+    },
+    isAddingByUrl: inputState.isAddingByUrl,
+    ttsContext: inputState.ttsContext,
+    onEditTtsContext: () => modalsState.setShowTtsContextEditor(true),
+  };
+
+  const actionState = {
+    onAttachmentAction: modalsState.handleAttachmentAction,
+    disabled: actionDisabled,
+    onRecordButtonClick: voiceState.handleVoiceInputClick,
+    onCancelRecording: voiceState.handleCancelRecording,
+    isRecording: voiceState.isRecording,
+    isMicInitializing: voiceState.isMicInitializing,
+    isTranscribing: voiceState.isTranscribing,
+    canSend,
+    isWaitingForUpload: inputState.isWaitingForUpload,
+    onTranslate: handlers.handleTranslate,
+    onPasteFromClipboard: handlers.handlePasteFromClipboard,
+    onClearInput: handlers.handleClearInput,
+    isTranslating: inputState.isTranslating,
+    inputText: inputState.inputText,
+    onToggleFullscreen: inputState.handleToggleFullscreen,
+    isFullscreen,
+    onStartLiveSession: liveAPI.connect,
+    onDisconnectLiveSession: liveAPI.disconnect,
+    isLiveConnected: liveAPI.isConnected,
+    isLiveMuted: liveAPI.isMuted,
+    onToggleLiveMute: liveAPI.toggleMute,
+    onStartLiveCamera: handleStartLiveCamera,
+    onStartLiveScreenShare: handleStartLiveScreenShare,
+    onStopLiveVideo: liveAPI.stopVideo,
+    liveVideoSource: liveAPI.videoSource,
+    onFastSendMessage: handlers.handleFastSubmit,
+    canQueueMessage,
+    onQueueMessage: handlers.queueCurrentSubmission,
+    onToggleToolAndFocus: handlers.handleToggleToolAndFocus,
+    onAddYouTubeVideo: () => {
+      modalsState.setShowAddByUrlInput(true);
+      inputState.textareaRef.current?.focus();
+    },
+    onCountTokens: () => localFileState.setShowTokenModal(true),
+  };
+
+  const fileInputState: React.ComponentProps<typeof HiddenFileInputs>['fileInputs'] = {
+    fileInputRef: modalsState.fileInputRef,
+    imageInputRef: modalsState.imageInputRef,
+    folderInputRef: modalsState.folderInputRef,
+    zipInputRef: modalsState.zipInputRef,
+    cameraInputRef: modalsState.cameraInputRef,
+    handleFileChange: handlers.handleFileChange,
+    handleFolderChange: handlers.handleFolderChange,
+    handleZipChange: handlers.handleZipChange,
   };
 
   return (
     <div className={wrapperClass} aria-hidden={isUIBlocked}>
-      {liveVideoProps && (
+      {capabilities.isNativeAudioModel && (
         <video
-          ref={liveVideoProps.videoRef}
+          ref={liveAPI.videoRef}
           autoPlay
           muted
           playsInline
@@ -196,15 +157,15 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         />
       )}
       <div className="mx-auto w-full max-w-[44.8rem] px-2 sm:px-3">
-        {suggestionsProps && !isFullscreen && (
+        {chatInput.showEmptyStateSuggestions && capabilities.permissions.canGenerateSuggestions && !isFullscreen && (
           <ChatSuggestions
-            show={suggestionsProps.show}
-            onSuggestionClick={suggestionsProps.onSuggestionClick}
-            onOrganizeInfoClick={suggestionsProps.onOrganizeInfoClick}
-            onToggleBBox={suggestionsProps.onToggleBBox}
-            isBBoxModeActive={suggestionsProps.isBBoxModeActive}
-            onToggleGuide={suggestionsProps.onToggleGuide}
-            isGuideModeActive={suggestionsProps.isGuideModeActive}
+            show={chatInput.showEmptyStateSuggestions}
+            onSuggestionClick={chatInput.onSuggestionClick}
+            onOrganizeInfoClick={chatInput.onOrganizeInfoClick}
+            onToggleBBox={chatInput.onToggleBBox}
+            isBBoxModeActive={chatInput.isBBoxModeActive}
+            onToggleGuide={chatInput.onToggleGuide}
+            isGuideModeActive={chatInput.isGuideModeActive}
             isFullscreen={isFullscreen}
           />
         )}
@@ -213,58 +174,66 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       <div className={innerContainerClass}>
         {/* Wrap toolbar in z-indexed container to ensure dropdowns render above status banner */}
         <div className="relative z-50">
-          <ChatInputToolbar {...toolbarLocalProps} />
+          <ChatInputToolbar {...toolbarState} />
         </div>
 
-        {liveStatusProps && <LiveStatusBanner {...liveStatusProps} />}
+        <LiveStatusBanner
+          isConnected={liveAPI.isConnected}
+          isSpeaking={liveAPI.isSpeaking}
+          isReconnecting={liveAPI.isReconnecting}
+          volume={liveAPI.volume}
+          error={liveAPI.error}
+          onDisconnect={liveAPI.disconnect}
+        />
 
-        <form onSubmit={formProps.onSubmit} className={formClass}>
+        <form onSubmit={handlers.handleSubmit} className={formClass}>
           <SlashCommandMenu
-            isOpen={slashCommandProps.isOpen}
-            commands={slashCommandProps.commands}
-            onSelect={slashCommandProps.onSelect}
-            selectedIndex={slashCommandProps.selectedIndex}
+            isOpen={slashCommandState.slashCommandState.isOpen}
+            commands={slashCommandState.slashCommandState.filteredCommands}
+            onSelect={slashCommandState.handleCommandSelect}
+            selectedIndex={slashCommandState.slashCommandState.selectedIndex}
             className={
               isFullscreen ? 'absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20' : undefined
             }
           />
-          {queuedSubmissionProps && (
+          {queuedSubmissionView && (
             <div className={queuedSubmissionContainerClass}>
               <QueuedSubmissionCard
-                title={queuedSubmissionProps.title}
-                previewText={queuedSubmissionProps.previewText}
-                fileCount={queuedSubmissionProps.fileCount}
-                onEdit={queuedSubmissionProps.onEdit}
-                onRemove={queuedSubmissionProps.onRemove}
+                title={queuedSubmissionView.title}
+                previewText={queuedSubmissionView.previewText}
+                fileCount={queuedSubmissionView.fileCount}
+                onEdit={queuedSubmissionView.onEdit}
+                onRemove={queuedSubmissionView.onRemove}
               />
             </div>
           )}
           <div className={inputContainerClass} onClick={handleInputShellClick}>
             <ChatFilePreviewList
-              selectedFiles={fileDisplayProps.selectedFiles}
-              onRemove={fileDisplayProps.onRemove}
-              onCancelUpload={fileDisplayProps.onCancelUpload}
-              onConfigure={fileDisplayProps.onConfigure}
-              onMoveTextToInput={fileDisplayProps.onMoveTextToInput}
-              onPreview={fileDisplayProps.onPreview}
-              isGemini3={fileDisplayProps.isGemini3}
+              selectedFiles={chatInput.selectedFiles}
+              onRemove={handlers.removeSelectedFile}
+              onCancelUpload={chatInput.onCancelUpload}
+              onConfigure={localFileState.handleConfigureFile}
+              onMoveTextToInput={localFileState.handleMoveTextFileToInput}
+              onPreview={localFileState.handlePreviewFile}
+              isGemini3={capabilities.isGemini3}
             />
 
-            {quoteProps && (
-              <ChatQuoteDisplay quotes={quoteProps.quotes} onRemoveQuote={quoteProps.onRemoveQuote} themeId={themeId} />
-            )}
+            <ChatQuoteDisplay
+              quotes={inputState.quotes}
+              onRemoveQuote={(index: number) => inputState.setQuotes((prev) => prev.filter((_, i) => i !== index))}
+              themeId={chatInput.themeId}
+            />
 
             <ChatTextArea
-              textareaRef={inputProps.textareaRef}
-              value={inputProps.value}
-              onChange={inputProps.onChange}
-              onKeyDown={inputProps.onKeyDown}
-              onPaste={inputProps.onPaste}
-              onCompositionStart={inputProps.onCompositionStart}
-              onCompositionEnd={inputProps.onCompositionEnd}
-              onFocus={inputProps.onFocus}
-              placeholder={inputProps.placeholder}
-              disabled={inputProps.disabled}
+              textareaRef={inputState.textareaRef}
+              value={inputState.inputText}
+              onChange={handlers.handleInputChange}
+              onKeyDown={handlers.handleKeyDown}
+              onPaste={handlers.handlePaste}
+              onCompositionStart={handlers.onCompositionStart}
+              onCompositionEnd={handlers.onCompositionEnd}
+              placeholder={t('chatInputPlaceholder')}
+              disabled={inputDisabled}
               isFullscreen={isFullscreen}
               isMobile={isMobile}
               initialTextareaHeight={initialTextareaHeight}
@@ -272,8 +241,8 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             />
 
             <div className={actionsContainerClass}>
-              <ChatInputActions {...actionsLocalProps} />
-              <HiddenFileInputs fileInputs={fileInputs} />
+              <ChatInputActions {...actionState} />
+              <HiddenFileInputs fileInputs={fileInputState} />
             </div>
           </div>
         </form>

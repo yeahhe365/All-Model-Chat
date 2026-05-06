@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSelectionPosition } from './useSelectionPosition';
 import { renderHook } from '@/test/testUtils';
+import { renderHookWithProviders } from '@/test/providerTestUtils';
 
 const createRect = (overrides: Partial<DOMRect> = {}): DOMRect =>
   ({
@@ -39,11 +40,77 @@ const selectNode = (node: Node) => {
   return selection;
 };
 
+const createIsolatedWindowContext = () => {
+  const iframe = document.createElement('iframe');
+  document.body.appendChild(iframe);
+  const targetWindow = iframe.contentWindow!;
+  const targetDocument = targetWindow.document;
+  targetDocument.body.innerHTML = '';
+
+  return {
+    targetWindow,
+    targetDocument,
+    cleanup: () => iframe.remove(),
+  };
+};
+
+const selectNodeInDocument = (node: Node, targetDocument: Document, targetWindow: Window) => {
+  const range = targetDocument.createRange();
+  range.selectNode(node);
+  range.getBoundingClientRect = () => createRect();
+
+  const selection = targetWindow.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+
+  act(() => {
+    targetDocument.dispatchEvent(new Event('selectionchange'));
+  });
+
+  return selection;
+};
+
 afterEach(() => {
   window.getSelection()?.removeAllRanges();
 });
 
 describe('useSelectionPosition', () => {
+  it('reads text selection from the WindowProvider document', () => {
+    const { targetWindow, targetDocument, cleanup } = createIsolatedWindowContext();
+    const host = targetDocument.createElement('div');
+    const strong = targetDocument.createElement('strong');
+    strong.textContent = 'hello from pip';
+    host.appendChild(strong);
+    targetDocument.body.appendChild(host);
+
+    const toolbarRef = {
+      current: targetDocument.createElement('div'),
+    } as React.RefObject<HTMLDivElement>;
+    toolbarRef.current!.getBoundingClientRect = () => createRect({ width: 100 });
+
+    const { result, unmount } = renderHookWithProviders(
+      () =>
+        useSelectionPosition({
+          containerRef: host,
+          isAudioActive: false,
+          toolbarRef,
+        }),
+      {
+        window: targetWindow,
+        document: targetDocument,
+      },
+    );
+
+    selectNodeInDocument(strong, targetDocument, targetWindow);
+
+    expect(result.current.selectedText).toBe('**hello from pip**');
+    expect(result.current.position).not.toBeNull();
+
+    targetWindow.getSelection()?.removeAllRanges();
+    unmount();
+    cleanup();
+  });
+
   it('does not crash when the container is temporarily null', () => {
     const textNode = document.createTextNode('hello world');
     document.body.appendChild(textNode);
@@ -218,6 +285,53 @@ describe('useSelectionPosition', () => {
 
     expect(result.current.selectedText).toBe('**hello world**');
     expect(result.current.selectedCopyText).toBe('hello world');
+
+    unmount();
+  });
+
+  it('keeps selected code block text plain so partial code copies preserve indentation and operators', () => {
+    const host = document.createElement('div');
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    const selectedCode = [
+      'for (int i = 1; i <= limit; i++) {',
+      '    if (i % 2 == 0) {',
+      '        System.out.println(i + " 是偶数");',
+      '    } else {',
+      '        System.out.println(i + " 是奇数");',
+      '    }',
+      '    sum += i;',
+    ].join('\n');
+    const firstSpan = document.createElement('span');
+    firstSpan.textContent = selectedCode;
+    code.appendChild(firstSpan);
+    pre.appendChild(code);
+    host.appendChild(pre);
+    document.body.appendChild(host);
+
+    const toolbarRef = createToolbarRef();
+    const { result, unmount } = renderHook(() =>
+      useSelectionPosition({
+        containerRef: host,
+        isAudioActive: false,
+        toolbarRef,
+      }),
+    );
+
+    const range = document.createRange();
+    range.selectNodeContents(firstSpan);
+    range.getBoundingClientRect = () => createRect();
+
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    act(() => {
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+
+    expect(result.current.selectedCopyText).toBe(selectedCode);
+    expect(result.current.selectedCopyText).not.toContain('\\=');
 
     unmount();
   });

@@ -30,16 +30,9 @@ export const usePictureInPicture = (
         height: 700, // A reasonable default height
       });
 
-      // Copy all head elements from the main document to the PiP window.
-      // This ensures styles, scripts (like Tailwind), and other configurations are available.
-      // IMPORTANT: Filter out the main application script to prevent it from re-executing
-      // and trying to mount to #root in the PiP window, which causes errors.
+      // Copy head resources without executable scripts. React renders into this window via a portal.
       Array.from(document.head.childNodes).forEach((node) => {
-        if (
-          node.nodeName === 'SCRIPT' &&
-          (node as HTMLScriptElement).src &&
-          (node as HTMLScriptElement).src.includes('index.tsx')
-        ) {
+        if (node.nodeName === 'SCRIPT') {
           return;
         }
         pipWin.document.head.appendChild(node.cloneNode(true));

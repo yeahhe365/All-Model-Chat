@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
+import { renderWithProviders } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolbarContainer } from './ToolbarContainer';
 
@@ -52,5 +53,34 @@ describe('ToolbarContainer', () => {
     expect(toolbar?.style.top).toBe('40px');
     expect(toolbar?.style.translate).toBe('');
     expect(toolbar?.className).not.toContain('zoom-in');
+  });
+
+  it('portals into the WindowProvider document body', () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const targetWindow = iframe.contentWindow!;
+    const targetDocument = targetWindow.document;
+    targetDocument.body.innerHTML = '';
+
+    const view = renderWithProviders(
+      <ToolbarContainer position={{ top: 40.4, left: 100.2 }} isDragging={false}>
+        <button type="button">Quote</button>
+      </ToolbarContainer>,
+      {
+        window: targetWindow,
+        document: targetDocument,
+      },
+    );
+
+    const targetButton = targetDocument.body.querySelector('button');
+    const mainButton = Array.from(document.body.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Quote',
+    );
+
+    expect(targetButton).toHaveTextContent('Quote');
+    expect(mainButton).toBeUndefined();
+
+    view.unmount();
+    iframe.remove();
   });
 });

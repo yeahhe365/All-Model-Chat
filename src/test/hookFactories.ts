@@ -50,12 +50,8 @@ export const createMessageSenderProps = (overrides: MessageSenderPropsOverrides 
     personGeneration: 'ALLOW_ADULT',
     userScrolledUpRef: createMutableRef(false),
     activeSessionId: null,
-    setActiveSessionId: vi.fn(),
-    activeJobs: createMutableRef(new Map<string, AbortController>()),
-    updateAndPersistSessions: vi.fn(),
     sessionKeyMapRef: createMutableRef(new Map<string, string>()),
     language: 'en',
-    setSessionLoading: vi.fn(),
     ...rest,
   };
 };

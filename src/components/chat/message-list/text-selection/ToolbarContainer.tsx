@@ -1,5 +1,6 @@
 import React, { forwardRef, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useWindowContext } from '../../../../contexts/WindowContext';
 
 interface ToolbarContainerProps {
   children: React.ReactNode;
@@ -28,6 +29,7 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
   ({ children, position, isDragging }, ref) => {
     const localRef = useRef<HTMLDivElement | null>(null);
     const [renderPosition, setRenderPosition] = useState(position);
+    const { document: targetDocument, window: targetWindow } = useWindowContext();
 
     const handleRef = useCallback(
       (node: HTMLDivElement | null) => {
@@ -57,7 +59,7 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
         }
 
         const rect = toolbar.getBoundingClientRect();
-        const nextPosition = getToolbarRenderPosition(position, rect, window.innerWidth, window.innerHeight);
+        const nextPosition = getToolbarRenderPosition(position, rect, targetWindow.innerWidth, targetWindow.innerHeight);
 
         setRenderPosition((prev) => {
           if (prev.left === nextPosition.left && prev.top === nextPosition.top) {
@@ -76,17 +78,17 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
         resizeObserver?.observe(localRef.current);
       }
 
-      window.addEventListener('resize', clampToViewport);
-      window.visualViewport?.addEventListener('resize', clampToViewport);
-      window.visualViewport?.addEventListener('scroll', clampToViewport);
+      targetWindow.addEventListener('resize', clampToViewport);
+      targetWindow.visualViewport?.addEventListener('resize', clampToViewport);
+      targetWindow.visualViewport?.addEventListener('scroll', clampToViewport);
 
       return () => {
         resizeObserver?.disconnect();
-        window.removeEventListener('resize', clampToViewport);
-        window.visualViewport?.removeEventListener('resize', clampToViewport);
-        window.visualViewport?.removeEventListener('scroll', clampToViewport);
+        targetWindow.removeEventListener('resize', clampToViewport);
+        targetWindow.visualViewport?.removeEventListener('resize', clampToViewport);
+        targetWindow.visualViewport?.removeEventListener('scroll', clampToViewport);
       };
-    }, [children, position]);
+    }, [children, position, targetWindow]);
 
     return createPortal(
       <div
@@ -101,7 +103,7 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
       >
         {children}
       </div>,
-      document.body,
+      targetDocument.body,
     );
   },
 );

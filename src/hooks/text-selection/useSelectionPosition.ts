@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/refs */
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useWindowContext } from '../../contexts/WindowContext';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 import { copySelectionTextToClipboardEvent } from './selectionClipboard';
 
@@ -20,15 +21,19 @@ const resolveContainerElement = (containerRef: ContainerRefLike): HTMLElement | 
 };
 
 const isEditableElement = (element: Element | null): boolean => {
-  if (!(element instanceof HTMLElement)) return false;
+  if (!element) return false;
 
-  return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.isContentEditable;
+  const HTMLElementCtor = element.ownerDocument.defaultView?.HTMLElement ?? HTMLElement;
+  if (!(element instanceof HTMLElementCtor)) return false;
+  const htmlElement = element as HTMLElement;
+
+  return htmlElement.tagName === 'INPUT' || htmlElement.tagName === 'TEXTAREA' || htmlElement.isContentEditable;
 };
 
 const SELECTION_EXCLUDED_SELECTOR = '.select-none, [data-selection-copy="exclude"]';
 
-const cloneSelectionContent = (range: Range): HTMLDivElement => {
-  const container = document.createElement('div');
+const cloneSelectionContent = (range: Range, targetDocument: Document): HTMLDivElement => {
+  const container = targetDocument.createElement('div');
   container.appendChild(range.cloneContents());
 
   container.querySelectorAll(SELECTION_EXCLUDED_SELECTOR).forEach((element) => {
@@ -40,6 +45,32 @@ const cloneSelectionContent = (range: Range): HTMLDivElement => {
 
 const getPlainSelectionText = (container: HTMLElement): string =>
   (container.innerText || container.textContent || '').trim();
+
+const getElementForNode = (node: Node): Element | null => {
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    return node as Element;
+  }
+
+  return node.parentElement;
+};
+
+const getContainingCodeBlock = (node: Node): Element | null => {
+  const element = getElementForNode(node);
+  return element?.closest('pre, code') ?? null;
+};
+
+const isCodeSelection = (range: Range): boolean => {
+  const startCodeBlock = getContainingCodeBlock(range.startContainer);
+  const endCodeBlock = getContainingCodeBlock(range.endContainer);
+
+  return Boolean(
+    startCodeBlock &&
+      endCodeBlock &&
+      (startCodeBlock === endCodeBlock ||
+        startCodeBlock.contains(endCodeBlock) ||
+        endCodeBlock.contains(startCodeBlock)),
+  );
+};
 
 export const useSelectionPosition = ({
   containerRef,
@@ -57,6 +88,7 @@ export const useSelectionPosition = ({
   const selectedTextRef = useRef('');
   const selectedPlainTextRef = useRef('');
   const toolbarNode = toolbarRef.current;
+  const { document: targetDocument, window: targetWindow } = useWindowContext();
 
   // Monitor selection changes
   useEffect(() => {
@@ -74,7 +106,7 @@ export const useSelectionPosition = ({
         return;
       }
 
-      const selection = window.getSelection();
+      const selection = targetWindow.getSelection();
       if (!selection || selection.isCollapsed || !selection.rangeCount) {
         clearSelectionState();
         return;
@@ -98,10 +130,12 @@ export const useSelectionPosition = ({
       }
 
       // Extract content
-      const container = cloneSelectionContent(range);
+      const container = cloneSelectionContent(range, targetDocument);
       const html = container.innerHTML;
-      const text = convertHtmlToMarkdown(html).trim();
-      const plainText = getPlainSelectionText(container);
+      const rangeIsCodeSelection = isCodeSelection(range);
+      const cleanedPlainText = getPlainSelectionText(container);
+      const plainText = rangeIsCodeSelection ? (selection.toString() || cleanedPlainText).trim() : cleanedPlainText;
+      const text = rangeIsCodeSelection ? plainText : convertHtmlToMarkdown(html).trim();
 
       if (!text) {
         clearSelectionState();
@@ -121,16 +155,16 @@ export const useSelectionPosition = ({
       setSelectedCopyText(preserveFormattingOnCopy ? text : plainText || text);
     };
 
-    document.addEventListener('selectionchange', handleSelectionChange);
-    document.addEventListener('mouseup', handleSelectionChange);
-    document.addEventListener('keyup', handleSelectionChange);
+    targetDocument.addEventListener('selectionchange', handleSelectionChange);
+    targetDocument.addEventListener('mouseup', handleSelectionChange);
+    targetDocument.addEventListener('keyup', handleSelectionChange);
 
     return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange);
-      document.removeEventListener('mouseup', handleSelectionChange);
-      document.removeEventListener('keyup', handleSelectionChange);
+      targetDocument.removeEventListener('selectionchange', handleSelectionChange);
+      targetDocument.removeEventListener('mouseup', handleSelectionChange);
+      targetDocument.removeEventListener('keyup', handleSelectionChange);
     };
-  }, [containerRef, isAudioActive, preserveFormattingOnCopy]);
+  }, [containerRef, isAudioActive, preserveFormattingOnCopy, targetDocument, targetWindow]);
 
   useEffect(() => {
     const handleCopy = (e: ClipboardEvent) => {
@@ -138,7 +172,7 @@ export const useSelectionPosition = ({
         return;
       }
 
-      const activeElement = document.activeElement;
+      const activeElement = targetDocument.activeElement;
       if (isEditableElement(activeElement)) {
         return;
       }
@@ -151,9 +185,9 @@ export const useSelectionPosition = ({
       }
     };
 
-    document.addEventListener('copy', handleCopy);
-    return () => document.removeEventListener('copy', handleCopy);
-  }, [isAudioActive, onCopySuccess, preserveFormattingOnCopy]);
+    targetDocument.addEventListener('copy', handleCopy);
+    return () => targetDocument.removeEventListener('copy', handleCopy);
+  }, [isAudioActive, onCopySuccess, preserveFormattingOnCopy, targetDocument]);
 
   useLayoutEffect(() => {
     if (!position) {
@@ -197,24 +231,24 @@ export const useSelectionPosition = ({
     const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => updateToolbarSize()) : null;
 
     resizeObserver?.observe(toolbarElement);
-    window.addEventListener('resize', updateToolbarSize);
-    window.visualViewport?.addEventListener('resize', updateToolbarSize);
-    window.visualViewport?.addEventListener('scroll', updateToolbarSize);
+    targetWindow.addEventListener('resize', updateToolbarSize);
+    targetWindow.visualViewport?.addEventListener('resize', updateToolbarSize);
+    targetWindow.visualViewport?.addEventListener('scroll', updateToolbarSize);
 
     return () => {
       resizeObserver?.disconnect();
-      window.removeEventListener('resize', updateToolbarSize);
-      window.visualViewport?.removeEventListener('resize', updateToolbarSize);
-      window.visualViewport?.removeEventListener('scroll', updateToolbarSize);
+      targetWindow.removeEventListener('resize', updateToolbarSize);
+      targetWindow.visualViewport?.removeEventListener('resize', updateToolbarSize);
+      targetWindow.visualViewport?.removeEventListener('scroll', updateToolbarSize);
     };
-  }, [position, toolbarElement]);
+  }, [position, toolbarElement, targetWindow]);
 
   const clampedPosition = useMemo(() => {
     if (!position || !toolbarSize) return position;
 
     const { width, height } = toolbarSize;
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    const viewportWidth = targetWindow.innerWidth;
+    const viewportHeight = targetWindow.innerHeight;
     const padding = 10;
 
     let correctedLeft = position.left;
@@ -247,10 +281,10 @@ export const useSelectionPosition = ({
     }
 
     return position;
-  }, [position, toolbarSize]);
+  }, [position, toolbarSize, targetWindow.innerHeight, targetWindow.innerWidth]);
 
   const clearSelection = () => {
-    window.getSelection()?.removeAllRanges();
+    targetWindow.getSelection()?.removeAllRanges();
     selectionBoundsRef.current = null;
     selectedTextRef.current = '';
     selectedPlainTextRef.current = '';

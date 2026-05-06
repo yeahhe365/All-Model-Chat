@@ -33,6 +33,7 @@
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "katex": "^0.16.44",
+    "lamejs": "^1.2.1",
     "lucide-react": "^0.417.0",
     "mermaid": "^10.9.1",
     "pdfjs-dist": "^4.10.38",

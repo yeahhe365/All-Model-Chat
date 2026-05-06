@@ -1,5 +1,5 @@
 import { act } from 'react';
-import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
+import { renderWithProviders, setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageActions } from './MessageActions';
 import type { ChatMessage } from '../../types';
@@ -156,6 +156,52 @@ describe('MessageActions', () => {
     });
 
     expect(handleGenerateCanvas).toHaveBeenCalledWith('message-1', 'Hello from the model');
+  });
+
+  it('listens for overflow menu dismissal in the provided document', () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const pipDocument = iframe.contentDocument!;
+    const pipWindow = iframe.contentWindow!;
+    pipWindow.matchMedia = window.matchMedia;
+    const pipContainer = pipDocument.createElement('div');
+    pipDocument.body.appendChild(pipContainer);
+    const pipRenderer = renderWithProviders(
+      <MessageActions
+        message={message}
+        sessionTitle="Session"
+        messageIndex={0}
+        isGrouped={false}
+        onEditMessage={() => {}}
+        onDeleteMessage={() => {}}
+        onRetryMessage={() => {}}
+        onGenerateCanvas={() => {}}
+        onContinueGeneration={() => {}}
+        onForkMessage={() => {}}
+        themeId="pearl"
+      />,
+      {
+        window: pipWindow,
+        document: pipDocument,
+        container: pipContainer,
+        baseElement: pipDocument.body,
+      },
+    );
+
+    const moreButton = pipRenderer.container.querySelector<HTMLButtonElement>('[aria-label="More message actions"]');
+
+    act(() => {
+      moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(pipRenderer.container.querySelector('[role="menu"]')).toBeInTheDocument();
+
+    act(() => {
+      pipDocument.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(pipRenderer.container.querySelector('[role="menu"]')).not.toBeInTheDocument();
+    iframe.remove();
   });
 
   it('uses the custom assistant avatar image for model messages only', () => {

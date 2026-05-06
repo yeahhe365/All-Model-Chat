@@ -12,14 +12,15 @@ type DisplayMediaVideoConstraints = MediaTrackConstraints & {
 };
 
 export const captureScreenImage = async (): Promise<Blob | null> => {
-  if (!('getDisplayMedia' in navigator.mediaDevices)) {
+  const mediaDevices = navigator.mediaDevices;
+  if (!mediaDevices?.getDisplayMedia) {
     alert('Your browser does not support screen capture.');
     return null;
   }
 
   let stream: MediaStream;
   try {
-    stream = await navigator.mediaDevices.getDisplayMedia({
+    stream = await mediaDevices.getDisplayMedia({
       video: { mediaSource: 'screen' } as DisplayMediaVideoConstraints,
       audio: false,
     });
@@ -39,7 +40,16 @@ export const captureScreenImage = async (): Promise<Blob | null> => {
   }
 
   return new Promise<Blob | null>((resolve) => {
+    let isSettled = false;
     const cleanup = () => stream.getTracks().forEach((t) => t.stop());
+    const finish = (blob: Blob | null) => {
+      if (isSettled) {
+        return;
+      }
+      isSettled = true;
+      cleanup();
+      resolve(blob);
+    };
 
     const processBitmap = (bitmap: ImageBitmap) => {
       try {
@@ -47,15 +57,17 @@ export const captureScreenImage = async (): Promise<Blob | null> => {
         canvas.width = bitmap.width;
         canvas.height = bitmap.height;
         const context = canvas.getContext('2d');
-        context?.drawImage(bitmap, 0, 0);
+        if (!context || canvas.width === 0 || canvas.height === 0) {
+          finish(null);
+          return;
+        }
+        context.drawImage(bitmap, 0, 0);
         canvas.toBlob((blob) => {
-          cleanup();
-          resolve(blob);
+          finish(blob);
         }, 'image/png');
       } catch (e) {
         console.error('Error drawing bitmap:', e);
-        cleanup();
-        resolve(null);
+        finish(null);
       }
     };
 
@@ -75,33 +87,73 @@ export const captureScreenImage = async (): Promise<Blob | null> => {
     }
 
     function fallbackToVideo() {
+      let video: HTMLVideoElement | null = null;
+      let metadataTimeout: number | undefined;
+      const clearFallbackTimeout = () => {
+        if (metadataTimeout !== undefined) {
+          window.clearTimeout(metadataTimeout);
+          metadataTimeout = undefined;
+        }
+      };
+      const removeVideo = () => {
+        clearFallbackTimeout();
+        video?.pause();
+        video?.remove();
+        video = null;
+      };
+
+      const fail = (error?: unknown) => {
+        if (error) {
+          console.warn('Video fallback failed:', error);
+        }
+        removeVideo();
+        finish(null);
+      };
+
       try {
-        const video = document.createElement('video');
+        video = document.createElement('video');
+        video.muted = true;
+        video.playsInline = true;
         video.srcObject = stream;
-        video.onloadedmetadata = () => {
-          video.play();
-          // Slight delay to ensure frame is rendered
-          setTimeout(() => {
+        metadataTimeout = window.setTimeout(() => {
+          fail(new Error('Timed out waiting for captured video metadata.'));
+        }, 3000);
+        video.onloadedmetadata = async () => {
+          try {
+            if (!video) {
+              finish(null);
+              return;
+            }
+
+            await video.play();
+            await new Promise((painted) => requestAnimationFrame(painted));
+
+            if (!video.videoWidth || !video.videoHeight) {
+              fail(new Error('Captured video stream did not provide a drawable frame.'));
+              return;
+            }
+
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
-            context?.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (!context) {
+              fail(new Error('Could not create canvas context for screenshot.'));
+              return;
+            }
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
             canvas.toBlob((blob) => {
-              cleanup();
-              video.remove();
-              resolve(blob);
+              removeVideo();
+              finish(blob);
             }, 'image/png');
-          }, 150);
+          } catch (error) {
+            fail(error);
+          }
         };
-        video.onerror = () => {
-          cleanup();
-          resolve(null);
-        };
+        video.onerror = () => fail();
       } catch (e) {
-        console.error('Video fallback failed:', e);
-        cleanup();
-        resolve(null);
+        fail(e);
       }
     }
   });

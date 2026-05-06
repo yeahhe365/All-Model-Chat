@@ -17,6 +17,7 @@ const standardClientFunctionsPath = path.join(projectRoot, 'src/features/standar
 const liveClientFunctionsPath = path.join(projectRoot, 'src/hooks/live-api/liveClientFunctions.ts');
 const ttsVoiceSelectorPath = path.join(projectRoot, 'src/components/chat/input/toolbar/TtsVoiceSelector.tsx');
 const markdownPdfExportPath = path.join(projectRoot, 'src/utils/export/markdownPdf.ts');
+const interfaceTogglesPath = path.join(projectRoot, 'src/components/settings/sections/appearance/InterfaceToggles.tsx');
 
 describe('vite.config runtime ownership', () => {
   it('does not externalize core runtime libraries needed in the Vite bundle', () => {
@@ -46,6 +47,22 @@ describe('vite.config runtime ownership', () => {
     );
     expect(config).toContain('src: PDF_WORKER_COPY_SOURCE');
     expect(config).not.toContain("src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'");
+  });
+
+  it('copies the lamejs encoder asset used by the audio compression worker', () => {
+    const config = fs.readFileSync(viteConfigPath, 'utf8');
+    const packageJson = fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8');
+
+    expect(packageJson).toContain('"lamejs"');
+    expect(config).toContain("const LAMEJS_WORKER_COPY_SOURCE = 'node_modules/lamejs/lame.min.js'");
+    expect(config).toContain('src: LAMEJS_WORKER_COPY_SOURCE');
+  });
+
+  it('keeps system-audio recording out of global settings', () => {
+    const source = fs.readFileSync(interfaceTogglesPath, 'utf8');
+
+    expect(source).not.toContain('isSystemAudioRecordingEnabled');
+    expect(source).not.toContain('settings_systemAudioRecording_label');
   });
 
   it('keeps the service worker precache focused on the app shell instead of eager heavy feature payloads', () => {

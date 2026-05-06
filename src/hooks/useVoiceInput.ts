@@ -6,6 +6,7 @@ import { useTextAreaInsert } from './useTextAreaInsert';
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   setInputText: React.Dispatch<React.SetStateAction<string>>;
+  setAppFileError?: (error: string | null) => void;
   isAudioCompressionEnabled?: boolean;
   isSystemAudioRecordingEnabled?: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
@@ -14,12 +15,31 @@ interface UseVoiceInputProps {
 export const useVoiceInput = ({
   onTranscribeAudio,
   setInputText,
+  setAppFileError,
   isAudioCompressionEnabled = true,
-  isSystemAudioRecordingEnabled = false,
   textareaRef,
 }: UseVoiceInputProps) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isFinalizingRecording, setIsFinalizingRecording] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [systemAudioWarning, setSystemAudioWarning] = useState<string | null>(null);
   const insertText = useTextAreaInsert(textareaRef, setInputText);
+
+  const reportError = useCallback(
+    (message: string | null) => {
+      setError(message);
+      setAppFileError?.(message);
+    },
+    [setAppFileError],
+  );
+
+  const reportSystemAudioWarning = useCallback(
+    (warning: string | null) => {
+      setSystemAudioWarning(warning);
+      setAppFileError?.(warning);
+    },
+    [setAppFileError],
+  );
 
   const handleRecordingComplete = useCallback(
     async (audioBlob: Blob) => {
@@ -47,33 +67,52 @@ export const useVoiceInput = ({
           }
         } catch (error) {
           console.error('Error processing/transcribing audio:', error);
+          const message = error instanceof Error ? error.message : 'Voice input failed.';
+          reportError(`Voice input failed: ${message}`);
         } finally {
           setIsTranscribing(false);
+          setIsFinalizingRecording(false);
         }
+      } else {
+        setIsFinalizingRecording(false);
       }
     },
-    [onTranscribeAudio, isAudioCompressionEnabled, insertText],
+    [onTranscribeAudio, isAudioCompressionEnabled, insertText, reportError],
   );
 
   const { status, isInitializing, startRecording, stopRecording, cancelRecording } = useRecorder({
     onStop: handleRecordingComplete,
+    onError: reportError,
+    onSystemAudioWarning: reportSystemAudioWarning,
   });
 
   const isRecording = status === 'recording';
+  const isBusy = isTranscribing || isFinalizingRecording;
 
   const handleVoiceInputClick = () => {
     if (isRecording) {
+      setIsFinalizingRecording(true);
       stopRecording();
     } else {
-      startRecording({ captureSystemAudio: isSystemAudioRecordingEnabled });
+      reportError(null);
+      reportSystemAudioWarning(null);
+      startRecording({ captureSystemAudio: false });
     }
+  };
+
+  const handleCancelRecording = () => {
+    setIsFinalizingRecording(false);
+    reportSystemAudioWarning(null);
+    cancelRecording();
   };
 
   return {
     isRecording,
-    isTranscribing,
+    isTranscribing: isBusy,
     isMicInitializing: isInitializing,
+    error,
+    systemAudioWarning,
     handleVoiceInputClick,
-    handleCancelRecording: cancelRecording,
+    handleCancelRecording,
   };
 };

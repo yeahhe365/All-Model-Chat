@@ -25,13 +25,15 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
       for (const file of rawFilesArray) {
         const fileNameLower = file.name.toLowerCase();
+        const mimeTypeLower = file.type.toLowerCase();
 
         // Expanded audio detection
         const isAudio =
-          isAudioMimeType(file.type) ||
-          ['.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.webm', '.wma', '.aiff'].some((ext) =>
-            fileNameLower.endsWith(ext),
-          );
+          !mimeTypeLower.startsWith('video/') &&
+          (isAudioMimeType(file.type) ||
+            ['.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.webm', '.wma', '.aiff'].some((ext) =>
+              fileNameLower.endsWith(ext),
+            ));
 
         const isText = isTextFile(file);
 

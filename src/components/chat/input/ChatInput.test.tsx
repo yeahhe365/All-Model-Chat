@@ -1,4 +1,4 @@
-import { act, cloneElement, isValidElement, type ComponentProps, type ReactNode } from 'react';
+import { act, cloneElement, isValidElement, type ReactNode } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ChatSettings, type InputCommand, type UploadedFile } from '../../../types';
@@ -193,81 +193,90 @@ vi.mock('./ChatInputFileModals', () => ({
   ChatInputFileModals: () => null,
 }));
 
-vi.mock('./ChatInputArea', () => {
-  const ChatInputArea = (props: ComponentProps<typeof import('./ChatInputArea').ChatInputArea>) => {
-    const { formProps, inputProps, actionsLocalProps, fileDisplayProps } = props;
-    const queuedProps = props.queuedSubmissionProps;
-    const liveStatusProps = props.liveStatusProps;
+vi.mock('./ChatInputArea', async () => {
+  const { useChatInputContext } =
+    await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
+
+  const ChatInputArea = () => {
+    const {
+      chatInput,
+      inputState,
+      handlers,
+      liveAPI,
+      localFileState,
+      inputDisabled,
+      canQueueMessage,
+      queuedSubmissionView,
+      handleStartLiveCamera,
+      handleStartLiveScreenShare,
+    } = useChatInputContext();
 
     return (
-      <form onSubmit={formProps.onSubmit}>
-        <div data-testid="chat-input-value">{inputProps.value}</div>
-        {queuedProps ? (
+      <form onSubmit={handlers.handleSubmit}>
+        <div data-testid="chat-input-value">{inputState.inputText}</div>
+        {queuedSubmissionView ? (
           <div data-testid="queued-card">
-            <div data-testid="queued-title">{queuedProps.title}</div>
-            <div data-testid="queued-preview">{queuedProps.previewText}</div>
-            <button type="button" data-testid="queued-edit" onClick={queuedProps.onEdit}>
+            <div data-testid="queued-title">{queuedSubmissionView.title}</div>
+            <div data-testid="queued-preview">{queuedSubmissionView.previewText}</div>
+            <button type="button" data-testid="queued-edit" onClick={queuedSubmissionView.onEdit}>
               edit
             </button>
-            <button type="button" data-testid="queued-remove" onClick={queuedProps.onRemove}>
+            <button type="button" data-testid="queued-remove" onClick={queuedSubmissionView.onRemove}>
               remove
             </button>
           </div>
         ) : null}
-        {liveStatusProps ? (
-          <div data-testid="live-status">
-            <span data-testid="live-connected">{String(liveStatusProps.isConnected)}</span>
-            <span data-testid="live-reconnecting">{String(liveStatusProps.isReconnecting)}</span>
-            <span data-testid="live-error">{liveStatusProps.error ?? ''}</span>
-          </div>
-        ) : null}
+        <div data-testid="live-status">
+          <span data-testid="live-connected">{String(liveAPI.isConnected)}</span>
+          <span data-testid="live-reconnecting">{String(liveAPI.isReconnecting)}</span>
+          <span data-testid="live-error">{liveAPI.error ?? ''}</span>
+        </div>
         <textarea
           data-testid="chat-input-textarea"
-          ref={inputProps.textareaRef}
-          value={inputProps.value}
-          onChange={inputProps.onChange}
-          onKeyDown={inputProps.onKeyDown}
-          onPaste={inputProps.onPaste}
-          onCompositionStart={inputProps.onCompositionStart}
-          onCompositionEnd={inputProps.onCompositionEnd}
-          onFocus={inputProps.onFocus}
-          disabled={inputProps.disabled}
+          ref={inputState.textareaRef}
+          value={inputState.inputText}
+          onChange={handlers.handleInputChange}
+          onKeyDown={handlers.handleKeyDown}
+          onPaste={handlers.handlePaste}
+          onCompositionStart={handlers.onCompositionStart}
+          onCompositionEnd={handlers.onCompositionEnd}
+          disabled={inputDisabled}
         />
         <button
           type="button"
           data-testid="queue-button"
-          onClick={() => actionsLocalProps.onQueueMessage?.()}
-          disabled={!actionsLocalProps.canQueueMessage}
+          onClick={() => handlers.queueCurrentSubmission()}
+          disabled={!canQueueMessage}
         >
           queue
         </button>
         {mockChatInputUiSettings.showInputTranslationButton === true && (
-          <button type="button" data-testid="translate-button" onClick={actionsLocalProps.onTranslate}>
+          <button type="button" data-testid="translate-button" onClick={handlers.handleTranslate}>
             translate
           </button>
         )}
         {mockChatInputUiSettings.showInputPasteButton !== false && (
-          <button type="button" data-testid="paste-button" onClick={actionsLocalProps.onPasteFromClipboard}>
+          <button type="button" data-testid="paste-button" onClick={handlers.handlePasteFromClipboard}>
             paste
           </button>
         )}
         {mockChatInputUiSettings.showInputClearButton === true && (
-          <button type="button" data-testid="clear-input-button" onClick={actionsLocalProps.onClearInput}>
+          <button type="button" data-testid="clear-input-button" onClick={handlers.handleClearInput}>
             clear
           </button>
         )}
-        <button type="button" data-testid="live-camera-button" onClick={actionsLocalProps.onStartLiveCamera}>
+        <button type="button" data-testid="live-camera-button" onClick={handleStartLiveCamera}>
           camera
         </button>
-        <button type="button" data-testid="live-screen-button" onClick={actionsLocalProps.onStartLiveScreenShare}>
+        <button type="button" data-testid="live-screen-button" onClick={handleStartLiveScreenShare}>
           screen
         </button>
-        {fileDisplayProps.selectedFiles.map((file: UploadedFile) => (
+        {chatInput.selectedFiles.map((file: UploadedFile) => (
           <button
             key={file.id}
             type="button"
             data-testid={`move-file-${file.id}`}
-            onClick={() => fileDisplayProps.onMoveTextToInput?.(file)}
+            onClick={() => localFileState.handleMoveTextFileToInput(file)}
           >
             move {file.name}
           </button>

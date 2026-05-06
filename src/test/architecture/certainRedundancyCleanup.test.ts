@@ -113,7 +113,7 @@ describe('certain redundancy cleanup guards', () => {
   it('keeps chat input orchestration delegated to focused hooks', () => {
     const source = readProjectFile('src/hooks/chat-input/useChatInput.ts');
     const submissionSource = readProjectFile('src/hooks/chat-input/useChatInputSubmission.ts');
-    const chatInputComponentSource = readProjectFile('src/components/chat/input/ChatInput.tsx');
+    const chatInputProviderSource = readProjectFile('src/components/chat/input/ChatInputProvider.tsx');
     const chatTextAreaSource = readProjectFile('src/components/chat/input/area/ChatTextArea.tsx');
     const chatAreaSource = readProjectFile('src/components/layout/chat-area/useChatArea.ts');
 
@@ -125,8 +125,8 @@ describe('certain redundancy cleanup guards', () => {
     expect(source).toContain('useChatInputKeyboard');
     expect(source).not.toContain('isComposingRef.current =');
     expect(source.length).toBeLessThan(10000);
-    expect(chatInputComponentSource).toContain("from '../../../hooks/chat-input/useChatInput'");
-    expect(chatInputComponentSource).toContain("from '../../../hooks/chat-input/useChatInputState'");
+    expect(chatInputProviderSource).toContain("from '../../../hooks/chat-input/useChatInput'");
+    expect(chatInputProviderSource).toContain("from '../../../hooks/chat-input/useChatInputState'");
     expect(chatTextAreaSource).toContain("from '../../../../hooks/chat-input/useChatInputState'");
     expect(chatAreaSource).toContain("from '../../../hooks/chat-input/useChatInputHeight'");
   });

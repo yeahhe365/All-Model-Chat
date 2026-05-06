@@ -76,8 +76,8 @@ export const useChatInput = () => {
   const voiceState = useVoiceInput({
     onTranscribeAudio,
     setInputText: inputState.setInputText,
+    setAppFileError,
     isAudioCompressionEnabled: appSettings.isAudioCompressionEnabled,
-    isSystemAudioRecordingEnabled: appSettings.isSystemAudioRecordingEnabled,
     textareaRef: inputState.textareaRef,
   });
 

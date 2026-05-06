@@ -136,10 +136,21 @@ type WindowWithWebkitAudioContext = Window &
     webkitAudioContext?: typeof AudioContext;
   };
 
+export const SYSTEM_AUDIO_NOT_SHARED_WARNING =
+  'System audio was not shared. Recording continued with microphone audio only.';
+export const SYSTEM_AUDIO_CAPTURE_FAILED_WARNING =
+  'System audio capture was cancelled or failed. Recording continued with microphone audio only.';
+
+export interface MixedAudioStreamResult {
+  stream: MediaStream;
+  cleanup: () => void;
+  warning?: string;
+}
+
 export const getMixedAudioStream = async (
   micStream: MediaStream,
   includeSystemAudio: boolean = false,
-): Promise<{ stream: MediaStream; cleanup: () => void }> => {
+): Promise<MixedAudioStreamResult> => {
   if (!includeSystemAudio) {
     return { stream: micStream, cleanup: () => {} };
   }
@@ -163,7 +174,7 @@ export const getMixedAudioStream = async (
     if (displayStream.getAudioTracks().length === 0) {
       console.warn("System audio not shared (user might have unchecked 'Share Audio').");
       displayStream.getTracks().forEach((t) => t.stop());
-      return { stream: micStream, cleanup: () => {} };
+      return { stream: micStream, cleanup: () => {}, warning: SYSTEM_AUDIO_NOT_SHARED_WARNING };
     }
 
     const AudioContextClass = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
@@ -191,6 +202,6 @@ export const getMixedAudioStream = async (
   } catch (error) {
     console.warn('System audio capture cancelled or failed:', error);
     // Fallback to mic only
-    return { stream: micStream, cleanup: () => {} };
+    return { stream: micStream, cleanup: () => {}, warning: SYSTEM_AUDIO_CAPTURE_FAILED_WARNING };
   }
 };

@@ -90,12 +90,6 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({ settings, on
             onChange={(v) => onUpdate('isCopySelectionFormattingEnabled', v)}
             tooltip={t('settings_copySelectionFormatting_tooltip')}
           />
-          <ToggleItem
-            label={t('settings_systemAudioRecording_label')}
-            checked={settings.isSystemAudioRecordingEnabled ?? false}
-            onChange={(v) => onUpdate('isSystemAudioRecordingEnabled', v)}
-            tooltip={t('settings_systemAudioRecording_tooltip')}
-          />
 
           <ToggleItem
             label={t('isAutoTitleEnabled')}

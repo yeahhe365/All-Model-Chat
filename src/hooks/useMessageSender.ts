@@ -1,10 +1,9 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   AppSettings,
   ChatMessage,
   UploadedFile,
   ChatSettings as IndividualChatSettings,
-  SavedChatSession,
 } from '../types';
 import { logService } from '../services/logService';
 import { useChatStreamHandler } from '@/features/message-sender/useChatStreamHandler';
@@ -13,6 +12,7 @@ import { useMessageLifecycle } from '@/features/message-sender/useMessageLifecyc
 import { generateCanvasMessage } from '@/features/message-sender/canvasStrategy';
 import { sendImageEditMessage } from '@/features/message-sender/imageEditStrategy';
 import { sendStandardMessage } from '@/features/message-sender/standardChatStrategy';
+import { createSenderStoreActions } from '@/features/message-sender/senderStoreActions';
 import { sendTtsImagenMessage } from '@/features/message-sender/ttsImagenStrategy';
 import { getModelCapabilities } from '../utils/modelHelpers';
 import { useI18n } from '../contexts/I18nContext';
@@ -21,11 +21,6 @@ import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 import { isImageMimeType, isPdfMimeType, isTextFile } from '../utils/fileTypeUtils';
 
 const CODE_EXECUTION_TEXT_FILE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024;
-
-type SessionsUpdater = (
-  updater: (prev: SavedChatSession[]) => SavedChatSession[],
-  options?: { persist?: boolean },
-) => void;
 
 interface MessageSenderProps {
   appSettings: AppSettings;
@@ -42,12 +37,8 @@ interface MessageSenderProps {
   personGeneration: ImagePersonGeneration;
   userScrolledUpRef: React.MutableRefObject<boolean>;
   activeSessionId: string | null;
-  setActiveSessionId: (id: string | null) => void;
-  activeJobs: React.MutableRefObject<Map<string, AbortController>>;
-  updateAndPersistSessions: SessionsUpdater;
   sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
   language: 'en' | 'zh';
-  setSessionLoading: (sessionId: string, isLoading: boolean) => void;
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
@@ -67,11 +58,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
     personGeneration,
     userScrolledUpRef,
     activeSessionId,
-    setActiveSessionId,
-    activeJobs,
-    setSessionLoading,
-    updateAndPersistSessions,
   } = props;
+  const senderStoreActions = useMemo(() => createSenderStoreActions(), []);
+  const { updateAndPersistSessions, setActiveSessionId, setSessionLoading, activeJobs } = senderStoreActions;
 
   const translateApiKeyError = useCallback(
     (error: string) => {
@@ -322,7 +311,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
       }
 
       await sendStandardMessage({
-        props,
+        props: {
+          ...props,
+          ...senderStoreActions,
+        },
         getStreamHandlers,
         handleGenerateCanvas,
         runMessageLifecycle,
@@ -355,6 +347,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
       getStreamHandlers,
       handleGenerateCanvas,
       runMessageLifecycle,
+      senderStoreActions,
       props,
       prepareModelRequest,
       t,

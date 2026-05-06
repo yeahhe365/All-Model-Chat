@@ -66,6 +66,7 @@ const DATA_PACKAGES = ['xlsx'];
 
 // Keep the served worker pinned to the same pdfjs-dist version bundled under react-pdf.
 const PDF_WORKER_COPY_SOURCE = 'node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
+const LAMEJS_WORKER_COPY_SOURCE = 'node_modules/lamejs/lame.min.js';
 const IMAGE_PROXY_PATH = '/api/image-proxy';
 const MAX_IMAGE_PROXY_BYTES = 25 * 1024 * 1024;
 
@@ -382,6 +383,10 @@ export default defineConfig(({ mode }) => {
           },
           {
             src: PDF_WORKER_COPY_SOURCE,
+            dest: '.',
+          },
+          {
+            src: LAMEJS_WORKER_COPY_SOURCE,
             dest: '.',
           },
         ],

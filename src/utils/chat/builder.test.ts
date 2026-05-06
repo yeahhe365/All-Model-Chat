@@ -128,6 +128,55 @@ describe('buildContentParts', () => {
     });
   });
 
+  it('keeps ultra-high per-part media resolution for Gemini 3 image parts', async () => {
+    const file = makeFile({
+      rawFile: new Blob(['img'], { type: 'image/png' }),
+    });
+
+    const { contentParts } = await buildContentParts(
+      'Describe this',
+      [file],
+      'gemini-3.1-pro-preview',
+      MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH,
+    );
+
+    expect(contentParts[0]).toEqual({
+      inlineData: { mimeType: 'image/png', data: 'base64data' },
+      mediaResolution: { level: 'MEDIA_RESOLUTION_ULTRA_HIGH' },
+    });
+  });
+
+  it('downgrades ultra-high per-part media resolution for Gemini 3 video and PDF parts', async () => {
+    const video = makeFile({
+      id: 'video-1',
+      name: 'demo.mp4',
+      type: 'video/mp4',
+      fileUri: 'files/video123',
+    });
+    const pdf = makeFile({
+      id: 'pdf-1',
+      name: 'paper.pdf',
+      type: 'application/pdf',
+      fileUri: 'files/pdf123',
+    });
+
+    const { contentParts } = await buildContentParts(
+      'Describe these',
+      [video, pdf],
+      'gemini-3.1-pro-preview',
+      MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH,
+    );
+
+    expect(contentParts[0]).toMatchObject({
+      fileData: { mimeType: 'video/mp4', fileUri: 'files/video123' },
+      mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
+    });
+    expect(contentParts[1]).toMatchObject({
+      fileData: { mimeType: 'application/pdf', fileUri: 'files/pdf123' },
+      mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
+    });
+  });
+
   it('does not attach per-part media resolution to audio inputs', async () => {
     const file = makeFile({
       name: 'clip.mp3',

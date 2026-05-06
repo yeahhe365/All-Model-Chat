@@ -18,10 +18,10 @@ describe('FileConfigurationModal', () => {
     vi.clearAllMocks();
   });
 
-  const renderModal = (file: UploadedFile, onSave = vi.fn(), onClose = vi.fn()) => {
+  const renderModal = (file: UploadedFile, onSave = vi.fn(), onClose = vi.fn(), isGemini3 = false) => {
     act(() => {
       renderer.root.render(
-        <FileConfigurationModal isOpen onClose={onClose} file={file} onSave={onSave} isGemini3={false} />,
+        <FileConfigurationModal isOpen onClose={onClose} file={file} onSave={onSave} isGemini3={isGemini3} />,
       );
     });
 
@@ -40,6 +40,13 @@ describe('FileConfigurationModal', () => {
     descriptor?.set?.call(input, value);
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  const openResolutionSelect = async () => {
+    const button = document.querySelector<HTMLButtonElement>('#file-media-resolution');
+    await act(async () => {
+      button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
   };
 
   it('does not persist empty video metadata for a new video file', async () => {
@@ -127,5 +134,41 @@ describe('FileConfigurationModal', () => {
 
     expect(closeButton?.className).toContain('focus-visible:ring-2');
     expect(saveButton?.className).toContain('focus-visible:ring-2');
+  });
+
+  it('only offers ultra-high per-part resolution for image files', async () => {
+    const imageFile: UploadedFile = {
+      id: 'image-1',
+      name: 'diagram.png',
+      type: 'image/png',
+      size: 128,
+      uploadState: 'active',
+    };
+    const videoFile: UploadedFile = {
+      id: 'video-4',
+      name: 'demo.mp4',
+      type: 'video/mp4',
+      size: 128,
+      uploadState: 'active',
+    };
+    const pdfFile: UploadedFile = {
+      id: 'pdf-1',
+      name: 'paper.pdf',
+      type: 'application/pdf',
+      size: 128,
+      uploadState: 'active',
+    };
+
+    renderModal(imageFile, vi.fn(), vi.fn(), true);
+    await openResolutionSelect();
+    expect(document.body.textContent).toContain('Ultra High');
+
+    renderModal(videoFile, vi.fn(), vi.fn(), true);
+    await openResolutionSelect();
+    expect(document.body.textContent).not.toContain('Ultra High');
+
+    renderModal(pdfFile, vi.fn(), vi.fn(), true);
+    await openResolutionSelect();
+    expect(document.body.textContent).not.toContain('Ultra High');
   });
 });

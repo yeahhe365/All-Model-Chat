@@ -45,7 +45,7 @@ export const modelSettings = {
   mediaResolution_low: { en: 'Low (Faster)', zh: '低 (较快)' },
   mediaResolution_medium: { en: 'Medium (Balanced)', zh: '中 (平衡)' },
   mediaResolution_high: { en: 'High (Detail)', zh: '高 (细节)' },
-  mediaResolution_ultra_high: { en: 'Ultra High (Gemini 3 Only)', zh: '超高 (仅限 Gemini 3)' },
+  mediaResolution_ultra_high: { en: 'Ultra High (Images only)', zh: '超高 (仅限图片)' },
   chatBehavior_voiceModel_label: { en: 'Speech-to-Text Model', zh: '语音转文本模型' },
   chatBehavior_voiceModel_tooltip: {
     en: 'Selects the model used for transcribing voice input to text.',

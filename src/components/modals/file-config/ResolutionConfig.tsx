@@ -7,9 +7,14 @@ import { Select } from '../../shared/Select';
 interface ResolutionConfigProps {
   mediaResolution: MediaResolution | '';
   setMediaResolution: (value: MediaResolution) => void;
+  allowUltraHigh?: boolean;
 }
 
-export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({ mediaResolution, setMediaResolution }) => {
+export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({
+  mediaResolution,
+  setMediaResolution,
+  allowUltraHigh = true,
+}) => {
   const { t } = useI18n();
   return (
     <div className="space-y-3 pb-4 border-b border-[var(--theme-border-secondary)]/50">
@@ -30,7 +35,9 @@ export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({ mediaResolut
         <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
         <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>
         <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>
-        <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>
+        {allowUltraHigh && (
+          <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>
+        )}
       </Select>
       <p className="text-[10px] text-[var(--theme-text-tertiary)] italic">
         {t('fileSettings_resolution_help') || 'Specific resolution for this file. Overrides global settings.'}

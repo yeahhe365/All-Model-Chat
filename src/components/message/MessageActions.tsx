@@ -16,6 +16,7 @@ import { useI18n } from '../../contexts/I18nContext';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
 import { useIsMobile, useResponsiveValue } from '../../hooks/useDevice';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 const AvatarWrapper: React.FC<{ children: React.ReactNode; onClick: () => void; showEditOverlay: boolean }> = ({
   children,
@@ -83,6 +84,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   themeId,
 }) => {
   const { t } = useI18n();
+  const { document: targetDocument } = useWindowContext();
   const isMobile = useIsMobile();
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const overflowRef = useRef<HTMLDivElement | null>(null);
@@ -120,14 +122,14 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       }
     };
 
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
+    targetDocument.addEventListener('pointerdown', handlePointerDown);
+    targetDocument.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
+      targetDocument.removeEventListener('pointerdown', handlePointerDown);
+      targetDocument.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOverflowOpen]);
+  }, [isOverflowOpen, targetDocument]);
 
   return (
     <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10 h-full">

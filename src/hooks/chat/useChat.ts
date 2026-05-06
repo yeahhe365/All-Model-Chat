@@ -158,12 +158,8 @@ export const useChat = (
     personGeneration,
     userScrolledUpRef,
     activeSessionId,
-    setActiveSessionId,
-    activeJobs,
-    updateAndPersistSessions,
     sessionKeyMapRef,
     language,
-    setSessionLoading,
   });
 
   const messageActions = useMessageActions({

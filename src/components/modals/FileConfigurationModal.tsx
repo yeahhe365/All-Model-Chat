@@ -109,6 +109,7 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
           <ResolutionConfig
             mediaResolution={draft.mediaResolution}
             setMediaResolution={(value) => setDraft((prev) => ({ ...prev, mediaResolution: value }))}
+            allowUltraHigh={isImage}
           />
         )}
 
