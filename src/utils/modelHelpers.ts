@@ -284,6 +284,11 @@ interface CachedModelSettings {
   thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
+type SwitchableModelSettings = CachedModelSettings & {
+  modelId?: string;
+  thinkingBudget: number;
+};
+
 export const getCachedModelSettings = (modelId: string): CachedModelSettings | undefined => {
   try {
     const cache = JSON.parse(localStorage.getItem(MODEL_SETTINGS_CACHE_KEY) || '{}');
@@ -302,6 +307,38 @@ export const cacheModelSettings = (modelId: string, settings: CachedModelSetting
   } catch (e) {
     console.error('Failed to cache model settings', e);
   }
+};
+
+export const resolveModelSwitchSettings = ({
+  currentSettings,
+  sourceSettings,
+  targetModelId,
+}: {
+  currentSettings: SwitchableModelSettings;
+  sourceSettings: SwitchableModelSettings;
+  targetModelId: string;
+}) => {
+  if (currentSettings.modelId) {
+    cacheModelSettings(currentSettings.modelId, {
+      mediaResolution: currentSettings.mediaResolution,
+      thinkingBudget: currentSettings.thinkingBudget,
+      thinkingLevel: currentSettings.thinkingLevel,
+    });
+  }
+
+  const cached = getCachedModelSettings(targetModelId);
+  const mediaResolution =
+    cached?.mediaResolution ?? sourceSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+  const thinkingLevel =
+    cached?.thinkingLevel ?? getDefaultThinkingLevelForModel(targetModelId, sourceSettings.thinkingLevel);
+  const thinkingBudget = adjustThinkingBudget(targetModelId, cached?.thinkingBudget ?? sourceSettings.thinkingBudget);
+
+  return {
+    modelId: targetModelId,
+    thinkingBudget,
+    thinkingLevel,
+    mediaResolution,
+  };
 };
 
 // --- Token Logic Extraction ---

@@ -2,9 +2,14 @@ import React, { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { setTestMatchMedia } from '@/test/browserEnvironment';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createChatAreaProviderValue, applyChatAreaProviderValue } from '../../test/chatAreaFixtures';
+import {
+  createChatAreaProviderValue,
+  applyChatAreaProviderValue,
+  createChatRuntimeValues,
+} from '../../test/chatAreaFixtures';
 import { useChatStore } from '../../stores/chatStore';
 import { ChatArea } from './ChatArea';
+import { ChatRuntimeValuesProvider } from './chat-runtime/ChatRuntimeContext';
 
 const dispatchTouchEvent = (
   node: Element,
@@ -89,8 +94,20 @@ describe('ChatArea', () => {
     renderer.root.unmount();
   });
 
+  const renderChatArea = (providerValue = createChatAreaProviderValue()) => {
+    applyChatAreaProviderValue(providerValue);
+
+    act(() => {
+      renderer.root.render(
+        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+          <ChatArea />
+        </ChatRuntimeValuesProvider>,
+      );
+    });
+  };
+
   it('renders layout data from stores and runtime actions without ChatArea props', () => {
-    applyChatAreaProviderValue(
+    renderChatArea(
       createChatAreaProviderValue({
         messageList: {
           messages: [
@@ -112,20 +129,12 @@ describe('ChatArea', () => {
       }),
     );
 
-    act(() => {
-      renderer.root.render(<ChatArea />);
-    });
-
     expect(renderer.container.querySelector('[data-testid="message-list"]')?.textContent).toBe('1');
     expect(renderer.container.querySelector('[data-testid="chat-input"]')?.textContent).toBe('store input');
   });
 
   it('keeps the pointer-enabled composer layer constrained so the message scrollbar remains reachable', () => {
-    applyChatAreaProviderValue(createChatAreaProviderValue());
-
-    act(() => {
-      renderer.root.render(<ChatArea />);
-    });
+    renderChatArea();
 
     const input = renderer.container.querySelector('[data-testid="chat-input"]');
     const pointerLayer = input?.parentElement;
@@ -143,7 +152,7 @@ describe('ChatArea', () => {
       writable: true,
       value: windowInnerWidth,
     });
-    applyChatAreaProviderValue(createChatAreaProviderValue());
+    const providerValue = createChatAreaProviderValue();
 
     const composer = document.createElement('textarea');
     composer.setAttribute('aria-label', 'Chat message input');
@@ -152,9 +161,7 @@ describe('ChatArea', () => {
     const focusSpy = vi.spyOn(composer, 'focus');
     const selectionSpy = vi.spyOn(composer, 'setSelectionRange');
 
-    act(() => {
-      renderer.root.render(<ChatArea />);
-    });
+    renderChatArea(providerValue);
 
     const chatArea = renderer.container.querySelector('.chat-bg-enhancement');
     expect(chatArea).not.toBeNull();

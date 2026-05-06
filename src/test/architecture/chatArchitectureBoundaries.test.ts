@@ -16,6 +16,25 @@ const getCallBlock = (source: string, callStart: string) => {
 };
 
 describe('chat architecture boundaries', () => {
+  it('does not mirror chat runtime state through a global bridge store', () => {
+    const sourceFiles = fs
+      .readdirSync(path.join(projectRoot, 'src'), { recursive: true })
+      .map((entry) => entry.toString())
+      .filter((entry) => /\.(ts|tsx)$/.test(entry))
+      .filter((entry) => !entry.startsWith('test/architecture/'))
+      .map((entry) => `src/${entry}`);
+
+    expect(fs.existsSync(path.join(projectRoot, 'src/stores/chatRuntimeStore.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(projectRoot, 'src/components/layout/useChatRuntimeBridge.ts'))).toBe(false);
+
+    for (const relativePath of sourceFiles) {
+      const source = readProjectFile(relativePath);
+      expect(source, relativePath).not.toContain('chatRuntimeStore');
+      expect(source, relativePath).not.toContain('useChatRuntimeBridge');
+      expect(source, relativePath).not.toContain('setChatRuntime');
+    }
+  });
+
   it('keeps ChatInput composition behind a local provider instead of area prop dictionaries', () => {
     const chatInputSource = readProjectFile('src/components/chat/input/ChatInput.tsx');
     const chatInputAreaSource = readProjectFile('src/components/chat/input/ChatInputArea.tsx');

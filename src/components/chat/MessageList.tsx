@@ -13,8 +13,9 @@ import { getVisibleChatMessages } from '../../utils/chat/visibility';
 import { isMarkdownFile } from '../../utils/fileTypeUtils';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useChatStore } from '../../stores/chatStore';
-import { useChatRuntimeStore } from '../../stores/chatRuntimeStore';
+import { useUIStore } from '../../stores/uiStore';
 import { useChatState } from '../../hooks/chat/useChatState';
+import { useChatMessageListRuntime } from '../layout/chat-runtime/ChatRuntimeContext';
 
 const LazyHtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');
@@ -37,19 +38,21 @@ const MessageListComponent: React.FC = () => {
   const messages = useChatStore((state) => state.activeMessages);
   const setCommandedInput = useChatStore((state) => state.setCommandedInput);
   const { activeSessionId, currentChatSettings } = useChatState(appSettings);
-  const sessionTitle = useChatRuntimeStore((state) => state.sessionTitle);
-  const setScrollContainerRef = useChatRuntimeStore((state) => state.setScrollContainerRef);
-  const onEditMessage = useChatRuntimeStore((state) => state.onEditMessage);
-  const onDeleteMessage = useChatRuntimeStore((state) => state.onDeleteMessage);
-  const onRetryMessage = useChatRuntimeStore((state) => state.onRetryMessage);
-  const onUpdateMessageFile = useChatRuntimeStore((state) => state.onUpdateMessageFile);
-  const onFollowUpSuggestionClick = useChatRuntimeStore((state) => state.onFollowUpSuggestionClick);
-  const onGenerateCanvas = useChatRuntimeStore((state) => state.onGenerateCanvas);
-  const onContinueGeneration = useChatRuntimeStore((state) => state.onContinueGeneration);
-  const onForkMessage = useChatRuntimeStore((state) => state.onForkMessage);
-  const onQuickTTS = useChatRuntimeStore((state) => state.onQuickTTS);
-  const chatInputHeight = useChatRuntimeStore((state) => state.chatInputHeight);
-  const onOpenSidePanel = useChatRuntimeStore((state) => state.onOpenSidePanel);
+  const chatInputHeight = useUIStore((state) => state.chatInputHeight);
+  const {
+    sessionTitle,
+    setScrollContainerRef,
+    onEditMessage,
+    onDeleteMessage,
+    onRetryMessage,
+    onUpdateMessageFile,
+    onFollowUpSuggestionClick,
+    onGenerateCanvas,
+    onContinueGeneration,
+    onForkMessage,
+    onQuickTTS,
+    onOpenSidePanel,
+  } = useChatMessageListRuntime();
   const handleQuote = React.useCallback(
     (text: string) => {
       setCommandedInput({ text, id: Date.now(), mode: 'quote' });

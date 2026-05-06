@@ -4,7 +4,6 @@ import type { AppViewModel } from '../../hooks/app/useApp';
 import { useUIStore } from '../../stores/uiStore';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
 import { buildSidePanelKey } from './mainContentModels';
-import { useChatRuntimeBridge } from './useChatRuntimeBridge';
 
 interface UseMainContentViewModelOptions {
   app: AppViewModel;
@@ -30,8 +29,6 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
   } = app;
   const { setIsHistorySidebarOpen, setIsHistorySidebarOpenTransient } = uiState;
   const { loadChatSession } = chatState;
-
-  useChatRuntimeBridge({ app });
 
   const isSettingsModalOpen = useUIStore((state) => state.isSettingsModalOpen);
   const setIsSettingsModalOpen = useUIStore((state) => state.setIsSettingsModalOpen);

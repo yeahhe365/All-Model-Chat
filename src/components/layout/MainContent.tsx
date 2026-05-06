@@ -4,6 +4,7 @@ import { ChatArea } from './ChatArea';
 import { AppModals } from '../modals/AppModals';
 import type { AppViewModel } from '../../hooks/app/useApp';
 import { useMainContentViewModel } from './useMainContentViewModel';
+import { ChatRuntimeProvider } from './chat-runtime/ChatRuntimeContext';
 
 const LazySidePanel = lazy(async () => {
   const module = await import('./SidePanel');
@@ -37,7 +38,9 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       />
 
       <HistorySidebar {...sidebarProps} />
-      <ChatArea />
+      <ChatRuntimeProvider app={app}>
+        <ChatArea />
+      </ChatRuntimeProvider>
 
       {sidePanelContent && (
         <Suspense fallback={null}>

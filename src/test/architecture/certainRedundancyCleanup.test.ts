@@ -59,12 +59,12 @@ describe('certain redundancy cleanup guards', () => {
   it('keeps PiP availability independent from custom API config toggles', () => {
     const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
     const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
-    const runtimeBridgeSource = readProjectFile('src/components/layout/useChatRuntimeBridge.ts');
+    const runtimeContextSource = readProjectFile('src/components/layout/chat-runtime/ChatRuntimeContext.tsx');
 
-    expect(runtimeBridgeSource).toContain('isPipSupported: pipState.isPipSupported,');
+    expect(runtimeContextSource).toContain('isPipSupported: pipState.isPipSupported,');
     expect(mainContentSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
     expect(mainContentViewModelSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
-    expect(runtimeBridgeSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
+    expect(runtimeContextSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
   });
 
   it('keeps message-list scroll ownership local instead of routing scroll events back through chat state', () => {
@@ -311,10 +311,10 @@ describe('certain redundancy cleanup guards', () => {
   });
 
   it('reuses the shared chat settings updater type for store-backed chat area contracts', () => {
-    const chatRuntimeStoreSource = readProjectFile('src/stores/chatRuntimeStore.ts');
+    const chatRuntimeContextSource = readProjectFile('src/components/layout/chat-runtime/ChatRuntimeContext.tsx');
     const chatStoreSource = readProjectFile('src/stores/chatStore.ts');
 
-    for (const source of [chatRuntimeStoreSource, chatStoreSource]) {
+    for (const source of [chatRuntimeContextSource, chatStoreSource]) {
       expect(source).toContain('ChatSettingsUpdater');
       expect(source).not.toContain('(updater: (prevSettings: ChatSettings) => ChatSettings) => void;');
       expect(source).not.toContain('(updater: (prev: ChatSettings) => ChatSettings) => void;');
@@ -357,7 +357,7 @@ describe('certain redundancy cleanup guards', () => {
   it('keeps composer state subscribed at the consumer instead of relaying it through ChatArea context', () => {
     const chatAreaSource = readProjectFile('src/components/layout/ChatArea.tsx');
     const chatInputCoreSource = readProjectFile('src/hooks/chat-input/useChatInputCore.ts');
-    const runtimeStoreSource = readProjectFile('src/stores/chatRuntimeStore.ts');
+    const runtimeContextSource = readProjectFile('src/components/layout/chat-runtime/ChatRuntimeContext.tsx');
 
     expect(fs.existsSync(path.join(projectRoot, 'src/contexts/ChatAreaContext.tsx'))).toBe(false);
     expect(fs.existsSync(path.join(projectRoot, 'src/components/layout/chat-area/ChatAreaContext.tsx'))).toBe(false);
@@ -368,8 +368,8 @@ describe('certain redundancy cleanup guards', () => {
     expect(readProjectFile('src/components/chat/input/ChatInput.tsx')).not.toContain('ChatInputViewProvider');
     expect(chatInputCoreSource).toContain("from '../../stores/chatStore'");
     expect(chatInputCoreSource).toContain("from '../../stores/settingsStore'");
-    expect(chatInputCoreSource).toContain("from '../../stores/chatRuntimeStore'");
-    expect(runtimeStoreSource).toContain('useChatRuntimeStore');
+    expect(chatInputCoreSource).toContain('useChatInputRuntime');
+    expect(runtimeContextSource).toContain('ChatInputRuntimeContext');
   });
 
   it('passes chat input tool state through the input context while keeping registry-based tool menus', () => {
@@ -421,22 +421,24 @@ describe('certain redundancy cleanup guards', () => {
     expect(chatInputAreaSource).not.toContain('view.');
     expect(chatInputToolbarSource).toContain("from '../../../stores/chatStore'");
     expect(chatInputToolbarSource).toContain("from '../../../stores/settingsStore'");
-    expect(chatInputToolbarSource).toContain("from '../../../stores/chatRuntimeStore'");
+    expect(chatInputToolbarSource).toContain('useChatInputRuntime');
     expect(chatInputActionsSource).toContain("from '../../../stores/chatStore'");
     expect(chatInputActionsSource).toContain("from '../../../stores/settingsStore'");
-    expect(chatInputActionsSource).toContain("from '../../../stores/chatRuntimeStore'");
+    expect(chatInputActionsSource).toContain('useChatInputRuntime');
   });
 
-  it('isolates main content runtime bridging from sidebar and modal prop assembly', () => {
+  it('isolates scoped chat runtime context from sidebar and modal prop assembly', () => {
+    const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
     const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
-    const runtimeBridgeSource = readProjectFile('src/components/layout/useChatRuntimeBridge.ts');
+    const runtimeContextSource = readProjectFile('src/components/layout/chat-runtime/ChatRuntimeContext.tsx');
 
-    expect(mainContentViewModelSource).toContain('useChatRuntimeBridge');
+    expect(mainContentSource).toContain('ChatRuntimeProvider');
+    expect(mainContentViewModelSource).not.toContain('useChatRuntimeBridge');
     expect(mainContentViewModelSource).not.toContain('setChatRuntime');
     expect(mainContentViewModelSource).not.toContain('const chatRuntime = useMemo');
-    expect(runtimeBridgeSource).toContain('useChatRuntimeStore.getState().setChatRuntime');
-    expect(runtimeBridgeSource).toContain('messageActions');
-    expect(runtimeBridgeSource).toContain('inputActions');
+    expect(runtimeContextSource).toContain('ChatHeaderRuntimeContext');
+    expect(runtimeContextSource).toContain('ChatMessageListRuntimeContext');
+    expect(runtimeContextSource).toContain('ChatInputRuntimeContext');
   });
 
   it('uses store-level message actions for repeated session/message updates', () => {

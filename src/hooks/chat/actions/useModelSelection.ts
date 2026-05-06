@@ -2,13 +2,7 @@ import React, { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 import { createNewSession } from '../../../utils/chat/session';
-import {
-  cacheModelSettings,
-  getCachedModelSettings,
-  adjustThinkingBudget,
-  getDefaultThinkingLevelForModel,
-} from '../../../utils/modelHelpers';
-import { MediaResolution } from '../../../types/settings';
+import { resolveModelSwitchSettings } from '../../../utils/modelHelpers';
 
 interface UseModelSelectionProps {
   appSettings: AppSettings;
@@ -42,35 +36,11 @@ export const useModelSelection = ({
     (modelId: string) => {
       // Resolve target settings based on context (Session vs Global)
       const sourceSettings = activeSessionId ? currentChatSettings : appSettings;
-
-      // 1. Cache CURRENT model settings before switching
-      if (currentChatSettings.modelId) {
-        cacheModelSettings(currentChatSettings.modelId, {
-          mediaResolution: currentChatSettings.mediaResolution,
-          thinkingBudget: currentChatSettings.thinkingBudget,
-          thinkingLevel: currentChatSettings.thinkingLevel,
-        });
-      }
-
-      // 2. Retrieve CACHED settings for NEW model
-      const cached = getCachedModelSettings(modelId);
-
-      // 3. Determine new settings
-      const newMediaResolution =
-        cached?.mediaResolution ?? sourceSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
-      let newThinkingBudget = cached?.thinkingBudget ?? sourceSettings.thinkingBudget;
-      const newThinkingLevel =
-        cached?.thinkingLevel ?? getDefaultThinkingLevelForModel(modelId, sourceSettings.thinkingLevel);
-
-      // 4. Validating range compatibility using shared helper
-      newThinkingBudget = adjustThinkingBudget(modelId, newThinkingBudget);
-
-      const newSettingsPartial: Partial<IndividualChatSettings> = {
-        modelId,
-        thinkingBudget: newThinkingBudget,
-        thinkingLevel: newThinkingLevel,
-        mediaResolution: newMediaResolution,
-      };
+      const newSettingsPartial: Partial<IndividualChatSettings> = resolveModelSwitchSettings({
+        currentSettings: currentChatSettings,
+        sourceSettings,
+        targetModelId: modelId,
+      });
 
       if (!activeSessionId) {
         const sessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...newSettingsPartial };
@@ -90,13 +60,13 @@ export const useModelSelection = ({
         } else {
           // If model is same but somehow we are updating params (rare here)
           if (
-            currentChatSettings.thinkingBudget !== newThinkingBudget ||
-            currentChatSettings.thinkingLevel !== newThinkingLevel
+            currentChatSettings.thinkingBudget !== newSettingsPartial.thinkingBudget ||
+            currentChatSettings.thinkingLevel !== newSettingsPartial.thinkingLevel
           ) {
             setCurrentChatSettings((prev) => ({
               ...prev,
-              thinkingBudget: newThinkingBudget,
-              thinkingLevel: newThinkingLevel,
+              thinkingBudget: newSettingsPartial.thinkingBudget ?? prev.thinkingBudget,
+              thinkingLevel: newSettingsPartial.thinkingLevel,
             }));
           }
         }

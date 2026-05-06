@@ -2,14 +2,8 @@ import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { AppSettings } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { logService } from '../../services/logService';
-import {
-  cacheModelSettings,
-  getCachedModelSettings,
-  adjustThinkingBudget,
-  getDefaultThinkingLevelForModel,
-} from '../../utils/modelHelpers';
+import { resolveModelSwitchSettings } from '../../utils/modelHelpers';
 import { translations } from '@/i18n/translations';
-import { MediaResolution } from '../../types/settings';
 
 export type SettingsTab = 'models' | 'interface' | 'api' | 'data' | 'shortcuts' | 'about';
 export type SettingsTabDescriptor = { id: SettingsTab; labelKey: string };
@@ -202,33 +196,13 @@ export const useSettingsLogic = ({
       return;
     }
 
-    // 1. Cache current model settings
-    if (latestSettings.modelId) {
-      cacheModelSettings(latestSettings.modelId, {
-        mediaResolution: latestSettings.mediaResolution,
-        thinkingBudget: latestSettings.thinkingBudget,
-        thinkingLevel: latestSettings.thinkingLevel,
-      });
-    }
-
-    // 2. Load cached settings for new model
-    const cached = getCachedModelSettings(newModelId);
-
-    let newThinkingBudget = cached?.thinkingBudget ?? latestSettings.thinkingBudget;
-    const newThinkingLevel =
-      cached?.thinkingLevel ?? getDefaultThinkingLevelForModel(newModelId, latestSettings.thinkingLevel);
-    const newMediaResolution =
-      cached?.mediaResolution ?? latestSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
-
-    // 3. Apply defaults/clamping logic using shared helper
-    newThinkingBudget = adjustThinkingBudget(newModelId, newThinkingBudget);
-
     const nextSettings = {
       ...latestSettings,
-      modelId: newModelId,
-      thinkingBudget: newThinkingBudget,
-      thinkingLevel: newThinkingLevel,
-      mediaResolution: newMediaResolution,
+      ...resolveModelSwitchSettings({
+        currentSettings: latestSettings,
+        sourceSettings: latestSettings,
+        targetModelId: newModelId,
+      }),
     };
 
     latestSettingsRef.current = nextSettings;

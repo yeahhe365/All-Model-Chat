@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vitest';
 import { MODELS_SUPPORTING_RAW_MODE } from './../constants/appConstants';
 import {
   sortModels,
@@ -10,15 +10,21 @@ import {
   resolveSupportedModelId,
   calculateTokenStats,
   adjustThinkingBudget,
+  resolveModelSwitchSettings,
 } from './modelHelpers';
 import { ModelOption } from './../types';
 import type { UsageMetadata } from '@google/genai';
+import { MediaResolution } from '../types/settings';
 
 type LegacyUsageMetadata = UsageMetadata & {
   candidatesTokenCount?: number;
 };
 
 const createUsageMetadata = (overrides: LegacyUsageMetadata): UsageMetadata => overrides;
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 describe('raw mode support', () => {
   it('includes Gemini Robotics-ER 1.6', () => {
@@ -411,5 +417,75 @@ describe('adjustThinkingBudget', () => {
 
   it('keeps valid budget within range', () => {
     expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 1000)).toBe(1000);
+  });
+});
+
+describe('resolveModelSwitchSettings', () => {
+  it('caches the current model settings and restores clamped settings for the target model', () => {
+    localStorage.setItem(
+      'model_settings_cache',
+      JSON.stringify({
+        'gemini-3.1-pro-preview': {
+          mediaResolution: MediaResolution.MEDIA_RESOLUTION_HIGH,
+          thinkingBudget: 50000,
+          thinkingLevel: 'MEDIUM',
+        },
+      }),
+    );
+
+    const result = resolveModelSwitchSettings({
+      currentSettings: {
+        modelId: 'gemini-2.5-flash',
+        mediaResolution: MediaResolution.MEDIA_RESOLUTION_LOW,
+        thinkingBudget: 2048,
+        thinkingLevel: 'LOW',
+      },
+      sourceSettings: {
+        mediaResolution: MediaResolution.MEDIA_RESOLUTION_MEDIUM,
+        thinkingBudget: 4096,
+        thinkingLevel: 'HIGH',
+      },
+      targetModelId: 'gemini-3.1-pro-preview',
+    });
+
+    expect(result).toEqual({
+      modelId: 'gemini-3.1-pro-preview',
+      mediaResolution: MediaResolution.MEDIA_RESOLUTION_HIGH,
+      thinkingBudget: 32768,
+      thinkingLevel: 'MEDIUM',
+    });
+    expect(JSON.parse(localStorage.getItem('model_settings_cache') ?? '{}')).toEqual(
+      expect.objectContaining({
+        'gemini-2.5-flash': {
+          mediaResolution: MediaResolution.MEDIA_RESOLUTION_LOW,
+          thinkingBudget: 2048,
+          thinkingLevel: 'LOW',
+        },
+      }),
+    );
+  });
+
+  it('uses source settings and model-specific thinking defaults when no target cache exists', () => {
+    const result = resolveModelSwitchSettings({
+      currentSettings: {
+        modelId: 'gemini-3-flash-preview',
+        mediaResolution: undefined,
+        thinkingBudget: 0,
+        thinkingLevel: 'HIGH',
+      },
+      sourceSettings: {
+        mediaResolution: undefined,
+        thinkingBudget: 0,
+        thinkingLevel: 'HIGH',
+      },
+      targetModelId: 'gemini-3.1-flash-image-preview',
+    });
+
+    expect(result).toEqual({
+      modelId: 'gemini-3.1-flash-image-preview',
+      mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
+      thinkingBudget: 0,
+      thinkingLevel: 'MINIMAL',
+    });
   });
 });

@@ -2,8 +2,8 @@ import { useRef } from 'react';
 import { useI18n } from '../../contexts/I18nContext';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { isBboxSystemInstruction, isHdGuideSystemInstruction } from '../../constants/promptHelpers';
+import { useChatInputRuntime } from '../../components/layout/chat-runtime/ChatRuntimeContext';
 import { useChatStore } from '../../stores/chatStore';
-import { useChatRuntimeStore } from '../../stores/chatRuntimeStore';
 import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
@@ -26,34 +26,36 @@ export const useChatInputCore = () => {
   const editMode = useChatStore((state) => state.editMode);
   const isProcessingFile = useChatStore((state) => state.isAppProcessingFile);
   const activeMessages = useChatStore((state) => state.activeMessages);
-  const onMessageSent = useChatRuntimeStore((state) => state.onMessageSent);
-  const onSendMessage = useChatRuntimeStore((state) => state.onSendMessage);
-  const onStopGenerating = useChatRuntimeStore((state) => state.onStopGenerating);
-  const onCancelEdit = useChatRuntimeStore((state) => state.onCancelEdit);
-  const onProcessFiles = useChatRuntimeStore((state) => state.onProcessFiles);
-  const onAddFileById = useChatRuntimeStore((state) => state.onAddFileById);
-  const onCancelUpload = useChatRuntimeStore((state) => state.onCancelUpload);
-  const onTranscribeAudio = useChatRuntimeStore((state) => state.onTranscribeAudio);
-  const onClearChat = useChatRuntimeStore((state) => state.onClearChat);
-  const onNewChat = useChatRuntimeStore((state) => state.onNewChat);
-  const onOpenSettings = useChatRuntimeStore((state) => state.onOpenSettings);
-  const onToggleCanvasPrompt = useChatRuntimeStore((state) => state.onToggleCanvasPrompt);
-  const onTogglePinCurrentSession = useChatRuntimeStore((state) => state.onTogglePinCurrentSession);
-  const onRetryLastTurn = useChatRuntimeStore((state) => state.onRetryLastTurn);
-  const onSelectModel = useChatRuntimeStore((state) => state.onSelectModel);
-  const availableModels = useChatRuntimeStore((state) => state.availableModels);
-  const onEditLastUserMessage = useChatRuntimeStore((state) => state.onEditLastUserMessage);
-  const onTogglePip = useChatRuntimeStore((state) => state.onTogglePip);
-  const isPipActive = useChatRuntimeStore((state) => state.isPipActive);
-  const setCurrentChatSettings = useChatRuntimeStore((state) => state.setCurrentChatSettings);
-  const onSuggestionClick = useChatRuntimeStore((state) => state.onSuggestionClick);
-  const onOrganizeInfoClick = useChatRuntimeStore((state) => state.onOrganizeInfoClick);
-  const onUpdateMessageContent = useChatRuntimeStore((state) => state.onEditMessageContent);
-  const onAddUserMessage = useChatRuntimeStore((state) => state.onAddUserMessage);
-  const onLiveTranscript = useChatRuntimeStore((state) => state.onLiveTranscript);
-  const liveClientFunctions = useChatRuntimeStore((state) => state.liveClientFunctions);
-  const onToggleBBox = useChatRuntimeStore((state) => state.onToggleBBox);
-  const onToggleGuide = useChatRuntimeStore((state) => state.onToggleGuide);
+  const {
+    onMessageSent,
+    onSendMessage,
+    onStopGenerating,
+    onCancelEdit,
+    onProcessFiles,
+    onAddFileById,
+    onCancelUpload,
+    onTranscribeAudio,
+    onClearChat,
+    onNewChat,
+    onOpenSettings,
+    onToggleCanvasPrompt,
+    onTogglePinCurrentSession,
+    onRetryLastTurn,
+    onSelectModel,
+    availableModels,
+    onEditLastUserMessage,
+    onTogglePip,
+    isPipActive,
+    setCurrentChatSettings,
+    onSuggestionClick,
+    onOrganizeInfoClick,
+    onEditMessageContent: onUpdateMessageContent,
+    onAddUserMessage,
+    onLiveTranscript,
+    liveClientFunctions,
+    onToggleBBox,
+    onToggleGuide,
+  } = useChatInputRuntime();
   const { activeSessionId, currentChatSettings, isLoading } = useChatState(appSettings);
   const isEditing = !!editingMessageId;
   const inputState = useChatInputState(activeSessionId, isEditing);

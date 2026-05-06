@@ -9,8 +9,8 @@ import { getShortcutDisplay } from '../../utils/shortcutUtils';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
-import { useChatRuntimeStore } from '../../stores/chatRuntimeStore';
 import { useChatState } from '../../hooks/chat/useChatState';
+import { useChatHeaderRuntime } from './chat-runtime/ChatRuntimeContext';
 
 export const ChatArea: React.FC = () => {
   const appSettings = useSettingsStore((s) => s.appSettings);
@@ -18,27 +18,29 @@ export const ChatArea: React.FC = () => {
   const { currentChatSettings, isLoading } = useChatState(appSettings);
   const isSwitchingModel = useChatStore((s) => s.isSwitchingModel);
   const isHistorySidebarOpen = useUIStore((s) => s.isHistorySidebarOpen);
-  const isAppDraggingOver = useChatRuntimeStore((s) => s.isAppDraggingOver);
-  const modelsLoadingError = useChatRuntimeStore((s) => s.modelsLoadingError);
-  const handleAppDragEnter = useChatRuntimeStore((s) => s.handleAppDragEnter);
-  const handleAppDragOver = useChatRuntimeStore((s) => s.handleAppDragOver);
-  const handleAppDragLeave = useChatRuntimeStore((s) => s.handleAppDragLeave);
-  const handleAppDrop = useChatRuntimeStore((s) => s.handleAppDrop);
-  const currentModelName = useChatRuntimeStore((s) => s.currentModelName);
-  const availableModels = useChatRuntimeStore((s) => s.availableModels);
-  const selectedModelId = useChatRuntimeStore((s) => s.selectedModelId);
-  const isCanvasPromptActive = useChatRuntimeStore((s) => s.isCanvasPromptActive);
-  const isCanvasPromptBusy = useChatRuntimeStore((s) => s.isCanvasPromptBusy);
-  const isPipSupported = useChatRuntimeStore((s) => s.isPipSupported);
-  const isPipActive = useChatRuntimeStore((s) => s.isPipActive);
-  const onNewChat = useChatRuntimeStore((s) => s.onNewChat);
-  const onOpenScenariosModal = useChatRuntimeStore((s) => s.onOpenScenariosModal);
-  const onToggleHistorySidebar = useChatRuntimeStore((s) => s.onToggleHistorySidebar);
-  const onLoadCanvasPrompt = useChatRuntimeStore((s) => s.onLoadCanvasPrompt);
-  const onSelectModel = useChatRuntimeStore((s) => s.onSelectModel);
-  const onSetThinkingLevel = useChatRuntimeStore((s) => s.onSetThinkingLevel);
-  const onToggleGemmaReasoning = useChatRuntimeStore((s) => s.onToggleGemmaReasoning);
-  const onTogglePip = useChatRuntimeStore((s) => s.onTogglePip);
+  const {
+    isAppDraggingOver,
+    modelsLoadingError,
+    handleAppDragEnter,
+    handleAppDragOver,
+    handleAppDragLeave,
+    handleAppDrop,
+    currentModelName,
+    availableModels,
+    selectedModelId,
+    isCanvasPromptActive,
+    isCanvasPromptBusy,
+    isPipSupported,
+    isPipActive,
+    onNewChat,
+    onOpenScenariosModal,
+    onToggleHistorySidebar,
+    onLoadCanvasPrompt,
+    onSelectModel,
+    onSetThinkingLevel,
+    onToggleGemmaReasoning,
+    onTogglePip,
+  } = useChatHeaderRuntime();
   const { chatInputContainerRef } = useChatArea();
 
   const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);

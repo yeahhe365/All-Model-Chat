@@ -11,8 +11,8 @@ import { SendControls } from './actions/SendControls';
 import { ComposerMoreMenu } from './actions/ComposerMoreMenu';
 import { useI18n } from '../../../contexts/I18nContext';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
+import { useChatInputRuntime } from '../../layout/chat-runtime/ChatRuntimeContext';
 import { useChatStore } from '../../../stores/chatStore';
-import { useChatRuntimeStore } from '../../../stores/chatRuntimeStore';
 import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useChatState } from '../../../hooks/chat/useChatState';
@@ -102,8 +102,7 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
   const canAddYouTubeVideo = !!capabilities.permissions?.canUseYouTubeUrl;
   const isEditing = !!useChatStore((state) => state.editingMessageId);
   const editMode = useChatStore((state) => state.editMode);
-  const onStopGenerating = useChatRuntimeStore((state) => state.onStopGenerating);
-  const onCancelEdit = useChatRuntimeStore((state) => state.onCancelEdit);
+  const { onStopGenerating, onCancelEdit } = useChatInputRuntime();
   const toolStates = useChatInputToolStates({
     currentChatSettings,
     isLoading,

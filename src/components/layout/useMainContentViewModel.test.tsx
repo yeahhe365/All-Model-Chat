@@ -2,10 +2,9 @@ import { act, type SetStateAction } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppViewModel } from '../../hooks/app/useApp';
 import type { AppSettings } from '../../types';
-import { useMainContentViewModel } from './useMainContentViewModel';
 import { renderHook } from '@/test/testUtils';
 import { createAppSettings, createChatSettings, createTheme } from '../../test/factories';
-import { useChatRuntimeStore } from '../../stores/chatRuntimeStore';
+import { useChatRuntimeValues } from './chat-runtime/ChatRuntimeContext';
 
 const mockStores = vi.hoisted(() => {
   const ui = {
@@ -200,16 +199,15 @@ const buildApp = (overrides: Partial<AppViewModel> = {}) => {
   } satisfies AppViewModel;
 };
 
-describe('useMainContentViewModel', () => {
+describe('chat runtime values', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useChatRuntimeStore.getState().resetChatRuntime();
   });
 
   it('shows Gemini and OpenAI-compatible models together while OpenAI mode is active', () => {
     const app = buildApp();
-    const { unmount } = renderHook(() => useMainContentViewModel({ app }));
-    const header = useChatRuntimeStore.getState();
+    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
+    const header = result.current.header;
 
     expect(header.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
@@ -252,8 +250,8 @@ describe('useMainContentViewModel', () => {
       },
       getCurrentModelDisplayName: vi.fn(() => 'Gemini 3 Flash Preview'),
     });
-    const { unmount } = renderHook(() => useMainContentViewModel({ app }));
-    const header = useChatRuntimeStore.getState();
+    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
+    const header = result.current.header;
 
     expect(header.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
@@ -282,8 +280,8 @@ describe('useMainContentViewModel', () => {
       },
       getCurrentModelDisplayName: vi.fn(() => 'Gemini 3 Flash Preview'),
     });
-    const { unmount } = renderHook(() => useMainContentViewModel({ app }));
-    const header = useChatRuntimeStore.getState();
+    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
+    const header = result.current.header;
 
     act(() => {
       header.onSelectModel('gpt-5.5');
@@ -309,8 +307,8 @@ describe('useMainContentViewModel', () => {
 
   it('switches back to Gemini-native mode when selecting a Gemini model from OpenAI mode', () => {
     const app = buildApp();
-    const { unmount } = renderHook(() => useMainContentViewModel({ app }));
-    const header = useChatRuntimeStore.getState();
+    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
+    const header = result.current.header;
 
     act(() => {
       header.onSelectModel('gemini-3-flash-preview');

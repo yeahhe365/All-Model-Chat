@@ -5,8 +5,10 @@ import { type ChatSettings, type InputCommand, type UploadedFile } from '../../.
 import {
   applyChatAreaProviderValue,
   createChatAreaProviderValue,
+  createChatRuntimeValues,
   type ChatAreaProviderValue,
 } from '../../../test/chatAreaFixtures';
+import { ChatRuntimeValuesProvider } from '../../layout/chat-runtime/ChatRuntimeContext';
 import { ChatInput } from './ChatInput';
 
 const mockChatStoreState = vi.hoisted(() => ({
@@ -296,11 +298,15 @@ const ChatAreaProvider = ({ value, children }: { value: ChatAreaProviderValue; c
   mockChatStoreState.setSelectedFiles = value.input.setSelectedFiles as typeof mockChatStoreState.setSelectedFiles;
   mockChatStoreState.setAppFileError = value.input.setAppFileError as typeof mockChatStoreState.setAppFileError;
   mockChatStoreState.setEditingMessageId = value.input.setEditingMessageId as typeof mockChatStoreState.setEditingMessageId;
-  return isValidElement(children)
+  const versionedChildren = isValidElement(children)
     ? cloneElement(children, {
         'data-provider-version': `${value.input.activeSessionId}-${value.input.isLoading}-${value.input.selectedFiles.length}`,
       })
     : children;
+
+  return (
+    <ChatRuntimeValuesProvider value={createChatRuntimeValues(value)}>{versionedChildren}</ChatRuntimeValuesProvider>
+  );
 };
 
 const createProviderValue = (commandedInput: InputCommand | null) =>

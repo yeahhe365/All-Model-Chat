@@ -3,9 +3,13 @@ import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { vi } from 'vitest';
 import { I18nProvider } from '../contexts/I18nContext';
 import { WindowProvider } from '../contexts/WindowContext';
-import { useChatRuntimeStore } from '../stores/chatRuntimeStore';
+import {
+  ChatRuntimeValuesProvider,
+  type ChatRuntimeValues,
+} from '../components/layout/chat-runtime/ChatRuntimeContext';
 import { useChatStore } from '../stores/chatStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useUIStore } from '../stores/uiStore';
 import { AVAILABLE_THEMES } from '../constants/themeConstants';
 import type { AppSettings, ChatMessage, ChatSettings, ChatToolToggleStates, ModelOption, UploadedFile } from '../types';
 import { createAppSettings, createChatSettings } from './factories';
@@ -100,6 +104,7 @@ type ChatAreaMessageListValue = {
 };
 
 export interface ChatAreaProviderValue {
+  header: ChatRuntimeValues['header'];
   messageList: ChatAreaMessageListValue;
   input: ChatAreaInputValue;
 }
@@ -114,6 +119,7 @@ type ChatAreaInputOverrides = Omit<
 };
 
 interface ChatAreaProviderValueOverrides {
+  header?: Partial<ChatRuntimeValues['header']>;
   messageList?: Partial<ChatAreaMessageListValue>;
   input?: ChatAreaInputOverrides;
 }
@@ -122,6 +128,30 @@ export const createChatAreaProviderValue = (overrides: ChatAreaProviderValueOver
   const { appSettings, currentChatSettings, toolStates, ...inputOverrides } = overrides.input ?? {};
 
   return {
+    header: {
+      isAppDraggingOver: false,
+      modelsLoadingError: null,
+      handleAppDragEnter: vi.fn(),
+      handleAppDragOver: vi.fn(),
+      handleAppDragLeave: vi.fn(),
+      handleAppDrop: vi.fn(),
+      currentModelName: 'Test Model',
+      availableModels: inputOverrides.availableModels ?? [],
+      selectedModelId: currentChatSettings?.modelId ?? createChatSettings().modelId,
+      isCanvasPromptActive: false,
+      isCanvasPromptBusy: false,
+      isPipSupported: true,
+      isPipActive: inputOverrides.isPipActive ?? false,
+      onNewChat: inputOverrides.onNewChat ?? vi.fn(),
+      onOpenScenariosModal: vi.fn(),
+      onToggleHistorySidebar: vi.fn(),
+      onLoadCanvasPrompt: inputOverrides.onToggleCanvasPrompt ?? vi.fn(),
+      onSelectModel: inputOverrides.onSelectModel ?? vi.fn(),
+      onSetThinkingLevel: vi.fn(),
+      onToggleGemmaReasoning: vi.fn(),
+      onTogglePip: inputOverrides.onTogglePip ?? vi.fn(),
+      ...overrides.header,
+    },
     messageList: {
       messages: [],
       sessionTitle: 'Test',
@@ -235,24 +265,13 @@ export const applyChatAreaProviderValue = (value: ChatAreaProviderValue) => {
       value.input.isLoading && value.input.activeSessionId ? new Set([value.input.activeSessionId]) : new Set(),
   });
 
-  useChatRuntimeStore.getState().setChatRuntime({
-    sessionTitle: value.messageList.sessionTitle,
-    selectedModelId: value.input.currentChatSettings.modelId,
-    availableModels: value.input.availableModels,
-    chatInputHeight: value.messageList.chatInputHeight,
-    setScrollContainerRef: value.messageList.setScrollContainerRef,
-    onEditMessage: value.messageList.onEditMessage,
-    onDeleteMessage: value.messageList.onDeleteMessage,
-    onRetryMessage: value.messageList.onRetryMessage,
-    onUpdateMessageFile: value.messageList.onUpdateMessageFile,
-    onSuggestionClick: value.input.onSuggestionClick,
-    onOrganizeInfoClick: value.input.onOrganizeInfoClick,
-    onFollowUpSuggestionClick: value.messageList.onFollowUpSuggestionClick,
-    onGenerateCanvas: value.messageList.onGenerateCanvas,
-    onContinueGeneration: value.messageList.onContinueGeneration,
-    onForkMessage: value.messageList.onForkMessage,
-    onQuickTTS: value.messageList.onQuickTTS,
-    onOpenSidePanel: value.messageList.onOpenSidePanel,
+  useUIStore.setState({ chatInputHeight: value.messageList.chatInputHeight });
+};
+
+export const createChatRuntimeValues = (value: ChatAreaProviderValue): ChatRuntimeValues => ({
+  header: value.header,
+  messageList: value.messageList,
+  input: {
     onMessageSent: value.input.onMessageSent,
     onSendMessage: value.input.onSendMessage,
     onStopGenerating: value.input.onStopGenerating,
@@ -265,21 +284,24 @@ export const applyChatAreaProviderValue = (value: ChatAreaProviderValue) => {
     onNewChat: value.input.onNewChat,
     onOpenSettings: value.input.onOpenSettings,
     onToggleCanvasPrompt: value.input.onToggleCanvasPrompt,
-    onSelectModel: value.input.onSelectModel,
     onTogglePinCurrentSession: value.input.onTogglePinCurrentSession,
     onRetryLastTurn: value.input.onRetryLastTurn,
+    onSelectModel: value.input.onSelectModel,
+    availableModels: value.input.availableModels,
     onEditLastUserMessage: value.input.onEditLastUserMessage,
     onTogglePip: value.input.onTogglePip,
     isPipActive: value.input.isPipActive,
     onToggleQuadImages: value.input.onToggleQuadImages,
     setCurrentChatSettings: value.input.setCurrentChatSettings,
+    onSuggestionClick: value.input.onSuggestionClick,
+    onOrganizeInfoClick: value.input.onOrganizeInfoClick,
     onAddUserMessage: value.input.onAddUserMessage,
     onLiveTranscript: value.input.onLiveTranscript,
     onEditMessageContent: value.input.onUpdateMessageContent,
     onToggleBBox: value.input.onToggleBBox,
     onToggleGuide: value.input.onToggleGuide,
-  });
-};
+  },
+});
 
 export const renderWithChatAreaProviders = (
   children: ReactNode,
@@ -294,7 +316,9 @@ export const renderWithChatAreaProviders = (
   act(() => {
     root.render(
       <I18nProvider>
-        <WindowProvider>{children}</WindowProvider>
+        <WindowProvider>
+          <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>{children}</ChatRuntimeValuesProvider>
+        </WindowProvider>
       </I18nProvider>,
     );
   });

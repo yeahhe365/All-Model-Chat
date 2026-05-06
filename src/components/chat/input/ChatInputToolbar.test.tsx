@@ -3,7 +3,9 @@ import { setupTestRenderer } from '@/test/testUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChatStore } from '../../../stores/chatStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { createChatAreaProviderValue, createChatRuntimeValues } from '../../../test/chatAreaFixtures';
 import { createAppSettings } from '../../../test/factories';
+import { ChatRuntimeValuesProvider } from '../../layout/chat-runtime/ChatRuntimeContext';
 
 const personGenerationSelectorMock = vi.fn();
 const mockCapabilities = vi.hoisted(() => ({
@@ -56,6 +58,18 @@ const localProps = {
 describe('ChatInputToolbar', () => {
   const renderer = setupTestRenderer();
 
+  const renderToolbar = () => {
+    const providerValue = createChatAreaProviderValue();
+
+    act(() => {
+      renderer.root.render(
+        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+          <ChatInputToolbar {...localProps} />
+        </ChatRuntimeValuesProvider>,
+      );
+    });
+  };
+
   beforeEach(() => {
     personGenerationSelectorMock.mockClear();
     useSettingsStore.setState({
@@ -85,9 +99,7 @@ describe('ChatInputToolbar', () => {
       isRealImagenModel: true,
     };
 
-    act(() => {
-      renderer.root.render(<ChatInputToolbar {...localProps} />);
-    });
+    renderToolbar();
 
     expect(personGenerationSelectorMock).toHaveBeenCalledWith(
       expect.objectContaining({ personGeneration: 'ALLOW_ADULT' }),
@@ -101,9 +113,7 @@ describe('ChatInputToolbar', () => {
       isRealImagenModel: false,
     };
 
-    act(() => {
-      renderer.root.render(<ChatInputToolbar {...localProps} />);
-    });
+    renderToolbar();
 
     expect(personGenerationSelectorMock).not.toHaveBeenCalled();
   });

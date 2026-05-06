@@ -62,6 +62,7 @@ interface UIState {
   desktopHistorySidebarOpen: boolean;
   mobileHistorySidebarOpen: boolean;
   isLogViewerOpen: boolean;
+  chatInputHeight: number;
 }
 
 interface UIActions {
@@ -72,6 +73,7 @@ interface UIActions {
   syncHistorySidebarForViewport: () => void;
   setIsLogViewerOpen: (v: boolean | ((p: boolean) => boolean)) => void;
   toggleHistorySidebar: () => void;
+  setChatInputHeight: (height: number) => void;
 }
 
 export const useUIStore = create<UIState & UIActions>((set, get) => ({
@@ -79,6 +81,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   isPreloadedMessagesModalOpen: false,
   ...buildInitialHistorySidebarState(),
   isLogViewerOpen: false,
+  chatInputHeight: 160,
 
   setIsSettingsModalOpen: (v) =>
     set((s) => ({
@@ -124,4 +127,5 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
       isLogViewerOpen: typeof v === 'function' ? v(s.isLogViewerOpen) : v,
     })),
   toggleHistorySidebar: () => get().setIsHistorySidebarOpen((s) => !s),
+  setChatInputHeight: (height) => set({ chatInputHeight: height }),
 }));

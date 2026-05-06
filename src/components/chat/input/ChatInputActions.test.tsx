@@ -3,7 +3,9 @@ import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChatStore } from '../../../stores/chatStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { createChatAreaProviderValue, createChatRuntimeValues } from '../../../test/chatAreaFixtures';
 import { createAppSettings } from '../../../test/factories';
+import { ChatRuntimeValuesProvider } from '../../layout/chat-runtime/ChatRuntimeContext';
 
 const attachmentMenuMock = vi.fn();
 const toolsMenuMock = vi.fn();
@@ -91,7 +93,7 @@ const baseProps = {
   onStartLiveCamera: vi.fn(),
   onStartLiveScreenShare: vi.fn(),
   onStopLiveVideo: vi.fn(),
-  liveVideoSource: null,
+  liveVideoSource: null as 'camera' | 'screen' | null,
   onFastSendMessage: vi.fn(),
   canQueueMessage: false,
   onQueueMessage: vi.fn(),
@@ -102,6 +104,18 @@ const baseProps = {
 describe('ChatInputActions', () => {
   const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
+
+  const renderActions = (props: Partial<typeof baseProps> = {}) => {
+    const providerValue = createChatAreaProviderValue();
+
+    act(() => {
+      renderer.root.render(
+        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+          <ChatInputActions {...baseProps} {...props} />
+        </ChatRuntimeValuesProvider>,
+      );
+    });
+  };
 
   const mockActionRowMeasurements = ({
     containerWidth,
@@ -185,9 +199,7 @@ describe('ChatInputActions', () => {
       isRealImagenModel: true,
     };
 
-    act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} />);
-    });
+    renderActions();
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }));
   });
@@ -199,9 +211,7 @@ describe('ChatInputActions', () => {
       isRealImagenModel: false,
     };
 
-    act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} />);
-    });
+    renderActions();
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
   });
@@ -212,9 +222,7 @@ describe('ChatInputActions', () => {
       isNativeAudioModel: true,
     };
 
-    act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} />);
-    });
+    renderActions();
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(expect.objectContaining({ disabled: false }));
   });
@@ -225,9 +233,7 @@ describe('ChatInputActions', () => {
       isNativeAudioModel: true,
     };
 
-    act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} isLiveConnected liveVideoSource="camera" />);
-    });
+    renderActions({ isLiveConnected: true, liveVideoSource: 'camera' });
 
     expect(liveControlsMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -247,9 +253,7 @@ describe('ChatInputActions', () => {
       appSettings: createAppSettings({ modelId: 'gemma-3-27b-it' }),
     });
 
-    act(() => {
-      renderer.root.render(<ChatInputActions {...baseProps} />);
-    });
+    renderActions();
 
     expect(toolsMenuMock).toHaveBeenCalledWith(expect.objectContaining({ currentModelId: 'gemma-3-27b-it' }));
     expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('isGemmaModel');
@@ -260,23 +264,15 @@ describe('ChatInputActions', () => {
   it('keeps auxiliary composer actions direct when the single action row has enough room', async () => {
     mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
 
-    act(() => {
-      useSettingsStore.setState({
-        appSettings: createAppSettings({
-          modelId: 'gemini-3.1-pro-preview',
-          showInputTranslationButton: true,
-          showInputPasteButton: true,
-          showInputClearButton: true,
-        }),
-      });
-      renderer.root.render(
-        <ChatInputActions
-          {...baseProps}
-          inputText="Translate or send this"
-          canQueueMessage
-        />,
-      );
+    useSettingsStore.setState({
+      appSettings: createAppSettings({
+        modelId: 'gemini-3.1-pro-preview',
+        showInputTranslationButton: true,
+        showInputPasteButton: true,
+        showInputClearButton: true,
+      }),
     });
+    renderActions({ inputText: 'Translate or send this', canQueueMessage: true });
     await waitForActionRowMeasurement();
 
     expect(utilityControlsMock).toHaveBeenCalledWith(
@@ -302,23 +298,15 @@ describe('ChatInputActions', () => {
   it('moves auxiliary composer actions into the more menu only when the direct row overflows', async () => {
     mockActionRowMeasurements({ containerWidth: 300, leftWidth: 88, rightWidth: 292 });
 
-    act(() => {
-      useSettingsStore.setState({
-        appSettings: createAppSettings({
-          modelId: 'gemini-3.1-pro-preview',
-          showInputTranslationButton: true,
-          showInputPasteButton: true,
-          showInputClearButton: true,
-        }),
-      });
-      renderer.root.render(
-        <ChatInputActions
-          {...baseProps}
-          inputText="Translate or send this"
-          canQueueMessage
-        />,
-      );
+    useSettingsStore.setState({
+      appSettings: createAppSettings({
+        modelId: 'gemini-3.1-pro-preview',
+        showInputTranslationButton: true,
+        showInputPasteButton: true,
+        showInputClearButton: true,
+      }),
     });
+    renderActions({ inputText: 'Translate or send this', canQueueMessage: true });
     await waitForActionRowMeasurement();
 
     expect(sendControlsMock).toHaveBeenCalledWith(

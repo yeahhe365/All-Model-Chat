@@ -79,11 +79,14 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
   const module = await import('./MessageList');
   const fixtureModule = await import('../../test/chatAreaFixtures');
   const i18nModule = await import('../../contexts/I18nContext');
+  const runtimeModule = await import('../layout/chat-runtime/ChatRuntimeContext');
 
   return {
     MessageList: module.MessageList,
     applyChatAreaProviderValue: fixtureModule.applyChatAreaProviderValue,
+    createChatRuntimeValues: fixtureModule.createChatRuntimeValues,
     I18nProvider: i18nModule.I18nProvider,
+    ChatRuntimeValuesProvider: runtimeModule.ChatRuntimeValuesProvider,
   };
 };
 
@@ -101,15 +104,19 @@ describe('MessageList preview chunking', () => {
 
   it('does not load the file preview modal module until the user opens a preview', async () => {
     const moduleLoadTracker = { count: 0 };
-    const { MessageList, applyChatAreaProviderValue, I18nProvider } = await loadMessageList(moduleLoadTracker);
+    const { MessageList, applyChatAreaProviderValue, createChatRuntimeValues, I18nProvider, ChatRuntimeValuesProvider } =
+      await loadMessageList(moduleLoadTracker);
+    const providerValue = createProviderValue();
 
     expect(moduleLoadTracker.count).toBe(0);
-    applyChatAreaProviderValue(createProviderValue());
+    applyChatAreaProviderValue(providerValue);
 
     act(() => {
       renderer.root.render(
         <I18nProvider>
-          <MessageList />
+          <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+            <MessageList />
+          </ChatRuntimeValuesProvider>
         </I18nProvider>,
       );
     });
