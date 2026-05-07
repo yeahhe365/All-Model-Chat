@@ -30,8 +30,6 @@ const DEFAULT_THOUGHT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = '
 const DEFAULT_OPENAI_COMPATIBLE_MODEL_ID = 'gpt-5.5';
 export const DEFAULT_OPENAI_COMPATIBLE_MODELS: ModelOption[] = [
   { id: DEFAULT_OPENAI_COMPATIBLE_MODEL_ID, name: 'GPT-5.5', isPinned: true },
-  { id: 'gpt-5.1', name: 'GPT-5.1', isPinned: true },
-  { id: 'gpt-4.1', name: 'GPT-4.1' },
 ];
 
 export const TRANSLATION_TARGET_LANGUAGE_OPTIONS: Array<{

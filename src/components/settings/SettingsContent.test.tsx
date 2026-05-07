@@ -258,8 +258,6 @@ describe('SettingsContent', () => {
     expect(mockModelsSection.lastProps!.availableModels).toBe(openAIModels);
     expect(mockModelsSection.lastProps!.defaultModels).toEqual([
       { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
-      { id: 'gpt-5.1', name: 'GPT-5.1', isPinned: true },
-      { id: 'gpt-4.1', name: 'GPT-4.1' },
     ]);
     expect(mockModelsSection.lastProps!.isOpenAICompatibleMode).toBe(true);
 
