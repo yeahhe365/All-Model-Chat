@@ -40,6 +40,12 @@ export const commonTranslations = {
   canvasHelperToggle: { en: 'Toggle Canvas', zh: '切换 Canvas' },
   pipEnter: { en: 'Enter Picture-in-Picture', zh: '进入画中画' },
   pipExit: { en: 'Exit Picture-in-Picture', zh: '退出画中画' },
+  pipPlaceholderTitle: { en: 'Chat in Picture-in-Picture', zh: '聊天已在画中画窗口打开' },
+  pipPlaceholderDescription: {
+    en: 'The chat is running in a separate window. Close it to bring the conversation back here.',
+    zh: '关闭该窗口可回到这里继续对话。',
+  },
+  pipPlaceholderClose: { en: 'Close PiP Window', zh: '关闭画中画窗口' },
   exportToCSV: { en: 'Export to CSV', zh: '导出为 CSV' },
   exportToExcel: { en: 'Export to Excel', zh: '导出为 Excel' },
 };

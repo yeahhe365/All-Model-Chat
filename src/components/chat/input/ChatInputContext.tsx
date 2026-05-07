@@ -19,6 +19,12 @@ export interface ChatInputContextValue extends ChatInputLogic {
 }
 
 export interface ChatInputToolbarContextValue {
+  appSettings: ChatInputLogic['chatInput']['appSettings'];
+  currentChatSettings: ChatInputLogic['chatInput']['currentChatSettings'];
+  capabilities: ChatInputLogic['capabilities'];
+  isLoading: boolean;
+  setCurrentChatSettings: ChatInputLogic['chatInput']['setCurrentChatSettings'];
+  onToggleQuadImages: ChatInputLogic['chatInput']['onToggleQuadImages'];
   showAddByIdInput: boolean;
   fileIdInput: string;
   setFileIdInput: (value: string) => void;
@@ -36,6 +42,8 @@ export interface ChatInputToolbarContextValue {
 }
 
 export interface ChatInputActionsContextValue {
+  currentModelId: string;
+  toolStates: ChatInputLogic['chatInput']['toolStates'];
   onAttachmentAction: (action: AttachmentAction) => void;
   disabled: boolean;
   onRecordButtonClick: () => void;
@@ -63,6 +71,10 @@ export interface ChatInputActionsContextValue {
   isNativeAudioModel: boolean;
   canAddYouTubeVideo: boolean;
   isLoading: boolean;
+  isEditing: boolean;
+  showInputTranslationButton: boolean;
+  showInputPasteButton: boolean;
+  showInputClearButton: boolean;
 }
 
 export interface ChatInputComposerStatusContextValue {
@@ -102,9 +114,5 @@ export const useChatInputActionsContext = () => {
 };
 
 export const useChatInputComposerStatusContext = () => {
-  return useRequiredContext(
-    ChatInputComposerStatusContext,
-    'useChatInputComposerStatusContext',
-    'ChatInputProvider',
-  );
+  return useRequiredContext(ChatInputComposerStatusContext, 'useChatInputComposerStatusContext', 'ChatInputProvider');
 };

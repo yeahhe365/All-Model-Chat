@@ -1,11 +1,10 @@
 import { act } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useChatStore } from '../../../stores/chatStore';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { createChatAreaProviderValue, createChatRuntimeValues } from '../../../test/chatAreaFixtures';
-import { createAppSettings } from '../../../test/factories';
-import { ChatRuntimeValuesProvider } from '../../layout/chat-runtime/ChatRuntimeContext';
+import {
+  createChatInputActionsContextValue,
+  createChatInputComposerStatusContextValue,
+} from '../../../test/chatInputContextFixtures';
 
 const attachmentMenuMock = vi.fn();
 const toolsMenuMock = vi.fn();
@@ -63,23 +62,20 @@ vi.mock('./actions/RecordControls', () => ({
   RecordControls: () => null,
 }));
 
-vi.mock('./actions/UtilityControls', async () => {
-  const { useChatInputActionsContext } =
-    await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
-  const { useSettingsStore } =
-    await vi.importActual<typeof import('../../../stores/settingsStore')>('../../../stores/settingsStore');
-
-  return {
-    UtilityControls: () => {
-      const { onToggleFullscreen } = useChatInputActionsContext();
-      const showTranslateButton = useSettingsStore(
-        (state) => state.appSettings.showInputTranslationButton ?? false,
-      );
-      utilityControlsMock({ showTranslateButton, onToggleFullscreen });
-      return <div data-testid="utility-controls" />;
-    },
-  };
-});
+vi.mock('./actions/UtilityControls', () => ({
+  UtilityControls: ({ actions }: { actions: Array<{ id: string; testId?: string; action: () => void }> }) => {
+    utilityControlsMock({ actions });
+    return (
+      <div data-testid="utility-controls">
+        {actions.map((action) => (
+          <button key={action.id} type="button" data-testid={action.testId} onClick={action.action}>
+            {action.id}
+          </button>
+        ))}
+      </div>
+    );
+  },
+}));
 
 vi.mock('./actions/SendControls', async () => {
   const { useChatInputComposerStatusContext } =
@@ -87,18 +83,13 @@ vi.mock('./actions/SendControls', async () => {
 
   return {
     SendControls: () => {
-      const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage } =
-        useChatInputComposerStatusContext();
+      const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage } = useChatInputComposerStatusContext();
       const props = { canSend, canQueueMessage, onFastSendMessage, onQueueMessage };
       sendControlsMock(props);
       return <div data-testid="send-controls" />;
     },
   };
 });
-
-vi.mock('../../../stores/modelCapabilitiesStore', () => ({
-  getCachedModelCapabilities: () => mockCapabilities.value,
-}));
 
 import {
   ChatInputActionsContext,
@@ -107,47 +98,6 @@ import {
   type ChatInputComposerStatusContextValue,
 } from './ChatInputContext';
 import { ChatInputActions } from './ChatInputActions';
-
-const baseActionsContext: ChatInputActionsContextValue = {
-  onAttachmentAction: vi.fn(),
-  disabled: false,
-  onRecordButtonClick: vi.fn(),
-  isRecording: false,
-  isMicInitializing: false,
-  isTranscribing: false,
-  onCancelRecording: vi.fn(),
-  isWaitingForUpload: false,
-  isTranslating: false,
-  onToggleFullscreen: vi.fn(),
-  isFullscreen: false,
-  onStartLiveSession: vi.fn(),
-  onDisconnectLiveSession: vi.fn(),
-  isLiveConnected: false,
-  isLiveMuted: false,
-  onToggleLiveMute: vi.fn(),
-  onStartLiveCamera: vi.fn(),
-  onStartLiveScreenShare: vi.fn(),
-  onStopLiveVideo: vi.fn(),
-  liveVideoSource: null,
-  onToggleToolAndFocus: vi.fn((toggle: () => void) => toggle()),
-  onCountTokens: vi.fn(),
-  isImageModel: false,
-  isRealImagenModel: false,
-  isNativeAudioModel: false,
-  canAddYouTubeVideo: false,
-  isLoading: false,
-};
-
-const baseComposerStatusContext: ChatInputComposerStatusContextValue = {
-  hasTrimmedInput: false,
-  canSend: true,
-  canQueueMessage: false,
-  onTranslate: vi.fn(),
-  onPasteFromClipboard: vi.fn(),
-  onClearInput: vi.fn(),
-  onFastSendMessage: vi.fn(),
-  onQueueMessage: vi.fn(),
-};
 
 type ActionRenderOverrides = Partial<ChatInputActionsContextValue> &
   Partial<ChatInputComposerStatusContextValue> & {
@@ -187,29 +137,26 @@ const splitRenderOverrides = (overrides: ActionRenderOverrides) => {
 describe('ChatInputActions', () => {
   const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
+  let lastActionsValue: ChatInputActionsContextValue;
 
   const renderActions = (props: ActionRenderOverrides = {}) => {
-    const providerValue = createChatAreaProviderValue();
     const { actionOverrides, composerOverrides } = splitRenderOverrides(props);
-    const actionsValue: ChatInputActionsContextValue = {
-      ...baseActionsContext,
+    const actionsValue = createChatInputActionsContextValue({
       isImageModel: mockCapabilities.value.isImagenModel,
       isRealImagenModel: mockCapabilities.value.isRealImagenModel,
       isNativeAudioModel: mockCapabilities.value.isNativeAudioModel,
       ...actionOverrides,
-    };
-    const composerStatusValue: ChatInputComposerStatusContextValue = {
-      ...baseComposerStatusContext,
+    });
+    const composerStatusValue = createChatInputComposerStatusContextValue({
       ...composerOverrides,
-    };
+    });
+    lastActionsValue = actionsValue;
 
     act(() => {
       renderer.root.render(
         <ChatInputActionsContext.Provider value={actionsValue}>
           <ChatInputComposerStatusContext.Provider value={composerStatusValue}>
-            <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
-              <ChatInputActions />
-            </ChatRuntimeValuesProvider>
+            <ChatInputActions />
           </ChatInputComposerStatusContext.Provider>
         </ChatInputActionsContext.Provider>,
       );
@@ -257,22 +204,6 @@ describe('ChatInputActions', () => {
   };
 
   beforeEach(() => {
-    useSettingsStore.setState({
-      appSettings: createAppSettings({
-        modelId: 'gemini-3.1-pro-preview',
-        showInputTranslationButton: false,
-        showInputPasteButton: true,
-        showInputClearButton: false,
-      }),
-    });
-    useChatStore.setState({
-      activeSessionId: null,
-      savedSessions: [],
-      activeMessages: [],
-      editingMessageId: null,
-      editMode: 'update',
-      loadingSessionIds: new Set(),
-    });
     mockCapabilities.value = {
       isImagenModel: false,
       isRealImagenModel: false,
@@ -337,22 +268,18 @@ describe('ChatInputActions', () => {
     expect(liveControlsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         isLiveConnected: true,
-        onStartLiveSession: baseActionsContext.onStartLiveSession,
-        onDisconnectLiveSession: baseActionsContext.onDisconnectLiveSession,
-        onStartLiveCamera: baseActionsContext.onStartLiveCamera,
-        onStartLiveScreenShare: baseActionsContext.onStartLiveScreenShare,
-        onStopLiveVideo: baseActionsContext.onStopLiveVideo,
+        onStartLiveSession: lastActionsValue.onStartLiveSession,
+        onDisconnectLiveSession: lastActionsValue.onDisconnectLiveSession,
+        onStartLiveCamera: lastActionsValue.onStartLiveCamera,
+        onStartLiveScreenShare: lastActionsValue.onStartLiveScreenShare,
+        onStopLiveVideo: lastActionsValue.onStopLiveVideo,
         liveVideoSource: 'camera',
       }),
     );
   });
 
   it('forwards only the current model id into the tools menu for capability derivation', () => {
-    useSettingsStore.setState({
-      appSettings: createAppSettings({ modelId: 'gemma-3-27b-it' }),
-    });
-
-    renderActions();
+    renderActions({ currentModelId: 'gemma-3-27b-it' });
 
     expect(toolsMenuMock).toHaveBeenCalledWith(expect.objectContaining({ currentModelId: 'gemma-3-27b-it' }));
     expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('isGemmaModel');
@@ -363,21 +290,23 @@ describe('ChatInputActions', () => {
   it('keeps auxiliary composer actions direct when the single action row has enough room', async () => {
     mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
 
-    useSettingsStore.setState({
-      appSettings: createAppSettings({
-        modelId: 'gemini-3.1-pro-preview',
-        showInputTranslationButton: true,
-        showInputPasteButton: true,
-        showInputClearButton: true,
-      }),
+    renderActions({
+      inputText: 'Translate or send this',
+      canQueueMessage: true,
+      showInputTranslationButton: true,
+      showInputPasteButton: true,
+      showInputClearButton: true,
     });
-    renderActions({ inputText: 'Translate or send this', canQueueMessage: true });
     await waitForActionRowMeasurement();
 
     expect(utilityControlsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        showTranslateButton: true,
-        onToggleFullscreen: baseActionsContext.onToggleFullscreen,
+        actions: expect.arrayContaining([
+          expect.objectContaining({ id: 'fullscreen', action: lastActionsValue.onToggleFullscreen }),
+          expect.objectContaining({ id: 'translate' }),
+          expect.objectContaining({ id: 'clear' }),
+          expect.objectContaining({ id: 'paste' }),
+        ]),
       }),
     );
     expect(sendControlsMock).toHaveBeenCalledWith(
@@ -397,15 +326,13 @@ describe('ChatInputActions', () => {
   it('moves auxiliary composer actions into the more menu only when the direct row overflows', async () => {
     mockActionRowMeasurements({ containerWidth: 300, leftWidth: 88, rightWidth: 292 });
 
-    useSettingsStore.setState({
-      appSettings: createAppSettings({
-        modelId: 'gemini-3.1-pro-preview',
-        showInputTranslationButton: true,
-        showInputPasteButton: true,
-        showInputClearButton: true,
-      }),
+    renderActions({
+      inputText: 'Translate or send this',
+      canQueueMessage: true,
+      showInputTranslationButton: true,
+      showInputPasteButton: true,
+      showInputClearButton: true,
     });
-    renderActions({ inputText: 'Translate or send this', canQueueMessage: true });
     await waitForActionRowMeasurement();
 
     expect(sendControlsMock).toHaveBeenCalledWith(

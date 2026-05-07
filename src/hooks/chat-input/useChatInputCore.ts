@@ -56,6 +56,7 @@ export const useChatInputCore = () => {
     liveClientFunctions,
     onToggleBBox,
     onToggleGuide,
+    onToggleQuadImages,
   } = useChatInputRuntime();
   const { activeSessionId, currentChatSettings, isLoading } = useChatState(appSettings);
   const isEditing = !!editingMessageId;
@@ -120,6 +121,7 @@ export const useChatInputCore = () => {
     isBBoxModeActive: !isOpenAICompatibleMode && isBboxSystemInstruction(currentChatSettings.systemInstruction),
     onToggleGuide,
     isGuideModeActive: !isOpenAICompatibleMode && isHdGuideSystemInstruction(currentChatSettings.systemInstruction),
+    onToggleQuadImages,
     themeId,
   };
 

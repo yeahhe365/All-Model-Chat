@@ -1,85 +1,20 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { ClipboardPaste, Eraser, Ellipsis, Languages, Loader2, Maximize2, Minimize2 } from 'lucide-react';
+import { Ellipsis } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { usePortaledMenu } from '../../../../hooks/ui/usePortaledMenu';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
-import { useSettingsStore } from '../../../../stores/settingsStore';
-import { useChatStore } from '../../../../stores/chatStore';
-import { useChatInputActionsContext, useChatInputComposerStatusContext } from '../ChatInputContext';
+import type { ComposerAuxiliaryAction } from './useComposerAuxiliaryActions';
 
-export const ComposerMoreMenu: React.FC = () => {
-  const {
-    isFullscreen,
-    onToggleFullscreen,
-    isTranslating,
-    disabled,
-    isLoading,
-    isWaitingForUpload,
-    isTranscribing,
-    isMicInitializing,
-    isNativeAudioModel,
-  } = useChatInputActionsContext();
-  const { hasTrimmedInput, onTranslate, onPasteFromClipboard, onClearInput } = useChatInputComposerStatusContext();
-  const appSettings = useSettingsStore((state) => state.appSettings);
-  const isEditing = !!useChatStore((state) => state.editingMessageId);
+export const ComposerMoreMenu: React.FC<{ actions: ComposerAuxiliaryAction[]; disabled?: boolean }> = ({
+  actions,
+  disabled = false,
+}) => {
   const { t } = useI18n();
   const { isOpen, menuPosition, containerRef, buttonRef, menuRef, targetWindow, closeMenu, toggleMenu } =
     usePortaledMenu({ menuWidth: 224 });
 
-  const showTranslateButton = !isNativeAudioModel && (appSettings.showInputTranslationButton ?? false);
-  const showInputPasteButton = appSettings.showInputPasteButton ?? true;
-  const showInputClearButton = appSettings.showInputClearButton ?? false;
-  const canTranslate = hasTrimmedInput && !isEditing && !isTranscribing && !isMicInitializing;
-  const commonBlocked = disabled || isLoading || isWaitingForUpload;
-  const items = [
-    !isNativeAudioModel && onToggleFullscreen
-      ? {
-          key: 'fullscreen',
-          label: isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand'),
-          icon: isFullscreen ? <Minimize2 size={17} strokeWidth={2} /> : <Maximize2 size={17} strokeWidth={2} />,
-          disabled,
-          action: onToggleFullscreen,
-          testId: 'fullscreen-button',
-        }
-      : null,
-    showTranslateButton
-      ? {
-          key: 'translate',
-          label: isTranslating ? t('translating_button_title') : t('translate_button_title'),
-          icon: isTranslating ? (
-            <Loader2 size={17} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
-          ) : (
-            <Languages size={17} strokeWidth={2} />
-          ),
-          disabled: !canTranslate || isTranslating,
-          action: onTranslate,
-          testId: 'translate-button',
-        }
-      : null,
-    showInputClearButton && onClearInput
-      ? {
-          key: 'clear',
-          label: t('clearInput_title'),
-          icon: <Eraser size={17} strokeWidth={2} />,
-          disabled: commonBlocked,
-          action: onClearInput,
-          testId: 'clear-input-button',
-        }
-      : null,
-    showInputPasteButton && onPasteFromClipboard
-      ? {
-          key: 'paste',
-          label: t('pasteClipboard_title'),
-          icon: <ClipboardPaste size={17} strokeWidth={2} />,
-          disabled: commonBlocked,
-          action: onPasteFromClipboard,
-          testId: 'paste-button',
-        }
-      : null,
-  ].filter((item): item is NonNullable<typeof item> => item !== null);
-
-  if (items.length === 0) {
+  if (actions.length === 0) {
     return null;
   }
 
@@ -89,7 +24,7 @@ export const ComposerMoreMenu: React.FC = () => {
         ref={buttonRef}
         type="button"
         onClick={toggleMenu}
-        disabled={disabled && items.every((item) => item.disabled)}
+        disabled={disabled}
         className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' : ''}`}
         aria-label={t('composer_more_actions', 'More input actions')}
         title={t('composer_more_actions', 'More input actions')}
@@ -108,9 +43,9 @@ export const ComposerMoreMenu: React.FC = () => {
             style={menuPosition}
             role="menu"
           >
-            {items.map((item) => (
+            {actions.map((item) => (
               <button
-                key={item.key}
+                key={item.id}
                 type="button"
                 role="menuitem"
                 onClick={(event) => {

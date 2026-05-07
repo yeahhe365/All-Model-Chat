@@ -2,10 +2,8 @@ import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChatStore } from '../../../stores/chatStore';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { createChatAreaProviderValue, createChatRuntimeValues } from '../../../test/chatAreaFixtures';
-import { createAppSettings } from '../../../test/factories';
-import { ChatRuntimeValuesProvider } from '../../layout/chat-runtime/ChatRuntimeContext';
+import { createChatInputToolbarContextValue } from '../../../test/chatInputContextFixtures';
+import { getModelCapabilities } from '../../../utils/modelHelpers';
 
 const personGenerationSelectorMock = vi.fn();
 const mockCapabilities = vi.hoisted(() => ({
@@ -34,51 +32,31 @@ vi.mock('./toolbar/PersonGenerationSelector', () => ({
     return <div data-testid="person-generation-selector" />;
   },
 }));
-vi.mock('../../../stores/modelCapabilitiesStore', () => ({
-  getCachedModelCapabilities: () => mockCapabilities.value,
-}));
-
-import { ChatInputToolbarContext, type ChatInputToolbarContextValue } from './ChatInputContext';
+import { ChatInputToolbarContext } from './ChatInputContext';
 import { ChatInputToolbar } from './ChatInputToolbar';
-
-const toolbarContextValue: ChatInputToolbarContextValue = {
-  showAddByIdInput: false,
-  fileIdInput: '',
-  setFileIdInput: vi.fn(),
-  onAddFileByIdSubmit: vi.fn(),
-  onCancelAddById: vi.fn(),
-  isAddingById: false,
-  showAddByUrlInput: false,
-  urlInput: '',
-  setUrlInput: vi.fn(),
-  onAddUrlSubmit: vi.fn(),
-  onCancelAddUrl: vi.fn(),
-  isAddingByUrl: false,
-  onEditTtsContext: vi.fn(),
-};
 
 describe('ChatInputToolbar', () => {
   const renderer = setupTestRenderer();
 
   const renderToolbar = () => {
-    const providerValue = createChatAreaProviderValue();
-
     act(() => {
       renderer.root.render(
-        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
-          <ChatInputToolbarContext.Provider value={toolbarContextValue}>
-            <ChatInputToolbar />
-          </ChatInputToolbarContext.Provider>
-        </ChatRuntimeValuesProvider>,
+        <ChatInputToolbarContext.Provider
+          value={createChatInputToolbarContextValue({
+            capabilities: {
+              ...getModelCapabilities('imagen-test-model'),
+              ...mockCapabilities.value,
+            },
+          })}
+        >
+          <ChatInputToolbar />
+        </ChatInputToolbarContext.Provider>,
       );
     });
   };
 
   beforeEach(() => {
     personGenerationSelectorMock.mockClear();
-    useSettingsStore.setState({
-      appSettings: createAppSettings({ modelId: 'imagen-test-model' }),
-    });
     useChatStore.setState({
       activeSessionId: null,
       savedSessions: [],

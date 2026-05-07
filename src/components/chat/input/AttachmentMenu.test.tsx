@@ -2,7 +2,8 @@ import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { setupStoreStateReset } from '../../../test/storeTestUtils';
-import { ChatInputActionsContext, type ChatInputActionsContextValue } from './ChatInputContext';
+import { createChatInputActionsContextValue } from '../../../test/chatInputContextFixtures';
+import { ChatInputActionsContext } from './ChatInputContext';
 
 vi.mock('../../../services/logService', async () => {
   const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
@@ -25,39 +26,6 @@ vi.mock('../../../hooks/ui/usePortaledMenu', () => ({
 
 import { AttachmentMenu } from './AttachmentMenu';
 
-const createActionsContextValue = (
-  overrides: Partial<ChatInputActionsContextValue> = {},
-): ChatInputActionsContextValue => ({
-  onAttachmentAction: vi.fn(),
-  disabled: false,
-  onRecordButtonClick: vi.fn(),
-  isRecording: false,
-  isMicInitializing: false,
-  isTranscribing: false,
-  onCancelRecording: vi.fn(),
-  isWaitingForUpload: false,
-  isTranslating: false,
-  onToggleFullscreen: vi.fn(),
-  isFullscreen: false,
-  onStartLiveSession: vi.fn(),
-  onDisconnectLiveSession: vi.fn(),
-  isLiveConnected: false,
-  isLiveMuted: false,
-  onToggleLiveMute: vi.fn(),
-  onStartLiveCamera: vi.fn(),
-  onStartLiveScreenShare: vi.fn(),
-  onStopLiveVideo: vi.fn(),
-  liveVideoSource: null,
-  onToggleToolAndFocus: vi.fn(),
-  onCountTokens: vi.fn(),
-  isImageModel: false,
-  isRealImagenModel: false,
-  isNativeAudioModel: false,
-  canAddYouTubeVideo: false,
-  isLoading: false,
-  ...overrides,
-});
-
 describe('AttachmentMenu', () => {
   const renderer = setupTestRenderer({ providers: { language: 'en' } });
   setupStoreStateReset();
@@ -68,7 +36,7 @@ describe('AttachmentMenu', () => {
     act(() => {
       renderer.root.render(
         <ChatInputActionsContext.Provider
-          value={createActionsContextValue({ onAttachmentAction: onAction, canAddYouTubeVideo: true })}
+          value={createChatInputActionsContextValue({ onAttachmentAction: onAction, canAddYouTubeVideo: true })}
         >
           <AttachmentMenu />
         </ChatInputActionsContext.Provider>,
@@ -91,7 +59,7 @@ describe('AttachmentMenu', () => {
   it('shows only image-relevant actions for Gemini image models', () => {
     act(() => {
       renderer.root.render(
-        <ChatInputActionsContext.Provider value={createActionsContextValue({ isImageModel: true })}>
+        <ChatInputActionsContext.Provider value={createChatInputActionsContextValue({ isImageModel: true })}>
           <AttachmentMenu />
         </ChatInputActionsContext.Provider>,
       );

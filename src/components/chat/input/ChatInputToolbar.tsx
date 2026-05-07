@@ -9,15 +9,17 @@ import { QuadImageToggle } from './toolbar/QuadImageToggle';
 import { TtsVoiceSelector } from './toolbar/TtsVoiceSelector';
 import { MediaResolutionSelector } from './toolbar/MediaResolutionSelector';
 import { Clapperboard } from 'lucide-react';
-import { useChatInputRuntime } from '../../layout/chat-runtime/ChatRuntimeContext';
 import { useChatStore } from '../../../stores/chatStore';
-import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { useChatState } from '../../../hooks/chat/useChatState';
 import { useChatInputToolbarContext } from './ChatInputContext';
 
 const ChatInputToolbarComponent: React.FC = () => {
   const {
+    appSettings,
+    currentChatSettings,
+    capabilities,
+    isLoading,
+    setCurrentChatSettings,
+    onToggleQuadImages,
     showAddByIdInput,
     fileIdInput,
     setFileIdInput,
@@ -33,9 +35,6 @@ const ChatInputToolbarComponent: React.FC = () => {
     ttsContext,
     onEditTtsContext,
   } = useChatInputToolbarContext();
-  const appSettings = useSettingsStore((state) => state.appSettings);
-  const { currentChatSettings, isLoading } = useChatState(appSettings);
-  const capabilities = getCachedModelCapabilities(currentChatSettings.modelId);
   const {
     isImagenModel,
     isGemini3ImageModel,
@@ -54,7 +53,6 @@ const ChatInputToolbarComponent: React.FC = () => {
   const personGeneration = useChatStore((state) => state.personGeneration);
   const setPersonGeneration = useChatStore((state) => state.setPersonGeneration);
   const fileError = useChatStore((state) => state.appFileError);
-  const { onToggleQuadImages, setCurrentChatSettings } = useChatInputRuntime();
   const ttsVoice = currentChatSettings.ttsVoice;
   const mediaResolution = currentChatSettings.mediaResolution;
   const generateQuadImages = appSettings.generateQuadImages ?? false;

@@ -102,6 +102,12 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const toolbarValue = useMemo<ChatInputToolbarContextValue>(
     () => ({
+      appSettings: logic.chatInput.appSettings,
+      currentChatSettings: logic.chatInput.currentChatSettings,
+      capabilities: logic.capabilities,
+      isLoading: logic.chatInput.isLoading,
+      setCurrentChatSettings: logic.chatInput.setCurrentChatSettings,
+      onToggleQuadImages: logic.chatInput.onToggleQuadImages,
       showAddByIdInput: logic.modalsState.showAddByIdInput,
       fileIdInput: inputState.fileIdInput,
       setFileIdInput: inputState.setFileIdInput,
@@ -118,6 +124,12 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       onEditTtsContext,
     }),
     [
+      logic.capabilities,
+      logic.chatInput.appSettings,
+      logic.chatInput.currentChatSettings,
+      logic.chatInput.isLoading,
+      logic.chatInput.onToggleQuadImages,
+      logic.chatInput.setCurrentChatSettings,
       inputState.fileIdInput,
       inputState.isAddingById,
       inputState.isAddingByUrl,
@@ -137,6 +149,8 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const actionsValue = useMemo<ChatInputActionsContextValue>(
     () => ({
+      currentModelId: logic.chatInput.currentChatSettings.modelId,
+      toolStates: logic.chatInput.toolStates,
       onAttachmentAction,
       disabled: actionDisabled,
       onRecordButtonClick,
@@ -164,6 +178,10 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isNativeAudioModel: logic.capabilities.isNativeAudioModel || false,
       canAddYouTubeVideo: !!logic.capabilities.permissions?.canUseYouTubeUrl,
       isLoading: logic.chatInput.isLoading,
+      isEditing: logic.chatInput.isEditing,
+      showInputTranslationButton: logic.chatInput.appSettings.showInputTranslationButton ?? false,
+      showInputPasteButton: logic.chatInput.appSettings.showInputPasteButton ?? true,
+      showInputClearButton: logic.chatInput.appSettings.showInputClearButton ?? false,
     }),
     [
       actionDisabled,
@@ -177,7 +195,13 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       logic.capabilities.isNativeAudioModel,
       logic.capabilities.isRealImagenModel,
       logic.capabilities.permissions?.canUseYouTubeUrl,
+      logic.chatInput.appSettings.showInputClearButton,
+      logic.chatInput.appSettings.showInputPasteButton,
+      logic.chatInput.appSettings.showInputTranslationButton,
+      logic.chatInput.currentChatSettings.modelId,
+      logic.chatInput.isEditing,
       logic.chatInput.isLoading,
+      logic.chatInput.toolStates,
       onAttachmentAction,
       onCancelRecording,
       onCountTokens,

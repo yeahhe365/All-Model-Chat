@@ -108,6 +108,41 @@ function buildDefaultSettingsState() {
   };
 }
 
+function buildLoadedAppSettings(
+  storedSettings: AppSettings | null | undefined,
+  preloadOverrides: Partial<AppSettings> | null,
+) {
+  const appSettings = sanitizeAppSettings({
+    ...getDefaultAppSettings(),
+    ...(storedSettings ?? {}),
+    ...(preloadOverrides ?? {}),
+  });
+
+  if (storedSettings?.filesApiConfig) {
+    appSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
+  }
+
+  if (preloadOverrides?.filesApiConfig) {
+    appSettings.filesApiConfig = {
+      ...(appSettings.filesApiConfig ?? DEFAULT_FILES_API_CONFIG),
+      ...preloadOverrides.filesApiConfig,
+    };
+  }
+
+  return appSettings;
+}
+
+function persistLoadedPreloadOverrides(newSettings: AppSettings, preloadOverrides: Partial<AppSettings> | null) {
+  if (!preloadOverrides) {
+    return;
+  }
+
+  dbService
+    .setAppSettings(newSettings)
+    .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
+    .catch((e) => logService.error('Failed to save settings', { error: e }));
+}
+
 export const useSettingsStore = create<SettingsState & SettingsActions>((set) => ({
   ...buildDefaultSettingsState(),
   isSettingsLoaded: false,
@@ -148,63 +183,18 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
 
   loadSettings: async () => {
     try {
-      const defaultSettings = getDefaultAppSettings();
       const storedSettings = await dbService.getAppSettings();
       const preloadOverrides = useSettingsStore.getState().pendingPreloadSettingsOverrides;
+      const newSettings = buildLoadedAppSettings(storedSettings, preloadOverrides);
 
-      if (storedSettings) {
-        const newSettings = sanitizeAppSettings({
-          ...defaultSettings,
-          ...storedSettings,
-          ...(preloadOverrides ?? {}),
-        });
-        if (storedSettings.filesApiConfig) {
-          newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
-        }
-        if (preloadOverrides?.filesApiConfig) {
-          newSettings.filesApiConfig = {
-            ...newSettings.filesApiConfig,
-            ...preloadOverrides.filesApiConfig,
-          };
-        }
-        set({
-          appSettings: newSettings,
-          currentTheme: computeTheme(newSettings.themeId),
-          language: resolveLanguage(newSettings.language),
-          isSettingsLoaded: true,
-          pendingPreloadSettingsOverrides: null,
-        });
-        if (preloadOverrides) {
-          dbService
-            .setAppSettings(newSettings)
-            .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
-            .catch((e) => logService.error('Failed to save settings', { error: e }));
-        }
-      } else {
-        const newSettings = sanitizeAppSettings({
-          ...defaultSettings,
-          ...(preloadOverrides ?? {}),
-        });
-        if (preloadOverrides?.filesApiConfig) {
-          newSettings.filesApiConfig = {
-            ...DEFAULT_FILES_API_CONFIG,
-            ...preloadOverrides.filesApiConfig,
-          };
-        }
-        set({
-          appSettings: newSettings,
-          currentTheme: computeTheme(newSettings.themeId),
-          language: resolveLanguage(newSettings.language),
-          isSettingsLoaded: true,
-          pendingPreloadSettingsOverrides: null,
-        });
-        if (preloadOverrides) {
-          dbService
-            .setAppSettings(newSettings)
-            .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
-            .catch((e) => logService.error('Failed to save settings', { error: e }));
-        }
-      }
+      set({
+        appSettings: newSettings,
+        currentTheme: computeTheme(newSettings.themeId),
+        language: resolveLanguage(newSettings.language),
+        isSettingsLoaded: true,
+        pendingPreloadSettingsOverrides: null,
+      });
+      persistLoadedPreloadOverrides(newSettings, preloadOverrides);
     } catch (error) {
       logService.error('Failed to load settings from IndexedDB', { error });
       set({ isSettingsLoaded: true });

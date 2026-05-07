@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ClipboardPaste, Eraser } from 'lucide-react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
 import { WebSearchToggle } from './actions/WebSearchToggle';
@@ -8,13 +7,7 @@ import { RecordControls } from './actions/RecordControls';
 import { UtilityControls } from './actions/UtilityControls';
 import { SendControls } from './actions/SendControls';
 import { ComposerMoreMenu } from './actions/ComposerMoreMenu';
-import { useI18n } from '../../../contexts/I18nContext';
-import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
-import { useChatInputRuntime } from '../../layout/chat-runtime/ChatRuntimeContext';
-import { useChatStore } from '../../../stores/chatStore';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { useChatState } from '../../../hooks/chat/useChatState';
-import { useChatInputToolStates } from '../../../hooks/chat-input/useChatInputToolStates';
+import { useComposerAuxiliaryActions } from './actions/useComposerAuxiliaryActions';
 import { useChatInputActionsContext, useChatInputComposerStatusContext } from './ChatInputContext';
 
 const ACTION_ROW_GAP_PX = 8;
@@ -34,23 +27,12 @@ const ChatInputActionsComponent: React.FC = () => {
     isNativeAudioModel,
     onToggleToolAndFocus,
     onCountTokens,
-  } = useChatInputActionsContext();
-  const {
-    canQueueMessage,
-    onPasteFromClipboard,
-    onClearInput,
-  } = useChatInputComposerStatusContext();
-  const { t } = useI18n();
-  const appSettings = useSettingsStore((state) => state.appSettings);
-  const { currentChatSettings, isLoading } = useChatState(appSettings);
-  const currentModelId = currentChatSettings.modelId;
-  const isEditing = !!useChatStore((state) => state.editingMessageId);
-  const { onStopGenerating } = useChatInputRuntime();
-  const toolStates = useChatInputToolStates({
-    currentChatSettings,
+    currentModelId,
+    toolStates,
     isLoading,
-    onStopGenerating,
-  });
+    isEditing,
+  } = useChatInputActionsContext();
+  const { canQueueMessage } = useChatInputComposerStatusContext();
   const focusedToolStates = useMemo(
     () => ({
       googleSearch: {
@@ -73,7 +55,9 @@ const ChatInputActionsComponent: React.FC = () => {
       },
       urlContext: {
         isEnabled: !!toolStates.urlContext?.isEnabled,
-        onToggle: toolStates.urlContext?.onToggle ? () => onToggleToolAndFocus(toolStates.urlContext!.onToggle!) : undefined,
+        onToggle: toolStates.urlContext?.onToggle
+          ? () => onToggleToolAndFocus(toolStates.urlContext!.onToggle!)
+          : undefined,
       },
       deepSearch: {
         isEnabled: !!toolStates.deepSearch?.isEnabled,
@@ -90,14 +74,12 @@ const ChatInputActionsComponent: React.FC = () => {
     }),
     [onCountTokens],
   );
-  const showInputTranslationButton = appSettings.showInputTranslationButton ?? false;
-  const showInputPasteButton = appSettings.showInputPasteButton ?? true;
-  const showInputClearButton = appSettings.showInputClearButton ?? false;
-  const canUseInputUtility = !disabled && !isLoading && !isWaitingForUpload;
-  const showClearButton = showInputClearButton;
-  const showPasteButton = showInputPasteButton;
-  const hasComposerMoreActions =
-    (!isNativeAudioModel && (onToggleFullscreen || showInputTranslationButton)) || showClearButton || showPasteButton;
+  const auxiliaryActions = useComposerAuxiliaryActions();
+  const auxiliaryActionSignature = useMemo(
+    () => auxiliaryActions.map((action) => `${action.id}:${action.disabled}`).join('|'),
+    [auxiliaryActions],
+  );
+  const hasComposerMoreActions = auxiliaryActions.length > 0;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const leftActionsRef = useRef<HTMLDivElement | null>(null);
   const rightActionsRef = useRef<HTMLDivElement | null>(null);
@@ -109,9 +91,7 @@ const ChatInputActionsComponent: React.FC = () => {
         isNativeAudioModel,
         isLiveConnected,
         !!onToggleFullscreen,
-        showInputTranslationButton,
-        showClearButton,
-        showPasteButton,
+        auxiliaryActionSignature,
         isLoading,
         isEditing,
         isWaitingForUpload,
@@ -126,9 +106,7 @@ const ChatInputActionsComponent: React.FC = () => {
       isNativeAudioModel,
       isWaitingForUpload,
       onToggleFullscreen,
-      showClearButton,
-      showInputTranslationButton,
-      showPasteButton,
+      auxiliaryActionSignature,
     ],
   );
   const [auxiliaryActionCollapseState, setAuxiliaryActionCollapseState] = useState<AuxiliaryActionCollapseState>({
@@ -210,46 +188,6 @@ const ChatInputActionsComponent: React.FC = () => {
     return () => resizeObserver.disconnect();
   }, [measureActionRow]);
 
-  const renderDesktopPasteClearControls = () => (
-    <>
-      {showClearButton && (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onClearInput();
-          }}
-          className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
-          aria-label={t('clearInput_aria')}
-          title={t('clearInput_title')}
-          data-testid="clear-input-button"
-          disabled={!canUseInputUtility}
-        >
-          <Eraser size={18} strokeWidth={2} />
-        </button>
-      )}
-
-      {showPasteButton && (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onPasteFromClipboard();
-          }}
-          className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
-          aria-label={t('pasteClipboard_aria')}
-          title={t('pasteClipboard_title')}
-          data-testid="paste-button"
-          disabled={!canUseInputUtility}
-        >
-          <ClipboardPaste size={18} strokeWidth={2} />
-        </button>
-      )}
-    </>
-  );
-
   return (
     <div
       ref={rootRef}
@@ -284,23 +222,20 @@ const ChatInputActionsComponent: React.FC = () => {
         data-testid="chat-input-actions-right"
         className="flex min-w-0 flex-shrink-0 items-center gap-1.5 sm:gap-3"
       >
-        {!isLiveConnected && !isNativeAudioModel && (
-          <RecordControls />
-        )}
+        {!isLiveConnected && !isNativeAudioModel && <RecordControls />}
 
-        {!isNativeAudioModel && !showAuxiliaryActionsInMenu && (
+        {!showAuxiliaryActionsInMenu && auxiliaryActions.length > 0 && (
           <div className="flex items-center gap-2 sm:gap-3">
-            <UtilityControls />
+            <UtilityControls actions={auxiliaryActions} />
           </div>
-        )}
-
-        {!showAuxiliaryActionsInMenu && (showClearButton || showPasteButton) && (
-          <div className="flex items-center gap-2 sm:gap-3">{renderDesktopPasteClearControls()}</div>
         )}
 
         {showAuxiliaryActionsInMenu && (
           <div>
-            <ComposerMoreMenu />
+            <ComposerMoreMenu
+              actions={auxiliaryActions}
+              disabled={disabled && auxiliaryActions.every((action) => action.disabled)}
+            />
           </div>
         )}
 
