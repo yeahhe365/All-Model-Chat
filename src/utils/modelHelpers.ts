@@ -289,7 +289,7 @@ type SwitchableModelSettings = CachedModelSettings & {
   thinkingBudget: number;
 };
 
-export const getCachedModelSettings = (modelId: string): CachedModelSettings | undefined => {
+const getCachedModelSettings = (modelId: string): CachedModelSettings | undefined => {
   try {
     const cache = JSON.parse(localStorage.getItem(MODEL_SETTINGS_CACHE_KEY) || '{}');
     return cache[modelId];
@@ -298,7 +298,7 @@ export const getCachedModelSettings = (modelId: string): CachedModelSettings | u
   }
 };
 
-export const cacheModelSettings = (modelId: string, settings: CachedModelSettings) => {
+const cacheModelSettings = (modelId: string, settings: CachedModelSettings) => {
   if (!modelId) return;
   try {
     const cache = JSON.parse(localStorage.getItem(MODEL_SETTINGS_CACHE_KEY) || '{}');
