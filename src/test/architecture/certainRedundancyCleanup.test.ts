@@ -453,6 +453,32 @@ describe('certain redundancy cleanup guards', () => {
     expect(messageUpdatesSource).toContain('updateMessageInActiveSession');
   });
 
+  it('routes lightweight frontend persistence through shared persisted stores', () => {
+    const chatInputStateSource = readProjectFile('src/hooks/chat-input/useChatInputState.ts');
+    const settingsLogicSource = readProjectFile('src/hooks/features/useSettingsLogic.ts');
+    const useModelsSource = readProjectFile('src/hooks/core/useModels.ts');
+    const uiStoreSource = readProjectFile('src/stores/uiStore.ts');
+    const modelHelpersSource = readProjectFile('src/utils/modelHelpers.ts');
+
+    expect(chatInputStateSource).toContain('useChatDraftStore');
+    expect(settingsLogicSource).toContain('useSettingsUiStore');
+    expect(useModelsSource).toContain('useModelPreferencesStore');
+    expect(uiStoreSource).toContain('persistentStorage');
+    expect(modelHelpersSource).toContain('useModelPreferencesStore');
+
+    for (const [relativePath, source] of [
+      ['src/hooks/chat-input/useChatInputState.ts', chatInputStateSource],
+      ['src/hooks/features/useSettingsLogic.ts', settingsLogicSource],
+      ['src/hooks/core/useModels.ts', useModelsSource],
+      ['src/stores/uiStore.ts', uiStoreSource],
+      ['src/utils/modelHelpers.ts', modelHelpersSource],
+    ] as const) {
+      expect(source, relativePath).not.toContain('localStorage.');
+      expect(source, relativePath).not.toContain("addEventListener('storage'");
+      expect(source, relativePath).not.toContain('new StorageEvent');
+    }
+  });
+
   it('keeps React act environment configuration centralized in test setup', () => {
     const testFiles = listProjectSourceFiles('src').filter(
       (relativePath) =>

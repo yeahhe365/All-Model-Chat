@@ -431,6 +431,49 @@ describe('SettingsContent', () => {
     expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'gpt-5.5');
   });
 
+  it('passes OpenAI-compatible models into Tab cycle shortcut settings when the provider is enabled', () => {
+    act(() => {
+      renderer.root.render(
+        <SettingsContent
+          activeTab="shortcuts"
+          currentSettings={{
+            ...DEFAULT_APP_SETTINGS,
+            isOpenAICompatibleApiEnabled: true,
+            apiMode: 'openai-compatible',
+            openaiCompatibleModelId: 'gpt-5.5',
+            openaiCompatibleModels: [
+              { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+              { id: 'gpt-4.1', name: 'GPT-4.1' },
+            ],
+          }}
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }]}
+          updateSetting={vi.fn()}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+        />,
+      );
+    });
+
+    expect(mockShortcutsSection.lastProps!.availableModels).toEqual([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true, apiMode: 'openai-compatible' },
+      { id: 'gpt-4.1', name: 'GPT-4.1', apiMode: 'openai-compatible' },
+    ]);
+  });
+
   it('does not render the removed model behavior section when the obsolete tab is requested', () => {
     act(() => {
       renderer.root.render(
@@ -594,6 +637,8 @@ describe('SettingsContent', () => {
     });
 
     expect(renderer.container.querySelector('[data-testid="shortcuts-section"]')).not.toBeNull();
-    expect(mockShortcutsSection.lastProps!.availableModels).toBe(availableModels);
+    expect(mockShortcutsSection.lastProps!.availableModels).toEqual([
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', apiMode: 'gemini-native' },
+    ]);
   });
 });

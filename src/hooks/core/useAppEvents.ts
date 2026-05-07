@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { AppSettings, ChatSettings, ModelOption } from '../../types';
 import { logService } from '../../services/logService';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
@@ -8,9 +8,11 @@ import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
 import { loadRegisterSW } from '../../pwa/loadRegisterSw';
 import { getTabCycleModelIds } from '../../utils/modelCatalog';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 interface AppEventsProps {
   appSettings: AppSettings;
+  setAppSettings: Dispatch<SetStateAction<AppSettings>>;
   startNewChat: () => void;
   currentChatSettings: ChatSettings;
   availableModels: ModelOption[];
@@ -25,6 +27,7 @@ interface AppEventsProps {
 
 export const useAppEvents = ({
   appSettings,
+  setAppSettings,
   startNewChat,
   currentChatSettings,
   availableModels,
@@ -274,7 +277,10 @@ export const useAppEvents = ({
         const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
         if (isChatTextareaFocused || !isGenerallyInputFocused) {
           event.preventDefault();
-          const currentModelId = currentChatSettings.modelId;
+          const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
+          const currentModelId = isOpenAICompatibleMode
+            ? appSettings.openaiCompatibleModelId
+            : currentChatSettings.modelId;
           const cycleModels = getTabCycleModelIds(availableModels, appSettings.tabModelCycleIds);
           if (cycleModels.length === 0) {
             return;
@@ -284,7 +290,25 @@ export const useAppEvents = ({
           if (currentIndex === -1) nextIndex = 0;
           else nextIndex = (currentIndex + 1) % cycleModels.length;
           const newModelId = cycleModels[nextIndex];
-          if (newModelId) handleSelectModelInHeader(newModelId);
+          if (newModelId) {
+            const targetModel = availableModels.find((model) => model.id === newModelId);
+            if (appSettings.isOpenAICompatibleApiEnabled === true && targetModel?.apiMode === 'openai-compatible') {
+              setAppSettings((prev) => ({
+                ...prev,
+                apiMode: 'openai-compatible',
+                openaiCompatibleModelId: newModelId,
+              }));
+              return;
+            }
+
+            if (isOpenAICompatibleMode) {
+              setAppSettings((prev) => ({
+                ...prev,
+                apiMode: 'gemini-native',
+              }));
+            }
+            handleSelectModelInHeader(newModelId);
+          }
         }
       }
     };
@@ -302,6 +326,7 @@ export const useAppEvents = ({
     };
   }, [
     appSettings,
+    setAppSettings,
     startNewChat,
     currentChatSettings.modelId,
     availableModels,

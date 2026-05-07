@@ -20,12 +20,20 @@ const mockCapabilities = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('./AttachmentMenu', () => ({
-  AttachmentMenu: (props: { disabled: boolean }) => {
-    attachmentMenuMock(props);
-    return <div data-testid="attachment-menu" data-disabled={String(props.disabled)} />;
-  },
-}));
+vi.mock('./AttachmentMenu', async () => {
+  const { useChatInputActionsContext } =
+    await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
+
+  return {
+    AttachmentMenu: () => {
+      const { disabled, isRealImagenModel } = useChatInputActionsContext();
+      const props = { disabled: disabled || isRealImagenModel };
+
+      attachmentMenuMock(props);
+      return <div data-testid="attachment-menu" data-disabled={String(props.disabled)} />;
+    },
+  };
+});
 
 vi.mock('./ToolsMenu', () => ({
   ToolsMenu: (props: unknown) => {
@@ -38,81 +46,172 @@ vi.mock('./actions/WebSearchToggle', () => ({
   WebSearchToggle: () => null,
 }));
 
-vi.mock('./actions/LiveControls', () => ({
-  LiveControls: (props: unknown) => {
-    liveControlsMock(props);
-    return null;
-  },
-}));
+vi.mock('./actions/LiveControls', async () => {
+  const { useChatInputActionsContext } =
+    await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
+
+  return {
+    LiveControls: () => {
+      const props = useChatInputActionsContext();
+      liveControlsMock(props);
+      return null;
+    },
+  };
+});
 
 vi.mock('./actions/RecordControls', () => ({
   RecordControls: () => null,
 }));
 
-vi.mock('./actions/UtilityControls', () => ({
-  UtilityControls: (props: unknown) => {
-    utilityControlsMock(props);
-    return <div data-testid="utility-controls" />;
-  },
-}));
+vi.mock('./actions/UtilityControls', async () => {
+  const { useChatInputActionsContext } =
+    await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
+  const { useSettingsStore } =
+    await vi.importActual<typeof import('../../../stores/settingsStore')>('../../../stores/settingsStore');
 
-vi.mock('./actions/SendControls', () => ({
-  SendControls: (props: unknown) => {
-    sendControlsMock(props);
-    return <div data-testid="send-controls" />;
-  },
-}));
+  return {
+    UtilityControls: () => {
+      const { onToggleFullscreen } = useChatInputActionsContext();
+      const showTranslateButton = useSettingsStore(
+        (state) => state.appSettings.showInputTranslationButton ?? false,
+      );
+      utilityControlsMock({ showTranslateButton, onToggleFullscreen });
+      return <div data-testid="utility-controls" />;
+    },
+  };
+});
+
+vi.mock('./actions/SendControls', async () => {
+  const { useChatInputComposerStatusContext } =
+    await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
+
+  return {
+    SendControls: () => {
+      const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage } =
+        useChatInputComposerStatusContext();
+      const props = { canSend, canQueueMessage, onFastSendMessage, onQueueMessage };
+      sendControlsMock(props);
+      return <div data-testid="send-controls" />;
+    },
+  };
+});
+
 vi.mock('../../../stores/modelCapabilitiesStore', () => ({
   getCachedModelCapabilities: () => mockCapabilities.value,
 }));
 
+import {
+  ChatInputActionsContext,
+  ChatInputComposerStatusContext,
+  type ChatInputActionsContextValue,
+  type ChatInputComposerStatusContextValue,
+} from './ChatInputContext';
 import { ChatInputActions } from './ChatInputActions';
 
-const baseProps = {
+const baseActionsContext: ChatInputActionsContextValue = {
   onAttachmentAction: vi.fn(),
   disabled: false,
   onRecordButtonClick: vi.fn(),
   isRecording: false,
   isMicInitializing: false,
   isTranscribing: false,
-  canSend: true,
-  isWaitingForUpload: false,
   onCancelRecording: vi.fn(),
-  onTranslate: vi.fn(),
-  onPasteFromClipboard: vi.fn(),
-  onClearInput: vi.fn(),
+  isWaitingForUpload: false,
   isTranslating: false,
-  inputText: '',
   onToggleFullscreen: vi.fn(),
   isFullscreen: false,
   onStartLiveSession: vi.fn(),
+  onDisconnectLiveSession: vi.fn(),
   isLiveConnected: false,
   isLiveMuted: false,
   onToggleLiveMute: vi.fn(),
-  onDisconnectLiveSession: vi.fn(),
   onStartLiveCamera: vi.fn(),
   onStartLiveScreenShare: vi.fn(),
   onStopLiveVideo: vi.fn(),
-  liveVideoSource: null as 'camera' | 'screen' | null,
-  onFastSendMessage: vi.fn(),
-  canQueueMessage: false,
-  onQueueMessage: vi.fn(),
+  liveVideoSource: null,
   onToggleToolAndFocus: vi.fn((toggle: () => void) => toggle()),
   onCountTokens: vi.fn(),
+  isImageModel: false,
+  isRealImagenModel: false,
+  isNativeAudioModel: false,
+  canAddYouTubeVideo: false,
+  isLoading: false,
+};
+
+const baseComposerStatusContext: ChatInputComposerStatusContextValue = {
+  hasTrimmedInput: false,
+  canSend: true,
+  canQueueMessage: false,
+  onTranslate: vi.fn(),
+  onPasteFromClipboard: vi.fn(),
+  onClearInput: vi.fn(),
+  onFastSendMessage: vi.fn(),
+  onQueueMessage: vi.fn(),
+};
+
+type ActionRenderOverrides = Partial<ChatInputActionsContextValue> &
+  Partial<ChatInputComposerStatusContextValue> & {
+    inputText?: string;
+  };
+
+const splitRenderOverrides = (overrides: ActionRenderOverrides) => {
+  const {
+    inputText,
+    hasTrimmedInput,
+    canSend,
+    canQueueMessage,
+    onTranslate,
+    onPasteFromClipboard,
+    onClearInput,
+    onFastSendMessage,
+    onQueueMessage,
+    ...actionOverrides
+  } = overrides;
+
+  return {
+    actionOverrides,
+    composerOverrides: {
+      ...(hasTrimmedInput !== undefined ? { hasTrimmedInput } : {}),
+      ...(inputText !== undefined ? { hasTrimmedInput: inputText.trim().length > 0 } : {}),
+      ...(canSend !== undefined ? { canSend } : {}),
+      ...(canQueueMessage !== undefined ? { canQueueMessage } : {}),
+      ...(onTranslate !== undefined ? { onTranslate } : {}),
+      ...(onPasteFromClipboard !== undefined ? { onPasteFromClipboard } : {}),
+      ...(onClearInput !== undefined ? { onClearInput } : {}),
+      ...(onFastSendMessage !== undefined ? { onFastSendMessage } : {}),
+      ...(onQueueMessage !== undefined ? { onQueueMessage } : {}),
+    },
+  };
 };
 
 describe('ChatInputActions', () => {
   const renderer = setupProviderTestRenderer({ providers: { language: 'en' } });
   let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
 
-  const renderActions = (props: Partial<typeof baseProps> = {}) => {
+  const renderActions = (props: ActionRenderOverrides = {}) => {
     const providerValue = createChatAreaProviderValue();
+    const { actionOverrides, composerOverrides } = splitRenderOverrides(props);
+    const actionsValue: ChatInputActionsContextValue = {
+      ...baseActionsContext,
+      isImageModel: mockCapabilities.value.isImagenModel,
+      isRealImagenModel: mockCapabilities.value.isRealImagenModel,
+      isNativeAudioModel: mockCapabilities.value.isNativeAudioModel,
+      ...actionOverrides,
+    };
+    const composerStatusValue: ChatInputComposerStatusContextValue = {
+      ...baseComposerStatusContext,
+      ...composerOverrides,
+    };
 
     act(() => {
       renderer.root.render(
-        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
-          <ChatInputActions {...baseProps} {...props} />
-        </ChatRuntimeValuesProvider>,
+        <ChatInputActionsContext.Provider value={actionsValue}>
+          <ChatInputComposerStatusContext.Provider value={composerStatusValue}>
+            <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+              <ChatInputActions />
+            </ChatRuntimeValuesProvider>
+          </ChatInputComposerStatusContext.Provider>
+        </ChatInputActionsContext.Provider>,
       );
     });
   };
@@ -238,11 +337,11 @@ describe('ChatInputActions', () => {
     expect(liveControlsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         isLiveConnected: true,
-        onStartLiveSession: baseProps.onStartLiveSession,
-        onDisconnectLiveSession: baseProps.onDisconnectLiveSession,
-        onStartLiveCamera: baseProps.onStartLiveCamera,
-        onStartLiveScreenShare: baseProps.onStartLiveScreenShare,
-        onStopLiveVideo: baseProps.onStopLiveVideo,
+        onStartLiveSession: baseActionsContext.onStartLiveSession,
+        onDisconnectLiveSession: baseActionsContext.onDisconnectLiveSession,
+        onStartLiveCamera: baseActionsContext.onStartLiveCamera,
+        onStartLiveScreenShare: baseActionsContext.onStartLiveScreenShare,
+        onStopLiveVideo: baseActionsContext.onStopLiveVideo,
         liveVideoSource: 'camera',
       }),
     );
@@ -278,7 +377,7 @@ describe('ChatInputActions', () => {
     expect(utilityControlsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         showTranslateButton: true,
-        onToggleFullscreen: baseProps.onToggleFullscreen,
+        onToggleFullscreen: baseActionsContext.onToggleFullscreen,
       }),
     );
     expect(sendControlsMock).toHaveBeenCalledWith(

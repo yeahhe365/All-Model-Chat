@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { ClipboardPaste, Eraser } from 'lucide-react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
-import type { AttachmentAction } from '../../../types';
 import { WebSearchToggle } from './actions/WebSearchToggle';
 import { LiveControls } from './actions/LiveControls';
 import { RecordControls } from './actions/RecordControls';
@@ -13,43 +12,10 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { useChatInputRuntime } from '../../layout/chat-runtime/ChatRuntimeContext';
 import { useChatStore } from '../../../stores/chatStore';
-import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useChatState } from '../../../hooks/chat/useChatState';
 import { useChatInputToolStates } from '../../../hooks/chat-input/useChatInputToolStates';
-
-interface ChatInputActionsLocalProps {
-  onAttachmentAction: (action: AttachmentAction) => void;
-  disabled: boolean;
-  onRecordButtonClick: () => void;
-  isRecording?: boolean;
-  isMicInitializing?: boolean;
-  isTranscribing: boolean;
-  onCancelRecording: () => void;
-  canSend: boolean;
-  isWaitingForUpload: boolean;
-  onTranslate: () => void;
-  onPasteFromClipboard?: () => void;
-  onClearInput?: () => void;
-  isTranslating: boolean;
-  inputText: string;
-  onToggleFullscreen?: () => void;
-  isFullscreen?: boolean;
-  onStartLiveSession?: () => void;
-  onDisconnectLiveSession?: () => void;
-  isLiveConnected?: boolean;
-  isLiveMuted?: boolean;
-  onToggleLiveMute?: () => void;
-  onStartLiveCamera?: () => void;
-  onStartLiveScreenShare?: () => void;
-  onStopLiveVideo?: () => void;
-  liveVideoSource?: 'camera' | 'screen' | null;
-  onFastSendMessage?: () => void;
-  canQueueMessage?: boolean;
-  onQueueMessage?: () => void;
-  onToggleToolAndFocus: (toggleFunc: () => void) => void;
-  onCountTokens: () => void;
-}
+import { useChatInputActionsContext, useChatInputComposerStatusContext } from './ChatInputContext';
 
 const ACTION_ROW_GAP_PX = 8;
 const ACTION_ROW_OVERFLOW_BUFFER_PX = 4;
@@ -59,50 +25,27 @@ interface AuxiliaryActionCollapseState {
   shouldCollapse: boolean;
 }
 
-export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
-  onAttachmentAction,
-  disabled,
-  onRecordButtonClick,
-  isRecording,
-  isMicInitializing,
-  isTranscribing,
-  canSend,
-  isWaitingForUpload,
-  onCancelRecording,
-  onTranslate,
-  onPasteFromClipboard,
-  onClearInput,
-  isTranslating,
-  inputText,
-  onToggleFullscreen,
-  isFullscreen,
-  onStartLiveSession,
-  onDisconnectLiveSession,
-  isLiveConnected,
-  isLiveMuted,
-  onToggleLiveMute,
-  onStartLiveCamera,
-  onStartLiveScreenShare,
-  onStopLiveVideo,
-  liveVideoSource,
-  onFastSendMessage,
-  canQueueMessage,
-  onQueueMessage,
-  onToggleToolAndFocus,
-  onCountTokens,
-}) => {
+const ChatInputActionsComponent: React.FC = () => {
+  const {
+    disabled,
+    isWaitingForUpload,
+    onToggleFullscreen,
+    isLiveConnected,
+    isNativeAudioModel,
+    onToggleToolAndFocus,
+    onCountTokens,
+  } = useChatInputActionsContext();
+  const {
+    canQueueMessage,
+    onPasteFromClipboard,
+    onClearInput,
+  } = useChatInputComposerStatusContext();
   const { t } = useI18n();
   const appSettings = useSettingsStore((state) => state.appSettings);
   const { currentChatSettings, isLoading } = useChatState(appSettings);
   const currentModelId = currentChatSettings.modelId;
-  const capabilities = getCachedModelCapabilities(currentModelId);
-  const isImageModel = capabilities.isImagenModel || false;
-  const isRealImagenModel = capabilities.isRealImagenModel || false;
-  const isNativeAudioModel = capabilities.isNativeAudioModel || false;
-  const canAddYouTubeVideo = !!capabilities.permissions?.canUseYouTubeUrl;
   const isEditing = !!useChatStore((state) => state.editingMessageId);
-  const editMode = useChatStore((state) => state.editMode);
-  const { onStopGenerating, onCancelEdit } = useChatInputRuntime();
+  const { onStopGenerating } = useChatInputRuntime();
   const toolStates = useChatInputToolStates({
     currentChatSettings,
     isLoading,
@@ -150,10 +93,9 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
   const showInputTranslationButton = appSettings.showInputTranslationButton ?? false;
   const showInputPasteButton = appSettings.showInputPasteButton ?? true;
   const showInputClearButton = appSettings.showInputClearButton ?? false;
-  const canTranslate = !!inputText.trim() && !isEditing && !isTranscribing && !isMicInitializing;
   const canUseInputUtility = !disabled && !isLoading && !isWaitingForUpload;
-  const showClearButton = showInputClearButton && onClearInput;
-  const showPasteButton = showInputPasteButton && onPasteFromClipboard;
+  const showClearButton = showInputClearButton;
+  const showPasteButton = showInputPasteButton;
   const hasComposerMoreActions =
     (!isNativeAudioModel && (onToggleFullscreen || showInputTranslationButton)) || showClearButton || showPasteButton;
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -166,7 +108,6 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
         hasComposerMoreActions,
         isNativeAudioModel,
         isLiveConnected,
-        !!onStartLiveSession,
         !!onToggleFullscreen,
         showInputTranslationButton,
         showClearButton,
@@ -184,7 +125,6 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
       isLoading,
       isNativeAudioModel,
       isWaitingForUpload,
-      onStartLiveSession,
       onToggleFullscreen,
       showClearButton,
       showInputTranslationButton,
@@ -321,12 +261,7 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
         data-testid="chat-input-actions-left"
         className="flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        <AttachmentMenu
-          onAction={onAttachmentAction}
-          disabled={disabled || !!isRealImagenModel}
-          isImageModel={isImageModel}
-          canAddYouTubeVideo={canAddYouTubeVideo}
-        />
+        <AttachmentMenu />
 
         {isNativeAudioModel && (
           <WebSearchToggle
@@ -350,27 +285,12 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
         className="flex min-w-0 flex-shrink-0 items-center gap-1.5 sm:gap-3"
       >
         {!isLiveConnected && !isNativeAudioModel && (
-          <RecordControls
-            isRecording={!!isRecording}
-            isTranscribing={isTranscribing}
-            isMicInitializing={!!isMicInitializing}
-            onRecordButtonClick={onRecordButtonClick}
-            onCancelRecording={onCancelRecording}
-            disabled={disabled}
-          />
+          <RecordControls />
         )}
 
         {!isNativeAudioModel && !showAuxiliaryActionsInMenu && (
           <div className="flex items-center gap-2 sm:gap-3">
-            <UtilityControls
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={onToggleFullscreen}
-              isTranslating={isTranslating}
-              onTranslate={onTranslate}
-              showTranslateButton={showInputTranslationButton ?? false}
-              disabled={disabled}
-              canTranslate={canTranslate}
-            />
+            <UtilityControls />
           </div>
         )}
 
@@ -380,55 +300,16 @@ export const ChatInputActions: React.FC<ChatInputActionsLocalProps> = ({
 
         {showAuxiliaryActionsInMenu && (
           <div>
-            <ComposerMoreMenu
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={isNativeAudioModel ? undefined : onToggleFullscreen}
-              isTranslating={isTranslating}
-              onTranslate={onTranslate}
-              showTranslateButton={!isNativeAudioModel && (showInputTranslationButton ?? false)}
-              canTranslate={canTranslate}
-              onPasteFromClipboard={onPasteFromClipboard}
-              showInputPasteButton={showInputPasteButton ?? true}
-              onClearInput={onClearInput}
-              showInputClearButton={showInputClearButton ?? false}
-              disabled={disabled}
-              isLoading={isLoading}
-              isWaitingForUpload={isWaitingForUpload}
-              isInputDisabled={disabled}
-            />
+            <ComposerMoreMenu />
           </div>
         )}
 
-        {isNativeAudioModel && onStartLiveSession && (
-          <LiveControls
-            isLiveConnected={!!isLiveConnected}
-            isLiveMuted={isLiveMuted}
-            onStartLiveSession={onStartLiveSession}
-            onDisconnectLiveSession={onDisconnectLiveSession}
-            onToggleLiveMute={onToggleLiveMute}
-            onStartLiveCamera={onStartLiveCamera}
-            onStartLiveScreenShare={onStartLiveScreenShare}
-            onStopLiveVideo={onStopLiveVideo}
-            liveVideoSource={liveVideoSource}
-            disabled={disabled}
-            isRecording={!!isRecording}
-            isTranscribing={isTranscribing}
-          />
-        )}
+        {isNativeAudioModel && <LiveControls />}
 
-        <SendControls
-          isLoading={isLoading}
-          isEditing={isEditing}
-          canSend={canSend}
-          isWaitingForUpload={isWaitingForUpload}
-          editMode={editMode}
-          onStopGenerating={onStopGenerating}
-          onCancelEdit={onCancelEdit}
-          onFastSendMessage={onFastSendMessage}
-          canQueueMessage={canQueueMessage}
-          onQueueMessage={onQueueMessage}
-        />
+        <SendControls />
       </div>
     </div>
   );
 };
+
+export const ChatInputActions = React.memo(ChatInputActionsComponent);

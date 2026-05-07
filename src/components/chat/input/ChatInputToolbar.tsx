@@ -14,40 +14,25 @@ import { useChatStore } from '../../../stores/chatStore';
 import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { useChatState } from '../../../hooks/chat/useChatState';
+import { useChatInputToolbarContext } from './ChatInputContext';
 
-interface ChatInputToolbarLocalProps {
-  showAddByIdInput: boolean;
-  fileIdInput: string;
-  setFileIdInput: (value: string) => void;
-  onAddFileByIdSubmit: () => void;
-  onCancelAddById: () => void;
-  isAddingById: boolean;
-  showAddByUrlInput: boolean;
-  urlInput: string;
-  setUrlInput: (value: string) => void;
-  onAddUrlSubmit: () => void;
-  onCancelAddUrl: () => void;
-  isAddingByUrl: boolean;
-  ttsContext?: string;
-  onEditTtsContext?: () => void;
-}
-
-export const ChatInputToolbar: React.FC<ChatInputToolbarLocalProps> = ({
-  showAddByIdInput,
-  fileIdInput,
-  setFileIdInput,
-  onAddFileByIdSubmit,
-  onCancelAddById,
-  isAddingById,
-  showAddByUrlInput,
-  urlInput,
-  setUrlInput,
-  onAddUrlSubmit,
-  onCancelAddUrl,
-  isAddingByUrl,
-  ttsContext,
-  onEditTtsContext,
-}) => {
+const ChatInputToolbarComponent: React.FC = () => {
+  const {
+    showAddByIdInput,
+    fileIdInput,
+    setFileIdInput,
+    onAddFileByIdSubmit,
+    onCancelAddById,
+    isAddingById,
+    showAddByUrlInput,
+    urlInput,
+    setUrlInput,
+    onAddUrlSubmit,
+    onCancelAddUrl,
+    isAddingByUrl,
+    ttsContext,
+    onEditTtsContext,
+  } = useChatInputToolbarContext();
   const appSettings = useSettingsStore((state) => state.appSettings);
   const { currentChatSettings, isLoading } = useChatState(appSettings);
   const capabilities = getCachedModelCapabilities(currentChatSettings.modelId);
@@ -111,7 +96,7 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarLocalProps> = ({
         showMediaResolution) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {showTtsVoice && <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} />}
-          {isTtsModel && onEditTtsContext && (
+          {isTtsModel && (
             <button
               onClick={onEditTtsContext}
               className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${
@@ -196,3 +181,5 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarLocalProps> = ({
     </div>
   );
 };
+
+export const ChatInputToolbar = React.memo(ChatInputToolbarComponent);

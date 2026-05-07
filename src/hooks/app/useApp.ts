@@ -26,6 +26,16 @@ const focusChatInput = () => {
   }, 50);
 };
 
+const buildProviderAwareModels = (appSettings: AppSettings, apiModels: ModelOption[]): ModelOption[] => {
+  const geminiModels = apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));
+  const openAICompatibleModels =
+    appSettings.isOpenAICompatibleApiEnabled === true
+      ? appSettings.openaiCompatibleModels.map((model) => ({ ...model, apiMode: 'openai-compatible' as const }))
+      : [];
+
+  return [...geminiModels, ...openAICompatibleModels];
+};
+
 export const useApp = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = useMemo(() => getTranslator(language), [language]);
@@ -82,11 +92,14 @@ export const useApp = () => {
     }
   }, [pipState.pipWindow, currentTheme, appSettings]);
 
+  const providerAwareModels = useMemo(() => buildProviderAwareModels(appSettings, apiModels), [appSettings, apiModels]);
+
   const eventsState = useAppEvents({
     appSettings,
+    setAppSettings,
     startNewChat,
     currentChatSettings,
-    availableModels: apiModels,
+    availableModels: providerAwareModels,
     handleSelectModelInHeader,
     setIsLogViewerOpen,
     onTogglePip: pipState.togglePip,

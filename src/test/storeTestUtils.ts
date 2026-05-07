@@ -1,9 +1,17 @@
 import { afterEach, beforeEach } from 'vitest';
 import { useChatStore } from '../stores/chatStore';
+import { useChatDraftStore } from '../stores/chatDraftStore';
+import { useModelPreferencesStore } from '../stores/modelPreferencesStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useSettingsUiStore } from '../stores/settingsUiStore';
+import { useUIStore } from '../stores/uiStore';
 
 const initialSettingsState = useSettingsStore.getState();
 const initialChatState = useChatStore.getState();
+const initialChatDraftState = useChatDraftStore.getState();
+const initialSettingsUiState = useSettingsUiStore.getState();
+const initialModelPreferencesState = useModelPreferencesStore.getState();
+const initialUiState = useUIStore.getState();
 
 export const resetSettingsStoreState = () => {
   useSettingsStore.setState({
@@ -49,6 +57,26 @@ export const resetChatStoreState = () => {
 export const resetAllStoreState = () => {
   resetSettingsStoreState();
   resetChatStoreState();
+  useChatDraftStore.setState({ drafts: { ...initialChatDraftState.drafts } });
+  useSettingsUiStore.setState({
+    activeTab: initialSettingsUiState.activeTab,
+    scrollPositions: { ...initialSettingsUiState.scrollPositions },
+    legacySettingsUiHydrated: initialSettingsUiState.legacySettingsUiHydrated,
+  });
+  useModelPreferencesStore.setState({
+    customModels: initialModelPreferencesState.customModels,
+    modelSettingsCache: { ...initialModelPreferencesState.modelSettingsCache },
+    legacyModelPreferencesHydrated: initialModelPreferencesState.legacyModelPreferencesHydrated,
+  });
+  useUIStore.setState({
+    isSettingsModalOpen: initialUiState.isSettingsModalOpen,
+    isPreloadedMessagesModalOpen: initialUiState.isPreloadedMessagesModalOpen,
+    isHistorySidebarOpen: initialUiState.isHistorySidebarOpen,
+    desktopHistorySidebarOpen: initialUiState.desktopHistorySidebarOpen,
+    mobileHistorySidebarOpen: initialUiState.mobileHistorySidebarOpen,
+    isLogViewerOpen: initialUiState.isLogViewerOpen,
+    chatInputHeight: initialUiState.chatInputHeight,
+  });
 };
 
 export const setupStoreStateReset = () => {

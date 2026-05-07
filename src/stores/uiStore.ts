@@ -1,7 +1,14 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import {
+  createPersistedStateStorage,
+  readPersistentStorageItem,
+  registerPersistedStoreSync,
+} from './persistentStorage';
 
 const DESKTOP_BREAKPOINT = 768;
-const HISTORY_SIDEBAR_STORAGE_KEY = 'all_model_chat_history_sidebar_v1';
+const UI_PREFERENCES_STORAGE_KEY = 'all_model_chat_ui_preferences_v1';
+const LEGACY_HISTORY_SIDEBAR_STORAGE_KEY = 'all_model_chat_history_sidebar_v1';
 
 type HistorySidebarPreferences = {
   desktopOpen: boolean;
@@ -16,12 +23,8 @@ const DEFAULT_HISTORY_SIDEBAR_PREFERENCES: HistorySidebarPreferences = {
 const isDesktopViewport = () => (typeof window !== 'undefined' ? window.innerWidth >= DESKTOP_BREAKPOINT : true);
 
 const readHistorySidebarPreferences = (): HistorySidebarPreferences => {
-  if (typeof localStorage === 'undefined') {
-    return DEFAULT_HISTORY_SIDEBAR_PREFERENCES;
-  }
-
   try {
-    const raw = localStorage.getItem(HISTORY_SIDEBAR_STORAGE_KEY);
+    const raw = readPersistentStorageItem(LEGACY_HISTORY_SIDEBAR_STORAGE_KEY);
     if (!raw) {
       return DEFAULT_HISTORY_SIDEBAR_PREFERENCES;
     }
@@ -36,14 +39,6 @@ const readHistorySidebarPreferences = (): HistorySidebarPreferences => {
   } catch {
     return DEFAULT_HISTORY_SIDEBAR_PREFERENCES;
   }
-};
-
-const writeHistorySidebarPreferences = (preferences: HistorySidebarPreferences) => {
-  if (typeof localStorage === 'undefined') {
-    return;
-  }
-
-  localStorage.setItem(HISTORY_SIDEBAR_STORAGE_KEY, JSON.stringify(preferences));
 };
 
 const buildInitialHistorySidebarState = () => {
@@ -76,56 +71,87 @@ interface UIActions {
   setChatInputHeight: (height: number) => void;
 }
 
-export const useUIStore = create<UIState & UIActions>((set, get) => ({
-  isSettingsModalOpen: false,
-  isPreloadedMessagesModalOpen: false,
-  ...buildInitialHistorySidebarState(),
-  isLogViewerOpen: false,
-  chatInputHeight: 160,
+type PersistedUiPreferences = Pick<UIState, 'desktopHistorySidebarOpen' | 'mobileHistorySidebarOpen'>;
 
-  setIsSettingsModalOpen: (v) =>
-    set((s) => ({
-      isSettingsModalOpen: typeof v === 'function' ? v(s.isSettingsModalOpen) : v,
-    })),
-  setIsPreloadedMessagesModalOpen: (v) =>
-    set((s) => ({
-      isPreloadedMessagesModalOpen: typeof v === 'function' ? v(s.isPreloadedMessagesModalOpen) : v,
-    })),
-  setIsHistorySidebarOpen: (v) =>
-    set((s) => {
-      const nextIsOpen = typeof v === 'function' ? v(s.isHistorySidebarOpen) : v;
-      const isDesktop = isDesktopViewport();
-      const nextDesktopOpen = isDesktop ? nextIsOpen : s.desktopHistorySidebarOpen;
-      const nextMobileOpen = isDesktop ? s.mobileHistorySidebarOpen : nextIsOpen;
-      const nextState = isDesktop
-        ? {
-            isHistorySidebarOpen: nextIsOpen,
-            desktopHistorySidebarOpen: nextDesktopOpen,
-          }
-        : {
-            isHistorySidebarOpen: nextIsOpen,
-            mobileHistorySidebarOpen: nextMobileOpen,
-          };
+const mergePersistedUiPreferences = (
+  persistedState: unknown,
+  currentState: UIState & UIActions,
+): UIState & UIActions => {
+  const persistedPreferences = (persistedState ?? {}) as Partial<PersistedUiPreferences>;
+  const desktopHistorySidebarOpen =
+    typeof persistedPreferences.desktopHistorySidebarOpen === 'boolean'
+      ? persistedPreferences.desktopHistorySidebarOpen
+      : currentState.desktopHistorySidebarOpen;
+  const mobileHistorySidebarOpen =
+    typeof persistedPreferences.mobileHistorySidebarOpen === 'boolean'
+      ? persistedPreferences.mobileHistorySidebarOpen
+      : currentState.mobileHistorySidebarOpen;
 
-      writeHistorySidebarPreferences({
-        desktopOpen: nextDesktopOpen,
-        mobileOpen: nextMobileOpen,
-      });
+  return {
+    ...currentState,
+    desktopHistorySidebarOpen,
+    mobileHistorySidebarOpen,
+    isHistorySidebarOpen: isDesktopViewport() ? desktopHistorySidebarOpen : mobileHistorySidebarOpen,
+  };
+};
 
-      return nextState;
+export const useUIStore = create<UIState & UIActions>()(
+  persist(
+    (set, get) => ({
+      isSettingsModalOpen: false,
+      isPreloadedMessagesModalOpen: false,
+      ...buildInitialHistorySidebarState(),
+      isLogViewerOpen: false,
+      chatInputHeight: 160,
+
+      setIsSettingsModalOpen: (v) =>
+        set((s) => ({
+          isSettingsModalOpen: typeof v === 'function' ? v(s.isSettingsModalOpen) : v,
+        })),
+      setIsPreloadedMessagesModalOpen: (v) =>
+        set((s) => ({
+          isPreloadedMessagesModalOpen: typeof v === 'function' ? v(s.isPreloadedMessagesModalOpen) : v,
+        })),
+      setIsHistorySidebarOpen: (v) =>
+        set((s) => {
+          const nextIsOpen = typeof v === 'function' ? v(s.isHistorySidebarOpen) : v;
+          const isDesktop = isDesktopViewport();
+
+          return isDesktop
+            ? {
+                isHistorySidebarOpen: nextIsOpen,
+                desktopHistorySidebarOpen: nextIsOpen,
+              }
+            : {
+                isHistorySidebarOpen: nextIsOpen,
+                mobileHistorySidebarOpen: nextIsOpen,
+              };
+        }),
+      setIsHistorySidebarOpenTransient: (v) =>
+        set((s) => ({
+          isHistorySidebarOpen: typeof v === 'function' ? v(s.isHistorySidebarOpen) : v,
+        })),
+      syncHistorySidebarForViewport: () =>
+        set((s) => ({
+          isHistorySidebarOpen: isDesktopViewport() ? s.desktopHistorySidebarOpen : s.mobileHistorySidebarOpen,
+        })),
+      setIsLogViewerOpen: (v) =>
+        set((s) => ({
+          isLogViewerOpen: typeof v === 'function' ? v(s.isLogViewerOpen) : v,
+        })),
+      toggleHistorySidebar: () => get().setIsHistorySidebarOpen((s) => !s),
+      setChatInputHeight: (height) => set({ chatInputHeight: height }),
     }),
-  setIsHistorySidebarOpenTransient: (v) =>
-    set((s) => ({
-      isHistorySidebarOpen: typeof v === 'function' ? v(s.isHistorySidebarOpen) : v,
-    })),
-  syncHistorySidebarForViewport: () =>
-    set((s) => ({
-      isHistorySidebarOpen: isDesktopViewport() ? s.desktopHistorySidebarOpen : s.mobileHistorySidebarOpen,
-    })),
-  setIsLogViewerOpen: (v) =>
-    set((s) => ({
-      isLogViewerOpen: typeof v === 'function' ? v(s.isLogViewerOpen) : v,
-    })),
-  toggleHistorySidebar: () => get().setIsHistorySidebarOpen((s) => !s),
-  setChatInputHeight: (height) => set({ chatInputHeight: height }),
-}));
+    {
+      name: UI_PREFERENCES_STORAGE_KEY,
+      storage: createJSONStorage(() => createPersistedStateStorage()),
+      partialize: (state) => ({
+        desktopHistorySidebarOpen: state.desktopHistorySidebarOpen,
+        mobileHistorySidebarOpen: state.mobileHistorySidebarOpen,
+      }),
+      merge: mergePersistedUiPreferences,
+    },
+  ),
+);
+
+registerPersistedStoreSync(useUIStore, UI_PREFERENCES_STORAGE_KEY);

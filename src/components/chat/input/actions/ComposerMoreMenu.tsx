@@ -4,47 +4,36 @@ import { ClipboardPaste, Eraser, Ellipsis, Languages, Loader2, Maximize2, Minimi
 import { useI18n } from '../../../../contexts/I18nContext';
 import { usePortaledMenu } from '../../../../hooks/ui/usePortaledMenu';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
+import { useSettingsStore } from '../../../../stores/settingsStore';
+import { useChatStore } from '../../../../stores/chatStore';
+import { useChatInputActionsContext, useChatInputComposerStatusContext } from '../ChatInputContext';
 
-interface ComposerMoreMenuProps {
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
-  isTranslating: boolean;
-  onTranslate: () => void;
-  showTranslateButton?: boolean;
-  canTranslate: boolean;
-  onPasteFromClipboard?: () => void;
-  showInputPasteButton?: boolean;
-  onClearInput?: () => void;
-  showInputClearButton?: boolean;
-  disabled: boolean;
-  isLoading: boolean;
-  isWaitingForUpload: boolean;
-  isInputDisabled?: boolean;
-}
-
-export const ComposerMoreMenu: React.FC<ComposerMoreMenuProps> = ({
-  isFullscreen,
-  onToggleFullscreen,
-  isTranslating,
-  onTranslate,
-  showTranslateButton = false,
-  canTranslate,
-  onPasteFromClipboard,
-  showInputPasteButton = true,
-  onClearInput,
-  showInputClearButton = false,
-  disabled,
-  isLoading,
-  isWaitingForUpload,
-  isInputDisabled,
-}) => {
+export const ComposerMoreMenu: React.FC = () => {
+  const {
+    isFullscreen,
+    onToggleFullscreen,
+    isTranslating,
+    disabled,
+    isLoading,
+    isWaitingForUpload,
+    isTranscribing,
+    isMicInitializing,
+    isNativeAudioModel,
+  } = useChatInputActionsContext();
+  const { hasTrimmedInput, onTranslate, onPasteFromClipboard, onClearInput } = useChatInputComposerStatusContext();
+  const appSettings = useSettingsStore((state) => state.appSettings);
+  const isEditing = !!useChatStore((state) => state.editingMessageId);
   const { t } = useI18n();
   const { isOpen, menuPosition, containerRef, buttonRef, menuRef, targetWindow, closeMenu, toggleMenu } =
     usePortaledMenu({ menuWidth: 224 });
 
-  const commonBlocked = !!isInputDisabled || isLoading || isWaitingForUpload;
+  const showTranslateButton = !isNativeAudioModel && (appSettings.showInputTranslationButton ?? false);
+  const showInputPasteButton = appSettings.showInputPasteButton ?? true;
+  const showInputClearButton = appSettings.showInputClearButton ?? false;
+  const canTranslate = hasTrimmedInput && !isEditing && !isTranscribing && !isMicInitializing;
+  const commonBlocked = disabled || isLoading || isWaitingForUpload;
   const items = [
-    onToggleFullscreen
+    !isNativeAudioModel && onToggleFullscreen
       ? {
           key: 'fullscreen',
           label: isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand'),

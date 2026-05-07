@@ -49,6 +49,17 @@ describe('ChatInputArea default spacing', () => {
     expect(source).toContain('onClick={handleInputShellClick}');
   });
 
+  it('does not rebuild toolbar and action context data into intermediate prop objects', () => {
+    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+
+    expect(source).not.toContain('const toolbarState =');
+    expect(source).not.toContain('const actionState =');
+    expect(source).toContain('<ChatInputToolbar />');
+    expect(source).toContain('<ChatInputActions />');
+    expect(source).not.toContain('<ChatInputToolbar {...');
+    expect(source).not.toContain('<ChatInputActions {...');
+  });
+
   it('mounts a hidden Live video element so screen and camera streams can be captured', () => {
     const source = fs.readFileSync(chatInputAreaPath, 'utf8');
 
@@ -62,11 +73,14 @@ describe('ChatInputArea default spacing', () => {
 
   it('keeps action controls independently enabled while textarea-only states are blocked', () => {
     const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+    const providerSource = fs.readFileSync(path.resolve(__dirname, './ChatInputProvider.tsx'), 'utf8');
 
-    expect(source).toContain(
-      'const actionDisabled = inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || isConverting;',
+    expect(providerSource).toContain('const actionDisabled =');
+    expect(providerSource).toContain(
+      'inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting;',
     );
-    expect(source).toContain('disabled: actionDisabled,');
+    expect(providerSource).toContain('disabled: actionDisabled,');
+    expect(source).not.toContain('const actionDisabled =');
     expect(source).not.toContain('disabled: inputState.isAddingById || inputState.isWaitingForUpload || isConverting || inputDisabled,');
   });
 

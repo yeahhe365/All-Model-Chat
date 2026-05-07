@@ -4,40 +4,9 @@ import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { logService } from '../../services/logService';
 import { resolveModelSwitchSettings } from '../../utils/modelHelpers';
 import { translations } from '@/i18n/translations';
+import { useSettingsUiStore, type SettingsTab, type SettingsTabDescriptor } from '../../stores/settingsUiStore';
 
-export type SettingsTab = 'models' | 'interface' | 'api' | 'data' | 'shortcuts' | 'about';
-export type SettingsTabDescriptor = { id: SettingsTab; labelKey: string };
-
-const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
-
-const normalizeSettingsTab = (savedTab: string | null): SettingsTab | null => {
-  switch (savedTab) {
-    case 'model':
-    case 'chat':
-    case 'models':
-    case 'generation':
-      return 'models';
-    case 'languageVoice':
-      return 'models';
-    case 'canvas':
-      return 'models';
-    case 'safety':
-      return 'models';
-    case 'interface':
-      return 'interface';
-    case 'shortcuts':
-      return 'shortcuts';
-    case 'api':
-    case 'account':
-      return 'api';
-    case 'data':
-      return 'data';
-    case 'about':
-      return 'about';
-    default:
-      return null;
-  }
-};
+export type { SettingsTab, SettingsTabDescriptor };
 
 interface UseSettingsLogicProps {
   isOpen: boolean;
@@ -58,23 +27,18 @@ export const useSettingsLogic = ({
   onImportHistory,
   t,
 }: UseSettingsLogicProps) => {
+  useSettingsUiStore.getState().hydrateLegacySettingsUiPreferences();
+
   const latestSettingsRef = useRef(currentSettings);
 
   useEffect(() => {
     latestSettingsRef.current = currentSettings;
   }, [currentSettings]);
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
-    try {
-      const normalizedTab = normalizeSettingsTab(localStorage.getItem(SETTINGS_TAB_STORAGE_KEY));
-      if (normalizedTab) {
-        return normalizedTab;
-      }
-    } catch {
-      // Ignore storage errors
-    }
-    return 'models';
-  });
+  const activeTab = useSettingsUiStore((state) => state.activeTab);
+  const setActiveTab = useSettingsUiStore((state) => state.setActiveTab);
+  const activeTabScrollTop = useSettingsUiStore((state) => state.scrollPositions[activeTab] ?? 0);
+  const setScrollPosition = useSettingsUiStore((state) => state.setScrollPosition);
 
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean;
@@ -86,40 +50,21 @@ export const useSettingsLogic = ({
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const scrollSaveTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (activeTab) {
-      localStorage.setItem(SETTINGS_TAB_STORAGE_KEY, activeTab);
-    }
-  }, [activeTab]);
 
   // Restore scroll position when tab changes or modal opens
   useLayoutEffect(() => {
     if (isOpen && scrollContainerRef.current) {
-      const key = `chatSettingsScroll_${activeTab}`;
-      const savedPosition = localStorage.getItem(key);
-
       // Use requestAnimationFrame to ensure content has reflowed
       requestAnimationFrame(() => {
         if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = savedPosition ? parseInt(savedPosition, 10) : 0;
+          scrollContainerRef.current.scrollTop = activeTabScrollTop;
         }
       });
     }
-  }, [activeTab, isOpen]);
+  }, [activeTab, activeTabScrollTop, isOpen]);
 
   const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const scrollTop = e.currentTarget.scrollTop;
-
-    if (scrollSaveTimeoutRef.current) {
-      clearTimeout(scrollSaveTimeoutRef.current);
-    }
-
-    // Debounce saving to localStorage
-    scrollSaveTimeoutRef.current = window.setTimeout(() => {
-      localStorage.setItem(`chatSettingsScroll_${activeTab}`, scrollTop.toString());
-    }, 150);
+    setScrollPosition(activeTab, e.currentTarget.scrollTop);
   };
 
   const handleResetToDefaults = () => {

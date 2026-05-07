@@ -1,95 +1,58 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ModelOption } from '../../types';
 import { sanitizeModelOptions } from '../../utils/modelHelpers';
-
-const CUSTOM_MODELS_KEY = 'custom_model_list_v1';
-
-const parseStoredModels = (storedValue: string | null): ModelOption[] | null => {
-  if (storedValue === null) {
-    return null;
-  }
-
-  return sanitizeModelOptions(JSON.parse(storedValue));
-};
+import { useModelPreferencesStore } from '../../stores/modelPreferencesStore';
 
 export const useModels = () => {
-  // Initialize with persisted models or defaults
-  const [apiModels, setApiModelsState] = useState<ModelOption[]>(() => {
-    try {
-      const storedModels = parseStoredModels(localStorage.getItem(CUSTOM_MODELS_KEY));
-      if (storedModels) {
-        return storedModels;
-      }
-    } catch (e) {
-      console.error('Failed to load custom models', e);
-    }
-    return [];
-  });
-  const [isModelsLoading, setIsModelsLoading] = useState(() => apiModels.length === 0);
+  useModelPreferencesStore.getState().hydrateLegacyModelPreferences();
+
+  const customModels = useModelPreferencesStore((state) => state.customModels);
+  const setCustomModels = useModelPreferencesStore((state) => state.setCustomModels);
+  const [defaultModels, setDefaultModels] = useState<ModelOption[]>([]);
+  const [isDefaultModelsLoading, setIsDefaultModelsLoading] = useState(() => !customModels?.length);
   const [modelsLoadingError, setModelsLoadingError] = useState<string | null>(null);
+  const hasCustomModels = !!customModels?.length;
 
   useEffect(() => {
-    if (apiModels.length > 0) {
-      setIsModelsLoading(false);
+    if (hasCustomModels) {
+      setIsDefaultModelsLoading(false);
       return;
     }
 
     let isActive = true;
+    setIsDefaultModelsLoading(true);
 
     void import('../../utils/defaultModelOptions')
       .then(({ getDefaultModelOptions }) => {
         if (!isActive) return;
-        setApiModelsState(getDefaultModelOptions());
-        setIsModelsLoading(false);
+        setDefaultModels(getDefaultModelOptions());
+        setIsDefaultModelsLoading(false);
       })
       .catch((error) => {
         console.error('Failed to load default models', error);
         if (!isActive) return;
         setModelsLoadingError('Failed to load default models');
-        setIsModelsLoading(false);
+        setIsDefaultModelsLoading(false);
       });
 
     return () => {
       isActive = false;
     };
-  }, [apiModels.length]);
+  }, [hasCustomModels]);
 
-  useEffect(() => {
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key !== CUSTOM_MODELS_KEY) {
-        return;
-      }
+  const setApiModels = useCallback(
+    (models: ModelOption[]) => {
+      const sanitizedModels = sanitizeModelOptions(models);
+      setModelsLoadingError(null);
+      setCustomModels(sanitizedModels);
+    },
+    [setCustomModels],
+  );
 
-      try {
-        const storedModels = parseStoredModels(event.newValue);
-        if (storedModels) {
-          setApiModelsState(storedModels);
-          setIsModelsLoading(false);
-          setModelsLoadingError(null);
-          return;
-        }
-
-        setApiModelsState([]);
-        setIsModelsLoading(true);
-        setModelsLoadingError(null);
-      } catch (error) {
-        console.error('Failed to sync custom models from storage', error);
-        setModelsLoadingError('Failed to load default models');
-        setIsModelsLoading(false);
-      }
-    };
-
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
-
-  const setApiModels = useCallback((models: ModelOption[]) => {
-    const sanitizedModels = sanitizeModelOptions(models);
-    setApiModelsState(sanitizedModels);
-    setIsModelsLoading(false);
-    setModelsLoadingError(null);
-    localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(sanitizedModels));
-  }, []);
-
-  return { apiModels, setApiModels, isModelsLoading, modelsLoadingError };
+  return {
+    apiModels: hasCustomModels ? customModels : defaultModels,
+    setApiModels,
+    isModelsLoading: hasCustomModels ? false : isDefaultModelsLoading,
+    modelsLoadingError,
+  };
 };

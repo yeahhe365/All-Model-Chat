@@ -6,6 +6,7 @@ import {
   MODELS_SUPPORTING_RAW_MODE,
 } from '../constants/appConstants';
 import { MediaResolution } from '../types/settings';
+import { useModelPreferencesStore, type CachedModelSettings } from '../stores/modelPreferencesStore';
 import type { UsageMetadata } from '@google/genai';
 
 // --- Model Sorting & Defaults ---
@@ -276,13 +277,6 @@ export const shouldStripThinkingFromContext = (modelId: string, hideThinkingInCo
 };
 
 // --- Model Settings Cache ---
-const MODEL_SETTINGS_CACHE_KEY = 'model_settings_cache';
-
-interface CachedModelSettings {
-  mediaResolution?: MediaResolution;
-  thinkingBudget?: number;
-  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
-}
 
 type SwitchableModelSettings = CachedModelSettings & {
   modelId?: string;
@@ -290,23 +284,14 @@ type SwitchableModelSettings = CachedModelSettings & {
 };
 
 const getCachedModelSettings = (modelId: string): CachedModelSettings | undefined => {
-  try {
-    const cache = JSON.parse(localStorage.getItem(MODEL_SETTINGS_CACHE_KEY) || '{}');
-    return cache[modelId];
-  } catch {
-    return undefined;
-  }
+  useModelPreferencesStore.getState().hydrateLegacyModelPreferences();
+  return useModelPreferencesStore.getState().getCachedModelSettings(modelId);
 };
 
 const cacheModelSettings = (modelId: string, settings: CachedModelSettings) => {
   if (!modelId) return;
-  try {
-    const cache = JSON.parse(localStorage.getItem(MODEL_SETTINGS_CACHE_KEY) || '{}');
-    cache[modelId] = { ...cache[modelId], ...settings };
-    localStorage.setItem(MODEL_SETTINGS_CACHE_KEY, JSON.stringify(cache));
-  } catch (e) {
-    console.error('Failed to cache model settings', e);
-  }
+  useModelPreferencesStore.getState().hydrateLegacyModelPreferences();
+  useModelPreferencesStore.getState().cacheModelSettings(modelId, settings);
 };
 
 export const resolveModelSwitchSettings = ({

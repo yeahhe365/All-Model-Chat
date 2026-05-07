@@ -44,6 +44,12 @@ describe('ShortcutsSection', () => {
     expect(renderer.container.textContent).toContain('2 models selected');
     expect(renderer.container.textContent).not.toContain('Gemini 3.1 Flash Lite Preview');
 
+    const shortcutText = renderer.container.textContent ?? '';
+    expect(shortcutText.indexOf('Cycle Models')).toBeLessThan(
+      shortcutText.indexOf('Models Included In Tab Cycle'),
+    );
+    expect(shortcutText.indexOf('Models Included In Tab Cycle')).toBeLessThan(shortcutText.indexOf('Clear Draft'));
+
     const toggleButton = renderer.container.querySelector<HTMLButtonElement>(
       'button[aria-label="Toggle Tab cycle model panel"]',
     );

@@ -26,14 +26,9 @@ export const ChatInputArea: React.FC = () => {
     voiceState,
     slashCommandState,
     handlers,
-    canSend,
-    canQueueMessage,
     inputDisabled,
-    isAnyModalOpen,
     initialTextareaHeight,
     queuedSubmissionView,
-    handleStartLiveCamera,
-    handleStartLiveScreenShare,
   } = useChatInputContext();
 
   const isFullscreen = inputState.isFullscreen;
@@ -42,7 +37,6 @@ export const ChatInputArea: React.FC = () => {
   const isMobile = inputState.isMobile;
   const isConverting = localFileState.isConverting;
   const isRecording = voiceState.isRecording;
-  const actionDisabled = inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || isConverting;
 
   const {
     isUIBlocked,
@@ -69,64 +63,6 @@ export const ChatInputArea: React.FC = () => {
     }
 
     inputState.textareaRef.current?.focus();
-  };
-
-  const toolbarState = {
-    showAddByIdInput: modalsState.showAddByIdInput,
-    fileIdInput: inputState.fileIdInput,
-    setFileIdInput: inputState.setFileIdInput,
-    onAddFileByIdSubmit: handlers.handleAddFileByIdSubmit,
-    onCancelAddById: () => {
-      modalsState.setShowAddByIdInput(false);
-      inputState.setFileIdInput('');
-      inputState.textareaRef.current?.focus();
-    },
-    isAddingById: inputState.isAddingById,
-    showAddByUrlInput: modalsState.showAddByUrlInput,
-    urlInput: inputState.urlInput,
-    setUrlInput: inputState.setUrlInput,
-    onAddUrlSubmit: () => handlers.handleAddUrl(inputState.urlInput),
-    onCancelAddUrl: () => {
-      modalsState.setShowAddByUrlInput(false);
-      inputState.setUrlInput('');
-      inputState.textareaRef.current?.focus();
-    },
-    isAddingByUrl: inputState.isAddingByUrl,
-    ttsContext: inputState.ttsContext,
-    onEditTtsContext: () => modalsState.setShowTtsContextEditor(true),
-  };
-
-  const actionState = {
-    onAttachmentAction: modalsState.handleAttachmentAction,
-    disabled: actionDisabled,
-    onRecordButtonClick: voiceState.handleVoiceInputClick,
-    onCancelRecording: voiceState.handleCancelRecording,
-    isRecording: voiceState.isRecording,
-    isMicInitializing: voiceState.isMicInitializing,
-    isTranscribing: voiceState.isTranscribing,
-    canSend,
-    isWaitingForUpload: inputState.isWaitingForUpload,
-    onTranslate: handlers.handleTranslate,
-    onPasteFromClipboard: handlers.handlePasteFromClipboard,
-    onClearInput: handlers.handleClearInput,
-    isTranslating: inputState.isTranslating,
-    inputText: inputState.inputText,
-    onToggleFullscreen: inputState.handleToggleFullscreen,
-    isFullscreen,
-    onStartLiveSession: liveAPI.connect,
-    onDisconnectLiveSession: liveAPI.disconnect,
-    isLiveConnected: liveAPI.isConnected,
-    isLiveMuted: liveAPI.isMuted,
-    onToggleLiveMute: liveAPI.toggleMute,
-    onStartLiveCamera: handleStartLiveCamera,
-    onStartLiveScreenShare: handleStartLiveScreenShare,
-    onStopLiveVideo: liveAPI.stopVideo,
-    liveVideoSource: liveAPI.videoSource,
-    onFastSendMessage: handlers.handleFastSubmit,
-    canQueueMessage,
-    onQueueMessage: handlers.queueCurrentSubmission,
-    onToggleToolAndFocus: handlers.handleToggleToolAndFocus,
-    onCountTokens: () => localFileState.setShowTokenModal(true),
   };
 
   const fileInputState: React.ComponentProps<typeof HiddenFileInputs>['fileInputs'] = {
@@ -170,7 +106,7 @@ export const ChatInputArea: React.FC = () => {
       <div className={innerContainerClass}>
         {/* Wrap toolbar in z-indexed container to ensure dropdowns render above status banner */}
         <div className="relative z-50">
-          <ChatInputToolbar {...toolbarState} />
+          <ChatInputToolbar />
         </div>
 
         <LiveStatusBanner
@@ -237,7 +173,7 @@ export const ChatInputArea: React.FC = () => {
             />
 
             <div className={actionsContainerClass}>
-              <ChatInputActions {...actionState} />
+              <ChatInputActions />
               <HiddenFileInputs fileInputs={fileInputState} />
             </div>
           </div>

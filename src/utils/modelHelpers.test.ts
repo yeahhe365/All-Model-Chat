@@ -15,6 +15,7 @@ import {
 import { ModelOption } from './../types';
 import type { UsageMetadata } from '@google/genai';
 import { MediaResolution } from '../types/settings';
+import { useModelPreferencesStore } from '../stores/modelPreferencesStore';
 
 type LegacyUsageMetadata = UsageMetadata & {
   candidatesTokenCount?: number;
@@ -24,6 +25,11 @@ const createUsageMetadata = (overrides: LegacyUsageMetadata): UsageMetadata => o
 
 beforeEach(() => {
   localStorage.clear();
+  useModelPreferencesStore.setState({
+    customModels: null,
+    modelSettingsCache: {},
+    legacyModelPreferencesHydrated: false,
+  });
 });
 
 describe('raw mode support', () => {
@@ -454,7 +460,7 @@ describe('resolveModelSwitchSettings', () => {
       thinkingBudget: 32768,
       thinkingLevel: 'MEDIUM',
     });
-    expect(JSON.parse(localStorage.getItem('model_settings_cache') ?? '{}')).toEqual(
+    expect(useModelPreferencesStore.getState().modelSettingsCache).toEqual(
       expect.objectContaining({
         'gemini-2.5-flash': {
           mediaResolution: MediaResolution.MEDIA_RESOLUTION_LOW,

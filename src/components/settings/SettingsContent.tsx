@@ -258,7 +258,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
         <div className={animClass}>
           <ShortcutsSection
             currentSettings={currentSettings}
-            availableModels={availableModels}
+            availableModels={effectiveAvailableModels}
             onUpdateSettings={handleBatchUpdate}
           />
         </div>

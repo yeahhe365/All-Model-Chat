@@ -1,38 +1,25 @@
 import React from 'react';
 import { PhoneOff, AudioWaveform, Mic, MicOff, MonitorUp, Video, VideoOff } from 'lucide-react';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
+import { useChatInputActionsContext } from '../ChatInputContext';
 
-interface LiveControlsProps {
-  isLiveConnected: boolean;
-  isLiveMuted?: boolean;
-  onStartLiveSession: () => void;
-  onDisconnectLiveSession?: () => void;
-  onToggleLiveMute?: () => void;
-  onStartLiveCamera?: () => void;
-  onStartLiveScreenShare?: () => void;
-  onStopLiveVideo?: () => void;
-  liveVideoSource?: 'camera' | 'screen' | null;
-  disabled: boolean;
-  isRecording: boolean;
-  isTranscribing: boolean;
-}
-
-export const LiveControls: React.FC<LiveControlsProps> = ({
-  isLiveConnected,
-  isLiveMuted,
-  onStartLiveSession,
-  onDisconnectLiveSession,
-  onToggleLiveMute,
-  onStartLiveCamera,
-  onStartLiveScreenShare,
-  onStopLiveVideo,
-  liveVideoSource,
-  disabled,
-  isRecording,
-  isTranscribing,
-}) => {
+export const LiveControls: React.FC = () => {
+  const {
+    isLiveConnected,
+    isLiveMuted,
+    onStartLiveSession,
+    onDisconnectLiveSession,
+    onToggleLiveMute,
+    onStartLiveCamera,
+    onStartLiveScreenShare,
+    onStopLiveVideo,
+    liveVideoSource,
+    disabled,
+    isRecording,
+    isTranscribing,
+  } = useChatInputActionsContext();
   const micIconSize = 20;
-  const handleSessionClick = isLiveConnected ? (onDisconnectLiveSession ?? onStartLiveSession) : onStartLiveSession;
+  const handleSessionClick = isLiveConnected ? onDisconnectLiveSession : onStartLiveSession;
 
   return (
     <>

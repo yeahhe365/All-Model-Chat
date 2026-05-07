@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback, useEffect, useReducer } from 'react';
+import { useState, useRef, useCallback, useEffect, useReducer, type SetStateAction } from 'react';
+import { useChatDraftStore, type ChatDraft } from '../../stores/chatDraftStore';
 import { useIsMobile } from '../useDevice';
 import {
   chatInputStateReducer,
@@ -12,10 +13,32 @@ import {
 export const INITIAL_TEXTAREA_HEIGHT_PX = 25.2;
 export const MAX_TEXTAREA_HEIGHT_PX = 150;
 
+const EMPTY_EDITING_DRAFT: ChatDraft = {
+  inputText: '',
+  quotes: [],
+  ttsContext: '',
+};
+const EMPTY_QUOTES: string[] = [];
+
+const resolveSetStateAction = <T>(value: SetStateAction<T>, previous: T): T =>
+  typeof value === 'function' ? (value as (prev: T) => T)(previous) : value;
+
 export const useChatInputState = (activeSessionId: string | null, isEditing: boolean) => {
-  const [inputText, setInputText] = useState('');
-  const [quotes, setQuotes] = useState<string[]>([]);
-  const [ttsContext, setTtsContext] = useState('');
+  const persistedInputText = useChatDraftStore((state) =>
+    activeSessionId && !isEditing ? (state.drafts[activeSessionId]?.inputText ?? '') : '',
+  );
+  const persistedQuotes = useChatDraftStore((state) =>
+    activeSessionId && !isEditing ? (state.drafts[activeSessionId]?.quotes ?? EMPTY_QUOTES) : EMPTY_QUOTES,
+  );
+  const persistedTtsContext = useChatDraftStore((state) =>
+    activeSessionId && !isEditing ? (state.drafts[activeSessionId]?.ttsContext ?? '') : '',
+  );
+  const hydrateLegacySessionDraft = useChatDraftStore((state) => state.hydrateLegacySessionDraft);
+  const setDraftText = useChatDraftStore((state) => state.setDraftText);
+  const setDraftQuotes = useChatDraftStore((state) => state.setDraftQuotes);
+  const setDraftTtsContext = useChatDraftStore((state) => state.setDraftTtsContext);
+  const clearPersistedCurrentDraft = useChatDraftStore((state) => state.clearCurrentDraft);
+  const [editingDraft, setEditingDraft] = useState<ChatDraft>(EMPTY_EDITING_DRAFT);
   const [fileIdInput, setFileIdInput] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [machineState, dispatchMachineState] = useReducer(chatInputStateReducer, initialChatInputMachineState);
@@ -51,116 +74,66 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
   );
   const exitFullscreen = useCallback(() => setMachineFlag('isFullscreen', false), [setMachineFlag]);
 
-  // Load draft from localStorage when session changes
   useEffect(() => {
     if (activeSessionId && !isEditing) {
-      const draftKey = `chatDraft_${activeSessionId}`;
-      const savedDraft = localStorage.getItem(draftKey);
-      // Intentional draft hydration when switching sessions.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setInputText(savedDraft || '');
+      hydrateLegacySessionDraft(activeSessionId);
+    }
+  }, [activeSessionId, hydrateLegacySessionDraft, isEditing]);
 
-      // Load quotes draft
-      const quoteKey = `chatQuotes_${activeSessionId}`;
-      try {
-        const savedQuotes = localStorage.getItem(quoteKey);
-        if (savedQuotes) {
-          const parsed = JSON.parse(savedQuotes);
-          if (Array.isArray(parsed)) {
-            setQuotes(parsed);
-          }
-        } else {
-          setQuotes([]);
-        }
-      } catch {
-        setQuotes([]);
+  const inputText = isEditing ? editingDraft.inputText : persistedInputText;
+  const quotes = isEditing ? editingDraft.quotes : persistedQuotes;
+  const ttsContext = isEditing ? editingDraft.ttsContext : persistedTtsContext;
+
+  const setInputText = useCallback(
+    (value: SetStateAction<string>) => {
+      if (!activeSessionId || isEditing) {
+        setEditingDraft((draft) => ({
+          ...draft,
+          inputText: resolveSetStateAction(value, draft.inputText),
+        }));
+        return;
       }
 
-      // Load TTS Context draft
-      const ttsKey = `chatTtsContext_${activeSessionId}`;
-      const savedTtsContext = localStorage.getItem(ttsKey);
-      setTtsContext(savedTtsContext || '');
-    }
-  }, [activeSessionId, isEditing]);
+      setDraftText(activeSessionId, value);
+    },
+    [activeSessionId, isEditing, setDraftText],
+  );
 
-  // Cross-Tab Sync for Input Drafts
-  useEffect(() => {
-    if (!activeSessionId || isEditing) return;
-
-    const draftKey = `chatDraft_${activeSessionId}`;
-    const quoteKey = `chatQuotes_${activeSessionId}`;
-    const ttsKey = `chatTtsContext_${activeSessionId}`;
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === draftKey) {
-        const newValue = e.newValue || '';
-        if (newValue !== inputText) {
-          setInputText(newValue);
-        }
-      } else if (e.key === quoteKey) {
-        try {
-          const newValue = e.newValue ? JSON.parse(e.newValue) : [];
-          if (JSON.stringify(newValue) !== JSON.stringify(quotes)) {
-            setQuotes(newValue);
-          }
-        } catch {
-          // Ignore malformed cross-tab quote payloads.
-        }
-      } else if (e.key === ttsKey) {
-        const newValue = e.newValue || '';
-        if (newValue !== ttsContext) {
-          setTtsContext(newValue);
-        }
+  const setQuotes = useCallback(
+    (value: SetStateAction<string[]>) => {
+      if (!activeSessionId || isEditing) {
+        setEditingDraft((draft) => ({
+          ...draft,
+          quotes: resolveSetStateAction(value, draft.quotes),
+        }));
+        return;
       }
-    };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [activeSessionId, isEditing, inputText, quotes, ttsContext]);
+      setDraftQuotes(activeSessionId, value);
+    },
+    [activeSessionId, isEditing, setDraftQuotes],
+  );
 
-  // Save draft to localStorage on input change (debounced)
-  useEffect(() => {
-    if (!activeSessionId || isEditing) return;
-    const handler = setTimeout(() => {
-      const draftKey = `chatDraft_${activeSessionId}`;
-      if (inputText.trim()) {
-        localStorage.setItem(draftKey, inputText);
-      } else {
-        localStorage.removeItem(draftKey);
+  const setTtsContext = useCallback(
+    (value: SetStateAction<string>) => {
+      if (!activeSessionId || isEditing) {
+        setEditingDraft((draft) => ({
+          ...draft,
+          ttsContext: resolveSetStateAction(value, draft.ttsContext),
+        }));
+        return;
       }
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [inputText, activeSessionId, isEditing]);
 
-  // Save quotes to localStorage
-  useEffect(() => {
-    if (!activeSessionId || isEditing) return;
-    const quoteKey = `chatQuotes_${activeSessionId}`;
-    if (quotes.length > 0) {
-      localStorage.setItem(quoteKey, JSON.stringify(quotes));
-    } else {
-      localStorage.removeItem(quoteKey);
-    }
-  }, [quotes, activeSessionId, isEditing]);
-
-  // Save TTS context to localStorage
-  useEffect(() => {
-    if (!activeSessionId || isEditing) return;
-    const ttsKey = `chatTtsContext_${activeSessionId}`;
-    if (ttsContext.trim()) {
-      localStorage.setItem(ttsKey, ttsContext);
-    } else {
-      localStorage.removeItem(ttsKey);
-    }
-  }, [ttsContext, activeSessionId, isEditing]);
+      setDraftTtsContext(activeSessionId, value);
+    },
+    [activeSessionId, isEditing, setDraftTtsContext],
+  );
 
   const clearCurrentDraft = useCallback(() => {
     if (activeSessionId) {
-      localStorage.removeItem(`chatDraft_${activeSessionId}`);
-      localStorage.removeItem(`chatQuotes_${activeSessionId}`);
-      // Note: We deliberately do NOT clear TTS context on send, as it's often a persistent directive for the session
+      clearPersistedCurrentDraft(activeSessionId);
     }
-  }, [activeSessionId]);
+  }, [activeSessionId, clearPersistedCurrentDraft]);
 
   const handleToggleFullscreen = useCallback(() => {
     if (!machineState.isFullscreen) {

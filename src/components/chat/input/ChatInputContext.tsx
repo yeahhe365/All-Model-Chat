@@ -1,5 +1,6 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, type Context } from 'react';
 import { useChatInput } from '../../../hooks/chat-input/useChatInput';
+import type { AttachmentAction } from '../../../types';
 
 type ChatInputLogic = ReturnType<typeof useChatInput>;
 
@@ -17,12 +18,93 @@ export interface ChatInputContextValue extends ChatInputLogic {
   };
 }
 
-export const ChatInputContext = createContext<ChatInputContextValue | null>(null);
+export interface ChatInputToolbarContextValue {
+  showAddByIdInput: boolean;
+  fileIdInput: string;
+  setFileIdInput: (value: string) => void;
+  onAddFileByIdSubmit: () => void;
+  onCancelAddById: () => void;
+  isAddingById: boolean;
+  showAddByUrlInput: boolean;
+  urlInput: string;
+  setUrlInput: (value: string) => void;
+  onAddUrlSubmit: () => void;
+  onCancelAddUrl: () => void;
+  isAddingByUrl: boolean;
+  ttsContext?: string;
+  onEditTtsContext: () => void;
+}
 
-export const useChatInputContext = () => {
-  const value = useContext(ChatInputContext);
+export interface ChatInputActionsContextValue {
+  onAttachmentAction: (action: AttachmentAction) => void;
+  disabled: boolean;
+  onRecordButtonClick: () => void;
+  onCancelRecording: () => void;
+  isRecording: boolean;
+  isMicInitializing: boolean;
+  isTranscribing: boolean;
+  isWaitingForUpload: boolean;
+  isTranslating: boolean;
+  onToggleFullscreen: () => void;
+  isFullscreen: boolean;
+  onStartLiveSession: () => void;
+  onDisconnectLiveSession: () => void;
+  isLiveConnected: boolean;
+  isLiveMuted: boolean;
+  onToggleLiveMute: () => void;
+  onStartLiveCamera: () => void;
+  onStartLiveScreenShare: () => void;
+  onStopLiveVideo: () => void;
+  liveVideoSource: 'camera' | 'screen' | null;
+  onToggleToolAndFocus: (toggleFunc: () => void) => void;
+  onCountTokens: () => void;
+  isImageModel: boolean;
+  isRealImagenModel: boolean;
+  isNativeAudioModel: boolean;
+  canAddYouTubeVideo: boolean;
+  isLoading: boolean;
+}
+
+export interface ChatInputComposerStatusContextValue {
+  hasTrimmedInput: boolean;
+  canSend: boolean;
+  canQueueMessage: boolean;
+  onTranslate: () => void;
+  onPasteFromClipboard: () => void;
+  onClearInput: () => void;
+  onFastSendMessage: () => void;
+  onQueueMessage: () => void;
+}
+
+export const ChatInputContext = createContext<ChatInputContextValue | null>(null);
+export const ChatInputToolbarContext = createContext<ChatInputToolbarContextValue | null>(null);
+export const ChatInputActionsContext = createContext<ChatInputActionsContextValue | null>(null);
+export const ChatInputComposerStatusContext = createContext<ChatInputComposerStatusContextValue | null>(null);
+
+const useRequiredContext = <T,>(context: Context<T | null>, hookName: string, providerName: string) => {
+  const value = useContext(context);
   if (!value) {
-    throw new Error('useChatInputContext must be used within ChatInputProvider');
+    throw new Error(`${hookName} must be used within ${providerName}`);
   }
   return value;
+};
+
+export const useChatInputContext = () => {
+  return useRequiredContext(ChatInputContext, 'useChatInputContext', 'ChatInputProvider');
+};
+
+export const useChatInputToolbarContext = () => {
+  return useRequiredContext(ChatInputToolbarContext, 'useChatInputToolbarContext', 'ChatInputProvider');
+};
+
+export const useChatInputActionsContext = () => {
+  return useRequiredContext(ChatInputActionsContext, 'useChatInputActionsContext', 'ChatInputProvider');
+};
+
+export const useChatInputComposerStatusContext = () => {
+  return useRequiredContext(
+    ChatInputComposerStatusContext,
+    'useChatInputComposerStatusContext',
+    'ChatInputProvider',
+  );
 };

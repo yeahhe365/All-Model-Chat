@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { useSettingsLogic } from './useSettingsLogic';
 import { renderHook } from '@/test/testUtils';
+import { useSettingsUiStore } from '../../stores/settingsUiStore';
 
 describe('useSettingsLogic', () => {
   let storage: Map<string, string>;
@@ -20,6 +21,11 @@ describe('useSettingsLogic', () => {
       clear: () => {
         storage.clear();
       },
+    });
+    useSettingsUiStore.setState({
+      activeTab: 'models',
+      scrollPositions: {},
+      legacySettingsUiHydrated: false,
     });
   });
 

@@ -3,19 +3,9 @@ import { X, Save, Edit2, Loader2, ArrowUp, CornerDownLeft } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { IconStop } from '../../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
-
-interface SendControlsProps {
-  isLoading: boolean;
-  isEditing: boolean;
-  canSend: boolean;
-  isWaitingForUpload: boolean;
-  editMode?: 'update' | 'resend';
-  onStopGenerating: () => void;
-  onCancelEdit: () => void;
-  onFastSendMessage?: () => void;
-  canQueueMessage?: boolean;
-  onQueueMessage?: () => void;
-}
+import { useChatInputRuntime } from '../../../layout/chat-runtime/ChatRuntimeContext';
+import { useChatStore } from '../../../../stores/chatStore';
+import { useChatInputActionsContext, useChatInputComposerStatusContext } from '../ChatInputContext';
 
 interface Ripple {
   x: number;
@@ -24,18 +14,12 @@ interface Ripple {
   size: number;
 }
 
-export const SendControls: React.FC<SendControlsProps> = ({
-  isLoading,
-  isEditing,
-  canSend,
-  isWaitingForUpload,
-  editMode,
-  onStopGenerating,
-  onCancelEdit,
-  onFastSendMessage,
-  canQueueMessage,
-  onQueueMessage,
-}) => {
+export const SendControls: React.FC = () => {
+  const { isLoading, isWaitingForUpload } = useChatInputActionsContext();
+  const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage } = useChatInputComposerStatusContext();
+  const isEditing = !!useChatStore((state) => state.editingMessageId);
+  const editMode = useChatStore((state) => state.editMode);
+  const { onStopGenerating, onCancelEdit } = useChatInputRuntime();
   const { t } = useI18n();
   const iconSize = 18;
   const [ripples, setRipples] = useState<Ripple[]>([]);
@@ -106,7 +90,7 @@ export const SendControls: React.FC<SendControlsProps> = ({
   };
 
   const handleContextMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isSend && onFastSendMessage && !isDisabled) {
+    if (isSend && !isDisabled) {
       e.preventDefault();
       createRipple(e);
       onFastSendMessage();
@@ -126,7 +110,7 @@ export const SendControls: React.FC<SendControlsProps> = ({
   } else if (isUpload) {
     label = t('sendMessage_waitingForUpload_aria');
     title = t('sendMessage_waitingForUpload_title');
-  } else if (isSend && onFastSendMessage && !isDisabled) {
+  } else if (isSend && !isDisabled) {
     title = t('sendMessage_title') + t('sendMessage_fast_suffix', ' (Right-click for Fast Mode ⚡)');
   }
 

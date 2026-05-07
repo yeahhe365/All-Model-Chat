@@ -2,28 +2,19 @@ import React from 'react';
 import { Maximize2, Minimize2, Languages, Loader2 } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
+import { useSettingsStore } from '../../../../stores/settingsStore';
+import { useChatStore } from '../../../../stores/chatStore';
+import { useChatInputActionsContext, useChatInputComposerStatusContext } from '../ChatInputContext';
 
-interface UtilityControlsProps {
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
-  isTranslating: boolean;
-  onTranslate: () => void;
-  showTranslateButton?: boolean;
-  disabled: boolean;
-  canTranslate: boolean;
-}
-
-export const UtilityControls: React.FC<UtilityControlsProps> = ({
-  isFullscreen,
-  onToggleFullscreen,
-  isTranslating,
-  onTranslate,
-  showTranslateButton = false,
-  disabled,
-  canTranslate,
-}) => {
+export const UtilityControls: React.FC = () => {
+  const { isFullscreen, onToggleFullscreen, isTranslating, disabled, isTranscribing, isMicInitializing } =
+    useChatInputActionsContext();
+  const { hasTrimmedInput, onTranslate } = useChatInputComposerStatusContext();
+  const showTranslateButton = useSettingsStore((state) => state.appSettings.showInputTranslationButton ?? false);
+  const isEditing = !!useChatStore((state) => state.editingMessageId);
   const { t } = useI18n();
   const iconSize = 20;
+  const canTranslate = hasTrimmedInput && !isEditing && !isTranscribing && !isMicInitializing;
 
   return (
     <>

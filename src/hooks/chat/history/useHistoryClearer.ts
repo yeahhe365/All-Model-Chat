@@ -4,6 +4,7 @@ import { dbService } from '@/services/db/dbService';
 import { logService } from '../../../services/logService';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
+import { useChatDraftStore } from '../../../stores/chatDraftStore';
 
 interface UseHistoryClearerProps {
   savedSessions: SavedChatSession[];
@@ -36,7 +37,9 @@ export const useHistoryClearer = ({
     });
 
     try {
-      removeSessionScopedLocalStorageEntries(savedSessions.map((session) => session.id));
+      const sessionIds = savedSessions.map((session) => session.id);
+      removeSessionScopedLocalStorageEntries(sessionIds);
+      useChatDraftStore.getState().clearSessionDrafts(sessionIds);
       logService.info(`Cleaned up session-scoped LocalStorage entries for ${savedSessions.length} sessions.`);
     } catch (e) {
       console.error('Failed to clean up localStorage:', e);

@@ -20,30 +20,22 @@ import {
   MENU_ITEM_DEFAULT_STATE_CLASS,
 } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
-
-interface AttachmentMenuProps {
-  onAction: (action: AttachmentAction) => void;
-  disabled: boolean;
-  isImageModel?: boolean;
-  canAddYouTubeVideo?: boolean;
-}
+import { useChatInputActionsContext } from './ChatInputContext';
 
 const attachIconSize = 20;
 const menuIconSize = 18;
 
-export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({
-  onAction,
-  disabled,
-  isImageModel,
-  canAddYouTubeVideo,
-}) => {
+export const AttachmentMenu: React.FC = () => {
+  const { onAttachmentAction, disabled, isImageModel, isRealImagenModel, canAddYouTubeVideo } =
+    useChatInputActionsContext();
   const { t } = useI18n();
   const { isOpen, menuPosition, containerRef, buttonRef, menuRef, targetWindow, closeMenu, toggleMenu } =
     usePortaledMenu({ constrainHeight: true });
+  const isAttachmentDisabled = disabled || isRealImagenModel;
 
   const handleAction = (action: AttachmentAction) => {
     closeMenu();
-    onAction(action);
+    onAttachmentAction(action);
   };
 
   const menuItems = [
@@ -78,7 +70,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({
         ref={buttonRef}
         type="button"
         onClick={toggleMenu}
-        disabled={disabled}
+        disabled={isAttachmentDisabled}
         className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rotate-45' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)] rotate-0'}`}
         aria-label={t('attachMenu_aria')}
         title={t('attachMenu_title')}

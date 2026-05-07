@@ -38,9 +38,10 @@ vi.mock('../../../stores/modelCapabilitiesStore', () => ({
   getCachedModelCapabilities: () => mockCapabilities.value,
 }));
 
+import { ChatInputToolbarContext, type ChatInputToolbarContextValue } from './ChatInputContext';
 import { ChatInputToolbar } from './ChatInputToolbar';
 
-const localProps = {
+const toolbarContextValue: ChatInputToolbarContextValue = {
   showAddByIdInput: false,
   fileIdInput: '',
   setFileIdInput: vi.fn(),
@@ -53,6 +54,7 @@ const localProps = {
   onAddUrlSubmit: vi.fn(),
   onCancelAddUrl: vi.fn(),
   isAddingByUrl: false,
+  onEditTtsContext: vi.fn(),
 };
 
 describe('ChatInputToolbar', () => {
@@ -64,7 +66,9 @@ describe('ChatInputToolbar', () => {
     act(() => {
       renderer.root.render(
         <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
-          <ChatInputToolbar {...localProps} />
+          <ChatInputToolbarContext.Provider value={toolbarContextValue}>
+            <ChatInputToolbar />
+          </ChatInputToolbarContext.Provider>
         </ChatRuntimeValuesProvider>,
       );
     });

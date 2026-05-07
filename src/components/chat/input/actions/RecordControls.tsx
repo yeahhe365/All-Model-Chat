@@ -2,24 +2,17 @@ import React from 'react';
 import { Loader2, Mic } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
+import { useChatInputActionsContext } from '../ChatInputContext';
 
-interface RecordControlsProps {
-  isRecording: boolean;
-  isTranscribing: boolean;
-  isMicInitializing: boolean;
-  onRecordButtonClick: () => void;
-  onCancelRecording: () => void;
-  disabled: boolean;
-}
-
-export const RecordControls: React.FC<RecordControlsProps> = ({
-  isRecording,
-  isTranscribing,
-  isMicInitializing,
-  onRecordButtonClick,
-  onCancelRecording,
-  disabled,
-}) => {
+export const RecordControls: React.FC = () => {
+  const {
+    isRecording,
+    isTranscribing,
+    isMicInitializing,
+    onRecordButtonClick,
+    onCancelRecording,
+    disabled,
+  } = useChatInputActionsContext();
   const { t } = useI18n();
   const micIconSize = 20;
 

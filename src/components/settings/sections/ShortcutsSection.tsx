@@ -70,31 +70,36 @@ export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({
               const effectiveKey = customKey !== undefined ? customKey : item.defaultKey;
 
               return (
-                <div key={item.id} className="py-2 group">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-sm text-[var(--theme-text-secondary)] font-medium group-hover:text-[var(--theme-text-primary)] transition-colors">
-                        {t(item.labelKey)}
-                      </span>
+                <React.Fragment key={item.id}>
+                  <div className="py-2 group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-[var(--theme-text-secondary)] font-medium group-hover:text-[var(--theme-text-primary)] transition-colors">
+                          {t(item.labelKey)}
+                        </span>
+                      </div>
+                      <ShortcutRecorder
+                        value={effectiveKey}
+                        defaultValue={item.defaultKey}
+                        onChange={(val) => handleShortcutChange(item.id, val)}
+                      />
                     </div>
-                    <ShortcutRecorder
-                      value={effectiveKey}
-                      defaultValue={item.defaultKey}
-                      onChange={(val) => handleShortcutChange(item.id, val)}
-                    />
                   </div>
-                </div>
+                  {item.id === 'input.cycleModels' && (
+                    <div className="pb-3">
+                      <TabCycleModelsCard
+                        availableModels={availableModels}
+                        configuredIds={currentSettings.tabModelCycleIds}
+                        onChange={(tabModelCycleIds) => onUpdateSettings({ tabModelCycleIds })}
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
         </div>
       ))}
-
-      <TabCycleModelsCard
-        availableModels={availableModels}
-        configuredIds={currentSettings.tabModelCycleIds}
-        onChange={(tabModelCycleIds) => onUpdateSettings({ tabModelCycleIds })}
-      />
     </div>
   );
 };

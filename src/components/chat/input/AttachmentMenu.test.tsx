@@ -2,6 +2,7 @@ import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { setupStoreStateReset } from '../../../test/storeTestUtils';
+import { ChatInputActionsContext, type ChatInputActionsContextValue } from './ChatInputContext';
 
 vi.mock('../../../services/logService', async () => {
   const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
@@ -24,6 +25,39 @@ vi.mock('../../../hooks/ui/usePortaledMenu', () => ({
 
 import { AttachmentMenu } from './AttachmentMenu';
 
+const createActionsContextValue = (
+  overrides: Partial<ChatInputActionsContextValue> = {},
+): ChatInputActionsContextValue => ({
+  onAttachmentAction: vi.fn(),
+  disabled: false,
+  onRecordButtonClick: vi.fn(),
+  isRecording: false,
+  isMicInitializing: false,
+  isTranscribing: false,
+  onCancelRecording: vi.fn(),
+  isWaitingForUpload: false,
+  isTranslating: false,
+  onToggleFullscreen: vi.fn(),
+  isFullscreen: false,
+  onStartLiveSession: vi.fn(),
+  onDisconnectLiveSession: vi.fn(),
+  isLiveConnected: false,
+  isLiveMuted: false,
+  onToggleLiveMute: vi.fn(),
+  onStartLiveCamera: vi.fn(),
+  onStartLiveScreenShare: vi.fn(),
+  onStopLiveVideo: vi.fn(),
+  liveVideoSource: null,
+  onToggleToolAndFocus: vi.fn(),
+  onCountTokens: vi.fn(),
+  isImageModel: false,
+  isRealImagenModel: false,
+  isNativeAudioModel: false,
+  canAddYouTubeVideo: false,
+  isLoading: false,
+  ...overrides,
+});
+
 describe('AttachmentMenu', () => {
   const renderer = setupTestRenderer({ providers: { language: 'en' } });
   setupStoreStateReset();
@@ -32,7 +66,13 @@ describe('AttachmentMenu', () => {
     const onAction = vi.fn();
 
     act(() => {
-      renderer.root.render(<AttachmentMenu onAction={onAction} disabled={false} canAddYouTubeVideo />);
+      renderer.root.render(
+        <ChatInputActionsContext.Provider
+          value={createActionsContextValue({ onAttachmentAction: onAction, canAddYouTubeVideo: true })}
+        >
+          <AttachmentMenu />
+        </ChatInputActionsContext.Provider>,
+      );
     });
 
     const youtubeButton = Array.from(document.querySelectorAll('button')).find((button) =>
@@ -50,7 +90,11 @@ describe('AttachmentMenu', () => {
 
   it('shows only image-relevant actions for Gemini image models', () => {
     act(() => {
-      renderer.root.render(<AttachmentMenu onAction={() => {}} disabled={false} isImageModel />);
+      renderer.root.render(
+        <ChatInputActionsContext.Provider value={createActionsContextValue({ isImageModel: true })}>
+          <AttachmentMenu />
+        </ChatInputActionsContext.Provider>,
+      );
     });
 
     expect(document.body.textContent).toContain('Upload from Device');

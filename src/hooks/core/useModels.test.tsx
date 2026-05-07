@@ -2,6 +2,7 @@ import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useModels } from './useModels';
 import { renderHook } from '@/test/testUtils';
+import { MODEL_PREFERENCES_STORE_STORAGE_KEY, useModelPreferencesStore } from '../../stores/modelPreferencesStore';
 
 describe('useModels', () => {
   beforeEach(() => {
@@ -17,6 +18,11 @@ describe('useModels', () => {
       clear: () => {
         storage.clear();
       },
+    });
+    useModelPreferencesStore.setState({
+      customModels: null,
+      modelSettingsCache: {},
+      legacyModelPreferencesHydrated: false,
     });
   });
 
@@ -50,27 +56,20 @@ describe('useModels', () => {
     });
 
     expect(result.current.apiModels.map((model) => model.id)).toEqual(['gemini-3-flash-preview', 'gemma-4-31b-it']);
-    expect(JSON.parse(localStorage.getItem('custom_model_list_v1') || '[]')).toEqual([
+    expect(JSON.parse(localStorage.getItem(MODEL_PREFERENCES_STORE_STORAGE_KEY) || '{}').state.customModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
       { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
     ]);
     unmount();
   });
 
-  it('updates models when another tab writes to storage', () => {
+  it('updates models when the persisted model store changes', () => {
     const { result, unmount } = renderHook(() => useModels());
 
     act(() => {
-      localStorage.setItem(
-        'custom_model_list_v1',
-        JSON.stringify([{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }]),
-      );
-      window.dispatchEvent(
-        new StorageEvent('storage', {
-          key: 'custom_model_list_v1',
-          newValue: localStorage.getItem('custom_model_list_v1'),
-        }),
-      );
+      useModelPreferencesStore
+        .getState()
+        .setCustomModels([{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }]);
     });
 
     expect(result.current.apiModels).toEqual([{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }]);
