@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Check } from 'lucide-react';
-import { ModelOption } from '../../../../types';
+import { ApiMode, ModelOption } from '../../../../types';
 import { getModelIcon } from '../../../shared/ModelPicker';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { buildModelCatalog, filterModelCatalog, type ModelCatalogCategory } from '../../../../utils/modelCatalog';
@@ -8,20 +8,58 @@ import { buildModelCatalog, filterModelCatalog, type ModelCatalogCategory } from
 interface ModelListViewProps {
   availableModels: ModelOption[];
   selectedModelId: string;
-  onSelectModel: (id: string) => void;
+  selectedApiMode?: ApiMode;
+  onSelectModel: (id: string, apiMode?: ApiMode) => void;
 }
 
-export const ModelListView: React.FC<ModelListViewProps> = ({ availableModels, selectedModelId, onSelectModel }) => {
+type ModelListSection = {
+  entries: ReturnType<typeof filterModelCatalog>;
+  key: string;
+  providerKey?: ApiMode;
+};
+
+const getProviderSectionLabelKey = (providerKey: ApiMode): string => {
+  if (providerKey === 'openai-compatible') {
+    return 'modelPickerProviderOpenAICompatible';
+  }
+
+  return 'modelPickerProviderGemini';
+};
+
+export const ModelListView: React.FC<ModelListViewProps> = ({
+  availableModels,
+  selectedModelId,
+  selectedApiMode,
+  onSelectModel,
+}) => {
   const { t } = useI18n();
 
   const catalog = useMemo(() => buildModelCatalog(availableModels), [availableModels]);
   const filteredEntries = useMemo(() => filterModelCatalog(catalog, ''), [catalog]);
 
   const sections = useMemo(() => {
+    const hasProviderSections = filteredEntries.some((entry) => entry.model.apiMode);
+    if (hasProviderSections) {
+      const providerOrder: ApiMode[] = ['gemini-native', 'openai-compatible'];
+
+      return providerOrder.reduce<ModelListSection[]>((nextSections, providerKey) => {
+        const entries = filteredEntries.filter((entry) => entry.model.apiMode === providerKey);
+        if (entries.length > 0) {
+          nextSections.push({
+            key: providerKey,
+            providerKey,
+            entries,
+          });
+        }
+
+        return nextSections;
+      }, []);
+    }
+
     const pinned = filteredEntries.filter((entry) => entry.group === 'pinned');
     const standard = filteredEntries.filter((entry) => entry.group === 'standard');
     const categories: ModelCatalogCategory[] = ['text', 'live', 'tts', 'image', 'robotics', 'other'];
-    const nextSections: Array<{ key: string; entries: typeof filteredEntries }> = [];
+    const nextSections: ModelListSection[] = [];
 
     if (pinned.length > 0) {
       nextSections.push({ key: 'pinned', entries: pinned });
@@ -41,19 +79,27 @@ export const ModelListView: React.FC<ModelListViewProps> = ({ availableModels, s
     <div className="border border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-input)]/30 overflow-hidden">
       <div className="max-h-[280px] overflow-y-auto custom-scrollbar p-1.5 space-y-2">
         {sections.map((section) => (
-          <div key={section.key} className="space-y-1">
+          <div key={section.key} className="space-y-1" data-provider-section={section.providerKey}>
+            {section.providerKey && (
+              <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--theme-text-tertiary)]">
+                {t(getProviderSectionLabelKey(section.providerKey))}
+              </div>
+            )}
             {section.entries.map((entry) => {
-              const isSelected = entry.id === selectedModelId;
+              const isSelected =
+                entry.id === selectedModelId &&
+                (!selectedApiMode || !entry.model.apiMode || entry.model.apiMode === selectedApiMode);
+              const optionKey = entry.model.apiMode ? `${entry.model.apiMode}:${entry.id}` : entry.id;
 
               return (
                 <button
                   type="button"
-                  key={entry.id}
+                  key={optionKey}
                   data-testid={`settings-model-option-${entry.id}`}
                   onPointerDown={(event) => {
                     event.preventDefault();
                   }}
-                  onClick={() => onSelectModel(entry.id)}
+                  onClick={() => onSelectModel(entry.id, entry.model.apiMode)}
                   className={`w-full flex items-start gap-3 px-3 py-2.5 text-sm rounded-xl border transition-colors text-left ${
                     isSelected
                       ? 'bg-[var(--theme-bg-accent)]/10 border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]'

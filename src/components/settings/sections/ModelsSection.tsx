@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { ChevronDown, Shield } from 'lucide-react';
-import { AppSettings, ModelOption } from '../../../types';
+import { ApiMode, AppSettings, ModelOption } from '../../../types';
 import { ModelSelector } from '../controls/ModelSelector';
 import { CanvasSection } from './CanvasSection';
 import { GenerationSection } from './GenerationSection';
@@ -11,10 +11,11 @@ import type { SettingsUpdateHandler } from '../settingsTypes';
 
 interface ModelsSectionProps {
   modelId: string;
-  setModelId: (id: string) => void;
+  setModelId: (id: string, apiMode?: ApiMode) => void;
   availableModels: ModelOption[];
   setAvailableModels: (models: ModelOption[]) => void;
   defaultModels?: ModelOption[];
+  defaultApiMode?: ApiMode;
   isOpenAICompatibleMode?: boolean;
   currentSettings: AppSettings;
   onUpdateSettings: (settings: Partial<AppSettings>) => void;
@@ -26,6 +27,7 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
   availableModels,
   setAvailableModels,
   defaultModels,
+  defaultApiMode,
   isOpenAICompatibleMode = false,
   currentSettings,
   onUpdateSettings,
@@ -36,15 +38,24 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
   const updateSetting: SettingsUpdateHandler = (key, value) => {
     onUpdateSettings({ [key]: value } as Partial<AppSettings>);
   };
+  const geminiOnlyModels = availableModels
+    .filter((model) => !model.apiMode || model.apiMode === 'gemini-native')
+    .map((model) => {
+      const nextModel = { ...model };
+      delete nextModel.apiMode;
+      return nextModel;
+    });
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <ModelSelector
         availableModels={availableModels}
         selectedModelId={modelId}
+        selectedApiMode={currentSettings.apiMode}
         onSelectModel={setModelId}
         setAvailableModels={setAvailableModels}
         defaultModels={defaultModels}
+        defaultApiMode={defaultApiMode}
       />
 
       <GenerationSection
@@ -59,7 +70,7 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
           <CanvasSection currentSettings={currentSettings} onUpdateSetting={updateSetting} />
 
           <LanguageVoiceSection
-            availableModels={availableModels}
+            availableModels={geminiOnlyModels}
             currentSettings={currentSettings}
             onUpdateSetting={updateSetting}
           />

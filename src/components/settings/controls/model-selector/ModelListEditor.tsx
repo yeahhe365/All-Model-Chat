@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, RotateCcw, Check } from 'lucide-react';
-import { ModelOption } from '../../../../types';
+import { ApiMode, ModelOption } from '../../../../types';
 import { ModelListEditorRow } from './ModelListEditorRow';
 import { useI18n } from '../../../../contexts/I18nContext';
 
 interface ModelListEditorProps {
   availableModels: ModelOption[];
   defaultModels?: ModelOption[];
+  defaultApiMode?: ApiMode;
+  showApiModeControls?: boolean;
   onSave: (models: ModelOption[]) => void;
   setIsEditingList: (value: boolean) => void;
 }
 
-type EditableModelField = 'id' | 'name' | 'isPinned';
+type EditableModelField = 'id' | 'name' | 'isPinned' | 'apiMode';
 type EditableModelRow = ModelOption & { _rowId: string };
 
 const createRowId = () => `model-row-${Math.random().toString(36).slice(2, 10)}`;
@@ -24,6 +26,8 @@ const toEditableRows = (models: ModelOption[]): EditableModelRow[] =>
 export const ModelListEditor: React.FC<ModelListEditorProps> = ({
   availableModels,
   defaultModels,
+  defaultApiMode = 'gemini-native',
+  showApiModeControls = false,
   onSave,
   setIsEditingList,
 }) => {
@@ -50,7 +54,16 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
   };
 
   const handleAddModel = () => {
-    setTempModels((prev) => [...prev, { id: '', name: '', isPinned: false, _rowId: createRowId() }]);
+    setTempModels((prev) => [
+      ...prev,
+      {
+        id: '',
+        name: '',
+        isPinned: false,
+        apiMode: showApiModeControls ? defaultApiMode : undefined,
+        _rowId: createRowId(),
+      },
+    ]);
     setValidationMessage('');
   };
 
@@ -72,6 +85,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
         id: model.id.trim(),
         name: model.name.trim(),
         isPinned: !!model.isPinned,
+        apiMode: showApiModeControls ? model.apiMode || defaultApiMode : model.apiMode,
       }))
       .filter((model) => model.id !== '');
 
@@ -80,16 +94,28 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
       return;
     }
 
-    const ids = validModels.map((model) => model.id);
+    const hasProviderMetadata = validModels.some((model) => model.apiMode);
+    const ids = validModels.map((model) =>
+      hasProviderMetadata ? `${model.apiMode || defaultApiMode}:${model.id}` : model.id,
+    );
     if (new Set(ids).size !== ids.length) {
       setValidationMessage(t('settingsModelListDuplicateIds'));
       return;
     }
 
-    const refinedModels = validModels.map((m) => ({
-      ...m,
-      name: m.name || m.id,
-    }));
+    const refinedModels = validModels.map((m) => {
+      const refinedModel: ModelOption = {
+        id: m.id,
+        name: m.name || m.id,
+        isPinned: m.isPinned,
+      };
+
+      if (m.apiMode) {
+        refinedModel.apiMode = m.apiMode;
+      }
+
+      return refinedModel;
+    });
     setValidationMessage('');
     onSave(refinedModels);
     setIsEditingList(false);
@@ -103,6 +129,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
             key={model._rowId}
             model={model}
             index={idx}
+            showApiModeControls={showApiModeControls}
             onUpdate={handleUpdateTempModel}
             onDelete={handleDeleteModel}
           />

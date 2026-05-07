@@ -91,6 +91,40 @@ describe('ModelListEditor', () => {
     expect(renderer.container.textContent).toContain('Model IDs must be unique.');
   });
 
+  it('preserves provider metadata when saving a combined model list', () => {
+    const onSave = vi.fn();
+
+    act(() => {
+      renderer.root.render(
+        <ModelListEditor
+          availableModels={[
+            {
+              id: 'gemini-3-flash-preview',
+              name: 'Gemini 3 Flash',
+              isPinned: true,
+              apiMode: 'gemini-native',
+            },
+            { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: false, apiMode: 'openai-compatible' },
+          ]}
+          onSave={onSave}
+          setIsEditingList={vi.fn()}
+        />,
+      );
+    });
+
+    act(() => {
+      const saveButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Save List'),
+      );
+      saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onSave).toHaveBeenCalledWith([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: true, apiMode: 'gemini-native' },
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: false, apiMode: 'openai-compatible' },
+    ]);
+  });
+
   it('resets to caller-provided defaults for independent model lists', async () => {
     const onSave = vi.fn();
     vi.spyOn(window, 'confirm').mockReturnValue(true);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ModelOption } from '../../../types';
+import { ApiMode, ModelOption } from '../../../types';
 import { ModelSelectorHeader } from './model-selector/ModelSelectorHeader';
 import { ModelListEditor } from './model-selector/ModelListEditor';
 import { ModelListView } from './model-selector/ModelListView';
@@ -7,19 +7,25 @@ import { ModelListView } from './model-selector/ModelListView';
 interface ModelSelectorProps {
   availableModels: ModelOption[];
   selectedModelId: string;
-  onSelectModel: (id: string) => void;
+  selectedApiMode?: ApiMode;
+  onSelectModel: (id: string, apiMode?: ApiMode) => void;
   setAvailableModels: (models: ModelOption[]) => void;
   defaultModels?: ModelOption[];
+  defaultApiMode?: ApiMode;
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
   availableModels,
   selectedModelId,
+  selectedApiMode,
   onSelectModel,
   setAvailableModels,
   defaultModels,
+  defaultApiMode,
 }) => {
   const [isEditingList, setIsEditingList] = useState(false);
+  const isProviderAwareList =
+    availableModels.some((model) => model.apiMode) || !!defaultModels?.some((model) => model.apiMode);
 
   return (
     <div className="space-y-4">
@@ -29,6 +35,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <ModelListEditor
           availableModels={availableModels}
           defaultModels={defaultModels}
+          defaultApiMode={defaultApiMode}
+          showApiModeControls={isProviderAwareList}
           onSave={setAvailableModels}
           setIsEditingList={setIsEditingList}
         />
@@ -36,6 +44,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <ModelListView
           availableModels={availableModels}
           selectedModelId={selectedModelId}
+          selectedApiMode={selectedApiMode}
           onSelectModel={onSelectModel}
         />
       )}

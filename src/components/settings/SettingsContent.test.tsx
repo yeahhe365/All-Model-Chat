@@ -50,8 +50,28 @@ vi.mock('./sections/ModelsSection', () => ({
         >
           save
         </button>
+        <button
+          data-testid="save-provider-model-list"
+          onClick={() =>
+            props.setAvailableModels([
+              { id: 'gemini-new', name: 'Gemini New', isPinned: true, apiMode: 'gemini-native' },
+              { id: 'gpt-new', name: 'GPT New', isPinned: false, apiMode: 'openai-compatible' },
+            ])
+          }
+        >
+          save providers
+        </button>
         <button data-testid="select-model" onClick={() => props.setModelId('manual-openai-model')}>
           select
+        </button>
+        <button
+          data-testid="select-gemini-model"
+          onClick={() => props.setModelId('gemini-3-flash-preview', 'gemini-native')}
+        >
+          select gemini
+        </button>
+        <button data-testid="select-openai-model" onClick={() => props.setModelId('gpt-5.5', 'openai-compatible')}>
+          select openai
         </button>
       </>
     );
@@ -206,13 +226,14 @@ describe('SettingsContent', () => {
       'gemini-custom-thought-translator',
     );
     expect(mockModelsSection.lastProps!.availableModels).toEqual([
-      { id: 'gemini-custom-input-translator', name: 'Input Translator' },
-      { id: 'gemini-custom-thought-translator', name: 'Thought Translator' },
+      { id: 'gemini-custom-input-translator', name: 'Input Translator', apiMode: 'gemini-native' },
+      { id: 'gemini-custom-thought-translator', name: 'Thought Translator', apiMode: 'gemini-native' },
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true, apiMode: 'openai-compatible' },
     ]);
     expect(updateSetting).not.toHaveBeenCalled();
   });
 
-  it('uses the independent OpenAI-compatible model list in OpenAI-compatible mode', () => {
+  it('passes Gemini and OpenAI-compatible models together in model settings', () => {
     const updateSetting = vi.fn();
     const setAvailableModels = vi.fn();
     const handleModelChange = vi.fn();
@@ -255,35 +276,118 @@ describe('SettingsContent', () => {
     });
 
     expect(mockModelsSection.lastProps!.modelId).toBe('gpt-5.5');
-    expect(mockModelsSection.lastProps!.availableModels).toBe(openAIModels);
-    expect(mockModelsSection.lastProps!.defaultModels).toEqual([
-      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+    expect(mockModelsSection.lastProps!.availableModels).toEqual([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true, apiMode: 'openai-compatible' },
+      { id: 'gpt-4.1', name: 'GPT-4.1', apiMode: 'openai-compatible' },
     ]);
+    expect(mockModelsSection.lastProps!.defaultModels).toContainEqual({
+      id: 'gpt-5.5',
+      name: 'GPT-5.5',
+      isPinned: true,
+      apiMode: 'openai-compatible',
+    });
     expect(mockModelsSection.lastProps!.isOpenAICompatibleMode).toBe(true);
 
     act(() => {
       renderer.container
-        .querySelector('[data-testid="save-model-list"]')
+        .querySelector('[data-testid="save-provider-model-list"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
+    expect(setAvailableModels).toHaveBeenCalledWith([{ id: 'gemini-new', name: 'Gemini New', isPinned: true }]);
     expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModels', [
-      { id: 'fallback-model', name: 'Fallback Model', isPinned: true },
-      { id: 'secondary-model', name: 'Secondary Model' },
+      { id: 'gpt-new', name: 'GPT New', isPinned: false },
     ]);
-    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'fallback-model');
-    expect(setAvailableModels).not.toHaveBeenCalled();
-    expect(handleModelChange).not.toHaveBeenCalled();
+    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'gpt-new');
+    expect(handleModelChange).toHaveBeenCalledWith('gemini-new');
+  });
+
+  it('switches API mode when selecting a provider-tagged model from settings', () => {
+    const updateSetting = vi.fn();
+    const handleModelChange = vi.fn();
+
+    act(() => {
+      renderer.root.render(
+        <SettingsContent
+          activeTab="models"
+          currentSettings={{
+            ...DEFAULT_APP_SETTINGS,
+            apiMode: 'openai-compatible',
+            modelId: 'gemini-3-flash-preview',
+            openaiCompatibleModelId: 'gpt-5.5',
+            openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true }],
+          }}
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }]}
+          updateSetting={updateSetting}
+          handleModelChange={handleModelChange}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+        />,
+      );
+    });
 
     act(() => {
       renderer.container
-        .querySelector('[data-testid="select-model"]')
+        .querySelector('[data-testid="select-gemini-model"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'manual-openai-model');
-    expect(setAvailableModels).not.toHaveBeenCalled();
-    expect(handleModelChange).not.toHaveBeenCalled();
+    expect(updateSetting).toHaveBeenCalledWith('apiMode', 'gemini-native');
+    expect(handleModelChange).toHaveBeenCalledWith('gemini-3-flash-preview');
+
+    act(() => {
+      renderer.root.render(
+        <SettingsContent
+          activeTab="models"
+          currentSettings={{
+            ...DEFAULT_APP_SETTINGS,
+            apiMode: 'gemini-native',
+            modelId: 'gemini-3-flash-preview',
+            openaiCompatibleModelId: 'gpt-5.5',
+            openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true }],
+          }}
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }]}
+          updateSetting={updateSetting}
+          handleModelChange={handleModelChange}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+        />,
+      );
+    });
+
+    act(() => {
+      renderer.container
+        .querySelector('[data-testid="select-openai-model"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(updateSetting).toHaveBeenCalledWith('apiMode', 'openai-compatible');
+    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'gpt-5.5');
   });
 
   it('does not render the removed model behavior section when the obsolete tab is requested', () => {

@@ -225,6 +225,19 @@ describe('ModelsSection', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith({ thoughtTranslationModelId: 'gemini-3.1-pro-preview' });
   });
 
+  it('keeps OpenAI-compatible models out of Gemini language and voice controls', async () => {
+    await renderModelsSection({
+      availableModels: [
+        { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+        { id: 'gpt-5.5', name: 'GPT-5.5', apiMode: 'openai-compatible' },
+      ],
+    });
+
+    expect(mockLanguageVoiceSection.lastProps!.availableModels).toEqual([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' },
+    ]);
+  });
+
   it('shows only GPT-compatible model and chat controls in OpenAI-compatible mode', async () => {
     const onUpdateSettings = vi.fn();
     const defaultModels = [

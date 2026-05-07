@@ -41,4 +41,38 @@ describe('ModelListView', () => {
     expect(renderer.container.textContent).not.toContain('Pinned');
     expect(renderer.container.textContent).not.toContain('Speech');
   });
+
+  it('groups provider-tagged models and reports the selected provider', () => {
+    const onSelectModel = vi.fn();
+
+    act(() => {
+      renderer.root.render(
+        <ModelListView
+          availableModels={[
+            { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+            { id: 'gpt-5.5', name: 'GPT-5.5', apiMode: 'openai-compatible' },
+          ]}
+          selectedModelId="gemini-3-flash-preview"
+          selectedApiMode="gemini-native"
+          onSelectModel={onSelectModel}
+        />,
+      );
+    });
+
+    const geminiSection = renderer.container.querySelector('[data-provider-section="gemini-native"]');
+    const openAISection = renderer.container.querySelector('[data-provider-section="openai-compatible"]');
+
+    expect(geminiSection?.textContent).toContain('Gemini');
+    expect(geminiSection?.textContent).toContain('Gemini 3 Flash Preview');
+    expect(openAISection?.textContent).toContain('OpenAI Compatible');
+    expect(openAISection?.textContent).toContain('GPT-5.5');
+
+    act(() => {
+      renderer.container
+        .querySelector('[data-testid="settings-model-option-gpt-5.5"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onSelectModel).toHaveBeenCalledWith('gpt-5.5', 'openai-compatible');
+  });
 });
