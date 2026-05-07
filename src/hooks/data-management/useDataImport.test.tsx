@@ -294,6 +294,7 @@ describe('useDataImport', () => {
     fileReaderResult = JSON.stringify({
       type: 'AllModelChat-Settings',
       settings: {
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         openaiCompatibleApiKey: 'openai-key',
         openaiCompatibleBaseUrl: 'https://openai-compatible.example.com/v1',
@@ -336,6 +337,7 @@ describe('useDataImport', () => {
     });
 
     expect(didImportSettings).toBe(true);
+    expect(importedSettings.isOpenAICompatibleApiEnabled).toBe(true);
     expect(importedSettings.apiMode).toBe('openai-compatible');
     expect(importedSettings.openaiCompatibleApiKey).toBe('openai-key');
     expect(importedSettings.openaiCompatibleBaseUrl).toBe('https://openai-compatible.example.com/v1');

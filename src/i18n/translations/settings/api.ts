@@ -3,6 +3,11 @@ export const apiSettings = {
   settingsApiModeLabel: { en: 'API Mode', zh: 'API 模式' },
   settingsApiModeGeminiNative: { en: 'Gemini Native', zh: 'Gemini 原生' },
   settingsApiModeOpenAICompatible: { en: 'OpenAI Compatible', zh: 'OpenAI 兼容' },
+  settingsOpenAICompatibleToggleLabel: { en: 'OpenAI-Compatible API', zh: 'OpenAI 兼容 API' },
+  settingsOpenAICompatibleToggleHelp: {
+    en: 'Turn on to use OpenAI or GPT-compatible providers. When off, Gemini Native remains active.',
+    zh: '打开后可使用 OpenAI 或 GPT 兼容服务。关闭时保持 Gemini 原生模式。',
+  },
   settingsOpenAICompatibleBaseUrl: { en: 'OpenAI-Compatible Base URL', zh: 'OpenAI 兼容基础 URL' },
   settingsOpenAICompatibleApiKey: { en: 'OpenAI-Compatible API Keys', zh: 'OpenAI 兼容 API 密钥' },
   settingsOpenAICompatibleHelp: {

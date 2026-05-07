@@ -252,6 +252,7 @@ describe('ModelsSection', () => {
       isOpenAICompatibleMode: true,
       currentSettings: {
         ...useSettingsStore.getState().appSettings,
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
       },
       onUpdateSettings,

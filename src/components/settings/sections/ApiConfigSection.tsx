@@ -17,6 +17,8 @@ import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
 import { FileStrategyControl } from './appearance/FileStrategyControl';
+import { Toggle } from '../../shared/Toggle';
+import { isOpenAICompatibleApiActive } from '../../../utils/openaiCompatibleMode';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -64,7 +66,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     apiProxyUrl,
   });
   const apiMode = settings.apiMode ?? 'gemini-native';
-  const isOpenAICompatibleMode = apiMode === 'openai-compatible';
+  const isOpenAICompatibleApiEnabled = settings.isOpenAICompatibleApiEnabled === true;
+  const isOpenAICompatibleMode = isOpenAICompatibleApiActive(settings);
   const openaiCompatibleApiKey = settings.openaiCompatibleApiKey;
 
   useEffect(() => {
@@ -93,6 +96,13 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     }
 
     setAllowOverflow(false);
+  };
+
+  const handleOpenAICompatibleApiEnabledChange = (enabled: boolean) => {
+    onUpdate('isOpenAICompatibleApiEnabled', enabled);
+    onUpdate('apiMode', enabled ? 'openai-compatible' : 'gemini-native');
+    setTestStatus('idle');
+    setTestMessage(null);
   };
 
   const handleTestConnection = async () => {
@@ -190,27 +200,50 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       <div>
         <div className="space-y-3 pb-4">
           <div
-            role="group"
-            aria-label={t('settingsApiModeLabel')}
-            className="grid grid-cols-2 gap-1 rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/35 p-1 shadow-sm"
+            className="flex items-center justify-between py-3 cursor-pointer group select-none relative z-10"
+            onClick={() => handleOpenAICompatibleApiEnabledChange(!isOpenAICompatibleApiEnabled)}
           >
-            <button
-              type="button"
-              className={modeButtonClass(apiMode === 'gemini-native')}
-              aria-pressed={apiMode === 'gemini-native'}
-              onClick={() => onUpdate('apiMode', 'gemini-native')}
-            >
-              {t('settingsApiModeGeminiNative')}
-            </button>
-            <button
-              type="button"
-              className={modeButtonClass(isOpenAICompatibleMode)}
-              aria-pressed={isOpenAICompatibleMode}
-              onClick={() => onUpdate('apiMode', 'openai-compatible')}
-            >
-              {t('settingsApiModeOpenAICompatible')}
-            </button>
+            <div className="flex flex-col flex-grow pr-4">
+              <span className="text-sm font-medium text-[var(--theme-text-primary)] group-hover:text-[var(--theme-text-link)] transition-colors">
+                {t('settingsOpenAICompatibleToggleLabel')}
+              </span>
+              <span className="text-xs text-[var(--theme-text-tertiary)] mt-0.5">
+                {t('settingsOpenAICompatibleToggleHelp')}
+              </span>
+            </div>
+            <div onClick={(event) => event.stopPropagation()}>
+              <Toggle
+                id="openai-compatible-api-enabled-toggle"
+                checked={isOpenAICompatibleApiEnabled}
+                onChange={handleOpenAICompatibleApiEnabledChange}
+                ariaLabel={t('settingsOpenAICompatibleToggleLabel')}
+              />
+            </div>
           </div>
+          {isOpenAICompatibleApiEnabled && (
+            <div
+              role="group"
+              aria-label={t('settingsApiModeLabel')}
+              className="grid grid-cols-2 gap-1 rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/35 p-1 shadow-sm"
+            >
+              <button
+                type="button"
+                className={modeButtonClass(apiMode === 'gemini-native')}
+                aria-pressed={apiMode === 'gemini-native'}
+                onClick={() => onUpdate('apiMode', 'gemini-native')}
+              >
+                {t('settingsApiModeGeminiNative')}
+              </button>
+              <button
+                type="button"
+                className={modeButtonClass(isOpenAICompatibleMode)}
+                aria-pressed={isOpenAICompatibleMode}
+                onClick={() => onUpdate('apiMode', 'openai-compatible')}
+              >
+                {t('settingsApiModeOpenAICompatible')}
+              </button>
+            </div>
+          )}
           {isOpenAICompatibleMode && (
             <div className="space-y-4">
               <ApiKeyInput

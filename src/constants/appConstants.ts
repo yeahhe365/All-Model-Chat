@@ -25,6 +25,7 @@ import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../utils/apiProxyUrl';
 const DEFAULT_IS_STREAMING_ENABLED = true;
 const DEFAULT_BASE_FONT_SIZE = 16;
 const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
+const DEFAULT_IS_OPENAI_COMPATIBLE_API_ENABLED = false;
 const DEFAULT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'English';
 const DEFAULT_THOUGHT_TRANSLATION_TARGET_LANGUAGE: TranslationTargetLanguage = 'Simplified Chinese';
 const DEFAULT_OPENAI_COMPATIBLE_MODEL_ID = 'gpt-5.5';
@@ -120,6 +121,7 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   themeId: 'pearl',
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   apiMode: 'gemini-native',
+  isOpenAICompatibleApiEnabled: DEFAULT_IS_OPENAI_COMPATIBLE_API_ENABLED,
   useCustomApiConfig: false,
   serverManagedApi: false,
   apiKey: null,

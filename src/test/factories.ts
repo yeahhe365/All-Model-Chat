@@ -30,6 +30,7 @@ export const createAppSettings = (overrides: Partial<AppSettings> = {}): AppSett
   themeId: 'pearl',
   baseFontSize: 14,
   apiMode: 'gemini-native',
+  isOpenAICompatibleApiEnabled: false,
   useCustomApiConfig: false,
   apiKey: 'api-key',
   apiProxyUrl: null,

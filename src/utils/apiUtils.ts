@@ -1,6 +1,7 @@
 import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
+import { isOpenAICompatibleApiActive } from './openaiCompatibleMode';
 
 export const SERVER_MANAGED_API_KEY = '__SERVER_MANAGED_API_KEY__';
 
@@ -27,7 +28,7 @@ const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string |
     }
   ).env;
 
-  if (appSettings.apiMode === 'openai-compatible') {
+  if (isOpenAICompatibleApiActive(appSettings)) {
     return {
       apiKeysString: appSettings.openaiCompatibleApiKey || envWithGeminiKey?.VITE_OPENAI_API_KEY || null,
     };
@@ -58,7 +59,7 @@ export const getKeyForRequest = (
 ): { key: string; isNewKey: boolean } | { error: string } => {
   const { skipIncrement = false } = options;
   const { skipUsageLogging = false } = options;
-  const isOpenAICompatibleMode = appSettings.apiMode === 'openai-compatible';
+  const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
   const shouldUseServerManagedMarker =
     !isOpenAICompatibleMode && isServerManagedApiEnabledForProxyRequests(appSettings);
 

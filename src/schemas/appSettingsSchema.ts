@@ -169,6 +169,7 @@ const appSettingsSchema: z.ZodType<AppSettings> = z.object({
   themeId: withDefault(z.enum(THEME_IDS), DEFAULT_APP_SETTINGS.themeId),
   baseFontSize: numberWithDefault(DEFAULT_APP_SETTINGS.baseFontSize),
   apiMode: withDefault(z.enum(API_MODES), DEFAULT_APP_SETTINGS.apiMode as ApiMode),
+  isOpenAICompatibleApiEnabled: booleanWithDefault(DEFAULT_APP_SETTINGS.isOpenAICompatibleApiEnabled ?? false),
   useCustomApiConfig: booleanWithDefault(DEFAULT_APP_SETTINGS.useCustomApiConfig),
   serverManagedApi: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.serverManagedApi),
   apiKey: nullableStringWithDefault(DEFAULT_APP_SETTINGS.apiKey),
@@ -229,5 +230,10 @@ const appSettingsSchema: z.ZodType<AppSettings> = z.object({
     .transform((value) => sanitizeTabModelCycleIds(value, DEFAULT_APP_SETTINGS.tabModelCycleIds)),
 });
 
+const coerceDisabledOpenAICompatibleMode = (settings: AppSettings): AppSettings => ({
+  ...settings,
+  apiMode: settings.isOpenAICompatibleApiEnabled ? settings.apiMode : 'gemini-native',
+});
+
 export const sanitizeImportedAppSettings = (value: unknown): AppSettings =>
-  appSettingsSchema.parse(isRecord(value) ? value : {});
+  coerceDisabledOpenAICompatibleMode(appSettingsSchema.parse(isRecord(value) ? value : {}));

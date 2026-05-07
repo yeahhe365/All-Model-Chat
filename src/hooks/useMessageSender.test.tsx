@@ -340,6 +340,7 @@ describe('useMessageSender', () => {
 
     const { result, unmount } = renderMessageSender({
       appSettings: {
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         openaiCompatibleModelId: 'gpt-5.5',
       },

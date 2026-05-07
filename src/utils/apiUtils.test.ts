@@ -84,6 +84,7 @@ describe('getKeyForRequest', () => {
     const result = getKeyForRequest(
       {
         ...DEFAULT_APP_SETTINGS,
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         useCustomApiConfig: true,
         apiKey: 'gemini-key',
@@ -102,6 +103,7 @@ describe('getKeyForRequest', () => {
     const result = getKeyForRequest(
       {
         ...DEFAULT_APP_SETTINGS,
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         useCustomApiConfig: true,
         apiKey: 'gemini-key',
@@ -111,6 +113,25 @@ describe('getKeyForRequest', () => {
     );
 
     expect(result).toEqual({ error: 'API Key not configured.' });
+  });
+
+  it('uses Gemini key handling when OpenAI-compatible mode is stored but the provider switch is off', () => {
+    const result = getKeyForRequest(
+      {
+        ...DEFAULT_APP_SETTINGS,
+        isOpenAICompatibleApiEnabled: false,
+        apiMode: 'openai-compatible',
+        useCustomApiConfig: true,
+        apiKey: 'gemini-key',
+        openaiCompatibleApiKey: 'openai-key',
+      },
+      chatSettings,
+    );
+
+    expect(result).toEqual({
+      key: 'gemini-key',
+      isNewKey: true,
+    });
   });
 
   it('can select a key without recording usage for Live token setup', () => {

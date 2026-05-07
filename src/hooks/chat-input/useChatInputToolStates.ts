@@ -3,6 +3,7 @@ import type { ChatSettings } from '../../types';
 import type { ChatToolSettingKey, ChatToolToggleStates, ToggleableChatToolId } from '../../types/chatTools';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 interface UseChatInputToolStatesParams {
   currentChatSettings: ChatSettings;
@@ -49,7 +50,7 @@ export const useChatInputToolStates = ({
 }: UseChatInputToolStatesParams): ChatToolToggleStates => {
   const activeSessionId = useChatStore((state) => state.activeSessionId);
   const setCurrentChatSettings = useChatStore((state) => state.setCurrentChatSettings);
-  const isOpenAICompatibleMode = useSettingsStore((state) => state.appSettings.apiMode === 'openai-compatible');
+  const isOpenAICompatibleMode = useSettingsStore((state) => isOpenAICompatibleApiActive(state.appSettings));
 
   const createToggle = useCallback(
     (toolId: ToggleableChatToolId) => () => {

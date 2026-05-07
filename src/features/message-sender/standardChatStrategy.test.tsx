@@ -334,6 +334,7 @@ describe('standardChatStrategy', () => {
 
     const { result, unmount } = renderStandardChat({
       appSettings: {
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         apiKey: 'gemini-key',
         openaiCompatibleApiKey: 'openai-key',
@@ -399,6 +400,7 @@ describe('standardChatStrategy', () => {
 
     const { result, unmount } = renderStandardChat({
       appSettings: {
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         apiKey: 'gemini-key',
         openaiCompatibleApiKey: 'openai-key',
@@ -443,6 +445,38 @@ describe('standardChatStrategy', () => {
       streamOnError,
       expect.any(Function),
       'user',
+    );
+
+    unmount();
+  });
+
+  it('uses Gemini chat routing when OpenAI-compatible mode is stored but the provider switch is off', async () => {
+    const { result, unmount } = renderStandardChat({
+      appSettings: {
+        isOpenAICompatibleApiEnabled: false,
+        apiMode: 'openai-compatible',
+        apiKey: 'gemini-key',
+        openaiCompatibleApiKey: 'openai-key',
+        openaiCompatibleModelId: 'gpt-5.5',
+      },
+    });
+
+    await act(async () => {
+      await result.current.sendStandardMessage({
+        text: 'hello through gemini',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
+    });
+
+    expect(mockSendOpenAICompatibleMessageStream).not.toHaveBeenCalled();
+    expect(mockSendMessageStream).toHaveBeenCalled();
+    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: 'gemini-3-flash-preview',
+      }),
     );
 
     unmount();

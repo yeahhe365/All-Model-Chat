@@ -228,9 +228,47 @@ describe('SettingsContent', () => {
     expect(mockModelsSection.lastProps!.availableModels).toEqual([
       { id: 'gemini-custom-input-translator', name: 'Input Translator', apiMode: 'gemini-native' },
       { id: 'gemini-custom-thought-translator', name: 'Thought Translator', apiMode: 'gemini-native' },
-      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true, apiMode: 'openai-compatible' },
     ]);
     expect(updateSetting).not.toHaveBeenCalled();
+  });
+
+  it('keeps OpenAI-compatible models out of model settings while the provider is disabled', () => {
+    act(() => {
+      renderer.root.render(
+        <SettingsContent
+          activeTab="models"
+          currentSettings={{
+            ...DEFAULT_APP_SETTINGS,
+            isOpenAICompatibleApiEnabled: false,
+            openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true }],
+          }}
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }]}
+          updateSetting={vi.fn()}
+          handleModelChange={vi.fn()}
+          setAvailableModels={vi.fn()}
+          onClearHistory={vi.fn()}
+          onClearCache={vi.fn()}
+          onOpenLogViewer={vi.fn()}
+          onClearLogs={vi.fn()}
+          onReset={vi.fn()}
+          onInstallPwa={vi.fn()}
+          installState="installed"
+          onImportSettings={vi.fn()}
+          onExportSettings={vi.fn()}
+          onImportHistory={vi.fn()}
+          onExportHistory={vi.fn()}
+          onImportScenarios={vi.fn()}
+          onExportScenarios={vi.fn()}
+        />,
+      );
+    });
+
+    expect(mockModelsSection.lastProps!.availableModels).toEqual([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+    ]);
+    expect(mockModelsSection.lastProps!.defaultModels).not.toContainEqual(
+      expect.objectContaining({ apiMode: 'openai-compatible' }),
+    );
   });
 
   it('passes Gemini and OpenAI-compatible models together in model settings', () => {
@@ -249,6 +287,7 @@ describe('SettingsContent', () => {
           activeTab="models"
           currentSettings={{
             ...DEFAULT_APP_SETTINGS,
+            isOpenAICompatibleApiEnabled: true,
             apiMode: 'openai-compatible',
             modelId: 'gemini-3-flash-preview',
             openaiCompatibleModelId: 'gpt-5.5',
@@ -313,6 +352,7 @@ describe('SettingsContent', () => {
           activeTab="models"
           currentSettings={{
             ...DEFAULT_APP_SETTINGS,
+            isOpenAICompatibleApiEnabled: true,
             apiMode: 'openai-compatible',
             modelId: 'gemini-3-flash-preview',
             openaiCompatibleModelId: 'gpt-5.5',
@@ -354,6 +394,7 @@ describe('SettingsContent', () => {
           activeTab="models"
           currentSettings={{
             ...DEFAULT_APP_SETTINGS,
+            isOpenAICompatibleApiEnabled: true,
             apiMode: 'gemini-native',
             modelId: 'gemini-3-flash-preview',
             openaiCompatibleModelId: 'gpt-5.5',

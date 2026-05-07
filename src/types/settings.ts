@@ -83,6 +83,7 @@ export interface AppSettings extends ChatSettings {
   themeId: 'system' | 'onyx' | 'pearl';
   baseFontSize: number;
   apiMode: ApiMode;
+  isOpenAICompatibleApiEnabled?: boolean;
   useCustomApiConfig: boolean;
   serverManagedApi?: boolean;
   apiKey: string | null;

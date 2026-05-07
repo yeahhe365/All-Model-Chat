@@ -16,6 +16,7 @@ import type {
   VideoMetadata,
 } from '../../../types';
 import type { MediaResolution } from '../../../types/settings';
+import { isOpenAICompatibleApiActive } from '../../../utils/openaiCompatibleMode';
 
 type ThinkingLevel = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -125,10 +126,13 @@ const ChatInputRuntimeContext = createContext<ChatInputRuntimeValue | null>(null
 const buildHeaderModels = (appSettings: AppSettings, apiModels: AppViewModel['chatState']['apiModels']) => {
   const seenIds = new Set<string>();
   const geminiModels = apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));
-  const openAICompatibleModels = appSettings.openaiCompatibleModels.map((model) => ({
-    ...model,
-    apiMode: 'openai-compatible' as const,
-  }));
+  const openAICompatibleModels =
+    appSettings.isOpenAICompatibleApiEnabled === true
+      ? appSettings.openaiCompatibleModels.map((model) => ({
+          ...model,
+          apiMode: 'openai-compatible' as const,
+        }))
+      : [];
 
   return [...geminiModels, ...openAICompatibleModels].filter((model) => {
     if (seenIds.has(model.id)) {
@@ -236,10 +240,15 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
   }, [chatState, gemmaReasoningEnabled, setAppSettings]);
 
   const currentModelName = getCurrentModelDisplayName();
-  const isOpenAICompatibleMode = appSettings.apiMode === 'openai-compatible';
+  const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
   const openAICompatibleModelIds = useMemo(
-    () => new Set(appSettings.openaiCompatibleModels.map((model) => model.id)),
-    [appSettings.openaiCompatibleModels],
+    () =>
+      new Set(
+        appSettings.isOpenAICompatibleApiEnabled === true
+          ? appSettings.openaiCompatibleModels.map((model) => model.id)
+          : [],
+      ),
+    [appSettings.isOpenAICompatibleApiEnabled, appSettings.openaiCompatibleModels],
   );
   const geminiModelIds = useMemo(() => new Set(chatState.apiModels.map((model) => model.id)), [chatState.apiModels]);
   const headerAvailableModels = useMemo(
@@ -254,7 +263,11 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       const isOpenAICompatibleModel = openAICompatibleModelIds.has(modelId);
       const isGeminiModel = geminiModelIds.has(modelId);
 
-      if (isOpenAICompatibleModel && (!isGeminiModel || isOpenAICompatibleMode)) {
+      if (
+        appSettings.isOpenAICompatibleApiEnabled === true &&
+        isOpenAICompatibleModel &&
+        (!isGeminiModel || isOpenAICompatibleMode)
+      ) {
         setAppSettings((prev) => ({
           ...prev,
           apiMode: 'openai-compatible',
@@ -273,6 +286,7 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
     },
     [
       chatState,
+      appSettings.isOpenAICompatibleApiEnabled,
       geminiModelIds,
       isOpenAICompatibleMode,
       openAICompatibleModelIds,

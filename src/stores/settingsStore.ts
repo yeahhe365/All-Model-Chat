@@ -45,6 +45,8 @@ function computeTheme(themeId: string): Theme {
 
 function sanitizeAppSettings(settings: AppSettings): AppSettings {
   const defaultSettings = getDefaultAppSettings();
+  const isOpenAICompatibleApiEnabled =
+    settings.isOpenAICompatibleApiEnabled ?? defaultSettings.isOpenAICompatibleApiEnabled;
   const sanitizedOpenAICompatibleModels = sanitizeModelOptions(
     settings.openaiCompatibleModels ?? defaultSettings.openaiCompatibleModels,
   );
@@ -55,6 +57,8 @@ function sanitizeAppSettings(settings: AppSettings): AppSettings {
 
   return {
     ...settings,
+    apiMode: isOpenAICompatibleApiEnabled ? settings.apiMode : 'gemini-native',
+    isOpenAICompatibleApiEnabled,
     modelId: resolveSupportedModelId(settings.modelId, defaultSettings.modelId),
     openaiCompatibleModelId: resolveSupportedModelId(
       settings.openaiCompatibleModelId,

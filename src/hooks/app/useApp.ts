@@ -9,6 +9,7 @@ import { getTranslator } from '@/i18n/translations';
 import { applyThemeToDocument } from '../../utils/uiUtils';
 import { useUIStore } from '../../stores/uiStore';
 import { AppSettings, ChatSettings, ModelOption, SideViewContent } from '../../types';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 import { useDataExport } from '../data-management/useDataExport';
 import { useDataImport } from '../data-management/useDataImport';
 import { useChatSessionExport } from '../data-management/useChatSessionExport';
@@ -219,7 +220,10 @@ export const useApp = () => {
   );
 
   const getCurrentModelDisplayName = useCallback(() => {
-    const isOpenAICompatibleMode = appSettings.apiMode === 'openai-compatible';
+    const isOpenAICompatibleMode = isOpenAICompatibleApiActive({
+      apiMode: appSettings.apiMode,
+      isOpenAICompatibleApiEnabled: appSettings.isOpenAICompatibleApiEnabled,
+    });
     const modelIdToDisplay = isOpenAICompatibleMode
       ? appSettings.openaiCompatibleModelId
       : currentChatSettings.modelId || appSettings.modelId;
@@ -252,6 +256,7 @@ export const useApp = () => {
   }, [
     apiModels,
     appSettings.apiMode,
+    appSettings.isOpenAICompatibleApiEnabled,
     appSettings.modelId,
     appSettings.openaiCompatibleModelId,
     appSettings.openaiCompatibleModels,

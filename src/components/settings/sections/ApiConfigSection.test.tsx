@@ -124,7 +124,7 @@ describe('ApiConfigSection', () => {
     expect(renderer.container.textContent).toContain('File Transfer Method');
     expect(renderer.container.textContent).not.toContain('API Mode');
     expect(renderer.container.textContent).toContain('Gemini Native');
-    expect(renderer.container.textContent).toContain('OpenAI Compatible');
+    expect(renderer.container.textContent).toContain('OpenAI-Compatible API');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
@@ -133,21 +133,54 @@ describe('ApiConfigSection', () => {
     expect(renderer.container.textContent).not.toContain('API 与连接');
     expect(renderer.container.textContent).toContain('测试连通性');
     expect(renderer.container.textContent).toContain('文件传输方式');
+    expect(renderer.container.textContent).toContain('OpenAI 兼容 API');
     expect(renderer.container.textContent).not.toContain('API 模式');
   });
 
-  it('renders API mode choices as one segmented control surface', async () => {
-    await renderApiConfigSection();
+  it('renders the OpenAI-compatible API switch off by default and enables the provider when toggled', async () => {
+    const onUpdate = vi.fn();
 
-    const modeControl = renderer.container.querySelector('[role="group"][aria-label="API Mode"]');
-    const modeButtons = Array.from(modeControl?.querySelectorAll('button') ?? []);
+    await renderApiConfigSection({ onUpdate });
 
-    expect(modeControl).not.toBeNull();
-    expect(modeControl!.className).toContain('border');
-    expect(modeControl!.className).toContain('rounded-lg');
-    expect(modeButtons).toHaveLength(2);
-    expect(modeButtons[0].className.split(/\s+/)).not.toContain('border');
-    expect(modeButtons[1].className.split(/\s+/)).not.toContain('border');
+    const openAIToggle = renderer.container.querySelector<HTMLInputElement>('#openai-compatible-api-enabled-toggle');
+
+    expect(openAIToggle).not.toBeNull();
+    expect(openAIToggle!.checked).toBe(false);
+    expect(renderer.container.querySelector('[role="group"][aria-label="API Mode"]')).toBeNull();
+    expect(renderer.container.textContent).not.toContain('OpenAI-Compatible API Keys');
+
+    await act(async () => {
+      openAIToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith('isOpenAICompatibleApiEnabled', true);
+    expect(onUpdate).toHaveBeenCalledWith('apiMode', 'openai-compatible');
+  });
+
+  it('turns the OpenAI-compatible provider off and returns to Gemini Native mode', async () => {
+    const onUpdate = vi.fn();
+
+    await renderApiConfigSection({
+      settings: {
+        ...settingsFixture,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+      },
+      onUpdate,
+    });
+
+    const openAIToggle = renderer.container.querySelector<HTMLInputElement>('#openai-compatible-api-enabled-toggle');
+
+    expect(openAIToggle).not.toBeNull();
+    expect(openAIToggle!.checked).toBe(true);
+    expect(renderer.container.textContent).toContain('OpenAI-Compatible API Keys');
+
+    await act(async () => {
+      openAIToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith('isOpenAICompatibleApiEnabled', false);
+    expect(onUpdate).toHaveBeenCalledWith('apiMode', 'gemini-native');
   });
 
   it('tests the OpenAI-compatible endpoint with the isolated OpenAI key when that global API mode is selected', async () => {
@@ -155,6 +188,7 @@ describe('ApiConfigSection', () => {
       apiKey: 'gemini-key',
       settings: {
         ...settingsFixture,
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         openaiCompatibleApiKey: 'openai-compatible-key',
         openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
@@ -195,6 +229,7 @@ describe('ApiConfigSection', () => {
       setApiKey,
       settings: {
         ...settingsFixture,
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'openai-compatible',
         openaiCompatibleApiKey: null,
         openaiCompatibleBaseUrl: 'https://api.openai.com/v1',

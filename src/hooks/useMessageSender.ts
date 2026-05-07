@@ -19,6 +19,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
 import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 import { isImageMimeType, isPdfMimeType, isTextFile } from '../utils/fileTypeUtils';
+import { isOpenAICompatibleApiActive } from '../utils/openaiCompatibleMode';
 
 const CODE_EXECUTION_TEXT_FILE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024;
 
@@ -136,10 +137,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
       const isFastMode = overrideOptions?.isFastMode ?? false;
 
       const sessionToUpdate = currentChatSettings;
-      const activeModelId =
-        appSettings.apiMode === 'openai-compatible'
-          ? appSettings.openaiCompatibleModelId || ''
-          : sessionToUpdate.modelId;
+      const activeModelId = isOpenAICompatibleApiActive(appSettings)
+        ? appSettings.openaiCompatibleModelId || ''
+        : sessionToUpdate.modelId;
       const capabilities = getModelCapabilities(activeModelId);
       const isTtsModel = capabilities.isTtsModel;
       const isImagenModel = capabilities.isRealImagenModel;

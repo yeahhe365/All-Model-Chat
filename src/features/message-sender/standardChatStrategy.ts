@@ -1,6 +1,7 @@
 import { logService } from '../../services/logService';
 import { buildContentParts } from '../../utils/chat/builder';
 import { getModelCapabilities } from '../../utils/modelHelpers';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 import type { UploadedFile } from '../../types';
 import { runOptimisticMessagePipeline } from './messagePipeline';
 import { resolveStandardChatTurn } from './standardChatTurn';
@@ -52,8 +53,9 @@ export const sendStandardMessage = async ({
     updateAndPersistSessions,
     sessionKeyMapRef,
   } = props;
-  const effectiveActiveModelId =
-    appSettings.apiMode === 'openai-compatible' ? appSettings.openaiCompatibleModelId || activeModelId : activeModelId;
+  const effectiveActiveModelId = isOpenAICompatibleApiActive(appSettings)
+    ? appSettings.openaiCompatibleModelId || activeModelId
+    : activeModelId;
   const settingsForPersistence = { ...currentChatSettings };
   const settingsForApi = { ...currentChatSettings };
 

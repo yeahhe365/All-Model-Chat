@@ -115,6 +115,7 @@ describe('settingsStore', () => {
 
       const { appSettings } = useSettingsStore.getState();
       expect(appSettings.apiMode).toBe('gemini-native');
+      expect(appSettings.isOpenAICompatibleApiEnabled).toBe(false);
       expect(appSettings.apiKey).toBeNull();
       expect(appSettings.openaiCompatibleApiKey).toBeNull();
       expect(appSettings.openaiCompatibleBaseUrl).toBe('https://api.openai.com/v1');
@@ -196,6 +197,25 @@ describe('settingsStore', () => {
       expect(appSettings.openaiCompatibleModels).toEqual([
         { id: 'openai/custom-gpt', name: 'Custom GPT', isPinned: true },
       ]);
+    });
+
+    it('forces Gemini Native mode when stored settings have OpenAI-compatible API disabled', async () => {
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(
+        createStoredSettingsSnapshot({
+          apiMode: 'openai-compatible',
+          isOpenAICompatibleApiEnabled: false,
+          modelId: 'gemini-3.1-pro-preview',
+          openaiCompatibleModelId: 'openai/custom-gpt',
+          openaiCompatibleModels: [{ id: 'openai/custom-gpt', name: 'Custom GPT', isPinned: true }],
+        }),
+      );
+
+      await useSettingsStore.getState().loadSettings();
+
+      const { appSettings } = useSettingsStore.getState();
+      expect(appSettings.isOpenAICompatibleApiEnabled).toBe(false);
+      expect(appSettings.apiMode).toBe('gemini-native');
+      expect(appSettings.openaiCompatibleModelId).toBe('openai/custom-gpt');
     });
 
     it('sets isSettingsLoaded when no stored settings', async () => {

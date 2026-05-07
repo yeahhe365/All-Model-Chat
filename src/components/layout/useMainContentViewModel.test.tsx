@@ -43,6 +43,7 @@ vi.mock('../../utils/shortcutUtils', () => ({
 
 const buildApp = (overrides: Partial<AppViewModel> = {}) => {
   const appSettings = createAppSettings({
+    isOpenAICompatibleApiEnabled: true,
     apiMode: 'openai-compatible',
     modelId: 'gemini-3-flash-preview',
     openaiCompatibleModelId: 'gpt-5.5',
@@ -243,6 +244,7 @@ describe('chat runtime values', () => {
     const app = buildApp({
       appSettings: {
         ...createAppSettings(),
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'gemini-native',
         modelId: 'gemini-3-flash-preview',
         openaiCompatibleModelId: 'gpt-5.5',
@@ -273,6 +275,7 @@ describe('chat runtime values', () => {
     const app = buildApp({
       appSettings: {
         ...createAppSettings(),
+        isOpenAICompatibleApiEnabled: true,
         apiMode: 'gemini-native',
         modelId: 'gemini-3-flash-preview',
         openaiCompatibleModelId: 'gpt-5.5',
@@ -301,6 +304,36 @@ describe('chat runtime values', () => {
         openaiCompatibleModelId: 'gpt-5.5',
       }),
     );
+
+    unmount();
+  });
+
+  it('keeps OpenAI-compatible models hidden while the provider switch is off', () => {
+    const app = buildApp({
+      appSettings: {
+        ...createAppSettings(),
+        isOpenAICompatibleApiEnabled: false,
+        apiMode: 'gemini-native',
+        modelId: 'gemini-3-flash-preview',
+        openaiCompatibleModelId: 'gpt-5.5',
+        openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true }],
+      },
+      getCurrentModelDisplayName: vi.fn(() => 'Gemini 3 Flash Preview'),
+    });
+    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
+    const header = result.current.header;
+
+    expect(header.availableModels).toEqual([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+    ]);
+    expect(header.selectedModelId).toBe('gemini-3-flash-preview');
+
+    act(() => {
+      header.onSelectModel('gpt-5.5');
+    });
+
+    expect(app.setAppSettings).not.toHaveBeenCalled();
+    expect(app.chatState.handleSelectModelInHeader).toHaveBeenCalledWith('gpt-5.5');
 
     unmount();
   });

@@ -22,6 +22,7 @@ import type { ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile 
 import type { ContentPart } from '../../types/chat';
 import type { GetStreamHandlers, SessionsUpdater, StandardChatProps } from './types';
 import type { resolveStandardChatTurn } from './standardChatTurn';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 interface StandardChatApiCallContext {
   appSettings: StandardChatProps['appSettings'];
@@ -85,8 +86,8 @@ export const performStandardChatApiCall = async ({
   textToUse,
   enrichedFiles,
 }: PerformStandardChatApiCallParams) => {
-  const apiModelId =
-    appSettings.apiMode === 'openai-compatible' ? appSettings.openaiCompatibleModelId || activeModelId : activeModelId;
+  const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
+  const apiModelId = isOpenAICompatibleMode ? appSettings.openaiCompatibleModelId || activeModelId : activeModelId;
   const { baseMessagesForApi, finalRole, finalParts, shouldSkipApiCall } = resolveTurn({
     messages,
     promptParts,
@@ -140,7 +141,7 @@ export const performStandardChatApiCall = async ({
     },
   );
 
-  if (appSettings.apiMode === 'openai-compatible') {
+  if (isOpenAICompatibleMode) {
     const openAICompatibleConfig = {
       baseUrl: appSettings.openaiCompatibleBaseUrl,
       systemInstruction: sessionToUpdate.systemInstruction,

@@ -367,6 +367,7 @@ describe('useApp', () => {
   it('displays the independent OpenAI-compatible model name in OpenAI-compatible mode', () => {
     currentAppSettings = {
       ...currentAppSettings,
+      isOpenAICompatibleApiEnabled: true,
       apiMode: 'openai-compatible',
       modelId: 'gemini-3-flash-preview',
       openaiCompatibleModelId: 'gpt-5.5',

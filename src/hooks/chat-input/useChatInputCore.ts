@@ -12,6 +12,7 @@ import { useLiveAPI } from '../useLiveAPI';
 import { useTextAreaInsert } from '../useTextAreaInsert';
 import { useChatInputState } from './useChatInputState';
 import { useChatInputToolStates } from './useChatInputToolStates';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 export const useChatInputCore = () => {
   const { t } = useI18n();
@@ -67,7 +68,7 @@ export const useChatInputCore = () => {
   const { document: targetDocument } = useWindowContext();
   const insertText = useTextAreaInsert(inputState.textareaRef, inputState.setInputText);
 
-  const isOpenAICompatibleMode = appSettings.apiMode === 'openai-compatible';
+  const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
   const toolStates = useChatInputToolStates({
     currentChatSettings,
     isLoading,
