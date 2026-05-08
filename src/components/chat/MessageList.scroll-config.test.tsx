@@ -91,12 +91,12 @@ describe('MessageList scroll configuration', () => {
     vi.clearAllMocks();
   });
 
-  it('configures Virtuoso to pre-render below the viewport and use stable message keys', () => {
+  it('configures Virtuoso to pre-render around the viewport and use stable message keys', () => {
     ({ unmount } = renderWithChatAreaProviders(<MessageList />, { value: createProviderValue() }));
 
     expect(virtuosoPropsSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        increaseViewportBy: { bottom: 800, top: 0 },
+        increaseViewportBy: { bottom: 800, top: 800 },
         atBottomThreshold: 150,
         computeItemKey: expect.any(Function),
       }),

@@ -122,7 +122,7 @@ const MessageListComponent: React.FC = () => {
             followOutput={false} // Disable auto-scroll to bottom during streaming (we handle it via auto-anchor or user interaction)
             computeItemKey={(_, msg) => msg.id}
             rangeChanged={onRangeChanged}
-            increaseViewportBy={{ top: 0, bottom: 800 }}
+            increaseViewportBy={{ top: 800, bottom: 800 }}
             className="custom-scrollbar"
             onScroll={handleScroll}
             components={{

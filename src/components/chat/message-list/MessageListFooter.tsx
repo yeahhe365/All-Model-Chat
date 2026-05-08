@@ -11,9 +11,9 @@ export const MessageListFooter: React.FC<MessageListFooterProps> = React.memo(({
   const lastMsg = messages[messages.length - 1];
   const isLastMessageLoading = lastMsg?.role === 'model' && lastMsg?.isLoading;
 
-  const heightStyle = {
+  const heightStyle: React.CSSProperties = {
     height: isLastMessageLoading ? '85vh' : chatInputHeight ? `${chatInputHeight + 20}px` : '160px',
-    transition: 'height 0.3s ease-out',
+    overflowAnchor: 'none',
   };
 
   return <div style={heightStyle} />;
