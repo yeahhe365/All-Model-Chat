@@ -58,4 +58,9 @@ describe('fileTypeUtils', () => {
     expect(isMarkdownFile({ name: 'README.markdown', type: '' })).toBe(true);
     expect(isMarkdownFile({ name: 'README.txt', type: 'text/plain' })).toBe(false);
   });
+
+  it('does not treat extension-like filenames without dots as file extensions', () => {
+    expect(isTextFile({ name: 'sql', type: '' })).toBe(false);
+    expect(isMarkdownFile({ name: 'markdown', type: '' })).toBe(false);
+  });
 });

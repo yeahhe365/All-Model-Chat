@@ -45,7 +45,10 @@ const normalizeMimeType = (mimeType?: string): string => (mimeType || '').trim()
 const normalizeFileName = (name?: string): string => (name || '').trim().toLowerCase();
 
 const getFileExtension = (filename?: string): string => {
-  const extension = normalizeFileName(filename).split('.').pop();
+  const parts = normalizeFileName(filename).split('.');
+  if (parts.length <= 1) return '';
+
+  const extension = parts.pop();
   return extension ? `.${extension}` : '';
 };
 

@@ -40,6 +40,8 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ stream }) => {
 
       const bufferLength = analyserRef.current.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
+      const style = getComputedStyle(document.body);
+      const accentColor = style.getPropertyValue('--theme-bg-accent').trim() || '#3b82f6';
 
       const draw = () => {
         if (!analyserRef.current) return;
@@ -52,8 +54,6 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ stream }) => {
 
         ctx.clearRect(0, 0, width, height);
 
-        const style = getComputedStyle(document.body);
-        const accentColor = style.getPropertyValue('--theme-bg-accent').trim() || '#3b82f6';
         ctx.fillStyle = accentColor;
 
         const effectiveSlice = Math.floor(bufferLength * 0.7);
