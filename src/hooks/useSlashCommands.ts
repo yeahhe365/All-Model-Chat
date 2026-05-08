@@ -52,6 +52,23 @@ const TOOL_COMMAND_ACTIONS: Record<string, ToggleableChatToolId> = {
   url: 'urlContext',
 };
 
+const buildModelCommands = (
+  models: ModelOption[],
+  onSelectModel: (modelId: string) => void,
+  setInputText: Dispatch<SetStateAction<string>>,
+  onMessageSent: () => void,
+): Command[] =>
+  models.map((model) => ({
+    name: model.name,
+    description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
+    icon: model.id.includes('imagen') ? 'image' : model.isPinned ? 'pin' : 'bot',
+    action: () => {
+      onSelectModel(model.id);
+      setInputText('');
+      onMessageSent();
+    },
+  }));
+
 export const useSlashCommands = ({
   t,
   toolStates,
@@ -208,16 +225,7 @@ export const useSlashCommands = ({
   }, []);
 
   const openModelCommandList = useCallback(() => {
-    const modelCommands: Command[] = availableModels.map((model) => ({
-      name: model.name,
-      description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
-      icon: model.id.includes('imagen') ? 'image' : model.isPinned ? 'pin' : 'bot',
-      action: () => {
-        onSelectModel(model.id);
-        setInputText('');
-        onMessageSent();
-      },
-    }));
+    const modelCommands = buildModelCommands(availableModels, onSelectModel, setInputText, onMessageSent);
 
     setSlashCommandState({
       isOpen: true,
@@ -272,16 +280,7 @@ export const useSlashCommands = ({
       if (commandName === 'model') {
         const keyword = args.join(' ').toLowerCase();
         const filteredModels = availableModels.filter((m) => m.name.toLowerCase().includes(keyword));
-        const modelCommands: Command[] = filteredModels.map((model) => ({
-          name: model.name,
-          description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
-          icon: model.id.includes('imagen') ? 'image' : model.isPinned ? 'pin' : 'bot',
-          action: () => {
-            onSelectModel(model.id);
-            setInputText('');
-            onMessageSent();
-          },
-        }));
+        const modelCommands = buildModelCommands(filteredModels, onSelectModel, setInputText, onMessageSent);
 
         setSlashCommandState({
           isOpen: modelCommands.length > 0 || !keyword.trim(),

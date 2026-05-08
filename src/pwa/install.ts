@@ -13,7 +13,7 @@ const resolveLanguage = (language: 'en' | 'zh' | 'system', navigatorLanguage?: s
   return navigatorLanguage?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
 };
 
-export const isStandaloneMode = (win: Window = window) => {
+const isStandaloneMode = (win: Window = window) => {
   const displayModeStandalone = win.matchMedia?.('(display-mode: standalone)').matches ?? false;
   const navigatorStandalone = Boolean((win.navigator as Navigator & { standalone?: boolean }).standalone);
 

@@ -11,7 +11,7 @@ import {
   buildGenerationConfig,
   toCountTokensConfig,
 } from '../../services/api/generationConfig';
-import { createRunLocalPythonDeclaration } from '@/features/standard-chat/standardClientFunctions';
+import { createLocalPythonToolDeclaration } from '@/features/local-python/clientFunctionTool';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { isServerManagedApiEnabledForProxyRequests, parseApiKeys, SERVER_MANAGED_API_KEY } from '../../utils/apiUtils';
 
@@ -23,7 +23,7 @@ interface UseTokenCountLogicProps {
   currentModelId: string;
 }
 
-export const mergeTokenCountAppSettings = (
+const mergeTokenCountAppSettings = (
   modalAppSettings: AppSettings,
   latestStoredSettings: AppSettings,
 ): AppSettings => ({
@@ -36,7 +36,7 @@ export const mergeTokenCountAppSettings = (
   useApiProxy: modalAppSettings.useApiProxy ?? latestStoredSettings.useApiProxy,
 });
 
-export const resolveTokenCountRequestKey = (
+const resolveTokenCountRequestKey = (
   effectiveAppSettings: AppSettings,
   modelId: string,
 ): { key: string } | { error: string } => {
@@ -116,7 +116,7 @@ export const useTokenCountLogic = ({
         });
 
         const requestConfig = effectiveAppSettings.isLocalPythonEnabled
-          ? appendFunctionDeclarationsToTools(modelId, generationConfig, [createRunLocalPythonDeclaration()])
+          ? appendFunctionDeclarationsToTools(modelId, generationConfig, [createLocalPythonToolDeclaration()])
           : generationConfig;
 
         const count = await countTokensApi(keyResult.key, modelId, contentParts, toCountTokensConfig(requestConfig));

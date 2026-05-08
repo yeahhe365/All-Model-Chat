@@ -93,13 +93,12 @@ describe('certain redundancy cleanup guards', () => {
     expect(chatSessionExportSource).toContain("from '../../utils/export/runtime'");
   });
 
-  it('reuses stripSessionFilePayloads for sanitizeSessionForExport', () => {
+  it('does not keep sanitizeSessionForExport as an identity wrapper', () => {
     const source = readProjectFile('src/utils/chat/session.ts');
 
-    expect(source).toContain(
-      'export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession =>',
-    );
-    expect(source).toContain('stripSessionFilePayloads(session);');
+    expect(source).toContain('export const stripSessionFilePayloads =');
+    expect(source).not.toContain('sanitizeSessionForExport');
+    expect(source).not.toContain('updateSessionWithNewMessages');
   });
 
   it('avoids writing input text twice in the chat input change handler', () => {

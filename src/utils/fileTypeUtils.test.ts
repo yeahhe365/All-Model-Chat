@@ -4,12 +4,9 @@ import {
   getFileTypeCategory,
   isAudioMimeType,
   isImageMimeType,
-  isInlineDataMimeType,
   isMarkdownFile,
-  isPdfFile,
   isTextFile,
   isVideoMimeType,
-  isYoutubeMimeType,
 } from './fileTypeUtils';
 
 describe('fileTypeUtils', () => {
@@ -18,16 +15,16 @@ describe('fileTypeUtils', () => {
     expect(isImageMimeType('image/svg+xml')).toBe(true);
     expect(isAudioMimeType('audio/mpeg')).toBe(true);
     expect(isVideoMimeType('video/mp4')).toBe(true);
-    expect(isYoutubeMimeType('video/youtube-link')).toBe(true);
-    expect(isPdfFile({ name: 'report.pdf', type: '' })).toBe(true);
+    expect(getFileKindFlags({ name: 'youtube.url', type: 'video/youtube-link' }).isYoutube).toBe(true);
+    expect(getFileKindFlags({ name: 'report.pdf', type: '' }).isPdf).toBe(true);
   });
 
   it('uses the same media flags for inline-data eligibility', () => {
-    expect(isInlineDataMimeType('image/webp')).toBe(true);
-    expect(isInlineDataMimeType('audio/wav')).toBe(true);
-    expect(isInlineDataMimeType('video/webm')).toBe(true);
-    expect(isInlineDataMimeType('application/pdf')).toBe(true);
-    expect(isInlineDataMimeType('application/vnd.ms-excel')).toBe(false);
+    expect(getFileKindFlags({ type: 'image/webp' }).isInlineData).toBe(true);
+    expect(getFileKindFlags({ type: 'audio/wav' }).isInlineData).toBe(true);
+    expect(getFileKindFlags({ type: 'video/webm' }).isInlineData).toBe(true);
+    expect(getFileKindFlags({ type: 'application/pdf' }).isInlineData).toBe(true);
+    expect(getFileKindFlags({ type: 'application/vnd.ms-excel' }).isInlineData).toBe(false);
   });
 
   it('returns reusable kind flags that components can consume without parsing MIME strings', () => {

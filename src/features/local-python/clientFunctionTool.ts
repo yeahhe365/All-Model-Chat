@@ -1,0 +1,62 @@
+import { Type, type FunctionDeclaration } from '@google/genai';
+import type { ExecutionResult } from './pyodideService';
+import type { UploadedFile } from '../../types';
+import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
+import { hasGeneratedImageFile } from './helpers';
+
+type PythonRunOptions = { files?: UploadedFile[]; abortSignal?: AbortSignal };
+type PythonRunResult = Omit<ExecutionResult, 'status'>;
+
+interface CreateLocalPythonToolHandlerOptions<RunOptions extends PythonRunOptions> {
+  getRunOptions: (options?: { abortSignal?: AbortSignal }) => RunOptions;
+  runPython: (code: string, options?: RunOptions) => Promise<PythonRunResult>;
+}
+
+export const createLocalPythonToolDeclaration = (): FunctionDeclaration => ({
+  name: 'run_local_python',
+  description:
+    'Execute Python code locally in the browser with Pyodide. Use this for calculations, data analysis, CSV inspection, and lightweight plots.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      code: {
+        type: Type.STRING,
+        description: 'The Python code to execute locally.',
+      },
+    },
+    required: ['code'],
+  },
+});
+
+export const createLocalPythonToolHandler = <RunOptions extends PythonRunOptions>({
+  getRunOptions,
+  runPython,
+}: CreateLocalPythonToolHandlerOptions<RunOptions>) => {
+  return async (args: unknown, options?: { abortSignal?: AbortSignal }) => {
+    const code = typeof args === 'object' && args !== null ? (args as { code?: unknown }).code : undefined;
+
+    if (typeof code !== 'string' || !code.trim()) {
+      throw new Error('run_local_python requires a non-empty "code" string.');
+    }
+
+    const result = await runPython(code, getRunOptions(options));
+    const outputFiles = result.files || [];
+    const generatedFiles = [...outputFiles].map((file) =>
+      createUploadedFileFromBase64(file.data, file.type, file.name),
+    );
+
+    if (result.image && !hasGeneratedImageFile(outputFiles)) {
+      generatedFiles.unshift(createUploadedFileFromBase64(result.image, 'image/png', `generated-plot-${Date.now()}`));
+    }
+
+    return {
+      response: {
+        output: result.output || null,
+        result: result.result || null,
+        imageGenerated: !!result.image,
+        generatedFiles: outputFiles.map(({ name, type }) => ({ name, type })),
+      },
+      generatedFiles,
+    };
+  };
+};

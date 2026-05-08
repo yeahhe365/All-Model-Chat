@@ -83,7 +83,7 @@ export const chatInputStateReducer = (
   }
 };
 
-export const selectIsChatInputProcessing = ({ state, isProcessingFile, isConverting }: ChatInputProcessingSnapshot) =>
+const selectIsChatInputProcessing = ({ state, isProcessingFile, isConverting }: ChatInputProcessingSnapshot) =>
   state.isTranslating ||
   state.isAddingById ||
   state.isAddingByUrl ||

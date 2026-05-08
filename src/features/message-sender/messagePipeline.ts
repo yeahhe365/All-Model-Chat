@@ -89,12 +89,12 @@ type OptimisticMessagePlacement =
   | { type: 'continue-model'; targetMessageId: string }
   | { type: 'insert-model-after'; sourceMessageId: string };
 
-export const completeModelMessage = (
+const completeModelMessage = (
   sessions: SavedChatSession[],
   { sessionId, messageId, patch }: CompleteModelMessageParams,
 ) => updateMessageInSession(sessions, sessionId, messageId, patch);
 
-export const startOptimisticMessageTurn = ({
+const startOptimisticMessageTurn = ({
   activeSessionId,
   appSettings,
   currentChatSettings,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getClient, getApiClient, getConfiguredApiClient } from './apiClient';
+import { getClient, getConfiguredApiClient } from './apiClient';
 import {
   appendFunctionDeclarationsToTools,
   buildGenerationConfig as buildGenerationConfigFromSettings,
@@ -215,21 +215,6 @@ describe('getClient', () => {
       throw new Error('bad');
     });
     await expect(getClient('key')).rejects.toThrow('bad');
-  });
-});
-
-// ── getApiClient ──
-
-describe('getApiClient', () => {
-  it('throws SilentError when no API key', async () => {
-    await expect(getApiClient(null)).rejects.toMatchObject({
-      name: 'SilentError',
-    });
-  });
-
-  it('returns client when API key is provided', async () => {
-    const client = await getApiClient('my-key');
-    expect(client).toBeDefined();
   });
 });
 

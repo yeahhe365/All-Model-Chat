@@ -32,7 +32,7 @@ vi.mock('@/i18n/translations', () => ({
 }));
 
 import { createChatSettings } from '../../test/factories';
-import { appendApiPart, finalizeMessages, updateMessagesWithBatch } from './processors';
+import { appendApiPart, finalizeMessages } from './processors';
 
 describe('appendApiPart', () => {
   it('preserves signature-only text parts instead of merging them into the previous text part', () => {
@@ -96,40 +96,4 @@ describe('finalizeMessages', () => {
     expect(updatedMessages[0]?.files).toEqual([existingFile]);
   });
 
-  it('keeps generated inline image files after the same batch is finalized', () => {
-    const generationStartTime = new Date('2026-04-25T01:00:00.000Z');
-    const messages = updateMessagesWithBatch(
-      [
-        {
-          id: 'model-message',
-          role: 'model',
-          content: '',
-          timestamp: generationStartTime,
-          generationStartTime,
-          isLoading: true,
-        },
-      ],
-      [{ inlineData: { mimeType: 'image/png', data: 'base64-chart' } } as Part],
-      '',
-      generationStartTime,
-      new Set(['model-message']),
-      generationStartTime,
-    );
-
-    const { updatedMessages } = finalizeMessages(
-      messages,
-      generationStartTime,
-      new Set(['model-message']),
-      createChatSettings(),
-      'zh',
-      generationStartTime,
-    );
-
-    expect(updatedMessages[0]?.files).toEqual([
-      expect.objectContaining({
-        name: 'generated-plot-d-id.png',
-        type: 'image/png',
-      }),
-    ]);
-  });
 });

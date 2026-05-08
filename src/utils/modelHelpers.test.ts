@@ -4,12 +4,10 @@ import {
   sortModels,
   isGemini3Model,
   getModelCapabilities,
-  getDefaultThinkingLevelForModel,
   shouldStripThinkingFromContext,
   sanitizeModelOptions,
   resolveSupportedModelId,
   calculateTokenStats,
-  adjustThinkingBudget,
   resolveModelSwitchSettings,
 } from './modelHelpers';
 import { ModelOption } from './../types';
@@ -31,6 +29,27 @@ beforeEach(() => {
     legacyModelPreferencesHydrated: false,
   });
 });
+
+const resolveModelSwitchForTarget = (
+  targetModelId: string,
+  overrides: Partial<{
+    thinkingBudget: number;
+    thinkingLevel: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  }> = {},
+) =>
+  resolveModelSwitchSettings({
+    currentSettings: {
+      mediaResolution: undefined,
+      thinkingBudget: overrides.thinkingBudget ?? 4096,
+      thinkingLevel: overrides.thinkingLevel ?? 'HIGH',
+    },
+    sourceSettings: {
+      mediaResolution: undefined,
+      thinkingBudget: overrides.thinkingBudget ?? 4096,
+      thinkingLevel: overrides.thinkingLevel ?? 'HIGH',
+    },
+    targetModelId,
+  });
 
 describe('raw mode support', () => {
   it('includes Gemini Robotics-ER 1.6', () => {
@@ -217,15 +236,15 @@ describe('getModelCapabilities', () => {
 
 describe('getDefaultThinkingLevelForModel', () => {
   it('defaults Gemini 3.1 Flash Live to MINIMAL', () => {
-    expect(getDefaultThinkingLevelForModel('gemini-3.1-flash-live-preview', 'HIGH')).toBe('MINIMAL');
+    expect(resolveModelSwitchForTarget('gemini-3.1-flash-live-preview').thinkingLevel).toBe('MINIMAL');
   });
 
   it('defaults Gemini 3.1 Flash Image to MINIMAL', () => {
-    expect(getDefaultThinkingLevelForModel('gemini-3.1-flash-image-preview', 'HIGH')).toBe('MINIMAL');
+    expect(resolveModelSwitchForTarget('gemini-3.1-flash-image-preview').thinkingLevel).toBe('MINIMAL');
   });
 
   it('keeps fallback thinking level for non-special models', () => {
-    expect(getDefaultThinkingLevelForModel('gemini-2.5-flash', 'HIGH')).toBe('HIGH');
+    expect(resolveModelSwitchForTarget('gemini-2.5-flash', { thinkingLevel: 'HIGH' }).thinkingLevel).toBe('HIGH');
   });
 });
 
@@ -389,40 +408,53 @@ describe('calculateTokenStats', () => {
 
 describe('adjustThinkingBudget', () => {
   it('clamps to max when budget exceeds range', () => {
-    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 50000)).toBe(50000);
+    expect(
+      resolveModelSwitchForTarget('gemini-2.5-flash-native-audio-preview-12-2025', { thinkingBudget: 50000 })
+        .thinkingBudget,
+    ).toBe(50000);
   });
 
   it('clamps Gemini Robotics-ER 1.6 budgets to the documented max', () => {
-    expect(adjustThinkingBudget('gemini-robotics-er-1.6-preview', 50000)).toBe(24576);
+    expect(resolveModelSwitchForTarget('gemini-robotics-er-1.6-preview', { thinkingBudget: 50000 }).thinkingBudget).toBe(
+      24576,
+    );
   });
 
   it('clamps to min when budget is below range', () => {
-    expect(adjustThinkingBudget('gemini-3.1-pro-preview', 10)).toBe(128);
+    expect(resolveModelSwitchForTarget('gemini-3.1-pro-preview', { thinkingBudget: 10 }).thinkingBudget).toBe(128);
   });
 
   it('returns budget unchanged for unknown models', () => {
-    expect(adjustThinkingBudget('unknown-model', 5000)).toBe(5000);
+    expect(resolveModelSwitchForTarget('unknown-model', { thinkingBudget: 5000 }).thinkingBudget).toBe(5000);
   });
 
   it('converts auto (-1) to max for non-Gemini-3 models', () => {
-    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', -1)).toBe(-1);
+    expect(
+      resolveModelSwitchForTarget('gemini-2.5-flash-native-audio-preview-12-2025', { thinkingBudget: -1 })
+        .thinkingBudget,
+    ).toBe(-1);
   });
 
   it('keeps auto (-1) for Gemini Robotics-ER 1.6', () => {
-    expect(adjustThinkingBudget('gemini-robotics-er-1.6-preview', -1)).toBe(-1);
+    expect(resolveModelSwitchForTarget('gemini-robotics-er-1.6-preview', { thinkingBudget: -1 }).thinkingBudget).toBe(
+      -1,
+    );
   });
 
   it('keeps auto (-1) for Gemini 3 models', () => {
-    expect(adjustThinkingBudget('gemini-3-flash-preview', -1)).toBe(-1);
+    expect(resolveModelSwitchForTarget('gemini-3-flash-preview', { thinkingBudget: -1 }).thinkingBudget).toBe(-1);
   });
 
   it('forces mandatory thinking models with 0 budget to -1 (G3)', () => {
     // gemini-3-flash-preview is G3 and mandatory
-    expect(adjustThinkingBudget('gemini-3-flash-preview', 0)).toBe(-1);
+    expect(resolveModelSwitchForTarget('gemini-3-flash-preview', { thinkingBudget: 0 }).thinkingBudget).toBe(-1);
   });
 
   it('keeps valid budget within range', () => {
-    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 1000)).toBe(1000);
+    expect(
+      resolveModelSwitchForTarget('gemini-2.5-flash-native-audio-preview-12-2025', { thinkingBudget: 1000 })
+        .thinkingBudget,
+    ).toBe(1000);
   });
 });
 

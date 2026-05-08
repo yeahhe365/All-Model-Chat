@@ -335,23 +335,31 @@ function isIgnoredByGitignore(path: string, matchers: IgnoreMatcher[], isDirecto
   return ignored;
 }
 
-function ensureDirectoryPath(path: string, nodeMap: Map<string, FileNode>, roots: FileNode[]): void {
+function ensurePathNodes(
+  path: string,
+  nodeMap: Map<string, FileNode>,
+  roots: FileNode[],
+  terminalIsDirectory: boolean,
+): FileNode | undefined {
   const parts = path.split('/').filter(Boolean);
   let parentNode: FileNode | undefined;
+  let currentNode: FileNode | undefined;
 
   for (let index = 0; index < parts.length; index++) {
     const part = parts[index];
     const currentPath = parts.slice(0, index + 1).join('/');
 
     if (nodeMap.has(currentPath)) {
-      parentNode = nodeMap.get(currentPath);
+      currentNode = nodeMap.get(currentPath);
+      parentNode = currentNode;
       continue;
     }
 
+    const isTerminal = index === parts.length - 1;
     const newNode: FileNode = {
       name: part,
       path: currentPath,
-      isDirectory: true,
+      isDirectory: !isTerminal || terminalIsDirectory,
       children: [],
     };
     nodeMap.set(currentPath, newNode);
@@ -362,8 +370,15 @@ function ensureDirectoryPath(path: string, nodeMap: Map<string, FileNode>, roots
       roots.push(newNode);
     }
 
+    currentNode = newNode;
     parentNode = newNode;
   }
+
+  return currentNode;
+}
+
+function ensureDirectoryPath(path: string, nodeMap: Map<string, FileNode>, roots: FileNode[]): void {
+  ensurePathNodes(path, nodeMap, roots, true);
 }
 
 async function filterDirectoryPaths(
@@ -462,37 +477,7 @@ async function processImportFiles(
 
   for (const file of validFiles) {
     const path = getFilePath(file);
-    const parts = path.split('/').filter(Boolean);
-    let parentNode: FileNode | undefined;
-
-    for (let index = 0; index < parts.length; index++) {
-      const part = parts[index];
-      const currentPath = parts.slice(0, index + 1).join('/');
-
-      if (nodeMap.has(currentPath)) {
-        parentNode = nodeMap.get(currentPath);
-        continue;
-      }
-
-      const isDirectory = index < parts.length - 1;
-      const newNode: FileNode = {
-        name: part,
-        path: currentPath,
-        isDirectory,
-        children: [],
-      };
-      nodeMap.set(currentPath, newNode);
-
-      if (parentNode) {
-        parentNode.children.push(newNode);
-      } else {
-        roots.push(newNode);
-      }
-
-      parentNode = newNode;
-    }
-
-    const fileNode = nodeMap.get(path);
+    const fileNode = ensurePathNodes(path, nodeMap, roots, false);
     if (!fileNode) {
       continue;
     }

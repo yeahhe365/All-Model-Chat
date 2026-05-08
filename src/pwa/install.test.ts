@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getPwaInstallState, isStandaloneMode } from './install';
+import { getPwaInstallState } from './install';
 
 const createWindowLike = ({
   standaloneDisplayMode = false,
@@ -25,19 +25,20 @@ const createWindowLike = ({
   }) as unknown as Window;
 
 describe('install helpers', () => {
-  it('detects standalone mode from display mode media query', () => {
-    expect(isStandaloneMode(createWindowLike({ standaloneDisplayMode: true }))).toBe(true);
-  });
-
-  it('detects standalone mode from iOS navigator.standalone', () => {
-    expect(isStandaloneMode(createWindowLike({ navigatorStandalone: true }))).toBe(true);
-  });
-
-  it('returns installed state when already running standalone', () => {
+  it('returns installed state for standalone display mode', () => {
     expect(
       getPwaInstallState({
         installPromptEvent: null,
         win: createWindowLike({ standaloneDisplayMode: true }),
+      }).state,
+    ).toBe('installed');
+  });
+
+  it('returns installed state for iOS navigator.standalone', () => {
+    expect(
+      getPwaInstallState({
+        installPromptEvent: null,
+        win: createWindowLike({ navigatorStandalone: true }),
       }).state,
     ).toBe('installed');
   });

@@ -8,7 +8,7 @@ const isPlainTextPart = (part: Part) => {
   return keys.length === 1 && keys[0] === 'text' && typeof (part as { text?: unknown }).text === 'string';
 };
 
-export const buildPureTextChatExactPricing = ({
+const buildPureTextChatExactPricing = ({
   requestParts,
   responseParts,
   promptTokens,

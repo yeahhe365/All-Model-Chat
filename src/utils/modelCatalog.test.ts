@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { ModelOption } from '../types';
 import {
   buildModelCatalog,
+  buildModelCatalogSections,
   filterModelCatalog,
   getQuickSwitchModelIds,
   getTabCycleModelIds,
-  type ModelCatalogEntry,
 } from './modelCatalog';
+
+type ModelCatalogEntry = ReturnType<typeof buildModelCatalog>[number];
 
 const getEntry = (entries: ModelCatalogEntry[], id: string) => {
   const entry = entries.find((candidate) => candidate.id === id);
@@ -65,6 +67,38 @@ describe('filterModelCatalog', () => {
     expect(filterModelCatalog(entries, 'tts').map((entry) => entry.id)).toEqual(['gemini-3.1-flash-tts-preview']);
     expect(filterModelCatalog(entries, 'live').map((entry) => entry.id)).toEqual(['gemini-3.1-flash-live-preview']);
     expect(filterModelCatalog(entries, 'imagen').map((entry) => entry.id)).toEqual(['imagen-4.0-generate-001']);
+  });
+});
+
+describe('buildModelCatalogSections', () => {
+  it('groups mixed provider catalogs by provider instead of duplicating section assembly in pickers', () => {
+    const entries = buildModelCatalog([
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', apiMode: 'gemini-native' },
+      { id: 'gpt-5.5', name: 'GPT-5.5', apiMode: 'openai-compatible' },
+    ]);
+
+    expect(buildModelCatalogSections(entries)).toMatchObject([
+      {
+        key: 'gemini-native',
+        providerKey: 'gemini-native',
+        entries: [{ id: 'gemini-3.1-pro-preview' }],
+      },
+      {
+        key: 'openai-compatible',
+        providerKey: 'openai-compatible',
+        entries: [{ id: 'gpt-5.5' }],
+      },
+    ]);
+  });
+
+  it('groups providerless catalogs into pinned and category sections', () => {
+    const entries = buildModelCatalog([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: true },
+      { id: 'gemini-3.1-flash-tts-preview', name: 'Gemini 3.1 Flash TTS' },
+      { id: 'imagen-4.0-generate-001', name: 'Imagen 4.0' },
+    ]);
+
+    expect(buildModelCatalogSections(entries).map((section) => section.key)).toEqual(['pinned', 'tts', 'image']);
   });
 });
 

@@ -1,22 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  buildOpenAICompatibleChatCompletionsUrl,
-  sendOpenAICompatibleMessageNonStream,
-  sendOpenAICompatibleMessageStream,
-} from './openaiCompatibleApi';
+import { sendOpenAICompatibleMessageNonStream, sendOpenAICompatibleMessageStream } from './openaiCompatibleApi';
 
 describe('openaiCompatibleApi', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-  });
-
-  it('builds chat completions URLs from root and provider-prefixed base URLs', () => {
-    expect(buildOpenAICompatibleChatCompletionsUrl('https://api.openai.com/v1')).toBe(
-      'https://api.openai.com/v1/chat/completions',
-    );
-    expect(buildOpenAICompatibleChatCompletionsUrl('https://generativelanguage.googleapis.com/v1beta/openai/')).toBe(
-      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    );
   });
 
   it('sends a non-streaming chat completion request and maps the response text plus usage', async () => {

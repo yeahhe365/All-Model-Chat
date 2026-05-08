@@ -117,55 +117,53 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
     : hasAppDataSizeError
       ? t('settingsLocalAppData_error')
       : formattedTotalSize;
+  const importExportRows = [
+    {
+      key: 'settings',
+      label: t('settingsDataSettings'),
+      icon: <Settings size={16} strokeWidth={1.5} />,
+      importRef: settingsImportRef,
+      onImport: onImportSettings,
+      onExport: onExportSettings,
+    },
+    {
+      key: 'history',
+      label: t('settingsDataHistory'),
+      icon: <MessageSquare size={16} strokeWidth={1.5} />,
+      importRef: historyImportRef,
+      onImport: onImportHistory,
+      onExport: onExportHistory,
+    },
+    {
+      key: 'scenarios',
+      label: t('settingsDataScenarios'),
+      icon: <Bot size={16} strokeWidth={1.5} />,
+      importRef: scenariosImportRef,
+      onImport: onImportScenarios,
+      onExport: onExportScenarios,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <DataCard title={t('settingsDataImportsExports')} icon={<Database size={14} strokeWidth={1.5} />}>
-        <ActionRow label={t('settingsDataSettings')} icon={<Settings size={16} strokeWidth={1.5} />}>
-          <button onClick={onExportSettings} className={outlineBtnClass}>
-            <Download size={12} strokeWidth={1.5} /> {t('export')}
-          </button>
-          <button onClick={() => settingsImportRef.current?.click()} className={outlineBtnClass}>
-            <Upload size={12} strokeWidth={1.5} /> {t('import')}
-          </button>
-          <input
-            type="file"
-            ref={settingsImportRef}
-            onChange={() => handleFileImport(settingsImportRef, onImportSettings)}
-            accept=".json"
-            className="hidden"
-          />
-        </ActionRow>
-        <ActionRow label={t('settingsDataHistory')} icon={<MessageSquare size={16} strokeWidth={1.5} />}>
-          <button onClick={onExportHistory} className={outlineBtnClass}>
-            <Download size={12} strokeWidth={1.5} /> {t('export')}
-          </button>
-          <button onClick={() => historyImportRef.current?.click()} className={outlineBtnClass}>
-            <Upload size={12} strokeWidth={1.5} /> {t('import')}
-          </button>
-          <input
-            type="file"
-            ref={historyImportRef}
-            onChange={() => handleFileImport(historyImportRef, onImportHistory)}
-            accept=".json"
-            className="hidden"
-          />
-        </ActionRow>
-        <ActionRow label={t('settingsDataScenarios')} icon={<Bot size={16} strokeWidth={1.5} />}>
-          <button onClick={onExportScenarios} className={outlineBtnClass}>
-            <Download size={12} strokeWidth={1.5} /> {t('export')}
-          </button>
-          <button onClick={() => scenariosImportRef.current?.click()} className={outlineBtnClass}>
-            <Upload size={12} strokeWidth={1.5} /> {t('import')}
-          </button>
-          <input
-            type="file"
-            ref={scenariosImportRef}
-            onChange={() => handleFileImport(scenariosImportRef, onImportScenarios)}
-            accept=".json"
-            className="hidden"
-          />
-        </ActionRow>
+        {importExportRows.map(({ key, label, icon, importRef, onImport, onExport }) => (
+          <ActionRow key={key} label={label} icon={icon}>
+            <button onClick={onExport} className={outlineBtnClass}>
+              <Download size={12} strokeWidth={1.5} /> {t('export')}
+            </button>
+            <button onClick={() => importRef.current?.click()} className={outlineBtnClass}>
+              <Upload size={12} strokeWidth={1.5} /> {t('import')}
+            </button>
+            <input
+              type="file"
+              ref={importRef}
+              onChange={() => handleFileImport(importRef, onImport)}
+              accept=".json"
+              className="hidden"
+            />
+          </ActionRow>
+        ))}
       </DataCard>
 
       <DataCard title={t('settingsSystemTools')} icon={<Settings size={14} strokeWidth={1.5} />}>

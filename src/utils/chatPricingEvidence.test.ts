@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Part } from '@google/genai';
-import { buildPureTextChatExactPricing, resolveChatExactPricing } from './chatPricingEvidence';
+import { resolveChatExactPricing } from './chatPricingEvidence';
 
 describe('buildPureTextChatExactPricing', () => {
   it('builds text-only pricing evidence for pure text request/response pairs', () => {
@@ -8,7 +8,7 @@ describe('buildPureTextChatExactPricing', () => {
     const responseParts: Part[] = [{ text: 'world' }];
 
     expect(
-      buildPureTextChatExactPricing({
+      resolveChatExactPricing({
         requestParts,
         responseParts,
         promptTokens: 120,
@@ -31,7 +31,7 @@ describe('buildPureTextChatExactPricing', () => {
     const responseParts: Part[] = [{ text: 'world' }];
 
     expect(
-      buildPureTextChatExactPricing({
+      resolveChatExactPricing({
         requestParts,
         responseParts,
         promptTokens: 120,
@@ -47,7 +47,7 @@ describe('buildPureTextChatExactPricing', () => {
     const responseParts: Part[] = [{ inlineData: { mimeType: 'image/png', data: '' } }];
 
     expect(
-      buildPureTextChatExactPricing({
+      resolveChatExactPricing({
         requestParts,
         responseParts,
         promptTokens: 120,

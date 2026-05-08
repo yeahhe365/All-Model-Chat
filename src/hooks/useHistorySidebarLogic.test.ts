@@ -1,42 +1,63 @@
 import { describe, expect, it } from 'vitest';
 import type { SavedChatSession } from '../types';
 import { createChatSettings } from '../test/factories';
-import { categorizeSessionsByDate } from './useHistorySidebarLogic';
+import { renderHook } from '../test/testUtils';
+import { useSettingsStore } from '../stores/settingsStore';
+import { useHistorySidebarLogic } from './useHistorySidebarLogic';
 
-const createSession = (id: string, iso: string): SavedChatSession => ({
-  id,
-  title: id,
-  timestamp: new Date(iso).getTime(),
-  messages: [],
-  settings: createChatSettings(),
-});
+const createSession = (id: string, daysAgo: number): SavedChatSession => {
+  const timestamp = new Date();
+  timestamp.setHours(12, 0, 0, 0);
+  timestamp.setDate(timestamp.getDate() - daysAgo);
+
+  return {
+    id,
+    title: id,
+    timestamp: timestamp.getTime(),
+    messages: [],
+    settings: createChatSettings(),
+  };
+};
+
+const renderHistoryLogic = (sessions: SavedChatSession[]) => {
+  useSettingsStore.setState({ language: 'en' });
+
+  return renderHook(() =>
+    useHistorySidebarLogic({
+      isOpen: true,
+      onToggle: () => {},
+      onAutoClose: () => {},
+      sessions,
+      groups: [],
+      generatingTitleSessionIds: new Set(),
+      onRenameSession: () => {},
+      onRenameGroup: () => {},
+      onMoveSessionToGroup: () => {},
+      onSelectSession: () => {},
+    }),
+  );
+};
 
 describe('categorizeSessionsByDate', () => {
   it('places yesterday into its own category before previous 7 days', () => {
-    const { categoryOrder, categories } = categorizeSessionsByDate(
-      [
-        createSession('today', '2026-04-20T08:00:00.000Z'),
-        createSession('yesterday', '2026-04-19T08:00:00.000Z'),
-        createSession('previous', '2026-04-18T08:00:00.000Z'),
-      ],
-      'en',
-      (_key, fallback) => fallback ?? '',
-      new Date('2026-04-20T12:00:00.000Z'),
-    );
+    const { result, unmount } = renderHistoryLogic([
+      createSession('today', 0),
+      createSession('yesterday', 1),
+      createSession('previous', 2),
+    ]);
+    const { categoryOrder, categories } = result.current.categorizedUngroupedSessions;
 
     expect(categoryOrder).toEqual(['Today', 'Yesterday', 'Previous 7 Days']);
     expect(categories.Yesterday.map((session) => session.id)).toEqual(['yesterday']);
+    unmount();
   });
 
   it('keeps previous 30 days separate from the new yesterday and previous 7 days buckets', () => {
-    const { categoryOrder, categories } = categorizeSessionsByDate(
-      [createSession('older', '2026-03-31T08:00:00.000Z')],
-      'en',
-      (_key, fallback) => fallback ?? '',
-      new Date('2026-04-20T12:00:00.000Z'),
-    );
+    const { result, unmount } = renderHistoryLogic([createSession('older', 20)]);
+    const { categoryOrder, categories } = result.current.categorizedUngroupedSessions;
 
     expect(categoryOrder).toEqual(['Previous 30 Days']);
     expect(categories['Previous 30 Days'].map((session) => session.id)).toEqual(['older']);
+    unmount();
   });
 });

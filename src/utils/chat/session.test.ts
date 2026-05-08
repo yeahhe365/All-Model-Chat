@@ -6,10 +6,8 @@ import {
   extractPersistedSessionFileRecords,
   generateSessionTitle,
   performOptimisticSessionUpdate,
-  sanitizeSessionForExport,
   serializeMessageForPortableExport,
   stripSessionFilePayloads,
-  updateSessionWithNewMessages,
 } from './session';
 import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord } from '../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
@@ -244,98 +242,6 @@ describe('performOptimisticSessionUpdate', () => {
   });
 });
 
-// ── sanitizeSessionForExport ──
-
-describe('sanitizeSessionForExport', () => {
-  it('removes rawFile from files', () => {
-    const session = makeSession({
-      messages: [
-        makeMessage('user', 'Hi', {
-          files: [
-            createUploadedFile({
-              id: 'f1',
-              name: 'test.png',
-              type: 'image/png',
-              size: 100,
-              rawFile: new Blob(['data']),
-            }),
-          ],
-        }),
-      ],
-    });
-    const result = sanitizeSessionForExport(session);
-    expect(result.messages[0].files![0].rawFile).toBeUndefined();
-  });
-
-  it('removes blob: dataUrl from files', () => {
-    const session = makeSession({
-      messages: [
-        makeMessage('user', 'Hi', {
-          files: [
-            createUploadedFile({
-              id: 'f1',
-              name: 'test.png',
-              type: 'image/png',
-              size: 100,
-              dataUrl: 'blob:http://localhost/abc',
-            }),
-          ],
-        }),
-      ],
-    });
-    const result = sanitizeSessionForExport(session);
-    expect(result.messages[0].files![0].dataUrl).toBeUndefined();
-  });
-
-  it('removes inline base64 dataUrl because it is persisted separately', () => {
-    const session = makeSession({
-      messages: [
-        makeMessage('user', 'Hi', {
-          files: [
-            createUploadedFile({
-              id: 'f1',
-              name: 'test.png',
-              type: 'image/png',
-              size: 100,
-              dataUrl: 'data:image/png;base64,abc123',
-            }),
-          ],
-        }),
-      ],
-    });
-    const result = sanitizeSessionForExport(session);
-    expect(result.messages[0].files![0].dataUrl).toBeUndefined();
-  });
-
-  it('removes abortController from files', () => {
-    const session = makeSession({
-      messages: [
-        makeMessage('user', 'Hi', {
-          files: [
-            createUploadedFile({
-              id: 'f1',
-              name: 'test.png',
-              type: 'image/png',
-              size: 100,
-              abortController: new AbortController(),
-            }),
-          ],
-        }),
-      ],
-    });
-    const result = sanitizeSessionForExport(session);
-    expect(result.messages[0].files![0].abortController).toBeUndefined();
-  });
-
-  it('handles messages without files', () => {
-    const session = makeSession({
-      messages: [makeMessage('user', 'Hi')],
-    });
-    const result = sanitizeSessionForExport(session);
-    expect(result.messages[0].files).toBeUndefined();
-  });
-});
-
 describe('serializeMessageForPortableExport', () => {
   it('converts attachment blobs to portable data URLs for single-message JSON export', async () => {
     const rawFile = new File(['hello'], 'note.txt', { type: 'text/plain' });
@@ -451,28 +357,5 @@ describe('session file persistence helpers', () => {
     const hydrated = attachPersistedSessionFiles(session, records);
 
     expect(hydrated.messages[0].files?.[0].rawFile).toBe(rawFile);
-  });
-});
-
-// ── updateSessionWithNewMessages ──
-
-describe('updateSessionWithNewMessages', () => {
-  it('replaces messages entirely for the target session', () => {
-    const existing = makeSession({
-      id: 'sess-1',
-      messages: [makeMessage('user', 'Old')],
-    });
-    const newMsgs = [makeMessage('model', 'New 1'), makeMessage('model', 'New 2')];
-    const result = updateSessionWithNewMessages([existing], 'sess-1', newMsgs, makeSettings());
-    expect(result[0].messages).toEqual(newMsgs);
-    expect(result[0].messages).toHaveLength(2);
-  });
-
-  it('does not affect other sessions', () => {
-    const s1 = makeSession({ id: 'sess-1', messages: [makeMessage('user', 'A')] });
-    const s2 = makeSession({ id: 'sess-2', messages: [makeMessage('user', 'B')] });
-    const result = updateSessionWithNewMessages([s1, s2], 'sess-1', [], makeSettings());
-    expect(result[1].messages).toHaveLength(1);
-    expect(result[1].messages[0].content).toBe('B');
   });
 });

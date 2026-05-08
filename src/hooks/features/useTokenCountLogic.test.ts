@@ -1,10 +1,44 @@
-import { describe, expect, it } from 'vitest';
+import { waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import type { AppSettings } from '../../types';
-import { mergeTokenCountAppSettings, resolveTokenCountRequestKey } from './useTokenCountLogic';
+import { useSettingsStore } from '../../stores/settingsStore';
+import type { AppSettings, UploadedFile } from '../../types';
+import { createAppSettings } from '../../test/factories';
+import { renderHook } from '../../test/testUtils';
 
-describe('mergeTokenCountAppSettings', () => {
-  it('prefers the latest stored API config fields when modal props are stale', () => {
+const { countTokensApiMock } = vi.hoisted(() => ({
+  countTokensApiMock: vi.fn(),
+}));
+
+vi.mock('../../services/api/generation/tokenApi', () => ({
+  countTokensApi: countTokensApiMock,
+}));
+
+import { useTokenCountLogic } from './useTokenCountLogic';
+
+const renderTokenCountLogic = (appSettings: AppSettings, latestStoredSettings: AppSettings) => {
+  useSettingsStore.setState({ appSettings: latestStoredSettings });
+  const initialFiles: UploadedFile[] = [];
+
+  return renderHook(() =>
+    useTokenCountLogic({
+      isOpen: true,
+      initialText: 'hello',
+      initialFiles,
+      appSettings,
+      currentModelId: 'gemini-3-flash-preview',
+    }),
+  );
+};
+
+describe('useTokenCountLogic API key resolution', () => {
+  beforeEach(() => {
+    countTokensApiMock.mockReset();
+    countTokensApiMock.mockResolvedValue(42);
+    useSettingsStore.setState({ appSettings: createAppSettings() });
+  });
+
+  it('prefers the latest stored API config fields when modal props are stale', async () => {
     const modalAppSettings: AppSettings = {
       ...DEFAULT_APP_SETTINGS,
       useCustomApiConfig: true,
@@ -25,28 +59,23 @@ describe('mergeTokenCountAppSettings', () => {
       isGoogleSearchEnabled: false,
     };
 
-    expect(mergeTokenCountAppSettings(modalAppSettings, latestStoredSettings)).toMatchObject({
-      apiKey: 'stored-key',
-      apiProxyUrl: 'https://proxy.example.com/gemini',
-      useApiProxy: false,
-      useCustomApiConfig: true,
-      systemInstruction: 'session override',
-      isGoogleSearchEnabled: true,
-    });
-  });
-});
+    const { unmount } = renderTokenCountLogic(modalAppSettings, latestStoredSettings);
 
-describe('resolveTokenCountRequestKey', () => {
-  it('uses the first custom API key directly instead of chat rotation state', () => {
-    expect(
-      resolveTokenCountRequestKey(
-        {
-          ...DEFAULT_APP_SETTINGS,
-          useCustomApiConfig: true,
-          apiKey: 'valid-key\nstale-key',
-        },
-        'gemini-3-flash-preview',
-      ),
-    ).toEqual({ key: 'valid-key' });
+    await waitFor(() => expect(countTokensApiMock).toHaveBeenCalled());
+    expect(countTokensApiMock.mock.calls.at(-1)?.[0]).toBe('stored-key');
+    unmount();
+  });
+
+  it('uses the first custom API key directly instead of chat rotation state', async () => {
+    const appSettings = createAppSettings({
+      useCustomApiConfig: true,
+      apiKey: 'valid-key\nstale-key',
+    });
+
+    const { unmount } = renderTokenCountLogic(appSettings, appSettings);
+
+    await waitFor(() => expect(countTokensApiMock).toHaveBeenCalled());
+    expect(countTokensApiMock.mock.calls.at(-1)?.[0]).toBe('valid-key');
+    unmount();
   });
 });

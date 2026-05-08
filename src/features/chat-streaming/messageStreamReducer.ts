@@ -5,7 +5,7 @@ import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '../../utils/fileTypeUtils';
 
-export type MessageStreamEvent =
+type MessageStreamEvent =
   | { type: 'part'; part: Part; receivedAt?: Date }
   | { type: 'thought'; text: string; receivedAt?: Date }
   | { type: 'files'; files: UploadedFile[]; receivedAt?: Date }
@@ -175,7 +175,7 @@ export const getContentDeltaFromPart = (part: Part): string => {
   return '';
 };
 
-export const getGeneratedFileFromPart = (part: Part): UploadedFile | undefined => {
+const getGeneratedFileFromPart = (part: Part): UploadedFile | undefined => {
   const partWithInlineData = part as Part & { inlineData?: { mimeType?: string; data?: string } };
   const mimeType = partWithInlineData.inlineData?.mimeType;
   const data = partWithInlineData.inlineData?.data;

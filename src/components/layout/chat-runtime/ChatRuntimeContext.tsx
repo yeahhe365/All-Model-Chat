@@ -20,7 +20,7 @@ import { isOpenAICompatibleApiActive } from '../../../utils/openaiCompatibleMode
 
 type ThinkingLevel = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 
-export interface ChatHeaderRuntimeValue {
+interface ChatHeaderRuntimeValue {
   isAppDraggingOver: boolean;
   modelsLoadingError: string | null;
   handleAppDragEnter: (event: DragEvent<HTMLDivElement>) => void;
@@ -44,7 +44,7 @@ export interface ChatHeaderRuntimeValue {
   onTogglePip: () => void;
 }
 
-export interface ChatMessageListRuntimeValue {
+interface ChatMessageListRuntimeValue {
   sessionTitle: string;
   setScrollContainerRef: (node: HTMLDivElement | null) => void;
   onEditMessage: (messageId: string, mode?: 'update' | 'resend') => void;
@@ -63,7 +63,7 @@ export interface ChatMessageListRuntimeValue {
   onOpenSidePanel: (content: SideViewContent) => void;
 }
 
-export interface ChatInputRuntimeValue {
+interface ChatInputRuntimeValue {
   onMessageSent: () => void;
   onSendMessage: (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => void;
   onStopGenerating: () => void;
@@ -103,7 +103,7 @@ export interface ChatInputRuntimeValue {
   onToggleGuide: () => void;
 }
 
-export interface ChatRuntimeValues {
+interface ChatRuntimeValues {
   header: ChatHeaderRuntimeValue;
   messageList: ChatMessageListRuntimeValue;
   input: ChatInputRuntimeValue;

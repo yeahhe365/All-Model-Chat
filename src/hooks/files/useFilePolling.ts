@@ -7,7 +7,7 @@ import { getFileMetadataApi } from '../../services/api/fileApi';
 
 const MAX_POLLING_BACKOFF_MULTIPLIER = 8;
 
-export const getFilePollingDelayMs = (failureCount: number): number => {
+const getFilePollingDelayMs = (failureCount: number): number => {
   const multiplier = Math.min(MAX_POLLING_BACKOFF_MULTIPLIER, Math.pow(2, Math.max(0, failureCount)));
   return POLLING_INTERVAL_MS * multiplier;
 };

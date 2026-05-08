@@ -1,46 +1,6 @@
 import type { ChatMessage, UploadedFile } from '../../types';
 import { isImageMimeType } from '../../utils/fileTypeUtils';
 
-const PYTHON_BLOCK_REGEX = /```(?:python|py)\s*([\s\S]*?)\s*```/gi;
-
-export const createLocalPythonExecutionSignature = (code: string) => code.trim();
-
-const getLatestPythonCodeBlock = (content: string): string | null => {
-  let latestCode: string | null = null;
-  let match: RegExpExecArray | null;
-
-  while ((match = PYTHON_BLOCK_REGEX.exec(content)) !== null) {
-    const code = match[1]?.trim();
-    if (code) {
-      latestCode = code;
-    }
-  }
-
-  return latestCode;
-};
-
-export const getLatestLocalPythonExecutionCandidate = ({
-  messageId,
-  content,
-  processedSignatures,
-}: {
-  messageId: string;
-  content: string;
-  processedSignatures: Map<string, string>;
-}) => {
-  const code = getLatestPythonCodeBlock(content);
-  if (!code) {
-    return null;
-  }
-
-  const signature = createLocalPythonExecutionSignature(code);
-  if (processedSignatures.get(messageId) === signature) {
-    return null;
-  }
-
-  return { code, signature };
-};
-
 export const collectLocalPythonInputFiles = (messages: ChatMessage[], targetMessageId: string) => {
   const targetIndex = messages.findIndex((message) => message.id === targetMessageId);
   const contextMessages = targetIndex === -1 ? messages : messages.slice(0, targetIndex);

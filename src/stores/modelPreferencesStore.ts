@@ -7,7 +7,7 @@ import {
   registerPersistedStoreSync,
 } from './persistentStorage';
 
-export const MODEL_PREFERENCES_STORE_STORAGE_KEY = 'all_model_chat_model_preferences_v1';
+const MODEL_PREFERENCES_STORE_STORAGE_KEY = 'all_model_chat_model_preferences_v1';
 
 const LEGACY_CUSTOM_MODELS_KEY = 'custom_model_list_v1';
 const LEGACY_MODEL_SETTINGS_CACHE_KEY = 'model_settings_cache';

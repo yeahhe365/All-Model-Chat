@@ -2,11 +2,24 @@ import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useModels } from './useModels';
 import { renderHook } from '@/test/testUtils';
-import { MODEL_PREFERENCES_STORE_STORAGE_KEY, useModelPreferencesStore } from '../../stores/modelPreferencesStore';
+import { useModelPreferencesStore } from '../../stores/modelPreferencesStore';
+
+let storage: Map<string, string>;
+
+const readPersistedCustomModels = () => {
+  for (const value of storage.values()) {
+    const parsed = JSON.parse(value) as { state?: { customModels?: unknown } };
+    if (parsed.state?.customModels) {
+      return parsed.state.customModels;
+    }
+  }
+
+  return undefined;
+};
 
 describe('useModels', () => {
   beforeEach(() => {
-    const storage = new Map<string, string>();
+    storage = new Map<string, string>();
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => {
@@ -56,7 +69,7 @@ describe('useModels', () => {
     });
 
     expect(result.current.apiModels.map((model) => model.id)).toEqual(['gemini-3-flash-preview', 'gemma-4-31b-it']);
-    expect(JSON.parse(localStorage.getItem(MODEL_PREFERENCES_STORE_STORAGE_KEY) || '{}').state.customModels).toEqual([
+    expect(readPersistedCustomModels()).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
       { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
     ]);

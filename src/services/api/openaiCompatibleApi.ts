@@ -47,7 +47,7 @@ type OpenAIResponsePayload = {
   };
 };
 
-export const buildOpenAICompatibleChatCompletionsUrl = (baseUrl?: string | null): string => {
+const buildOpenAICompatibleChatCompletionsUrl = (baseUrl?: string | null): string => {
   const normalizedBaseUrl = (baseUrl?.trim() || DEFAULT_OPENAI_COMPATIBLE_BASE_URL).replace(/\/+$/, '');
   return `${normalizedBaseUrl}/chat/completions`;
 };

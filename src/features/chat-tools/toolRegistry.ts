@@ -1,5 +1,5 @@
 import type { ModelCapabilities } from '../../stores/modelCapabilitiesStore';
-import type { ChatToolId, ChatToolSettingKey, ToggleableChatToolId } from '../../types/chatTools';
+import type { ChatToolId, ChatToolSettingKey } from '../../types/chatTools';
 
 type ChatToolSurface = 'tools-menu' | 'slash-command';
 
@@ -27,7 +27,7 @@ export interface ChatToolAvailabilityContext {
 
 const isToolsMenu = (context: ChatToolAvailabilityContext) => context.surface === 'tools-menu';
 
-export const CHAT_TOOL_REGISTRY: ChatToolDefinition[] = [
+const CHAT_TOOL_REGISTRY: ChatToolDefinition[] = [
   {
     id: 'deepSearch',
     labelKey: 'deep_search_label',
@@ -93,9 +93,3 @@ export const getChatToolsForSurface = (context: ChatToolAvailabilityContext): Ch
 
 export const getSlashCommandToolDefinitions = (): ChatToolDefinition[] =>
   CHAT_TOOL_REGISTRY.filter((tool) => !!tool.slashCommand);
-
-export const getToggleableToolIds = (): ToggleableChatToolId[] =>
-  CHAT_TOOL_REGISTRY.filter(
-    (tool): tool is ChatToolDefinition & { id: ToggleableChatToolId; settingKey: ChatToolSettingKey } =>
-      !!tool.settingKey,
-  ).map((tool) => tool.id);

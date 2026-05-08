@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   CHAT_INPUT_BUTTON_CLASS,
-  FOCUS_VISIBLE_RING_CLASS,
   FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS,
   FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
   FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
@@ -39,9 +38,15 @@ describe('MESSAGE_BLOCK_BUTTON_CLASS', () => {
 
 describe('focus ring helper classes', () => {
   it('keeps the shared focus-visible ring definition centralized', () => {
-    expect(FOCUS_VISIBLE_RING_CLASS).toContain('focus-visible:ring-2');
-    expect(FOCUS_VISIBLE_RING_CLASS).toContain('focus-visible:ring-[var(--theme-border-focus)]');
-    expect(FOCUS_VISIBLE_RING_CLASS).toContain('focus-visible:ring-offset-2');
+    for (const className of [
+      FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
+      FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
+      FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS,
+    ]) {
+      expect(className).toContain('focus-visible:ring-2');
+      expect(className).toContain('focus-visible:ring-[var(--theme-border-focus)]');
+      expect(className).toContain('focus-visible:ring-offset-2');
+    }
   });
 
   it('provides per-surface offset helpers', () => {

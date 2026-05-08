@@ -11,14 +11,14 @@ vi.mock('../../utils/uiUtils', () => ({
   showNotification: vi.fn(),
 }));
 
-import { completeModelMessage, runOptimisticMessagePipeline, startOptimisticMessageTurn } from './messagePipeline';
+import { runOptimisticMessagePipeline } from './messagePipeline';
 
 describe('messagePipeline', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('creates a new optimistic user/model turn through one shared entry point', () => {
+  it('creates a new optimistic user/model turn through one shared entry point', async () => {
     let sessions: SavedChatSession[] = [];
     const updateAndPersistSessions = vi.fn((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
       sessions = updater(sessions);
@@ -29,7 +29,7 @@ describe('messagePipeline', () => {
       name: 'source.png',
     });
 
-    const result = startOptimisticMessageTurn({
+    const result = await runOptimisticMessagePipeline({
       activeSessionId: null,
       appSettings: createAppSettings({
         modelId: 'app-default-model',
@@ -50,6 +50,10 @@ describe('messagePipeline', () => {
       shouldLockKey: true,
       shouldGenerateTitle: true,
       createSessionId: () => 'new-session',
+      abortController: new AbortController(),
+      errorPrefix: 'Test Error',
+      runMessageLifecycle: vi.fn(async () => undefined),
+      execute: async () => undefined,
     });
 
     expect(result.finalSessionId).toBe('new-session');
@@ -82,48 +86,6 @@ describe('messagePipeline', () => {
         content: '',
         isLoading: true,
         generationStartTime,
-      }),
-    );
-  });
-
-  it('updates the completed model message through a shared session updater helper', () => {
-    const generationEndTime = new Date('2026-05-04T10:00:00.000Z');
-    const sessions = completeModelMessage(
-      [
-        {
-          id: 'session-1',
-          title: 'Chat',
-          timestamp: 1,
-          groupId: null,
-          settings: createChatSettings(),
-          messages: [
-            {
-              id: 'model-message',
-              role: 'model',
-              content: '',
-              timestamp: new Date('2026-05-04T09:59:00.000Z'),
-              isLoading: true,
-            },
-          ],
-        },
-      ],
-      {
-        sessionId: 'session-1',
-        messageId: 'model-message',
-        patch: {
-          isLoading: false,
-          content: 'done',
-          generationEndTime,
-        },
-      },
-    );
-
-    expect(sessions[0].messages[0]).toEqual(
-      expect.objectContaining({
-        id: 'model-message',
-        isLoading: false,
-        content: 'done',
-        generationEndTime,
       }),
     );
   });
@@ -186,7 +148,7 @@ describe('messagePipeline', () => {
     expect(playCompletionSoundMock).toHaveBeenCalledOnce();
   });
 
-  it('can start a standard chat turn with sender-specific optimistic message metadata', () => {
+  it('can start a standard chat turn with sender-specific optimistic message metadata', async () => {
     let sessions: SavedChatSession[] = [
       {
         id: 'session-1',
@@ -211,7 +173,7 @@ describe('messagePipeline', () => {
     const file = createUploadedFile({ name: 'report.csv' });
     const generationStartTime = new Date('2026-05-04T10:01:00.000Z');
 
-    startOptimisticMessageTurn({
+    await runOptimisticMessagePipeline({
       activeSessionId: 'session-1',
       appSettings: createAppSettings(),
       currentChatSettings: createChatSettings({ modelId: 'gemini-3-flash-preview' }),
@@ -229,6 +191,10 @@ describe('messagePipeline', () => {
       modelMessageOptions: {
         content: '<thinking>',
       },
+      abortController: new AbortController(),
+      errorPrefix: 'Test Error',
+      runMessageLifecycle: vi.fn(async () => undefined),
+      execute: async () => undefined,
     });
 
     expect(sessions[0].title).toBe('summarize');
@@ -251,7 +217,7 @@ describe('messagePipeline', () => {
     );
   });
 
-  it('can start an inserted model-only turn for canvas generation', () => {
+  it('can start an inserted model-only turn for canvas generation', async () => {
     let sessions: SavedChatSession[] = [
       {
         id: 'session-1',
@@ -280,7 +246,7 @@ describe('messagePipeline', () => {
     });
     const generationStartTime = new Date('2026-05-04T10:02:00.000Z');
 
-    startOptimisticMessageTurn({
+    await runOptimisticMessagePipeline({
       activeSessionId: 'session-1',
       appSettings: createAppSettings(),
       currentChatSettings: createChatSettings(),
@@ -296,6 +262,10 @@ describe('messagePipeline', () => {
       modelMessageOptions: {
         excludeFromContext: true,
       },
+      abortController: new AbortController(),
+      errorPrefix: 'Test Error',
+      runMessageLifecycle: vi.fn(async () => undefined),
+      execute: async () => undefined,
     });
 
     expect(sessions[0].messages.map((message) => message.id)).toEqual([

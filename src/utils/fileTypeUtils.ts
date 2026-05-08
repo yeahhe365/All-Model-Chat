@@ -52,7 +52,7 @@ const getFileExtension = (filename?: string): string => {
   return extension ? `.${extension}` : '';
 };
 
-export const isYoutubeMimeType = (mimeType?: string): boolean => normalizeMimeType(mimeType) === 'video/youtube-link';
+const isYoutubeMimeType = (mimeType?: string): boolean => normalizeMimeType(mimeType) === 'video/youtube-link';
 
 export const isImageMimeType = (mimeType?: string): boolean => {
   const normalized = normalizeMimeType(mimeType);
@@ -75,7 +75,7 @@ export const isVideoMimeType = (mimeType?: string): boolean => {
 export const isPdfMimeType = (mimeType?: string): boolean =>
   SUPPORTED_PDF_MIME_TYPES.includes(normalizeMimeType(mimeType));
 
-export const isPdfFile = (file: FileKindInput): boolean =>
+const isPdfFile = (file: FileKindInput): boolean =>
   isPdfMimeType(file.type) || normalizeFileName(file.name).endsWith('.pdf');
 
 export const isTextFile = (file: FileTypeInput): boolean => {
@@ -89,7 +89,7 @@ export const isMarkdownFile = (file: FileTypeInput): boolean => {
   return normalizeMimeType(file.type) === 'text/markdown' || fileExtension === '.md' || fileExtension === '.markdown';
 };
 
-export const isInlineDataMimeType = (mimeType?: string): boolean =>
+const isInlineDataMimeType = (mimeType?: string): boolean =>
   isImageMimeType(mimeType) || isAudioMimeType(mimeType) || isVideoMimeType(mimeType) || isPdfMimeType(mimeType);
 
 export const getFileTypeCategory = (mimeType: string, error?: string): FileCategory => {

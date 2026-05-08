@@ -11,7 +11,7 @@ const normalizeLanguage = (language?: string): string => {
   return language.trim().split(/\s+/)[0].toLowerCase();
 };
 
-export const getPreviewMarkupType = (textContent: string): PreviewMarkupType | null => {
+const getPreviewMarkupType = (textContent: string): PreviewMarkupType | null => {
   if (!textContent) return null;
 
   const normalizedContent = textContent.trim();

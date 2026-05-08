@@ -59,19 +59,6 @@ export const getClient = async (
   }
 };
 
-export const getApiClient = async (
-  apiKey?: string | null,
-  baseUrl?: string | null,
-  httpOptions?: ClientHttpOptions,
-): Promise<GoogleGenAI> => {
-  if (!apiKey) {
-    const silentError = new Error('API key is not configured in settings or provided.');
-    silentError.name = 'SilentError';
-    throw silentError;
-  }
-  return getClient(apiKey, baseUrl, httpOptions);
-};
-
 const resolveConfiguredBaseUrl = (
   appSettings: Pick<AppSettings, 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>,
 ): string | null => {

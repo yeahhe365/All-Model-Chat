@@ -15,16 +15,9 @@ import { useDataImport } from '../data-management/useDataImport';
 import { useChatSessionExport } from '../data-management/useChatSessionExport';
 import { useAppInitialization } from './useAppInitialization';
 import { useAppTitle } from './useAppTitle';
-import { useAppPromptModes } from './useAppPromptModes';
+import { focusChatInput, useAppPromptModes } from './useAppPromptModes';
 import { DEFAULT_THINKING_BUDGET } from '../../constants/modelConstants';
 import { getModelCapabilities } from '../../utils/modelHelpers';
-
-const focusChatInput = () => {
-  setTimeout(() => {
-    const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement | null;
-    textarea?.focus();
-  }, 50);
-};
 
 const buildProviderAwareModels = (appSettings: AppSettings, apiModels: ModelOption[]): ModelOption[] => {
   const geminiModels = apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));

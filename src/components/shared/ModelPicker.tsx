@@ -18,9 +18,9 @@ import { isGeminiRoboticsModel } from '../../utils/modelHelpers';
 import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
 import {
   buildModelCatalog,
+  buildModelCatalogSections,
   filterModelCatalog,
-  type ModelCatalogCategory,
-  type ModelCatalogEntry,
+  getModelProviderSectionLabelKey,
 } from '../../utils/modelCatalog';
 
 const MODEL_ICON_SIZE = 18;
@@ -107,20 +107,6 @@ interface ModelPickerProps {
   dropdownClassName?: string;
 }
 
-type PickerSection = {
-  entries: ModelCatalogEntry[];
-  key: string;
-  providerKey?: 'gemini-native' | 'openai-compatible';
-};
-
-const getProviderSectionLabelKey = (providerKey: PickerSection['providerKey']): string => {
-  if (providerKey === 'openai-compatible') {
-    return 'modelPickerProviderOpenAICompatible';
-  }
-
-  return 'modelPickerProviderGemini';
-};
-
 export const ModelPicker: React.FC<ModelPickerProps> = ({
   models,
   selectedId,
@@ -140,50 +126,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
 
   const selectedModel = models.find((m) => m.id === selectedId);
 
-  const sections = useMemo(() => {
-    const hasProviderSections = filteredEntries.some((entry) => entry.model.apiMode);
-    if (hasProviderSections) {
-      const providerOrder: Array<NonNullable<PickerSection['providerKey']>> = ['gemini-native', 'openai-compatible'];
-
-      return providerOrder.reduce<PickerSection[]>((nextSections, providerKey) => {
-        const entries = filteredEntries.filter((entry) => entry.model.apiMode === providerKey);
-        if (entries.length > 0) {
-          nextSections.push({
-            key: providerKey,
-            providerKey,
-            entries,
-          });
-        }
-
-        return nextSections;
-      }, []);
-    }
-
-    const pinned = filteredEntries.filter((entry) => entry.group === 'pinned');
-    const standard = filteredEntries.filter((entry) => entry.group === 'standard');
-    const groupedStandards: ModelCatalogCategory[] = ['text', 'live', 'tts', 'image', 'robotics', 'other'];
-
-    const nextSections: PickerSection[] = [];
-
-    if (pinned.length > 0) {
-      nextSections.push({
-        key: 'pinned',
-        entries: pinned,
-      });
-    }
-
-    groupedStandards.forEach((category) => {
-      const entries = standard.filter((entry) => entry.category === category);
-      if (entries.length > 0) {
-        nextSections.push({
-          key: category,
-          entries,
-        });
-      }
-    });
-
-    return nextSections;
-  }, [filteredEntries]);
+  const sections = useMemo(() => buildModelCatalogSections(filteredEntries), [filteredEntries]);
 
   const handleSelectModel = (modelId: string) => {
     onSelect(modelId);
@@ -219,7 +162,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                     <div key={section.key} className="space-y-1" data-provider-section={section.providerKey}>
                       {section.providerKey && (
                         <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--theme-text-tertiary)]">
-                          {t(getProviderSectionLabelKey(section.providerKey))}
+                          {t(getModelProviderSectionLabelKey(section.providerKey))}
                         </div>
                       )}
                       {section.entries.map((entry) => {

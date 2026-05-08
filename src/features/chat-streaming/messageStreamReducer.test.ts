@@ -3,8 +3,9 @@ import type { Part, UsageMetadata } from '@google/genai';
 import {
   createMessageStreamState,
   reduceMessageStreamEvent,
-  type MessageStreamEvent,
 } from './messageStreamReducer';
+
+type MessageStreamEvent = Parameters<typeof reduceMessageStreamEvent>[1];
 
 vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: () => 'generated-id',

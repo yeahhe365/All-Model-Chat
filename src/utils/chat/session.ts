@@ -219,13 +219,6 @@ export const attachPersistedSessionFiles = (
   }),
 });
 
-/**
- * Prepares a session object for export by stripping out non-serializable properties
- * like Blobs, Files, and ephemeral URL references.
- */
-export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession =>
-  stripSessionFilePayloads(session);
-
 const buildPortableDataUrl = async (file: UploadedFile): Promise<string | undefined> => {
   if (file.rawFile instanceof Blob) {
     const mimeType = file.type || file.rawFile.type || 'application/octet-stream';
@@ -329,34 +322,4 @@ export const performOptimisticSessionUpdate = (
   };
 
   return updatedSessions;
-};
-
-export const updateSessionWithNewMessages = (
-  prevSessions: SavedChatSession[],
-  sessionId: string,
-  newMessages: ChatMessage[],
-  settings: ChatSettings,
-  options: {
-    title?: string;
-    shouldLockKey?: boolean;
-    keyToLock?: string;
-  } = {},
-): SavedChatSession[] => {
-  // Delegates to the new robust handler
-  return performOptimisticSessionUpdate(prevSessions, {
-    activeSessionId: sessionId, // Assume sessionId passed is the active one
-    newSessionId: sessionId,
-    newMessages: [], // We are replacing messages entirely in this legacy signature
-    settings,
-    title: options.title,
-    shouldLockKey: options.shouldLockKey,
-    keyToLock: options.keyToLock,
-  }).map((s) => {
-    // Fixup: The legacy function replaced messages entirely, the new one appends.
-    // We override the messages here to match legacy behavior strictly.
-    if (s.id === sessionId) {
-      return { ...s, messages: newMessages, timestamp: Date.now() };
-    }
-    return s;
-  });
 };

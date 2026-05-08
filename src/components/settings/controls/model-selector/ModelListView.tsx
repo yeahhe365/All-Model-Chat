@@ -3,7 +3,12 @@ import { Check } from 'lucide-react';
 import { ApiMode, ModelOption } from '../../../../types';
 import { getModelIcon } from '../../../shared/ModelPicker';
 import { useI18n } from '../../../../contexts/I18nContext';
-import { buildModelCatalog, filterModelCatalog, type ModelCatalogCategory } from '../../../../utils/modelCatalog';
+import {
+  buildModelCatalog,
+  buildModelCatalogSections,
+  filterModelCatalog,
+  getModelProviderSectionLabelKey,
+} from '../../../../utils/modelCatalog';
 
 interface ModelListViewProps {
   availableModels: ModelOption[];
@@ -11,20 +16,6 @@ interface ModelListViewProps {
   selectedApiMode?: ApiMode;
   onSelectModel: (id: string, apiMode?: ApiMode) => void;
 }
-
-type ModelListSection = {
-  entries: ReturnType<typeof filterModelCatalog>;
-  key: string;
-  providerKey?: ApiMode;
-};
-
-const getProviderSectionLabelKey = (providerKey: ApiMode): string => {
-  if (providerKey === 'openai-compatible') {
-    return 'modelPickerProviderOpenAICompatible';
-  }
-
-  return 'modelPickerProviderGemini';
-};
 
 export const ModelListView: React.FC<ModelListViewProps> = ({
   availableModels,
@@ -37,43 +28,7 @@ export const ModelListView: React.FC<ModelListViewProps> = ({
   const catalog = useMemo(() => buildModelCatalog(availableModels), [availableModels]);
   const filteredEntries = useMemo(() => filterModelCatalog(catalog, ''), [catalog]);
 
-  const sections = useMemo(() => {
-    const hasProviderSections = filteredEntries.some((entry) => entry.model.apiMode);
-    if (hasProviderSections) {
-      const providerOrder: ApiMode[] = ['gemini-native', 'openai-compatible'];
-
-      return providerOrder.reduce<ModelListSection[]>((nextSections, providerKey) => {
-        const entries = filteredEntries.filter((entry) => entry.model.apiMode === providerKey);
-        if (entries.length > 0) {
-          nextSections.push({
-            key: providerKey,
-            providerKey,
-            entries,
-          });
-        }
-
-        return nextSections;
-      }, []);
-    }
-
-    const pinned = filteredEntries.filter((entry) => entry.group === 'pinned');
-    const standard = filteredEntries.filter((entry) => entry.group === 'standard');
-    const categories: ModelCatalogCategory[] = ['text', 'live', 'tts', 'image', 'robotics', 'other'];
-    const nextSections: ModelListSection[] = [];
-
-    if (pinned.length > 0) {
-      nextSections.push({ key: 'pinned', entries: pinned });
-    }
-
-    categories.forEach((category) => {
-      const entries = standard.filter((entry) => entry.category === category);
-      if (entries.length > 0) {
-        nextSections.push({ key: category, entries });
-      }
-    });
-
-    return nextSections;
-  }, [filteredEntries]);
+  const sections = useMemo(() => buildModelCatalogSections(filteredEntries), [filteredEntries]);
 
   return (
     <div className="border border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-input)]/30 overflow-hidden">
@@ -82,7 +37,7 @@ export const ModelListView: React.FC<ModelListViewProps> = ({
           <div key={section.key} className="space-y-1" data-provider-section={section.providerKey}>
             {section.providerKey && (
               <div className="px-2 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--theme-text-tertiary)]">
-                {t(getProviderSectionLabelKey(section.providerKey))}
+                {t(getModelProviderSectionLabelKey(section.providerKey))}
               </div>
             )}
             {section.entries.map((entry) => {

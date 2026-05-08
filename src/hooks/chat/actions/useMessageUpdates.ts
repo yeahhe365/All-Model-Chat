@@ -38,6 +38,46 @@ interface UseMessageUpdatesProps {
   userScrolledUpRef: React.MutableRefObject<boolean>;
 }
 
+interface LiveModelStreamInput {
+  apiPart?: Part;
+  generatedFiles?: UploadedFile[];
+  text: string;
+  type: 'content' | 'thought';
+}
+
+const reduceLiveModelStreamInput = (
+  streamState: MessageStreamState,
+  { apiPart, generatedFiles, text, type }: LiveModelStreamInput,
+): MessageStreamState => {
+  let nextState = streamState;
+
+  if (apiPart) {
+    nextState = reduceMessageStreamEvent(nextState, { type: 'part', part: apiPart });
+  } else if (text) {
+    nextState =
+      type === 'thought'
+        ? reduceMessageStreamEvent(nextState, { type: 'thought', text })
+        : reduceMessageStreamEvent(nextState, { type: 'part', part: { text } as Part });
+  }
+
+  if (generatedFiles?.length) {
+    nextState = reduceMessageStreamEvent(nextState, { type: 'files', files: generatedFiles });
+  }
+
+  return nextState;
+};
+
+const getMessageUpdatesFromStreamState = (
+  streamState: MessageStreamState,
+  fallbackFirstTokenTimeMs?: number,
+): Partial<ChatMessage> => ({
+  content: streamState.content,
+  thoughts: streamState.thoughts || undefined,
+  files: streamState.files.length ? streamState.files : undefined,
+  apiParts: streamState.apiParts.length ? streamState.apiParts : undefined,
+  firstTokenTimeMs: streamState.firstTokenTimeMs ?? fallbackFirstTokenTimeMs,
+});
+
 export const useMessageUpdates = ({
   activeSessionId,
   setActiveSessionId,
@@ -206,23 +246,9 @@ export const useMessageUpdates = ({
                   generationId: newMessage.id,
                   generationStartTime,
                 });
-                if (apiPart) {
-                  streamState = reduceMessageStreamEvent(streamState, { type: 'part', part: apiPart });
-                } else if (text) {
-                  streamState =
-                    type === 'thought'
-                      ? reduceMessageStreamEvent(streamState, { type: 'thought', text })
-                      : reduceMessageStreamEvent(streamState, { type: 'part', part: { text } as Part });
-                }
-                if (generatedFiles?.length) {
-                  streamState = reduceMessageStreamEvent(streamState, { type: 'files', files: generatedFiles });
-                }
+                streamState = reduceLiveModelStreamInput(streamState, { apiPart, generatedFiles, text, type });
                 liveStreamStateRefs.current.model = streamState;
-                newMessage.content = streamState.content;
-                newMessage.thoughts = streamState.thoughts || undefined;
-                newMessage.files = streamState.files.length ? streamState.files : undefined;
-                newMessage.apiParts = streamState.apiParts.length ? streamState.apiParts : undefined;
-                newMessage.firstTokenTimeMs = streamState.firstTokenTimeMs ?? 0;
+                Object.assign(newMessage, getMessageUpdatesFromStreamState(streamState, 0));
               } else {
                 newMessage.content = type === 'content' ? text : '';
                 newMessage.thoughts = type === 'thought' ? text : undefined;
@@ -261,24 +287,10 @@ export const useMessageUpdates = ({
                   };
                 }
 
-                if (apiPart) {
-                  streamState = reduceMessageStreamEvent(streamState, { type: 'part', part: apiPart });
-                } else if (text) {
-                  streamState =
-                    type === 'thought'
-                      ? reduceMessageStreamEvent(streamState, { type: 'thought', text })
-                      : reduceMessageStreamEvent(streamState, { type: 'part', part: { text } as Part });
-                }
-                if (generatedFiles?.length) {
-                  streamState = reduceMessageStreamEvent(streamState, { type: 'files', files: generatedFiles });
-                }
+                streamState = reduceLiveModelStreamInput(streamState, { apiPart, generatedFiles, text, type });
 
                 liveStreamStateRefs.current.model = streamState;
-                updates.content = streamState.content;
-                updates.thoughts = streamState.thoughts || undefined;
-                updates.files = streamState.files.length ? streamState.files : undefined;
-                updates.apiParts = streamState.apiParts.length ? streamState.apiParts : undefined;
-                updates.firstTokenTimeMs = streamState.firstTokenTimeMs ?? msg.firstTokenTimeMs;
+                Object.assign(updates, getMessageUpdatesFromStreamState(streamState, msg.firstTokenTimeMs));
 
                 if (streamState.thoughts && !msg.thinkingTimeMs && streamState.firstContentPartTime) {
                   updates.thinkingTimeMs =

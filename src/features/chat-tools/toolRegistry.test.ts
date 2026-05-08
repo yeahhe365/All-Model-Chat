@@ -1,23 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getModelCapabilities } from '../../utils/modelHelpers';
-import {
-  CHAT_TOOL_REGISTRY,
-  getChatToolsForSurface,
-  getSlashCommandToolDefinitions,
-  getToggleableToolIds,
-} from './toolRegistry';
+import { getChatToolsForSurface, getSlashCommandToolDefinitions } from './toolRegistry';
 
 describe('chat tool registry', () => {
   it('keeps toggleable tool ids, labels, slash commands, and settings keys in one registry', () => {
-    expect(getToggleableToolIds()).toEqual([
-      'deepSearch',
-      'googleSearch',
-      'codeExecution',
-      'localPython',
-      'urlContext',
-    ]);
-
-    expect(CHAT_TOOL_REGISTRY).toEqual(
+    expect(getSlashCommandToolDefinitions()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'googleSearch',

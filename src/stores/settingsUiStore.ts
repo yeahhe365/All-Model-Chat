@@ -9,7 +9,7 @@ import {
 export type SettingsTab = 'models' | 'interface' | 'api' | 'data' | 'shortcuts' | 'about';
 export type SettingsTabDescriptor = { id: SettingsTab; labelKey: string };
 
-export const SETTINGS_UI_STORE_STORAGE_KEY = 'all_model_chat_settings_ui_v1';
+const SETTINGS_UI_STORE_STORAGE_KEY = 'all_model_chat_settings_ui_v1';
 
 const LEGACY_SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
 const SETTINGS_TABS: SettingsTab[] = ['models', 'interface', 'api', 'data', 'shortcuts', 'about'];
@@ -26,7 +26,7 @@ interface SettingsUiActions {
   setScrollPosition: (tab: SettingsTab, scrollTop: number) => void;
 }
 
-export const normalizeSettingsTab = (savedTab: string | null): SettingsTab | null => {
+const normalizeSettingsTab = (savedTab: string | null): SettingsTab | null => {
   switch (savedTab) {
     case 'model':
     case 'chat':

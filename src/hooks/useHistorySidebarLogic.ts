@@ -20,7 +20,7 @@ interface UseHistorySidebarLogicProps {
   onSelectSession: (sessionId: string) => void;
 }
 
-export const categorizeSessionsByDate = (
+const categorizeSessionsByDate = (
   sessions: SavedChatSession[],
   language: 'en' | 'zh',
   t: HistoryTranslator,

@@ -7,7 +7,6 @@ import {
   createToggleChatInputFullscreenAction,
   getChatInputMode,
   initialChatInputMachineState,
-  selectIsChatInputProcessing,
 } from './chatInputStateMachine';
 
 describe('chatInputStateMachine', () => {
@@ -64,29 +63,47 @@ describe('chatInputStateMachine', () => {
   });
 
   it('detects processing from local and external blockers', () => {
+    const base = {
+      state: initialChatInputMachineState,
+      isEditing: false,
+      hasActiveQueuedSubmission: false,
+      canQueueMessage: false,
+      isNativeAudioModel: false,
+      liveStatus: {
+        isConnected: false,
+        isReconnecting: false,
+        error: null,
+      },
+      isProcessingFile: false,
+      isConverting: false,
+    };
+
     expect(
-      selectIsChatInputProcessing({
+      getChatInputMode({
+        ...base,
         state: { ...initialChatInputMachineState, isWaitingForUpload: true },
         isProcessingFile: false,
         isConverting: false,
       }),
-    ).toBe(true);
+    ).toBe('processing');
 
     expect(
-      selectIsChatInputProcessing({
+      getChatInputMode({
+        ...base,
         state: initialChatInputMachineState,
         isProcessingFile: true,
         isConverting: false,
       }),
-    ).toBe(true);
+    ).toBe('processing');
 
     expect(
-      selectIsChatInputProcessing({
+      getChatInputMode({
+        ...base,
         state: initialChatInputMachineState,
         isProcessingFile: false,
         isConverting: false,
       }),
-    ).toBe(false);
+    ).toBe('idle');
   });
 
   it('selects composer modes by stable priority', () => {

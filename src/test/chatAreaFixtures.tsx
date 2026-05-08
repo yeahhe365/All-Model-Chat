@@ -1,12 +1,9 @@
-import { act, type ReactNode } from 'react';
+import { act, type ComponentProps, type ReactNode } from 'react';
 import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { vi } from 'vitest';
 import { I18nProvider } from '../contexts/I18nContext';
 import { WindowProvider } from '../contexts/WindowContext';
-import {
-  ChatRuntimeValuesProvider,
-  type ChatRuntimeValues,
-} from '../components/layout/chat-runtime/ChatRuntimeContext';
+import { ChatRuntimeValuesProvider } from '../components/layout/chat-runtime/ChatRuntimeContext';
 import { useChatStore } from '../stores/chatStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useUIStore } from '../stores/uiStore';
@@ -15,6 +12,8 @@ import type { AppSettings, ChatMessage, ChatSettings, ChatToolToggleStates, Mode
 import { createAppSettings, createChatSettings } from './factories';
 
 export { createAppSettings, createChatSettings } from './factories';
+
+type ChatRuntimeValues = ComponentProps<typeof ChatRuntimeValuesProvider>['value'];
 
 const createToolStates = (overrides: Partial<ChatToolToggleStates> = {}): ChatToolToggleStates => ({
   googleSearch: { isEnabled: false, onToggle: vi.fn() },

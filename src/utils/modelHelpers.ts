@@ -257,7 +257,7 @@ export const normalizeImageSizeForModel = (modelId: string, imageSize?: string):
   return supportedImageSizes[0];
 };
 
-export const getDefaultThinkingLevelForModel = (
+const getDefaultThinkingLevelForModel = (
   modelId: string,
   fallback: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH' = 'HIGH',
 ): 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH' => {
@@ -381,7 +381,7 @@ export const calculateTokenStats = (usageMetadata?: UsageMetadata) => {
 };
 
 // --- Thinking Budget Logic Extraction ---
-export const adjustThinkingBudget = (modelId: string, currentBudget: number): number => {
+const adjustThinkingBudget = (modelId: string, currentBudget: number): number => {
   const range = THINKING_BUDGET_RANGES[modelId];
   let newBudget = currentBudget;
 

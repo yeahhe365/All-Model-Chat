@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChatMessage, UploadedFile } from '../../types';
-import {
-  collectLocalPythonInputFiles,
-  createLocalPythonExecutionSignature,
-  getLatestLocalPythonExecutionCandidate,
-} from './helpers';
+import { collectLocalPythonInputFiles } from './helpers';
 
 const makeFile = (id: string, name: string): UploadedFile => ({
   id,
@@ -24,24 +20,6 @@ const makeMessage = (id: string, role: 'user' | 'model', content: string, files?
 });
 
 describe('local-python helpers', () => {
-  it('returns the latest python block when the same message receives new code on continue generation', () => {
-    const firstCode = 'print("first")';
-    const secondCode = 'print("second")';
-    const messageId = 'model-1';
-    const processed = new Map<string, string>([[messageId, createLocalPythonExecutionSignature(firstCode)]]);
-
-    const candidate = getLatestLocalPythonExecutionCandidate({
-      messageId,
-      content: `\`\`\`python\n${firstCode}\n\`\`\`\n<div class="tool-result outcome-ok"></div>\n\`\`\`python\n${secondCode}\n\`\`\``,
-      processedSignatures: processed,
-    });
-
-    expect(candidate).toEqual({
-      code: secondCode,
-      signature: createLocalPythonExecutionSignature(secondCode),
-    });
-  });
-
   it('collects only active user-provided files before the target model message', () => {
     const inputA = makeFile('input-a', 'dataset-a.csv');
     const inputB = makeFile('input-b', 'dataset-b.csv');

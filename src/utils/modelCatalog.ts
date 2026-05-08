@@ -1,11 +1,18 @@
-import type { ModelOption } from '../types';
+import type { ApiMode, ModelOption } from '../types';
 import { getModelCapabilities, isGeminiRoboticsModel, sortModels } from './modelHelpers';
 
-export type ModelCatalogGroup = 'pinned' | 'standard';
-export type ModelCatalogCategory = 'text' | 'live' | 'tts' | 'image' | 'robotics' | 'other';
-export type ModelBadgeKey = 'pinned' | 'live' | 'tts' | 'image' | 'robotics' | 'gemma' | 'flash' | 'pro';
+type ModelCatalogGroup = 'pinned' | 'standard';
+type ModelCatalogCategory = 'text' | 'live' | 'tts' | 'image' | 'robotics' | 'other';
+type ModelBadgeKey = 'pinned' | 'live' | 'tts' | 'image' | 'robotics' | 'gemma' | 'flash' | 'pro';
+type ModelCatalogProviderKey = ApiMode;
 
-export interface ModelCatalogEntry {
+interface ModelCatalogSection {
+  entries: ModelCatalogEntry[];
+  key: string;
+  providerKey?: ModelCatalogProviderKey;
+}
+
+interface ModelCatalogEntry {
   badgeKeys: ModelBadgeKey[];
   category: ModelCatalogCategory;
   group: ModelCatalogGroup;
@@ -103,6 +110,52 @@ export const filterModelCatalog = (entries: ModelCatalogEntry[], query: string):
   }
 
   return entries.filter((entry) => entry.searchText.includes(query.trim().toLowerCase()));
+};
+
+export const buildModelCatalogSections = (entries: ModelCatalogEntry[]): ModelCatalogSection[] => {
+  const hasProviderSections = entries.some((entry) => entry.model.apiMode);
+  if (hasProviderSections) {
+    const providerOrder: ModelCatalogProviderKey[] = ['gemini-native', 'openai-compatible'];
+
+    return providerOrder.reduce<ModelCatalogSection[]>((sections, providerKey) => {
+      const providerEntries = entries.filter((entry) => entry.model.apiMode === providerKey);
+      if (providerEntries.length > 0) {
+        sections.push({
+          key: providerKey,
+          providerKey,
+          entries: providerEntries,
+        });
+      }
+
+      return sections;
+    }, []);
+  }
+
+  const pinned = entries.filter((entry) => entry.group === 'pinned');
+  const standard = entries.filter((entry) => entry.group === 'standard');
+  const categories: ModelCatalogCategory[] = ['text', 'live', 'tts', 'image', 'robotics', 'other'];
+  const sections: ModelCatalogSection[] = [];
+
+  if (pinned.length > 0) {
+    sections.push({ key: 'pinned', entries: pinned });
+  }
+
+  categories.forEach((category) => {
+    const categoryEntries = standard.filter((entry) => entry.category === category);
+    if (categoryEntries.length > 0) {
+      sections.push({ key: category, entries: categoryEntries });
+    }
+  });
+
+  return sections;
+};
+
+export const getModelProviderSectionLabelKey = (providerKey: ModelCatalogProviderKey): string => {
+  if (providerKey === 'openai-compatible') {
+    return 'modelPickerProviderOpenAICompatible';
+  }
+
+  return 'modelPickerProviderGemini';
 };
 
 export const getQuickSwitchModelIds = (models: ModelOption[]): string[] =>
