@@ -6,6 +6,7 @@ import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/generationConfig';
 import { loadLiveArtifactsSystemPrompt } from '../../constants/promptHelpers';
 import { runOptimisticMessagePipeline } from './messagePipeline';
+import { buildLiveArtifactsRequestParts, coerceLiveArtifactsOutput } from './liveArtifactsContracts';
 import type { LiveArtifactsGeneratorProps, GetStreamHandlers } from './types';
 
 type MessageLifecycleRunner = Parameters<typeof runOptimisticMessagePipeline>[0]['runMessageLifecycle'];
@@ -80,12 +81,24 @@ export const generateLiveArtifactsMessage = async ({
       const liveArtifactsSystemPrompt =
         appSettings.liveArtifactsSystemPrompt?.trim() ||
         (await loadLiveArtifactsSystemPrompt(language, appSettings.liveArtifactsPromptMode ?? 'inline'));
+      const liveArtifactsPromptMode = appSettings.liveArtifactsPromptMode ?? 'inline';
+      const t = getTranslator(language);
+      const promptInstruction = t('suggestion_html_desc');
+      const requestParts = buildLiveArtifactsRequestParts({
+        promptInstruction,
+        sourceContent: content,
+        language,
+        promptMode: liveArtifactsPromptMode,
+      });
       const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
         activeSessionId,
         generationId,
         abortController,
         generationStartTime,
         liveArtifactsSettings,
+        requestParts,
+        undefined,
+        (finalContent) => coerceLiveArtifactsOutput(finalContent, language, liveArtifactsPromptMode),
       );
 
       const config = await buildGenerationConfig({
@@ -104,15 +117,12 @@ export const generateLiveArtifactsMessage = async ({
         isLocalPythonEnabled: false,
       });
 
-      const t = getTranslator(language);
-      const promptInstruction = t('suggestion_html_desc');
-
       try {
         await sendStatelessMessageStreamApi(
           keyToUse,
           liveArtifactsModelId,
           [],
-          [{ text: promptInstruction }, { text: content }],
+          requestParts,
           config,
           abortController.signal,
           streamOnPart,

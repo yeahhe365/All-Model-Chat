@@ -34,6 +34,7 @@ export type GetStreamHandlers = (
   currentChatSettings: IndividualChatSettings,
   requestParts?: Part[],
   onSuccess?: (generationId: string, finalContent: string) => void,
+  transformFinalContent?: (finalContent: string) => string,
 ) => StreamHandlerFunctions;
 
 export interface BaseSenderProps {

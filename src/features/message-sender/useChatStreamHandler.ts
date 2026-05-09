@@ -46,6 +46,7 @@ export const useChatStreamHandler = ({
       currentChatSettings: IndividualChatSettings,
       requestParts: Part[] = [],
       onSuccess?: (generationId: string, finalContent: string) => void,
+      transformFinalContent?: (finalContent: string) => string,
     ) => {
       const newModelMessageIds = new Set<string>([generationId]);
       let streamState = createMessageStreamState({ generationId, generationStartTime });
@@ -99,6 +100,13 @@ export const useChatStreamHandler = ({
           streamState = {
             ...streamState,
             firstContentPartTime: new Date(),
+          };
+        }
+
+        if (transformFinalContent) {
+          streamState = {
+            ...streamState,
+            content: transformFinalContent(streamState.content),
           };
         }
 
