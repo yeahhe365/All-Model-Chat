@@ -479,6 +479,35 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(renderer.container.querySelector('div[style*="display"] strong')?.textContent).toBe('Self-Attention');
   });
 
+  it('keeps streaming raw html fragments out of accidental code blocks before they close', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={`<div style="padding:24px;background:#f8f9fa">
+    <section style="background:white">
+        <p>Transformer summary</p>
+    </section>
+
+    <!-- 三大核心特性 -->
+    <div style="display:grid">
+        <strong>Self-Attention</strong>`}
+          isLoading={true}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(renderer.container.querySelector('pre')).toBeNull();
+    expect(renderer.container.textContent).toContain('Self-Attention');
+  });
+
   it('hides markdown preview affordances when interactive mode is disabled', () => {
     act(() => {
       renderer.root.render(

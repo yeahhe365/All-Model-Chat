@@ -85,12 +85,53 @@ describe('codeUtils preview detection', () => {
 </div>`);
   });
 
+  it('removes markdown-breaking blank lines inside streaming raw html fragments before they close', () => {
+    const fragment = `<div style="padding:24px">
+    <section style="background:white">
+        <p>Transformer summary</p>
+    </section>
+
+    <!-- 三大核心特性 -->
+    <div style="display:grid">
+        <strong>Self-Attention</strong>`;
+
+    expect(normalizePreviewableMarkdownContent(fragment)).toBe(`<div style="padding:24px">
+    <section style="background:white">
+        <p>Transformer summary</p>
+    </section>
+    <!-- 三大核心特性 -->
+    <div style="display:grid">
+        <strong>Self-Attention</strong>`);
+  });
+
   it('unwraps mislabeled fenced html fragments so they render inline', () => {
     const fragment =
       '<!-- 核心定义卡片 -->\n<div style="padding:20px;background:#f9fafb"><strong>Transformer</strong></div>';
 
     expect(normalizePreviewableMarkdownContent(`Intro\n\n\`\`\`css\n${fragment}\n\`\`\``)).toBe(`Intro\n\n${fragment}`);
     expect(getCodeBlockPreviewType(fragment, 'css')).toBe('html');
+  });
+
+  it('unwraps streaming mislabeled html fragments from unclosed css fences', () => {
+    const content = `<div style="padding:24px">
+    <section style="background:white">
+        <p>Transformer summary</p>
+    </section>
+
+\`\`\`css
+    </div>
+    <!-- 右侧：核心贡献与特质 -->
+    <div style="display:grid">
+        <strong>Self-Attention</strong>`;
+
+    expect(normalizePreviewableMarkdownContent(content)).toBe(`<div style="padding:24px">
+    <section style="background:white">
+        <p>Transformer summary</p>
+    </section>
+</div>
+    <!-- 右侧：核心贡献与特质 -->
+    <div style="display:grid">
+        <strong>Self-Attention</strong>`);
   });
 
   it('keeps real css code blocks fenced', () => {

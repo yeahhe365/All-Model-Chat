@@ -39,10 +39,23 @@ const HTML_FRAGMENT_CONTAINER_REGEX = new RegExp(
   `^<(?:${HTML_FRAGMENT_TAG_NAMES})(?:\\s[^>]*)?>[\\s\\S]*<\\/(?:${HTML_FRAGMENT_TAG_NAMES})>$`,
   'i',
 );
+const HTML_FRAGMENT_START_REGEX = new RegExp(
+  `^(?:<!--[\\s\\S]*?-->\\s*)?<(?:${HTML_FRAGMENT_TAG_NAMES})(?:\\s[^>]*)?>`,
+  'i',
+);
+const HTML_STRUCTURAL_BLANK_LINE_REGEX = new RegExp(
+  `\\n[ \\t]*\\n(?=[ \\t]*(?:<!--|<\\/?(?:${HTML_FRAGMENT_TAG_NAMES})(?:\\s|>|/)))`,
+  'gi',
+);
+const HTML_STRUCTURAL_LINE_START_REGEX = new RegExp(
+  `^(?:<!--[\\s\\S]*?-->\\s*)?<\\/?(?:${HTML_FRAGMENT_TAG_NAMES})(?:\\s|>|/)`,
+  'i',
+);
 const HTML_COMMENT_REGEX = /<!--[\s\S]*?-->/g;
 const UNSAFE_INLINE_FRAGMENT_TAG_REGEX = /<(?:script|style|iframe|object|embed)\b/i;
 const SVG_DOCUMENT_REGEX = /^<svg\b[\s\S]*<\/svg>$/i;
 const FENCED_CODE_BLOCK_REGEX = /```([^\n`]*)\n?([\s\S]*?)```/g;
+const OPEN_FENCED_CODE_BLOCK_AT_END_REGEX = /```([^\n`]*)\n?([\s\S]*)$/;
 const MISLABELED_HTML_FRAGMENT_LANGUAGES = new Set(['css', 'text', 'txt', 'markdown', 'md']);
 
 const normalizeLanguage = (language?: string): string => {
@@ -82,6 +95,26 @@ const isStandaloneHtmlFragment = (textContent: string): boolean => {
   const contentWithoutComments = normalizedContent.replace(HTML_COMMENT_REGEX, '').trim();
 
   return HTML_FRAGMENT_REGEX.test(contentWithoutComments) || HTML_FRAGMENT_CONTAINER_REGEX.test(contentWithoutComments);
+};
+
+const isLikelyStreamingStandaloneHtmlFragment = (textContent: string): boolean => {
+  const normalizedContent = textContent.trim();
+
+  if (!normalizedContent || UNSAFE_INLINE_FRAGMENT_TAG_REGEX.test(normalizedContent)) {
+    return false;
+  }
+
+  return HTML_FRAGMENT_START_REGEX.test(normalizedContent);
+};
+
+const isLikelyHtmlFragmentSegment = (textContent: string): boolean => {
+  const normalizedContent = textContent.trim();
+
+  if (!normalizedContent || UNSAFE_INLINE_FRAGMENT_TAG_REGEX.test(normalizedContent)) {
+    return false;
+  }
+
+  return HTML_STRUCTURAL_LINE_START_REGEX.test(normalizedContent);
 };
 
 const getStandaloneDocumentPreviewType = (textContent: string): PreviewMarkupType | null => {
@@ -153,7 +186,7 @@ export const wrapBarePreviewableDocument = (markdownContent: string): string => 
 const unwrapMislabeledHtmlFragmentCodeBlocks = (markdownContent: string): string => {
   if (!markdownContent) return markdownContent;
 
-  return markdownContent.replace(
+  const normalizedClosedFences = markdownContent.replace(
     FENCED_CODE_BLOCK_REGEX,
     (match, rawLanguage: string = '', rawContent: string = '') => {
       const normalizedLanguage = normalizeLanguage(rawLanguage);
@@ -166,16 +199,30 @@ const unwrapMislabeledHtmlFragmentCodeBlocks = (markdownContent: string): string
       return match;
     },
   );
+
+  return normalizedClosedFences.replace(
+    OPEN_FENCED_CODE_BLOCK_AT_END_REGEX,
+    (match, rawLanguage: string = '', rawContent: string = '') => {
+      const normalizedLanguage = normalizeLanguage(rawLanguage);
+      const content = rawContent.trim();
+
+      if (MISLABELED_HTML_FRAGMENT_LANGUAGES.has(normalizedLanguage) && isLikelyHtmlFragmentSegment(content)) {
+        return content;
+      }
+
+      return match;
+    },
+  );
 };
 
 const normalizeStandaloneRawHtmlFragment = (markdownContent: string): string => {
   const content = markdownContent.trim();
 
-  if (!isStandaloneHtmlFragment(content)) {
+  if (!isStandaloneHtmlFragment(content) && !isLikelyStreamingStandaloneHtmlFragment(content)) {
     return markdownContent;
   }
 
-  return content.replace(/\n[ \t]*\n/g, '\n');
+  return content.replace(HTML_STRUCTURAL_BLANK_LINE_REGEX, '\n');
 };
 
 export const normalizePreviewableMarkdownContent = (markdownContent: string): string => {
