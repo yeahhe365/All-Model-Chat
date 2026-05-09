@@ -52,7 +52,7 @@ export const createChatInputActionsContextValue = (
   isEditing: false,
   showInputTranslationButton: DEFAULT_APP_SETTINGS.showInputTranslationButton ?? false,
   showInputPasteButton: DEFAULT_APP_SETTINGS.showInputPasteButton ?? true,
-  showInputClearButton: DEFAULT_APP_SETTINGS.showInputClearButton ?? false,
+  showInputClearButton: DEFAULT_APP_SETTINGS.showInputClearButton ?? true,
   ...overrides,
 });
 

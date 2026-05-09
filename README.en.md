@@ -27,7 +27,7 @@
     <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React">
     <img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
     <img src="https://img.shields.io/badge/Tailwind-4.2-38BDF8?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind">
-    <img src="https://img.shields.io/badge/Gemini_SDK-1.2+-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini SDK">
+    <img src="https://img.shields.io/badge/Gemini_SDK-1.50%2B-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini SDK">
     <img src="https://img.shields.io/badge/PWA-Supported-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA">
   </p>
 
@@ -90,7 +90,7 @@ The project currently focuses on one main application shape: a **Vite + React SP
 
 - Detects code blocks and renders interactive HTML previews.
 - Supports ECharts, Mermaid, and Graphviz diagrams.
-- Includes an automatic Live Artifacts generation mode with configurable trigger models.
+- Includes an automatic Live Artifacts generation mode with configurable trigger models, prompt versions, and custom prompts.
 
 ### Advanced File Handling
 
@@ -98,7 +98,7 @@ The project currently focuses on one main application shape: a **Vite + React SP
 - ZIP and folder import for codebase context.
 - Supports images, PDFs, videos, audio files, text files, and more.
 - Per-file-type control over Gemini Files API upload vs direct Base64 upload.
-- Adjustable file resolution presets: Low, Medium, High, and Ultra.
+- Adjustable input detail levels: Unspecified, Low, Medium, and High. Ultra High is available for per-file image configuration.
 
 ### Productivity Workflow
 
@@ -109,7 +109,7 @@ The project currently focuses on one main application shape: a **Vite + React SP
   - Detects imports automatically, and installs scipy and scikit-learn on demand when needed.
   - File mounting and generated file download support.
   - Automatic capture of matplotlib chart output.
-- TTS with 30+ voices.
+- TTS with 30 voices.
 - Speech transcription through Gemini models.
 - Imagen 4.0 image generation with Fast, Standard, and Ultra tiers.
 
@@ -129,7 +129,7 @@ The project currently focuses on one main application shape: a **Vite + React SP
 
 - Web App Manifest, Service Worker, and install/update prompts.
 - Installable on desktop and mobile.
-- Offline application shell support. Model responses and sync still require network access.
+- Offline application shell support. Model responses and remote API features still require network access.
 - Picture-in-Picture mode support.
 
 ### Usage and Pricing Logs
@@ -141,9 +141,9 @@ The project currently focuses on one main application shape: a **Vite + React SP
 
 ### More
 
-- Cross-tab synchronization through Web Locks.
+- Cross-tab synchronization through BroadcastChannel, with Web Locks protecting IndexedDB writes.
 - Custom keyboard shortcuts.
-- Configurable safety settings across harassment, hate speech, sexual content, dangerous content, and civic integrity categories.
+- Configurable safety settings across harassment, hate speech, sexual content, dangerous content, and civic integrity categories, with Off, Block None, Block Few, Block Some, and Block Most levels.
 - Onyx and Pearl themes with system theme support.
 - Import/export for chat history, settings, and scenarios.
 - Session grouping, full-text session search, and a developer log panel.
@@ -326,7 +326,7 @@ Optional variable:
 | Core framework | React 18 + TypeScript 5.5 + Vite 7 |
 | Styling | Tailwind CSS 4 + CSS variable based theme system |
 | Persistence | Native IndexedDB wrapper with Web Locks for cross-tab write safety |
-| Gemini SDK | `@google/genai` 1.2+ for streaming, non-streaming, file upload, image generation, TTS, and transcription |
+| Gemini SDK | `@google/genai` 1.50+ for streaming, non-streaming, file upload, image generation, TTS, and transcription |
 | Audio | AudioWorklet API plus browser Worker based audio preprocessing and compression |
 | Rendering | React-Markdown + KaTeX + Highlight.js + Mermaid + Graphviz |
 | Python sandbox | Pyodide (WASM) in a Web Worker, with common packages preloaded and extra packages installed on demand |
@@ -381,7 +381,9 @@ AMC-WebUI/
 
 ---
 
-## Supported Models
+## Gemini Native Default Models
+
+OpenAI Compatible mode uses a separate model list that you can manage manually or fetch from a compatible endpoint. The table below lists the built-in Gemini Native defaults.
 
 | Type | Models |
 | :--- | :--- |
@@ -390,7 +392,7 @@ AMC-WebUI/
 | Gemma 4 | `gemma-4-31b-it`, `gemma-4-26b-a4b-it` |
 | Imagen 4.0 | `imagen-4.0-fast-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-ultra-generate-001` |
 | Image generation | `gemini-2.5-flash-image`, `gemini-3-pro-image-preview`, `gemini-3.1-flash-image-preview` |
-| TTS | `gemini-3.1-flash-tts-preview` with 30+ voices |
+| TTS | `gemini-3.1-flash-tts-preview` with 30 voices |
 
 ---
 

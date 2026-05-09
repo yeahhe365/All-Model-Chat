@@ -32,6 +32,7 @@ export enum MediaResolution {
 export type ImageOutputMode = 'IMAGE_TEXT' | 'IMAGE_ONLY';
 export type ImagePersonGeneration = 'ALLOW_ADULT' | 'ALLOW_ALL' | 'DONT_ALLOW';
 export type ApiMode = 'gemini-native' | 'openai-compatible';
+export type LiveArtifactsPromptMode = 'inline' | 'full' | 'fullHtml';
 export type TranslationTargetLanguage =
   | 'English'
   | 'Simplified Chinese'
@@ -117,6 +118,8 @@ export interface AppSettings extends ChatSettings {
   isAudioCompressionEnabled: boolean;
   autoLiveArtifactsVisualization?: boolean;
   autoLiveArtifactsModelId: string;
+  liveArtifactsPromptMode?: LiveArtifactsPromptMode;
+  liveArtifactsSystemPrompt?: string;
   isPasteRichTextAsMarkdownEnabled?: boolean;
   isPasteAsTextFileEnabled?: boolean;
   showInputPasteButton?: boolean;

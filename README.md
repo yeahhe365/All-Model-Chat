@@ -27,7 +27,7 @@
     <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React">
     <img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
     <img src="https://img.shields.io/badge/Tailwind-4.2-38BDF8?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind">
-    <img src="https://img.shields.io/badge/Gemini_SDK-1.2+-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini SDK">
+    <img src="https://img.shields.io/badge/Gemini_SDK-1.50%2B-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini SDK">
     <img src="https://img.shields.io/badge/PWA-Supported-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA">
   </p>
 
@@ -84,14 +84,14 @@
 - 代码块自动识别并渲染为交互式 HTML 预览（自动全屏）
 - 支持 ECharts 图表渲染
 - 支持 Mermaid 流程图与 Graphviz 图渲染
-- 自动 Live Artifacts 生成模式（可配置触发模型）
+- 自动 Live Artifacts 生成模式（可配置触发模型、提示词版本与自定义提示词）
 
 ### 高级文件处理
 - 浏览器端音频预处理与压缩流程，尽量降低音频上传的 Token 与带宽消耗
 - 支持 ZIP / 文件夹拖入，自动解析代码库结构
 - 支持图片、PDF、视频、音频、文本等多种文件类型
 - 可配置各文件类型使用 Gemini Files API 还是直接 Base64 上传
-- 文件分辨率可调（Low / Medium / High / Ultra）
+- 输入细节等级可调（未指定 / Low / Medium / High；图片单文件可选 Ultra High）
 
 ### 生产力工具链
 - **深度搜索**：聚合 Google Search，自动规划搜索任务并提供精准引用
@@ -101,7 +101,7 @@
   - 自动检测代码依赖，并在需要时按需安装 scipy、scikit-learn 等包
   - 支持文件挂载与生成文件下载
   - matplotlib 图表自动捕获输出
-- **TTS 语音合成**：30+ 种语音可选
+- **TTS 语音合成**：30 种语音可选
 - **语音转录**：支持多种 Gemini 模型进行语音转文字
 - **Imagen 4.0 图片生成**：支持 Fast / Standard / Ultra 三档，可配置宽高比与尺寸
 
@@ -118,7 +118,7 @@
 ### PWA 支持
 - 提供完整 Web App Manifest、Service Worker 与安装/更新提示
 - 可安装为桌面/移动端应用，并支持离线打开应用 Shell
-- 运行时接口请求保持网络优先，模型响应与同步能力仍需联网
+- 运行时接口请求保持网络优先，模型响应与远端 API 能力仍需联网
 - 支持画中画 (Picture-in-Picture) 模式
 
 ### 日志价格统计
@@ -128,7 +128,7 @@
 - 历史记录或缺少精确定价字段的请求会继续显示 `—`
 
 ### 多标签同步
-- 基于 Web Locks API 的跨标签页数据同步
+- 基于 BroadcastChannel 的跨标签页同步，并通过 Web Locks API 保护 IndexedDB 写入
 - 确保多标签页同时操作时数据一致性
 
 ### 自定义快捷键
@@ -137,7 +137,7 @@
 
 ### 安全设置
 - 5 个安全过滤类别：骚扰、仇恨言论、色情内容、危险内容、公民诚信
-- 每个类别可独立配置过滤级别（OFF / None / High / Medium / Low）
+- 每个类别可独立配置过滤级别（关闭 / 不拦截 / 拦截少量 / 拦截部分 / 拦截大部分）
 
 ### 主题系统
 - 内置 Onyx（暗色）、Pearl（亮色）主题
@@ -330,7 +330,7 @@ GEMINI_API_KEY=your_key_here npm run verify:code-execution:api
 | **核心框架** | React 18 + TypeScript 5.5 + Vite 7 |
 | **样式方案** | Tailwind CSS 4 + CSS 变量主题系统 |
 | **持久化层** | 原生 IndexedDB（dbService.ts 封装），支持 Web Locks 跨标签写锁 |
-| **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
+| **Gemini SDK** | `@google/genai` 1.50+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
 | **音频引擎** | AudioWorklet API（实时流处理）+ 浏览器端 Worker 音频预处理 / 压缩流程 |
 | **渲染引擎** | React-Markdown + KaTeX (公式) + Highlight.js (代码高亮) + Mermaid.js + Graphviz (viz.js) |
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预加载常用科学计算库并按需安装扩展包 |
@@ -385,7 +385,9 @@ AMC-WebUI/
 
 ---
 
-## 支持的模型
+## Gemini 原生默认模型
+
+OpenAI 兼容模式使用独立模型列表，可在设置中手动维护或从兼容端点拉取；下表列出应用内置的 Gemini 原生默认模型。
 
 | 类型 | 模型 |
 | :--- | :--- |
@@ -394,7 +396,7 @@ AMC-WebUI/
 | **Gemma 4** | gemma-4-31b-it, gemma-4-26b-a4b-it |
 | **Imagen 4.0** | imagen-4.0-fast-generate-001, imagen-4.0-generate-001, imagen-4.0-ultra-generate-001 |
 | **图片生成** | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview |
-| **TTS** | gemini-3.1-flash-tts-preview (30+ 种语音) |
+| **TTS** | gemini-3.1-flash-tts-preview (30 种语音) |
 
 ---
 

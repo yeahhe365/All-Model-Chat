@@ -6,14 +6,32 @@ describe('promptHelpers', () => {
     expect(isLiveArtifactsSystemInstruction('[Live Artifacts Protocol]')).toBe(true);
     expect(isLiveArtifactsSystemInstruction('[Live Artifacts Protocol - zh]')).toBe(true);
     expect(isLiveArtifactsSystemInstruction('[Live Artifacts Protocol - en]')).toBe(true);
+    expect(isLiveArtifactsSystemInstruction('[Live Artifacts Inline Protocol - zh]')).toBe(true);
+    expect(isLiveArtifactsSystemInstruction('[Live Artifacts Inline Protocol - en]')).toBe(true);
+    expect(isLiveArtifactsSystemInstruction('[Live Artifacts Full HTML Protocol - zh]')).toBe(true);
+    expect(isLiveArtifactsSystemInstruction('[Live Artifacts Full HTML Protocol - en]')).toBe(true);
     expect(isLiveArtifactsSystemInstruction('[Canvas Artifact Protocol]')).toBe(true);
     expect(isLiveArtifactsSystemInstruction('<title>Canvas 助手：响应式视觉指南</title>')).toBe(true);
     expect(isLiveArtifactsSystemInstruction('<title>Canvas Assistant: Responsive Visual Guide</title>')).toBe(true);
   });
 
-  it('loads semantically equivalent Chinese and English Live Artifacts prompts', async () => {
+  it('defaults to inline-only Chinese and English Live Artifacts prompts', async () => {
     const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
     const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+
+    expect(zhPrompt).toContain('[Live Artifacts Inline Protocol - zh]');
+    expect(zhPrompt).toContain('只输出裸 HTML 片段');
+    expect(zhPrompt).not.toContain('完整 HTML');
+    expect(zhPrompt).not.toContain('<!DOCTYPE html>');
+    expect(enPrompt).toContain('[Live Artifacts Inline Protocol - en]');
+    expect(enPrompt).toContain('Output only the raw HTML fragment');
+    expect(enPrompt).not.toContain('full HTML');
+    expect(enPrompt).not.toContain('<!DOCTYPE html>');
+  });
+
+  it('loads semantically equivalent Chinese and English full Live Artifacts prompts', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'full');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'full');
 
     expect(zhPrompt).toContain('[Live Artifacts Protocol - zh]');
     expect(zhPrompt).toContain('Live Artifacts Designer');
@@ -32,23 +50,39 @@ describe('promptHelpers', () => {
     expect(enPrompt).not.toContain('核心规则');
   });
 
+  it('loads complete-page Chinese and English Live Artifacts prompts', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'fullHtml');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'fullHtml');
+
+    expect(zhPrompt).toContain('[Live Artifacts Full HTML Protocol - zh]');
+    expect(zhPrompt).toContain('只输出一个 html fenced code block');
+    expect(zhPrompt).toContain('<!DOCTYPE html>');
+    expect(zhPrompt).toContain('完整 HTML 页面');
+    expect(zhPrompt).not.toContain('内嵌 HTML 片段');
+    expect(enPrompt).toContain('[Live Artifacts Full HTML Protocol - en]');
+    expect(enPrompt).toContain('Output exactly one html fenced code block');
+    expect(enPrompt).toContain('<!DOCTYPE html>');
+    expect(enPrompt).toContain('complete HTML page');
+    expect(enPrompt).not.toContain('inline HTML fragment');
+  });
+
   it('emphasizes HTML artifacts instead of traditional Markdown output', async () => {
     const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
     const enPrompt = await loadLiveArtifactsSystemPrompt('en');
 
     expect(zhPrompt).toContain('用 HTML 产物替代传统 Markdown 排版');
-    expect(zhPrompt).toContain('不要输出传统 Markdown 标题、列表或表格');
+    expect(zhPrompt).toContain('不要输出传统 Markdown 标题、列表、表格或解释文字');
     expect(zhPrompt).not.toContain('轻量增强 Markdown');
     expect(zhPrompt).not.toContain('Markdown 片段');
     expect(enPrompt).toContain('Use HTML artifacts to replace traditional Markdown formatting');
-    expect(enPrompt).toContain('Do not output traditional Markdown headings, lists, or tables');
+    expect(enPrompt).toContain('Do not output traditional Markdown headings, lists, tables, or explanations');
     expect(enPrompt).not.toContain('lightweight Markdown enhancement');
     expect(enPrompt).not.toContain('Markdown fragment');
   });
 
   it('does not include version numbers in the Live Artifacts prompt protocol marker', async () => {
-    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
-    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'full');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'full');
 
     expect(zhPrompt).not.toMatch(/\[Live Artifacts Protocol\s+v\d+/i);
     expect(enPrompt).not.toMatch(/\[Live Artifacts Protocol\s+v\d+/i);
@@ -61,16 +95,16 @@ describe('promptHelpers', () => {
   });
 
   it('does not preload third-party visualization libraries in the Live Artifacts prompt', async () => {
-    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
-    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'full');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'full');
 
     expect(zhPrompt).not.toMatch(/cdnjs|cdn\.jsdelivr|echarts@|viz\.js|svg-pan-zoom/i);
     expect(enPrompt).not.toMatch(/cdnjs|cdn\.jsdelivr|echarts@|viz\.js|svg-pan-zoom/i);
   });
 
   it('keeps Live Artifacts prompts concise instead of acting like a design handbook', async () => {
-    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
-    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'full');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'full');
 
     expect(zhPrompt.length).toBeLessThan(2500);
     expect(enPrompt.length).toBeLessThan(2500);
@@ -88,5 +122,26 @@ describe('promptHelpers', () => {
     expect(zhPrompt).toContain('不要一半直出、一半进代码块');
     expect(enPrompt).toContain('Do not wrap it in css, text, markdown, or html fences');
     expect(enPrompt).toContain('Do not split one artifact between rendered HTML and a code block');
+  });
+
+  it('uses inline HTML only when complexity justifies the rendering cost', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+
+    expect(zhPrompt).toContain('优先保证速度');
+    expect(zhPrompt).toContain('只有当复杂度值得渲染成本时才使用裸 HTML 片段');
+    expect(zhPrompt).toContain('对比/比较');
+    expect(zhPrompt).toContain('流程/结构');
+    expect(zhPrompt).toContain('数据密集');
+    expect(zhPrompt).toContain('布局受益');
+    expect(zhPrompt).toContain('简单问题直接用紧凑文本回答');
+
+    expect(enPrompt).toContain('prioritize speed');
+    expect(enPrompt).toContain('Use raw HTML fragments only when the complexity justifies the rendering cost');
+    expect(enPrompt).toContain('comparison');
+    expect(enPrompt).toContain('process/structure');
+    expect(enPrompt).toContain('data-dense');
+    expect(enPrompt).toContain('layout benefit');
+    expect(enPrompt).toContain('Answer simple requests with compact text');
   });
 });

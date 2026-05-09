@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CHAT_INPUT_BUTTON_CLASS,
+  DEFAULT_APP_SETTINGS,
   FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS,
   FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
   FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
@@ -16,6 +17,18 @@ import {
   SMALL_ICON_BUTTON_ROUND_CLASS,
   SMALL_ICON_DANGER_BUTTON_CLASS,
 } from './appConstants';
+
+describe('DEFAULT_APP_SETTINGS', () => {
+  it('defaults input toolbar visibility to translate off and edit helpers on', () => {
+    expect(DEFAULT_APP_SETTINGS.showInputTranslationButton).toBe(false);
+    expect(DEFAULT_APP_SETTINGS.showInputPasteButton).toBe(true);
+    expect(DEFAULT_APP_SETTINGS.showInputClearButton).toBe(true);
+  });
+
+  it('defaults the Live Artifacts custom prompt to blank', () => {
+    expect((DEFAULT_APP_SETTINGS as { liveArtifactsSystemPrompt?: string }).liveArtifactsSystemPrompt).toBe('');
+  });
+});
 
 describe('CHAT_INPUT_BUTTON_CLASS', () => {
   it('keeps compact tap targets stable by avoiding scale transforms', () => {

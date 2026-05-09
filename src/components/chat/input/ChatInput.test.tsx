@@ -307,9 +307,9 @@ vi.mock('./ChatInputArea', async () => {
 
 const ChatAreaProvider = ({ value, children }: { value: ChatAreaProviderValue; children: ReactNode }) => {
   applyChatAreaProviderValue(value);
-  mockChatInputUiSettings.showInputTranslationButton = value.input.appSettings.showInputTranslationButton;
-  mockChatInputUiSettings.showInputPasteButton = value.input.appSettings.showInputPasteButton;
-  mockChatInputUiSettings.showInputClearButton = value.input.appSettings.showInputClearButton;
+  mockChatInputUiSettings.showInputTranslationButton = value.input.appSettings.showInputTranslationButton ?? false;
+  mockChatInputUiSettings.showInputPasteButton = value.input.appSettings.showInputPasteButton ?? true;
+  mockChatInputUiSettings.showInputClearButton = value.input.appSettings.showInputClearButton ?? true;
   mockChatStoreState.setSelectedFiles = value.input.setSelectedFiles as typeof mockChatStoreState.setSelectedFiles;
   mockChatStoreState.setAppFileError = value.input.setAppFileError as typeof mockChatStoreState.setAppFileError;
   mockChatStoreState.setEditingMessageId = value.input
@@ -1522,8 +1522,12 @@ describe('ChatInput', () => {
     expect(document.activeElement).toBe(textarea);
   });
 
-  it('hides the clear input button by default', async () => {
+  it('shows the clear input button by default', async () => {
     const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      showInputClearButton: undefined,
+    };
     providerValue.input.isEditing = false;
     providerValue.input.editMode = 'resend';
     providerValue.input.editingMessageId = null;
@@ -1536,7 +1540,7 @@ describe('ChatInput', () => {
       );
     });
 
-    expect(renderer.container.querySelector('[data-testid="clear-input-button"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="clear-input-button"]')).not.toBeNull();
   });
 
   it('does not auto-send a pending message when an attachment finishes as failed', async () => {

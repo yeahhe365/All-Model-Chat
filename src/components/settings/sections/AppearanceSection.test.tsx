@@ -141,6 +141,28 @@ describe('AppearanceSection', () => {
     expect(onUpdate).toHaveBeenCalledWith('showInputClearButton', true);
   });
 
+  it('uses input toolbar defaults when visibility preferences are missing', async () => {
+    await renderAppearanceSection({
+      language: 'zh',
+      settings: {
+        showInputTranslationButton: undefined,
+        showInputPasteButton: undefined,
+        showInputClearButton: undefined,
+      },
+    });
+
+    const findToggle = (label: string) => {
+      const toggleRow = Array.from(renderer.container.querySelectorAll('div')).find((element) =>
+        element.textContent?.trim().startsWith(label),
+      ) as HTMLDivElement | undefined;
+      return toggleRow?.querySelector('input[type="checkbox"]') as HTMLInputElement | undefined;
+    };
+
+    expect(findToggle('显示翻译按钮')?.checked).toBe(false);
+    expect(findToggle('显示粘贴按钮')?.checked).toBe(true);
+    expect(findToggle('显示清空输入框按钮')?.checked).toBe(true);
+  });
+
   it('updates the selected-text formatting copy preference', async () => {
     const onUpdate = vi.fn();
 

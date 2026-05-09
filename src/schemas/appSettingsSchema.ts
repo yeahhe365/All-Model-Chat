@@ -13,6 +13,7 @@ const THEME_IDS = ['system', 'onyx', 'pearl'] as const;
 const LANGUAGE_IDS = ['en', 'zh', 'system'] as const;
 const THINKING_LEVELS = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] as const;
 const API_MODES = ['gemini-native', 'openai-compatible'] as const;
+const LIVE_ARTIFACTS_PROMPT_MODES = ['inline', 'full', 'fullHtml'] as const;
 const TRANSLATION_TARGET_LANGUAGES = [
   'English',
   'Simplified Chinese',
@@ -233,6 +234,11 @@ const appSettingsSchema: z.ZodType<AppSettings> = z.object({
   isAudioCompressionEnabled: booleanWithDefault(DEFAULT_APP_SETTINGS.isAudioCompressionEnabled),
   autoLiveArtifactsVisualization: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.autoLiveArtifactsVisualization),
   autoLiveArtifactsModelId: stringWithDefault(DEFAULT_APP_SETTINGS.autoLiveArtifactsModelId),
+  liveArtifactsPromptMode: optionalWithDefault(
+    z.enum(LIVE_ARTIFACTS_PROMPT_MODES),
+    DEFAULT_APP_SETTINGS.liveArtifactsPromptMode,
+  ),
+  liveArtifactsSystemPrompt: optionalStringWithDefault(DEFAULT_APP_SETTINGS.liveArtifactsSystemPrompt),
   isPasteRichTextAsMarkdownEnabled: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.isPasteRichTextAsMarkdownEnabled),
   isPasteAsTextFileEnabled: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.isPasteAsTextFileEnabled),
   showInputPasteButton: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.showInputPasteButton),

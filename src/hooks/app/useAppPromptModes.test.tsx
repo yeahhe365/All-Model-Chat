@@ -124,10 +124,67 @@ describe('useAppPromptModes', () => {
       await result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    expect(mockLoadLiveArtifactsSystemPrompt).toHaveBeenCalledWith('en');
+    expect(mockLoadLiveArtifactsSystemPrompt).toHaveBeenCalledWith('en', 'inline');
     expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
     const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
     expect(appSettingsUpdater(createAppSettings()).systemInstruction).toBe(LIVE_ARTIFACTS_PROMPT_EN);
+
+    unmount();
+  });
+
+  it('loads the selected built-in Live Artifacts prompt version', async () => {
+    mockLoadLiveArtifactsSystemPrompt.mockResolvedValue(LIVE_ARTIFACTS_PROMPT_EN);
+
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: createAppSettings({ liveArtifactsPromptMode: 'full' }),
+        setAppSettings: vi.fn(),
+        activeChat: createLiveArtifactsSession(),
+        activeSessionId: 'session-1',
+        currentChatSettings: createLiveArtifactsChatSettings(),
+        setCurrentChatSettings: vi.fn(),
+        handleSendMessage: vi.fn(),
+        setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleLoadLiveArtifactsPromptAndSave();
+    });
+
+    expect(mockLoadLiveArtifactsSystemPrompt).toHaveBeenCalledWith('en', 'full');
+
+    unmount();
+  });
+
+  it('uses the configured custom Live Artifacts prompt for prompt-mode activation', async () => {
+    const customPrompt = 'Custom Live Artifacts prompt without built-in marker';
+    const setAppSettings = vi.fn();
+    const setCurrentChatSettings = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: createAppSettings({ liveArtifactsSystemPrompt: customPrompt } as unknown as Partial<AppSettings>),
+        setAppSettings,
+        activeChat: createLiveArtifactsSession(),
+        activeSessionId: 'session-1',
+        currentChatSettings: createLiveArtifactsChatSettings(),
+        setCurrentChatSettings,
+        handleSendMessage: vi.fn(),
+        setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleLoadLiveArtifactsPromptAndSave();
+    });
+
+    expect(mockLoadLiveArtifactsSystemPrompt).not.toHaveBeenCalled();
+    expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
+    const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
+    expect(appSettingsUpdater(createAppSettings()).systemInstruction).toBe(customPrompt);
 
     unmount();
   });

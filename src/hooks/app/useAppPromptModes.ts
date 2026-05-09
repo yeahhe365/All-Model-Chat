@@ -26,6 +26,8 @@ interface UseAppPromptModesOptions {
   appSettings: {
     isAutoSendOnSuggestionClick?: boolean;
     systemInstruction?: string | null;
+    liveArtifactsPromptMode?: AppSettings['liveArtifactsPromptMode'];
+    liveArtifactsSystemPrompt?: string | null;
   };
   setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   activeChat: SavedChatSession | undefined;
@@ -62,6 +64,14 @@ export const useAppPromptModes = ({
     useState<PendingLiveArtifactsPromptActivation | null>(null);
   const [liveArtifactsPromptBusySessionId, setLiveArtifactsPromptBusySessionId] = useState<string | null>(null);
   const [liveArtifactsPromptOverrideState, setLiveArtifactsPromptOverrideState] = useState<LiveArtifactsPromptOverrideState | null>(null);
+  const liveArtifactsPromptMode = appSettings.liveArtifactsPromptMode ?? 'inline';
+  const configuredLiveArtifactsSystemPrompt = appSettings.liveArtifactsSystemPrompt?.trim() ?? '';
+  const isConfiguredLiveArtifactsSystemInstruction = useCallback(
+    (instruction?: string | null) =>
+      isLiveArtifactsSystemInstruction(instruction) ||
+      (!!configuredLiveArtifactsSystemPrompt && instruction?.trim() === configuredLiveArtifactsSystemPrompt),
+    [configuredLiveArtifactsSystemPrompt],
+  );
 
   const currentLiveArtifactsPromptTargetSessionId = activeSessionId ?? null;
   const liveArtifactsPromptOverrideActive =
@@ -70,8 +80,8 @@ export const useAppPromptModes = ({
       : null;
   const liveArtifactsPromptBusy = liveArtifactsPromptBusySessionId === currentLiveArtifactsPromptTargetSessionId;
   const persistedLiveArtifactsPromptActive =
-    isLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction) ||
-    isLiveArtifactsSystemInstruction(appSettings.systemInstruction);
+    isConfiguredLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction) ||
+    isConfiguredLiveArtifactsSystemInstruction(appSettings.systemInstruction);
 
   const isLiveArtifactsPromptActive = liveArtifactsPromptOverrideActive ?? persistedLiveArtifactsPromptActive;
 
@@ -88,7 +98,7 @@ export const useAppPromptModes = ({
       return;
     }
 
-    if (activeChat && isLiveArtifactsSystemInstruction(activeChat.settings.systemInstruction)) {
+    if (activeChat && isConfiguredLiveArtifactsSystemInstruction(activeChat.settings.systemInstruction)) {
       queueMicrotask(() => {
         setPendingLiveArtifactsPromptActivation((current) => (current === pendingActivation ? null : current));
       });
@@ -100,7 +110,7 @@ export const useAppPromptModes = ({
     }
 
     setCurrentChatSettings((prev) =>
-      isLiveArtifactsSystemInstruction(prev.systemInstruction)
+      isConfiguredLiveArtifactsSystemInstruction(prev.systemInstruction)
         ? prev
         : {
             ...prev,
@@ -111,7 +121,13 @@ export const useAppPromptModes = ({
     queueMicrotask(() => {
       setPendingLiveArtifactsPromptActivation((current) => (current === pendingActivation ? null : current));
     });
-  }, [activeChat, activeSessionId, pendingLiveArtifactsPromptActivation, setCurrentChatSettings]);
+  }, [
+    activeChat,
+    activeSessionId,
+    isConfiguredLiveArtifactsSystemInstruction,
+    pendingLiveArtifactsPromptActivation,
+    setCurrentChatSettings,
+  ]);
 
   useEffect(() => {
     if (
@@ -122,8 +138,8 @@ export const useAppPromptModes = ({
     }
 
     const actualActive =
-      isLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction) ||
-      isLiveArtifactsSystemInstruction(appSettings.systemInstruction);
+      isConfiguredLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction) ||
+      isConfiguredLiveArtifactsSystemInstruction(appSettings.systemInstruction);
     if (actualActive === liveArtifactsPromptOverrideState.active) {
       queueMicrotask(() => {
         setLiveArtifactsPromptOverrideState((current) =>
@@ -140,6 +156,7 @@ export const useAppPromptModes = ({
     }
   }, [
     appSettings.systemInstruction,
+    isConfiguredLiveArtifactsSystemInstruction,
     liveArtifactsPromptOverrideState,
     currentLiveArtifactsPromptTargetSessionId,
     currentChatSettings.systemInstruction,
@@ -147,7 +164,8 @@ export const useAppPromptModes = ({
 
   const activateLiveArtifactsPrompt = useCallback(
     async (targetSessionId: string | null) => {
-      const newSystemInstruction = await loadLiveArtifactsSystemPrompt(language);
+      const newSystemInstruction =
+        configuredLiveArtifactsSystemPrompt || (await loadLiveArtifactsSystemPrompt(language, liveArtifactsPromptMode));
 
       setPendingLiveArtifactsPromptActivation({
         systemInstruction: newSystemInstruction,
@@ -157,7 +175,7 @@ export const useAppPromptModes = ({
 
       return newSystemInstruction;
     },
-    [language, setAppSettings],
+    [configuredLiveArtifactsSystemPrompt, language, liveArtifactsPromptMode, setAppSettings],
   );
 
   const handleLoadLiveArtifactsPromptAndSave = useCallback(async () => {
@@ -297,7 +315,7 @@ export const useAppPromptModes = ({
         return;
       }
 
-      if (type === 'organize' && !isLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction)) {
+      if (type === 'organize' && !isConfiguredLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction)) {
         await activateLiveArtifactsPrompt(activeSessionId);
       }
 
@@ -316,6 +334,7 @@ export const useAppPromptModes = ({
       currentLiveArtifactsPromptTargetSessionId,
       currentChatSettings.systemInstruction,
       handleSendMessage,
+      isConfiguredLiveArtifactsSystemInstruction,
       isLiveArtifactsPromptActive,
       setCommandedInput,
       setAppSettings,

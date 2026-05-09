@@ -77,7 +77,9 @@ export const generateLiveArtifactsMessage = async ({
       excludeFromContext: true,
     },
     execute: async () => {
-      const liveArtifactsSystemPrompt = await loadLiveArtifactsSystemPrompt();
+      const liveArtifactsSystemPrompt =
+        appSettings.liveArtifactsSystemPrompt?.trim() ||
+        (await loadLiveArtifactsSystemPrompt(language, appSettings.liveArtifactsPromptMode ?? 'inline'));
       const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
         activeSessionId,
         generationId,

@@ -1,4 +1,5 @@
 import { LOCAL_PYTHON_SYSTEM_PROMPT } from '@/features/prompts/localPython';
+import type { LiveArtifactsPromptMode } from '@/types';
 
 type PromptLanguage = 'en' | 'zh';
 
@@ -6,6 +7,10 @@ const LIVE_ARTIFACTS_PROMPT_MARKERS = [
   '[Live Artifacts Protocol]',
   '[Live Artifacts Protocol - zh]',
   '[Live Artifacts Protocol - en]',
+  '[Live Artifacts Inline Protocol - zh]',
+  '[Live Artifacts Inline Protocol - en]',
+  '[Live Artifacts Full HTML Protocol - zh]',
+  '[Live Artifacts Full HTML Protocol - en]',
   // Legacy Canvas markers are recognized so old saved settings can still be toggled off.
   '[Canvas Artifact Protocol]',
   '[Canvas Artifact Protocol - zh]',
@@ -28,9 +33,24 @@ export const isBboxSystemInstruction = (instruction?: string | null) =>
 export const isHdGuideSystemInstruction = (instruction?: string | null) =>
   !!instruction && instruction.includes(HD_GUIDE_PROMPT_MARKER);
 
-export const loadLiveArtifactsSystemPrompt = async (language: PromptLanguage = 'zh') => {
+export const loadLiveArtifactsSystemPrompt = async (
+  language: PromptLanguage = 'zh',
+  mode: LiveArtifactsPromptMode = 'inline',
+) => {
   const prompts = await import('@/features/prompts/liveArtifacts');
-  return language === 'en' ? prompts.LIVE_ARTIFACTS_SYSTEM_PROMPT_EN : prompts.LIVE_ARTIFACTS_SYSTEM_PROMPT_ZH;
+  if (mode === 'fullHtml') {
+    return language === 'en'
+      ? prompts.LIVE_ARTIFACTS_FULL_HTML_SYSTEM_PROMPT_EN
+      : prompts.LIVE_ARTIFACTS_FULL_HTML_SYSTEM_PROMPT_ZH;
+  }
+
+  if (mode === 'full') {
+    return language === 'en' ? prompts.LIVE_ARTIFACTS_SYSTEM_PROMPT_EN : prompts.LIVE_ARTIFACTS_SYSTEM_PROMPT_ZH;
+  }
+
+  return language === 'en'
+    ? prompts.LIVE_ARTIFACTS_INLINE_SYSTEM_PROMPT_EN
+    : prompts.LIVE_ARTIFACTS_INLINE_SYSTEM_PROMPT_ZH;
 };
 
 export const loadDeepSearchSystemPrompt = async () =>

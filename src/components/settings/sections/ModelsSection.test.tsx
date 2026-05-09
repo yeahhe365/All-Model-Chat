@@ -146,6 +146,8 @@ describe('ModelsSection', () => {
         ...useSettingsStore.getState().appSettings,
         autoLiveArtifactsVisualization: false,
         autoLiveArtifactsModelId: 'gemini-3-flash-preview',
+        liveArtifactsPromptMode: 'inline',
+        liveArtifactsSystemPrompt: 'Custom Live Artifacts prompt',
       },
       onUpdateSettings,
     });
@@ -153,6 +155,13 @@ describe('ModelsSection', () => {
     expect(renderer.container.textContent).toContain('Live Artifacts');
     expect(renderer.container.textContent).toContain('Auto-open Live Artifacts');
     expect(renderer.container.textContent).toContain('Live Artifacts Model');
+    expect(renderer.container.textContent).toContain('Live Artifacts Prompt Version');
+    expect(renderer.container.textContent).toContain('Inline HTML Only');
+    expect(renderer.container.textContent).toContain('Live Artifacts Prompt');
+
+    const promptToggle = renderer.container.querySelector<HTMLButtonElement>('#live-artifacts-prompt-toggle');
+    expect(promptToggle?.getAttribute('aria-expanded')).toBe('false');
+    expect(renderer.container.querySelector<HTMLTextAreaElement>('#live-artifacts-prompt-input')).toBeNull();
 
     const toggleLabel = Array.from(renderer.container.querySelectorAll('span')).find(
       (element) => element.textContent?.trim() === 'Auto-open Live Artifacts',
@@ -178,6 +187,55 @@ describe('ModelsSection', () => {
     });
 
     expect(onUpdateSettings).toHaveBeenCalledWith({ autoLiveArtifactsModelId: 'gemini-3.1-pro-preview' });
+
+    await act(async () => {
+      renderer.container
+        .querySelector<HTMLButtonElement>('#live-artifacts-prompt-mode-select')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(renderer.container.textContent).toContain('Complete HTML Only');
+
+    await act(async () => {
+      Array.from(renderer.container.querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Full or Inline HTML')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onUpdateSettings).toHaveBeenCalledWith({ liveArtifactsPromptMode: 'full' });
+
+    await act(async () => {
+      renderer.container
+        .querySelector<HTMLButtonElement>('#live-artifacts-prompt-mode-select')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    await act(async () => {
+      Array.from(renderer.container.querySelectorAll('button'))
+        .find((button) => button.textContent?.trim() === 'Complete HTML Only')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onUpdateSettings).toHaveBeenCalledWith({ liveArtifactsPromptMode: 'fullHtml' });
+
+    await act(async () => {
+      promptToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(promptToggle?.getAttribute('aria-expanded')).toBe('true');
+    const promptTextarea = renderer.container.querySelector<HTMLTextAreaElement>('#live-artifacts-prompt-input');
+    expect(promptTextarea?.value).toBe('Custom Live Artifacts prompt');
+
+    await act(async () => {
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+      descriptor?.set?.call(promptTextarea, 'Use product-dashboard HTML artifacts.');
+      promptTextarea?.dispatchEvent(new Event('input', { bubbles: true }));
+      promptTextarea?.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(onUpdateSettings).toHaveBeenCalledWith({
+      liveArtifactsSystemPrompt: 'Use product-dashboard HTML artifacts.',
+    });
   });
 
   it('keeps language, voice, and translation settings inside models settings', async () => {

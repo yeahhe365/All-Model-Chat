@@ -182,7 +182,7 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isEditing: logic.chatInput.isEditing,
       showInputTranslationButton: logic.chatInput.appSettings.showInputTranslationButton ?? false,
       showInputPasteButton: logic.chatInput.appSettings.showInputPasteButton ?? true,
-      showInputClearButton: logic.chatInput.appSettings.showInputClearButton ?? false,
+      showInputClearButton: logic.chatInput.appSettings.showInputClearButton ?? true,
     }),
     [
       actionDisabled,

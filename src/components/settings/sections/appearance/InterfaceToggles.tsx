@@ -53,7 +53,7 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({ settings, on
           />
           <ToggleItem
             label={t('settings_showInputClearButton_label')}
-            checked={settings.showInputClearButton ?? false}
+            checked={settings.showInputClearButton ?? true}
             onChange={(v) => onUpdate('showInputClearButton', v)}
             tooltip={t('settings_showInputClearButton_tooltip')}
           />
