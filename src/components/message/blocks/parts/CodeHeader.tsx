@@ -48,7 +48,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
 
       <div data-code-header-toolbar className="flex flex-shrink-0 items-center gap-0.5">
         {canRun && onRun && (
-          <button className={runButtonClass} title="Run Python Code" onClick={onRun} disabled={isRunning}>
+          <button className={runButtonClass} title={t('code_run_python')} onClick={onRun} disabled={isRunning}>
             {isRunning ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
@@ -59,7 +59,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
 
         {showPreview && (
           <>
-            <button className={headerButtonClass} title="Open in Side Panel" onClick={onOpenSide}>
+            <button className={headerButtonClass} title={t('diagram_open_side_panel')} onClick={onOpenSide}>
               <Sidebar size={16} strokeWidth={2} />
             </button>
             <button
@@ -78,7 +78,11 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
             </button>
           </>
         )}
-        <button className={headerButtonClass} title={`Download ${language.toUpperCase()}`} onClick={onDownload}>
+        <button
+          className={headerButtonClass}
+          title={t('code_download_language').replace('{language}', language.toUpperCase())}
+          onClick={onDownload}
+        >
           <Download size={16} strokeWidth={2} />
         </button>
         <button
@@ -97,7 +101,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
             onClick={onToggleExpand}
             className={headerButtonClass}
             aria-expanded={isExpanded}
-            title={isExpanded ? 'Collapse' : 'Expand'}
+            title={isExpanded ? t('collapse') : t('expand')}
           >
             {isExpanded ? <ChevronUp size={16} strokeWidth={2} /> : <ChevronDown size={16} strokeWidth={2} />}
           </button>

@@ -17,8 +17,8 @@ interface UseChatSessionExportProps {
 
 export const useChatSessionExport = ({ activeChat, currentTheme, language, t }: UseChatSessionExportProps) => {
   const exportChatLogic = useCallback(
-    async (format: 'png' | 'html' | 'txt' | 'json') => {
-      if (!activeChat) return;
+    async (format: 'png' | 'html' | 'txt' | 'json'): Promise<boolean> => {
+      if (!activeChat) return false;
       const dateObj = new Date();
       const { dateStr } = createExportDateMeta(dateObj);
       const filename = buildChatExportFilename({
@@ -38,7 +38,7 @@ export const useChatSessionExport = ({ activeChat, currentTheme, language, t }: 
 
         try {
           if (format === 'png') {
-            await generateSnapshotPng(
+            const didExport = await generateSnapshotPng(
               chatClone,
               filename,
               currentTheme.id,
@@ -49,8 +49,15 @@ export const useChatSessionExport = ({ activeChat, currentTheme, language, t }: 
               },
               {
                 scale: 2, // Standard 2x scale for full chat
+                messages: {
+                  imageTooLarge: t('export_image_too_large'),
+                  exportFailed: (message) => t('export_failed_with_message').replace('{message}', message),
+                },
               },
             );
+            if (didExport === false) {
+              return false;
+            }
           } else {
             // HTML Export
             const chatHtml = chatClone.innerHTML;
@@ -76,7 +83,7 @@ export const useChatSessionExport = ({ activeChat, currentTheme, language, t }: 
           date: dateStr,
           model: activeChat.settings.modelId,
           messages: activeChat.messages.map((m) => ({
-            role: m.role === 'user' ? 'USER' : 'ASSISTANT',
+            role: m.role === 'user' ? t('export_role_user') : t('export_role_assistant'),
             timestamp: m.timestamp,
             content: m.content,
             files: m.files?.map((f) => ({ name: f.name })),
@@ -103,8 +110,10 @@ export const useChatSessionExport = ({ activeChat, currentTheme, language, t }: 
         } catch (error) {
           logService.error('Failed to export chat as JSON', { error });
           alert(t('export_failed_title'));
+          return false;
         }
       }
+      return true;
     },
     [activeChat, currentTheme, language, t],
   );

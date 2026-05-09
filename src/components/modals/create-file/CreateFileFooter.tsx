@@ -39,7 +39,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
             onChange={(e) => setFilenameBase(e.target.value)}
             placeholder={t('createText_filename_placeholder')}
             className="w-full h-9 px-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] outline-none transition-all text-sm font-medium"
-            aria-label="Filename"
+            aria-label={t('createText_filename_placeholder')}
             autoComplete="off"
           />
         </div>
@@ -49,7 +49,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
             value={extension}
             onChange={(e) => setExtension(e.target.value)}
             className="h-9 pl-3 pr-8 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] outline-none transition-all text-sm font-mono cursor-pointer appearance-none max-w-[80px]"
-            aria-label="File Extension"
+            aria-label={t('createText_file_extension_aria')}
           >
             {SUPPORTED_EXTENSIONS.map((ext) => (
               <option key={ext} value={ext}>

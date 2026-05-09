@@ -4,6 +4,7 @@ import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
 import { HelpModal } from '../../modals/HelpModal';
 import { TextEditorModal } from '../../modals/TextEditorModal';
 import { CommandInfo, UploadedFile } from '../../../types';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface ChatInputModalsProps {
   showRecorder: boolean;
@@ -59,6 +60,8 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   ttsContext,
   setTtsContext,
 }) => {
+  const { t } = useI18n();
+
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen && !showTtsContextEditor) {
     return null;
   }
@@ -86,7 +89,7 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
         <TextEditorModal
           isOpen={showTtsContextEditor}
           onClose={onCloseTtsContextEditor}
-          title="TTS Director's Notes"
+          title={t('ttsDirectorNotes_title')}
           value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
           onChange={setTtsContext}
           placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}

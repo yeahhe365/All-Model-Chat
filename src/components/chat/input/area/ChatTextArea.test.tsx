@@ -29,7 +29,7 @@ describe('ChatTextArea', () => {
       );
     });
 
-    const textarea = renderer.container.querySelector('textarea[aria-label="Chat message input"]');
+    const textarea = renderer.container.querySelector('textarea[data-chat-input-textarea="true"]');
     const shell = textarea?.parentElement;
 
     expect(textarea).toBeInstanceOf(HTMLTextAreaElement);
@@ -68,7 +68,7 @@ describe('ChatTextArea', () => {
       renderTextArea('');
     });
 
-    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]');
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('textarea[data-chat-input-textarea="true"]');
     expect(textarea).not.toBeNull();
 
     act(() => {

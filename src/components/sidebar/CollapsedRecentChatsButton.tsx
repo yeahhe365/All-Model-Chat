@@ -239,25 +239,28 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
             </div>
             <div className="max-h-[min(420px,calc(100vh-120px))] overflow-y-auto py-1 custom-scrollbar">
               {recentSessions.length > 0 ? (
-                recentSessions.map((session) => (
-                  <a
-                    key={session.id}
-                    href={`/chat/${session.id}`}
-                    onClick={(event) => {
-                      if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onSelectSession(session.id);
-                        closePopover();
-                      }
-                    }}
-                    className="block px-4 py-2.5 text-sm text-[var(--theme-text-primary)] no-underline hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-tertiary)] focus:outline-none"
-                  >
-                    <span className="block truncate" title={session.title}>
-                      {session.title}
-                    </span>
-                  </a>
-                ))
+                recentSessions.map((session) => {
+                  const displayTitle = session.title === 'New Chat' ? t('newChat') : session.title;
+                  return (
+                    <a
+                      key={session.id}
+                      href={`/chat/${session.id}`}
+                      onClick={(event) => {
+                        if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onSelectSession(session.id);
+                          closePopover();
+                        }
+                      }}
+                      className="block px-4 py-2.5 text-sm text-[var(--theme-text-primary)] no-underline hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-tertiary)] focus:outline-none"
+                    >
+                      <span className="block truncate" title={displayTitle}>
+                        {displayTitle}
+                      </span>
+                    </a>
+                  );
+                })
               ) : (
                 <p className="px-4 py-3 text-sm text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
               )}

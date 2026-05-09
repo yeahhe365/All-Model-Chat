@@ -68,7 +68,12 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
       {onTTS && (
         <>
           <div className="mx-0.5 h-3.5 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
-          <button onMouseDown={onTTS} className={actionButtonClass} title="Read Aloud (TTS)">
+          <button
+            onMouseDown={onTTS}
+            className={actionButtonClass}
+            title={t('tts_read_aloud')}
+            aria-label={t('tts_read_aloud')}
+          >
             <Volume2 size={14} className="text-purple-500" />
             <span>TTS</span>
           </button>

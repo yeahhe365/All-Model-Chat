@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { pdfjs } from 'react-pdf';
 import { UploadedFile } from '../../types';
 import { configurePdfWorker } from '../../utils/pdfWorker';
+import { useI18n } from '../../contexts/I18nContext';
 
 // Configure PDF worker globally
 configurePdfWorker(pdfjs);
@@ -16,6 +17,7 @@ const getInitialScale = () => {
 };
 
 export const usePdfViewer = (_file: UploadedFile) => {
+  const { t } = useI18n();
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(getInitialScale);
@@ -75,7 +77,7 @@ export const usePdfViewer = (_file: UploadedFile) => {
 
   const onDocumentLoadError = (err: Error) => {
     setIsLoading(false);
-    setError(err.message || 'Failed to load PDF.');
+    setError(t('pdf_load_failed_with_message').replace('{message}', err.message));
     console.error('PDF Load Error:', err);
   };
 

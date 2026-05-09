@@ -2,10 +2,11 @@ import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { logService } from '../../services/logService';
 import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
-import { getKeyForRequest } from '../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getKeyForRequest } from '../../utils/apiUtils';
 import { buildFileUploadPreflight, checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
 import { uploadFileItem } from './uploadFileItem';
 import { runWithConcurrencyLimit } from './uploadQueue';
+import { useI18n } from '../../contexts/I18nContext';
 
 const MAX_CONCURRENT_FILE_UPLOADS = 3;
 
@@ -26,6 +27,7 @@ export const useFileUploader = ({
   currentChatSettings,
   setCurrentChatSettings,
 }: UseFileUploaderProps) => {
+  const { t } = useI18n();
   // Refs to track upload speed for each file ID
   const uploadStatsRef = useRef<Map<string, { lastLoaded: number; lastTime: number }>>(new Map());
 
@@ -34,7 +36,7 @@ export const useFileUploader = ({
       if (filesArray.length === 0) return;
       const writeSelectedFiles = options.setSelectedFiles ?? setSelectedFiles;
 
-      const preflight = buildFileUploadPreflight(filesArray, appSettings, selectedFiles);
+      const preflight = buildFileUploadPreflight(filesArray, appSettings, selectedFiles, t);
       if (preflight.notice) {
         setAppFileError(preflight.notice);
       }
@@ -51,7 +53,8 @@ export const useFileUploader = ({
       if (needsApiKeyForUpload) {
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
-          setAppFileError(keyResult.error);
+          const translationKey = getApiKeyErrorTranslationKey(keyResult.error);
+          setAppFileError(translationKey ? t(translationKey) : keyResult.error);
           logService.error('Cannot process files: API key not configured.');
           return;
         }
@@ -78,12 +81,13 @@ export const useFileUploader = ({
             appSettings,
             setSelectedFiles: writeSelectedFiles,
             uploadStatsRef,
+            t,
           }),
       );
 
       await runWithConcurrencyLimit(uploadTasks, MAX_CONCURRENT_FILE_UPLOADS);
     },
-    [appSettings, currentChatSettings, selectedFiles, setCurrentChatSettings, setAppFileError, setSelectedFiles],
+    [appSettings, currentChatSettings, selectedFiles, setCurrentChatSettings, setAppFileError, setSelectedFiles, t],
   );
 
   const cancelUpload = useCallback(
@@ -105,7 +109,7 @@ export const useFileUploader = ({
             return {
               ...file,
               isProcessing: false,
-              error: 'Upload cancelled.',
+              error: t('upload_cancelled'),
               uploadState: 'cancelled',
               uploadSpeed: undefined,
               dataUrl: undefined, // Clear URL so UI gracefully falls back to a file type icon
@@ -119,7 +123,7 @@ export const useFileUploader = ({
       // Clean up speed calculation stats
       uploadStatsRef.current.delete(fileIdToCancel);
     },
-    [setSelectedFiles],
+    [setSelectedFiles, t],
   );
 
   return { uploadFiles, cancelUpload };

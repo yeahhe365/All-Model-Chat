@@ -8,7 +8,7 @@ interface UseGroupActionsProps {
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
     options?: { persist?: boolean },
   ) => void | Promise<void>;
-  t: (key: string, fallback?: string) => string;
+  t: (key: string) => string;
 }
 
 export const useGroupActions = ({ updateAndPersistGroups, updateAndPersistSessions, t }: UseGroupActionsProps) => {
@@ -16,7 +16,7 @@ export const useGroupActions = ({ updateAndPersistGroups, updateAndPersistSessio
     logService.info('Adding new group.');
     const newGroup: ChatGroup = {
       id: `group-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      title: t('newGroup_title', 'Untitled'),
+      title: t('newGroup_title'),
       timestamp: Date.now(),
       isExpanded: true,
     };

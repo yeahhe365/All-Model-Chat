@@ -55,6 +55,7 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
 
   const [isRightClickAnimating, setIsRightClickAnimating] = useState(false);
   const isActive = activeMenu === session.id;
+  const displayTitle = session.title === 'New Chat' ? t('newChat') : session.title;
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -97,14 +98,14 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
             {session.isPinned && (
               <Pin size={12} className="mr-2 text-[var(--theme-text-link)] flex-shrink-0" strokeWidth={2} />
             )}
-            <span className="font-medium truncate" title={session.title}>
+            <span className="font-medium truncate" title={displayTitle}>
               {generatingTitleSessionIds.has(session.id) ? (
                 <div className="flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)]">
                   <LoadingDots />
                   <span>{t('generatingTitle')}</span>
                 </div>
               ) : (
-                session.title
+                displayTitle
               )}
             </span>
           </a>

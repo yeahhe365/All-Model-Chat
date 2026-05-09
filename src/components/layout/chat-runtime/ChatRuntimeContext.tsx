@@ -350,12 +350,7 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       onQuickTTS: chatState.handleQuickTTS,
       onOpenSidePanel: handleOpenSidePanel,
     }),
-    [
-      chatState,
-      handleOpenSidePanel,
-      onFollowUpSuggestionClick,
-      sessionTitle,
-    ],
+    [chatState, handleOpenSidePanel, onFollowUpSuggestionClick, sessionTitle],
   );
 
   const input = useMemo<ChatInputRuntimeValue>(

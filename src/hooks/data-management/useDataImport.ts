@@ -92,11 +92,21 @@ export const useDataImport = ({
           if (data && data.type === expectedType) {
             onValid(data);
           } else {
-            throw new Error(`Invalid file format. Expected type: ${expectedType}, found: ${data.type || 'none'}`);
+            const foundType = typeof data?.type === 'string' ? data.type : t('export_not_applicable');
+            throw new Error(
+              t('settingsImport_invalidFileFormat')
+                .replace('{expectedType}', expectedType)
+                .replace('{foundType}', foundType),
+            );
           }
         } catch (error) {
           logService.error(`Failed to import ${expectedType}`, { error });
-          alert(`${t('settingsImport_error')} Error: ${error instanceof Error ? error.message : String(error)}`);
+          alert(
+            t('settingsImport_errorWithMessage').replace(
+              '{message}',
+              error instanceof Error ? error.message : String(error),
+            ),
+          );
         }
       };
       reader.onerror = (e) => {
@@ -142,7 +152,7 @@ export const useDataImport = ({
 
           alert(t('settingsImportHistory_success'));
         } else {
-          throw new Error('History data is missing or not an array.');
+          throw new Error(t('settingsImportHistory_invalidData'));
         }
       });
     },
@@ -162,7 +172,7 @@ export const useDataImport = ({
           );
           alert(t('scenarios_feedback_imported'));
         } else {
-          throw new Error('Scenarios data is missing or not an array.');
+          throw new Error(t('settingsImportScenarios_invalidData'));
         }
       });
     },

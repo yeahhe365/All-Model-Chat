@@ -40,7 +40,7 @@ export const shortcutsSettings = {
   shortcuts_clear_aria: { en: 'Clear shortcut', zh: '清空快捷键' },
   shortcuts_press_keys: { en: 'Press keys to record', zh: '按下按键开始录制' },
   shortcuts_click_record: { en: 'Click to record shortcut', zh: '点击开始录制快捷键' },
-  shortcuts_recording: { en: 'Recording...', zh: '录制中...' },
+  shortcuts_recording: { en: 'Recording...', zh: '录制中…' },
   shortcuts_current_aria: { en: 'Current shortcut', zh: '当前快捷键' },
   shortcuts_none: { en: 'None', zh: '未设置' },
 };

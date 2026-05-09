@@ -28,7 +28,7 @@ export const CreateFileHeader: React.FC<CreateFileHeaderProps> = ({
     <div className="flex items-center justify-between px-4 py-3 bg-[var(--theme-bg-secondary)]/50 flex-shrink-0 z-10">
       <h2 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
         <FileText size={20} className="text-[var(--theme-text-link)]" />
-        {isEditing ? t('edit') + ' File' : t('createText_title')}
+        {isEditing ? t('createText_edit_title') : t('createText_title')}
       </h2>
       <div className="flex items-center gap-2">
         {isPdf && (
@@ -36,7 +36,7 @@ export const CreateFileHeader: React.FC<CreateFileHeaderProps> = ({
             onClick={handleDownloadPdf}
             disabled={isExportingPdf}
             className="flex items-center justify-center h-9 w-9 sm:w-auto sm:px-3 rounded-lg text-xs font-medium transition-colors bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-50"
-            title="Download PDF"
+            title={t('createText_download_pdf')}
           >
             {isExportingPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
             <span className="hidden sm:inline ml-2">PDF</span>
@@ -51,7 +51,7 @@ export const CreateFileHeader: React.FC<CreateFileHeaderProps> = ({
                 ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)]'
                 : 'bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] border-[var(--theme-border-secondary)] hover:bg-[var(--theme-bg-tertiary)]'
             }`}
-            title={isPreviewMode ? 'Switch to Edit' : 'Switch to Preview'}
+            title={isPreviewMode ? t('createText_switch_to_edit') : t('createText_switch_to_preview')}
           >
             {isPreviewMode ? <Edit3 size={16} /> : <Eye size={16} />}
             <span className="hidden sm:inline ml-2">{isPreviewMode ? t('edit') : t('preview')}</span>

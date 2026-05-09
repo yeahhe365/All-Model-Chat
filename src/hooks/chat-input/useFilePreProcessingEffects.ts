@@ -4,6 +4,7 @@ import { generateUniqueId } from '../../utils/chat/ids';
 import { generateFolderContext } from '../../utils/folderImportUtils';
 import { readDirectoryHandle } from '../../utils/import-context/directoryHandleReader';
 import { captureScreenImage } from '../../utils/mediaUtils';
+import { useI18n } from '../../contexts/I18nContext';
 
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
 
@@ -28,6 +29,7 @@ export const useFilePreProcessingEffects = ({
   setSelectedFiles,
   setAppFileError,
 }: UseFilePreProcessingEffectsParams) => {
+  const { t } = useI18n();
   const [isConverting, setIsConverting] = useState(false);
   const [isScreenCapturing, setIsScreenCapturing] = useState(false);
   const isScreenCapturingRef = useRef(false);
@@ -40,7 +42,10 @@ export const useFilePreProcessingEffects = ({
     isScreenCapturingRef.current = true;
     setIsScreenCapturing(true);
     try {
-      const blob = await captureScreenImage();
+      const blob = await captureScreenImage({
+        unsupported: t('screenCapture_unsupported'),
+        startFailed: (message) => t('screenCapture_start_failed').replace('{message}', message),
+      });
 
       if (!blob) {
         return;
@@ -52,12 +57,12 @@ export const useFilePreProcessingEffects = ({
       await onProcessFiles([file]);
     } catch (error) {
       console.error('Failed to capture screenshot:', error);
-      setAppFileError('Failed to capture screenshot.');
+      setAppFileError(t('screenshot_capture_failed'));
     } finally {
       isScreenCapturingRef.current = false;
       setIsScreenCapturing(false);
     }
-  }, [justInitiatedFileOpRef, onProcessFiles, setAppFileError]);
+  }, [justInitiatedFileOpRef, onProcessFiles, setAppFileError, t]);
 
   const processFolderImport = useCallback(
     async (files: File[] | FileList, emptyDirectoryPaths: string[] = []) => {
@@ -73,7 +78,7 @@ export const useFilePreProcessingEffects = ({
         ...prev,
         {
           id: tempId,
-          name: 'Processing folder...',
+          name: t('folder_processing'),
           type: 'application/x-directory',
           size: 0,
           isProcessing: true,
@@ -90,13 +95,13 @@ export const useFilePreProcessingEffects = ({
         await onProcessFiles([contextFile]);
       } catch (error) {
         console.error(error);
-        setAppFileError('Failed to process folder structure.');
+        setAppFileError(t('folder_process_failed'));
         setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
       } finally {
         setIsConverting(false);
       }
     },
-    [justInitiatedFileOpRef, onProcessFiles, setAppFileError, setSelectedFiles],
+    [justInitiatedFileOpRef, onProcessFiles, setAppFileError, setSelectedFiles, t],
   );
 
   const handleOpenFolderPicker = useCallback(async () => {
@@ -112,10 +117,10 @@ export const useFilePreProcessingEffects = ({
       const errorName = error instanceof DOMException ? error.name : '';
       if (errorName !== 'AbortError' && errorName !== 'NotAllowedError') {
         console.error(error);
-        setAppFileError('Failed to process folder structure.');
+        setAppFileError(t('folder_process_failed'));
       }
     }
-  }, [processFolderImport, setAppFileError]);
+  }, [processFolderImport, setAppFileError, t]);
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {

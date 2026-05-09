@@ -323,6 +323,29 @@ describe('ChatInputActions', () => {
     expect(renderer.container.querySelector('[data-testid="composer-more-menu"]')).toBeNull();
   });
 
+  it('keeps local input edit actions clickable while the model is responding', async () => {
+    mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
+
+    renderActions({
+      inputText: 'Translate or edit this while the model responds',
+      isLoading: true,
+      showInputTranslationButton: true,
+      showInputPasteButton: true,
+      showInputClearButton: true,
+    });
+    await waitForActionRowMeasurement();
+
+    expect(utilityControlsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actions: expect.arrayContaining([
+          expect.objectContaining({ id: 'translate', disabled: false }),
+          expect.objectContaining({ id: 'clear', disabled: false }),
+          expect.objectContaining({ id: 'paste', disabled: false }),
+        ]),
+      }),
+    );
+  });
+
   it('moves auxiliary composer actions into the more menu only when the direct row overflows', async () => {
     mockActionRowMeasurements({ containerWidth: 300, leftWidth: 88, rightWidth: 292 });
 

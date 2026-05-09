@@ -335,7 +335,7 @@ describe('useLiveConnection', () => {
     expect(result.current.errorState).toEqual({
       kind: 'translation',
       key: 'liveStatus_missing_api_key',
-      fallback: 'Live API requires a browser API key.',
+      values: undefined,
     });
     expect(result.current.isReconnecting).toBe(false);
     unmount();

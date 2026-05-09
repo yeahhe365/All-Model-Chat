@@ -1,5 +1,6 @@
 import React from 'react';
 import { GripVertical, X, Loader2 } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 interface AudioPlayerViewProps {
   audioUrl: string | null;
@@ -16,11 +17,13 @@ export const AudioPlayerView: React.FC<AudioPlayerViewProps> = ({
   onDragStart,
   onClose,
 }) => {
+  const { t } = useI18n();
+
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-primary)]">
         <Loader2 size={14} className="animate-spin text-[var(--theme-text-link)]" />
-        <span>Generating Audio...</span>
+        <span>{t('generating_audio')}</span>
       </div>
     );
   }
@@ -32,7 +35,7 @@ export const AudioPlayerView: React.FC<AudioPlayerViewProps> = ({
       <div
         onMouseDown={onDragStart}
         className="cursor-grab active:cursor-grabbing p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors touch-none"
-        title="Drag to move"
+        title={t('drag_to_move')}
       >
         <GripVertical size={14} />
       </div>

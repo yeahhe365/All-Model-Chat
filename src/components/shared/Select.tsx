@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { useClickOutside } from '../../hooks/useClickOutside';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   label: string;
@@ -36,6 +37,7 @@ export const Select: React.FC<SelectProps> = ({
   direction = 'down',
   ...rest
 }) => {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -113,7 +115,7 @@ export const Select: React.FC<SelectProps> = ({
             {selectedOption ? (
               selectedOption.label
             ) : (
-              <span className="text-[var(--theme-text-tertiary)]">Select...</span>
+              <span className="text-[var(--theme-text-tertiary)]">{t('selectPlaceholder')}</span>
             )}
           </div>
           <ChevronDown

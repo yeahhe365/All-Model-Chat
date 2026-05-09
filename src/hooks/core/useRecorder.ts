@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getMixedAudioStream } from '@/features/audio/audioProcessing';
+import { getTranslator } from '../../i18n/translations';
 
 type RecorderStatus = 'idle' | 'recording' | 'paused';
 
@@ -7,6 +8,7 @@ interface UseRecorderOptions {
   onStop?: (blob: Blob) => void;
   onError?: (error: string) => void;
   onSystemAudioWarning?: (warning: string | null) => void;
+  permissionErrorMessage?: string;
 }
 
 const RECORDING_MIME_TYPE_CANDIDATES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
@@ -24,7 +26,7 @@ const stopStreamTracks = (targetStream: MediaStream | null) => {
 };
 
 export const useRecorder = (options: UseRecorderOptions = {}) => {
-  const { onStop, onError, onSystemAudioWarning } = options;
+  const { onStop, onError, onSystemAudioWarning, permissionErrorMessage } = options;
   const [status, setStatus] = useState<RecorderStatus>('idle');
   const [isInitializing, setIsInitializing] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -154,7 +156,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         timerRef.current = window.setInterval(() => setDuration((d) => d + 1), 1000);
       } catch (err) {
         console.error('Recorder error:', err);
-        const msg = 'Could not start recording. Please check permissions.';
+        const msg = permissionErrorMessage ?? getTranslator('en')('voiceInput_permission_error');
         setError(msg);
         if (onError) onError(msg);
         setStatus('idle');
@@ -165,7 +167,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         }
       }
     },
-    [onStop, onError, onSystemAudioWarning, cleanup],
+    [onStop, onError, onSystemAudioWarning, permissionErrorMessage, cleanup],
   );
 
   const stopRecording = useCallback(() => {

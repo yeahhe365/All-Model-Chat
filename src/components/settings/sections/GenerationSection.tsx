@@ -215,7 +215,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
                 className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center"
               >
                 Top K
-                <Tooltip text="Limits sampling to the K most probable tokens. Gemma 4 recommends 64. Set to 0 to disable.">
+                <Tooltip text={t('settingsTopK_tooltip')}>
                   <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
                 </Tooltip>
               </label>
@@ -245,9 +245,7 @@ export const GenerationSection: React.FC<GenerationSectionProps> = ({
                 {t('settingsMediaResolution')}
                 <Tooltip
                   text={
-                    isNativeAudio
-                      ? 'Controls video/audio resolution for Live API.'
-                      : t('settingsMediaResolution_tooltip')
+                    isNativeAudio ? t('settingsMediaResolution_live_tooltip') : t('settingsMediaResolution_tooltip')
                   }
                 >
                   <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />

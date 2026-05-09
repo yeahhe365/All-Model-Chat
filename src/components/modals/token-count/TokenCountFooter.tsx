@@ -24,15 +24,17 @@ export const TokenCountFooter: React.FC<TokenCountFooterProps> = ({
         {tokenCount !== null ? (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2">
             <span className="text-xs text-[var(--theme-text-tertiary)] font-medium uppercase tracking-wide">
-              Estimated Cost
+              {t('tokenModal_estimatedTokens')}
             </span>
             <span className="text-2xl font-bold text-[var(--theme-text-link)] font-mono tabular-nums">
               {tokenCount.toLocaleString()}{' '}
-              <span className="text-sm font-sans font-normal text-[var(--theme-text-secondary)]">tokens</span>
+              <span className="text-sm font-sans font-normal text-[var(--theme-text-secondary)]">
+                {t('tokens_unit')}
+              </span>
             </span>
           </div>
         ) : (
-          <span className="text-sm text-[var(--theme-text-tertiary)] italic">Ready to calculate</span>
+          <span className="text-sm text-[var(--theme-text-tertiary)] italic">{t('tokenModal_ready')}</span>
         )}
       </div>
 
@@ -40,7 +42,7 @@ export const TokenCountFooter: React.FC<TokenCountFooterProps> = ({
         <button
           onClick={onClear}
           className="px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors flex items-center gap-2"
-          title="Clear All"
+          title={t('tokenModal_clearAll')}
         >
           <Trash2 size={16} /> <span className="hidden sm:inline">{t('tokenModal_clear')}</span>
         </button>

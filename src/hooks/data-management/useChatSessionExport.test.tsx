@@ -54,6 +54,7 @@ describe('useChatSessionExport', () => {
     exportHtmlStringAsFile.mockClear();
     exportTextStringAsFile.mockClear();
     generateSnapshotPng.mockClear();
+    generateSnapshotPng.mockResolvedValue(undefined);
     prepareElementForExport.mockClear();
     buildHtmlDocument.mockClear();
     buildTextDocument.mockClear();
@@ -83,6 +84,27 @@ describe('useChatSessionExport', () => {
     expect(exportedElement.querySelector('[data-message-id="message-virtualized-away"]')).not.toBeNull();
     expect(exportedElement.textContent).toContain('not mounted in virtuoso');
 
+    unmount();
+  });
+
+  it('reports a PNG export failure when snapshot generation cannot download the image', async () => {
+    generateSnapshotPng.mockResolvedValueOnce(false);
+    const { result, unmount } = renderHook(() =>
+      useChatSessionExport({
+        activeChat: makeSession(),
+        scrollContainerRef: { current: document.createElement('div') },
+        currentTheme: { id: 'pearl' } as Theme,
+        language: 'en',
+        t: (key) => key,
+      }),
+    );
+
+    let exportResult: unknown;
+    await act(async () => {
+      exportResult = await result.current.exportChatLogic('png');
+    });
+
+    expect(exportResult).toBe(false);
     unmount();
   });
 });

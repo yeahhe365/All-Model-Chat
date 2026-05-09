@@ -304,7 +304,11 @@ export const createChatRuntimeValues = (value: ChatAreaProviderValue): ChatRunti
 
 export const renderWithChatAreaProviders = (
   children: ReactNode,
-  options: { attachToDocument?: boolean; chatArea?: ChatAreaProviderValueOverrides; value?: ChatAreaProviderValue } = {},
+  options: {
+    attachToDocument?: boolean;
+    chatArea?: ChatAreaProviderValueOverrides;
+    value?: ChatAreaProviderValue;
+  } = {},
 ) => {
   const root: TestRenderer = createTestRenderer({ attachToDocument: options.attachToDocument !== false });
   const { container } = root;
@@ -316,7 +320,9 @@ export const renderWithChatAreaProviders = (
     root.render(
       <I18nProvider>
         <WindowProvider>
-          <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>{children}</ChatRuntimeValuesProvider>
+          <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+            {children}
+          </ChatRuntimeValuesProvider>
         </WindowProvider>
       </I18nProvider>,
     );

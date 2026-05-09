@@ -3,10 +3,7 @@ import { Mic, X, Loader2, AlertCircle, ChevronRight } from 'lucide-react';
 import { Modal } from '../shared/Modal';
 import { AudioPlayer } from '../shared/AudioPlayer';
 import { useAudioRecorder } from '@/features/audio/useAudioRecorder';
-import {
-  SYSTEM_AUDIO_CAPTURE_FAILED_WARNING,
-  SYSTEM_AUDIO_NOT_SHARED_WARNING,
-} from '@/features/audio/audioProcessing';
+import { SYSTEM_AUDIO_CAPTURE_FAILED_WARNING, SYSTEM_AUDIO_NOT_SHARED_WARNING } from '@/features/audio/audioProcessing';
 import { AudioVisualizer } from '../recorder/AudioVisualizer';
 import { RecorderControls } from '../recorder/RecorderControls';
 import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS, MODAL_CLOSE_BUTTON_CLASS } from '../../constants/appConstants';
@@ -87,11 +84,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
           <Mic size={20} className="text-[var(--theme-text-link)]" />
           {viewState === 'review' ? t('audioRecorder_previewTitle') : t('audioRecorder_title')}
         </h2>
-        <button
-          onClick={onCancel}
-          aria-label={t('close')}
-          className={MODAL_CLOSE_BUTTON_CLASS}
-        >
+        <button onClick={onCancel} aria-label={t('close')} className={MODAL_CLOSE_BUTTON_CLASS}>
           <X size={20} />
         </button>
       </div>

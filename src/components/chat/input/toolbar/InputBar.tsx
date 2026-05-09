@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Loader2, Plus, X } from 'lucide-react';
 import { ICON_BUTTON_CLASS, FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../../../constants/appConstants';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 interface InputBarProps {
   value: string;
@@ -33,6 +34,7 @@ export const InputBar: React.FC<InputBarProps> = ({
   type = 'text',
   ariaLabel,
 }) => {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -94,7 +96,7 @@ export const InputBar: React.FC<InputBarProps> = ({
           onClick={onCancel}
           disabled={disabled}
           className={`${ICON_BUTTON_CLASS} ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-          aria-label="Cancel"
+          aria-label={t('cancel')}
         >
           <X size={18} strokeWidth={2} />
         </button>

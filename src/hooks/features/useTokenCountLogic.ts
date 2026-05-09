@@ -13,7 +13,13 @@ import {
 } from '../../services/api/generationConfig';
 import { createLocalPythonToolDeclaration } from '@/features/local-python/clientFunctionTool';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { isServerManagedApiEnabledForProxyRequests, parseApiKeys, SERVER_MANAGED_API_KEY } from '../../utils/apiUtils';
+import {
+  getApiKeyErrorTranslationKey,
+  isServerManagedApiEnabledForProxyRequests,
+  parseApiKeys,
+  SERVER_MANAGED_API_KEY,
+} from '../../utils/apiUtils';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface UseTokenCountLogicProps {
   isOpen: boolean;
@@ -23,10 +29,7 @@ interface UseTokenCountLogicProps {
   currentModelId: string;
 }
 
-const mergeTokenCountAppSettings = (
-  modalAppSettings: AppSettings,
-  latestStoredSettings: AppSettings,
-): AppSettings => ({
+const mergeTokenCountAppSettings = (modalAppSettings: AppSettings, latestStoredSettings: AppSettings): AppSettings => ({
   ...latestStoredSettings,
   ...modalAppSettings,
   useCustomApiConfig: modalAppSettings.useCustomApiConfig ?? latestStoredSettings.useCustomApiConfig,
@@ -67,6 +70,7 @@ export const useTokenCountLogic = ({
   appSettings,
   currentModelId,
 }: UseTokenCountLogicProps) => {
+  const { t } = useI18n();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [selectedModelId, setSelectedModelId] = useState(currentModelId);
@@ -88,7 +92,8 @@ export const useTokenCountLogic = ({
       const keyResult = resolveTokenCountRequestKey(effectiveAppSettings, modelId);
 
       if ('error' in keyResult) {
-        setError(keyResult.error);
+        const translationKey = getApiKeyErrorTranslationKey(keyResult.error);
+        setError(translationKey ? t(translationKey) : keyResult.error);
         setIsLoading(false);
         return;
       }
@@ -123,12 +128,13 @@ export const useTokenCountLogic = ({
         setTokenCount(count);
       } catch (err) {
         console.error('Token calculation failed', err);
-        setError(err instanceof Error ? err.message : 'Failed to calculate tokens');
+        const message = err instanceof Error ? err.message : String(err);
+        setError(t('token_count_error_with_message').replace('{message}', message));
       } finally {
         setIsLoading(false);
       }
     },
-    [appSettings, latestStoredSettings],
+    [appSettings, latestStoredSettings, t],
   );
 
   useEffect(() => {

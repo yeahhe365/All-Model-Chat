@@ -59,7 +59,12 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
         }
 
         const rect = toolbar.getBoundingClientRect();
-        const nextPosition = getToolbarRenderPosition(position, rect, targetWindow.innerWidth, targetWindow.innerHeight);
+        const nextPosition = getToolbarRenderPosition(
+          position,
+          rect,
+          targetWindow.innerWidth,
+          targetWindow.innerHeight,
+        );
 
         setRenderPosition((prev) => {
           if (prev.left === nextPosition.left && prev.top === nextPosition.top) {

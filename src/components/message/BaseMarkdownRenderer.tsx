@@ -306,11 +306,11 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
       const contentWithNormalizedMath = transformMarkdownTextSegments(content, normalizeEscapedMathDelimiters);
 
       if (hideThinkingInContext) {
-        return wrapReasoningMarkup(contentWithNormalizedMath, isLoading);
+        return wrapReasoningMarkup(contentWithNormalizedMath, isLoading, t('thinking_raw_process'));
       }
 
       return stripGemmaThoughtMarkup(contentWithNormalizedMath);
-    }, [content, hideThinkingInContext, isLoading]);
+    }, [content, hideThinkingInContext, isLoading, t]);
 
     return (
       <div className={isLoading ? 'is-loading' : ''}>

@@ -95,5 +95,4 @@ describe('finalizeMessages', () => {
 
     expect(updatedMessages[0]?.files).toEqual([existingFile]);
   });
-
 });

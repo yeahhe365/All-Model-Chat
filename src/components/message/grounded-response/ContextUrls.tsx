@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link as LinkIcon, AlertTriangle, CheckCircle, Globe } from 'lucide-react';
 import { getDomain } from './utils';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface UrlContextItem {
   retrievedUrl?: string;
@@ -25,6 +26,7 @@ const getStatusIcon = (status?: string) => {
 };
 
 export const ContextUrls: React.FC<ContextUrlsProps> = ({ metadata }) => {
+  const { t } = useI18n();
   const items = useMemo<UrlContextItem[]>(() => {
     if (!metadata) return [];
     const resolvedMetadata = metadata as { urlMetadata?: UrlContextItem[]; url_metadata?: UrlContextItem[] };
@@ -39,7 +41,7 @@ export const ContextUrls: React.FC<ContextUrlsProps> = ({ metadata }) => {
       <div className="flex items-center gap-2 mb-2">
         <LinkIcon size={11} className="text-[var(--theme-text-tertiary)]" strokeWidth={2} />
         <h4 className="text-[10px] font-bold uppercase text-[var(--theme-text-tertiary)] tracking-widest">
-          Context URLs
+          {t('context_urls_title')}
         </h4>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -55,7 +57,7 @@ export const ContextUrls: React.FC<ContextUrlsProps> = ({ metadata }) => {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--theme-bg-tertiary)]/20 hover:bg-[var(--theme-bg-tertiary)]/60 border border-[var(--theme-border-secondary)]/30 hover:border-[var(--theme-border-secondary)] transition-all no-underline group max-w-full"
-              title={`Status: ${status}`}
+              title={t('context_urls_status').replace('{status}', status || t('unknown'))}
             >
               <div className="flex-shrink-0 pt-0.5">{getStatusIcon(status)}</div>
               <span className="text-xs font-mono text-[var(--theme-text-secondary)] truncate group-hover:text-[var(--theme-text-primary)]">

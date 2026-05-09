@@ -11,10 +11,15 @@ type DisplayMediaVideoConstraints = MediaTrackConstraints & {
   mediaSource?: 'screen' | 'window' | 'application' | 'browser';
 };
 
-export const captureScreenImage = async (): Promise<Blob | null> => {
+interface ScreenCaptureMessages {
+  unsupported: string;
+  startFailed: (message: string) => string;
+}
+
+export const captureScreenImage = async (messages: ScreenCaptureMessages): Promise<Blob | null> => {
   const mediaDevices = navigator.mediaDevices;
   if (!mediaDevices?.getDisplayMedia) {
-    alert('Your browser does not support screen capture.');
+    alert(messages.unsupported);
     return null;
   }
 
@@ -27,7 +32,7 @@ export const captureScreenImage = async (): Promise<Blob | null> => {
   } catch (err) {
     console.error('Error starting screen capture:', err);
     if ((err as DOMException).name !== 'NotAllowedError') {
-      alert(`Could not start screen capture: ${(err as Error).message}`);
+      alert(messages.startFailed((err as Error).message));
     }
     return null;
   }

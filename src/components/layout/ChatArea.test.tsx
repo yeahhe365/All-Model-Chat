@@ -155,7 +155,7 @@ describe('ChatArea', () => {
     const providerValue = createChatAreaProviderValue();
 
     const composer = document.createElement('textarea');
-    composer.setAttribute('aria-label', 'Chat message input');
+    composer.dataset.chatInputTextarea = 'true';
     composer.value = 'Draft message';
     document.body.appendChild(composer);
     const focusSpy = vi.spyOn(composer, 'focus');

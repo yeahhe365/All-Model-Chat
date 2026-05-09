@@ -5,14 +5,8 @@ import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
 import { useChatInputActionsContext } from '../ChatInputContext';
 
 export const RecordControls: React.FC = () => {
-  const {
-    isRecording,
-    isTranscribing,
-    isMicInitializing,
-    onRecordButtonClick,
-    onCancelRecording,
-    disabled,
-  } = useChatInputActionsContext();
+  const { isRecording, isTranscribing, isMicInitializing, onRecordButtonClick, onCancelRecording, disabled } =
+    useChatInputActionsContext();
   const { t } = useI18n();
   const micIconSize = 20;
 

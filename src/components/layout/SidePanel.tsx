@@ -6,6 +6,7 @@ import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { useIsMobile } from '../../hooks/useDevice';
 import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface PanelTabButtonProps {
   activeTab: 'code' | 'preview';
@@ -51,6 +52,7 @@ interface SidePanelProps {
 }
 
 export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId }) => {
+  const { t } = useI18n();
   // Initialize with content immediately to ensure iframe has srcDoc on first render
   const [localCode, setLocalCode] = useState(content?.content || '');
   const [debouncedCode, setDebouncedCode] = useState(content?.content || '');
@@ -125,7 +127,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
   const previewFallback = (
     <div className="w-full h-full flex items-center justify-center text-[var(--theme-text-secondary)]">
-      Loading preview...
+      {t('sidePanel_loading_preview')}
     </div>
   );
 
@@ -139,7 +141,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
             // SECURITY: Removed allow-same-origin to prevent access to localStorage/parent DOM
             // Added allow-downloads to match main preview capabilities
             sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
-            title="Live Preview"
+            title={t('sidePanel_live_preview')}
             srcDoc={debouncedCode}
           />
         </div>
@@ -181,7 +183,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     }
     return (
       <div className="p-4 text-[var(--theme-text-tertiary)] flex items-center justify-center h-full">
-        Preview not supported for this type.
+        {t('sidePanel_preview_unsupported')}
       </div>
     );
   };
@@ -202,7 +204,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
   const isHtml = content.type === 'html';
 
   const PreviewIcon = isHtml ? FileCode2 : Eye;
-  const previewLabel = isHtml ? 'HTML' : 'Preview';
+  const previewLabel = isHtml ? 'HTML' : t('preview');
 
   return (
     <>
@@ -227,7 +229,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
                             flex items-center justify-center group transition-colors hover:bg-[var(--theme-bg-accent)]
                             ${isResizing ? 'bg-[var(--theme-bg-accent)]' : 'bg-transparent'}
                         `}
-            title="Drag to resize"
+            title={t('sidePanel_drag_resize')}
           />
         )}
 
@@ -242,7 +244,13 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
               label={previewLabel}
               onSelect={setActiveTab}
             />
-            <PanelTabButton activeTab={activeTab} id="code" icon={Code} label="Code" onSelect={setActiveTab} />
+            <PanelTabButton
+              activeTab={activeTab}
+              id="code"
+              icon={Code}
+              label={t('sidePanel_code_tab')}
+              onSelect={setActiveTab}
+            />
           </div>
 
           {/* Right: Actions */}
@@ -250,14 +258,14 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
             <button
               onClick={handleDownload}
               className={`p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-              title="Download Code"
+              title={t('sidePanel_download_code')}
             >
               <Download size={16} strokeWidth={1.5} />
             </button>
             <button
               onClick={onClose}
               className={`p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-              title="Close Panel"
+              title={t('sidePanel_close')}
             >
               <X size={18} strokeWidth={1.5} />
             </button>

@@ -87,7 +87,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
           <button
             onClick={handleCopyMarkdown}
             className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-            title={isCopied ? 'Copied!' : 'Copy Markdown'}
+            title={isCopied ? t('copied') : t('table_copy_markdown')}
           >
             {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
           </button>
@@ -96,7 +96,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
             <button
               onClick={() => setShowDownloadMenu(!showDownloadMenu)}
               className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-              title="Download"
+              title={t('download')}
             >
               <Download size={16} />
             </button>
@@ -124,7 +124,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
           <button
             onClick={toggleFullscreen}
             className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-            title="Exit Fullscreen"
+            title={t('table_exit_fullscreen')}
           >
             <Minimize2 size={16} />
           </button>
@@ -156,9 +156,9 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
       <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-100 pointer-events-auto transition-opacity duration-200 sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto">
         <button
           onClick={handleCopyMarkdown}
-          aria-label="Copy table as markdown"
+          aria-label={t('table_copy_markdown_aria')}
           className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-          title={isCopied ? 'Copied!' : 'Copy Markdown'}
+          title={isCopied ? t('copied') : t('table_copy_markdown')}
         >
           {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
         </button>
@@ -166,9 +166,9 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-            aria-label="Download table"
+            aria-label={t('table_download_aria')}
             className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-            title="Download"
+            title={t('download')}
           >
             <Download size={14} />
           </button>
@@ -194,9 +194,9 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
 
         <button
           onClick={toggleFullscreen}
-          aria-label="Open table fullscreen"
+          aria-label={t('table_fullscreen_aria')}
           className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
-          title="Fullscreen"
+          title={t('htmlPreview_fullscreen')}
         >
           <Maximize2 size={14} />
         </button>

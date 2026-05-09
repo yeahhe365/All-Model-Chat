@@ -81,6 +81,19 @@ const PdfToolbarHarness: React.FC<{ file: UploadedFile }> = ({ file }) => (
   <PdfToolbarHarnessInner key={file.id} file={file} />
 );
 
+const PdfLoadErrorHarness: React.FC<{ file: UploadedFile }> = ({ file }) => {
+  const { error, onDocumentLoadError } = usePdfViewer(file);
+
+  return (
+    <div>
+      <button type="button" onClick={() => onDocumentLoadError(new Error('Invalid xref table'))}>
+        fail pdf load
+      </button>
+      <div data-testid="pdf-load-error">{error ?? ''}</div>
+    </div>
+  );
+};
+
 describe('PdfToolbar', () => {
   const renderer = setupTestRenderer();
 
@@ -157,5 +170,29 @@ describe('PdfToolbar', () => {
 
     input = renderer.container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
     expect(input?.value).toBe('1');
+  });
+
+  it('includes the PDF parser failure detail in the visible load error', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      await act(async () => {
+        renderer.root.render(<PdfLoadErrorHarness file={file} />);
+      });
+
+      const failButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('fail pdf load'),
+      );
+
+      await act(async () => {
+        failButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+
+      expect(renderer.container.querySelector('[data-testid="pdf-load-error"]')?.textContent).toBe(
+        'Failed to load PDF: Invalid xref table',
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });

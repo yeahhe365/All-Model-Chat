@@ -294,8 +294,7 @@ export const useMessageUpdates = ({
 
                 if (streamState.thoughts && !msg.thinkingTimeMs && streamState.firstContentPartTime) {
                   updates.thinkingTimeMs =
-                    streamState.firstContentPartTime.getTime() -
-                    (msg.generationStartTime || msg.timestamp).getTime();
+                    streamState.firstContentPartTime.getTime() - (msg.generationStartTime || msg.timestamp).getTime();
                 }
               } else if (text) {
                 if (type === 'thought') {

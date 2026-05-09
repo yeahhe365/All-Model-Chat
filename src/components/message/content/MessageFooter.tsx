@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { ChatMessage } from '../../../types';
 import { PerformanceMetrics } from '../PerformanceMetrics';
 import { AudioPlayer } from '../../shared/AudioPlayer';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface MessageFooterProps {
   message: ChatMessage;
@@ -10,6 +11,7 @@ interface MessageFooterProps {
 }
 
 export const MessageFooter: React.FC<MessageFooterProps> = ({ message, onSuggestionClick }) => {
+  const { t } = useI18n();
   const { audioSrc, audioAutoplay, suggestions, isGeneratingSuggestions, role, generationStartTime } = message;
 
   return (
@@ -52,7 +54,7 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({ message, onSuggest
       {isGeneratingSuggestions && (
         <div className="mt-3 flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)] animate-pulse opacity-70 px-1">
           <Loader2 size={12} className="animate-spin" strokeWidth={1.5} />
-          <span>Generating suggestions...</span>
+          <span>{t('generating_suggestions')}</span>
         </div>
       )}
     </>

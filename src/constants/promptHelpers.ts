@@ -23,7 +23,8 @@ export const loadCanvasSystemPrompt = async (language: PromptLanguage = 'zh') =>
   return language === 'en' ? prompts.CANVAS_SYSTEM_PROMPT_EN : prompts.CANVAS_SYSTEM_PROMPT_ZH;
 };
 
-export const loadDeepSearchSystemPrompt = async () => (await import('@/features/prompts/deepSearch')).DEEP_SEARCH_SYSTEM_PROMPT;
+export const loadDeepSearchSystemPrompt = async () =>
+  (await import('@/features/prompts/deepSearch')).DEEP_SEARCH_SYSTEM_PROMPT;
 
 export const loadLocalPythonSystemPrompt = async () => LOCAL_PYTHON_SYSTEM_PROMPT;
 

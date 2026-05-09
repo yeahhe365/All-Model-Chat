@@ -1,12 +1,6 @@
 import type { ChatSettings } from './settings';
 
-export type ChatToolId =
-  | 'deepSearch'
-  | 'googleSearch'
-  | 'codeExecution'
-  | 'localPython'
-  | 'urlContext'
-  | 'tokenCount';
+export type ChatToolId = 'deepSearch' | 'googleSearch' | 'codeExecution' | 'localPython' | 'urlContext' | 'tokenCount';
 
 export type ToggleableChatToolId = Extract<
   ChatToolId,

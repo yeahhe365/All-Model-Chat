@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
 import { ChatMessage } from '../../types';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface PerformanceMetricsProps {
   message: ChatMessage;
@@ -8,6 +9,7 @@ interface PerformanceMetricsProps {
 }
 
 export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, hideTimer }) => {
+  const { t } = useI18n();
   const {
     promptTokens,
     cachedPromptTokens,
@@ -81,7 +83,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
       {showTokens && (
         <div
           className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30"
-          title="Token Usage"
+          title={t('metrics_token_usage')}
         >
           <span className="flex items-center gap-2">
             <span>U: {uncachedInputTokens.toLocaleString()}</span>
@@ -110,14 +112,14 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
       )}
 
       {tokensPerSecond > 0 && (
-        <div className="flex items-center gap-1" title="Generation Speed (excluding TTFT)">
+        <div className="flex items-center gap-1" title={t('metrics_generation_speed')}>
           <Zap size={11} className="text-amber-400 fill-amber-400/20" strokeWidth={2} />
           <span>{tokensPerSecond.toFixed(1)} t/s</span>
         </div>
       )}
 
       {showTimer && (
-        <div className="tabular-nums" title="Total Duration">
+        <div className="tabular-nums" title={t('metrics_total_duration')}>
           {elapsedTime.toFixed(1)}s
         </div>
       )}

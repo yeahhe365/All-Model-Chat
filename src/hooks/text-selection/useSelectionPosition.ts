@@ -65,10 +65,8 @@ const isCodeSelection = (range: Range): boolean => {
 
   return Boolean(
     startCodeBlock &&
-      endCodeBlock &&
-      (startCodeBlock === endCodeBlock ||
-        startCodeBlock.contains(endCodeBlock) ||
-        endCodeBlock.contains(startCodeBlock)),
+    endCodeBlock &&
+    (startCodeBlock === endCodeBlock || startCodeBlock.contains(endCodeBlock) || endCodeBlock.contains(startCodeBlock)),
   );
 };
 

@@ -8,6 +8,9 @@ import {
 } from '../../constants/fileConstants';
 import { AppSettings, UploadedFile } from '../../types';
 import { isTextFile } from '../../utils/fileTypeUtils';
+import { getTranslator } from '../../i18n/translations';
+
+type Translator = ReturnType<typeof getTranslator>;
 
 const INLINE_MAX_REQUEST_PAYLOAD_BYTES = 100 * 1024 * 1024;
 const INLINE_MAX_PDF_PAYLOAD_BYTES = 50 * 1024 * 1024;
@@ -150,6 +153,7 @@ export const buildFileUploadPreflight = (
   files: File[],
   _appSettings: AppSettings,
   existingFiles: Array<Pick<UploadedFile, 'name' | 'size'>> = [],
+  t: Translator = getTranslator('en'),
 ): FileUploadPreflightResult => {
   const seenSignatures = new Set(existingFiles.map(getFileSignature));
   const filesToUpload: File[] = [];
@@ -174,11 +178,11 @@ export const buildFileUploadPreflight = (
 
   const noticeParts: string[] = [];
   if (duplicateNames.length > 0) {
-    noticeParts.push(`Skipped duplicate files: ${duplicateNames.join(', ')}`);
+    noticeParts.push(t('upload_skipped_duplicates').replace('{filenames}', duplicateNames.join(', ')));
   }
 
   if (unsupportedNames.length > 0) {
-    noticeParts.push(`Unsupported file types: ${unsupportedNames.join(', ')}`);
+    noticeParts.push(t('upload_unsupported_types').replace('{filenames}', unsupportedNames.join(', ')));
   }
 
   return {

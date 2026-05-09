@@ -33,7 +33,7 @@ export const ThinkingActions: React.FC<ThinkingActionsProps> = ({
                     transition-all duration-200
                     ${isShowingTranslation ? 'text-[var(--theme-text-link)]' : ''}
                 `}
-        title={isShowingTranslation ? 'Show Original' : 'Translate to Chinese'}
+        title={isShowingTranslation ? t('thinking_show_original') : t('thinking_translate_to_chinese')}
       >
         {isTranslatingThoughts ? (
           <Loader2 size={15} className="animate-spin" />

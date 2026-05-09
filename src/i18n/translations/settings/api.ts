@@ -35,7 +35,7 @@ export const apiSettings = {
   },
   apiConfig_key_placeholder_disabled: { en: 'Using default', zh: '使用默认值' },
   apiConfig_testConnection: { en: 'Test Connection', zh: '测试连通性' },
-  apiConfig_testing: { en: 'Testing...', zh: '测试中...' },
+  apiConfig_testing: { en: 'Testing...', zh: '测试中…' },
   apiConfig_testSuccess: { en: 'Connection Successful', zh: '连接成功' },
   apiConfig_testFailed: { en: 'Connection Failed', zh: '连接失败' },
   apiConfig_envActiveBadge: { en: 'Env Key Active', zh: '环境密钥生效中' },

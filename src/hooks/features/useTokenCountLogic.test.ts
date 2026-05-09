@@ -78,4 +78,22 @@ describe('useTokenCountLogic API key resolution', () => {
     expect(countTokensApiMock.mock.calls.at(-1)?.[0]).toBe('valid-key');
     unmount();
   });
+
+  it('includes the token API failure detail in the visible error', async () => {
+    countTokensApiMock.mockRejectedValueOnce(new Error('quota exhausted'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const appSettings = createAppSettings({
+      useCustomApiConfig: true,
+      apiKey: 'valid-key',
+    });
+
+    try {
+      const { result, unmount } = renderTokenCountLogic(appSettings, appSettings);
+
+      await waitFor(() => expect(result.current.error).toBe('Failed to count tokens: quota exhausted'));
+      unmount();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
 });

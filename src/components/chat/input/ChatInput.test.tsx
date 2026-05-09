@@ -13,7 +13,13 @@ import { ChatInput } from './ChatInput';
 
 const mockChatStoreState = vi.hoisted(() => ({
   activeSessionId: 'session-1' as string | null,
-  savedSessions: [] as Array<{ id: string; title: string; timestamp: number; messages: unknown[]; settings: ChatSettings }>,
+  savedSessions: [] as Array<{
+    id: string;
+    title: string;
+    timestamp: number;
+    messages: unknown[];
+    settings: ChatSettings;
+  }>,
   activeMessages: [] as unknown[],
   selectedFiles: [] as unknown[],
   commandedInput: null as InputCommand | null,
@@ -28,7 +34,9 @@ const mockChatStoreState = vi.hoisted(() => ({
   loadingSessionIds: new Set<string>(),
   setSelectedFiles: vi.fn((value: unknown[] | ((previous: unknown[]) => unknown[])) => {
     mockChatStoreState.selectedFiles =
-      typeof value === 'function' ? (value as (previous: unknown[]) => unknown[])(mockChatStoreState.selectedFiles) : value;
+      typeof value === 'function'
+        ? (value as (previous: unknown[]) => unknown[])(mockChatStoreState.selectedFiles)
+        : value;
   }),
   setAppFileError: vi.fn((value: string | null) => {
     mockChatStoreState.appFileError = value;
@@ -106,7 +114,8 @@ const mockTextApi = vi.hoisted(() => ({
 }));
 
 const mockChatStoreSubscribers = vi.hoisted(
-  () => new Set<(state: Partial<typeof mockChatStoreState>, previousState: Partial<typeof mockChatStoreState>) => void>(),
+  () =>
+    new Set<(state: Partial<typeof mockChatStoreState>, previousState: Partial<typeof mockChatStoreState>) => void>(),
 );
 
 vi.mock('../../../hooks/useDevice', () => ({
@@ -176,7 +185,10 @@ vi.mock('../../../stores/chatStore', () => {
         mockChatStoreSubscribers.forEach((subscriber) => subscriber(mockChatStoreState, previousState));
       },
       subscribe: (
-        listener: (state: Partial<typeof mockChatStoreState>, previousState: Partial<typeof mockChatStoreState>) => void,
+        listener: (
+          state: Partial<typeof mockChatStoreState>,
+          previousState: Partial<typeof mockChatStoreState>,
+        ) => void,
       ) => {
         mockChatStoreSubscribers.add(listener);
         return () => mockChatStoreSubscribers.delete(listener);
@@ -196,8 +208,7 @@ vi.mock('./ChatInputFileModals', () => ({
 }));
 
 vi.mock('./ChatInputArea', async () => {
-  const { useChatInputContext } =
-    await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
+  const { useChatInputContext } = await vi.importActual<typeof import('./ChatInputContext')>('./ChatInputContext');
 
   const ChatInputArea = () => {
     const {
@@ -297,7 +308,8 @@ const ChatAreaProvider = ({ value, children }: { value: ChatAreaProviderValue; c
   mockChatInputUiSettings.showInputClearButton = value.input.appSettings.showInputClearButton;
   mockChatStoreState.setSelectedFiles = value.input.setSelectedFiles as typeof mockChatStoreState.setSelectedFiles;
   mockChatStoreState.setAppFileError = value.input.setAppFileError as typeof mockChatStoreState.setAppFileError;
-  mockChatStoreState.setEditingMessageId = value.input.setEditingMessageId as typeof mockChatStoreState.setEditingMessageId;
+  mockChatStoreState.setEditingMessageId = value.input
+    .setEditingMessageId as typeof mockChatStoreState.setEditingMessageId;
   const versionedChildren = isValidElement(children)
     ? cloneElement(children, {
         'data-provider-version': `${value.input.activeSessionId}-${value.input.isLoading}-${value.input.selectedFiles.length}`,
@@ -1079,6 +1091,53 @@ describe('ChatInput', () => {
 
     expect(mockTextApi.translateTextApi).toHaveBeenCalledWith('api-key', 'Hello', 'French', undefined);
     expect(textarea?.value).toBe('Bonjour');
+  });
+
+  it('includes translation API error details when composer translation fails', async () => {
+    mockTextApi.translateTextApi.mockRejectedValueOnce(new Error('model overloaded'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const setAppFileError = vi.fn();
+    const providerValue = createProviderValue(null);
+    providerValue.input.appSettings = {
+      ...providerValue.input.appSettings,
+      translationTargetLanguage: 'French',
+      showInputTranslationButton: true,
+    };
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.setAppFileError = setAppFileError;
+
+    try {
+      await act(async () => {
+        renderer.root.render(
+          <ChatAreaProvider value={providerValue}>
+            <ChatInput />
+          </ChatAreaProvider>,
+        );
+      });
+
+      const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+      const translateButton = renderer.container.querySelector<HTMLButtonElement>('[data-testid="translate-button"]');
+
+      await act(async () => {
+        if (!textarea) {
+          return;
+        }
+
+        setTextareaValue(textarea, 'Hello');
+      });
+
+      await act(async () => {
+        translateButton?.click();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(setAppFileError).toHaveBeenLastCalledWith('Translation failed: model overloaded');
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it('translates composer text using the configured input translation model', async () => {

@@ -1,5 +1,6 @@
 import React, { useRef, useLayoutEffect } from 'react';
 import { MAX_TEXTAREA_HEIGHT_PX } from '../../../../hooks/chat-input/useChatInputState';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 interface ChatTextAreaProps {
   textareaRef: React.RefObject<HTMLTextAreaElement>;
@@ -34,6 +35,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
   initialTextareaHeight,
   isConverting,
 }) => {
+  const { t } = useI18n();
   const shadowRef = useRef<HTMLTextAreaElement>(null);
   const isComposingRef = useRef(false);
 
@@ -120,7 +122,8 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
           height: isFullscreen ? '100%' : `${isMobile ? 24 : initialTextareaHeight}px`,
           overflowY: isFullscreen ? 'auto' : 'hidden',
         }}
-        aria-label="Chat message input"
+        aria-label={t('chatInput_textarea_aria')}
+        data-chat-input-textarea="true"
         onFocus={onFocus}
         disabled={disabled || isConverting}
         rows={1}

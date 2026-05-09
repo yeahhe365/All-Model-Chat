@@ -56,12 +56,12 @@ export const ScenarioItem: React.FC<ScenarioItemProps> = ({
             {scenario.title}
           </h3>
           <div className="flex items-center gap-2 text-[10px] text-[var(--theme-text-tertiary)]">
-            <span>{messageCount} msgs</span>
+            <span>{t('scenarios_message_count').replace('{count}', String(messageCount))}</span>
             {hasSystemPrompt && (
               <>
                 <span className="w-0.5 h-0.5 rounded-full bg-current" />
                 <span className="flex items-center gap-0.5 text-[var(--theme-text-secondary)]">
-                  <Sparkles size={8} /> Prompt
+                  <Sparkles size={8} /> {t('scenarios_has_system_prompt')}
                 </span>
               </>
             )}
@@ -73,14 +73,14 @@ export const ScenarioItem: React.FC<ScenarioItemProps> = ({
       <div className="flex-grow mb-4">
         <p className="text-xs text-[var(--theme-text-secondary)] leading-relaxed line-clamp-3 opacity-80 group-hover:opacity-100 transition-opacity">
           {scenario.systemInstruction ||
-            (scenario.messages.length > 0 ? scenario.messages[0].content : 'No preview available')}
+            (scenario.messages.length > 0 ? scenario.messages[0].content : t('scenarios_no_preview'))}
         </p>
       </div>
 
       {/* Footer Actions - Visible on Hover (Desktop) / Always (Mobile) */}
       <div className="flex items-center justify-end gap-1 pt-3 border-t border-[var(--theme-border-secondary)]/50 opacity-100 pointer-events-auto sm:opacity-0 sm:pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 translate-y-1 group-hover:translate-y-0">
         {isSystem && onView && (
-          <ActionButton onClick={onView} icon={Eye} label={t('scenarios_view_title', 'View')} scenario={scenario} />
+          <ActionButton onClick={onView} icon={Eye} label={t('scenarios_view_title')} scenario={scenario} />
         )}
         {!isSystem && onEdit && (
           <ActionButton onClick={onEdit} icon={Edit3} label={t('scenarios_edit_title')} scenario={scenario} />

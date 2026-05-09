@@ -7,6 +7,7 @@ import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';
 import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
 import { loadRegisterSW } from '../../pwa/loadRegisterSw';
 import { getTabCycleModelIds } from '../../utils/modelCatalog';
+import { CHAT_INPUT_TEXTAREA_SELECTOR } from '../../constants/appConstants';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
 import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
@@ -274,7 +275,8 @@ export const useAppEvents = ({
       }
 
       if (isShortcutPressed(event, 'input.cycleModels', appSettings)) {
-        const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
+        const isChatTextareaFocused =
+          activeElement instanceof Element && activeElement.matches(CHAT_INPUT_TEXTAREA_SELECTOR);
         if (isChatTextareaFocused || !isGenerallyInputFocused) {
           event.preventDefault();
           const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);

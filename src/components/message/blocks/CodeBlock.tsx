@@ -7,6 +7,7 @@ import { CodeHeader } from './parts/CodeHeader';
 import { extractTextFromNode } from '../../../utils/uiUtils';
 import { isImageMimeType } from '../../../utils/fileTypeUtils';
 import { FileDisplay } from '../FileDisplay';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface CodeBlockProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ interface CodeBlockProps {
 }
 
 export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
+  const { t } = useI18n();
   const {
     preRef,
     isExpanded,
@@ -119,7 +121,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
             onClick={handleToggleExpand}
           >
             <span className="text-xs font-medium text-[var(--theme-text-tertiary)] group-hover/expand:text-[var(--theme-text-primary)] flex items-center gap-1 bg-[var(--theme-bg-primary)] px-3 py-1 rounded-full shadow-sm border border-[var(--theme-border-secondary)] transition-colors">
-              <ChevronDown size={12} /> Show more
+              <ChevronDown size={12} /> {t('code_show_more')}
             </span>
           </div>
         )}
@@ -128,9 +130,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
             <button
               onClick={handleToggleExpand}
               className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-tertiary)] border border-[var(--theme-border-secondary)] rounded-full text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] shadow-sm transition-colors"
-              title="Collapse code block"
+              title={t('code_collapse_block')}
             >
-              <ChevronUp size={12} strokeWidth={2} /> Show less
+              <ChevronUp size={12} strokeWidth={2} /> {t('code_show_less')}
             </button>
           </div>
         )}
@@ -141,20 +143,20 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
         <div className="border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] rounded-b-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
           <div className="flex select-none items-center justify-between px-3 py-1.5 bg-[var(--theme-bg-tertiary)]/50">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-              <Terminal size={12} /> Local Python Output
+              <Terminal size={12} /> {t('code_local_python_output')}
             </span>
             <div className="flex items-center gap-1">
               <button
                 onClick={resetState}
                 className="p-1 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-secondary)] transition-colors"
-                title="Reset View"
+                title={t('code_reset_view')}
               >
                 <RotateCcw size={12} />
               </button>
               <button
                 onClick={clearOutput}
                 className="p-1 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-secondary)] transition-colors"
-                title="Close Console"
+                title={t('code_close_console')}
               >
                 <X size={12} />
               </button>
@@ -179,7 +181,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
               <div className="mt-2 mb-2 rounded-lg overflow-hidden border border-[var(--theme-border-secondary)] inline-block bg-white">
                 <img
                   src={`data:image/png;base64,${displayInlineImage}`}
-                  alt="Plot"
+                  alt={t('code_plot_alt')}
                   className="max-w-full h-auto block"
                 />
               </div>
@@ -188,7 +190,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
             {generatedFiles.length > 0 && (
               <div className="mt-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex select-none items-center gap-1.5 mb-2">
-                  <FileOutput size={12} /> Generated Files
+                  <FileOutput size={12} /> {t('code_generated_files')}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {generatedFiles.map((file) => (
@@ -204,7 +206,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
             )}
 
             {!error && !output && !displayInlineImage && generatedFiles.length === 0 && !isRunning && (
-              <div className="text-[var(--theme-text-tertiary)] text-xs italic">Executed successfully (no output).</div>
+              <div className="text-[var(--theme-text-tertiary)] text-xs italic">{t('code_executed_no_output')}</div>
             )}
           </div>
         </div>

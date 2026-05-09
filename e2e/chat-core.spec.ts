@@ -11,6 +11,7 @@ test('sends a non-streaming chat prompt and renders markdown from a mocked API r
       useCustomApiConfig: true,
       apiKey: 'e2e-key',
       isStreamingEnabled: false,
+      isAutoTitleEnabled: false,
       language: 'en',
     },
   });
@@ -40,6 +41,7 @@ test('renders a streamed chat response from intercepted API chunks', async ({ pa
       useCustomApiConfig: true,
       apiKey: 'e2e-key',
       isStreamingEnabled: true,
+      isAutoTitleEnabled: false,
       language: 'en',
     },
   });

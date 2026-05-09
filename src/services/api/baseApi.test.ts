@@ -17,7 +17,9 @@ type MockGoogleGenAIConfig = {
   };
 };
 
-type StoredAppSettings = NonNullable<Awaited<ReturnType<typeof import('@/services/db/dbService').dbService.getAppSettings>>>;
+type StoredAppSettings = NonNullable<
+  Awaited<ReturnType<typeof import('@/services/db/dbService').dbService.getAppSettings>>
+>;
 
 // Mock @google/genai - must use function syntax for constructor mock
 vi.mock('@google/genai', () => ({
@@ -80,7 +82,10 @@ type LegacyGenerationConfigTestOptions = {
 };
 
 const buildGenerationConfig = (
-  optionsOrModelId: Parameters<typeof buildGenerationConfigFromSettings>[0] | LegacyGenerationConfigTestOptions | string,
+  optionsOrModelId:
+    | Parameters<typeof buildGenerationConfigFromSettings>[0]
+    | LegacyGenerationConfigTestOptions
+    | string,
   systemInstruction = '',
   config: LegacyGenerationConfigTestOptions['config'] = {},
   showThoughts = false,

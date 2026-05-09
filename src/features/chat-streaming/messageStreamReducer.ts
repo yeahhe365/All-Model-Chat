@@ -109,7 +109,7 @@ export const createMessageStreamState = ({
 const hasThoughtSignature = (part: Part) =>
   Boolean(
     (part as Part & { thoughtSignature?: string; thought_signature?: string }).thoughtSignature ||
-      (part as Part & { thoughtSignature?: string; thought_signature?: string }).thought_signature,
+    (part as Part & { thoughtSignature?: string; thought_signature?: string }).thought_signature,
   );
 
 const isPlainTextOnlyPart = (part: Part) => Object.keys(part).every((key) => key === 'text');
@@ -225,9 +225,9 @@ const isMeaningfulPart = (part: Part) => {
 
   return Boolean(
     (anyPart.text && anyPart.text.trim().length > 0) ||
-      anyPart.executableCode ||
-      anyPart.codeExecutionResult ||
-      anyPart.inlineData,
+    anyPart.executableCode ||
+    anyPart.codeExecutionResult ||
+    anyPart.inlineData,
   );
 };
 
@@ -484,10 +484,7 @@ export const mergeUrlContextMetadata = (existing: unknown, incoming: unknown): u
   return merged;
 };
 
-export const reduceMessageStreamEvent = (
-  state: MessageStreamState,
-  event: MessageStreamEvent,
-): MessageStreamState => {
+export const reduceMessageStreamEvent = (state: MessageStreamState, event: MessageStreamEvent): MessageStreamState => {
   switch (event.type) {
     case 'thought':
       return {

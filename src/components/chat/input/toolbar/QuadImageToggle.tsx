@@ -24,7 +24,7 @@ export const QuadImageToggle: React.FC<QuadImageToggleProps> = ({ enabled, onTog
       title={t('settings_generateQuadImages_tooltip')}
     >
       <LayoutGrid size={14} strokeWidth={2} />
-      <span>4 Images</span>
+      <span>{t('quadImages_label')}</span>
     </button>
   );
 };

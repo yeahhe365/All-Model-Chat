@@ -38,12 +38,12 @@ const UserIcon: React.FC = () => {
   return <User size={size} className="text-[var(--theme-icon-user)] flex-shrink-0" strokeWidth={2} />;
 };
 
-const BotIcon: React.FC = () => {
+const BotIcon: React.FC<{ alt: string }> = ({ alt }) => {
   const size = useResponsiveValue(24, 29);
   return (
     <img
       src="/assets/assistant-avatar.png"
-      alt="Assistant avatar"
+      alt={alt}
       width={size}
       height={size}
       className="flex-shrink-0 object-contain"
@@ -143,7 +143,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             )}
             {message.role === 'model' && (
               <AvatarWrapper onClick={() => onEditMessage(message.id, 'update')} showEditOverlay={true}>
-                <BotIcon />
+                <BotIcon alt={t('assistant_avatar_alt')} />
               </AvatarWrapper>
             )}
             {message.role === 'error' && <ErrorMsgIcon />}

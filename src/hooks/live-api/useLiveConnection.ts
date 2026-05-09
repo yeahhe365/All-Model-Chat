@@ -93,12 +93,9 @@ export const useLiveConnection = ({
     [clearSetupCompleteWaiters],
   );
 
-  const setTranslationError = useCallback(
-    (key: string, fallback?: string, values?: Record<string, string | number>) => {
-      setErrorState({ kind: 'translation', key, fallback, values });
-    },
-    [],
-  );
+  const setTranslationError = useCallback((key: string, values?: Record<string, string | number>) => {
+    setErrorState({ kind: 'translation', key, values });
+  }, []);
 
   const setRawError = useCallback((message: string) => {
     setErrorState({ kind: 'raw', message });
@@ -113,7 +110,7 @@ export const useLiveConnection = ({
 
     if (retryCountRef.current >= maxRetries) {
       logService.error('Max reconnection attempts reached.');
-      setTranslationError('liveStatus_connection_lost_retry_failed', 'Connection lost. Please try again.');
+      setTranslationError('liveStatus_connection_lost_retry_failed');
       setIsReconnecting(false);
       setIsConnected(false);
 
@@ -127,14 +124,10 @@ export const useLiveConnection = ({
 
     const attempt = retryCountRef.current + 1;
     logService.warn(`Live API disconnected. Reconnecting in ${delay}ms... (Attempt ${attempt}/${maxRetries})`);
-    setTranslationError(
-      'liveStatus_reconnecting_attempt',
-      'Connection lost. Reconnecting... ({attempt}/{maxRetries})',
-      {
-        attempt,
-        maxRetries,
-      },
-    );
+    setTranslationError('liveStatus_reconnecting_attempt', {
+      attempt,
+      maxRetries,
+    });
 
     reconnectTimeoutRef.current = setTimeout(() => {
       reconnectTimeoutRef.current = null;
@@ -152,7 +145,7 @@ export const useLiveConnection = ({
       logService.info('Live API GoAway received', goAway ?? {});
       isProactiveReconnectRef.current = true;
       setIsReconnecting(true);
-      setTranslationError('liveStatus_refreshing', 'Refreshing live session...');
+      setTranslationError('liveStatus_refreshing');
 
       sessionRef.current?.then((session) => session.close());
     },
@@ -267,7 +260,7 @@ export const useLiveConnection = ({
               if (err.message) {
                 setRawError(err.message);
               } else {
-                setTranslationError('liveStatus_connection_error', 'Connection error');
+                setTranslationError('liveStatus_connection_error');
               }
             }
           },
@@ -291,11 +284,11 @@ export const useLiveConnection = ({
         setIsReconnecting(false);
         const authError = err as LiveApiAuthConfigurationError & { code?: string };
         if (authError.code === 'MISSING_API_KEY') {
-          setTranslationError('liveStatus_missing_api_key', 'Live API requires a browser API key.');
+          setTranslationError('liveStatus_missing_api_key');
         } else if (err.message) {
           setRawError(err.message);
         } else {
-          setTranslationError('liveStatus_failed_to_start', 'Failed to start session');
+          setTranslationError('liveStatus_failed_to_start');
         }
         resetAudioState();
         stopVideo();
@@ -308,7 +301,7 @@ export const useLiveConnection = ({
         if (err instanceof Error && err.message) {
           setRawError(err.message);
         } else {
-          setTranslationError('liveStatus_failed_to_start', 'Failed to start session');
+          setTranslationError('liveStatus_failed_to_start');
         }
         resetAudioState();
       }

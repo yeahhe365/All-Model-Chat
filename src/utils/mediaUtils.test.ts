@@ -3,6 +3,10 @@ import { captureScreenImage } from './mediaUtils';
 
 const originalMediaDevices = navigator.mediaDevices;
 const originalImageCapture = window.ImageCapture;
+const messages = {
+  unsupported: 'Screen capture unsupported.',
+  startFailed: (message: string) => `Screen capture failed: ${message}`,
+};
 
 describe('captureScreenImage', () => {
   afterEach(() => {
@@ -25,9 +29,9 @@ describe('captureScreenImage', () => {
     });
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-    await expect(captureScreenImage()).resolves.toBeNull();
+    await expect(captureScreenImage(messages)).resolves.toBeNull();
 
-    expect(alertSpy).toHaveBeenCalledWith('Your browser does not support screen capture.');
+    expect(alertSpy).toHaveBeenCalledWith('Screen capture unsupported.');
   });
 
   it('settles and stops the stream when the video fallback never becomes ready', async () => {
@@ -46,7 +50,7 @@ describe('captureScreenImage', () => {
     });
 
     let resolvedValue: Blob | null | 'pending' = 'pending';
-    const capturePromise = captureScreenImage().then((value) => {
+    const capturePromise = captureScreenImage(messages).then((value) => {
       resolvedValue = value;
     });
 

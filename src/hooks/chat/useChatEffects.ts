@@ -7,6 +7,7 @@ import {
   normalizeAspectRatioForModel,
   normalizeImageSizeForModel,
 } from '../../utils/modelHelpers';
+import { getTranslator } from '../../i18n/translations';
 
 interface UseChatEffectsProps {
   activeSessionId: string | null;
@@ -94,7 +95,11 @@ export const useChatEffects = ({
   // 4. File Error Auto-Clear
   useEffect(() => {
     const isFileProcessing = selectedFiles.some((file) => file.isProcessing);
-    if (appFileError === 'Wait for files to finish processing.' && !isFileProcessing) {
+    const waitForFilesMessages = [
+      getTranslator('en')('messageSender_waitForFiles'),
+      getTranslator('zh')('messageSender_waitForFiles'),
+    ];
+    if (appFileError && waitForFilesMessages.includes(appFileError) && !isFileProcessing) {
       setAppFileError(null);
     }
   }, [selectedFiles, appFileError, setAppFileError]);

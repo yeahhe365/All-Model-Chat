@@ -7,6 +7,7 @@ import { isAudioMimeType, isTextFile } from '../../utils/fileTypeUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '@/features/audio/audioCompression';
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface UseFilePreProcessingProps {
   appSettings: AppSettings;
@@ -14,6 +15,7 @@ interface UseFilePreProcessingProps {
 }
 
 export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFilePreProcessingProps) => {
+  const { t } = useI18n();
   const processFiles = useCallback(
     async (
       files: FileList | File[],
@@ -43,7 +45,7 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
             ...prev,
             {
               id: tempId,
-              name: `Processing ${file.name}...`,
+              name: t('fileProcessing_zip').replace('{filename}', file.name),
               type: 'application/zip',
               size: file.size,
               isProcessing: true,
@@ -68,7 +70,7 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
             ...prev,
             {
               id: tempId,
-              name: `Extracting text from ${file.name}...`,
+              name: t('fileProcessing_docx').replace('{filename}', file.name),
               type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
               size: file.size,
               isProcessing: true,
@@ -104,7 +106,7 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
               ...prev,
               {
                 id: tempId,
-                name: `Compressing ${file.name}...`,
+                name: t('fileProcessing_audio').replace('{filename}', file.name),
                 type: file.type || 'audio/mpeg',
                 size: file.size,
                 isProcessing: true,
@@ -143,7 +145,7 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
       return processedFiles;
     },
-    [appSettings.isAudioCompressionEnabled, setSelectedFiles],
+    [appSettings.isAudioCompressionEnabled, setSelectedFiles, t],
   );
 
   return { processFiles };

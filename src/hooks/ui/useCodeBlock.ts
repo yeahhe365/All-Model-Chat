@@ -5,6 +5,7 @@ import { getCodeBlockPreviewType } from '../../utils/codeUtils';
 import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { SideViewContent } from '../../types';
+import { useI18n } from '../../contexts/I18nContext';
 
 const COLLAPSE_THRESHOLD_PX = 320;
 
@@ -92,6 +93,7 @@ export const useCodeBlock = ({
   onOpenHtmlPreview,
   onOpenSidePanel,
 }: UseCodeBlockProps) => {
+  const { t } = useI18n();
   const preRef = useRef<HTMLPreElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [expandedOverride, setExpandedOverride] = useState<boolean | null>(null);
@@ -210,7 +212,7 @@ export const useCodeBlock = ({
   else if (previewMarkupType === 'svg') finalLanguage = 'svg';
 
   const handleOpenSide = () => {
-    let displayTitle = 'HTML Preview';
+    let displayTitle = t('htmlPreview_title');
     if (finalLanguage === 'html') {
       const titleMatch = resolvedCodeText.match(/<title[^>]*>([^<]+)<\/title>/i);
       if (titleMatch && titleMatch[1]) {

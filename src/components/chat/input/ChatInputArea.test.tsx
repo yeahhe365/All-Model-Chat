@@ -81,7 +81,9 @@ describe('ChatInputArea default spacing', () => {
     );
     expect(providerSource).toContain('disabled: actionDisabled,');
     expect(source).not.toContain('const actionDisabled =');
-    expect(source).not.toContain('disabled: inputState.isAddingById || inputState.isWaitingForUpload || isConverting || inputDisabled,');
+    expect(source).not.toContain(
+      'disabled: inputState.isAddingById || inputState.isWaitingForUpload || isConverting || inputDisabled,',
+    );
   });
 
   it('renders the queued submission strip above the input shell instead of inside it', () => {

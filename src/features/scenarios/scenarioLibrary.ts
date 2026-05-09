@@ -1,13 +1,8 @@
 import {
-  annaScenario,
-  eniManualPasteScenario,
   formalScenario,
-  fopScenario,
-  pyriteScenario,
   reasonerScenario,
   socraticScenario,
   succinctScenario,
-  unrestrictedScenario,
   voxelScenario,
 } from '../../constants/defaultScenarios';
 import { SavedScenario } from '../../types';
@@ -31,23 +26,18 @@ interface InitializeScenarioStateResult {
   didChange: boolean;
 }
 
-const DEPRECATED_SCENARIO_IDS = ['cyberpunk-rpg-scenario'];
+const DEPRECATED_SCENARIO_IDS = [
+  'cyberpunk-rpg-scenario',
+  'fop-scenario-default',
+  'unrestricted-scenario-default',
+  'pyrite-scenario-default',
+  'anna-scenario-default',
+  'eni-manual-paste-scenario-2026-04-12',
+];
 
 const SYSTEM_SCENARIOS: SavedScenario[] = [reasonerScenario, succinctScenario, socraticScenario, formalScenario];
 
 const USER_SCENARIO_SEEDS: UserScenarioSeed[] = [
-  {
-    flag: 'hasSeededJailbreaks_v1',
-    scenarios: [fopScenario, unrestrictedScenario, pyriteScenario],
-  },
-  {
-    flag: 'hasSeededAnna_v1',
-    scenarios: [annaScenario],
-  },
-  {
-    flag: 'hasSeededEniManualPaste_v1',
-    scenarios: [eniManualPasteScenario],
-  },
   {
     flag: 'hasSeededPlayablePresets_v1',
     scenarios: [voxelScenario],

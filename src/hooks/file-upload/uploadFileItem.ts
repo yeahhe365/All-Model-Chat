@@ -7,6 +7,9 @@ import { generateUniqueId } from '../../utils/chat/ids';
 import { fileToBlobUrl } from '../../utils/fileHelpers';
 import { uploadFileApi } from '../../services/api/fileApi';
 import { formatSpeed, getEffectiveMimeType, getUploadLifecycleForGeminiState, shouldUseFileApi } from './utils';
+import { getTranslator } from '../../i18n/translations';
+
+type Translator = ReturnType<typeof getTranslator>;
 
 interface UploadFileItemParams {
   file: File;
@@ -16,6 +19,7 @@ interface UploadFileItemParams {
   appSettings: AppSettings;
   setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
   uploadStatsRef: React.MutableRefObject<Map<string, { lastLoaded: number; lastTime: number }>>;
+  t?: Translator;
 }
 
 export const uploadFileItem = async ({
@@ -26,6 +30,7 @@ export const uploadFileItem = async ({
   appSettings,
   setSelectedFiles,
   uploadStatsRef,
+  t = getTranslator('en'),
 }: UploadFileItemParams) => {
   const fileId = generateUniqueId();
   const effectiveMimeType = getEffectiveMimeType(file);
@@ -44,7 +49,7 @@ export const uploadFileItem = async ({
         size: file.size,
         isProcessing: false,
         progress: 0,
-        error: `Unsupported file type: ${file.name}`,
+        error: t('upload_unsupported_type').replace('{filename}', file.name),
         uploadState: 'failed',
       },
     ]);
@@ -58,7 +63,7 @@ export const uploadFileItem = async ({
 
   if (shouldUploadFile) {
     if (!keyToUse) {
-      const errorMsg = 'API key was not available for file upload.';
+      const errorMsg = t('upload_missing_api_key');
       logService.error(errorMsg);
       // Cleanup on early rejection
       releaseManagedObjectUrl(dataUrl);
@@ -91,7 +96,7 @@ export const uploadFileItem = async ({
       dataUrl: dataUrl, // Add local preview URL
       uploadState: 'uploading',
       abortController: controller,
-      uploadSpeed: 'Starting...',
+      uploadSpeed: t('upload_starting'),
       mediaResolution: defaultResolution,
     };
 
@@ -159,7 +164,7 @@ export const uploadFileItem = async ({
                 fileApiName: uploadedFileInfo.name,
                 rawFile: file, // Preserve local file reference for preview
                 uploadState: uploadState,
-                error: uploadState === 'failed' ? 'File API processing failed' : f.error || undefined,
+                error: uploadState === 'failed' ? t('upload_api_processing_failed') : f.error || undefined,
                 abortController: undefined,
                 uploadSpeed: undefined, // Clear speed on complete
               }
@@ -167,11 +172,14 @@ export const uploadFileItem = async ({
         ),
       );
     } catch (uploadError) {
-      let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
+      let errorMsg = t('upload_failed_with_message').replace(
+        '{message}',
+        uploadError instanceof Error ? uploadError.message : String(uploadError),
+      );
       let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
 
       if (uploadError instanceof Error && uploadError.name === 'AbortError') {
-        errorMsg = 'Upload cancelled by user.';
+        errorMsg = t('upload_cancelled_by_user');
         uploadStateUpdate = 'cancelled';
         logService.warn(`File upload cancelled by user: ${file.name}`);
       } else {

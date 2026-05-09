@@ -5,7 +5,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { dbService } from '@/services/db/dbService';
 import { FOCUS_HISTORY_SEARCH_EVENT } from '../constants/shortcuts';
 
-type HistoryTranslator = (key: string, fallback?: string) => string;
+type HistoryTranslator = (key: string) => string;
 
 interface UseHistorySidebarLogicProps {
   isOpen: boolean;
@@ -37,10 +37,10 @@ const categorizeSessionsByDate = (
   const categories: { [key: string]: SavedChatSession[] } = {};
 
   const categoryKeys = {
-    today: t('history_today', 'Today'),
-    yesterday: t('history_yesterday', 'Yesterday'),
-    sevenDays: t('history_7_days', 'Previous 7 Days'),
-    thirtyDays: t('history_30_days', 'Previous 30 Days'),
+    today: t('history_today'),
+    yesterday: t('history_yesterday'),
+    sevenDays: t('history_7_days'),
+    thirtyDays: t('history_30_days'),
   };
 
   sessions.forEach((session) => {

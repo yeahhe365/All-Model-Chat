@@ -104,7 +104,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
               <span
                 className={`hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide border ${isSystemScenario ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' : 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-bg-accent)] border-[var(--theme-bg-accent)]/20'}`}
               >
-                {isSystemScenario ? 'System Preset (Read Only)' : 'Editor'}
+                {isSystemScenario ? t('scenarios_system_preset_readonly_badge') : t('scenarios_editor_badge')}
               </span>
             )}
           </div>

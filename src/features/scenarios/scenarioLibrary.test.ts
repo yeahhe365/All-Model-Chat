@@ -45,6 +45,37 @@ describe('scenarioLibrary', () => {
     expect(storage.setItem).toHaveBeenCalledWith('hasSeededPlayablePresets_v1', 'true');
   });
 
+  it('does not seed jailbreak or persona override presets by default', () => {
+    const storage = createStorage();
+
+    const result = initializeScenarioState([], storage);
+
+    expect(result.userScenarios.map((scenario) => scenario.id)).toEqual([voxelScenario.id]);
+    expect(result.savedScenarios.map((scenario) => scenario.id)).toEqual([...SYSTEM_SCENARIO_IDS, voxelScenario.id]);
+    expect(storage.setItem).toHaveBeenCalledWith('hasSeededPlayablePresets_v1', 'true');
+    expect(storage.setItem).not.toHaveBeenCalledWith('hasSeededJailbreaks_v1', expect.any(String));
+    expect(storage.setItem).not.toHaveBeenCalledWith('hasSeededAnna_v1', expect.any(String));
+    expect(storage.setItem).not.toHaveBeenCalledWith('hasSeededEniManualPaste_v1', expect.any(String));
+  });
+
+  it('prunes previously seeded jailbreak and persona override presets', () => {
+    const result = initializeScenarioState(
+      [
+        { id: 'fop-scenario-default', title: 'FOP Mode', messages: [] },
+        { id: 'unrestricted-scenario-default', title: 'Unrestricted Mode', messages: [] },
+        { id: 'pyrite-scenario-default', title: 'Pyrite Mode', messages: [] },
+        { id: 'anna-scenario-default', title: 'Anna (Girlfriend Mode)', messages: [] },
+        { id: 'eni-manual-paste-scenario-2026-04-12', title: 'ENI', messages: [] },
+        { id: 'custom-scenario', title: 'Custom Scenario', messages: [] },
+      ],
+      createStorage({ hasSeededPlayablePresets_v1: 'true' }),
+    );
+
+    expect(result.didChange).toBe(true);
+    expect(result.userScenarios).toEqual([{ id: 'custom-scenario', title: 'Custom Scenario', messages: [] }]);
+    expect(result.savedScenarios.map((scenario) => scenario.id)).toEqual([...SYSTEM_SCENARIO_IDS, 'custom-scenario']);
+  });
+
   it('exports only user scenarios', () => {
     const payload = buildScenarioExportPayload(
       buildSavedScenarios([

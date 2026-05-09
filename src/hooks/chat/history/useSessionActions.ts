@@ -6,6 +6,7 @@ import { createNewSession } from '../../../utils/chat/session';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { dbService } from '@/services/db/dbService';
 import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface UseSessionActionsProps {
   updateAndPersistSessions: (
@@ -16,6 +17,7 @@ interface UseSessionActionsProps {
 }
 
 export const useSessionActions = ({ updateAndPersistSessions, activeJobs }: UseSessionActionsProps) => {
+  const { t } = useI18n();
   const handleDeleteChatHistorySession = useCallback(
     (sessionId: string) => {
       logService.info(`Deleting session: ${sessionId}`);
@@ -88,15 +90,17 @@ export const useSessionActions = ({ updateAndPersistSessions, activeJobs }: UseS
           generationEndTime: undefined,
         }));
 
+        const duplicateTitle =
+          fullSessionToDuplicate.title === 'New Chat' ? t('newChat') : fullSessionToDuplicate.title;
         const newSession = createNewSession(
           fullSessionToDuplicate.settings,
           duplicatedMessages,
-          `${fullSessionToDuplicate.title} (Copy)`,
+          t('history_copy_title').replace('{title}', duplicateTitle),
         );
         return [newSession, ...prev];
       });
     },
-    [updateAndPersistSessions],
+    [updateAndPersistSessions, t],
   );
 
   return {

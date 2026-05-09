@@ -65,15 +65,9 @@ describe('useLiveMessageProcessing', () => {
     expect(playAudioChunk).toHaveBeenNthCalledWith(1, 'audio-1');
     expect(playAudioChunk).toHaveBeenNthCalledWith(2, 'audio-2');
     expect(mockCreateWavBlobFromPCMChunks).toHaveBeenCalledWith(['audio-1', 'audio-2']);
-    expect(onTranscript).toHaveBeenCalledWith(
-      'preface',
-      'model',
-      false,
-      'content',
-      undefined,
-      undefined,
-      { text: 'preface' },
-    );
+    expect(onTranscript).toHaveBeenCalledWith('preface', 'model', false, 'content', undefined, undefined, {
+      text: 'preface',
+    });
     expect(onTranscript).toHaveBeenCalledWith('suffix', 'model', false, 'content', undefined, undefined, {
       text: 'suffix',
     });
@@ -208,15 +202,9 @@ describe('useLiveMessageProcessing', () => {
       );
     });
 
-    expect(onTranscript).toHaveBeenCalledWith(
-      'Hello live.',
-      'model',
-      false,
-      'content',
-      undefined,
-      undefined,
-      { text: 'Hello live.' },
-    );
+    expect(onTranscript).toHaveBeenCalledWith('Hello live.', 'model', false, 'content', undefined, undefined, {
+      text: 'Hello live.',
+    });
 
     unmount();
   });

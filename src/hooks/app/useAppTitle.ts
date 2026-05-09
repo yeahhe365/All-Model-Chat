@@ -45,11 +45,11 @@ export const useAppTitle = ({ isLoading, messages, language, sessionTitle }: Use
       let statusPrefix = '';
       if (isLoading) {
         const timeDisplay = ` (${currentGenerationStartTime ? generationTime : 0}s)`;
-        statusPrefix = language === 'zh' ? `生成中${timeDisplay}... | ` : `Generating${timeDisplay}... | `;
+        statusPrefix = language === 'zh' ? `生成中${timeDisplay}… | ` : `Generating${timeDisplay}... | `;
       }
 
       const suffix = sessionTitle === 'AMC WebUI' ? '' : ' • AMC WebUI';
-      const cleanTitle = sessionTitle || 'New Chat';
+      const cleanTitle = sessionTitle === 'New Chat' && language === 'zh' ? '新聊天' : sessionTitle || 'New Chat';
       document.title = `${statusPrefix}${cleanTitle}${suffix}`;
     };
 

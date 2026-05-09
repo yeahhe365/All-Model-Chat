@@ -13,14 +13,12 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({ settings, on
   const handleNotificationToggle = async (enabled: boolean) => {
     if (enabled) {
       if (!('Notification' in window)) {
-        alert('Desktop notifications are not supported by your browser.');
+        alert(t('settings_notificationsUnsupported'));
         return;
       }
 
       if (Notification.permission === 'denied') {
-        alert(
-          'Notifications are blocked by your browser. Please enable them in your browser settings to use this feature.',
-        );
+        alert(t('settings_notificationsBlocked'));
         return;
       }
 

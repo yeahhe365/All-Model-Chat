@@ -3,6 +3,7 @@ import { buildImportContextFile } from '../../utils/import-context/importContext
 import { processDroppedItems } from '../../utils/import-context/droppedItems';
 import { UploadedFile } from '../../types';
 import { generateUniqueId } from '../../utils/chat/ids';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface UseFileDragDropProps {
   onFilesDropped: (files: FileList | File[]) => Promise<void>;
@@ -11,6 +12,7 @@ interface UseFileDragDropProps {
 }
 
 export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFile }: UseFileDragDropProps) => {
+  const { t } = useI18n();
   const [isAppDraggingOver, setIsAppDraggingOver] = useState<boolean>(false);
   const [isProcessingDrop, setIsProcessingDrop] = useState<boolean>(false);
 
@@ -75,7 +77,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
           const tempId = generateUniqueId();
           onAddTempFile({
             id: tempId,
-            name: 'Processing dropped files...',
+            name: t('fileProcessing_dropped'),
             type: 'application/x-directory', // Dummy type for icon
             size: 0,
             isProcessing: true,
@@ -105,7 +107,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
         setIsProcessingDrop(false);
       }
     },
-    [onFilesDropped, onAddTempFile, onRemoveTempFile],
+    [onFilesDropped, onAddTempFile, onRemoveTempFile, t],
   );
 
   return {

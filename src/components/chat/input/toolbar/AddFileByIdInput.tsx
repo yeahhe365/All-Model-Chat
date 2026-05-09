@@ -37,11 +37,7 @@ export const AddFileByIdInput: React.FC<AddFileByIdInputProps> = ({
         <div className="px-2 mt-1.5">
           <p className="text-[10px] text-[var(--theme-text-tertiary)] flex items-center gap-1.5 ml-1">
             <span className="inline-block w-1 h-1 rounded-full bg-[var(--theme-text-tertiary)]" />
-            Enter a valid Gemini API File URI (e.g.,{' '}
-            <code className="bg-[var(--theme-bg-tertiary)] px-1 rounded text-[var(--theme-text-secondary)]">
-              files/888...
-            </code>
-            )
+            {t('addById_hint')}
           </p>
         </div>
       }

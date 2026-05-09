@@ -26,8 +26,8 @@ export const ComposerMoreMenu: React.FC<{ actions: ComposerAuxiliaryAction[]; di
         onClick={toggleMenu}
         disabled={disabled}
         className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' : ''}`}
-        aria-label={t('composer_more_actions', 'More input actions')}
-        title={t('composer_more_actions', 'More input actions')}
+        aria-label={t('composer_more_actions')}
+        title={t('composer_more_actions')}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >

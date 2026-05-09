@@ -38,6 +38,14 @@ export const appearanceSettings = {
     en: 'Show a browser notification when a response is finished generating while the tab is in the background.',
     zh: '当标签页在后台时，在响应生成完毕后显示浏览器通知。',
   },
+  settings_notificationsUnsupported: {
+    en: 'Desktop notifications are not supported by your browser.',
+    zh: '当前浏览器不支持桌面通知。',
+  },
+  settings_notificationsBlocked: {
+    en: 'Notifications are blocked by your browser. Please enable them in your browser settings to use this feature.',
+    zh: '浏览器已阻止通知。请在浏览器设置中启用通知后再使用此功能。',
+  },
   settings_enableCompletionSound_label: { en: 'Completion Sound', zh: '完成提示音' },
   settings_enableCompletionSound_tooltip: {
     en: 'Play a notification sound when a response is finished generating.',

@@ -105,7 +105,7 @@ export const useApp = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
 
-  const sessionTitle = activeChat?.title || t('newChat');
+  const sessionTitle = activeChat?.title === 'New Chat' ? t('newChat') : activeChat?.title || t('newChat');
 
   useAppTitle({
     isLoading,
@@ -146,16 +146,21 @@ export const useApp = () => {
 
       setExportStatus('exporting');
       try {
-        await exportChatLogic(format);
+        const didExport = await exportChatLogic(format);
+        if (didExport === false) {
+          return;
+        }
+        setIsExportModalOpen(false);
       } catch (error) {
         logService.error(`Chat export failed (format: ${format})`, { error });
-        alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+        alert(
+          t('export_failed_with_message').replace('{message}', error instanceof Error ? error.message : String(error)),
+        );
       } finally {
         setExportStatus('idle');
-        setIsExportModalOpen(false);
       }
     },
-    [activeChat, exportChatLogic],
+    [activeChat, exportChatLogic, t],
   );
 
   const handleSaveSettings = useCallback(

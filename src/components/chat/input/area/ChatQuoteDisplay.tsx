@@ -1,6 +1,7 @@
 import React from 'react';
 import { Quote, Trash2 } from 'lucide-react';
 import { LazyMarkdownRenderer } from '../../../message/LazyMarkdownRenderer';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 interface ChatQuoteDisplayProps {
   quotes: string[];
@@ -9,6 +10,8 @@ interface ChatQuoteDisplayProps {
 }
 
 export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRemoveQuote, themeId }) => {
+  const { t } = useI18n();
+
   if (!quotes || quotes.length === 0) return null;
 
   return (
@@ -25,7 +28,7 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
           <div className="flex-grow min-w-0 pr-6">
             {quotes.length > 1 && (
               <div className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider mb-1">
-                Quote {index + 1}
+                {t('quote_number_label').replace('{number}', String(index + 1))}
               </div>
             )}
             <div className="max-h-[160px] overflow-y-auto custom-scrollbar">
@@ -49,7 +52,7 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
             type="button"
             onClick={() => onRemoveQuote(index)}
             className="absolute top-2 right-2 p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-full transition-colors"
-            aria-label="Remove quote"
+            aria-label={t('remove_quote_aria')}
           >
             <Trash2 size={14} />
           </button>

@@ -8,7 +8,7 @@ import {
   loadCanvasSystemPrompt,
   loadHdGuideSystemPrompt,
 } from '../../constants/promptHelpers';
-import { DEFAULT_SYSTEM_INSTRUCTION } from '../../constants/appConstants';
+import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_SYSTEM_INSTRUCTION } from '../../constants/appConstants';
 import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '../../types';
 
 interface PendingCanvasPromptActivation {
@@ -42,7 +42,7 @@ export const focusChatInput = (delayMs = 50) => {
       return;
     }
 
-    const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement | null;
+    const textarea = document.querySelector(CHAT_INPUT_TEXTAREA_SELECTOR) as HTMLTextAreaElement | null;
     textarea?.focus();
   }, delayMs);
 };

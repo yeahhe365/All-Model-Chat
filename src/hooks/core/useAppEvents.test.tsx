@@ -151,7 +151,7 @@ describe('useAppEvents manual update checks', () => {
   it('cycles models using the default tab-cycle model subset when no manual selection is stored', async () => {
     const handleSelectModelInHeader = vi.fn();
     const textarea = document.createElement('textarea');
-    textarea.setAttribute('aria-label', 'Chat message input');
+    textarea.dataset.chatInputTextarea = 'true';
     document.body.appendChild(textarea);
     textarea.focus();
 
@@ -219,7 +219,7 @@ describe('useAppEvents manual update checks', () => {
   it('cycles models using the manually configured tab cycle selection when present', async () => {
     const handleSelectModelInHeader = vi.fn();
     const textarea = document.createElement('textarea');
-    textarea.setAttribute('aria-label', 'Chat message input');
+    textarea.dataset.chatInputTextarea = 'true';
     document.body.appendChild(textarea);
     textarea.focus();
 
@@ -263,7 +263,7 @@ describe('useAppEvents manual update checks', () => {
       openaiCompatibleModelId: 'gpt-5.5',
     });
     const textarea = document.createElement('textarea');
-    textarea.setAttribute('aria-label', 'Chat message input');
+    textarea.dataset.chatInputTextarea = 'true';
     document.body.appendChild(textarea);
     textarea.focus();
 
@@ -319,7 +319,7 @@ describe('useAppEvents manual update checks', () => {
       tabModelCycleIds: ['gpt-5.5'],
     });
     const textarea = document.createElement('textarea');
-    textarea.setAttribute('aria-label', 'Chat message input');
+    textarea.dataset.chatInputTextarea = 'true';
     document.body.appendChild(textarea);
     textarea.focus();
 

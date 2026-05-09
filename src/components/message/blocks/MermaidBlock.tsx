@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { SideViewContent, UploadedFile } from '../../../types';
 import { DiagramWrapper } from './parts/DiagramWrapper';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface MermaidBlockProps {
   code: string;
@@ -20,6 +21,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({
   onOpenSidePanel,
   renderDelayMs = 500,
 }) => {
+  const { t } = useI18n();
   const [svg, setSvg] = useState('');
   const [error, setError] = useState('');
   const [isRendering, setIsRendering] = useState(true);
@@ -68,7 +70,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({
         if (isMessageLoading) {
           setIsRendering(true);
         } else {
-          const errorMessage = e instanceof Error ? e.message : 'Failed to render Mermaid diagram.';
+          const errorMessage = e instanceof Error ? e.message : t('diagram_render_mermaid_failed');
           setError(errorMessage.replace(/.*error:\s*/, ''));
           setSvg('');
           setIsRendering(false);
@@ -80,7 +82,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [code, isMessageLoading, themeId, renderDelayMs]);
+  }, [code, isMessageLoading, themeId, renderDelayMs, t]);
 
   const handleDownloadJpg = async () => {
     if (!svg || isDownloading) return;
@@ -89,7 +91,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({
       const { exportSvgAsImage } = await import('../../../utils/export/image');
       await exportSvgAsImage(svg, `mermaid-diagram-${Date.now()}.jpg`, 3, 'image/jpeg');
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Failed to export diagram as JPG.';
+      const errorMessage = e instanceof Error ? e.message : t('diagram_export_jpg_failed');
       setError(errorMessage);
     } finally {
       setIsDownloading(false);
@@ -108,7 +110,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({
       setShowSource={setShowSource}
       onImageClick={onImageClick}
       onDownloadJpg={handleDownloadJpg}
-      onOpenSidePanel={() => onOpenSidePanel({ type: 'mermaid', content: code, title: 'Mermaid Diagram' })}
+      onOpenSidePanel={() => onOpenSidePanel({ type: 'mermaid', content: code, title: t('diagram_mermaid_title') })}
       themeId={themeId}
       containerRef={diagramContainerRef}
     >

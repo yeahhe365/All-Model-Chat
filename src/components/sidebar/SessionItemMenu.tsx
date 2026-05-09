@@ -46,9 +46,9 @@ export const SessionItemMenu: React.FC<SessionItemMenuProps> = ({
       <button
         onClick={onExport}
         className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS}`}
-        title={t('export_chat', 'Export Chat')}
+        title={t('export_chat')}
       >
-        <Download size={14} /> <span>{t('export_chat', 'Export Chat')}</span>
+        <Download size={14} /> <span>{t('export_chat')}</span>
       </button>
       <button onClick={onDelete} className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DANGER_STATE_CLASS}`}>
         <Trash2 size={14} /> <span>{t('delete')}</span>

@@ -5,7 +5,7 @@ export const logViewerTranslations = {
   logViewer_overview_tab: { en: 'Overview', zh: '总览' },
   logViewer_tokens_tab: { en: 'Tokens', zh: 'Token' },
   logViewer_api_keys_tab: { en: 'API Keys', zh: 'API 密钥' },
-  logViewer_search_placeholder: { en: 'Search logs...', zh: '搜索日志...' },
+  logViewer_search_placeholder: { en: 'Search logs...', zh: '搜索日志…' },
   logViewer_all_categories: { en: 'All Categories', zh: '所有分类' },
   logViewer_export_json: { en: 'Export JSON', zh: '导出 JSON' },
   logViewer_clear_button: { en: 'Clear', zh: '清空' },

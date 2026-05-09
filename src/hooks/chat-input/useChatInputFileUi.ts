@@ -8,6 +8,7 @@ import { cleanupFilePreviewUrl, cleanupReplacedFilePreviewUrl } from '../../util
 import { isTextFile } from '../../utils/fileTypeUtils';
 import { useFileModalState } from '../ui/useFileModalState';
 import { readUploadedTextFileContent } from './textFileToInput';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface UseChatInputFileUiOptions {
   selectedFiles: UploadedFile[];
@@ -46,6 +47,7 @@ export const useChatInputFileUi = ({
   isConverting,
   setIsConverting,
 }: UseChatInputFileUiOptions) => {
+  const { t } = useI18n();
   const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
   const [editingFile, setEditingFile] = useState<UploadedFile | null>(null);
   const [showRecorder, setShowRecorder] = useState(false);
@@ -259,10 +261,10 @@ export const useChatInputFileUi = ({
         });
       } catch (error) {
         console.error('Failed to move text file into input:', error);
-        setAppFileError('Failed to read text file content.');
+        setAppFileError(t('selectedFile_readTextFailed'));
       }
     },
-    [setAppFileError, setInputText, setSelectedFiles, textareaRef],
+    [setAppFileError, setInputText, setSelectedFiles, t, textareaRef],
   );
 
   const modalsState = useMemo(

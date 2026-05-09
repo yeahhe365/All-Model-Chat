@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 import { createNewSession } from '../../../utils/chat/session';
 import { resolveModelSwitchSettings } from '../../../utils/modelHelpers';
 
@@ -75,7 +75,7 @@ export const useModelSelection = ({
 
       // Auto-focus input after model selection
       setTimeout(() => {
-        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+        const textarea = document.querySelector(CHAT_INPUT_TEXTAREA_SELECTOR) as HTMLTextAreaElement;
         if (textarea) {
           textarea.focus();
         }

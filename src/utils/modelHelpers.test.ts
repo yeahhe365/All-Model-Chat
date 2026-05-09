@@ -415,9 +415,9 @@ describe('adjustThinkingBudget', () => {
   });
 
   it('clamps Gemini Robotics-ER 1.6 budgets to the documented max', () => {
-    expect(resolveModelSwitchForTarget('gemini-robotics-er-1.6-preview', { thinkingBudget: 50000 }).thinkingBudget).toBe(
-      24576,
-    );
+    expect(
+      resolveModelSwitchForTarget('gemini-robotics-er-1.6-preview', { thinkingBudget: 50000 }).thinkingBudget,
+    ).toBe(24576);
   });
 
   it('clamps to min when budget is below range', () => {

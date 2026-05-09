@@ -10,6 +10,7 @@ import {
 } from '../utils/inlineImagePlaceholders';
 import { isImageMimeType } from '../utils/fileTypeUtils';
 import { CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY } from '../constants/appConstants';
+import { useI18n } from '../contexts/I18nContext';
 
 export const SUPPORTED_EXTENSIONS = [
   '.md',
@@ -42,6 +43,7 @@ export const useCreateFileEditor = ({
   themeId,
   isPasteRichTextAsMarkdownEnabled,
 }: UseCreateFileEditorProps) => {
+  const { t } = useI18n();
   const initialInlineImagesRef = useRef(extractInlineImagePlaceholders(initialContent));
   const imagePlaceholdersRef = useRef(initialInlineImagesRef.current.placeholders);
   const nextImageIndexRef = useRef(initialInlineImagesRef.current.nextIndex);
@@ -123,7 +125,7 @@ export const useCreateFileEditor = ({
         onConfirm(pdfBlob, finalName);
       } catch (error) {
         console.error('PDF generation error:', error);
-        alert('Error generating PDF.');
+        alert(t('createText_pdf_error'));
       } finally {
         setIsExportingPdf(false);
       }
@@ -141,7 +143,7 @@ export const useCreateFileEditor = ({
       triggerDownload(createManagedObjectUrl(pdfBlob), finalName);
     } catch (error) {
       console.error('PDF Export failed:', error);
-      alert('Error generating PDF.');
+      alert(t('createText_pdf_error'));
     } finally {
       setIsExportingPdf(false);
     }

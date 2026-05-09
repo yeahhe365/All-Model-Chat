@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { compressAudioToMp3 } from '@/features/audio/audioCompression';
 import { useRecorder } from './core/useRecorder';
 import { useTextAreaInsert } from './useTextAreaInsert';
+import { useI18n } from '../contexts/I18nContext';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
@@ -19,6 +20,7 @@ export const useVoiceInput = ({
   isAudioCompressionEnabled = true,
   textareaRef,
 }: UseVoiceInputProps) => {
+  const { t } = useI18n();
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isFinalizingRecording, setIsFinalizingRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,8 +69,8 @@ export const useVoiceInput = ({
           }
         } catch (error) {
           console.error('Error processing/transcribing audio:', error);
-          const message = error instanceof Error ? error.message : 'Voice input failed.';
-          reportError(`Voice input failed: ${message}`);
+          const message = error instanceof Error ? error.message : t('voiceInput_failed');
+          reportError(t('voiceInput_failedWithMessage').replace('{message}', message));
         } finally {
           setIsTranscribing(false);
           setIsFinalizingRecording(false);
@@ -77,13 +79,14 @@ export const useVoiceInput = ({
         setIsFinalizingRecording(false);
       }
     },
-    [onTranscribeAudio, isAudioCompressionEnabled, insertText, reportError],
+    [onTranscribeAudio, isAudioCompressionEnabled, insertText, reportError, t],
   );
 
   const { status, isInitializing, startRecording, stopRecording, cancelRecording } = useRecorder({
     onStop: handleRecordingComplete,
     onError: reportError,
     onSystemAudioWarning: reportSystemAudioWarning,
+    permissionErrorMessage: t('voiceInput_permission_error'),
   });
 
   const isRecording = status === 'recording';

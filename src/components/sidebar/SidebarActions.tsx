@@ -100,11 +100,11 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
         <button
           onClick={onAddNewGroup}
           className="flex items-center gap-3 w-full text-left px-3 h-9 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors"
-          aria-label={t('newGroup_aria', 'Create new group')}
-          title={t('newGroup_button', 'New Group')}
+          aria-label={t('newGroup_aria')}
+          title={t('newGroup_button')}
         >
           <IconNewGroup size={18} className="text-[var(--theme-icon-history)]" strokeWidth={2} />
-          <span className="text-[var(--theme-text-primary)]">{t('newGroup_button', 'New Group')}</span>
+          <span className="text-[var(--theme-text-primary)]">{t('newGroup_button')}</span>
         </button>
       </div>
     </div>

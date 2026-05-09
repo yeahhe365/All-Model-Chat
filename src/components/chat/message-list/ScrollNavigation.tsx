@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface ScrollNavigationProps {
   showUp: boolean;
@@ -16,6 +17,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
   onScrollToNext,
   bottomOffset,
 }) => {
+  const { t } = useI18n();
+
   if (!showUp && !showDown) return null;
 
   return (
@@ -40,8 +43,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                         pointer-events-auto
                         shadow-md
                     "
-          aria-label="Scroll to previous turn"
-          title="Scroll to previous turn"
+          aria-label={t('scroll_previous_turn')}
+          title={t('scroll_previous_turn')}
         >
           <ArrowUp size={18} strokeWidth={2.5} />
         </button>
@@ -60,8 +63,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                         pointer-events-auto
                         shadow-md
                     "
-          aria-label="Scroll to next turn or bottom"
-          title="Scroll to next turn or bottom"
+          aria-label={t('scroll_next_turn')}
+          title={t('scroll_next_turn')}
         >
           <ArrowDown size={18} strokeWidth={2.5} />
         </button>

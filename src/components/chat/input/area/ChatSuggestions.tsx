@@ -116,7 +116,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
                     title={t('bbox_button_title')}
                   >
                     <SuggestionIcon iconName="Scan" />
-                    <span>Bbox</span>
+                    <span>{t('bbox_button_short')}</span>
                   </button>
                 )}
                 {onToggleGuide && (
@@ -138,7 +138,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
                     title={t('guide_button_title')}
                   >
                     <MousePointer2 size={13} />
-                    <span>Guide</span>
+                    <span>{t('guide_button_short')}</span>
                   </button>
                 )}
               </>
@@ -153,7 +153,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
           type="button"
           onClick={() => handleScroll('left')}
           className={`absolute left-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-          aria-label="Scroll left"
+          aria-label={t('suggestions_scroll_left')}
         >
           <ChevronLeft size={16} strokeWidth={2} />
         </button>
@@ -163,7 +163,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
           type="button"
           onClick={() => handleScroll('right')}
           className={`absolute right-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/95 border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-          aria-label="Scroll right"
+          aria-label={t('suggestions_scroll_right')}
         >
           <ChevronRight size={16} strokeWidth={2} />
         </button>

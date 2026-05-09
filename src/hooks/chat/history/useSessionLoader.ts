@@ -8,7 +8,11 @@ import {
   ChatMessage,
   InputCommand,
 } from '../../../types';
-import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
+import {
+  ACTIVE_CHAT_SESSION_ID_KEY,
+  CHAT_INPUT_TEXTAREA_SELECTOR,
+  DEFAULT_CHAT_SETTINGS,
+} from '../../../constants/appConstants';
 import { logService } from '../../../services/logService';
 import { createNewSession, rehydrateSessionFiles } from '../../../utils/chat/session';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
@@ -191,7 +195,7 @@ export const useSessionLoader = ({
         }
 
         setTimeout(() => {
-          document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+          document.querySelector<HTMLTextAreaElement>(CHAT_INPUT_TEXTAREA_SELECTOR)?.focus();
         }, 0);
         return;
       }
@@ -227,7 +231,7 @@ export const useSessionLoader = ({
       setEditingMessageId(null);
 
       setTimeout(() => {
-        document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+        document.querySelector<HTMLTextAreaElement>(CHAT_INPUT_TEXTAREA_SELECTOR)?.focus();
       }, 0);
     },
     [
@@ -304,7 +308,7 @@ export const useSessionLoader = ({
 
           setEditingMessageId(null);
           setTimeout(() => {
-            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+            document.querySelector<HTMLTextAreaElement>(CHAT_INPUT_TEXTAREA_SELECTOR)?.focus();
           }, 0);
         } else {
           logService.warn(`Session ${sessionId} not found. Starting new chat.`);

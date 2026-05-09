@@ -2,6 +2,11 @@ import { triggerDownload } from './core';
 import { createManagedObjectUrl } from '../../services/objectUrlManager';
 import { createSnapshotContainer, createExportDOMHeader, sanitizeDocumentStylesForPngExport } from './dom';
 
+export interface PngExportMessages {
+  imageTooLarge: string;
+  exportFailed: (message: string) => string;
+}
+
 /**
  * Exports a given HTML element as a PNG image.
  * @param element The HTML element to capture.
@@ -11,8 +16,8 @@ import { createSnapshotContainer, createExportDOMHeader, sanitizeDocumentStylesF
 export const exportElementAsPng = async (
   element: HTMLElement,
   filename: string,
-  options?: { backgroundColor?: string | null; scale?: number },
-) => {
+  options: { backgroundColor?: string | null; scale?: number; messages: PngExportMessages },
+): Promise<boolean> => {
   const html2canvas = (await import('html2canvas')).default;
 
   // 1. Pre-load images to ensure they render
@@ -84,18 +89,20 @@ export const exportElementAsPng = async (
     });
 
     // Convert to Blob to handle larger images better than data URI
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = createManagedObjectUrl(blob);
-        triggerDownload(url, filename);
-      } else {
-        console.error('Canvas to Blob conversion failed (Result is null). The chat may be too long.');
-        alert('Export failed: The image is too large for the browser to handle. Please try exporting as HTML or Text.');
-      }
-    }, 'image/png');
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    if (blob) {
+      const url = createManagedObjectUrl(blob);
+      triggerDownload(url, filename);
+      return true;
+    } else {
+      console.error('Canvas to Blob conversion failed (Result is null). The chat may be too long.');
+      alert(options.messages.imageTooLarge);
+      return false;
+    }
   } catch (error) {
     console.error('html2canvas error:', error);
-    alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+    alert(options.messages.exportFailed(error instanceof Error ? error.message : String(error)));
+    return false;
   }
 };
 
@@ -108,8 +115,8 @@ export const generateSnapshotPng = async (
   filename: string,
   themeId: string,
   headerConfig: { title: string; metaLeft: string; metaRight: string },
-  options: { width?: string; scale?: number } = {},
-) => {
+  options: { width?: string; scale?: number; messages: PngExportMessages },
+): Promise<boolean> => {
   let cleanup = () => {};
   try {
     const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
@@ -130,9 +137,10 @@ export const generateSnapshotPng = async (
     // Wait for rendering
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    await exportElementAsPng(container, filename, {
+    return await exportElementAsPng(container, filename, {
       backgroundColor: rootBgColor,
       scale: options.scale || 2,
+      messages: options.messages,
     });
   } finally {
     cleanup();

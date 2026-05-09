@@ -15,7 +15,7 @@ export const FileConfigHeader: React.FC<FileConfigHeaderProps> = ({ onClose, sho
     <div className="p-4 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] flex justify-between items-center rounded-t-xl">
       <h3 className="font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
         {showResolutionSettings ? <Settings2 size={18} /> : isVideo ? <Scissors size={18} /> : <Settings2 size={18} />}
-        {t('fileSettings_title') || 'File Configuration'}
+        {t('fileSettings_title')}
       </h3>
       <button
         onClick={onClose}

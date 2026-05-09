@@ -1,6 +1,7 @@
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../../../types';
 import { logService } from '../../../services/logService';
+import { CHAT_INPUT_TEXTAREA_SELECTOR } from '../../../constants/appConstants';
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { getVisibleChatMessages } from '../../../utils/chat/visibility';
 import { createNewSession } from '../../../utils/chat/session';
@@ -121,7 +122,7 @@ export const useMessageActions = ({
         setEditingMessageId(messageId);
         setEditMode(mode);
         setAppFileError(null);
-        (document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement)?.focus();
+        (document.querySelector(CHAT_INPUT_TEXTAREA_SELECTOR) as HTMLTextAreaElement)?.focus();
       }
     },
     [

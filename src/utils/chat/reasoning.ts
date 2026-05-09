@@ -121,11 +121,12 @@ const escapeHtml = (value: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const createThinkingBlockMarkup = (innerContent: string, isLoading: boolean): string => {
+const createThinkingBlockMarkup = (innerContent: string, isLoading: boolean, summaryLabel: string): string => {
   const escapedContent = escapeHtml(innerContent.trim());
+  const escapedSummaryLabel = escapeHtml(summaryLabel);
   const openAttribute = isLoading ? ' open' : '';
 
-  return `<details${openAttribute}><summary>Raw Thinking Process</summary><div>${escapedContent}</div></details>`;
+  return `<details${openAttribute}><summary>${escapedSummaryLabel}</summary><div>${escapedContent}</div></details>`;
 };
 
 const transformMarkdownTextSegments = (value: string, transform: (segment: string) => string): string =>
@@ -133,20 +134,20 @@ const transformMarkdownTextSegments = (value: string, transform: (segment: strin
     .map((segment) => (segment.type === 'literal' ? segment.value : transform(segment.value)))
     .join('');
 
-export const wrapReasoningMarkup = (value: string, isLoading: boolean): string =>
+export const wrapReasoningMarkup = (value: string, isLoading: boolean, summaryLabel: string): string =>
   transformMarkdownTextSegments(value, (segment) => {
     let nextValue = segment.replace(THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
-      createThinkingBlockMarkup(innerContent, isLoading),
+      createThinkingBlockMarkup(innerContent, isLoading, summaryLabel),
     );
 
     if (isLoading) {
       nextValue = nextValue.replace(INCOMPLETE_THINKING_BLOCK_REGEX, (_match, innerContent: string) =>
-        createThinkingBlockMarkup(innerContent, true),
+        createThinkingBlockMarkup(innerContent, true, summaryLabel),
       );
     }
 
     nextValue = nextValue.replace(GEMMA_THOUGHT_CHANNEL_REGEX, (_match, innerContent: string) =>
-      createThinkingBlockMarkup(innerContent, isLoading),
+      createThinkingBlockMarkup(innerContent, isLoading, summaryLabel),
     );
 
     return nextValue;

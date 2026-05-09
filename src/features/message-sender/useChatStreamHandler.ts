@@ -144,9 +144,7 @@ export const useChatStreamHandler = ({
                     ...msg,
                     content: (msg.content || '') + streamState.content,
                     thoughts: (msg.thoughts || '') + streamState.thoughts,
-                    files: streamState.files.length
-                      ? mergeUniqueFiles(msg.files, streamState.files)
-                      : msg.files,
+                    files: streamState.files.length ? mergeUniqueFiles(msg.files, streamState.files) : msg.files,
                     apiParts: msg.apiParts ? [...msg.apiParts, ...streamState.apiParts] : streamState.apiParts,
                   };
                 }

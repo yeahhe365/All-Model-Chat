@@ -72,7 +72,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
               <span className="text-base text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
                 {thinkingTimeMs !== undefined
                   ? t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
-                  : 'Thought Process'}
+                  : t('thinking_process')}
               </span>
               {firstTokenTimeMs !== undefined && (
                 <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">

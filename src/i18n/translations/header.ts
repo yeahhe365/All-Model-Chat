@@ -29,5 +29,5 @@ export const headerTranslations = {
   headerThinkingMinimalFastTitle: { en: 'Thinking: Minimal (Fast Mode)', zh: '思考：最低（快速模式）' },
   headerThinkingLowFastTitle: { en: 'Thinking: Low (Fast Mode)', zh: '思考：低（快速模式）' },
   headerThinkingHighTitle: { en: 'Thinking: High (Pro Mode)', zh: '思考：高（专业模式）' },
-  header_model_search_placeholder: { en: 'Search models...', zh: '搜索模型...' },
+  header_model_search_placeholder: { en: 'Search models...', zh: '搜索模型…' },
 };

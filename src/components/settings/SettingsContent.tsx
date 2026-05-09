@@ -116,10 +116,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   );
   const geminiModelIds = React.useMemo(() => new Set(availableModels.map((model) => model.id)), [availableModels]);
   const openAICompatibleModelIds = React.useMemo(
-    () =>
-      new Set(
-        isOpenAICompatibleApiEnabled ? currentSettings.openaiCompatibleModels.map((model) => model.id) : [],
-      ),
+    () => new Set(isOpenAICompatibleApiEnabled ? currentSettings.openaiCompatibleModels.map((model) => model.id) : []),
     [currentSettings.openaiCompatibleModels, isOpenAICompatibleApiEnabled],
   );
 

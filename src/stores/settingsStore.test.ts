@@ -121,9 +121,7 @@ describe('settingsStore', () => {
       expect(appSettings.openaiCompatibleBaseUrl).toBe('https://api.openai.com/v1');
       expect(appSettings.modelId).toBe('gemini-3-flash-preview');
       expect(appSettings.openaiCompatibleModelId).toBe('gpt-5.5');
-      expect(appSettings.openaiCompatibleModels).toEqual([
-        { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
-      ]);
+      expect(appSettings.openaiCompatibleModels).toEqual([{ id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true }]);
     });
 
     it('provides English as the default input translation target language', async () => {

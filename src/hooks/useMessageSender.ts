@@ -1,10 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  AppSettings,
-  ChatMessage,
-  UploadedFile,
-  ChatSettings as IndividualChatSettings,
-} from '../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { logService } from '../services/logService';
 import { useChatStreamHandler } from '@/features/message-sender/useChatStreamHandler';
 import { useModelRequestRunner } from '@/features/message-sender/useModelRequestRunner';

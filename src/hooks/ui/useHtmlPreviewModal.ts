@@ -8,6 +8,7 @@ import {
   createStaticPreviewSnapshotContainer,
   HTML_PREVIEW_MESSAGE_CHANNEL,
 } from '../../utils/htmlPreview';
+import { useI18n } from '../../contexts/I18nContext';
 
 const ZOOM_STEP = 0.1;
 const MIN_ZOOM = 0.25;
@@ -37,6 +38,7 @@ export const useHtmlPreviewModal = ({
   initialTrueFullscreenRequest,
   iframeRef,
 }: UseHtmlPreviewModalProps) => {
+  const { t } = useI18n();
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const [scale, setScale] = useState(1);
@@ -157,7 +159,7 @@ export const useHtmlPreviewModal = ({
   }, [isOpen, onClose, initialTrueFullscreenRequest, enterTrueFullscreen, isTrueFullscreen, targetDocument, iframeRef]);
 
   const getPreviewTitle = useCallback(() => {
-    let title = 'HTML Preview';
+    let title = t('htmlPreview_title');
     try {
       const titleMatch = htmlContent?.match(/<title[^>]*>([^<]+)<\/title>/i);
       if (titleMatch && titleMatch[1]) {
@@ -167,7 +169,7 @@ export const useHtmlPreviewModal = ({
       // Fall back to the default preview title if parsing fails.
     }
     return title;
-  }, [htmlContent]);
+  }, [htmlContent, t]);
 
   const handleDownload = useCallback(() => {
     if (!htmlContent) return;
@@ -208,15 +210,27 @@ export const useHtmlPreviewModal = ({
       await exportElementAsPng(screenshotTarget, filename, {
         backgroundColor: null,
         scale: 2,
+        messages: {
+          imageTooLarge: t('export_image_too_large'),
+          exportFailed: (message) => t('export_failed_with_message').replace('{message}', message),
+        },
       });
     } catch (err) {
       console.error('Failed to take screenshot of iframe content:', err);
-      alert('Sorry, the screenshot could not be captured. Please check the console for errors.');
+      alert(t('htmlPreview_screenshot_failed'));
     } finally {
       cleanup();
       setIsScreenshotting(false);
     }
-  }, [getCurrentPreviewScreenshotTarget, getPreviewTitle, htmlContent, isPreviewReady, isScreenshotting, targetDocument]);
+  }, [
+    getCurrentPreviewScreenshotTarget,
+    getPreviewTitle,
+    htmlContent,
+    isPreviewReady,
+    isScreenshotting,
+    t,
+    targetDocument,
+  ]);
 
   const handleRefresh = useCallback(() => {
     if (iframeRef.current && htmlContent) {

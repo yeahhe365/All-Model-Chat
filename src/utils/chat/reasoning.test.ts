@@ -36,9 +36,9 @@ describe('renderable reasoning markup helpers', () => {
   it('wraps raw thinking blocks without touching fenced code examples', () => {
     const markdown = '```html\n<thinking>literal</thinking>\n```\n\n<thinking>Plan <x>.</thinking>\nFinal.';
 
-    expect(wrapReasoningMarkup(markdown, false)).toContain('```html\n<thinking>literal</thinking>\n```');
-    expect(wrapReasoningMarkup(markdown, false)).toContain('<details>');
-    expect(wrapReasoningMarkup(markdown, false)).toContain('Plan &lt;x&gt;.');
+    expect(wrapReasoningMarkup(markdown, false, 'Reasoning')).toContain('```html\n<thinking>literal</thinking>\n```');
+    expect(wrapReasoningMarkup(markdown, false, 'Reasoning')).toContain('<details>');
+    expect(wrapReasoningMarkup(markdown, false, 'Reasoning')).toContain('Plan &lt;x&gt;.');
   });
 
   it('strips Gemma thought channels outside literal markdown segments', () => {

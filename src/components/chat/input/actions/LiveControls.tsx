@@ -2,6 +2,7 @@ import React from 'react';
 import { PhoneOff, AudioWaveform, Mic, MicOff, MonitorUp, Video, VideoOff } from 'lucide-react';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
 import { useChatInputActionsContext } from '../ChatInputContext';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 export const LiveControls: React.FC = () => {
   const {
@@ -18,8 +19,14 @@ export const LiveControls: React.FC = () => {
     isRecording,
     isTranscribing,
   } = useChatInputActionsContext();
+  const { t } = useI18n();
   const micIconSize = 20;
   const handleSessionClick = isLiveConnected ? onDisconnectLiveSession : onStartLiveSession;
+  const cameraLabel = t('live_start_camera');
+  const screenShareLabel = t('live_start_screen_share');
+  const stopVideoLabel = t('live_stop_video');
+  const muteLabel = isLiveMuted ? t('live_unmute_microphone') : t('live_mute_microphone');
+  const sessionLabel = isLiveConnected ? t('live_end_session') : t('live_start_session');
 
   return (
     <>
@@ -29,8 +36,8 @@ export const LiveControls: React.FC = () => {
           onClick={onStartLiveCamera}
           disabled={disabled || liveVideoSource === 'camera'}
           className={`${CHAT_INPUT_BUTTON_CLASS} ${liveVideoSource === 'camera' ? 'bg-purple-500/10 text-purple-500' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
-          aria-label="Start Camera"
-          title="Start Camera"
+          aria-label={cameraLabel}
+          title={cameraLabel}
         >
           <Video size={micIconSize} strokeWidth={2} />
         </button>
@@ -42,8 +49,8 @@ export const LiveControls: React.FC = () => {
           onClick={onStartLiveScreenShare}
           disabled={disabled || liveVideoSource === 'screen'}
           className={`${CHAT_INPUT_BUTTON_CLASS} ${liveVideoSource === 'screen' ? 'bg-purple-500/10 text-purple-500' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
-          aria-label="Start Screen Share"
-          title="Start Screen Share"
+          aria-label={screenShareLabel}
+          title={screenShareLabel}
         >
           <MonitorUp size={micIconSize} strokeWidth={2} />
         </button>
@@ -55,8 +62,8 @@ export const LiveControls: React.FC = () => {
           onClick={onStopLiveVideo}
           disabled={disabled}
           className={`${CHAT_INPUT_BUTTON_CLASS} bg-red-500/10 text-red-500 hover:bg-red-500/20`}
-          aria-label="Stop Live Video"
-          title="Stop Live Video"
+          aria-label={stopVideoLabel}
+          title={stopVideoLabel}
         >
           <VideoOff size={micIconSize} strokeWidth={2} />
         </button>
@@ -69,8 +76,8 @@ export const LiveControls: React.FC = () => {
           onClick={onToggleLiveMute}
           disabled={disabled}
           className={`${CHAT_INPUT_BUTTON_CLASS} ${isLiveMuted ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
-          aria-label={isLiveMuted ? 'Unmute Microphone' : 'Mute Microphone'}
-          title={isLiveMuted ? 'Unmute Microphone' : 'Mute Microphone'}
+          aria-label={muteLabel}
+          title={muteLabel}
         >
           {isLiveMuted ? <MicOff size={micIconSize} strokeWidth={2} /> : <Mic size={micIconSize} strokeWidth={2} />}
         </button>
@@ -83,8 +90,8 @@ export const LiveControls: React.FC = () => {
           onClick={handleSessionClick}
           disabled={disabled}
           className={`${CHAT_INPUT_BUTTON_CLASS} ${isLiveConnected ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 animate-pulse' : 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20'}`}
-          aria-label={isLiveConnected ? 'End Live Session' : 'Start Live Session'}
-          title={isLiveConnected ? 'End Live Session' : 'Start Live Session'}
+          aria-label={sessionLabel}
+          title={sessionLabel}
         >
           {isLiveConnected ? (
             <PhoneOff size={micIconSize} strokeWidth={2} />

@@ -97,8 +97,8 @@
 - **深度搜索**：聚合 Google Search，自动规划搜索任务并提供精准引用
 - **URL 上下文**：自动抓取 URL 内容作为对话上下文
 - **本地 Python 沙箱**：基于 Pyodide (WASM) 的浏览器端 Python 运行环境
-  - 预装 numpy、pandas、matplotlib、scipy、scikit-learn 等科学计算库
-  - 自动检测代码依赖并安装
+  - 预加载 numpy、pandas、matplotlib
+  - 自动检测代码依赖，并在需要时按需安装 scipy、scikit-learn 等包
   - 支持文件挂载与生成文件下载
   - matplotlib 图表自动捕获输出
 - **TTS 语音合成**：30+ 种语音可选
@@ -217,7 +217,7 @@ docker compose up -d --build
 
 部署时请区分两类配置：
 
-| 变量名 | 用途 | 公开性 | 默认值 |
+| 变量名 | 用途 | 公开性 | Docker 默认值 |
 | :--- | :--- | :--- | :--- |
 | `GEMINI_API_KEY` | 可选的服务端托管 Gemini API Key（配置后优先于浏览器设置 key） | **仅服务端** | 空 |
 | `PORT` | `api` 服务监听端口 | 仅服务端 | `3001` |
@@ -230,6 +230,7 @@ docker compose up -d --build
 
 说明：
 - 上述 `RUNTIME_*` 会在容器启动时写入 `runtime-config.js`，可被浏览器读取，因此只能放“可公开”信息。
+- public/runtime-config.js 模板用于纯静态构建，默认不启用自定义 API 配置或代理；Docker 部署会由 `docker/web-entrypoint.sh` 按上表默认值覆盖该文件。
 - 默认 BYOK 模式只需要在设置界面填写 API Key：普通 Gemini 代理会使用浏览器请求携带的 key；Live API 会使用浏览器本地 key 直接建立官方 Live WebSocket 连接，不再经过 AMC 后端换取临时 token。
 - 如需服务端统一托管普通 Gemini 请求的 key，可配置 `GEMINI_API_KEY` 并将 `RUNTIME_SERVER_MANAGED_API=true`；Live API 仍需要浏览器中可用的 API Key。
 - OpenAI 兼容模式当前不读取 `RUNTIME_API_PROXY_URL`、`RUNTIME_USE_API_PROXY` 或 `RUNTIME_SERVER_MANAGED_API`；它会直接使用设置里的 OpenAI 兼容 Base URL 和独立 Key 发起 `chat/completions` 请求。如需走你自己的网关，请直接把该网关地址填为 OpenAI 兼容 Base URL。
@@ -326,13 +327,13 @@ GEMINI_API_KEY=your_key_here npm run verify:code-execution:api
 
 | 层级 | 技术栈 |
 | :--- | :--- |
-| **核心框架** | React 18 + TypeScript 5.5 + Vite 5 |
+| **核心框架** | React 18 + TypeScript 5.5 + Vite 7 |
 | **样式方案** | Tailwind CSS 4 + CSS 变量主题系统 |
-| **持久化层** | 原生 IndexedDB（db.ts 封装），支持 Web Locks 跨标签写锁 |
+| **持久化层** | 原生 IndexedDB（dbService.ts 封装），支持 Web Locks 跨标签写锁 |
 | **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
 | **音频引擎** | AudioWorklet API（实时流处理）+ 浏览器端 Worker 音频预处理 / 压缩流程 |
 | **渲染引擎** | React-Markdown + KaTeX (公式) + Highlight.js (代码高亮) + Mermaid.js + Graphviz (viz.js) |
-| **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
+| **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预加载常用科学计算库并按需安装扩展包 |
 | **API 代理** | 基于 `@google/genai` SDK `httpOptions.baseUrl` 的 Gemini API 代理配置 |
 | **PWA** | Web App Manifest + `beforeinstallprompt` / `appinstalled` 安装事件处理 |
 | **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API |
@@ -345,17 +346,23 @@ Live API 默认由浏览器使用本地 API Key 直连官方 Live 服务。
 
 ## 项目结构
 
+核心前端目录包括 `src/components/`、`src/features/`、`src/hooks/`、`src/services/`、`src/pwa/`、`src/schemas/` 与 `src/test/`。
+
 ```
 AMC-WebUI/
 ├── src/                        # 前端应用源码（Vite SPA）
 │   ├── components/             # UI 组件（chat / message / layout / settings / modals 等）
+│   ├── features/               # 本地 Python（src/features/local-python/）、消息发送、场景、音频、标准聊天等业务能力
 │   ├── hooks/                  # 业务 hooks（app / chat / chat-input / data-management / live-api / ui）
-│   ├── services/               # Gemini / Pyodide / API / 日志等基础设施
+│   ├── services/               # API、IndexedDB、日志、对象 URL 等基础设施
 │   ├── stores/                 # Zustand 状态（chat / settings / ui）
 │   ├── utils/                  # 导出、会话、IndexedDB、Markdown、文件处理等工具
+│   ├── pwa/                    # Service Worker、PWA 注册与安装状态
 │   ├── runtime/                # 运行时配置读取与公开配置映射
+│   ├── schemas/                # Zod 配置 schema
 │   ├── contexts/               # I18n / WindowContext 等上下文
 │   ├── constants/              # 模型、提示词、快捷键、主题等常量
+│   ├── test/                   # 测试工具、fixtures 与架构回归测试
 │   ├── types/                  # TypeScript 类型定义
 │   ├── styles/                 # 全局样式、动画、Markdown 样式
 │   ├── App.tsx                 # 应用入口组件
@@ -365,7 +372,7 @@ AMC-WebUI/
 │   └── tsconfig.json
 ├── public/                     # 静态资源与 runtime-config.js 模板
 ├── e2e/                        # Playwright 端到端测试
-├── docs/                       # 计划、规范与文档
+├── docs/                       # 截图与文档资源
 ├── docker/                     # 部署辅助脚本
 ├── vite.config.ts              # Vite 配置（React、静态复制、手工分包）
 ├── playwright.config.ts        # E2E 配置

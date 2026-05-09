@@ -11,8 +11,10 @@ import { MediaResolutionSelector } from './toolbar/MediaResolutionSelector';
 import { Clapperboard } from 'lucide-react';
 import { useChatStore } from '../../../stores/chatStore';
 import { useChatInputToolbarContext } from './ChatInputContext';
+import { useI18n } from '../../../contexts/I18nContext';
 
 const ChatInputToolbarComponent: React.FC = () => {
+  const { t } = useI18n();
   const {
     appSettings,
     currentChatSettings,
@@ -102,7 +104,7 @@ const ChatInputToolbarComponent: React.FC = () => {
                   ? 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border-[var(--theme-border-focus)] font-medium'
                   : 'bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)]'
               }`}
-              title="TTS Director's Notes"
+              title={t('ttsDirectorNotes_title')}
             >
               <div className="flex items-center gap-2">
                 <Clapperboard
@@ -114,7 +116,7 @@ const ChatInputToolbarComponent: React.FC = () => {
                       : 'text-[var(--theme-text-tertiary)]'
                   }
                 />
-                <span>Context</span>
+                <span>{t('ttsDirectorNotes_context')}</span>
               </div>
               {ttsContext && ttsContext.trim() && (
                 <div className="w-1.5 h-1.5 rounded-full bg-[var(--theme-text-link)]" />

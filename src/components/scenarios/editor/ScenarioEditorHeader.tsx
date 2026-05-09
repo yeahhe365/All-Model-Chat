@@ -30,7 +30,7 @@ export const ScenarioEditorHeader: React.FC<ScenarioEditorHeaderProps> = ({
           onClick={onCancel}
           className={`hidden md:flex items-center gap-1.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] px-3 py-1.5 rounded-lg transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
         >
-          <ChevronLeft size={16} /> Back
+          <ChevronLeft size={16} /> {t('scenarios_editor_back')}
         </button>
         <div className="hidden md:block h-6 w-px bg-[var(--theme-border-secondary)]"></div>
 
@@ -38,7 +38,7 @@ export const ScenarioEditorHeader: React.FC<ScenarioEditorHeaderProps> = ({
           type="text"
           value={title}
           onChange={(e) => !readOnly && setTitle(e.target.value)}
-          placeholder={t('scenarios_editor_title_placeholder', 'Scenario Title')}
+          placeholder={t('scenarios_editor_title_placeholder')}
           className="flex-1 bg-transparent text-lg sm:text-xl font-bold text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] outline-none min-w-0"
           // Auto-focus logic handled by parent or just removed for simplicity as specific field auto-focus can be annoying
           readOnly={readOnly}

@@ -1,7 +1,8 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import type { AppSettings, ChatSettings } from '../../types/settings';
 import { translateTextApi } from '../../services/api/generation/textApi';
-import { getKeyForRequest } from '../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getKeyForRequest } from '../../utils/apiUtils';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface UseChatInputTranslationParams {
   appSettings: AppSettings;
@@ -22,6 +23,7 @@ export const useChatInputTranslation = ({
   setTranslating,
   setAppFileError,
 }: UseChatInputTranslationParams) => {
+  const { t } = useI18n();
   const handleTranslate = useCallback(async () => {
     if (!inputText.trim() || isTranslating) {
       return;
@@ -32,7 +34,8 @@ export const useChatInputTranslation = ({
 
     const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
     if ('error' in keyResult) {
-      setAppFileError(keyResult.error);
+      const translationKey = getApiKeyErrorTranslationKey(keyResult.error);
+      setAppFileError(translationKey ? t(translationKey) : keyResult.error);
       setTranslating(false);
       return;
     }
@@ -46,11 +49,13 @@ export const useChatInputTranslation = ({
       );
       setInputText(translatedText);
     } catch (error) {
-      setAppFileError(error instanceof Error ? error.message : 'Translation failed.');
+      console.error('Input translation failed:', error);
+      const message = error instanceof Error ? error.message : String(error);
+      setAppFileError(t('translate_failed_with_message').replace('{message}', message));
     } finally {
       setTranslating(false);
     }
-  }, [appSettings, currentChatSettings, inputText, isTranslating, setAppFileError, setInputText, setTranslating]);
+  }, [appSettings, currentChatSettings, inputText, isTranslating, setAppFileError, setInputText, setTranslating, t]);
 
   return { handleTranslate };
 };

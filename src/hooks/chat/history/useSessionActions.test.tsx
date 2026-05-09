@@ -1,10 +1,11 @@
 import { act } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
 import { dbService } from '@/services/db/dbService';
 import { createChatSettings } from '../../../test/factories';
 import { useSessionActions } from './useSessionActions';
 import { renderHook } from '@/test/testUtils';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 vi.mock('@/services/db/dbService', async () => {
   const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
@@ -64,6 +65,10 @@ const createSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSess
 });
 
 describe('useSessionActions', () => {
+  beforeEach(() => {
+    useSettingsStore.setState({ language: 'en' });
+  });
+
   it('duplicates attachments with fresh file ids', async () => {
     let sessions: SavedChatSession[] = [createSession()];
     vi.mocked(dbService.getSession).mockResolvedValue(sessions[0]);
@@ -119,6 +124,29 @@ describe('useSessionActions', () => {
     expect(sessions[0].messages).toHaveLength(1);
     expect(sessions[0].messages[0].content).toBe('hello');
 
+    unmount();
+  });
+
+  it('localizes the default new chat title when duplicating in Chinese', async () => {
+    useSettingsStore.setState({ language: 'zh' });
+    let sessions: SavedChatSession[] = [createSession({ title: 'New Chat' })];
+    vi.mocked(dbService.getSession).mockResolvedValue(sessions[0]);
+    const updateAndPersistSessions = vi.fn((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
+      sessions = updater(sessions);
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useSessionActions({
+        updateAndPersistSessions,
+        activeJobs: { current: new Map() },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleDuplicateSession('session-1');
+    });
+
+    expect(sessions[0].title).toBe('新聊天（副本）');
     unmount();
   });
 });

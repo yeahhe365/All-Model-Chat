@@ -20,14 +20,14 @@ export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({
     <div className="space-y-3 pb-4 border-b border-[var(--theme-border-secondary)]/50">
       <Select
         id="file-media-resolution"
-        label={t('fileSettings_resolution') || 'Token Resolution'}
+        label={t('fileSettings_resolution')}
         layout="horizontal"
         value={mediaResolution}
         onChange={(e) => setMediaResolution(e.target.value as MediaResolution)}
         labelContent={
           <div className="flex items-center gap-2">
             <ImageIcon size={14} className="text-[var(--theme-text-secondary)]" />
-            <span>{t('fileSettings_resolution') || 'Resolution'}</span>
+            <span>{t('fileSettings_resolution')}</span>
           </div>
         }
       >
@@ -39,9 +39,7 @@ export const ResolutionConfig: React.FC<ResolutionConfigProps> = ({
           <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>
         )}
       </Select>
-      <p className="text-[10px] text-[var(--theme-text-tertiary)] italic">
-        {t('fileSettings_resolution_help') || 'Specific resolution for this file. Overrides global settings.'}
-      </p>
+      <p className="text-[10px] text-[var(--theme-text-tertiary)] italic">{t('fileSettings_resolution_help')}</p>
     </div>
   );
 };

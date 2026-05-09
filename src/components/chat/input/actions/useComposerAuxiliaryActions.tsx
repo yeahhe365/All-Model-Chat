@@ -22,7 +22,6 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
     onToggleFullscreen,
     isTranslating,
     disabled,
-    isLoading,
     isWaitingForUpload,
     isTranscribing,
     isMicInitializing,
@@ -35,7 +34,7 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
   const { hasTrimmedInput, onTranslate, onPasteFromClipboard, onClearInput } = useChatInputComposerStatusContext();
   const { t } = useI18n();
   const canTranslate = hasTrimmedInput && !isEditing && !isTranscribing && !isMicInitializing;
-  const commonBlocked = disabled || isLoading || isWaitingForUpload;
+  const localInputEditBlocked = disabled || isWaitingForUpload;
 
   return useMemo(() => {
     const actions: Array<ComposerAuxiliaryAction | null> = [
@@ -74,7 +73,7 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
             ariaLabel: t('clearInput_aria'),
             title: t('clearInput_title'),
             icon: <Eraser size={18} strokeWidth={2} />,
-            disabled: commonBlocked,
+            disabled: localInputEditBlocked,
             action: onClearInput,
             testId: 'clear-input-button',
           }
@@ -86,7 +85,7 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
             ariaLabel: t('pasteClipboard_aria'),
             title: t('pasteClipboard_title'),
             icon: <ClipboardPaste size={18} strokeWidth={2} />,
-            disabled: commonBlocked,
+            disabled: localInputEditBlocked,
             action: onPasteFromClipboard,
             testId: 'paste-button',
           }
@@ -96,11 +95,11 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
     return actions.filter((item): item is ComposerAuxiliaryAction => item !== null);
   }, [
     canTranslate,
-    commonBlocked,
     disabled,
     isFullscreen,
     isNativeAudioModel,
     isTranslating,
+    localInputEditBlocked,
     onClearInput,
     onPasteFromClipboard,
     onToggleFullscreen,

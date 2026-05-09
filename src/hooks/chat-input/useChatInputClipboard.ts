@@ -1,6 +1,7 @@
 import { useCallback, type MutableRefObject, type RefObject } from 'react';
 import type { AppSettings, UploadedFile } from '../../types';
 import { processClipboardData } from '../../utils/clipboardUtils';
+import { useI18n } from '../../contexts/I18nContext';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
@@ -37,10 +38,11 @@ export const useChatInputClipboard = ({
   onProcessFiles,
   insertText,
 }: UseChatInputClipboardParams) => {
+  const { t } = useI18n();
   const handleAddUrl = useCallback(
     async (url: string) => {
       if (!YOUTUBE_URL_REGEX.test(url)) {
-        setAppFileError('Invalid YouTube URL provided.');
+        setAppFileError(t('addByUrl_invalid'));
         return;
       }
 
@@ -60,7 +62,7 @@ export const useChatInputClipboard = ({
       setShowAddByUrlInput(false);
       textareaRef.current?.focus();
     },
-    [justInitiatedFileOpRef, setAppFileError, setSelectedFiles, setShowAddByUrlInput, setUrlInput, textareaRef],
+    [justInitiatedFileOpRef, setAppFileError, setSelectedFiles, setShowAddByUrlInput, setUrlInput, t, textareaRef],
   );
 
   const handlePasteAction = useCallback(

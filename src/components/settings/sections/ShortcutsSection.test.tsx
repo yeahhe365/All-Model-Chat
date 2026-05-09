@@ -45,9 +45,7 @@ describe('ShortcutsSection', () => {
     expect(renderer.container.textContent).not.toContain('Gemini 3.1 Flash Lite Preview');
 
     const shortcutText = renderer.container.textContent ?? '';
-    expect(shortcutText.indexOf('Cycle Models')).toBeLessThan(
-      shortcutText.indexOf('Models Included In Tab Cycle'),
-    );
+    expect(shortcutText.indexOf('Cycle Models')).toBeLessThan(shortcutText.indexOf('Models Included In Tab Cycle'));
     expect(shortcutText.indexOf('Models Included In Tab Cycle')).toBeLessThan(shortcutText.indexOf('Clear Draft'));
 
     const toggleButton = renderer.container.querySelector<HTMLButtonElement>(

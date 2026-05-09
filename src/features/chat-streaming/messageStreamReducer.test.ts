@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Part, UsageMetadata } from '@google/genai';
-import {
-  createMessageStreamState,
-  reduceMessageStreamEvent,
-} from './messageStreamReducer';
+import { createMessageStreamState, reduceMessageStreamEvent } from './messageStreamReducer';
 
 type MessageStreamEvent = Parameters<typeof reduceMessageStreamEvent>[1];
 

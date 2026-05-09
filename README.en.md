@@ -105,8 +105,8 @@ The project currently focuses on one main application shape: a **Vite + React SP
 - Deep search powered by Google Search with planned search tasks and citations.
 - URL context ingestion for adding web pages to conversations.
 - Local Python sandbox based on Pyodide (WASM):
-  - Bundled scientific stack such as numpy, pandas, matplotlib, scipy, and scikit-learn.
-  - Automatic dependency detection and installation.
+  - Preloads numpy, pandas, and matplotlib.
+  - Detects imports automatically, and installs scipy and scikit-learn on demand when needed.
   - File mounting and generated file download support.
   - Automatic capture of matplotlib chart output.
 - TTS with 30+ voices.
@@ -212,7 +212,7 @@ Notes:
 
 ### Runtime Configuration and Environment Variables
 
-| Variable | Purpose | Public | Default |
+| Variable | Purpose | Public | Docker default |
 | :--- | :--- | :--- | :--- |
 | `GEMINI_API_KEY` | Optional server-managed Gemini API key; when set, it takes precedence over browser settings keys | Server only | Empty |
 | `PORT` | Port used by the API service | Server only | `3001` |
@@ -223,7 +223,9 @@ Notes:
 | `RUNTIME_USE_API_PROXY` | Enables API proxy mode by default | Public runtime config | `true` |
 | `RUNTIME_API_PROXY_URL` | Default Gemini proxy URL for the frontend | Public runtime config | `/api/gemini` |
 
-The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. Docker defaults to BYOK: after you enter an API key in Settings, regular Gemini proxy requests use the browser-provided key, and Live API uses the browser-local key directly to open the official Live WebSocket connection. AMC no longer mints a backend Live token.
+The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. The public/runtime-config.js template is used for static builds and keeps custom API configuration and proxy mode disabled by default; Docker overwrites it through `docker/web-entrypoint.sh` using the defaults above.
+
+Docker defaults to BYOK: after you enter an API key in Settings, regular Gemini proxy requests use the browser-provided key, and Live API uses the browser-local key directly to open the official Live WebSocket connection. AMC no longer mints a backend Live token.
 
 If you want server-managed credentials for regular Gemini requests, set `GEMINI_API_KEY` and `RUNTIME_SERVER_MANAGED_API=true`. Live API still requires an API key available in the browser. A browser-local key is suitable for personal or trusted deployments, but it is not a server secret: scripts running in the same browser context, extensions, XSS, or device compromise may still read it.
 
@@ -321,13 +323,13 @@ Optional variable:
 
 | Layer | Stack |
 | :--- | :--- |
-| Core framework | React 18 + TypeScript 5.5 + Vite 5 |
+| Core framework | React 18 + TypeScript 5.5 + Vite 7 |
 | Styling | Tailwind CSS 4 + CSS variable based theme system |
 | Persistence | Native IndexedDB wrapper with Web Locks for cross-tab write safety |
 | Gemini SDK | `@google/genai` 1.2+ for streaming, non-streaming, file upload, image generation, TTS, and transcription |
 | Audio | AudioWorklet API plus browser Worker based audio preprocessing and compression |
 | Rendering | React-Markdown + KaTeX + Highlight.js + Mermaid + Graphviz |
-| Python sandbox | Pyodide (WASM) in a Web Worker with scientific packages |
+| Python sandbox | Pyodide (WASM) in a Web Worker, with common packages preloaded and extra packages installed on demand |
 | API proxy | Gemini proxy through `@google/genai` `httpOptions.baseUrl` |
 | PWA | Web App Manifest + install/update event handling |
 | Deployment | Vite static build, Docker Compose (`web + api`), or Cloudflare Pages + standalone API |
@@ -342,17 +344,23 @@ Live API uses the browser-local API key to connect directly to the official Live
 
 ## Project Structure
 
+Core frontend areas include `src/components/`, `src/features/`, `src/hooks/`, `src/services/`, `src/pwa/`, `src/schemas/`, and `src/test/`.
+
 ```text
 AMC-WebUI/
 ├── src/                        # Frontend source code (Vite SPA)
 │   ├── components/             # UI components for chat, messages, layout, settings, modals, and more
+│   ├── features/               # Local Python (src/features/local-python/), message sending, scenarios, audio, and standard chat features
 │   ├── hooks/                  # App, chat, input, data management, live API, and UI hooks
-│   ├── services/               # Gemini, Pyodide, API, logging, and infrastructure services
+│   ├── services/               # API, IndexedDB, logging, object URL, and infrastructure services
 │   ├── stores/                 # Zustand stores for chat, settings, and UI state
 │   ├── utils/                  # Export, session, IndexedDB, Markdown, file, and media utilities
+│   ├── pwa/                    # Service worker, PWA registration, and install state
 │   ├── runtime/                # Runtime config loading and public config mapping
+│   ├── schemas/                # Zod configuration schemas
 │   ├── contexts/               # I18n, WindowContext, and related providers
 │   ├── constants/              # Models, prompts, shortcuts, themes, and app constants
+│   ├── test/                   # Test utilities, fixtures, and architecture regression tests
 │   ├── types/                  # TypeScript types
 │   ├── styles/                 # Global styles, animations, and Markdown styles
 │   ├── App.tsx                 # App root component
@@ -360,7 +368,7 @@ AMC-WebUI/
 ├── server/                     # Standalone Node API for /api/gemini/*
 ├── public/                     # Static assets and runtime-config.js template
 ├── e2e/                        # Playwright tests
-├── docs/                       # Plans, specs, and documentation
+├── docs/                       # Screenshots and documentation assets
 ├── docker/                     # Deployment helper scripts
 ├── vite.config.ts              # Vite config
 ├── playwright.config.ts        # E2E config

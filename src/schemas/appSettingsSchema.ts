@@ -28,27 +28,33 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const withDefault = <Output>(schema: z.ZodType<Output>, fallback: Output): z.ZodType<Output> =>
-  z.unknown().optional().transform((value) => {
-    if (value === undefined) {
-      return fallback;
-    }
+  z
+    .unknown()
+    .optional()
+    .transform((value) => {
+      if (value === undefined) {
+        return fallback;
+      }
 
-    const parsed = schema.safeParse(value);
-    return parsed.success ? parsed.data : fallback;
-  });
+      const parsed = schema.safeParse(value);
+      return parsed.success ? parsed.data : fallback;
+    });
 
 const optionalWithDefault = <Output>(
   schema: z.ZodType<Output>,
   fallback: Output | undefined,
 ): z.ZodType<Output | undefined> =>
-  z.unknown().optional().transform((value) => {
-    if (value === undefined) {
-      return fallback;
-    }
+  z
+    .unknown()
+    .optional()
+    .transform((value) => {
+      if (value === undefined) {
+        return fallback;
+      }
 
-    const parsed = schema.safeParse(value);
-    return parsed.success ? parsed.data : fallback;
-  });
+      const parsed = schema.safeParse(value);
+      return parsed.success ? parsed.data : fallback;
+    });
 
 const nullableStringWithDefault = (fallback: string | null) => z.string().nullable().default(fallback).catch(fallback);
 

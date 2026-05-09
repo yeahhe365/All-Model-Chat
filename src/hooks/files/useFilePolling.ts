@@ -1,9 +1,10 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import { getKeyForRequest } from '../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getKeyForRequest } from '../../utils/apiUtils';
 import { logService } from '../../services/logService';
 import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../../services/api/filePollingConfig';
 import { getFileMetadataApi } from '../../services/api/fileApi';
+import { useI18n } from '../../contexts/I18nContext';
 
 const MAX_POLLING_BACKOFF_MULTIPLIER = 8;
 
@@ -25,6 +26,7 @@ export const useFilePolling = ({
   setSelectedFiles,
   currentChatSettings,
 }: UseFilePollingProps) => {
+  const { t } = useI18n();
   const pollingIntervals = useRef<Map<string, number>>(new Map());
   const pollingInFlight = useRef<Set<string>>(new Set());
   const pollingFailures = useRef<Map<string, number>>(new Map());
@@ -77,7 +79,7 @@ export const useFilePolling = ({
             setSelectedFiles((prev) =>
               prev.map((f) =>
                 f.id === fileId
-                  ? { ...f, error: 'File processing timed out.', uploadState: 'failed', isProcessing: false }
+                  ? { ...f, error: t('fileProcessing_timed_out'), uploadState: 'failed', isProcessing: false }
                   : f,
               ),
             );
@@ -92,9 +94,11 @@ export const useFilePolling = ({
           const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
           if ('error' in keyResult) {
             logService.error(`Polling for ${fileApiName} stopped: ${keyResult.error}`);
+            const translationKey = getApiKeyErrorTranslationKey(keyResult.error);
+            const errorMessage = translationKey ? t(translationKey) : keyResult.error;
             setSelectedFiles((prev) =>
               prev.map((f) =>
-                f.id === fileId ? { ...f, error: keyResult.error, uploadState: 'failed', isProcessing: false } : f,
+                f.id === fileId ? { ...f, error: errorMessage, uploadState: 'failed', isProcessing: false } : f,
               ),
             );
             pollingInFlight.current.delete(fileId);
@@ -115,7 +119,7 @@ export const useFilePolling = ({
               setSelectedFiles((prev) =>
                 prev.map((f) =>
                   f.id === fileId
-                    ? { ...f, error: 'Backend processing failed.', uploadState: 'failed', isProcessing: false }
+                    ? { ...f, error: t('fileProcessing_backend_failed'), uploadState: 'failed', isProcessing: false }
                     : f,
                 ),
               );
@@ -141,5 +145,5 @@ export const useFilePolling = ({
     return () => {
       intervals.forEach((intervalId) => window.clearInterval(intervalId));
     };
-  }, [selectedFiles, appSettings, currentChatSettings, setSelectedFiles]);
+  }, [selectedFiles, appSettings, currentChatSettings, setSelectedFiles, t]);
 };

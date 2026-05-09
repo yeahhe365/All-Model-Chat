@@ -57,10 +57,23 @@ export const dataSettings = {
     en: 'Failed to import settings. The file might be corrupted or in the wrong format.',
     zh: '导入设置失败。文件可能已损坏或格式不正确。',
   },
+  settingsImport_errorWithMessage: { en: 'Import failed: {message}', zh: '导入失败：{message}' },
+  settingsImport_invalidFileFormat: {
+    en: 'Invalid file format. Expected {expectedType}, found {foundType}.',
+    zh: '文件格式无效。应为 {expectedType}，实际为 {foundType}。',
+  },
+  settingsImportHistory_invalidData: {
+    en: 'History data is missing or not an array.',
+    zh: '历史数据缺失或不是数组。',
+  },
+  settingsImportScenarios_invalidData: {
+    en: 'Scenarios data is missing or not an array.',
+    zh: '场景数据缺失或不是数组。',
+  },
   settingsViewLogs: { en: 'View Logs', zh: '查看日志' },
   settingsViewLogsAndUsage: { en: 'Open Logs & Usage', zh: '打开日志与用量' },
   settingsViewLogs_aria: { en: 'Open Application Logs', zh: '查看应用日志' },
-  settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
+  settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志（Ctrl+Alt+L）' },
   settingsLocalAppData: { en: 'Current Local App Data', zh: '当前本地应用数据' },
   settingsLocalAppData_loading: { en: 'Calculating local storage usage…', zh: '正在计算本地存储占用…' },
   settingsLocalAppData_error: {

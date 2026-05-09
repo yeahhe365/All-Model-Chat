@@ -3,6 +3,7 @@ import { Loader2, Repeat } from 'lucide-react';
 import { SideViewContent, UploadedFile } from '../../../types';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { DiagramWrapper } from './parts/DiagramWrapper';
+import { useI18n } from '../../../contexts/I18nContext';
 
 const graphvizCache = new Map<string, string>();
 type VizInstance = {
@@ -40,6 +41,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
   onOpenSidePanel,
   renderDelayMs = 500,
 }) => {
+  const { t } = useI18n();
   const [manualLayout, setManualLayout] = useState<'LR' | 'TB' | null>(null);
 
   const effectiveLayout = useMemo(() => {
@@ -183,13 +185,13 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
       if (isMessageLoading) {
         setIsRendering(true);
       } else {
-        const errorMessage = e instanceof Error ? e.message : 'Failed to render Graphviz diagram.';
+        const errorMessage = e instanceof Error ? e.message : t('diagram_render_graphviz_failed');
         setError(errorMessage.replace(/.*error:\s*/, ''));
         setSvgContent('');
         setIsRendering(false);
       }
     }
-  }, [code, effectiveLayout, themeId, isMessageLoading, cacheKey]);
+  }, [code, effectiveLayout, themeId, isMessageLoading, cacheKey, t]);
 
   useEffect(() => {
     let isMounted = true;
@@ -217,7 +219,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
       const { exportSvgAsImage } = await import('../../../utils/export/image');
       await exportSvgAsImage(svgContent, `graphviz-diagram-${Date.now()}.jpg`, 5, 'image/jpeg');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to export diagram.');
+      setError(e instanceof Error ? e.message : t('diagram_export_failed'));
     } finally {
       setIsDownloading(false);
     }
@@ -228,7 +230,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
       onClick={handleToggleLayout}
       disabled={isRendering}
       className={MESSAGE_BLOCK_BUTTON_CLASS}
-      title={`Toggle Layout (Current: ${effectiveLayout})`}
+      title={t('diagram_toggle_layout').replace('{layout}', effectiveLayout)}
     >
       {isRendering ? <Loader2 size={14} className="animate-spin" /> : <Repeat size={14} />}
     </button>
@@ -246,7 +248,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
       setShowSource={setShowSource}
       onImageClick={onImageClick}
       onDownloadJpg={handleDownloadJpg}
-      onOpenSidePanel={() => onOpenSidePanel({ type: 'graphviz', content: code, title: 'Graphviz Diagram' })}
+      onOpenSidePanel={() => onOpenSidePanel({ type: 'graphviz', content: code, title: t('diagram_graphviz_title') })}
       themeId={themeId}
       containerRef={diagramContainerRef}
       extraActions={layoutToggleBtn}

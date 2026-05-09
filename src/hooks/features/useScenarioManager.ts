@@ -75,7 +75,7 @@ export const useScenarioManager = ({
       const newScenario: SavedScenario = {
         ...scenario,
         id: generateUniqueId(),
-        title: `${scenario.title} (Copy)`,
+        title: t('scenarios_copy_title').replace('{title}', scenario.title),
         messages: scenario.messages.map((m) => ({ ...m, id: generateUniqueId() })), // Deep copy messages with new IDs
       };
 
@@ -93,7 +93,7 @@ export const useScenarioManager = ({
   const handleSaveScenario = useCallback(
     (scenarioToSave: SavedScenario) => {
       if (!scenarioToSave.title.trim()) {
-        showFeedback('error', 'Scenario title cannot be empty.');
+        showFeedback('error', t('scenarios_title_required'));
         return;
       }
       setScenarios((prev) => {
@@ -114,7 +114,7 @@ export const useScenarioManager = ({
   const handleDeleteScenario = useCallback(
     (id: string) => {
       setScenarios((prev) => buildSavedScenarios(getExportableUserScenarios(prev).filter((s) => s.id !== id)));
-      showFeedback('info', t('scenarios_feedback_cleared', 'Scenario deleted.'));
+      showFeedback('info', t('scenarios_feedback_cleared'));
     },
     [showFeedback, t],
   );

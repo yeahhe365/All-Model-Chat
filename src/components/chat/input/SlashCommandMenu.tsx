@@ -1,12 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { CornerDownLeft } from 'lucide-react';
 import { CommandIcon } from '../../icons/CommandIcon';
-import type { SlashCommand as Command } from '../../../types/slashCommands';
+import type { SlashCommand as SlashMenuItem } from '../../../types/slashCommands';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface SlashCommandMenuProps {
   isOpen: boolean;
-  commands: Command[];
-  onSelect: (command: Command) => void;
+  commands: SlashMenuItem[];
+  onSelect: (command: SlashMenuItem) => void;
   selectedIndex: number;
   className?: string;
 }
@@ -18,6 +19,7 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({
   selectedIndex,
   className,
 }) => {
+  const { t } = useI18n();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const selectedItemRef = useRef<HTMLLIElement>(null);
 
@@ -46,14 +48,14 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({
         {/* Header Strip */}
         <div className="sticky top-0 z-10 bg-[var(--theme-bg-secondary)] border-b border-[var(--theme-border-secondary)] px-3 py-2 flex justify-between items-center">
           <span className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-widest">
-            Commands
+            {t('slashCommands_title')}
           </span>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-[var(--theme-text-tertiary)] bg-[var(--theme-bg-primary)] px-1.5 py-0.5 rounded border border-[var(--theme-border-secondary)]">
-              ↑↓ to navigate
+              {t('slashCommands_navigate_hint')}
             </span>
             <span className="text-[10px] text-[var(--theme-text-tertiary)] bg-[var(--theme-bg-primary)] px-1.5 py-0.5 rounded border border-[var(--theme-border-secondary)]">
-              Tab to select
+              {t('slashCommands_select_hint')}
             </span>
           </div>
         </div>

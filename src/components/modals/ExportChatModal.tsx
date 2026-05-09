@@ -4,6 +4,7 @@ import { Modal } from '../shared/Modal';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { ExportOptions } from '../message/buttons/export/ExportOptions';
 import { MODAL_CLOSE_BUTTON_CLASS } from '../../constants/appConstants';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface ExportChatModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface ExportChatModalProps {
 }
 
 export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClose, onExport, exportStatus }) => {
+  const { t } = useI18n();
   const headingIconSize = useResponsiveValue(20, 24);
   const isLoading = exportStatus === 'exporting';
 
@@ -28,13 +30,13 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
             className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)] flex items-center"
           >
             <Download size={headingIconSize} className="mr-2.5 opacity-80" />
-            Export Chat
+            {t('export_chat_title')}
           </h2>
           <button
             onClick={onClose}
             disabled={isLoading}
             className={`${MODAL_CLOSE_BUTTON_CLASS} disabled:opacity-50`}
-            aria-label="Close export dialog"
+            aria-label={t('export_close_dialog_aria')}
           >
             <X size={22} />
           </button>
@@ -44,8 +46,8 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-40 text-[var(--theme-text-secondary)]">
               <Loader2 size={36} className="animate-spin text-[var(--theme-text-link)] mb-4" />
-              <p className="text-base font-medium">Exporting conversation...</p>
-              <p className="text-sm mt-1">This may take a moment for long chats or images.</p>
+              <p className="text-base font-medium">{t('export_conversation_loading')}</p>
+              <p className="text-sm mt-1">{t('export_conversation_wait_hint')}</p>
             </div>
           ) : (
             <ExportOptions onExport={onExport} variant="chat" />

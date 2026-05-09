@@ -1,11 +1,15 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ModelOption } from '../../types';
 import { sanitizeModelOptions } from '../../utils/modelHelpers';
 import { useModelPreferencesStore } from '../../stores/modelPreferencesStore';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { getTranslator } from '../../i18n/translations';
 
 export const useModels = () => {
   useModelPreferencesStore.getState().hydrateLegacyModelPreferences();
 
+  const language = useSettingsStore((state) => state.language);
+  const t = useMemo(() => getTranslator(language), [language]);
   const customModels = useModelPreferencesStore((state) => state.customModels);
   const setCustomModels = useModelPreferencesStore((state) => state.setCustomModels);
   const [defaultModels, setDefaultModels] = useState<ModelOption[]>([]);
@@ -29,16 +33,16 @@ export const useModels = () => {
         setIsDefaultModelsLoading(false);
       })
       .catch((error) => {
-        console.error('Failed to load default models', error);
+        console.error('Default model import failed', error);
         if (!isActive) return;
-        setModelsLoadingError('Failed to load default models');
+        setModelsLoadingError(t('appDefaultModelsLoadError'));
         setIsDefaultModelsLoading(false);
       });
 
     return () => {
       isActive = false;
     };
-  }, [hasCustomModels]);
+  }, [hasCustomModels, t]);
 
   const setApiModels = useCallback(
     (models: ModelOption[]) => {
