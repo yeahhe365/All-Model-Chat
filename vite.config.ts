@@ -2,6 +2,9 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
 import net from 'node:net';
+import { Buffer } from 'node:buffer';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -68,7 +71,22 @@ const DATA_PACKAGES = ['xlsx'];
 const PDF_WORKER_COPY_SOURCE = 'node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
 const LAMEJS_WORKER_COPY_SOURCE = 'node_modules/lamejs/lame.min.js';
 const IMAGE_PROXY_PATH = '/api/image-proxy';
+const LOCAL_CLIPBOARD_IMAGE_PATH = '/api/local-clipboard-image';
 const MAX_IMAGE_PROXY_BYTES = 25 * 1024 * 1024;
+const MAX_LOCAL_CLIPBOARD_IMAGE_BYTES = 25 * 1024 * 1024;
+const PNG_HEX_PREFIX = '89504e470d0a1a0a';
+const MACOS_CLIPBOARD_PNG_SCRIPT = `
+(() => {
+  ObjC.import('AppKit');
+  ObjC.import('Foundation');
+  const pasteboard = $.NSPasteboard.generalPasteboard;
+  const data = pasteboard.dataForType($('public.png'));
+  if (!data || data.isNil()) {
+    return '';
+  }
+  return ObjC.unwrap(data.base64EncodedStringWithOptions(0));
+})()
+`.trim();
 
 const HEAVY_PRELOAD_PATTERNS = [
   /^assets\/pyodide-runtime-.*\.js$/,
@@ -237,6 +255,43 @@ const parseAllowedImageProxyUrl = (value: string | null): URL | null => {
   }
 };
 
+const execFileAsync = promisify(execFile);
+
+const parsePngBase64Data = (value: string): Buffer | null => {
+  const base64 = value.trim();
+  if (!base64) {
+    return null;
+  }
+
+  const data = Buffer.from(base64, 'base64');
+  if (!data.byteLength || !data.toString('hex', 0, 8).startsWith(PNG_HEX_PREFIX)) {
+    return null;
+  }
+
+  return data;
+};
+
+const readMacOsClipboardPng = async (): Promise<Buffer | null> => {
+  if (process.platform !== 'darwin') {
+    return null;
+  }
+
+  try {
+    const result = await execFileAsync('osascript', ['-l', 'JavaScript', '-e', MACOS_CLIPBOARD_PNG_SCRIPT], {
+      encoding: 'utf8',
+      maxBuffer: MAX_LOCAL_CLIPBOARD_IMAGE_BYTES * 2 + 1024,
+    });
+    const data = parsePngBase64Data(result.stdout);
+    if (!data || data.byteLength > MAX_LOCAL_CLIPBOARD_IMAGE_BYTES) {
+      return null;
+    }
+
+    return data;
+  } catch {
+    return null;
+  }
+};
+
 const writeImageProxyJson = (
   response: { writeHead: (status: number, headers: Record<string, string>) => void; end: (body?: string) => void },
   statusCode: number,
@@ -311,34 +366,81 @@ const proxyImageRequest = async (
   response.end(method === 'HEAD' ? undefined : body);
 };
 
-const createImageProxyPlugin = (): Plugin => ({
-  name: 'amc-image-proxy',
+const localClipboardImageRequest = async (
+  request: { method?: string },
+  response: {
+    writeHead: (status: number, headers: Record<string, string>) => void;
+    end: (body?: string | Uint8Array) => void;
+  },
+) => {
+  const method = request.method ?? 'GET';
+  if (method !== 'GET' && method !== 'HEAD') {
+    writeImageProxyJson(response, 405, { error: 'Method not allowed' });
+    return;
+  }
+
+  const data = await readMacOsClipboardPng();
+  if (!data) {
+    writeImageProxyJson(response, 404, { error: 'No local clipboard image is available.' });
+    return;
+  }
+
+  response.writeHead(200, {
+    'content-type': 'image/png',
+    'content-length': String(data.byteLength),
+    'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
+    'x-clipboard-file-name': 'clipboard-image.png',
+  });
+  response.end(method === 'HEAD' ? undefined : data);
+};
+
+const createLocalApiPlugin = (): Plugin => ({
+  name: 'amc-local-api',
   configureServer(server) {
     server.middlewares.use((request, response, next) => {
       const requestUrl = new URL(request.url || '/', 'http://localhost');
-      if (requestUrl.pathname !== IMAGE_PROXY_PATH) {
-        next();
+
+      if (requestUrl.pathname === IMAGE_PROXY_PATH) {
+        void proxyImageRequest(request, response).catch((error) => {
+          const message = error instanceof Error ? error.message : 'Unknown image proxy error';
+          writeImageProxyJson(response, 500, { error: message });
+        });
         return;
       }
 
-      void proxyImageRequest(request, response).catch((error) => {
-        const message = error instanceof Error ? error.message : 'Unknown image proxy error';
-        writeImageProxyJson(response, 500, { error: message });
-      });
+      if (requestUrl.pathname === LOCAL_CLIPBOARD_IMAGE_PATH) {
+        void localClipboardImageRequest(request, response).catch((error) => {
+          const message = error instanceof Error ? error.message : 'Unknown local clipboard image error';
+          writeImageProxyJson(response, 500, { error: message });
+        });
+        return;
+      }
+
+      next();
     });
   },
   configurePreviewServer(server) {
     server.middlewares.use((request, response, next) => {
       const requestUrl = new URL(request.url || '/', 'http://localhost');
-      if (requestUrl.pathname !== IMAGE_PROXY_PATH) {
-        next();
+
+      if (requestUrl.pathname === IMAGE_PROXY_PATH) {
+        void proxyImageRequest(request, response).catch((error) => {
+          const message = error instanceof Error ? error.message : 'Unknown image proxy error';
+          writeImageProxyJson(response, 500, { error: message });
+        });
         return;
       }
 
-      void proxyImageRequest(request, response).catch((error) => {
-        const message = error instanceof Error ? error.message : 'Unknown image proxy error';
-        writeImageProxyJson(response, 500, { error: message });
-      });
+      if (requestUrl.pathname === LOCAL_CLIPBOARD_IMAGE_PATH) {
+        void localClipboardImageRequest(request, response).catch((error) => {
+          const message = error instanceof Error ? error.message : 'Unknown local clipboard image error';
+          writeImageProxyJson(response, 500, { error: message });
+        });
+        return;
+      }
+
+      next();
     });
   },
 });
@@ -348,7 +450,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       createDisabledMermaidDiagramPlugin(),
-      createImageProxyPlugin(),
+      createLocalApiPlugin(),
       tailwindcss(),
       react(),
       VitePWA({

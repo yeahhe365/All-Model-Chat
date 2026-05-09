@@ -83,8 +83,9 @@ vi.mock('./actions/SendControls', async () => {
 
   return {
     SendControls: () => {
-      const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage } = useChatInputComposerStatusContext();
-      const props = { canSend, canQueueMessage, onFastSendMessage, onQueueMessage };
+      const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage, onCancelPendingUploadSend } =
+        useChatInputComposerStatusContext();
+      const props = { canSend, canQueueMessage, onFastSendMessage, onQueueMessage, onCancelPendingUploadSend };
       sendControlsMock(props);
       return <div data-testid="send-controls" />;
     },
@@ -115,6 +116,7 @@ const splitRenderOverrides = (overrides: ActionRenderOverrides) => {
     onClearInput,
     onFastSendMessage,
     onQueueMessage,
+    onCancelPendingUploadSend,
     ...actionOverrides
   } = overrides;
 
@@ -130,6 +132,7 @@ const splitRenderOverrides = (overrides: ActionRenderOverrides) => {
       ...(onClearInput !== undefined ? { onClearInput } : {}),
       ...(onFastSendMessage !== undefined ? { onFastSendMessage } : {}),
       ...(onQueueMessage !== undefined ? { onQueueMessage } : {}),
+      ...(onCancelPendingUploadSend !== undefined ? { onCancelPendingUploadSend } : {}),
     },
   };
 };
@@ -364,6 +367,19 @@ describe('ChatInputActions', () => {
       }),
     );
     expect(renderer.container.querySelector('[data-testid="clear-input-button"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="paste-button"]')).toBeNull();
+    expect(renderer.container.querySelector('[data-testid="composer-more-menu"]')).not.toBeNull();
+  });
+
+  it('collapses auxiliary composer actions before the row becomes visually cramped on narrow screens', async () => {
+    mockActionRowMeasurements({ containerWidth: 318, leftWidth: 96, rightWidth: 188 });
+
+    renderActions({
+      showInputPasteButton: true,
+      showInputClearButton: true,
+    });
+    await waitForActionRowMeasurement();
+
     expect(renderer.container.querySelector('[data-testid="paste-button"]')).toBeNull();
     expect(renderer.container.querySelector('[data-testid="composer-more-menu"]')).not.toBeNull();
   });

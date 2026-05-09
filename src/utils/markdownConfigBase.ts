@@ -3,9 +3,184 @@ import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import type { Nodes, Root } from 'hast';
 import type { PluggableList } from 'unified';
 import { HIGHLIGHT_ALIASES, HIGHLIGHT_LANGUAGES, HIGHLIGHT_PLAINTEXT } from './highlightConfig';
 import { remarkWrappedStrong } from './remarkWrappedStrong';
+
+const ALLOWED_STYLE_PROPERTIES = new Set([
+  'align-items',
+  'background',
+  'background-color',
+  'border',
+  'border-collapse',
+  'border-color',
+  'border-radius',
+  'border-spacing',
+  'border-style',
+  'border-width',
+  'bottom',
+  'box-shadow',
+  'box-sizing',
+  'caption-side',
+  'color',
+  'cursor',
+  'display',
+  'flex',
+  'flex-basis',
+  'flex-direction',
+  'flex-grow',
+  'flex-shrink',
+  'flex-wrap',
+  'font-family',
+  'font-size',
+  'font-style',
+  'font-weight',
+  'gap',
+  'grid-template-columns',
+  'height',
+  'justify-content',
+  'left',
+  'letter-spacing',
+  'line-height',
+  'margin',
+  'margin-bottom',
+  'margin-left',
+  'margin-right',
+  'margin-top',
+  'max-height',
+  'max-width',
+  'min-height',
+  'min-width',
+  'object-fit',
+  'opacity',
+  'overflow',
+  'overflow-x',
+  'overflow-y',
+  'padding',
+  'padding-bottom',
+  'padding-left',
+  'padding-right',
+  'padding-top',
+  'position',
+  'right',
+  'text-align',
+  'text-decoration',
+  'text-transform',
+  'top',
+  'transform',
+  'transition',
+  'vertical-align',
+  'white-space',
+  'width',
+  'word-break',
+]);
+
+const BLOCKED_STYLE_VALUE_PATTERN =
+  /(?:url\s*\(|expression\s*\(|behavior\s*:|@import|javascript:|vbscript:|data:|!important)/i;
+const ALLOWED_POSITION_VALUES = new Set(['static', 'relative', 'absolute']);
+
+const splitStyleDeclarations = (style: string): string[] => {
+  const declarations: string[] = [];
+  let current = '';
+  let parenDepth = 0;
+  let quote: '"' | "'" | null = null;
+
+  for (const char of style) {
+    if (quote) {
+      current += char;
+      if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      current += char;
+      continue;
+    }
+
+    if (char === '(') {
+      parenDepth += 1;
+    } else if (char === ')' && parenDepth > 0) {
+      parenDepth -= 1;
+    }
+
+    if (char === ';' && parenDepth === 0) {
+      declarations.push(current);
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim()) {
+    declarations.push(current);
+  }
+
+  return declarations;
+};
+
+const isSafeStyleDeclaration = (property: string, value: string): boolean => {
+  if (!ALLOWED_STYLE_PROPERTIES.has(property) || BLOCKED_STYLE_VALUE_PATTERN.test(value)) {
+    return false;
+  }
+
+  if (property === 'position') {
+    return ALLOWED_POSITION_VALUES.has(value.trim().toLowerCase());
+  }
+
+  return true;
+};
+
+const sanitizeInlineStyle = (style: string): string | undefined => {
+  const declarations = splitStyleDeclarations(style).flatMap((declaration) => {
+    const colonIndex = declaration.indexOf(':');
+    if (colonIndex === -1) {
+      return [];
+    }
+
+    const property = declaration.slice(0, colonIndex).trim().toLowerCase();
+    const value = declaration.slice(colonIndex + 1).trim();
+
+    if (!property || !value || !isSafeStyleDeclaration(property, value)) {
+      return [];
+    }
+
+    return [`${property}:${value}`];
+  });
+
+  return declarations.length > 0 ? declarations.join(';') : undefined;
+};
+
+const sanitizeStyleNodes = (node: Nodes | Root): void => {
+  if (node.type === 'element') {
+    const rawStyle = node.properties.style;
+
+    if (typeof rawStyle === 'string') {
+      const sanitizedStyle = sanitizeInlineStyle(rawStyle);
+      if (sanitizedStyle) {
+        node.properties.style = sanitizedStyle;
+      } else {
+        delete node.properties.style;
+      }
+    } else if (rawStyle !== undefined) {
+      delete node.properties.style;
+    }
+  }
+
+  if ('children' in node) {
+    node.children.forEach(sanitizeStyleNodes);
+  }
+};
+
+const rehypeSafeInlineStyles = () => {
+  return (tree: Root) => {
+    sanitizeStyleNodes(tree);
+  };
+};
 
 export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
   const sanitizeSchema = {
@@ -45,7 +220,7 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
     ],
     attributes: {
       ...defaultSchema.attributes,
-      '*': ['ariaHidden', 'ariaLabel', 'role', 'title'],
+      '*': ['ariaHidden', 'ariaLabel', 'role', 'title', 'style'],
       code: [...(defaultSchema.attributes?.code || []), 'inline'],
       span: [...(defaultSchema.attributes?.span || [])],
       div: [...(defaultSchema.attributes?.div || []), 'align', ['className', 'tool-result', /^outcome-[a-z0-9_-]+$/]],
@@ -76,6 +251,7 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
 
   if (allowHtml) {
     plugins.push(rehypeRaw);
+    plugins.push(rehypeSafeInlineStyles);
   }
 
   plugins.push([rehypeSanitize, sanitizeSchema] as const);

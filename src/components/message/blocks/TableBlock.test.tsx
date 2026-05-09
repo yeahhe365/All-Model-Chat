@@ -47,7 +47,7 @@ describe('TableBlock', () => {
     expect(tableClasses).not.toContain('w-full');
   });
 
-  it('keeps inline action controls available without hover on compact viewports', () => {
+  it('scopes inline action controls to the table hover area instead of outer message groups', () => {
     act(() => {
       renderer.root.render(
         <WindowProvider window={window} document={document}>
@@ -63,12 +63,19 @@ describe('TableBlock', () => {
       );
     });
 
+    const tableContainer = renderer.container.querySelector('[data-table-actions-scope="true"]');
     const actionBar = renderer.container.querySelector('.absolute.top-2.right-2');
 
-    expect(actionBar?.className).toContain('opacity-100');
-    expect(actionBar?.className).toContain('pointer-events-auto');
-    expect(actionBar?.className).toContain('sm:opacity-0');
-    expect(actionBar?.className).toContain('sm:group-hover:opacity-100');
+    expect(tableContainer).not.toBeNull();
+    expect(tableContainer?.className.toString()).toContain('group/table');
+    expect(tableContainer?.className.toString()).not.toMatch(/(^|\s)group(\s|$)/);
+    expect(actionBar?.className).toContain('opacity-0');
+    expect(actionBar?.className).toContain('pointer-events-none');
+    expect(actionBar?.className).toContain('group-hover/table:opacity-100');
+    expect(actionBar?.className).toContain('group-hover/table:pointer-events-auto');
+    expect(actionBar?.className).not.toContain('group-hover:opacity-100');
+    expect(actionBar?.className).toContain('focus-within:opacity-100');
+    expect(actionBar?.className).not.toContain('sm:opacity-0');
   });
 
   it('exports Excel using the safe HTML workbook fallback without loading xlsx', async () => {

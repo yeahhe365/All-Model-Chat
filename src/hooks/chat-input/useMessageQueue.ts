@@ -100,6 +100,11 @@ export const useMessageQueue = ({
     setQueuedSubmission(null);
   }, []);
 
+  const cancelPendingSubmission = useCallback(() => {
+    pendingSubmissionRef.current = null;
+    setWaitingForUpload(false);
+  }, [setWaitingForUpload]);
+
   const restoreQueuedSubmission = useCallback(() => {
     if (!queuedSubmission) {
       return;
@@ -207,6 +212,7 @@ export const useMessageQueue = ({
     activeQueuedSubmission,
     queueCurrentSubmission,
     queuePendingSubmission,
+    cancelPendingSubmission,
     restoreQueuedSubmission,
     removeQueuedSubmission,
   };

@@ -86,6 +86,7 @@ export interface ChatInputComposerStatusContextValue {
   onClearInput: () => void;
   onFastSendMessage: () => void;
   onQueueMessage: () => void;
+  onCancelPendingUploadSend: () => void;
 }
 
 export const ChatInputContext = createContext<ChatInputContextValue | null>(null);

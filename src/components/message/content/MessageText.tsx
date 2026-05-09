@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { LazyMarkdownRenderer } from '../LazyMarkdownRenderer';
 import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
-import { extractPreviewableCodeBlock } from '../../../utils/codeUtils';
+import { extractPreviewableCodeBlock, normalizePreviewableMarkdownContent } from '../../../utils/codeUtils';
 import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
 import { useMessageStream } from '../../../hooks/ui/useMessageStream';
 import { extractRawThinkingBlocks } from '../../../utils/chat/reasoning';
@@ -51,6 +51,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
   // Apply smooth streaming effect only when loading and for model messages
   const shouldSmooth = isLoading && message.role === 'model';
   const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
+  const markdownContent = useMemo(() => normalizePreviewableMarkdownContent(displayedContent), [displayedContent]);
 
   // Auto Fullscreen HTML Logic
   const prevIsLoadingRef = useRef(isLoading);
@@ -116,7 +117,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
         <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}>
           <LazyMarkdownRenderer
             messageId={message.id}
-            content={displayedContent} // Use smoothed text
+            content={markdownContent}
             isLoading={isLoading}
             onImageClick={onImageClick}
             onOpenHtmlPreview={onOpenHtmlPreview}

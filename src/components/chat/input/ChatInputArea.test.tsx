@@ -10,11 +10,9 @@ describe('ChatInputArea default spacing', () => {
   it('uses the reduced default vertical padding for the non-fullscreen input container', () => {
     const source = fs.readFileSync(chatInputAreaLayoutPath, 'utf8');
 
-    expect(source).toContain(
-      'px-3 py-[0.486rem] pb-[calc(3.15rem+0.486rem)] sm:px-4 sm:py-[0.648rem] sm:pb-[calc(3.15rem+0.648rem)]',
-    );
-    expect(source).not.toContain('pb-[calc(3.5rem+0.54rem)]');
-    expect(source).not.toContain('sm:pb-[calc(3.5rem+0.72rem)]');
+    expect(source).toContain('px-3 py-1.5 sm:px-4 sm:py-2');
+    expect(source).not.toContain('pb-[calc(3.15rem+0.486rem)]');
+    expect(source).not.toContain('sm:pb-[calc(3.15rem+0.648rem)]');
     expect(source).not.toContain('bg-[var(--theme-bg-input)] p-3 sm:p-4');
   });
 
@@ -25,20 +23,22 @@ describe('ChatInputArea default spacing', () => {
     expect(source).not.toContain('pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]');
   });
 
-  it('keeps the action row anchored to the same absolute insets in fullscreen and regular modes', () => {
+  it('keeps the action row in normal flow without an internal divider line', () => {
     const source = fs.readFileSync(chatInputAreaLayoutPath, 'utf8');
 
     expect(source).toContain('const actionsContainerClass =');
-    expect(source).toContain(
-      'absolute bottom-[0.486rem] left-3 right-3 sm:bottom-[0.648rem] sm:left-4 sm:right-4 flex items-center justify-between z-10',
-    );
+    expect(source).toContain('flex items-center justify-between pt-1');
+    expect(source).not.toContain('border-t');
+    expect(source).not.toContain('border-[var(--theme-border-secondary)]/40');
+    expect(source).not.toContain('absolute bottom-');
     expect(source).not.toContain('mt-auto pt-1 relative z-10');
   });
 
-  it('uses a ten-percent shorter default textarea height', () => {
+  it('uses one text line as the default textarea height', () => {
     const source = fs.readFileSync(chatInputStatePath, 'utf8');
 
-    expect(source).toContain('export const INITIAL_TEXTAREA_HEIGHT_PX = 25.2;');
+    expect(source).toContain('export const INITIAL_TEXTAREA_HEIGHT_PX = 24;');
+    expect(source).not.toContain('export const INITIAL_TEXTAREA_HEIGHT_PX = 25.2;');
     expect(source).not.toContain('export const INITIAL_TEXTAREA_HEIGHT_PX = 28;');
   });
 
@@ -106,7 +106,7 @@ describe('ChatInputArea default spacing', () => {
 
     expect(source).toContain('relative z-10 mx-5 mb-[-22px] -translate-y-1.5');
     expect(source).toContain(
-      'shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative z-20',
+      'shadow-lg transition-colors duration-200 focus-within:border-[var(--theme-border-focus)] relative z-20',
     );
   });
 });

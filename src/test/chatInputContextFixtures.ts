@@ -67,6 +67,7 @@ export const createChatInputComposerStatusContextValue = (
   onClearInput: vi.fn(),
   onFastSendMessage: vi.fn(),
   onQueueMessage: vi.fn(),
+  onCancelPendingUploadSend: vi.fn(),
   ...overrides,
 });
 

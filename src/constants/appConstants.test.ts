@@ -27,6 +27,11 @@ describe('CHAT_INPUT_BUTTON_CLASS', () => {
     expect(CHAT_INPUT_BUTTON_CLASS).toContain('h-11');
     expect(CHAT_INPUT_BUTTON_CLASS).toContain('w-11');
   });
+
+  it('uses color-only transitions so composer controls do not feel sluggish', () => {
+    expect(CHAT_INPUT_BUTTON_CLASS).toContain('transition-colors');
+    expect(CHAT_INPUT_BUTTON_CLASS).not.toContain('transition-all');
+  });
 });
 
 describe('MESSAGE_BLOCK_BUTTON_CLASS', () => {

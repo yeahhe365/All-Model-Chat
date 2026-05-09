@@ -2,10 +2,84 @@ import { useCallback, type MutableRefObject, type RefObject } from 'react';
 import type { AppSettings, UploadedFile } from '../../types';
 import { processClipboardData } from '../../utils/clipboardUtils';
 import { useI18n } from '../../contexts/I18nContext';
+import { MIME_TO_EXTENSION_MAP, SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
+const DEFAULT_CLIPBOARD_IMAGE_EXTENSION = '.image';
+const IMAGE_FILE_NAME_TEXT_REGEX = /^(?:file:\/\/\/)?[^\r\n]+\.(?:png|jpe?g|webp|gif|heic|heif|avif|bmp|tiff?)$/i;
+const LOCAL_CLIPBOARD_IMAGE_ENDPOINT = '/api/local-clipboard-image';
 
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
+
+const getClipboardImageFileName = (mimeType: string, index: number) => {
+  const extension = MIME_TO_EXTENSION_MAP[mimeType] ?? DEFAULT_CLIPBOARD_IMAGE_EXTENSION;
+  const suffix = index === 0 ? '' : `-${index + 1}`;
+
+  return `clipboard-image${suffix}${extension}`;
+};
+
+const readClipboardImageFiles = async (clipboard: Clipboard): Promise<File[]> => {
+  if (!clipboard.read) {
+    return [];
+  }
+
+  const items = await clipboard.read();
+  const files: File[] = [];
+
+  for (const item of items) {
+    const imageType = item.types.find((type) => SUPPORTED_IMAGE_MIME_TYPES.includes(type));
+    if (!imageType) {
+      continue;
+    }
+
+    const blob = await item.getType(imageType);
+    files.push(
+      new File([blob], getClipboardImageFileName(imageType, files.length), {
+        type: blob.type || imageType,
+      }),
+    );
+  }
+
+  return files;
+};
+
+const isImageFileNameClipboardText = (text: string) => IMAGE_FILE_NAME_TEXT_REGEX.test(text.trim());
+
+const decodeClipboardFileName = (value: string | null) => {
+  if (!value) {
+    return 'clipboard-image.png';
+  }
+
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+const readLocalClipboardImageFile = async (): Promise<File | null> => {
+  if (typeof fetch === 'undefined') {
+    return null;
+  }
+
+  try {
+    const response = await fetch(LOCAL_CLIPBOARD_IMAGE_ENDPOINT, { cache: 'no-store' });
+    if (!response.ok) {
+      return null;
+    }
+
+    const contentType = response.headers.get('content-type')?.split(';')[0].trim() || 'image/png';
+    if (!SUPPORTED_IMAGE_MIME_TYPES.includes(contentType)) {
+      return null;
+    }
+
+    const blob = await response.blob();
+    const fileName = decodeClipboardFileName(response.headers.get('x-clipboard-file-name'));
+    return new File([blob], fileName, { type: blob.type || contentType });
+  } catch {
+    return null;
+  }
+};
 
 interface UseChatInputClipboardParams {
   appSettings: AppSettings;
@@ -136,26 +210,61 @@ export const useChatInputClipboard = ({
   );
 
   const handlePasteFromClipboard = useCallback(async () => {
-    if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
       return;
     }
 
-    try {
-      const clipboardText = await navigator.clipboard.readText();
-      if (!clipboardText) {
-        return;
+    const clipboard = navigator.clipboard;
+    let didHandle = false;
+    const tryLocalClipboardImage = async () => {
+      const localClipboardImage = await readLocalClipboardImageFile();
+      if (!localClipboardImage) {
+        return false;
       }
 
-      setInputText((prev) => prev + clipboardText);
+      justInitiatedFileOpRef.current = true;
+      await onProcessFiles([localClipboardImage]);
+      return true;
+    };
+
+    try {
+      const imageFiles = await readClipboardImageFiles(clipboard);
+      if (imageFiles.length > 0) {
+        justInitiatedFileOpRef.current = true;
+        await onProcessFiles(imageFiles);
+        didHandle = true;
+      }
+    } catch {
+      // Fall back to text-only paste when image clipboard access is unavailable or denied.
+    }
+
+    if (!didHandle) {
+      try {
+        const clipboardText = clipboard.readText ? await clipboard.readText() : '';
+        if (clipboardText && isImageFileNameClipboardText(clipboardText)) {
+          didHandle = await tryLocalClipboardImage();
+        } else if (clipboardText) {
+          didHandle = true;
+          setInputText((prev) => prev + clipboardText);
+        } else {
+          didHandle = await tryLocalClipboardImage();
+        }
+      } catch {
+        if (!didHandle) {
+          didHandle = await tryLocalClipboardImage();
+        }
+      }
+    }
+
+    if (didHandle) {
+      textareaRef.current?.focus();
       setTimeout(() => {
         const textarea = textareaRef.current;
         textarea?.focus();
         textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
       }, 0);
-    } catch {
-      return;
     }
-  }, [setInputText, textareaRef]);
+  }, [justInitiatedFileOpRef, onProcessFiles, setInputText, textareaRef]);
 
   const handleClearInput = useCallback(() => {
     setInputText('');

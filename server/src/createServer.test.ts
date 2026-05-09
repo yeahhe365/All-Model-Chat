@@ -1,8 +1,9 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createServer } from './createServer';
+import { createServer, readMacOsClipboardPng } from './createServer';
 import type { AddressInfo } from 'node:net';
 import http from 'node:http';
+import { Buffer } from 'node:buffer';
 
 async function startHttpServer(server: http.Server): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   await new Promise<void>((resolve, reject) => {
@@ -343,5 +344,71 @@ describe('createServer', () => {
     expect(response.status).toBe(400);
     expect(body).toEqual({ error: 'Image proxy URL is not allowed.' });
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('returns the local clipboard image when available', async () => {
+    const readLocalClipboardImage = vi.fn(async () => ({
+      data: Buffer.from([137, 80, 78, 71]),
+      mimeType: 'image/png',
+      fileName: 'clipboard-image.png',
+    }));
+    const app = createServer(
+      {
+        geminiApiBase: 'https://example.test',
+        geminiApiKey: 'server-key',
+      },
+      { readLocalClipboardImage },
+    );
+    const started = await startHttpServer(app);
+    cleanupCallbacks.push(started.close);
+
+    const response = await fetch(`${started.baseUrl}/api/local-clipboard-image`);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/png');
+    expect(response.headers.get('x-clipboard-file-name')).toBe('clipboard-image.png');
+    expect(Array.from(bytes)).toEqual([137, 80, 78, 71]);
+  });
+
+  it('returns 404 when no local clipboard image is available', async () => {
+    const readLocalClipboardImage = vi.fn(async () => null);
+    const app = createServer(
+      {
+        geminiApiBase: 'https://example.test',
+        geminiApiKey: 'server-key',
+      },
+      { readLocalClipboardImage },
+    );
+    const started = await startHttpServer(app);
+    cleanupCallbacks.push(started.close);
+
+    const response = await fetch(`${started.baseUrl}/api/local-clipboard-image`);
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(404);
+    expect(body).toEqual({ error: 'No local clipboard image is available.' });
+  });
+
+  it('reads macOS clipboard PNG data from the JXA public.png pasteboard type', async () => {
+    const pngBytes = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3]);
+    const execFileImpl = vi.fn(async () => ({
+      stdout: `${pngBytes.toString('base64')}\n`,
+      stderr: '',
+    }));
+
+    const image = await readMacOsClipboardPng(execFileImpl, 'darwin');
+
+    expect(execFileImpl).toHaveBeenCalledWith(
+      'osascript',
+      ['-l', 'JavaScript', '-e', expect.stringContaining("dataForType($('public.png'))")],
+      expect.objectContaining({
+        encoding: 'utf8',
+      }),
+    );
+    expect(image).not.toBeNull();
+    expect(image?.mimeType).toBe('image/png');
+    expect(image?.fileName).toBe('clipboard-image.png');
+    expect(image?.data.equals(pngBytes)).toBe(true);
   });
 });

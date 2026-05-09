@@ -10,7 +10,7 @@ import {
   type ChatInputMachineFlag,
 } from './chatInputStateMachine';
 
-export const INITIAL_TEXTAREA_HEIGHT_PX = 25.2;
+export const INITIAL_TEXTAREA_HEIGHT_PX = 24;
 export const MAX_TEXTAREA_HEIGHT_PX = 150;
 
 const EMPTY_EDITING_DRAFT: ChatDraft = {

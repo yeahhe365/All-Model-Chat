@@ -65,7 +65,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
       target.style.overflowY = 'auto';
     } else {
       const scrollHeight = shadow.scrollHeight;
-      const baseHeight = isMobile ? 24 : initialTextareaHeight;
+      const baseHeight = isMobile ? 26 : initialTextareaHeight + 2;
       const maxHeight = isMobile ? 120 : MAX_TEXTAREA_HEIGHT_PX;
       const newHeight = Math.max(baseHeight, Math.min(scrollHeight, maxHeight));
       target.style.height = `${newHeight}px`;
@@ -95,13 +95,13 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
       {/* Shadow Textarea for Height Calculation */}
       <textarea
         ref={shadowRef}
-        className="absolute top-0 left-0 w-full -z-50 opacity-0 pointer-events-none resize-none px-1 py-1 text-base custom-scrollbar"
+        className="absolute top-0 left-0 w-full -z-50 opacity-0 pointer-events-none resize-none px-1 pt-0.5 pb-0 text-base custom-scrollbar"
         style={{
           height: '0',
           overflow: 'hidden',
           fontFamily: 'inherit',
           lineHeight: 'inherit',
-          padding: '0.25rem', // Matches px-1 py-1
+          padding: '2px 0.25rem 0', // Matches px-1 pt-0.5 pb-0
         }}
         aria-hidden="true"
         tabIndex={-1}
@@ -117,9 +117,9 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
         placeholder={placeholder}
-        className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px]"
+        className="w-full bg-transparent border-0 resize-none px-1 pt-0.5 pb-0 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[26px]"
         style={{
-          height: isFullscreen ? '100%' : `${isMobile ? 24 : initialTextareaHeight}px`,
+          height: isFullscreen ? '100%' : `${isMobile ? 26 : initialTextareaHeight + 2}px`,
           overflowY: isFullscreen ? 'auto' : 'hidden',
         }}
         aria-label={t('chatInput_textarea_aria')}

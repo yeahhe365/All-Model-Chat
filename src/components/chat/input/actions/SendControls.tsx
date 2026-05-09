@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Edit2, Loader2, ArrowUp, CornerDownLeft } from 'lucide-react';
+import { X, Save, Edit2, ArrowUp, CornerDownLeft, Ban } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { IconStop } from '../../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
@@ -16,14 +16,15 @@ interface Ripple {
 
 export const SendControls: React.FC = () => {
   const { isLoading, isWaitingForUpload } = useChatInputActionsContext();
-  const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage } = useChatInputComposerStatusContext();
+  const { canSend, canQueueMessage, onFastSendMessage, onQueueMessage, onCancelPendingUploadSend } =
+    useChatInputComposerStatusContext();
   const isEditing = !!useChatStore((state) => state.editingMessageId);
   const editMode = useChatStore((state) => state.editMode);
   const { onStopGenerating, onCancelEdit } = useChatInputRuntime();
   const { t } = useI18n();
   const iconSize = 18;
   const [ripples, setRipples] = useState<Ripple[]>([]);
-  const mainButtonSizeClass = '!h-9 !w-9';
+  const mainButtonSizeClass = '!h-10 !w-10';
 
   useEffect(() => {
     if (ripples.length > 0) {
@@ -50,7 +51,7 @@ export const SendControls: React.FC = () => {
 
   // Determine disabled state
   // Note: Stop button is never disabled by canSend.
-  const isDisabled = !isLoading && (!canSend || isWaitingForUpload);
+  const isDisabled = !isLoading && !isUpload && !canSend;
 
   // Determine background class
   let bgClass = 'bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)]';
@@ -62,15 +63,14 @@ export const SendControls: React.FC = () => {
   } else if (isEdit) {
     bgClass = 'bg-amber-500 hover:bg-amber-600 text-white';
   } else if (isUpload) {
-    // Active processing state uses accent color with progress stripes
-    bgClass = 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] cursor-wait bg-progress-stripe';
+    bgClass = 'bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]';
   }
 
   // Determine shape class for morphing
   // Stop button is squarer (rounded-xl) to match stop icon metaphor
   // Others are circular (rounded-full)
   // Using explicit pixel radius or consistent scale ensures smoother transition than mixed units
-  const shapeClass = isStop ? '!rounded-[12px]' : '!rounded-full';
+  const shapeClass = isStop ? '!rounded-[10px]' : '!rounded-full';
 
   // Handlers
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -83,6 +83,10 @@ export const SendControls: React.FC = () => {
       e.preventDefault();
       e.stopPropagation();
       onStopGenerating();
+    } else if (isUpload) {
+      e.preventDefault();
+      e.stopPropagation();
+      onCancelPendingUploadSend();
     } else if (isDisabled) {
       e.preventDefault();
     }
@@ -108,8 +112,8 @@ export const SendControls: React.FC = () => {
     label = t('updateMessage_aria');
     title = t('updateMessage_title');
   } else if (isUpload) {
-    label = t('sendMessage_waitingForUpload_aria');
-    title = t('sendMessage_waitingForUpload_title');
+    label = t('cancelPendingUploadSend_aria');
+    title = t('cancelPendingUploadSend_title');
   } else if (isSend && !isDisabled) {
     title = t('sendMessage_title') + t('sendMessage_fast_suffix', ' (Right-click for Fast Mode ⚡)');
   }
@@ -172,11 +176,11 @@ export const SendControls: React.FC = () => {
 
       {/* Main Action Button */}
       <button
-        type={isStop ? 'button' : 'submit'}
+        type={isStop || isUpload ? 'button' : 'submit'}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         disabled={!isStop && isDisabled}
-        className={`${CHAT_INPUT_BUTTON_CLASS} ${mainButtonSizeClass} ${bgClass} ${shapeClass} relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm`}
+        className={`${CHAT_INPUT_BUTTON_CLASS} ${mainButtonSizeClass} ${bgClass} ${shapeClass} relative overflow-hidden transition-colors duration-150 shadow-sm`}
         aria-label={label}
         title={title}
       >
@@ -195,8 +199,8 @@ export const SendControls: React.FC = () => {
         ))}
 
         {/* Icons stack on top of each other and fade/rotate in/out */}
-        {renderIcon(isStop, IconStop, { size: 11 })}
-        {renderIcon(isUpload, Loader2, { size: iconSize, className: 'animate-spin', strokeWidth: 2 })}
+        {renderIcon(isStop, IconStop, { size: 10 })}
+        {renderIcon(isUpload, Ban, { size: iconSize - 1, strokeWidth: 2 })}
         {renderIcon(isEdit, editMode === 'update' ? Save : Edit2, { size: iconSize, strokeWidth: 2 })}
         {renderIcon(isSend, ArrowUp, { size: iconSize, strokeWidth: 2 })}
       </button>

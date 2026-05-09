@@ -286,7 +286,7 @@ code.hljs {
 }
 
 /* Table Styles - Clean Minimalist Style (No Grid Borders) */
-.markdown-body table {
+.markdown-body table:not(.rich-html-table) {
   border-collapse: collapse;
   width: 100%;
   min-width: 100%;
@@ -296,7 +296,7 @@ code.hljs {
   table-layout: fixed;
 }
 
-.markdown-body caption {
+.markdown-body table:not(.rich-html-table) caption {
   caption-side: top;
   color: inherit !important;
   font-weight: 600;
@@ -304,17 +304,17 @@ code.hljs {
   padding: 0.875rem 1rem 0.25rem;
 }
 
-.markdown-body thead {
+.markdown-body table:not(.rich-html-table) thead {
   background-color: transparent !important;
   border-bottom: 1px solid var(--theme-border-secondary) !important;
 }
 
-.markdown-body thead tr {
+.markdown-body table:not(.rich-html-table) thead tr {
   background-color: transparent !important;
   border: none !important;
 }
 
-.markdown-body thead th {
+.markdown-body table:not(.rich-html-table) thead th {
   background-color: transparent !important;
   color: inherit !important;
   font-weight: 700;
@@ -329,12 +329,12 @@ code.hljs {
   opacity: 0.9;
 }
 
-.markdown-body tbody {
+.markdown-body table:not(.rich-html-table) tbody {
   background-color: transparent !important;
 }
 
 /* Horizontal lines between rows */
-.markdown-body tbody tr {
+.markdown-body table:not(.rich-html-table) tbody tr {
   background-color: transparent !important;
   border-bottom: 1px solid var(--theme-border-secondary) !important;
   border-top: none !important;
@@ -343,15 +343,15 @@ code.hljs {
 }
 
 /* Remove border from last row to avoid double border with container bottom if present, or just clean look */
-.markdown-body tbody tr:last-child {
+.markdown-body table:not(.rich-html-table) tbody tr:last-child {
   border-bottom: none !important;
 }
 
-.markdown-body tbody tr:hover {
+.markdown-body table:not(.rich-html-table) tbody tr:hover {
   background-color: transparent !important; /* No hover effect for cleaner look, or maybe subtle */
 }
 
-.markdown-body tbody td {
+.markdown-body table:not(.rich-html-table) tbody td {
   padding: 1rem;
   border: none !important;
   color: inherit !important;
@@ -361,6 +361,10 @@ code.hljs {
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.markdown-body table.rich-html-table {
+  max-width: 100%;
 }
 
 /* Citation Styles */

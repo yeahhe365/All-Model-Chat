@@ -11,7 +11,7 @@ import { useComposerAuxiliaryActions } from './actions/useComposerAuxiliaryActio
 import { useChatInputActionsContext, useChatInputComposerStatusContext } from './ChatInputContext';
 
 const ACTION_ROW_GAP_PX = 8;
-const ACTION_ROW_OVERFLOW_BUFFER_PX = 4;
+const ACTION_ROW_COMFORT_BUFFER_PX = 40;
 
 interface AuxiliaryActionCollapseState {
   measurementSignature: string;
@@ -151,7 +151,7 @@ const ChatInputActionsComponent: React.FC = () => {
     }
 
     const expandedRightWidth = expandedRightWidthRef.current || currentRightWidth;
-    const requiredWidth = leftWidth + expandedRightWidth + ACTION_ROW_GAP_PX + ACTION_ROW_OVERFLOW_BUFFER_PX;
+    const requiredWidth = leftWidth + expandedRightWidth + ACTION_ROW_GAP_PX + ACTION_ROW_COMFORT_BUFFER_PX;
     const nextShouldCollapse = requiredWidth > containerWidth;
 
     setAuxiliaryActionCollapseState((current) =>

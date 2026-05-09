@@ -154,6 +154,7 @@ export const useChatInputSubmission = ({
     activeQueuedSubmission,
     queueCurrentSubmission,
     queuePendingSubmission,
+    cancelPendingSubmission,
     restoreQueuedSubmission,
     removeQueuedSubmission,
   } = useMessageQueue({
@@ -238,6 +239,7 @@ export const useChatInputSubmission = ({
     canQueueMessage,
     activeQueuedSubmission,
     queueCurrentSubmission,
+    cancelPendingUploadSend: cancelPendingSubmission,
     restoreQueuedSubmission,
     removeQueuedSubmission,
     handleSubmit,

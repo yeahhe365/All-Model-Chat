@@ -81,6 +81,8 @@ export const chatInputTranslations = {
   sendMessage_fast_suffix: { en: ' (Right-click for Fast Mode ⚡)', zh: '（右键开启快速模式 ⚡）' },
   sendMessage_waitingForUpload_aria: { en: 'Waiting for upload...', zh: '正在等待上传…' },
   sendMessage_waitingForUpload_title: { en: 'Waiting for upload to complete before sending', zh: '等待上传完成后发送' },
+  cancelPendingUploadSend_aria: { en: 'Cancel sending after upload', zh: '取消上传后发送' },
+  cancelPendingUploadSend_title: { en: 'Cancel sending after upload', zh: '取消上传后发送' },
   queueMessage_aria: { en: 'Queue next message', zh: '排队下一条消息' },
   queueMessage_title: { en: 'Queue next message', zh: '排队下一条消息' },
   pasteClipboard_aria: { en: 'Paste clipboard into input', zh: '将剪贴板内容粘贴到输入框' },

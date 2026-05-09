@@ -263,6 +263,9 @@ vi.mock('./ChatInputArea', async () => {
         >
           queue
         </button>
+        <button type="button" data-testid="cancel-pending-upload-send" onClick={handlers.cancelPendingUploadSend}>
+          cancel pending upload send
+        </button>
         {mockChatInputUiSettings.showInputTranslationButton === true && (
           <button type="button" data-testid="translate-button" onClick={handlers.handleTranslate}>
             translate
@@ -1265,12 +1268,195 @@ describe('ChatInput', () => {
       pasteButton?.click();
       await Promise.resolve();
       await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     expect(readText).toHaveBeenCalledTimes(1);
     expect(textarea?.value).toBe('Existing clipboard text');
     expect(document.activeElement).toBe(textarea);
+  });
+
+  it('processes clipboard images from the paste action without inserting image filename text', async () => {
+    const imageBlob = new Blob(['fake-png'], { type: 'image/png' });
+    const getType = vi.fn(async () => imageBlob);
+    const read = vi.fn(async () => [{ types: ['image/png'], getType }]);
+    const readText = vi.fn(async () => 'PixPin_2026-05-09_16-05-36.png');
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { read, readText },
+    });
+    const onProcessFiles = vi.fn(async (_files: FileList | File[]) => {});
+    const providerValue = createProviderValue(null);
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onProcessFiles = onProcessFiles;
+
+    await act(async () => {
+      renderer.root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const pasteButton = renderer.container.querySelector<HTMLButtonElement>('[data-testid="paste-button"]');
+
+    expect(textarea).not.toBeNull();
+    expect(pasteButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, '');
+    });
+
+    await act(async () => {
+      pasteButton?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(getType).toHaveBeenCalledWith('image/png');
+    expect(readText).not.toHaveBeenCalled();
+    expect(onProcessFiles).toHaveBeenCalledTimes(1);
+    const files = onProcessFiles.mock.calls[0]?.[0] as File[];
+    expect(files).toHaveLength(1);
+    expect(files[0]).toBeInstanceOf(File);
+    expect(files[0]?.name).toBe('clipboard-image.png');
+    expect(files[0]?.type).toBe('image/png');
+    expect(textarea?.value).toBe('');
+    expect(document.activeElement).toBe(textarea);
+  });
+
+  it('processes local clipboard image fallback when browser clipboard image data is unavailable', async () => {
+    const read = vi.fn(async () => []);
+    const readText = vi.fn(async () => 'PixPin_2026-05-09_16-05-36.png');
+    const fetchMock = vi.fn(async () => {
+      return new Response(new Blob(['local-png'], { type: 'image/png' }), {
+        status: 200,
+        headers: {
+          'content-type': 'image/png',
+          'x-clipboard-file-name': 'PixPin_2026-05-09_16-05-36.png',
+        },
+      });
+    });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { read, readText },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const onProcessFiles = vi.fn(async (_files: FileList | File[]) => {});
+    const providerValue = createProviderValue(null);
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onProcessFiles = onProcessFiles;
+
+    await act(async () => {
+      renderer.root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const pasteButton = renderer.container.querySelector<HTMLButtonElement>('[data-testid="paste-button"]');
+
+    expect(textarea).not.toBeNull();
+    expect(pasteButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, '');
+    });
+
+    await act(async () => {
+      pasteButton?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(readText).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith('/api/local-clipboard-image', { cache: 'no-store' });
+    expect(onProcessFiles).toHaveBeenCalledTimes(1);
+    const files = onProcessFiles.mock.calls[0]?.[0] as File[];
+    expect(files).toHaveLength(1);
+    expect(files[0]).toBeInstanceOf(File);
+    expect(files[0]?.name).toBe('PixPin_2026-05-09_16-05-36.png');
+    expect(files[0]?.type).toBe('image/png');
+    expect(textarea?.value).toBe('');
+    expect(document.activeElement).toBe(textarea);
+  });
+
+  it('checks the local clipboard image fallback when clipboard text is empty', async () => {
+    const read = vi.fn(async () => []);
+    const readText = vi.fn(async () => '');
+    const fetchMock = vi.fn(async () => {
+      return new Response(new Blob(['local-png'], { type: 'image/png' }), {
+        status: 200,
+        headers: {
+          'content-type': 'image/png',
+          'x-clipboard-file-name': 'clipboard-image.png',
+        },
+      });
+    });
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { read, readText },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const onProcessFiles = vi.fn(async (_files: FileList | File[]) => {});
+    const providerValue = createProviderValue(null);
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onProcessFiles = onProcessFiles;
+
+    await act(async () => {
+      renderer.root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const pasteButton = renderer.container.querySelector<HTMLButtonElement>('[data-testid="paste-button"]');
+
+    expect(textarea).not.toBeNull();
+    expect(pasteButton).not.toBeNull();
+
+    await act(async () => {
+      pasteButton?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(readText).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith('/api/local-clipboard-image', { cache: 'no-store' });
+    expect(onProcessFiles).toHaveBeenCalledTimes(1);
+    const files = onProcessFiles.mock.calls[0]?.[0] as File[];
+    expect(files[0]?.name).toBe('clipboard-image.png');
+    expect(files[0]?.type).toBe('image/png');
   });
 
   it('hides the paste button when the interface setting is disabled', async () => {
@@ -1412,5 +1598,70 @@ describe('ChatInput', () => {
     expect(setAppFileError).toHaveBeenCalledWith(
       'Attachment upload failed. Remove the failed file or upload it again before sending.',
     );
+  });
+
+  it('cancels a pending automatic send while an attachment is still uploading', async () => {
+    const onSendMessage = vi.fn();
+    const processingFile: UploadedFile = {
+      id: 'processing-file',
+      name: 'large.pdf',
+      type: 'application/pdf',
+      size: 4096,
+      uploadState: 'processing_api',
+      isProcessing: true,
+    };
+    const activeFile: UploadedFile = {
+      ...processingFile,
+      uploadState: 'active',
+      isProcessing: false,
+    };
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = false;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.selectedFiles = [processingFile];
+    providerValue.input.onSendMessage = onSendMessage;
+    mockChatStoreState.selectedFiles = [processingFile];
+
+    await act(async () => {
+      renderer.root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const cancelPendingButton = renderer.container.querySelector<HTMLButtonElement>(
+      '[data-testid="cancel-pending-upload-send"]',
+    );
+
+    expect(textarea).not.toBeNull();
+    expect(cancelPendingButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Summarize this file');
+      dispatchKeyDown(textarea, 'Enter');
+    });
+
+    expect(onSendMessage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      cancelPendingButton?.click();
+    });
+
+    await act(async () => {
+      const previousState = { selectedFiles: [processingFile] };
+      const nextState = { selectedFiles: [activeFile] };
+      mockChatStoreState.selectedFiles = nextState.selectedFiles;
+      mockChatStoreSubscribers.forEach((subscriber) => subscriber(nextState, previousState));
+    });
+
+    expect(onSendMessage).not.toHaveBeenCalled();
   });
 });

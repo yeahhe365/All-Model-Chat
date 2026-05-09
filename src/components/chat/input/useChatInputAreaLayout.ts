@@ -28,14 +28,13 @@ export const useChatInputAreaLayout = ({
     : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
 
   const inputContainerClass = isFullscreen
-    ? 'flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 pb-[calc(3.5rem+0.72rem)] shadow-none h-full transition-all duration-200 relative'
-    : 'flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-3 py-[0.486rem] pb-[calc(3.15rem+0.486rem)] sm:px-4 sm:py-[0.648rem] sm:pb-[calc(3.15rem+0.648rem)] shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative z-20';
+    ? 'flex flex-col gap-1.5 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-colors duration-200 relative'
+    : 'flex flex-col gap-1.5 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-3 py-1.5 sm:px-4 sm:py-2 shadow-lg transition-colors duration-200 focus-within:border-[var(--theme-border-focus)] relative z-20';
 
   const queuedSubmissionContainerClass = isFullscreen
     ? 'mb-2 flex-shrink-0'
     : 'relative z-10 mx-5 mb-[-22px] -translate-y-1.5';
-  const actionsContainerClass =
-    'absolute bottom-[0.486rem] left-3 right-3 sm:bottom-[0.648rem] sm:left-4 sm:right-4 flex items-center justify-between z-10';
+  const actionsContainerClass = 'flex items-center justify-between pt-1';
 
   return {
     isUIBlocked,

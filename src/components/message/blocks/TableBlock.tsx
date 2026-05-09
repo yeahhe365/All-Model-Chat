@@ -14,9 +14,34 @@ import {
   MENU_ITEM_DEFAULT_STATE_CLASS,
 } from '../../../constants/appConstants';
 
-type TableBlockProps = React.TableHTMLAttributes<HTMLTableElement>;
+type HastElementLike = {
+  properties?: Record<string, unknown>;
+};
 
-export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...props }) => {
+type TableBlockProps = React.TableHTMLAttributes<HTMLTableElement> & {
+  node?: HastElementLike;
+};
+
+type TableChildProps = {
+  children?: React.ReactNode;
+  node?: HastElementLike;
+};
+
+const hasRawHtmlInlineStyle = (node?: HastElementLike): boolean => {
+  return typeof node?.properties?.style === 'string' && node.properties.style.trim().length > 0;
+};
+
+const hasInlineStyle = (node: React.ReactNode): boolean => {
+  return React.Children.toArray(node).some((child) => {
+    if (!React.isValidElement<TableChildProps>(child)) {
+      return false;
+    }
+
+    return hasRawHtmlInlineStyle(child.props.node) || hasInlineStyle(child.props.children);
+  });
+};
+
+export const TableBlock: React.FC<TableBlockProps> = ({ children, className, node, ...props }) => {
   const { t } = useI18n();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
@@ -77,7 +102,16 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
     setShowDownloadMenu(false);
   };
 
-  const tableClassName = [className, 'min-w-full', 'w-max', 'text-left'].filter(Boolean).join(' ');
+  const isRichHtmlTable = hasRawHtmlInlineStyle(node) || hasInlineStyle(children);
+  const tableClassName = [className, isRichHtmlTable ? 'rich-html-table' : 'min-w-full w-max text-left']
+    .filter(Boolean)
+    .join(' ');
+  const inlineContainerClassName = isRichHtmlTable
+    ? 'relative group/table my-4 w-full max-w-full overflow-visible'
+    : 'relative group/table my-4 w-full max-w-full rounded-xl border border-[var(--theme-border-secondary)]/70 bg-[var(--theme-bg-primary)]/40 overflow-visible';
+  const fullscreenContainerClassName = isRichHtmlTable
+    ? 'w-full max-w-6xl mx-auto markdown-body p-0 my-0'
+    : 'w-full max-w-6xl mx-auto bg-[var(--theme-bg-primary)] rounded-lg shadow-xl overflow-hidden border border-[var(--theme-border-secondary)] markdown-body p-0 my-0';
 
   // When fullscreen, we use a portal and a specific layout.
   if (isFullscreen) {
@@ -130,7 +164,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
           </button>
         </div>
 
-        <div className="w-full max-w-6xl mx-auto bg-[var(--theme-bg-primary)] rounded-lg shadow-xl overflow-hidden border border-[var(--theme-border-secondary)] markdown-body p-0 my-0">
+        <div className={fullscreenContainerClassName} data-rich-html-table-container={isRichHtmlTable || undefined}>
           <div className="overflow-x-auto">
             <table ref={tableRef} className={tableClassName} {...props}>
               {children}
@@ -144,7 +178,11 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
 
   // Default inline view - Enclosed container with floating top-right actions
   return (
-    <div className="relative group my-4 w-full max-w-full rounded-xl border border-[var(--theme-border-secondary)]/70 bg-[var(--theme-bg-primary)]/40 overflow-visible">
+    <div
+      className={inlineContainerClassName}
+      data-rich-html-table-container={isRichHtmlTable || undefined}
+      data-table-actions-scope="true"
+    >
       {/* Scrollable Table Container */}
       <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-[var(--theme-scrollbar-thumb)] scrollbar-track-transparent w-full">
         <table ref={tableRef} className={tableClassName} {...props}>
@@ -153,7 +191,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, ...
       </div>
 
       {/* Floating Action Buttons */}
-      <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-100 pointer-events-auto transition-opacity duration-200 sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto">
+      <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 pointer-events-none transition-opacity duration-200 group-hover/table:opacity-100 group-hover/table:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
         <button
           onClick={handleCopyMarkdown}
           aria-label={t('table_copy_markdown_aria')}

@@ -197,4 +197,99 @@ describe('MessageText', () => {
 
     expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe('Final answer.');
   });
+
+  it('passes bare standalone html documents to markdown as fenced html blocks', () => {
+    const htmlDocument =
+      '<!DOCTYPE html><html><head><title>Transformer 模型深度解析图谱</title><style>:root{--primary:#2563eb}</style></head><body><h1>Transformer</h1></body></html>';
+
+    act(() => {
+      renderer.render(
+        <MessageText
+          message={{
+            id: 'message-bare-html',
+            role: 'model',
+            content: htmlDocument,
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={false}
+          appSettings={createAppSettings({ autoFullscreenHtml: false, hideThinkingInContext: false })}
+          themeId="pearl"
+          baseFontSize={16}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe(
+      `\`\`\`html\n${htmlDocument}\n\`\`\``,
+    );
+  });
+
+  it('keeps raw html fragments inline for markdown rendering', () => {
+    const htmlFragment = '<div style="display:flex;gap:12px"><span>Ready</span></div>';
+
+    act(() => {
+      renderer.render(
+        <MessageText
+          message={{
+            id: 'message-html-fragment',
+            role: 'model',
+            content: htmlFragment,
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={false}
+          appSettings={createAppSettings({ autoFullscreenHtml: false, hideThinkingInContext: false })}
+          themeId="pearl"
+          baseFontSize={16}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe(htmlFragment);
+  });
+
+  it('renders mislabeled fenced html fragments inline instead of as css code', () => {
+    const htmlFragment =
+      '<!-- 核心定义卡片 -->\n<div style="padding:20px;background:#f9fafb"><strong>Transformer</strong></div>';
+    const content = `<div style="background:#6d28d9;color:white">Transformer 模型</div>\n\n\`\`\`css\n${htmlFragment}\n\`\`\``;
+
+    act(() => {
+      renderer.render(
+        <MessageText
+          message={{
+            id: 'message-mislabeled-fragment',
+            role: 'model',
+            content,
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={false}
+          appSettings={createAppSettings({ autoFullscreenHtml: false, hideThinkingInContext: false })}
+          themeId="pearl"
+          baseFontSize={16}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const renderedContent = renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent;
+
+    expect(renderedContent).toContain(htmlFragment);
+    expect(renderedContent).not.toContain('```css');
+  });
 });

@@ -3,6 +3,12 @@ import { LOCAL_PYTHON_SYSTEM_PROMPT } from '@/features/prompts/localPython';
 type PromptLanguage = 'en' | 'zh';
 
 const CANVAS_PROMPT_MARKERS = [
+  '[Canvas Artifact Protocol]',
+  '[Canvas Artifact Protocol - zh]',
+  '[Canvas Artifact Protocol - en]',
+  '[Canvas Artifact Protocol v2]',
+  '[Canvas Artifact Protocol v2 - zh]',
+  '[Canvas Artifact Protocol v2 - en]',
   '<title>Canvas 助手：响应式视觉指南</title>',
   '<title>Canvas Assistant: Responsive Visual Guide</title>',
 ];

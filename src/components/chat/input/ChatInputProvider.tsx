@@ -82,6 +82,7 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const onClearInput = useLatestCallback(handlers.handleClearInput);
   const onFastSendMessage = useLatestCallback(handlers.handleFastSubmit);
   const onQueueMessage = useLatestCallback(handlers.queueCurrentSubmission);
+  const onCancelPendingUploadSend = useLatestCallback(handlers.cancelPendingUploadSend);
 
   const queuedSubmissionView = useMemo(
     () =>
@@ -230,6 +231,7 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       onClearInput,
       onFastSendMessage,
       onQueueMessage,
+      onCancelPendingUploadSend,
     }),
     [
       hasTrimmedInput,
@@ -239,6 +241,7 @@ export const ChatInputProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       onFastSendMessage,
       onPasteFromClipboard,
       onQueueMessage,
+      onCancelPendingUploadSend,
       onTranslate,
     ],
   );

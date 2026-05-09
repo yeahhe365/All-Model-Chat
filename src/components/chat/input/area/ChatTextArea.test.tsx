@@ -81,4 +81,38 @@ describe('ChatTextArea', () => {
 
     expect(textarea?.value).toBe('ni');
   });
+
+  it('keeps a single entered line stable while nudging the text away from the top edge', () => {
+    const textareaRef = { current: null } as React.RefObject<HTMLTextAreaElement>;
+
+    act(() => {
+      renderer.root.render(
+        <ChatTextArea
+          textareaRef={textareaRef}
+          value="A single line"
+          onChange={() => {}}
+          onKeyDown={() => {}}
+          onPaste={() => {}}
+          onCompositionStart={() => {}}
+          onCompositionEnd={() => {}}
+          placeholder="Ask anything"
+          disabled={false}
+          isFullscreen={false}
+          isMobile={false}
+          initialTextareaHeight={24}
+          isConverting={false}
+        />,
+      );
+    });
+
+    const shadowTextarea = renderer.container.querySelector<HTMLTextAreaElement>('textarea[aria-hidden="true"]');
+    const visibleTextarea = renderer.container.querySelector<HTMLTextAreaElement>(
+      'textarea[data-chat-input-textarea="true"]',
+    );
+
+    expect(shadowTextarea?.style.padding).toBe('2px 0.25rem 0px');
+    expect(visibleTextarea?.style.height).toBe('26px');
+    expect(visibleTextarea?.className).toContain('pt-0.5');
+    expect(visibleTextarea?.className).toContain('pb-0');
+  });
 });

@@ -232,6 +232,103 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(image?.getAttribute('src')).toBe('blob:generated-plot');
   });
 
+  it('preserves safe inline styles in allowed raw html', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={
+            '<div style="display:flex;gap:12px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:20px 16px">' +
+            '<table style="width:100%;border-collapse:collapse;text-align:center">' +
+            '<tbody><tr><td style="padding:12px 16px"><span style="background:#e8f5e9;color:#2e7d32;border-radius:20px">Ready</span></td></tr></tbody>' +
+            '</table></div>'
+          }
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const wrapper = renderer.container.querySelector('div[style*="display"]');
+    const table = renderer.container.querySelector('table');
+    const cell = renderer.container.querySelector('td');
+    const badge = renderer.container.querySelector('span');
+    const wrapperStyle = wrapper?.getAttribute('style')?.replace(/\s+/g, '');
+    const tableStyle = table?.getAttribute('style')?.replace(/\s+/g, '');
+    const cellStyle = cell?.getAttribute('style')?.replace(/\s+/g, '');
+    const badgeStyle = badge?.getAttribute('style')?.replace(/\s+/g, '');
+
+    expect(wrapperStyle).toContain('display:flex');
+    expect(wrapperStyle).toContain('background:linear-gradient(135deg');
+    expect(wrapperStyle).toContain('border-radius:12px');
+    expect(tableStyle).toContain('border-collapse:collapse');
+    expect(cellStyle).toContain('padding:12px16px');
+    expect(badgeStyle).toContain('border-radius:20px');
+  });
+
+  it('marks styled raw html tables as rich tables so inline styles can win', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={
+            '<table style="width:100%;border-collapse:collapse;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.08)">' +
+            '<thead><tr style="background:#1a1a2e;color:#fff"><th style="padding:12px 16px;background:#16213e">React</th></tr></thead>' +
+            '<tbody><tr style="background:#fafafa"><td style="color:#2e7d32;font-weight:600">Ready</td></tr></tbody>' +
+            '</table>'
+          }
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const table = renderer.container.querySelector('table');
+    const tableWrapper = renderer.container.querySelector('[data-rich-html-table-container="true"]');
+
+    expect(table).not.toBeNull();
+    expect(table?.className).toContain('rich-html-table');
+    expect(table?.className).not.toContain('w-max');
+    expect(tableWrapper).not.toBeNull();
+  });
+
+  it('keeps markdown tables on the standard table styling path', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={'| Name | Total |\n|---|---:|\n| Alice | 42 |'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const table = renderer.container.querySelector('table');
+
+    expect(table).not.toBeNull();
+    expect(table?.className).not.toContain('rich-html-table');
+    expect(table?.className).toContain('w-max');
+  });
+
   it('strips raw html positioning attributes that can escape the markdown surface', () => {
     act(() => {
       renderer.root.render(
@@ -349,6 +446,37 @@ describe('BaseMarkdownRendererEntry', () => {
 
     expect(renderer.container.textContent).toContain('alpha');
     expect(renderer.container.textContent).toContain('beta');
+  });
+
+  it('renders standalone multiline raw html fragments without accidental code blocks', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={`<div style="padding:24px;background:#f8f9fa">
+  <section style="background:white">
+    <p>Transformer summary</p>
+  </section>
+
+  <!-- 三大核心特性 -->
+  <div style="display:grid">
+    <strong>Self-Attention</strong>
+  </div>
+</div>`}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(renderer.container.querySelector('pre')).toBeNull();
+    expect(renderer.container.querySelector('div[style*="display"] strong')?.textContent).toBe('Self-Attention');
   });
 
   it('hides markdown preview affordances when interactive mode is disabled', () => {

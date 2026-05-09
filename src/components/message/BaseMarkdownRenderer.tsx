@@ -11,6 +11,7 @@ import { extractTextFromNode } from '../../utils/uiUtils';
 import { InlineCode } from './code-block/InlineCode';
 import { splitMarkdownSegments } from '../../utils/markdownUtils';
 import { stripGemmaThoughtMarkup, wrapReasoningMarkup } from '../../utils/chat/reasoning';
+import { normalizePreviewableMarkdownContent } from '../../utils/codeUtils';
 
 const loadMermaidBlock = async () => {
   const module = await import('./blocks/MermaidBlock');
@@ -303,7 +304,11 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
     const processedContent = useMemo(() => {
       if (!content) return '';
 
-      const contentWithNormalizedMath = transformMarkdownTextSegments(content, normalizeEscapedMathDelimiters);
+      const normalizedContent = normalizePreviewableMarkdownContent(content);
+      const contentWithNormalizedMath = transformMarkdownTextSegments(
+        normalizedContent,
+        normalizeEscapedMathDelimiters,
+      );
 
       if (hideThinkingInContext) {
         return wrapReasoningMarkup(contentWithNormalizedMath, isLoading, t('thinking_raw_process'));
