@@ -44,7 +44,7 @@ describe('MessageActions', () => {
         onEditMessage={() => {}}
         onDeleteMessage={() => {}}
         onRetryMessage={() => {}}
-        onGenerateCanvas={() => {}}
+        onGenerateLiveArtifacts={() => {}}
         onContinueGeneration={() => {}}
         onForkMessage={() => {}}
         themeId="pearl"
@@ -83,21 +83,21 @@ describe('MessageActions', () => {
     expect(deleteButton?.className).not.toContain('scale');
   });
 
-  it('collapses continue generation and canvas actions into the message overflow menu', () => {
+  it('collapses continue generation and Live Artifacts actions into the message overflow menu', () => {
     const handleContinueGeneration = vi.fn();
-    const handleGenerateCanvas = vi.fn();
+    const handleGenerateLiveArtifacts = vi.fn();
     const handleForkMessage = vi.fn();
 
     act(() => {
       renderMessageActions({
-        onGenerateCanvas: handleGenerateCanvas,
+        onGenerateLiveArtifacts: handleGenerateLiveArtifacts,
         onContinueGeneration: handleContinueGeneration,
         onForkMessage: handleForkMessage,
       });
     });
 
     expect(renderer.container.querySelector('[aria-label="Continue Generating"]')).not.toBeInTheDocument();
-    expect(renderer.container.querySelector('[aria-label="Visualize with Canvas"]')).not.toBeInTheDocument();
+    expect(renderer.container.querySelector('[aria-label="Visualize with Live Artifacts"]')).not.toBeInTheDocument();
 
     const moreButton = renderer.container.querySelector<HTMLButtonElement>('[aria-label="More message actions"]');
     expect(moreButton).toBeInTheDocument();
@@ -114,14 +114,14 @@ describe('MessageActions', () => {
     const continueItem = renderer.container.querySelector<HTMLButtonElement>(
       '[role="menuitem"][aria-label="Continue Generating"]',
     );
-    const canvasItem = renderer.container.querySelector<HTMLButtonElement>(
-      '[role="menuitem"][aria-label="Visualize with Canvas"]',
+    const liveArtifactsItem = renderer.container.querySelector<HTMLButtonElement>(
+      '[role="menuitem"][aria-label="Visualize with Live Artifacts"]',
     );
     const forkItem = renderer.container.querySelector<HTMLButtonElement>(
       '[role="menuitem"][aria-label="Fork from here"]',
     );
     expect(continueItem).toBeInTheDocument();
-    expect(canvasItem).toBeInTheDocument();
+    expect(liveArtifactsItem).toBeInTheDocument();
     expect(forkItem).toBeInTheDocument();
 
     act(() => {
@@ -148,14 +148,14 @@ describe('MessageActions', () => {
     act(() => {
       moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    const reopenedCanvasItem = renderer.container.querySelector<HTMLButtonElement>(
-      '[role="menuitem"][aria-label="Visualize with Canvas"]',
+    const reopenedLiveArtifactsItem = renderer.container.querySelector<HTMLButtonElement>(
+      '[role="menuitem"][aria-label="Visualize with Live Artifacts"]',
     );
     act(() => {
-      reopenedCanvasItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      reopenedLiveArtifactsItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(handleGenerateCanvas).toHaveBeenCalledWith('message-1', 'Hello from the model');
+    expect(handleGenerateLiveArtifacts).toHaveBeenCalledWith('message-1', 'Hello from the model');
   });
 
   it('listens for overflow menu dismissal in the provided document', () => {
@@ -175,7 +175,7 @@ describe('MessageActions', () => {
         onEditMessage={() => {}}
         onDeleteMessage={() => {}}
         onRetryMessage={() => {}}
-        onGenerateCanvas={() => {}}
+        onGenerateLiveArtifacts={() => {}}
         onContinueGeneration={() => {}}
         onForkMessage={() => {}}
         themeId="pearl"
@@ -223,7 +223,7 @@ describe('MessageActions', () => {
             onEditMessage={() => {}}
             onDeleteMessage={() => {}}
             onRetryMessage={() => {}}
-            onGenerateCanvas={() => {}}
+            onGenerateLiveArtifacts={() => {}}
             onContinueGeneration={() => {}}
             onForkMessage={() => {}}
             themeId="pearl"
@@ -236,7 +236,7 @@ describe('MessageActions', () => {
             onEditMessage={() => {}}
             onDeleteMessage={() => {}}
             onRetryMessage={() => {}}
-            onGenerateCanvas={() => {}}
+            onGenerateLiveArtifacts={() => {}}
             onContinueGeneration={() => {}}
             onForkMessage={() => {}}
             themeId="pearl"

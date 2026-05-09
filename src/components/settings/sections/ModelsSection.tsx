@@ -3,7 +3,7 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { ChevronDown, Shield } from 'lucide-react';
 import { ApiMode, AppSettings, ModelOption } from '../../../types';
 import { ModelSelector } from '../controls/ModelSelector';
-import { CanvasSection } from './CanvasSection';
+import { LiveArtifactsSection } from './LiveArtifactsSection';
 import { GenerationSection } from './GenerationSection';
 import { LanguageVoiceSection } from './LanguageVoiceSection';
 import { SafetySection } from './SafetySection';
@@ -51,7 +51,7 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
       <ModelSelector
         availableModels={availableModels}
         selectedModelId={modelId}
-        selectedApiMode={currentSettings.apiMode}
+        selectedApiMode={isOpenAICompatibleMode ? 'gemini-native' : currentSettings.apiMode}
         onSelectModel={setModelId}
         setAvailableModels={setAvailableModels}
         defaultModels={defaultModels}
@@ -67,7 +67,7 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
 
       {!isOpenAICompatibleMode && (
         <>
-          <CanvasSection currentSettings={currentSettings} onUpdateSetting={updateSetting} />
+          <LiveArtifactsSection currentSettings={currentSettings} onUpdateSetting={updateSetting} />
 
           <LanguageVoiceSection
             availableModels={geminiOnlyModels}

@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../../types';
 import { logService } from '../../services/logService';
-import { getKeyForRequest } from '../../utils/apiUtils';
+import { getGeminiKeyForRequest } from '../../utils/apiUtils';
 import { generateSessionTitle } from '../../utils/chat/session';
 import { generateTitleApi } from '../../services/api/generation/textApi';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -37,7 +38,7 @@ export const useAutoTitling = ({
       logService.info(`Auto-generating title for session ${sessionId}`);
 
       // Sticky Key Logic: Prefer key used in the last turn if available
-      const stickyKey = sessionKeyMapRef?.current?.get(sessionId);
+      const stickyKey = isOpenAICompatibleApiActive(appSettings) ? undefined : sessionKeyMapRef?.current?.get(sessionId);
 
       let keyToUse: string;
       if (stickyKey) {
@@ -45,7 +46,7 @@ export const useAutoTitling = ({
         // logService.debug(`Reusing sticky key for title generation.`);
       } else {
         // Fallback to normal rotation (skipIncrement)
-        const keyResult = getKeyForRequest(appSettings, session.settings, { skipIncrement: true });
+        const keyResult = getGeminiKeyForRequest(appSettings, session.settings, { skipIncrement: true });
         if ('error' in keyResult) {
           logService.error(`Could not generate title for session ${sessionId}: ${keyResult.error}`);
           setGeneratingTitleSessionIds((prev) => {

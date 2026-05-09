@@ -275,7 +275,7 @@ export const chatInputTranslations = {
   help_cmd_clear: { en: 'Clear current chat', zh: '清除当前聊天' },
   help_cmd_new: { en: 'Start a new chat', zh: '开始新聊天' },
   help_cmd_settings: { en: 'Open settings', zh: '打开设置' },
-  help_cmd_canvas: { en: 'Toggle Canvas prompt', zh: '切换 Canvas 提示' },
+  help_cmd_artifacts: { en: 'Toggle Live Artifacts prompt', zh: '切换 Live Artifacts 提示' },
   help_cmd_pip: { en: 'Toggle Picture-in-Picture mode', zh: '切换画中画模式' },
   help_cmd_fast: { en: 'Toggle Fast Thinking Mode', zh: '切换快速思考模式' },
 

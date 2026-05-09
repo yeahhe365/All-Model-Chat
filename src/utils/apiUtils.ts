@@ -18,7 +18,26 @@ export const isServerManagedApiEnabledForProxyRequests = (appSettings: ServerMan
     appSettings.apiProxyUrl?.trim()
   );
 
-const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
+type ApiKeyRequestMode = 'active' | 'gemini-native' | 'openai-compatible';
+
+type GetKeyForRequestOptions = {
+  skipIncrement?: boolean;
+  skipUsageLogging?: boolean;
+  apiMode?: ApiKeyRequestMode;
+};
+
+const resolveApiKeyRequestMode = (appSettings: AppSettings, apiMode: ApiKeyRequestMode = 'active') => {
+  if (apiMode !== 'active') {
+    return apiMode;
+  }
+
+  return isOpenAICompatibleApiActive(appSettings) ? 'openai-compatible' : 'gemini-native';
+};
+
+const getActiveApiConfig = (
+  appSettings: AppSettings,
+  apiMode: ApiKeyRequestMode = 'active',
+): { apiKeysString: string | null } => {
   const envWithGeminiKey = (
     import.meta as ImportMeta & {
       env?: {
@@ -28,7 +47,7 @@ const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string |
     }
   ).env;
 
-  if (isOpenAICompatibleApiActive(appSettings)) {
+  if (resolveApiKeyRequestMode(appSettings, apiMode) === 'openai-compatible') {
     return {
       apiKeysString: appSettings.openaiCompatibleApiKey || envWithGeminiKey?.VITE_OPENAI_API_KEY || null,
     };
@@ -55,11 +74,12 @@ export const parseApiKeys = (apiKeysString: string | null): string[] => {
 export const getKeyForRequest = (
   appSettings: AppSettings,
   currentChatSettings: ChatSettings,
-  options: { skipIncrement?: boolean; skipUsageLogging?: boolean } = {},
+  options: GetKeyForRequestOptions = {},
 ): { key: string; isNewKey: boolean } | { error: string } => {
   const { skipIncrement = false } = options;
   const { skipUsageLogging = false } = options;
-  const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
+  const apiKeyRequestMode = resolveApiKeyRequestMode(appSettings, options.apiMode);
+  const isOpenAICompatibleMode = apiKeyRequestMode === 'openai-compatible';
   const shouldUseServerManagedMarker =
     !isOpenAICompatibleMode && isServerManagedApiEnabledForProxyRequests(appSettings);
 
@@ -69,7 +89,7 @@ export const getKeyForRequest = (
     }
   };
 
-  const { apiKeysString } = getActiveApiConfig(appSettings);
+  const { apiKeysString } = getActiveApiConfig(appSettings, options.apiMode);
   if (!apiKeysString) {
     if (shouldUseServerManagedMarker) {
       return { key: SERVER_MANAGED_API_KEY, isNewKey: false };
@@ -131,6 +151,21 @@ export const getKeyForRequest = (
   const nextKey = availableKeys[targetIndex];
   logUsage(nextKey);
   return { key: nextKey, isNewKey: true };
+};
+
+export const getGeminiKeyForRequest = (
+  appSettings: AppSettings,
+  currentChatSettings: ChatSettings,
+  options: Omit<GetKeyForRequestOptions, 'apiMode'> = {},
+): { key: string; isNewKey: boolean } | { error: string } => {
+  const keySettings = isOpenAICompatibleApiActive(appSettings)
+    ? { ...currentChatSettings, lockedApiKey: null }
+    : currentChatSettings;
+
+  return getKeyForRequest(appSettings, keySettings, {
+    ...options,
+    apiMode: 'gemini-native',
+  });
 };
 
 export const getApiKeyErrorTranslationKey = (error: string): string | null => {

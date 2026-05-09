@@ -47,7 +47,7 @@ const MessageListComponent: React.FC = () => {
     onRetryMessage,
     onUpdateMessageFile,
     onFollowUpSuggestionClick,
-    onGenerateCanvas,
+    onGenerateLiveArtifacts,
     onContinueGeneration,
     onForkMessage,
     onQuickTTS,
@@ -142,7 +142,7 @@ const MessageListComponent: React.FC = () => {
                   onImageClick={handleFileClick}
                   onOpenHtmlPreview={handleOpenHtmlPreview}
                   showThoughts={currentChatSettings.showThoughts}
-                  onGenerateCanvas={onGenerateCanvas}
+                  onGenerateLiveArtifacts={onGenerateLiveArtifacts}
                   onContinueGeneration={onContinueGeneration}
                   onForkMessage={onForkMessage}
                   onSuggestionClick={onFollowUpSuggestionClick}

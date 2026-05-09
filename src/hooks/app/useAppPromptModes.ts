@@ -2,21 +2,21 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
   isBboxSystemInstruction,
-  isCanvasSystemInstruction,
+  isLiveArtifactsSystemInstruction,
   isHdGuideSystemInstruction,
   loadBboxSystemPrompt,
-  loadCanvasSystemPrompt,
+  loadLiveArtifactsSystemPrompt,
   loadHdGuideSystemPrompt,
 } from '../../constants/promptHelpers';
 import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_SYSTEM_INSTRUCTION } from '../../constants/appConstants';
 import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '../../types';
 
-interface PendingCanvasPromptActivation {
+interface PendingLiveArtifactsPromptActivation {
   systemInstruction: string;
   targetSessionId: string | null;
 }
 
-interface CanvasPromptOverrideState {
+interface LiveArtifactsPromptOverrideState {
   active: boolean;
   targetSessionId: string | null;
 }
@@ -58,29 +58,29 @@ export const useAppPromptModes = ({
   handleSendMessage,
   setCommandedInput,
 }: UseAppPromptModesOptions) => {
-  const [pendingCanvasPromptActivation, setPendingCanvasPromptActivation] =
-    useState<PendingCanvasPromptActivation | null>(null);
-  const [canvasPromptBusySessionId, setCanvasPromptBusySessionId] = useState<string | null>(null);
-  const [canvasPromptOverrideState, setCanvasPromptOverrideState] = useState<CanvasPromptOverrideState | null>(null);
+  const [pendingLiveArtifactsPromptActivation, setPendingLiveArtifactsPromptActivation] =
+    useState<PendingLiveArtifactsPromptActivation | null>(null);
+  const [liveArtifactsPromptBusySessionId, setLiveArtifactsPromptBusySessionId] = useState<string | null>(null);
+  const [liveArtifactsPromptOverrideState, setLiveArtifactsPromptOverrideState] = useState<LiveArtifactsPromptOverrideState | null>(null);
 
-  const currentCanvasPromptTargetSessionId = activeSessionId ?? null;
-  const canvasPromptOverrideActive =
-    canvasPromptOverrideState?.targetSessionId === currentCanvasPromptTargetSessionId
-      ? canvasPromptOverrideState.active
+  const currentLiveArtifactsPromptTargetSessionId = activeSessionId ?? null;
+  const liveArtifactsPromptOverrideActive =
+    liveArtifactsPromptOverrideState?.targetSessionId === currentLiveArtifactsPromptTargetSessionId
+      ? liveArtifactsPromptOverrideState.active
       : null;
-  const canvasPromptBusy = canvasPromptBusySessionId === currentCanvasPromptTargetSessionId;
-  const persistedCanvasPromptActive =
-    isCanvasSystemInstruction(currentChatSettings.systemInstruction) ||
-    isCanvasSystemInstruction(appSettings.systemInstruction);
+  const liveArtifactsPromptBusy = liveArtifactsPromptBusySessionId === currentLiveArtifactsPromptTargetSessionId;
+  const persistedLiveArtifactsPromptActive =
+    isLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction) ||
+    isLiveArtifactsSystemInstruction(appSettings.systemInstruction);
 
-  const isCanvasPromptActive = canvasPromptOverrideActive ?? persistedCanvasPromptActive;
+  const isLiveArtifactsPromptActive = liveArtifactsPromptOverrideActive ?? persistedLiveArtifactsPromptActive;
 
   useEffect(() => {
-    if (!pendingCanvasPromptActivation) {
+    if (!pendingLiveArtifactsPromptActivation) {
       return;
     }
 
-    const pendingActivation = pendingCanvasPromptActivation;
+    const pendingActivation = pendingLiveArtifactsPromptActivation;
     const targetMatches =
       pendingActivation.targetSessionId === null || pendingActivation.targetSessionId === activeSessionId;
 
@@ -88,9 +88,9 @@ export const useAppPromptModes = ({
       return;
     }
 
-    if (activeChat && isCanvasSystemInstruction(activeChat.settings.systemInstruction)) {
+    if (activeChat && isLiveArtifactsSystemInstruction(activeChat.settings.systemInstruction)) {
       queueMicrotask(() => {
-        setPendingCanvasPromptActivation((current) => (current === pendingActivation ? null : current));
+        setPendingLiveArtifactsPromptActivation((current) => (current === pendingActivation ? null : current));
       });
       return;
     }
@@ -100,7 +100,7 @@ export const useAppPromptModes = ({
     }
 
     setCurrentChatSettings((prev) =>
-      isCanvasSystemInstruction(prev.systemInstruction)
+      isLiveArtifactsSystemInstruction(prev.systemInstruction)
         ? prev
         : {
             ...prev,
@@ -109,47 +109,47 @@ export const useAppPromptModes = ({
     );
 
     queueMicrotask(() => {
-      setPendingCanvasPromptActivation((current) => (current === pendingActivation ? null : current));
+      setPendingLiveArtifactsPromptActivation((current) => (current === pendingActivation ? null : current));
     });
-  }, [activeChat, activeSessionId, pendingCanvasPromptActivation, setCurrentChatSettings]);
+  }, [activeChat, activeSessionId, pendingLiveArtifactsPromptActivation, setCurrentChatSettings]);
 
   useEffect(() => {
     if (
-      !canvasPromptOverrideState ||
-      canvasPromptOverrideState.targetSessionId !== currentCanvasPromptTargetSessionId
+      !liveArtifactsPromptOverrideState ||
+      liveArtifactsPromptOverrideState.targetSessionId !== currentLiveArtifactsPromptTargetSessionId
     ) {
       return;
     }
 
     const actualActive =
-      isCanvasSystemInstruction(currentChatSettings.systemInstruction) ||
-      isCanvasSystemInstruction(appSettings.systemInstruction);
-    if (actualActive === canvasPromptOverrideState.active) {
+      isLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction) ||
+      isLiveArtifactsSystemInstruction(appSettings.systemInstruction);
+    if (actualActive === liveArtifactsPromptOverrideState.active) {
       queueMicrotask(() => {
-        setCanvasPromptOverrideState((current) =>
+        setLiveArtifactsPromptOverrideState((current) =>
           current &&
-          current.targetSessionId === canvasPromptOverrideState.targetSessionId &&
-          current.active === canvasPromptOverrideState.active
+          current.targetSessionId === liveArtifactsPromptOverrideState.targetSessionId &&
+          current.active === liveArtifactsPromptOverrideState.active
             ? null
             : current,
         );
-        setCanvasPromptBusySessionId((current) =>
-          current === canvasPromptOverrideState.targetSessionId ? null : current,
+        setLiveArtifactsPromptBusySessionId((current) =>
+          current === liveArtifactsPromptOverrideState.targetSessionId ? null : current,
         );
       });
     }
   }, [
     appSettings.systemInstruction,
-    canvasPromptOverrideState,
-    currentCanvasPromptTargetSessionId,
+    liveArtifactsPromptOverrideState,
+    currentLiveArtifactsPromptTargetSessionId,
     currentChatSettings.systemInstruction,
   ]);
 
-  const activateCanvasPrompt = useCallback(
+  const activateLiveArtifactsPrompt = useCallback(
     async (targetSessionId: string | null) => {
-      const newSystemInstruction = await loadCanvasSystemPrompt(language);
+      const newSystemInstruction = await loadLiveArtifactsSystemPrompt(language);
 
-      setPendingCanvasPromptActivation({
+      setPendingLiveArtifactsPromptActivation({
         systemInstruction: newSystemInstruction,
         targetSessionId,
       });
@@ -160,24 +160,24 @@ export const useAppPromptModes = ({
     [language, setAppSettings],
   );
 
-  const handleLoadCanvasPromptAndSave = useCallback(async () => {
+  const handleLoadLiveArtifactsPromptAndSave = useCallback(async () => {
     const targetSessionId = activeSessionId ?? null;
 
-    if (canvasPromptBusy) {
+    if (liveArtifactsPromptBusy) {
       return;
     }
 
-    const isCurrentlyCanvasPrompt = canvasPromptOverrideActive ?? persistedCanvasPromptActive;
+    const isCurrentlyLiveArtifactsPrompt = liveArtifactsPromptOverrideActive ?? persistedLiveArtifactsPromptActive;
 
-    setCanvasPromptBusySessionId(targetSessionId);
-    setCanvasPromptOverrideState({
-      active: !isCurrentlyCanvasPrompt,
+    setLiveArtifactsPromptBusySessionId(targetSessionId);
+    setLiveArtifactsPromptOverrideState({
+      active: !isCurrentlyLiveArtifactsPrompt,
       targetSessionId,
     });
 
     try {
-      if (isCurrentlyCanvasPrompt) {
-        setPendingCanvasPromptActivation(null);
+      if (isCurrentlyLiveArtifactsPrompt) {
+        setPendingLiveArtifactsPromptActivation(null);
         setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
         if (activeSessionId) {
           setCurrentChatSettings((prev) => ({
@@ -186,23 +186,23 @@ export const useAppPromptModes = ({
           }));
         }
       } else {
-        await activateCanvasPrompt(targetSessionId);
+        await activateLiveArtifactsPrompt(targetSessionId);
       }
     } catch (error) {
-      setCanvasPromptOverrideState((current) =>
-        current?.targetSessionId === targetSessionId ? { active: isCurrentlyCanvasPrompt, targetSessionId } : current,
+      setLiveArtifactsPromptOverrideState((current) =>
+        current?.targetSessionId === targetSessionId ? { active: isCurrentlyLiveArtifactsPrompt, targetSessionId } : current,
       );
-      setCanvasPromptBusySessionId((current) => (current === targetSessionId ? null : current));
+      setLiveArtifactsPromptBusySessionId((current) => (current === targetSessionId ? null : current));
       throw error;
     }
 
     focusChatInput();
   }, [
-    activateCanvasPrompt,
+    activateLiveArtifactsPrompt,
     activeSessionId,
-    canvasPromptBusy,
-    canvasPromptOverrideActive,
-    persistedCanvasPromptActive,
+    liveArtifactsPromptBusy,
+    liveArtifactsPromptOverrideActive,
+    persistedLiveArtifactsPromptActive,
     setAppSettings,
     setCurrentChatSettings,
   ]);
@@ -279,11 +279,11 @@ export const useAppPromptModes = ({
     async (type: 'homepage' | 'organize' | 'follow-up', text: string) => {
       const { isAutoSendOnSuggestionClick } = appSettings;
 
-      if (type === 'organize' && isCanvasPromptActive) {
-        setPendingCanvasPromptActivation(null);
-        setCanvasPromptOverrideState({
+      if (type === 'organize' && isLiveArtifactsPromptActive) {
+        setPendingLiveArtifactsPromptActivation(null);
+        setLiveArtifactsPromptOverrideState({
           active: false,
-          targetSessionId: currentCanvasPromptTargetSessionId,
+          targetSessionId: currentLiveArtifactsPromptTargetSessionId,
         });
         setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
         if (activeSessionId) {
@@ -297,8 +297,8 @@ export const useAppPromptModes = ({
         return;
       }
 
-      if (type === 'organize' && !isCanvasSystemInstruction(currentChatSettings.systemInstruction)) {
-        await activateCanvasPrompt(activeSessionId);
+      if (type === 'organize' && !isLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction)) {
+        await activateLiveArtifactsPrompt(activeSessionId);
       }
 
       if (type === 'follow-up' && (isAutoSendOnSuggestionClick ?? true)) {
@@ -311,12 +311,12 @@ export const useAppPromptModes = ({
     },
     [
       activeSessionId,
-      activateCanvasPrompt,
+      activateLiveArtifactsPrompt,
       appSettings,
-      currentCanvasPromptTargetSessionId,
+      currentLiveArtifactsPromptTargetSessionId,
       currentChatSettings.systemInstruction,
       handleSendMessage,
-      isCanvasPromptActive,
+      isLiveArtifactsPromptActive,
       setCommandedInput,
       setAppSettings,
       setCurrentChatSettings,
@@ -324,11 +324,11 @@ export const useAppPromptModes = ({
   );
 
   return {
-    handleLoadCanvasPromptAndSave,
+    handleLoadLiveArtifactsPromptAndSave,
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
-    isCanvasPromptActive,
-    isCanvasPromptBusy: canvasPromptBusy,
+    isLiveArtifactsPromptActive,
+    isLiveArtifactsPromptBusy: liveArtifactsPromptBusy,
   };
 };

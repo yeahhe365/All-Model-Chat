@@ -127,7 +127,7 @@ class LogServiceImpl {
       return 'NETWORK';
     }
     if (
-      /\bmodel\b|\btoken(?:s)?\b|\btranslate|translation\b|\bsuggestions?\b|\btitle generation\b|\btts\b|\bspeech\b|\btranscrib(?:e|ing|ed)\b|\bgeneratecontent\b|\bgemini\b|\bimagen\b|\bpyodide\b|\blocalpython\b|\bcanvas visualization\b/.test(
+      /\bmodel\b|\btoken(?:s)?\b|\btranslate|translation\b|\bsuggestions?\b|\btitle generation\b|\btts\b|\bspeech\b|\btranscrib(?:e|ing|ed)\b|\bgeneratecontent\b|\bgemini\b|\bimagen\b|\bpyodide\b|\blocalpython\b|\blive artifacts\b/.test(
         haystack,
       )
     ) {

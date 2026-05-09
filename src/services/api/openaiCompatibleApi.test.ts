@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { sendOpenAICompatibleMessageNonStream, sendOpenAICompatibleMessageStream } from './openaiCompatibleApi';
+import {
+  fetchOpenAICompatibleModels,
+  sendOpenAICompatibleMessageNonStream,
+  sendOpenAICompatibleMessageStream,
+} from './openaiCompatibleApi';
 
 describe('openaiCompatibleApi', () => {
   beforeEach(() => {
@@ -80,6 +84,104 @@ describe('openaiCompatibleApi', () => {
     );
   });
 
+  it('fetches OpenAI-compatible model IDs from the models endpoint', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => {
+      return new Response(
+        JSON.stringify({
+          data: [{ id: 'gpt-4.1' }, { id: 'deepseek-chat' }, { id: 'gpt-4.1' }, { id: '' }, { object: 'model' }],
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const models = await fetchOpenAICompatibleModels(
+      'openai-key',
+      'https://generativelanguage.googleapis.com/v1beta/openai/',
+      new AbortController().signal,
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://generativelanguage.googleapis.com/v1beta/openai/models',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          authorization: 'Bearer openai-key',
+        }),
+      }),
+    );
+    expect(models).toEqual([
+      { id: 'gpt-4.1', name: 'gpt-4.1' },
+      { id: 'deepseek-chat', name: 'deepseek-chat' },
+    ]);
+  });
+
+  it('reports model list fetch errors from OpenAI-compatible error payloads', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(async () => {
+        return new Response(JSON.stringify({ error: { message: 'invalid key' } }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        });
+      }),
+    );
+
+    await expect(
+      fetchOpenAICompatibleModels('bad-key', 'https://api.openai.com/v1', new AbortController().signal),
+    ).rejects.toThrow('invalid key');
+  });
+
+  it('maps non-streaming reasoning_content into thoughts', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(async () => {
+        return new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  reasoning_content: 'I need to compare the options.',
+                  content: 'Final answer.',
+                },
+              },
+            ],
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        );
+      }),
+    );
+
+    const onComplete = vi.fn();
+    const onError = vi.fn();
+
+    await sendOpenAICompatibleMessageNonStream(
+      'api-key',
+      'deepseek-v4-pro',
+      [],
+      [{ text: 'think then answer' }],
+      { baseUrl: 'https://api.deepseek.com' },
+      new AbortController().signal,
+      onError,
+      onComplete,
+    );
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledWith(
+      [{ text: 'Final answer.' }],
+      'I need to compare the options.',
+      undefined,
+      undefined,
+      undefined,
+    );
+  });
+
   it('streams SSE chat completion chunks as text parts and reports final usage', async () => {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -136,5 +238,55 @@ describe('openaiCompatibleApi', () => {
       undefined,
       undefined,
     );
+  });
+
+  it('streams reasoning_content chunks through the thought handler', async () => {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(
+            [
+              'data: {"choices":[{"delta":{"reasoning_content":"First, inspect the input. "}}]}',
+              '',
+              'data: {"choices":[{"delta":{"reasoning_content":"Then answer."}}]}',
+              '',
+              'data: {"choices":[{"delta":{"content":"Final answer."}}]}',
+              '',
+              'data: [DONE]',
+              '',
+            ].join('\n'),
+          ),
+        );
+        controller.close();
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(stream, { status: 200, headers: { 'content-type': 'text/event-stream' } })),
+    );
+
+    const onPart = vi.fn();
+    const onThoughtChunk = vi.fn();
+    const onComplete = vi.fn();
+    const onError = vi.fn();
+
+    await sendOpenAICompatibleMessageStream(
+      'api-key',
+      'glm-5.1',
+      [],
+      [{ text: 'think then answer' }],
+      { baseUrl: 'https://open.bigmodel.cn/api/paas/v4' },
+      new AbortController().signal,
+      onPart,
+      onThoughtChunk,
+      onError,
+      onComplete,
+    );
+
+    expect(onThoughtChunk).toHaveBeenNthCalledWith(1, 'First, inspect the input. ');
+    expect(onThoughtChunk).toHaveBeenNthCalledWith(2, 'Then answer.');
+    expect(onPart).toHaveBeenCalledWith({ text: 'Final answer.' });
+    expect(onError).not.toHaveBeenCalled();
   });
 });

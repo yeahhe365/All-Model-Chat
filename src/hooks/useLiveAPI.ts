@@ -10,7 +10,7 @@ import { useLiveFrameCapture } from './live-api/useLiveFrameCapture';
 import { resolveLiveErrorText } from './live-api/liveErrorState';
 import { useBackgroundKeepAlive } from './core/useBackgroundKeepAlive';
 import { useI18n } from '../contexts/I18nContext';
-import { getKeyForRequest, SERVER_MANAGED_API_KEY } from '../utils/apiUtils';
+import { getGeminiKeyForRequest, SERVER_MANAGED_API_KEY } from '../utils/apiUtils';
 import { useStateWithRef } from './useStateWithRef';
 
 interface UseLiveAPIProps {
@@ -61,7 +61,7 @@ export const useLiveAPI = ({
     clientFunctions,
   });
   const liveApiKeyForConnection = useMemo(() => {
-    const keyResult = getKeyForRequest(appSettings, chatSettings, {
+    const keyResult = getGeminiKeyForRequest(appSettings, chatSettings, {
       skipIncrement: true,
       skipUsageLogging: true,
     });

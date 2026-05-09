@@ -19,14 +19,8 @@ import { focusChatInput, useAppPromptModes } from './useAppPromptModes';
 import { DEFAULT_THINKING_BUDGET } from '../../constants/modelConstants';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 
-const buildProviderAwareModels = (appSettings: AppSettings, apiModels: ModelOption[]): ModelOption[] => {
-  const geminiModels = apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));
-  const openAICompatibleModels =
-    appSettings.isOpenAICompatibleApiEnabled === true
-      ? appSettings.openaiCompatibleModels.map((model) => ({ ...model, apiMode: 'openai-compatible' as const }))
-      : [];
-
-  return [...geminiModels, ...openAICompatibleModels];
+const buildProviderAwareModels = (apiModels: ModelOption[]): ModelOption[] => {
+  return apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));
 };
 
 export const useApp = () => {
@@ -85,7 +79,7 @@ export const useApp = () => {
     }
   }, [pipState.pipWindow, currentTheme, appSettings]);
 
-  const providerAwareModels = useMemo(() => buildProviderAwareModels(appSettings, apiModels), [appSettings, apiModels]);
+  const providerAwareModels = useMemo(() => buildProviderAwareModels(apiModels), [apiModels]);
 
   const eventsState = useAppEvents({
     appSettings,
@@ -190,12 +184,12 @@ export const useApp = () => {
   );
 
   const {
-    handleLoadCanvasPromptAndSave,
+    handleLoadLiveArtifactsPromptAndSave,
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
-    isCanvasPromptActive,
-    isCanvasPromptBusy,
+    isLiveArtifactsPromptActive,
+    isLiveArtifactsPromptBusy,
   } = useAppPromptModes({
     appSettings,
     setAppSettings,
@@ -297,12 +291,12 @@ export const useApp = () => {
     sessionTitle,
     handleSaveSettings,
     handleSaveCurrentChatSettings,
-    handleLoadCanvasPromptAndSave,
+    handleLoadLiveArtifactsPromptAndSave,
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
-    isCanvasPromptActive,
-    isCanvasPromptBusy,
+    isLiveArtifactsPromptActive,
+    isLiveArtifactsPromptBusy,
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
     handleExportAllScenarios: dataExport.handleExportAllScenarios,

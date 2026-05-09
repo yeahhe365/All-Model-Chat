@@ -29,7 +29,7 @@ interface StandardChatApiCallContext {
   messages: ChatMessage[];
   updateAndPersistSessions: SessionsUpdater;
   getStreamHandlers: GetStreamHandlers;
-  handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
+  handleGenerateLiveArtifacts: (sourceMessageId: string, content: string) => Promise<void>;
   aspectRatio: string;
   imageSize?: string;
   imageOutputMode: StandardChatProps['imageOutputMode'];
@@ -66,7 +66,7 @@ export const performStandardChatApiCall = async ({
   messages,
   updateAndPersistSessions,
   getStreamHandlers,
-  handleGenerateCanvas,
+  handleGenerateLiveArtifacts,
   aspectRatio,
   imageSize,
   imageOutputMode,
@@ -87,7 +87,7 @@ export const performStandardChatApiCall = async ({
   enrichedFiles,
 }: PerformStandardChatApiCallParams) => {
   const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
-  const apiModelId = isOpenAICompatibleMode ? appSettings.openaiCompatibleModelId || activeModelId : activeModelId;
+  const apiModelId = isOpenAICompatibleMode ? appSettings.openaiCompatibleModelId : activeModelId;
   const { baseMessagesForApi, finalRole, finalParts, shouldSkipApiCall } = resolveTurn({
     messages,
     promptParts,
@@ -124,7 +124,7 @@ export const performStandardChatApiCall = async ({
     (messageId, content) => {
       if (
         !isContinueMode &&
-        appSettings.autoCanvasVisualization &&
+        appSettings.autoLiveArtifactsVisualization &&
         content &&
         content.length > 50 &&
         !isLikelyHtml(content)
@@ -133,10 +133,10 @@ export const performStandardChatApiCall = async ({
         if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
           return;
         }
-        logService.info('Auto-triggering Canvas visualization for message', {
+        logService.info('Auto-triggering Live Artifacts for message', {
           msgId: messageId,
         });
-        handleGenerateCanvas(messageId, content);
+        handleGenerateLiveArtifacts(messageId, content);
       }
     },
   );

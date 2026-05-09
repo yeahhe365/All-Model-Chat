@@ -1,5 +1,5 @@
 import type { Part, UsageMetadata } from '@google/genai';
-import type { ChatHistoryItem, NonStreamMessageSender, StreamMessageSender } from '../../types';
+import type { ChatHistoryItem, ModelOption, NonStreamMessageSender, StreamMessageSender } from '../../types';
 import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../../utils/apiProxyUrl';
 import { isAudioMimeType, isImageMimeType } from '../../utils/fileTypeUtils';
 import { logService } from '../logService';
@@ -33,9 +33,11 @@ type OpenAIUsage = {
 type OpenAIChoice = {
   message?: {
     content?: string | Array<{ text?: string }>;
+    reasoning_content?: string;
   };
   delta?: {
     content?: string;
+    reasoning_content?: string;
   };
 };
 
@@ -47,9 +49,23 @@ type OpenAIResponsePayload = {
   };
 };
 
+type OpenAIModelsResponsePayload = {
+  data?: Array<{
+    id?: unknown;
+  }>;
+  error?: {
+    message?: string;
+  };
+};
+
 const buildOpenAICompatibleChatCompletionsUrl = (baseUrl?: string | null): string => {
   const normalizedBaseUrl = (baseUrl?.trim() || DEFAULT_OPENAI_COMPATIBLE_BASE_URL).replace(/\/+$/, '');
   return `${normalizedBaseUrl}/chat/completions`;
+};
+
+const buildOpenAICompatibleModelsUrl = (baseUrl?: string | null): string => {
+  const normalizedBaseUrl = (baseUrl?.trim() || DEFAULT_OPENAI_COMPATIBLE_BASE_URL).replace(/\/+$/, '');
+  return `${normalizedBaseUrl}/models`;
 };
 
 const asOpenAICompatibleConfig = (config: unknown): OpenAICompatibleChatConfig =>
@@ -210,6 +226,14 @@ const createRequestInit = (apiKey: string, body: Record<string, unknown>, abortS
   signal: abortSignal,
 });
 
+const createGetRequestInit = (apiKey: string, abortSignal: AbortSignal): RequestInit => ({
+  method: 'GET',
+  headers: {
+    authorization: `Bearer ${apiKey}`,
+  },
+  signal: abortSignal,
+});
+
 const readErrorMessage = async (response: Response): Promise<string> => {
   const text = await response.text();
   if (!text) {
@@ -239,6 +263,37 @@ const extractMessageText = (payload: OpenAIResponsePayload): string => {
   }
 
   return '';
+};
+
+const extractReasoningText = (payload: OpenAIResponsePayload): string | undefined => {
+  const reasoningContent = payload.choices?.[0]?.message?.reasoning_content;
+  return typeof reasoningContent === 'string' && reasoningContent ? reasoningContent : undefined;
+};
+
+export const fetchOpenAICompatibleModels = async (
+  apiKey: string,
+  baseUrl: string | null | undefined,
+  abortSignal: AbortSignal,
+): Promise<ModelOption[]> => {
+  const response = await fetch(buildOpenAICompatibleModelsUrl(baseUrl), createGetRequestInit(apiKey, abortSignal));
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  const payload = (await response.json()) as OpenAIModelsResponsePayload;
+  const seenIds = new Set<string>();
+
+  return (payload.data ?? []).reduce<ModelOption[]>((models, item) => {
+    const modelId = typeof item.id === 'string' ? item.id.trim() : '';
+    if (!modelId || seenIds.has(modelId)) {
+      return models;
+    }
+
+    seenIds.add(modelId);
+    models.push({ id: modelId, name: modelId });
+    return models;
+  }, []);
 };
 
 export const sendOpenAICompatibleMessageNonStream: NonStreamMessageSender = async (
@@ -276,7 +331,7 @@ export const sendOpenAICompatibleMessageNonStream: NonStreamMessageSender = asyn
     }
 
     const text = extractMessageText(payload);
-    onComplete(text ? [{ text }] : [], undefined, mapUsage(payload.usage), undefined, undefined);
+    onComplete(text ? [{ text }] : [], extractReasoningText(payload), mapUsage(payload.usage), undefined, undefined);
   } catch (error) {
     logService.error('OpenAI-compatible non-stream request failed:', error);
     onError(error instanceof Error ? error : new Error(String(error)));
@@ -359,7 +414,7 @@ export const sendOpenAICompatibleMessageStream: StreamMessageSender = async (
   config,
   abortSignal,
   onPart,
-  _onThoughtChunk,
+  onThoughtChunk,
   onError,
   onComplete,
   role = 'user',
@@ -383,6 +438,11 @@ export const sendOpenAICompatibleMessageStream: StreamMessageSender = async (
     }
 
     await readStreamEvents(response, abortSignal, (payload) => {
+      const reasoningContent = payload.choices?.[0]?.delta?.reasoning_content;
+      if (reasoningContent) {
+        onThoughtChunk(reasoningContent);
+      }
+
       const content = payload.choices?.[0]?.delta?.content;
       if (content) {
         onPart({ text: content });

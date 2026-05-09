@@ -9,6 +9,23 @@ export const apiSettings = {
     zh: '打开后可使用 OpenAI 或 GPT 兼容服务。关闭时保持 Gemini 原生模式。',
   },
   settingsOpenAICompatibleBaseUrl: { en: 'OpenAI-Compatible Base URL', zh: 'OpenAI 兼容基础 URL' },
+  settingsOpenAICompatibleModelId: { en: 'OpenAI-Compatible Model IDs', zh: 'OpenAI 兼容模型 ID' },
+  settingsOpenAICompatibleModelIdShort: { en: 'Model ID', zh: '模型 ID' },
+  settingsOpenAICompatibleModelName: { en: 'Model Name', zh: '模型名称' },
+  settingsFetchModelList: { en: 'Fetch Models', zh: '获取模型列表' },
+  settingsFetchingModelList: { en: 'Fetching...', zh: '获取中…' },
+  settingsOpenAICompatibleModelFetchSuccess: {
+    en: 'Fetched {count} models.',
+    zh: '已获取 {count} 个模型。',
+  },
+  settingsOpenAICompatibleModelFetchEmpty: {
+    en: 'No models were returned by this endpoint.',
+    zh: '该接口未返回模型。',
+  },
+  settingsOpenAICompatibleModelIdHelp: {
+    en: 'Set the API model ID and optional display name. The display name appears in the main model picker; blank names fall back to the model ID.',
+    zh: '设置 API 模型 ID 和可选显示名称。显示名称会出现在主界面的模型选择器中；名称为空时使用模型 ID。',
+  },
   settingsOpenAICompatibleApiKey: { en: 'OpenAI-Compatible API Keys', zh: 'OpenAI 兼容 API 密钥' },
   settingsOpenAICompatibleHelp: {
     en: 'Used only when OpenAI Compatible mode is selected. Gemini Native requests keep using the existing Gemini API settings.',

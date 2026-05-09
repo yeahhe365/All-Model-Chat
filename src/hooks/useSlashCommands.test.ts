@@ -17,7 +17,7 @@ const createProps = (overrides: Partial<Parameters<typeof useSlashCommands>[0]> 
     onClearChat: vi.fn(),
     onNewChat: vi.fn(),
     onOpenSettings: vi.fn(),
-    onToggleCanvasPrompt: vi.fn(),
+    onToggleLiveArtifactsPrompt: vi.fn(),
     onTogglePinCurrentSession: vi.fn(),
     onRetryLastTurn: vi.fn(),
     onAttachmentAction: vi.fn(),

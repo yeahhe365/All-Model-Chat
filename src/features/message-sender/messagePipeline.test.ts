@@ -217,7 +217,7 @@ describe('messagePipeline', () => {
     );
   });
 
-  it('can start an inserted model-only turn for canvas generation', async () => {
+  it('can start an inserted model-only turn for Live Artifacts generation', async () => {
     let sessions: SavedChatSession[] = [
       {
         id: 'session-1',
@@ -253,7 +253,7 @@ describe('messagePipeline', () => {
       updateAndPersistSessions,
       setActiveSessionId: vi.fn(),
       text: '',
-      generationId: 'canvas-generation',
+      generationId: 'live-artifacts-generation',
       generationStartTime,
       placement: {
         type: 'insert-model-after',
@@ -270,7 +270,7 @@ describe('messagePipeline', () => {
 
     expect(sessions[0].messages.map((message) => message.id)).toEqual([
       'source-message',
-      'canvas-generation',
+      'live-artifacts-generation',
       'next-message',
     ]);
     expect(sessions[0].messages[1]).toEqual(

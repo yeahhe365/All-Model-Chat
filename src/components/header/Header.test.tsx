@@ -24,8 +24,8 @@ describe('Header', () => {
           onSelectModel={vi.fn()}
           isSwitchingModel={false}
           isHistorySidebarOpen={false}
-          onLoadCanvasPrompt={vi.fn()}
-          isCanvasPromptActive={false}
+          onLoadLiveArtifactsPrompt={vi.fn()}
+          isLiveArtifactsPromptActive={false}
           isPipSupported={true}
           isPipActive={false}
           onTogglePip={vi.fn()}
@@ -45,7 +45,7 @@ describe('Header', () => {
     expect(pipButton?.getAttribute('title')).toBe('Enter Picture-in-Picture');
   });
 
-  it('keeps the canvas helper hit target stable while pressing', async () => {
+  it('keeps the Live Artifacts helper hit target stable while pressing', async () => {
     await act(async () => {
       renderer.root.render(
         <Header
@@ -59,8 +59,8 @@ describe('Header', () => {
           onSelectModel={vi.fn()}
           isSwitchingModel={false}
           isHistorySidebarOpen={false}
-          onLoadCanvasPrompt={vi.fn()}
-          isCanvasPromptActive={false}
+          onLoadLiveArtifactsPrompt={vi.fn()}
+          isLiveArtifactsPromptActive={false}
           isPipSupported={true}
           isPipActive={false}
           onTogglePip={vi.fn()}
@@ -75,13 +75,15 @@ describe('Header', () => {
       );
     });
 
-    const canvasButton = renderer.container.querySelector('button[aria-label="Load Canvas prompt and save settings"]');
+    const liveArtifactsButton = renderer.container.querySelector(
+      'button[aria-label="Load Live Artifacts prompt and save settings"]',
+    );
 
-    expect(canvasButton).not.toBeNull();
-    expect(canvasButton?.className).toContain('w-9');
-    expect(canvasButton?.className).toContain('h-9');
-    expect(canvasButton?.className).not.toContain('hover:scale-105');
-    expect(canvasButton?.className).not.toContain('active:scale-95');
+    expect(liveArtifactsButton).not.toBeNull();
+    expect(liveArtifactsButton?.className).toContain('w-9');
+    expect(liveArtifactsButton?.className).toContain('h-9');
+    expect(liveArtifactsButton?.className).not.toContain('hover:scale-105');
+    expect(liveArtifactsButton?.className).not.toContain('active:scale-95');
   });
 
   it('uses compact vertical chrome for the top header', async () => {
@@ -98,8 +100,8 @@ describe('Header', () => {
           onSelectModel={vi.fn()}
           isSwitchingModel={false}
           isHistorySidebarOpen={false}
-          onLoadCanvasPrompt={vi.fn()}
-          isCanvasPromptActive={false}
+          onLoadLiveArtifactsPrompt={vi.fn()}
+          isLiveArtifactsPromptActive={false}
           isPipSupported={true}
           isPipActive={false}
           onTogglePip={vi.fn()}

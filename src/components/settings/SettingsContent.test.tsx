@@ -271,7 +271,7 @@ describe('SettingsContent', () => {
     );
   });
 
-  it('passes Gemini and OpenAI-compatible models together in model settings', () => {
+  it('keeps OpenAI-compatible model IDs out of model settings when the provider is enabled', () => {
     const updateSetting = vi.fn();
     const setAvailableModels = vi.fn();
     const handleModelChange = vi.fn();
@@ -314,18 +314,13 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(mockModelsSection.lastProps!.modelId).toBe('gpt-5.5');
+    expect(mockModelsSection.lastProps!.modelId).toBe('gemini-3-flash-preview');
     expect(mockModelsSection.lastProps!.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
-      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true, apiMode: 'openai-compatible' },
-      { id: 'gpt-4.1', name: 'GPT-4.1', apiMode: 'openai-compatible' },
     ]);
-    expect(mockModelsSection.lastProps!.defaultModels).toContainEqual({
-      id: 'gpt-5.5',
-      name: 'GPT-5.5',
-      isPinned: true,
-      apiMode: 'openai-compatible',
-    });
+    expect(mockModelsSection.lastProps!.defaultModels).not.toContainEqual(
+      expect.objectContaining({ apiMode: 'openai-compatible' }),
+    );
     expect(mockModelsSection.lastProps!.isOpenAICompatibleMode).toBe(true);
 
     act(() => {
@@ -335,10 +330,8 @@ describe('SettingsContent', () => {
     });
 
     expect(setAvailableModels).toHaveBeenCalledWith([{ id: 'gemini-new', name: 'Gemini New', isPinned: true }]);
-    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModels', [
-      { id: 'gpt-new', name: 'GPT New', isPinned: false },
-    ]);
-    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'gpt-new');
+    expect(updateSetting).not.toHaveBeenCalledWith('openaiCompatibleModels', expect.anything());
+    expect(updateSetting).not.toHaveBeenCalledWith('openaiCompatibleModelId', expect.anything());
     expect(handleModelChange).toHaveBeenCalledWith('gemini-new');
   });
 
@@ -387,51 +380,9 @@ describe('SettingsContent', () => {
 
     expect(updateSetting).toHaveBeenCalledWith('apiMode', 'gemini-native');
     expect(handleModelChange).toHaveBeenCalledWith('gemini-3-flash-preview');
-
-    act(() => {
-      renderer.root.render(
-        <SettingsContent
-          activeTab="models"
-          currentSettings={{
-            ...DEFAULT_APP_SETTINGS,
-            isOpenAICompatibleApiEnabled: true,
-            apiMode: 'gemini-native',
-            modelId: 'gemini-3-flash-preview',
-            openaiCompatibleModelId: 'gpt-5.5',
-            openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true }],
-          }}
-          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }]}
-          updateSetting={updateSetting}
-          handleModelChange={handleModelChange}
-          setAvailableModels={vi.fn()}
-          onClearHistory={vi.fn()}
-          onClearCache={vi.fn()}
-          onOpenLogViewer={vi.fn()}
-          onClearLogs={vi.fn()}
-          onReset={vi.fn()}
-          onInstallPwa={vi.fn()}
-          installState="installed"
-          onImportSettings={vi.fn()}
-          onExportSettings={vi.fn()}
-          onImportHistory={vi.fn()}
-          onExportHistory={vi.fn()}
-          onImportScenarios={vi.fn()}
-          onExportScenarios={vi.fn()}
-        />,
-      );
-    });
-
-    act(() => {
-      renderer.container
-        .querySelector('[data-testid="select-openai-model"]')
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-
-    expect(updateSetting).toHaveBeenCalledWith('apiMode', 'openai-compatible');
-    expect(updateSetting).toHaveBeenCalledWith('openaiCompatibleModelId', 'gpt-5.5');
   });
 
-  it('passes OpenAI-compatible models into Tab cycle shortcut settings when the provider is enabled', () => {
+  it('keeps OpenAI-compatible models out of Tab cycle shortcut settings when the provider is enabled', () => {
     act(() => {
       renderer.root.render(
         <SettingsContent
@@ -469,8 +420,6 @@ describe('SettingsContent', () => {
 
     expect(mockShortcutsSection.lastProps!.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
-      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true, apiMode: 'openai-compatible' },
-      { id: 'gpt-4.1', name: 'GPT-4.1', apiMode: 'openai-compatible' },
     ]);
   });
 

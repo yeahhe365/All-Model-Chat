@@ -1,16 +1,16 @@
 import { expect, test } from '@playwright/test';
 
-test('canvas helper toggles on from an edge tap after hover', async ({ page }) => {
+test('Live Artifacts helper toggles on from an edge tap after hover', async ({ page }) => {
   await page.goto('/');
   await page.waitForLoadState('networkidle');
 
-  const canvasButton = page.getByRole('button', {
-    name: /Load Canvas prompt and save settings|加载 Canvas 提示并保存设置/,
+  const liveArtifactsButton = page.getByRole('button', {
+    name: /Load Live Artifacts prompt and save settings|加载 Live Artifacts 提示并保存设置/,
   });
 
-  await expect(canvasButton).toBeVisible();
+  await expect(liveArtifactsButton).toBeVisible();
 
-  const box = await canvasButton.boundingBox();
+  const box = await liveArtifactsButton.boundingBox();
   expect(box).not.toBeNull();
 
   if (!box) {
@@ -30,7 +30,7 @@ test('canvas helper toggles on from an edge tap after hover', async ({ page }) =
 
   await expect(
     page.getByRole('button', {
-      name: /Canvas prompt is active\. Click to remove\.|Canvas 提示已激活。点击移除。/,
+      name: /Live Artifacts prompt is active\. Click to remove\.|Live Artifacts 提示已激活。点击移除。/,
     }),
   ).toBeVisible();
 });

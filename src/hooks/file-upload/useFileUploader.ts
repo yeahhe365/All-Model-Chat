@@ -2,11 +2,12 @@ import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { logService } from '../../services/logService';
 import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
-import { getApiKeyErrorTranslationKey, getKeyForRequest } from '../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
 import { buildFileUploadPreflight, checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
 import { uploadFileItem } from './uploadFileItem';
 import { runWithConcurrencyLimit } from './uploadQueue';
 import { useI18n } from '../../contexts/I18nContext';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 const MAX_CONCURRENT_FILE_UPLOADS = 3;
 
@@ -51,7 +52,7 @@ export const useFileUploader = ({
 
       let keyToUse: string | null = null;
       if (needsApiKeyForUpload) {
-        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+        const keyResult = getGeminiKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
           const translationKey = getApiKeyErrorTranslationKey(keyResult.error);
           setAppFileError(translationKey ? t(translationKey) : keyResult.error);
@@ -59,7 +60,7 @@ export const useFileUploader = ({
           return;
         }
         keyToUse = keyResult.key;
-        if (keyResult.isNewKey) {
+        if (keyResult.isNewKey && !isOpenAICompatibleApiActive(appSettings)) {
           logService.info('New API key selected for this session due to file upload.');
           setCurrentChatSettings((prev) => ({ ...prev, lockedApiKey: keyToUse! }));
         }

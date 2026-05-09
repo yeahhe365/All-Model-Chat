@@ -232,7 +232,7 @@ describe('useSessionLoader', () => {
 
     const staleSession = createSession('session-1', 'Stale Session');
     staleSession.messages = [];
-    staleSession.settings.systemInstruction = '<title>Canvas 助手：响应式视觉指南</title>\nstale';
+    staleSession.settings.systemInstruction = '[Live Artifacts Protocol - zh]\nstale';
 
     const freshSession = createSession('session-1', 'Fresh Session');
     freshSession.messages = [];

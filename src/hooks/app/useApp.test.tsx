@@ -8,7 +8,7 @@ import { renderHook } from '@/test/testUtils';
 const mockSetIsHistorySidebarOpen = vi.fn();
 const mockSetIsLogViewerOpen = vi.fn();
 const mockSetAppSettings = vi.fn();
-const CANVAS_PROMPT = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
+const LIVE_ARTIFACTS_PROMPT = '[Live Artifacts Protocol - zh]\nLive Artifacts prompt';
 
 const fullMessages: ChatMessage[] = [
   {
@@ -98,11 +98,11 @@ vi.mock('../chat/useChat', () => ({
 }));
 
 vi.mock('../../constants/promptHelpers', () => ({
-  isCanvasSystemInstruction: (instruction?: string | null) =>
-    !!instruction && instruction.includes('<title>Canvas 助手：响应式视觉指南</title>'),
+  isLiveArtifactsSystemInstruction: (instruction?: string | null) =>
+    !!instruction && instruction.includes('[Live Artifacts Protocol - zh]'),
   isBboxSystemInstruction: () => false,
   isHdGuideSystemInstruction: () => false,
-  loadCanvasSystemPrompt: vi.fn(async () => CANVAS_PROMPT),
+  loadLiveArtifactsSystemPrompt: vi.fn(async () => LIVE_ARTIFACTS_PROMPT),
   loadBboxSystemPrompt: vi.fn(async () => 'bbox prompt'),
   loadHdGuideSystemPrompt: vi.fn(async () => 'guide prompt'),
 }));
@@ -205,7 +205,7 @@ describe('useApp', () => {
     unmount();
   });
 
-  it('re-applies the canvas prompt after the active session stabilizes', async () => {
+  it('re-applies the Live Artifacts prompt after the active session stabilizes', async () => {
     currentChatState.activeChat = undefined;
     currentChatState.activeSessionId = 'session-race';
     currentChatState.savedSessions = [];
@@ -216,7 +216,7 @@ describe('useApp', () => {
       await result.current.handleSuggestionClick('organize', 'Create an interactive HTML board');
     });
 
-    expect(currentAppSettings.systemInstruction).toBe(CANVAS_PROMPT);
+    expect(currentAppSettings.systemInstruction).toBe(LIVE_ARTIFACTS_PROMPT);
     expect(currentChatState.activeChat).toBeUndefined();
 
     currentChatState.activeChat = {
@@ -234,7 +234,7 @@ describe('useApp', () => {
     rerender();
     rerender();
 
-    expect(currentChatState.activeChat.settings.systemInstruction).toBe(CANVAS_PROMPT);
+    expect(currentChatState.activeChat.settings.systemInstruction).toBe(LIVE_ARTIFACTS_PROMPT);
 
     unmount();
   });

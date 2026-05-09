@@ -19,7 +19,7 @@ interface UseSlashCommandsProps {
   onClearChat: () => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
-  onToggleCanvasPrompt: () => void;
+  onToggleLiveArtifactsPrompt: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
   onAttachmentAction: (action: AttachmentAction) => void;
@@ -75,7 +75,7 @@ export const useSlashCommands = ({
   onClearChat,
   onNewChat,
   onOpenSettings,
-  onToggleCanvasPrompt,
+  onToggleLiveArtifactsPrompt,
   onTogglePinCurrentSession,
   onRetryLastTurn,
   onAttachmentAction,
@@ -111,7 +111,7 @@ export const useSlashCommands = ({
       { name: 'clear', description: t('help_cmd_clear'), icon: 'clear' },
       { name: 'new', description: t('help_cmd_new'), icon: 'new' },
       { name: 'settings', description: t('help_cmd_settings'), icon: 'settings' },
-      { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas' },
+      { name: 'artifacts', description: t('help_cmd_artifacts'), icon: 'artifacts' },
       { name: 'pip', description: t('help_cmd_pip'), icon: 'pip' },
       { name: 'fast', description: t('help_cmd_fast'), icon: 'fast' },
     ];
@@ -164,8 +164,8 @@ export const useSlashCommands = ({
             return { name, description, icon, action: onNewChat };
           case 'settings':
             return { name, description, icon, action: onOpenSettings };
-          case 'canvas':
-            return { name, description, icon, action: onToggleCanvasPrompt };
+          case 'artifacts':
+            return { name, description, icon, action: onToggleLiveArtifactsPrompt };
           case 'pip':
             return { name, description, icon, action: onTogglePip };
           case 'fast':
@@ -199,7 +199,7 @@ export const useSlashCommands = ({
       onOpenSettings,
       onRetryLastTurn,
       onSetThinkingLevel,
-      onToggleCanvasPrompt,
+      onToggleLiveArtifactsPrompt,
       onTogglePinCurrentSession,
       onTogglePip,
       setInputText,

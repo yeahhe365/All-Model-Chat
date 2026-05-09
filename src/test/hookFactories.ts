@@ -86,7 +86,7 @@ export const createStandardChatProps = (overrides: StandardChatPropsOverrides = 
     updateAndPersistSessions: vi.fn(),
     getStreamHandlers: vi.fn(() => createStreamHandlers()),
     sessionKeyMapRef: createMutableRef(new Map<string, string>()),
-    handleGenerateCanvas: vi.fn(async () => undefined),
+    handleGenerateLiveArtifacts: vi.fn(async () => undefined),
     setAppFileError: vi.fn(),
     language: 'en',
     ...rest,

@@ -53,7 +53,7 @@ type ChatAreaInputValue = {
   onClearChat: () => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
-  onToggleCanvasPrompt: () => void;
+  onToggleLiveArtifactsPrompt: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
   onSelectModel: (modelId: string) => void;
@@ -92,7 +92,7 @@ type ChatAreaMessageListValue = {
   onSuggestionClick: (suggestion: string) => void;
   onOrganizeInfoClick: (suggestion: string) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
-  onGenerateCanvas: (messageId: string, text: string) => void;
+  onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
@@ -137,14 +137,14 @@ export const createChatAreaProviderValue = (overrides: ChatAreaProviderValueOver
       currentModelName: 'Test Model',
       availableModels: inputOverrides.availableModels ?? [],
       selectedModelId: currentChatSettings?.modelId ?? createChatSettings().modelId,
-      isCanvasPromptActive: false,
-      isCanvasPromptBusy: false,
+      isLiveArtifactsPromptActive: false,
+      isLiveArtifactsPromptBusy: false,
       isPipSupported: true,
       isPipActive: inputOverrides.isPipActive ?? false,
       onNewChat: inputOverrides.onNewChat ?? vi.fn(),
       onOpenScenariosModal: vi.fn(),
       onToggleHistorySidebar: vi.fn(),
-      onLoadCanvasPrompt: inputOverrides.onToggleCanvasPrompt ?? vi.fn(),
+      onLoadLiveArtifactsPrompt: inputOverrides.onToggleLiveArtifactsPrompt ?? vi.fn(),
       onSelectModel: inputOverrides.onSelectModel ?? vi.fn(),
       onSetThinkingLevel: vi.fn(),
       onToggleGemmaReasoning: vi.fn(),
@@ -163,7 +163,7 @@ export const createChatAreaProviderValue = (overrides: ChatAreaProviderValueOver
       onSuggestionClick: vi.fn(),
       onOrganizeInfoClick: vi.fn(),
       onFollowUpSuggestionClick: vi.fn(),
-      onGenerateCanvas: vi.fn(),
+      onGenerateLiveArtifacts: vi.fn(),
       onContinueGeneration: vi.fn(),
       onForkMessage: vi.fn(),
       onQuickTTS: vi.fn(async () => null),
@@ -202,7 +202,7 @@ export const createChatAreaProviderValue = (overrides: ChatAreaProviderValueOver
       onClearChat: vi.fn(),
       onNewChat: vi.fn(),
       onOpenSettings: vi.fn(),
-      onToggleCanvasPrompt: vi.fn(),
+      onToggleLiveArtifactsPrompt: vi.fn(),
       onTogglePinCurrentSession: vi.fn(),
       onRetryLastTurn: vi.fn(),
       onSelectModel: vi.fn(),
@@ -282,7 +282,7 @@ export const createChatRuntimeValues = (value: ChatAreaProviderValue): ChatRunti
     onClearChat: value.input.onClearChat,
     onNewChat: value.input.onNewChat,
     onOpenSettings: value.input.onOpenSettings,
-    onToggleCanvasPrompt: value.input.onToggleCanvasPrompt,
+    onToggleLiveArtifactsPrompt: value.input.onToggleLiveArtifactsPrompt,
     onTogglePinCurrentSession: value.input.onTogglePinCurrentSession,
     onRetryLastTurn: value.input.onRetryLastTurn,
     onSelectModel: value.input.onSelectModel,

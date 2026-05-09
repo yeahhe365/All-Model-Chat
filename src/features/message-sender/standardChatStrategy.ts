@@ -12,9 +12,9 @@ import type { PreparedModelRequest } from './useModelRequestRunner';
 type MessageLifecycleRunner = Parameters<typeof runOptimisticMessagePipeline>[0]['runMessageLifecycle'];
 
 interface SendStandardMessageParams {
-  props: Omit<StandardChatProps, 'getStreamHandlers' | 'handleGenerateCanvas'>;
+  props: Omit<StandardChatProps, 'getStreamHandlers' | 'handleGenerateLiveArtifacts'>;
   getStreamHandlers: GetStreamHandlers;
-  handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
+  handleGenerateLiveArtifacts: (sourceMessageId: string, content: string) => Promise<void>;
   runMessageLifecycle: MessageLifecycleRunner;
   text: string;
   files: UploadedFile[];
@@ -28,7 +28,7 @@ interface SendStandardMessageParams {
 export const sendStandardMessage = async ({
   props,
   getStreamHandlers,
-  handleGenerateCanvas,
+  handleGenerateLiveArtifacts,
   runMessageLifecycle,
   text: textToUse,
   files: filesToUse,
@@ -54,7 +54,7 @@ export const sendStandardMessage = async ({
     sessionKeyMapRef,
   } = props;
   const effectiveActiveModelId = isOpenAICompatibleApiActive(appSettings)
-    ? appSettings.openaiCompatibleModelId || activeModelId
+    ? appSettings.openaiCompatibleModelId
     : activeModelId;
   const settingsForPersistence = { ...currentChatSettings };
   const settingsForApi = { ...currentChatSettings };
@@ -133,7 +133,7 @@ export const sendStandardMessage = async ({
         messages,
         updateAndPersistSessions,
         getStreamHandlers,
-        handleGenerateCanvas,
+        handleGenerateLiveArtifacts,
         aspectRatio,
         imageSize,
         imageOutputMode,

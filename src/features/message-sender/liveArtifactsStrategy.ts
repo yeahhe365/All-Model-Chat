@@ -1,17 +1,17 @@
-import { getKeyForRequest } from '../../utils/apiUtils';
+import { getGeminiKeyForRequest } from '../../utils/apiUtils';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { getTranslator } from '@/i18n/translations';
 import { sendStatelessMessageStreamApi } from '../../services/api/chatApi';
-import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
+import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/generationConfig';
-import { loadCanvasSystemPrompt } from '../../constants/promptHelpers';
+import { loadLiveArtifactsSystemPrompt } from '../../constants/promptHelpers';
 import { runOptimisticMessagePipeline } from './messagePipeline';
-import type { CanvasGeneratorProps, GetStreamHandlers } from './types';
+import type { LiveArtifactsGeneratorProps, GetStreamHandlers } from './types';
 
 type MessageLifecycleRunner = Parameters<typeof runOptimisticMessagePipeline>[0]['runMessageLifecycle'];
 
-interface GenerateCanvasParams extends Omit<
-  CanvasGeneratorProps,
+interface GenerateLiveArtifactsParams extends Omit<
+  LiveArtifactsGeneratorProps,
   'messages' | 'getStreamHandlers' | 'activeJobs' | 'setSessionLoading'
 > {
   getStreamHandlers: GetStreamHandlers;
@@ -20,7 +20,7 @@ interface GenerateCanvasParams extends Omit<
   content: string;
 }
 
-export const generateCanvasMessage = async ({
+export const generateLiveArtifactsMessage = async ({
   appSettings,
   currentChatSettings,
   activeSessionId,
@@ -32,10 +32,10 @@ export const generateCanvasMessage = async ({
   runMessageLifecycle,
   sourceMessageId,
   content,
-}: GenerateCanvasParams) => {
+}: GenerateLiveArtifactsParams) => {
   if (!activeSessionId) return;
 
-  const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
+  const keyResult = getGeminiKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
   if ('error' in keyResult) {
     setAppFileError(keyResult.error);
     return;
@@ -46,13 +46,13 @@ export const generateCanvasMessage = async ({
   const generationStartTime = new Date();
   const abortController = new AbortController();
 
-  const canvasModelId = appSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
-  const canvasThinkingLevel = 'HIGH';
+  const liveArtifactsModelId = appSettings.autoLiveArtifactsModelId || DEFAULT_LIVE_ARTIFACTS_MODEL_ID;
+  const liveArtifactsThinkingLevel = 'HIGH';
 
-  const canvasSettings = {
+  const liveArtifactsSettings = {
     ...currentChatSettings,
-    modelId: canvasModelId,
-    thinkingLevel: canvasThinkingLevel as 'HIGH',
+    modelId: liveArtifactsModelId,
+    thinkingLevel: liveArtifactsThinkingLevel as 'HIGH',
     thinkingBudget: 0,
     showThoughts: true,
   };
@@ -60,14 +60,14 @@ export const generateCanvasMessage = async ({
   await runOptimisticMessagePipeline({
     activeSessionId,
     appSettings,
-    currentChatSettings: canvasSettings,
+    currentChatSettings: liveArtifactsSettings,
     updateAndPersistSessions,
     setActiveSessionId: () => undefined,
     text: '',
     generationId,
     generationStartTime,
     abortController,
-    errorPrefix: 'Canvas Error',
+    errorPrefix: 'Live Artifacts Error',
     runMessageLifecycle,
     placement: {
       type: 'insert-model-after',
@@ -77,19 +77,19 @@ export const generateCanvasMessage = async ({
       excludeFromContext: true,
     },
     execute: async () => {
-      const canvasSystemPrompt = await loadCanvasSystemPrompt();
+      const liveArtifactsSystemPrompt = await loadLiveArtifactsSystemPrompt();
       const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
         activeSessionId,
         generationId,
         abortController,
         generationStartTime,
-        canvasSettings,
+        liveArtifactsSettings,
       );
 
       const config = await buildGenerationConfig({
         settings: {
-          ...canvasSettings,
-          systemInstruction: canvasSystemPrompt,
+          ...liveArtifactsSettings,
+          systemInstruction: liveArtifactsSystemPrompt,
           temperature: 0.7,
           topP: 0.95,
           isGoogleSearchEnabled: false,
@@ -108,7 +108,7 @@ export const generateCanvasMessage = async ({
       try {
         await sendStatelessMessageStreamApi(
           keyToUse,
-          canvasModelId,
+          liveArtifactsModelId,
           [],
           [{ text: promptInstruction }, { text: content }],
           config,

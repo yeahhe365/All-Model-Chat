@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '../../types';
 import { createAppSettings, createChatSettings, createSavedChatSession } from '@/test/factories';
 
-const { mockLoadCanvasSystemPrompt } = vi.hoisted(() => ({
-  mockLoadCanvasSystemPrompt: vi.fn(),
+const { mockLoadLiveArtifactsSystemPrompt } = vi.hoisted(() => ({
+  mockLoadLiveArtifactsSystemPrompt: vi.fn(),
 }));
 
 vi.mock('../../constants/promptHelpers', async () => {
@@ -13,24 +13,24 @@ vi.mock('../../constants/promptHelpers', async () => {
 
   return {
     ...actual,
-    loadCanvasSystemPrompt: mockLoadCanvasSystemPrompt,
+    loadLiveArtifactsSystemPrompt: mockLoadLiveArtifactsSystemPrompt,
   };
 });
 
 import { focusChatInput, useAppPromptModes } from './useAppPromptModes';
 import { createDeferred, renderHook } from '@/test/testUtils';
 
-const CANVAS_PROMPT = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
-const CANVAS_PROMPT_EN = '<title>Canvas Assistant: Responsive Visual Guide</title>\ncanvas prompt';
+const LIVE_ARTIFACTS_PROMPT = '[Live Artifacts Protocol - zh]\nLive Artifacts prompt';
+const LIVE_ARTIFACTS_PROMPT_EN = '[Live Artifacts Protocol - en]\nLive Artifacts prompt';
 
-const createCanvasChatSettings = (overrides: Partial<ChatSettings> = {}) =>
+const createLiveArtifactsChatSettings = (overrides: Partial<ChatSettings> = {}) =>
   createChatSettings({
     modelId: 'gemini-3-flash-preview',
     systemInstruction: '',
     ...overrides,
   });
 
-const createCanvasSession = (
+const createLiveArtifactsSession = (
   overrides: Partial<SavedChatSession> = {},
   settingsOverrides: Partial<ChatSettings> = {},
 ): SavedChatSession =>
@@ -39,7 +39,7 @@ const createCanvasSession = (
     title: 'Session',
     timestamp: Date.now(),
     messages: [],
-    settings: createCanvasChatSettings(settingsOverrides),
+    settings: createLiveArtifactsChatSettings(settingsOverrides),
     ...overrides,
   });
 
@@ -64,9 +64,9 @@ describe('useAppPromptModes', () => {
     vi.stubGlobal('document', originalDocument);
   });
 
-  it('optimistically marks the canvas prompt active while it is loading', async () => {
+  it('optimistically marks the Live Artifacts prompt active while it is loading', async () => {
     const deferred = createDeferred<string>();
-    mockLoadCanvasSystemPrompt.mockReturnValue(deferred.promise);
+    mockLoadLiveArtifactsSystemPrompt.mockReturnValue(deferred.promise);
 
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
@@ -74,9 +74,9 @@ describe('useAppPromptModes', () => {
       useAppPromptModes({
         appSettings: createAppSettings(),
         setAppSettings,
-        activeChat: createCanvasSession(),
+        activeChat: createLiveArtifactsSession(),
         activeSessionId: 'session-1',
-        currentChatSettings: createCanvasChatSettings(),
+        currentChatSettings: createLiveArtifactsChatSettings(),
         setCurrentChatSettings,
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -85,14 +85,14 @@ describe('useAppPromptModes', () => {
 
     let pendingPromise: Promise<void> | undefined;
     act(() => {
-      pendingPromise = result.current.handleLoadCanvasPromptAndSave();
+      pendingPromise = result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    expect(result.current.isCanvasPromptActive).toBe(true);
-    expect(result.current.isCanvasPromptBusy).toBe(true);
+    expect(result.current.isLiveArtifactsPromptActive).toBe(true);
+    expect(result.current.isLiveArtifactsPromptBusy).toBe(true);
 
     await act(async () => {
-      deferred.resolve(CANVAS_PROMPT);
+      deferred.resolve(LIVE_ARTIFACTS_PROMPT);
       await pendingPromise;
     });
 
@@ -101,8 +101,8 @@ describe('useAppPromptModes', () => {
     unmount();
   });
 
-  it('loads the canvas prompt in the active UI language', async () => {
-    mockLoadCanvasSystemPrompt.mockResolvedValue(CANVAS_PROMPT_EN);
+  it('loads the Live Artifacts prompt in the active UI language', async () => {
+    mockLoadLiveArtifactsSystemPrompt.mockResolvedValue(LIVE_ARTIFACTS_PROMPT_EN);
 
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
@@ -110,9 +110,9 @@ describe('useAppPromptModes', () => {
       useAppPromptModes({
         appSettings: createAppSettings(),
         setAppSettings,
-        activeChat: createCanvasSession(),
+        activeChat: createLiveArtifactsSession(),
         activeSessionId: 'session-1',
-        currentChatSettings: createCanvasChatSettings(),
+        currentChatSettings: createLiveArtifactsChatSettings(),
         setCurrentChatSettings,
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -121,28 +121,28 @@ describe('useAppPromptModes', () => {
     );
 
     await act(async () => {
-      await result.current.handleLoadCanvasPromptAndSave();
+      await result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    expect(mockLoadCanvasSystemPrompt).toHaveBeenCalledWith('en');
+    expect(mockLoadLiveArtifactsSystemPrompt).toHaveBeenCalledWith('en');
     expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
     const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
-    expect(appSettingsUpdater(createAppSettings()).systemInstruction).toBe(CANVAS_PROMPT_EN);
+    expect(appSettingsUpdater(createAppSettings()).systemInstruction).toBe(LIVE_ARTIFACTS_PROMPT_EN);
 
     unmount();
   });
 
-  it('ignores repeated canvas button presses while a canvas prompt load is already in flight', async () => {
+  it('ignores repeated Live Artifacts button presses while a Live Artifacts prompt load is already in flight', async () => {
     const deferred = createDeferred<string>();
-    mockLoadCanvasSystemPrompt.mockReturnValue(deferred.promise);
+    mockLoadLiveArtifactsSystemPrompt.mockReturnValue(deferred.promise);
 
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
         appSettings: createAppSettings(),
         setAppSettings: vi.fn(),
-        activeChat: createCanvasSession(),
+        activeChat: createLiveArtifactsSession(),
         activeSessionId: 'session-1',
-        currentChatSettings: createCanvasChatSettings(),
+        currentChatSettings: createLiveArtifactsChatSettings(),
         setCurrentChatSettings: vi.fn(),
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -151,35 +151,35 @@ describe('useAppPromptModes', () => {
 
     let firstCall: Promise<void> | undefined;
     act(() => {
-      firstCall = result.current.handleLoadCanvasPromptAndSave();
+      firstCall = result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
     await act(async () => {
-      await result.current.handleLoadCanvasPromptAndSave();
+      await result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    expect(mockLoadCanvasSystemPrompt).toHaveBeenCalledTimes(1);
+    expect(mockLoadLiveArtifactsSystemPrompt).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      deferred.resolve(CANVAS_PROMPT);
+      deferred.resolve(LIVE_ARTIFACTS_PROMPT);
       await firstCall;
     });
 
     unmount();
   });
 
-  it('allows toggling the canvas prompt in a different session after switching away from an in-flight load', async () => {
+  it('allows toggling the Live Artifacts prompt in a different session after switching away from an in-flight load', async () => {
     const deferred = createDeferred<string>();
-    mockLoadCanvasSystemPrompt.mockReturnValueOnce(deferred.promise).mockResolvedValue(CANVAS_PROMPT);
+    mockLoadLiveArtifactsSystemPrompt.mockReturnValueOnce(deferred.promise).mockResolvedValue(LIVE_ARTIFACTS_PROMPT);
 
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
     const options = {
       appSettings: createAppSettings(),
       setAppSettings,
-      activeChat: createCanvasSession({ title: 'Session 1' }),
+      activeChat: createLiveArtifactsSession({ title: 'Session 1' }),
       activeSessionId: 'session-1' as string | null,
-      currentChatSettings: createCanvasChatSettings(),
+      currentChatSettings: createLiveArtifactsChatSettings(),
       setCurrentChatSettings,
       handleSendMessage: vi.fn(),
       setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -188,43 +188,43 @@ describe('useAppPromptModes', () => {
     const { result, rerender, unmount } = renderHook(() => useAppPromptModes(options));
 
     act(() => {
-      void result.current.handleLoadCanvasPromptAndSave();
+      void result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    options.activeChat = createCanvasSession({
+    options.activeChat = createLiveArtifactsSession({
       id: 'session-2',
       title: 'Session 2',
     });
     options.activeSessionId = 'session-2';
-    options.currentChatSettings = createCanvasChatSettings();
+    options.currentChatSettings = createLiveArtifactsChatSettings();
     rerender();
 
     await act(async () => {
-      await result.current.handleLoadCanvasPromptAndSave();
+      await result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    expect(mockLoadCanvasSystemPrompt).toHaveBeenCalledTimes(2);
+    expect(mockLoadLiveArtifactsSystemPrompt).toHaveBeenCalledTimes(2);
 
     await act(async () => {
-      deferred.resolve(CANVAS_PROMPT);
+      deferred.resolve(LIVE_ARTIFACTS_PROMPT);
       await Promise.resolve();
     });
 
     unmount();
   });
 
-  it('does not write the canvas prompt into the newly active session when an older load resolves late', async () => {
+  it('does not write the Live Artifacts prompt into the newly active session when an older load resolves late', async () => {
     const deferred = createDeferred<string>();
-    mockLoadCanvasSystemPrompt.mockReturnValue(deferred.promise);
+    mockLoadLiveArtifactsSystemPrompt.mockReturnValue(deferred.promise);
 
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
     const options = {
       appSettings: createAppSettings(),
       setAppSettings,
-      activeChat: createCanvasSession({ title: 'Session 1' }),
+      activeChat: createLiveArtifactsSession({ title: 'Session 1' }),
       activeSessionId: 'session-1' as string | null,
-      currentChatSettings: createCanvasChatSettings(),
+      currentChatSettings: createLiveArtifactsChatSettings(),
       setCurrentChatSettings,
       handleSendMessage: vi.fn(),
       setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -233,19 +233,19 @@ describe('useAppPromptModes', () => {
     const { result, rerender, unmount } = renderHook(() => useAppPromptModes(options));
 
     act(() => {
-      void result.current.handleLoadCanvasPromptAndSave();
+      void result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    options.activeChat = createCanvasSession({
+    options.activeChat = createLiveArtifactsSession({
       id: 'session-2',
       title: 'Session 2',
     });
     options.activeSessionId = 'session-2';
-    options.currentChatSettings = createCanvasChatSettings();
+    options.currentChatSettings = createLiveArtifactsChatSettings();
     rerender();
 
     await act(async () => {
-      deferred.resolve(CANVAS_PROMPT);
+      deferred.resolve(LIVE_ARTIFACTS_PROMPT);
       await Promise.resolve();
     });
 
@@ -254,32 +254,32 @@ describe('useAppPromptModes', () => {
     unmount();
   });
 
-  it('keeps the canvas button active while app settings already contain the canvas prompt', () => {
+  it('keeps the Live Artifacts button active while app settings already contain the Live Artifacts prompt', () => {
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
-        appSettings: createAppSettings({ systemInstruction: CANVAS_PROMPT }),
+        appSettings: createAppSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT }),
         setAppSettings: vi.fn(),
-        activeChat: createCanvasSession({ title: 'Session 1' }),
+        activeChat: createLiveArtifactsSession({ title: 'Session 1' }),
         activeSessionId: 'session-1',
-        currentChatSettings: createCanvasChatSettings(),
+        currentChatSettings: createLiveArtifactsChatSettings(),
         setCurrentChatSettings: vi.fn(),
         handleSendMessage: vi.fn(),
         setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
       }),
     );
 
-    expect(result.current.isCanvasPromptActive).toBe(true);
+    expect(result.current.isLiveArtifactsPromptActive).toBe(true);
 
     unmount();
   });
 
-  it('stays inactive after disabling the canvas prompt once persisted settings are cleared', async () => {
+  it('stays inactive after disabling the Live Artifacts prompt once persisted settings are cleared', async () => {
     const options = {
-      appSettings: createAppSettings({ systemInstruction: CANVAS_PROMPT }),
+      appSettings: createAppSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT }),
       setAppSettings: vi.fn(),
-      activeChat: createCanvasSession({ title: 'Session 1' }, { systemInstruction: CANVAS_PROMPT }),
+      activeChat: createLiveArtifactsSession({ title: 'Session 1' }, { systemInstruction: LIVE_ARTIFACTS_PROMPT }),
       activeSessionId: 'session-1' as string | null,
-      currentChatSettings: createCanvasChatSettings({ systemInstruction: CANVAS_PROMPT }),
+      currentChatSettings: createLiveArtifactsChatSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT }),
       setCurrentChatSettings: vi.fn(),
       handleSendMessage: vi.fn(),
       setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
@@ -288,40 +288,40 @@ describe('useAppPromptModes', () => {
     const { result, rerender, unmount } = renderHook(() => useAppPromptModes(options));
 
     await act(async () => {
-      await result.current.handleLoadCanvasPromptAndSave();
+      await result.current.handleLoadLiveArtifactsPromptAndSave();
     });
 
-    expect(result.current.isCanvasPromptActive).toBe(false);
+    expect(result.current.isLiveArtifactsPromptActive).toBe(false);
 
     options.appSettings = createAppSettings({ systemInstruction: '' });
     options.activeChat = {
       ...options.activeChat,
-      settings: createCanvasChatSettings(),
+      settings: createLiveArtifactsChatSettings(),
     };
-    options.currentChatSettings = createCanvasChatSettings();
+    options.currentChatSettings = createLiveArtifactsChatSettings();
 
     rerender();
     await act(async () => {
       await Promise.resolve();
     });
 
-    expect(result.current.isCanvasPromptActive).toBe(false);
+    expect(result.current.isLiveArtifactsPromptActive).toBe(false);
 
     unmount();
   });
 
-  it('turns off canvas prompt and clears only the text input when smart board is clicked while active', async () => {
+  it('turns off Live Artifacts prompt and clears only the text input when Live Artifacts is clicked while active', async () => {
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
     const setCommandedInput = vi.fn() as unknown as (command: InputCommand) => void;
 
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
-        appSettings: createAppSettings({ systemInstruction: CANVAS_PROMPT }),
+        appSettings: createAppSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT }),
         setAppSettings,
-        activeChat: createCanvasSession({ title: 'Session 1' }, { systemInstruction: CANVAS_PROMPT }),
+        activeChat: createLiveArtifactsSession({ title: 'Session 1' }, { systemInstruction: LIVE_ARTIFACTS_PROMPT }),
         activeSessionId: 'session-1',
-        currentChatSettings: createCanvasChatSettings({ systemInstruction: CANVAS_PROMPT }),
+        currentChatSettings: createLiveArtifactsChatSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT }),
         setCurrentChatSettings,
         handleSendMessage: vi.fn(),
         setCommandedInput,
@@ -337,8 +337,8 @@ describe('useAppPromptModes', () => {
 
     const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
     const chatSettingsUpdater = setCurrentChatSettings.mock.calls.at(-1)?.[0] as (prev: ChatSettings) => ChatSettings;
-    expect(appSettingsUpdater(createAppSettings({ systemInstruction: CANVAS_PROMPT })).systemInstruction).toBe('');
-    expect(chatSettingsUpdater(createCanvasChatSettings({ systemInstruction: CANVAS_PROMPT })).systemInstruction).toBe(
+    expect(appSettingsUpdater(createAppSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT })).systemInstruction).toBe('');
+    expect(chatSettingsUpdater(createLiveArtifactsChatSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT })).systemInstruction).toBe(
       '',
     );
     expect(setCommandedInput).toHaveBeenCalledWith({
@@ -346,7 +346,7 @@ describe('useAppPromptModes', () => {
       id: expect.any(Number),
       mode: 'replace',
     });
-    expect(mockLoadCanvasSystemPrompt).not.toHaveBeenCalled();
+    expect(mockLoadLiveArtifactsSystemPrompt).not.toHaveBeenCalled();
 
     unmount();
   });

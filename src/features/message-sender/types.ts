@@ -46,7 +46,7 @@ export interface BaseSenderProps {
   language: 'en' | 'zh';
 }
 
-export interface CanvasGeneratorProps extends BaseSenderProps {
+export interface LiveArtifactsGeneratorProps extends BaseSenderProps {
   messages: ChatMessage[];
   activeSessionId: string | null;
   getStreamHandlers: GetStreamHandlers;
@@ -65,5 +65,5 @@ export interface StandardChatProps extends BaseSenderProps {
   setActiveSessionId: (id: string | null) => void;
   getStreamHandlers: GetStreamHandlers;
   sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
-  handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
+  handleGenerateLiveArtifacts: (sourceMessageId: string, content: string) => Promise<void>;
 }

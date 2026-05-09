@@ -2,7 +2,11 @@ import { LOCAL_PYTHON_SYSTEM_PROMPT } from '@/features/prompts/localPython';
 
 type PromptLanguage = 'en' | 'zh';
 
-const CANVAS_PROMPT_MARKERS = [
+const LIVE_ARTIFACTS_PROMPT_MARKERS = [
+  '[Live Artifacts Protocol]',
+  '[Live Artifacts Protocol - zh]',
+  '[Live Artifacts Protocol - en]',
+  // Legacy Canvas markers are recognized so old saved settings can still be toggled off.
   '[Canvas Artifact Protocol]',
   '[Canvas Artifact Protocol - zh]',
   '[Canvas Artifact Protocol - en]',
@@ -15,8 +19,8 @@ const CANVAS_PROMPT_MARKERS = [
 const BBOX_PROMPT_MARKER = '**任务：** 请作为一位计算机视觉专家';
 const HD_GUIDE_PROMPT_MARKER = '### 系统提示词：高清引导标注专家';
 
-export const isCanvasSystemInstruction = (instruction?: string | null) =>
-  !!instruction && CANVAS_PROMPT_MARKERS.some((marker) => instruction.includes(marker));
+export const isLiveArtifactsSystemInstruction = (instruction?: string | null) =>
+  !!instruction && LIVE_ARTIFACTS_PROMPT_MARKERS.some((marker) => instruction.includes(marker));
 
 export const isBboxSystemInstruction = (instruction?: string | null) =>
   !!instruction && instruction.includes(BBOX_PROMPT_MARKER);
@@ -24,9 +28,9 @@ export const isBboxSystemInstruction = (instruction?: string | null) =>
 export const isHdGuideSystemInstruction = (instruction?: string | null) =>
   !!instruction && instruction.includes(HD_GUIDE_PROMPT_MARKER);
 
-export const loadCanvasSystemPrompt = async (language: PromptLanguage = 'zh') => {
-  const prompts = await import('@/features/prompts/canvas');
-  return language === 'en' ? prompts.CANVAS_SYSTEM_PROMPT_EN : prompts.CANVAS_SYSTEM_PROMPT_ZH;
+export const loadLiveArtifactsSystemPrompt = async (language: PromptLanguage = 'zh') => {
+  const prompts = await import('@/features/prompts/liveArtifacts');
+  return language === 'en' ? prompts.LIVE_ARTIFACTS_SYSTEM_PROMPT_EN : prompts.LIVE_ARTIFACTS_SYSTEM_PROMPT_ZH;
 };
 
 export const loadDeepSearchSystemPrompt = async () =>

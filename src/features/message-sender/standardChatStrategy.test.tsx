@@ -120,7 +120,7 @@ describe('standardChatStrategy', () => {
     appSettings: {
       hideThinkingInContext: false,
       isRawModeEnabled: false,
-      autoCanvasVisualization: false,
+      autoLiveArtifactsVisualization: false,
       isStreamingEnabled: true,
       ...overrides.appSettings,
     },
@@ -156,13 +156,13 @@ describe('standardChatStrategy', () => {
           sendStandardMessage: (
             input: Omit<
               Parameters<typeof sendStandardMessage>[0],
-              'props' | 'getStreamHandlers' | 'handleGenerateCanvas' | 'runMessageLifecycle'
+              'props' | 'getStreamHandlers' | 'handleGenerateLiveArtifacts' | 'runMessageLifecycle'
             >,
           ) =>
             sendStandardMessage({
               props,
               getStreamHandlers: props.getStreamHandlers,
-              handleGenerateCanvas: props.handleGenerateCanvas,
+              handleGenerateLiveArtifacts: props.handleGenerateLiveArtifacts,
               runMessageLifecycle,
               ...input,
             }),

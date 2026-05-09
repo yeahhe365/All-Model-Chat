@@ -133,7 +133,7 @@ describe('settingsStore', () => {
     });
 
     it('preserves user edits made before settings finish loading', async () => {
-      const canvasPrompt = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
+      const liveArtifactsPrompt = '[Live Artifacts Protocol - zh]\nLive Artifacts prompt';
       vi.mocked(dbService.getAppSettings).mockResolvedValue(
         createStoredSettingsSnapshot({
           temperature: 0.5,
@@ -143,7 +143,7 @@ describe('settingsStore', () => {
 
       useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
-        systemInstruction: canvasPrompt,
+        systemInstruction: liveArtifactsPrompt,
       }));
 
       await useSettingsStore.getState().loadSettings();
@@ -151,13 +151,13 @@ describe('settingsStore', () => {
       const state = useSettingsStore.getState();
       expect(state.appSettings.temperature).toBe(0.5);
       expect(state.appSettings.language).toBe('zh');
-      expect(state.appSettings.systemInstruction).toBe(canvasPrompt);
+      expect(state.appSettings.systemInstruction).toBe(liveArtifactsPrompt);
       await vi.waitFor(() => {
         expect(dbService.setAppSettings).toHaveBeenCalledWith(
           expect.objectContaining({
             temperature: 0.5,
             language: 'zh',
-            systemInstruction: canvasPrompt,
+            systemInstruction: liveArtifactsPrompt,
           }),
         );
       });

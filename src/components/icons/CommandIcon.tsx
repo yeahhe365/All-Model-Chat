@@ -52,7 +52,7 @@ export const CommandIcon: React.FC<{ icon: string }> = ({ icon }) => {
       return <FilePlus2 {...iconProps} />;
     case 'settings':
       return <Settings {...iconProps} />;
-    case 'canvas':
+    case 'artifacts':
       return <Wand2 {...iconProps} />;
     case 'image':
       return <ImageIcon {...iconProps} />;

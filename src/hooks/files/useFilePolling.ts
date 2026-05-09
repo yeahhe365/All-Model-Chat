@@ -1,6 +1,6 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import { getApiKeyErrorTranslationKey, getKeyForRequest } from '../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
 import { logService } from '../../services/logService';
 import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../../services/api/filePollingConfig';
 import { getFileMetadataApi } from '../../services/api/fileApi';
@@ -91,7 +91,7 @@ export const useFilePolling = ({
 
           // Optimize polling by not rotating keys unnecessarily.
           // We reuse the current index/key to avoid burning through rotation turns on poll ticks.
-          const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
+          const keyResult = getGeminiKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
           if ('error' in keyResult) {
             logService.error(`Polling for ${fileApiName} stopped: ${keyResult.error}`);
             const translationKey = getApiKeyErrorTranslationKey(keyResult.error);

@@ -448,6 +448,10 @@ const createLocalApiPlugin = (): Plugin => ({
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
+    server: {
+      port: 5175,
+      strictPort: true,
+    },
     plugins: [
       createDisabledMermaidDiagramPlugin(),
       createLocalApiPlugin(),

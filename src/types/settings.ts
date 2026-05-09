@@ -115,8 +115,8 @@ export interface AppSettings extends ChatSettings {
   autoFullscreenHtml?: boolean;
   showWelcomeSuggestions?: boolean;
   isAudioCompressionEnabled: boolean;
-  autoCanvasVisualization?: boolean;
-  autoCanvasModelId: string;
+  autoLiveArtifactsVisualization?: boolean;
+  autoLiveArtifactsModelId: string;
   isPasteRichTextAsMarkdownEnabled?: boolean;
   isPasteAsTextFileEnabled?: boolean;
   showInputPasteButton?: boolean;

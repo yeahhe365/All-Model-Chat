@@ -7,7 +7,6 @@ import type { AppViewModel } from '../../../hooks/app/useApp';
 import { useChatStore } from '../../../stores/chatStore';
 import { useUIStore } from '../../../stores/uiStore';
 import type {
-  AppSettings,
   ChatSettingsUpdater,
   LiveClientFunctions,
   ModelOption,
@@ -30,14 +29,14 @@ interface ChatHeaderRuntimeValue {
   currentModelName: string;
   availableModels: ModelOption[];
   selectedModelId: string;
-  isCanvasPromptActive: boolean;
-  isCanvasPromptBusy: boolean;
+  isLiveArtifactsPromptActive: boolean;
+  isLiveArtifactsPromptBusy: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onNewChat: () => void;
   onOpenScenariosModal: () => void;
   onToggleHistorySidebar: () => void;
-  onLoadCanvasPrompt: () => void;
+  onLoadLiveArtifactsPrompt: () => void;
   onSelectModel: (modelId: string) => void;
   onSetThinkingLevel: (level: ThinkingLevel) => void;
   onToggleGemmaReasoning: () => void;
@@ -56,7 +55,7 @@ interface ChatMessageListRuntimeValue {
     updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution },
   ) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
-  onGenerateCanvas: (messageId: string, text: string) => void;
+  onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
@@ -75,7 +74,7 @@ interface ChatInputRuntimeValue {
   onClearChat: () => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
-  onToggleCanvasPrompt: () => void;
+  onToggleLiveArtifactsPrompt: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
   onSelectModel: (modelId: string) => void;
@@ -123,7 +122,7 @@ const ChatHeaderRuntimeContext = createContext<ChatHeaderRuntimeValue | null>(nu
 const ChatMessageListRuntimeContext = createContext<ChatMessageListRuntimeValue | null>(null);
 const ChatInputRuntimeContext = createContext<ChatInputRuntimeValue | null>(null);
 
-const buildHeaderModels = (appSettings: AppSettings, apiModels: AppViewModel['chatState']['apiModels']) => {
+const buildHeaderModels = (appSettings: AppViewModel['appSettings'], apiModels: AppViewModel['chatState']['apiModels']) => {
   const seenIds = new Set<string>();
   const geminiModels = apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));
   const openAICompatibleModels =
@@ -160,12 +159,12 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
     pipState,
     sessionTitle,
     handleOpenSidePanel,
-    handleLoadCanvasPromptAndSave,
+    handleLoadLiveArtifactsPromptAndSave,
     handleToggleBBoxMode,
     handleToggleGuideMode,
     handleSuggestionClick,
-    isCanvasPromptActive,
-    isCanvasPromptBusy,
+    isLiveArtifactsPromptActive,
+    isLiveArtifactsPromptBusy,
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
   } = app;
@@ -305,14 +304,14 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       currentModelName,
       availableModels: headerAvailableModels,
       selectedModelId: headerSelectedModelId,
-      isCanvasPromptActive,
-      isCanvasPromptBusy: !!isCanvasPromptBusy,
+      isLiveArtifactsPromptActive,
+      isLiveArtifactsPromptBusy: !!isLiveArtifactsPromptBusy,
       isPipSupported: pipState.isPipSupported,
       isPipActive: pipState.isPipActive,
       onNewChat: chatState.startNewChat,
       onOpenScenariosModal: openScenariosModal,
       onToggleHistorySidebar: toggleHistorySidebar,
-      onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
+      onLoadLiveArtifactsPrompt: handleLoadLiveArtifactsPromptAndSave,
       onSelectModel: handleHeaderSelectModel,
       onSetThinkingLevel: handleSetThinkingLevel,
       onToggleGemmaReasoning,
@@ -322,12 +321,12 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       chatState,
       currentModelName,
       handleHeaderSelectModel,
-      handleLoadCanvasPromptAndSave,
+      handleLoadLiveArtifactsPromptAndSave,
       handleSetThinkingLevel,
       headerAvailableModels,
       headerSelectedModelId,
-      isCanvasPromptActive,
-      isCanvasPromptBusy,
+      isLiveArtifactsPromptActive,
+      isLiveArtifactsPromptBusy,
       onToggleGemmaReasoning,
       openScenariosModal,
       pipState,
@@ -344,7 +343,7 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       onRetryMessage: chatState.handleRetryMessage,
       onUpdateMessageFile: chatState.handleUpdateMessageFile,
       onFollowUpSuggestionClick,
-      onGenerateCanvas: chatState.handleGenerateCanvas,
+      onGenerateLiveArtifacts: chatState.handleGenerateLiveArtifacts,
       onContinueGeneration: chatState.handleContinueGeneration,
       onForkMessage: chatState.handleForkMessage,
       onQuickTTS: chatState.handleQuickTTS,
@@ -366,7 +365,7 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       onClearChat: chatState.handleClearCurrentChat,
       onNewChat: chatState.startNewChat,
       onOpenSettings: openSettingsModal,
-      onToggleCanvasPrompt: handleLoadCanvasPromptAndSave,
+      onToggleLiveArtifactsPrompt: handleLoadLiveArtifactsPromptAndSave,
       onTogglePinCurrentSession: chatState.handleTogglePinCurrentSession,
       onRetryLastTurn: chatState.handleRetryLastTurn,
       onSelectModel: handleHeaderSelectModel,
@@ -388,7 +387,7 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
     [
       chatState,
       handleHeaderSelectModel,
-      handleLoadCanvasPromptAndSave,
+      handleLoadLiveArtifactsPromptAndSave,
       handleToggleBBoxMode,
       handleToggleGuideMode,
       headerAvailableModels,

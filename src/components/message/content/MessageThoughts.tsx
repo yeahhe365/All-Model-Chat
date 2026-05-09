@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChatMessage, AppSettings, SideViewContent, UploadedFile } from '../../../types';
-import { getKeyForRequest } from '../../../utils/apiUtils';
+import { getGeminiKeyForRequest } from '../../../utils/apiUtils';
 import { parseThoughtProcess } from '../../../utils/chat/parsing';
 import { translateTextApi } from '../../../services/api/generation/textApi';
 import { DEFAULT_CHAT_SETTINGS, DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/appConstants';
@@ -77,7 +77,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     setIsTranslatingThoughts(true);
     try {
       const tempSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-      const keyResult = getKeyForRequest(appSettings, tempSettings, { skipIncrement: true });
+      const keyResult = getGeminiKeyForRequest(appSettings, tempSettings, { skipIncrement: true });
       if ('error' in keyResult) {
         console.error('API Key error for translation:', keyResult.error);
         return;

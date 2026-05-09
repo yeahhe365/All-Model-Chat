@@ -149,6 +149,20 @@ const sanitizeTabModelCycleIds = (value: unknown, fallback: string[] | undefined
   return ids.length > 0 ? ids : fallback;
 };
 
+const normalizeLegacyAppSettingsInput = (value: unknown): Record<string, unknown> => {
+  const settings = isRecord(value) ? { ...value } : {};
+
+  if (settings.autoLiveArtifactsVisualization === undefined && settings.autoCanvasVisualization !== undefined) {
+    settings.autoLiveArtifactsVisualization = settings.autoCanvasVisualization;
+  }
+
+  if (settings.autoLiveArtifactsModelId === undefined && settings.autoCanvasModelId !== undefined) {
+    settings.autoLiveArtifactsModelId = settings.autoCanvasModelId;
+  }
+
+  return settings;
+};
+
 const appSettingsSchema: z.ZodType<AppSettings> = z.object({
   modelId: stringWithDefault(DEFAULT_APP_SETTINGS.modelId),
   temperature: numberWithDefault(DEFAULT_APP_SETTINGS.temperature),
@@ -217,8 +231,8 @@ const appSettingsSchema: z.ZodType<AppSettings> = z.object({
   autoFullscreenHtml: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.autoFullscreenHtml),
   showWelcomeSuggestions: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.showWelcomeSuggestions),
   isAudioCompressionEnabled: booleanWithDefault(DEFAULT_APP_SETTINGS.isAudioCompressionEnabled),
-  autoCanvasVisualization: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.autoCanvasVisualization),
-  autoCanvasModelId: stringWithDefault(DEFAULT_APP_SETTINGS.autoCanvasModelId),
+  autoLiveArtifactsVisualization: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.autoLiveArtifactsVisualization),
+  autoLiveArtifactsModelId: stringWithDefault(DEFAULT_APP_SETTINGS.autoLiveArtifactsModelId),
   isPasteRichTextAsMarkdownEnabled: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.isPasteRichTextAsMarkdownEnabled),
   isPasteAsTextFileEnabled: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.isPasteAsTextFileEnabled),
   showInputPasteButton: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.showInputPasteButton),
@@ -242,4 +256,4 @@ const coerceDisabledOpenAICompatibleMode = (settings: AppSettings): AppSettings 
 });
 
 export const sanitizeImportedAppSettings = (value: unknown): AppSettings =>
-  coerceDisabledOpenAICompatibleMode(appSettingsSchema.parse(isRecord(value) ? value : {}));
+  coerceDisabledOpenAICompatibleMode(appSettingsSchema.parse(normalizeLegacyAppSettingsInput(value)));

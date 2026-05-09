@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AVAILABLE_CANVAS_MODELS,
+  AVAILABLE_LIVE_ARTIFACTS_MODELS,
   AVAILABLE_TRANSCRIPTION_MODELS,
   CONNECTION_TEST_MODELS,
 } from './settingsModelOptions';
@@ -22,10 +22,10 @@ describe('settingsModelOptions', () => {
     expect(CONNECTION_TEST_MODELS.some((model) => model.id === 'gemini-2.5-flash-lite-preview-09-2025')).toBe(false);
   });
 
-  it('includes all supported Canvas model choices', () => {
-    const canvasModelIds = AVAILABLE_CANVAS_MODELS.map((model) => model.id);
+  it('includes all supported Live Artifacts model choices', () => {
+    const liveArtifactsModelIds = AVAILABLE_LIVE_ARTIFACTS_MODELS.map((model) => model.id);
 
-    expect(canvasModelIds).toEqual(
+    expect(liveArtifactsModelIds).toEqual(
       expect.arrayContaining([
         'gemini-3-flash-preview',
         'gemini-3.1-flash-lite-preview',

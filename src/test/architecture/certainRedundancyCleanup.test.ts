@@ -88,7 +88,7 @@ describe('certain redundancy cleanup guards', () => {
     expect(messageListUiSource).toContain('useFileModalState');
     expect(chatInputFileSource).toContain('useChatInputFileUi');
     expect(useAppSource).toContain('useAppPromptModes');
-    expect(useAppPromptModesSource).toContain('loadCanvasSystemPrompt');
+    expect(useAppPromptModesSource).toContain('loadLiveArtifactsSystemPrompt');
     expect(messageExportSource).toContain("from '../utils/export/runtime'");
     expect(chatSessionExportSource).toContain("from '../../utils/export/runtime'");
   });
@@ -168,7 +168,7 @@ describe('certain redundancy cleanup guards', () => {
   it('keeps senders on the shared optimistic message pipeline', () => {
     for (const relativePath of [
       'src/features/message-sender/standardChatStrategy.ts',
-      'src/features/message-sender/canvasStrategy.ts',
+      'src/features/message-sender/liveArtifactsStrategy.ts',
       'src/features/message-sender/ttsImagenStrategy.ts',
       'src/features/message-sender/imageEditStrategy.ts',
     ]) {
@@ -187,7 +187,7 @@ describe('certain redundancy cleanup guards', () => {
     expect(mainSenderSource).toContain('useMessageLifecycle');
     expect(mainSenderSource).toMatch(/const \{ runMessageLifecycle \} = useMessageLifecycle\(/);
 
-    for (const hookName of ['useStandardChat', 'useCanvasGenerator', 'useTtsImagenSender', 'useImageEditSender']) {
+    for (const hookName of ['useStandardChat', 'useLiveArtifactsGenerator', 'useTtsImagenSender', 'useImageEditSender']) {
       expect(mainSenderSource).not.toContain(hookName);
       expect(fs.existsSync(path.join(projectRoot, `src/features/message-sender/${hookName}.ts`))).toBe(false);
     }
@@ -255,14 +255,14 @@ describe('certain redundancy cleanup guards', () => {
   it('keeps model settings panels on the shared settings object contract', () => {
     const modelsSectionSource = readProjectFile('src/components/settings/sections/ModelsSection.tsx');
     const languageVoiceSectionSource = readProjectFile('src/components/settings/sections/LanguageVoiceSection.tsx');
-    const canvasSectionSource = readProjectFile('src/components/settings/sections/CanvasSection.tsx');
+    const liveArtifactsSectionSource = readProjectFile('src/components/settings/sections/LiveArtifactsSection.tsx');
 
-    for (const source of [languageVoiceSectionSource, canvasSectionSource]) {
+    for (const source of [languageVoiceSectionSource, liveArtifactsSectionSource]) {
       expect(source).toContain('currentSettings: AppSettings;');
       expect(source).toContain('onUpdateSetting: SettingsUpdateHandler;');
     }
 
-    for (const source of [modelsSectionSource, languageVoiceSectionSource, canvasSectionSource]) {
+    for (const source of [modelsSectionSource, languageVoiceSectionSource, liveArtifactsSectionSource]) {
       for (const propName of [
         'setTranscriptionModelId',
         'setTtsVoice',
@@ -278,8 +278,8 @@ describe('certain redundancy cleanup guards', () => {
         'setInputTranslationModelId',
         'setThoughtTranslationTargetLanguage',
         'setThoughtTranslationModelId',
-        'setAutoCanvasVisualization',
-        'setAutoCanvasModelId',
+        'setAutoLiveArtifactsVisualization',
+        'setAutoLiveArtifactsModelId',
       ]) {
         expect(source).not.toContain(`${propName}:`);
       }
@@ -301,8 +301,8 @@ describe('certain redundancy cleanup guards', () => {
         'setInputTranslationModelId',
         'setThoughtTranslationTargetLanguage',
         'setThoughtTranslationModelId',
-        'setAutoCanvasVisualization',
-        'setAutoCanvasModelId',
+        'setAutoLiveArtifactsVisualization',
+        'setAutoLiveArtifactsModelId',
       ]) {
         expect(source).not.toContain(`${propName}={`);
       }

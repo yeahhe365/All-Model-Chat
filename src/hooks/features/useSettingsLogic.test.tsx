@@ -46,7 +46,7 @@ describe('useSettingsLogic', () => {
     unmount();
   });
 
-  it('does not include the merged canvas tab in the settings sidebar model', () => {
+  it('does not include the legacy Canvas tab in the settings sidebar model', () => {
     const { result, unmount } = renderHook(() =>
       useSettingsLogic({
         isOpen: true,
@@ -118,7 +118,7 @@ describe('useSettingsLogic', () => {
     unmount();
   });
 
-  it('restores the merged canvas tab to the models tab', () => {
+  it('restores the legacy Canvas tab to the models tab', () => {
     storage.set('chatSettingsLastTab', 'canvas');
 
     const { result, unmount } = renderHook(() =>

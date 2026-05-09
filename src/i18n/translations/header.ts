@@ -5,10 +5,22 @@ export const headerTranslations = {
   historySidebarClose_short: { en: 'Close History', zh: '关闭历史' },
   historySidebarOpen_short: { en: 'Open History', zh: '打开历史' },
   headerModelSelectorNoModels: { en: 'No models available.', zh: '无可用模型。' },
-  canvasHelperActive_aria: { en: 'Canvas prompt is active. Click to remove.', zh: 'Canvas 提示已激活。点击移除。' },
-  canvasHelperInactive_aria: { en: 'Load Canvas prompt and save settings', zh: '加载 Canvas 提示并保存设置' },
-  canvasHelperActive_title: { en: 'Canvas prompt is active. Click to remove.', zh: 'Canvas 提示已激活。点击移除。' },
-  canvasHelperInactive_title: { en: 'Load Canvas Prompt and save', zh: '加载 Canvas 提示并保存' },
+  liveArtifactsHelperActive_aria: {
+    en: 'Live Artifacts prompt is active. Click to remove.',
+    zh: 'Live Artifacts 提示已激活。点击移除。',
+  },
+  liveArtifactsHelperInactive_aria: {
+    en: 'Load Live Artifacts prompt and save settings',
+    zh: '加载 Live Artifacts 提示并保存设置',
+  },
+  liveArtifactsHelperActive_title: {
+    en: 'Live Artifacts prompt is active. Click to remove.',
+    zh: 'Live Artifacts 提示已激活。点击移除。',
+  },
+  liveArtifactsHelperInactive_title: {
+    en: 'Load Live Artifacts Prompt and save',
+    zh: '加载 Live Artifacts 提示并保存',
+  },
   scenariosManage_aria: { en: 'Preset Scenarios', zh: '预设场景' },
   scenariosManage_title: { en: 'Preset Scenarios', zh: '预设场景' },
   settingsOpen_aria: { en: 'Open Chat Settings', zh: '打开聊天设置' },

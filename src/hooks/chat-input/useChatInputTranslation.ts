@@ -1,7 +1,7 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
 import type { AppSettings, ChatSettings } from '../../types/settings';
 import { translateTextApi } from '../../services/api/generation/textApi';
-import { getApiKeyErrorTranslationKey, getKeyForRequest } from '../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
 import { useI18n } from '../../contexts/I18nContext';
 
 interface UseChatInputTranslationParams {
@@ -32,7 +32,7 @@ export const useChatInputTranslation = ({
     setTranslating(true);
     setAppFileError(null);
 
-    const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
+    const keyResult = getGeminiKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
     if ('error' in keyResult) {
       const translationKey = getApiKeyErrorTranslationKey(keyResult.error);
       setAppFileError(translationKey ? t(translationKey) : keyResult.error);

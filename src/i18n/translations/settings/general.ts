@@ -4,7 +4,7 @@ export const generalSettings = {
   settingsTabModels: { en: 'Models', zh: '模型' },
   settingsTabGeneration: { en: 'Model Behavior', zh: '模型行为' },
   settingsTabLanguageVoice: { en: 'Speech & Translation', zh: '语音输入与翻译' },
-  settingsTabCanvas: { en: 'Canvas', zh: 'Canvas' },
+  settingsTabLiveArtifacts: { en: 'Live Artifacts', zh: 'Live Artifacts' },
   settingsTabSafety: { en: 'Safety', zh: '安全' },
   settingsTabInterface: { en: 'Interface & Interaction', zh: '界面与交互' },
   settingsTabApi: { en: 'API', zh: 'API' },

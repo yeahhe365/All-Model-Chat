@@ -29,14 +29,14 @@ describe('HelpModal', () => {
         <HelpModal
           isOpen
           onClose={vi.fn()}
-          commands={[{ name: '/canvas', description: 'Toggle canvas', icon: 'canvas' }]}
+          commands={[{ name: '/artifacts', description: 'Toggle Live Artifacts', icon: 'artifacts' }]}
         />,
       );
     });
 
     const closeButton = document.body.querySelector('button[aria-label="Close help modal"]');
     const copyButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('/canvas'),
+      button.textContent?.includes('/artifacts'),
     );
 
     expect(closeButton?.className).toContain('focus-visible:ring-2');

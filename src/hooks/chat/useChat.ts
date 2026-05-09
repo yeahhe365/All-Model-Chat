@@ -313,7 +313,7 @@ export const useChat = (
 
     // Message handlers
     handleSendMessage: messageSender.handleSendMessage,
-    handleGenerateCanvas: messageSender.handleGenerateCanvas,
+    handleGenerateLiveArtifacts: messageSender.handleGenerateLiveArtifacts,
     handleStopGenerating: messageActions.handleStopGenerating,
     handleEditMessage: messageActions.handleEditMessage,
     handleCancelEdit: messageActions.handleCancelEdit,

@@ -1,6 +1,6 @@
 import type { ModelOption } from '../types';
 
-type ModelRegistryGroup = 'defaultPinned' | 'tts' | 'image' | 'canvas' | 'connectionTest' | 'transcription';
+type ModelRegistryGroup = 'defaultPinned' | 'tts' | 'image' | 'liveArtifacts' | 'connectionTest' | 'transcription';
 
 interface RegisteredModel {
   id: string;
@@ -13,9 +13,9 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-3-flash-preview',
     name: 'Gemini 3 Flash Preview',
-    groups: ['defaultPinned', 'canvas', 'connectionTest', 'transcription'],
+    groups: ['defaultPinned', 'liveArtifacts', 'connectionTest', 'transcription'],
     groupLabels: {
-      canvas: 'Gemini 3 Flash',
+      liveArtifacts: 'Gemini 3 Flash',
       transcription: 'Gemini 3.0 Flash (Fastest)',
     },
   },
@@ -27,9 +27,9 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-3.1-flash-lite-preview',
     name: 'Gemini 3.1 Flash Lite Preview',
-    groups: ['defaultPinned', 'canvas', 'connectionTest', 'transcription'],
+    groups: ['defaultPinned', 'liveArtifacts', 'connectionTest', 'transcription'],
     groupLabels: {
-      canvas: 'Gemini 3.1 Flash Lite',
+      liveArtifacts: 'Gemini 3.1 Flash Lite',
       connectionTest: 'Gemini 3.1 Flash Lite',
       transcription: 'Gemini 3.1 Flash Lite',
     },
@@ -37,9 +37,9 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-3.1-pro-preview',
     name: 'Gemini 3.1 Pro Preview',
-    groups: ['defaultPinned', 'canvas', 'transcription', 'connectionTest'],
+    groups: ['defaultPinned', 'liveArtifacts', 'transcription', 'connectionTest'],
     groupLabels: {
-      canvas: 'Gemini 3.1 Pro',
+      liveArtifacts: 'Gemini 3.1 Pro',
       connectionTest: 'Gemini 3.1 Pro',
       transcription: 'Gemini 3.1 Pro',
     },
@@ -47,21 +47,21 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-robotics-er-1.6-preview',
     name: 'Gemini Robotics-ER 1.6 Preview',
-    groups: ['defaultPinned', 'canvas', 'connectionTest'],
+    groups: ['defaultPinned', 'liveArtifacts', 'connectionTest'],
     groupLabels: {
-      canvas: 'Gemini Robotics-ER 1.6',
+      liveArtifacts: 'Gemini Robotics-ER 1.6',
       connectionTest: 'Gemini Robotics-ER 1.6',
     },
   },
   {
     id: 'gemma-4-31b-it',
     name: 'Gemma 4 31B IT',
-    groups: ['defaultPinned', 'canvas', 'connectionTest'],
+    groups: ['defaultPinned', 'liveArtifacts', 'connectionTest'],
   },
   {
     id: 'gemma-4-26b-a4b-it',
     name: 'Gemma 4 26B A4B IT',
-    groups: ['defaultPinned', 'canvas', 'connectionTest'],
+    groups: ['defaultPinned', 'liveArtifacts', 'connectionTest'],
   },
   {
     id: 'gemini-3.1-flash-tts-preview',

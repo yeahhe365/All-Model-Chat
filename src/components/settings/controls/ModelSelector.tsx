@@ -25,7 +25,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 }) => {
   const [isEditingList, setIsEditingList] = useState(false);
   const isProviderAwareList =
-    availableModels.some((model) => model.apiMode) || !!defaultModels?.some((model) => model.apiMode);
+    availableModels.some((model) => model.apiMode === 'openai-compatible') ||
+    !!defaultModels?.some((model) => model.apiMode === 'openai-compatible');
 
   return (
     <div className="space-y-4">

@@ -86,11 +86,11 @@ The project currently focuses on one main application shape: a **Vite + React SP
 - Screen sharing and visual understanding workflows.
 - Audio visualization based on AudioWorklet.
 
-### Smart Canvas
+### Live Artifacts
 
 - Detects code blocks and renders interactive HTML previews.
 - Supports ECharts, Mermaid, and Graphviz diagrams.
-- Includes an automatic Canvas generation mode with configurable trigger models.
+- Includes an automatic Live Artifacts generation mode with configurable trigger models.
 
 ### Advanced File Handling
 
@@ -162,7 +162,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`, then add your Gemini API key in **Settings -> API Configuration**.
+Open `http://localhost:5175`, then add your Gemini API key in **Settings -> API Configuration**.
 
 For local frontend development, you can also create `.env.local` in the repository root:
 

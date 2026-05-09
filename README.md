@@ -80,11 +80,11 @@
 - 屏幕共享与视觉识别
 - 音频可视化 (AudioWorklet API)
 
-### 智能 Canvas
+### Live Artifacts
 - 代码块自动识别并渲染为交互式 HTML 预览（自动全屏）
 - 支持 ECharts 图表渲染
 - 支持 Mermaid 流程图与 Graphviz 图渲染
-- 自动 Canvas 生成模式（可配置触发模型）
+- 自动 Live Artifacts 生成模式（可配置触发模型）
 
 ### 高级文件处理
 - 浏览器端音频预处理与压缩流程，尽量降低音频上传的 Token 与带宽消耗
@@ -167,7 +167,7 @@ npm install
 npm run dev
 ```
 
-访问 `http://localhost:5173`，在 **设置 -> API 配置** 中填入你的 Gemini API Key。
+访问 `http://localhost:5175`，在 **设置 -> API 配置** 中填入你的 Gemini API Key。
 
 除了在界面中手动配置，也可在根目录创建 `.env.local`（仅前端开发模式使用）：
 

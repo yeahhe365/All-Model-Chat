@@ -1,6 +1,5 @@
 import React from 'react';
 import type { ApiMode, AppSettings, ModelOption } from '../../types';
-import { DEFAULT_OPENAI_COMPATIBLE_MODELS } from '../../constants/appConstants';
 import { SettingsTab } from '../../hooks/features/useSettingsLogic';
 import { getDefaultModelOptions } from '../../utils/defaultModelOptions';
 import { ApiConfigSection } from './sections/ApiConfigSection';
@@ -42,31 +41,11 @@ const tagModelsWithApiMode = (models: ModelOption[], apiMode: ApiMode): ModelOpt
     apiMode,
   }));
 
-const buildProviderModelList = (geminiModels: ModelOption[], openAICompatibleModels: ModelOption[]): ModelOption[] => [
-  ...tagModelsWithApiMode(geminiModels, 'gemini-native'),
-  ...tagModelsWithApiMode(openAICompatibleModels, 'openai-compatible'),
-];
+const buildGeminiModelList = (geminiModels: ModelOption[]): ModelOption[] =>
+  tagModelsWithApiMode(geminiModels, 'gemini-native');
 
-const splitProviderModelList = (
-  models: ModelOption[],
-  fallbackApiMode: ApiMode,
-): { geminiModels: ModelOption[]; openAICompatibleModels: ModelOption[] } => {
-  return models.reduce(
-    (lists, model) => {
-      const targetApiMode = model.apiMode || fallbackApiMode;
-      const modelWithoutApiMode = stripApiMode(model);
-
-      if (targetApiMode === 'openai-compatible') {
-        lists.openAICompatibleModels.push(modelWithoutApiMode);
-        return lists;
-      }
-
-      lists.geminiModels.push(modelWithoutApiMode);
-      return lists;
-    },
-    { geminiModels: [] as ModelOption[], openAICompatibleModels: [] as ModelOption[] },
-  );
-};
+const getGeminiModelsFromEditedList = (models: ModelOption[]): ModelOption[] =>
+  models.filter((model) => model.apiMode !== 'openai-compatible').map(stripApiMode);
 
 const getFallbackModelId = (models: ModelOption[]): string | undefined =>
   models.find((model) => model.isPinned)?.id || models[0]?.id;
@@ -95,29 +74,15 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   onExportScenarios,
 }) => {
   const animClass = 'animate-in fade-in duration-200 ease-out';
-  const isOpenAICompatibleApiEnabled = currentSettings.isOpenAICompatibleApiEnabled === true;
   const isOpenAICompatibleMode = isOpenAICompatibleApiActive(currentSettings);
-  const effectiveModelId = isOpenAICompatibleMode ? currentSettings.openaiCompatibleModelId : currentSettings.modelId;
+  const effectiveModelId = currentSettings.modelId;
   const effectiveAvailableModels = React.useMemo(
-    () =>
-      buildProviderModelList(
-        availableModels,
-        isOpenAICompatibleApiEnabled ? currentSettings.openaiCompatibleModels : [],
-      ),
-    [availableModels, currentSettings.openaiCompatibleModels, isOpenAICompatibleApiEnabled],
+    () => buildGeminiModelList(availableModels),
+    [availableModels],
   );
   const effectiveDefaultModels = React.useMemo(
-    () =>
-      buildProviderModelList(
-        getDefaultModelOptions(),
-        isOpenAICompatibleApiEnabled ? DEFAULT_OPENAI_COMPATIBLE_MODELS : [],
-      ),
-    [isOpenAICompatibleApiEnabled],
-  );
-  const geminiModelIds = React.useMemo(() => new Set(availableModels.map((model) => model.id)), [availableModels]);
-  const openAICompatibleModelIds = React.useMemo(
-    () => new Set(isOpenAICompatibleApiEnabled ? currentSettings.openaiCompatibleModels.map((model) => model.id) : []),
-    [currentSettings.openaiCompatibleModels, isOpenAICompatibleApiEnabled],
+    () => buildGeminiModelList(getDefaultModelOptions()),
+    [],
   );
 
   const handleBatchUpdate = (updates: Partial<AppSettings>) => {
@@ -127,17 +92,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   };
 
   const handleEffectiveModelChange = (modelId: string, apiMode?: ApiMode) => {
-    const targetApiMode =
-      apiMode ||
-      (openAICompatibleModelIds.has(modelId) && (!geminiModelIds.has(modelId) || isOpenAICompatibleMode)
-        ? 'openai-compatible'
-        : 'gemini-native');
-
-    if (isOpenAICompatibleApiEnabled && targetApiMode === 'openai-compatible') {
-      if (!isOpenAICompatibleMode) {
-        updateSetting('apiMode', 'openai-compatible');
-      }
-      updateSetting('openaiCompatibleModelId', modelId);
+    if (apiMode === 'openai-compatible') {
       return;
     }
 
@@ -148,44 +103,14 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   };
 
   const handleAvailableModelsChange = (models: ModelOption[]) => {
-    const { geminiModels, openAICompatibleModels } = splitProviderModelList(models, currentSettings.apiMode);
+    const geminiModels = getGeminiModelsFromEditedList(models);
 
     setAvailableModels(geminiModels);
 
-    if (!isOpenAICompatibleApiEnabled) {
-      const geminiFallbackModelId = getFallbackModelId(geminiModels);
-
-      if (geminiFallbackModelId && !hasModelId(geminiModels, currentSettings.modelId)) {
-        handleModelChange(geminiFallbackModelId);
-      }
-
-      return;
-    }
-
-    updateSetting('openaiCompatibleModels', openAICompatibleModels);
-
     const geminiFallbackModelId = getFallbackModelId(geminiModels);
-    const openAICompatibleFallbackModelId = getFallbackModelId(openAICompatibleModels);
 
     if (geminiFallbackModelId && !hasModelId(geminiModels, currentSettings.modelId)) {
       handleModelChange(geminiFallbackModelId);
-    }
-
-    if (
-      openAICompatibleFallbackModelId &&
-      !hasModelId(openAICompatibleModels, currentSettings.openaiCompatibleModelId)
-    ) {
-      updateSetting('openaiCompatibleModelId', openAICompatibleFallbackModelId);
-    }
-
-    if (isOpenAICompatibleMode && !openAICompatibleFallbackModelId && geminiFallbackModelId) {
-      updateSetting('apiMode', 'gemini-native');
-      handleModelChange(geminiFallbackModelId);
-    }
-
-    if (currentSettings.apiMode === 'gemini-native' && !geminiFallbackModelId && openAICompatibleFallbackModelId) {
-      updateSetting('apiMode', 'openai-compatible');
-      updateSetting('openaiCompatibleModelId', openAICompatibleFallbackModelId);
     }
   };
 
@@ -199,7 +124,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
             availableModels={effectiveAvailableModels}
             setAvailableModels={handleAvailableModelsChange}
             defaultModels={effectiveDefaultModels}
-            defaultApiMode={isOpenAICompatibleApiEnabled ? currentSettings.apiMode : 'gemini-native'}
+            defaultApiMode="gemini-native"
             isOpenAICompatibleMode={isOpenAICompatibleMode}
             currentSettings={currentSettings}
             onUpdateSettings={handleBatchUpdate}

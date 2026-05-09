@@ -2,13 +2,13 @@ import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
-import { getKeyForRequest } from '../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { getFileMetadataApi } from '../../services/api/fileApi';
 import { getUploadLifecycleForGeminiState } from './utils';
 import { useI18n } from '../../contexts/I18nContext';
-import { getApiKeyErrorTranslationKey } from '../../utils/apiUtils';
 import { isVideoMimeType } from '../../utils/fileTypeUtils';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 interface UseFileIdAdderProps {
   appSettings: AppSettings;
@@ -53,7 +53,7 @@ export const useFileIdAdder = ({
       }
 
       // Adding file by ID is an explicit user action, we rotate key to be safe/fair
-      const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+      const keyResult = getGeminiKeyForRequest(appSettings, currentChatSettings);
       if ('error' in keyResult) {
         logService.error('Cannot add file by ID: API key not configured.');
         setAppFileError(translateApiKeyError(keyResult.error));
@@ -61,7 +61,7 @@ export const useFileIdAdder = ({
       }
       const { key: keyToUse, isNewKey } = keyResult;
 
-      if (isNewKey) {
+      if (isNewKey && !isOpenAICompatibleApiActive(appSettings)) {
         logService.info('New API key selected for this session due to adding file by ID.');
         setCurrentChatSettings((prev) => ({ ...prev, lockedApiKey: keyToUse }));
       }

@@ -28,14 +28,14 @@ export const ChatArea: React.FC = () => {
     currentModelName,
     availableModels,
     selectedModelId,
-    isCanvasPromptActive,
-    isCanvasPromptBusy,
+    isLiveArtifactsPromptActive,
+    isLiveArtifactsPromptBusy,
     isPipSupported,
     isPipActive,
     onNewChat,
     onOpenScenariosModal,
     onToggleHistorySidebar,
-    onLoadCanvasPrompt,
+    onLoadLiveArtifactsPrompt,
     onSelectModel,
     onSetThinkingLevel,
     onToggleGemmaReasoning,
@@ -67,9 +67,9 @@ export const ChatArea: React.FC = () => {
         onSelectModel={onSelectModel}
         isSwitchingModel={isSwitchingModel}
         isHistorySidebarOpen={isHistorySidebarOpen}
-        onLoadCanvasPrompt={onLoadCanvasPrompt}
-        isCanvasPromptActive={isCanvasPromptActive}
-        isCanvasPromptBusy={isCanvasPromptBusy}
+        onLoadLiveArtifactsPrompt={onLoadLiveArtifactsPrompt}
+        isLiveArtifactsPromptActive={isLiveArtifactsPromptActive}
+        isLiveArtifactsPromptBusy={isLiveArtifactsPromptBusy}
         isPipSupported={isPipSupported}
         isPipActive={isPipActive}
         onTogglePip={onTogglePip}

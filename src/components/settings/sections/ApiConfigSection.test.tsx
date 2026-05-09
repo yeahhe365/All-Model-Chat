@@ -8,9 +8,15 @@ import type { AppSettings } from '../../../types';
 import { SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
 import { ApiConfigSection } from './ApiConfigSection';
 
-const { getClientMock, generateContentMock, sendOpenAICompatibleMessageNonStreamMock } = vi.hoisted(() => ({
+const {
+  getClientMock,
+  generateContentMock,
+  fetchOpenAICompatibleModelsMock,
+  sendOpenAICompatibleMessageNonStreamMock,
+} = vi.hoisted(() => ({
   getClientMock: vi.fn(),
   generateContentMock: vi.fn(),
+  fetchOpenAICompatibleModelsMock: vi.fn(),
   sendOpenAICompatibleMessageNonStreamMock: vi.fn(),
 }));
 
@@ -23,6 +29,7 @@ vi.mock('../../../services/api/apiClient', () => ({
 }));
 
 vi.mock('../../../services/api/openaiCompatibleApi', () => ({
+  fetchOpenAICompatibleModels: fetchOpenAICompatibleModelsMock,
   sendOpenAICompatibleMessageNonStream: sendOpenAICompatibleMessageNonStreamMock,
 }));
 
@@ -71,6 +78,7 @@ describe('ApiConfigSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     generateContentMock.mockResolvedValue({});
+    fetchOpenAICompatibleModelsMock.mockResolvedValue([]);
     sendOpenAICompatibleMessageNonStreamMock.mockResolvedValue(undefined);
     getClientMock.mockReturnValue({
       models: {
@@ -249,6 +257,166 @@ describe('ApiConfigSection', () => {
 
     expect(setApiKey).not.toHaveBeenCalled();
     expect(onUpdate).toHaveBeenCalledWith('openaiCompatibleApiKey', 'sk-openai');
+  });
+
+  it('manually adds OpenAI-compatible model IDs from the API settings screen', async () => {
+    const onUpdate = vi.fn();
+
+    await renderApiConfigSection({
+      settings: {
+        ...settingsFixture,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        openaiCompatibleModelId: 'gpt-5.5',
+        openaiCompatibleModels: [
+          { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+          { id: 'gpt-4.1', name: 'GPT-4.1' },
+        ],
+      },
+      onUpdate,
+    });
+
+    expect(renderer.container.querySelector('#openai-compatible-model-id-input')).toBeNull();
+
+    const modelIdInputs = Array.from(
+      renderer.container.querySelectorAll<HTMLInputElement>('input[data-openai-compatible-model-id-input="true"]'),
+    );
+    expect(modelIdInputs.map((input) => input.value)).toEqual(['gpt-5.5', 'gpt-4.1']);
+
+    await act(async () => {
+      const addButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Add Model'),
+      );
+      addButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const updatedModelIdInputs = Array.from(
+      renderer.container.querySelectorAll<HTMLInputElement>('input[data-openai-compatible-model-id-input="true"]'),
+    );
+    expect(updatedModelIdInputs.map((input) => input.value)).toEqual(['gpt-5.5', 'gpt-4.1', '']);
+
+    await act(async () => {
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+      descriptor?.set?.call(updatedModelIdInputs[2], 'deepseek-chat');
+      updatedModelIdInputs[2].dispatchEvent(new Event('input', { bubbles: true }));
+      updatedModelIdInputs[2].dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith('openaiCompatibleModels', [
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+      { id: 'gpt-4.1', name: 'GPT-4.1' },
+      { id: 'deepseek-chat', name: 'deepseek-chat' },
+    ]);
+    expect(onUpdate).not.toHaveBeenCalledWith('openaiCompatibleModelId', expect.anything());
+  });
+
+  it('fetches OpenAI-compatible models and preserves existing display names when merging', async () => {
+    const onUpdate = vi.fn();
+    fetchOpenAICompatibleModelsMock.mockResolvedValue([
+      { id: 'gpt-5.5', name: 'gpt-5.5' },
+      { id: 'deepseek-chat', name: 'deepseek-chat' },
+    ]);
+
+    await renderApiConfigSection({
+      settings: {
+        ...settingsFixture,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        openaiCompatibleApiKey: 'openai-compatible-key',
+        openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+        openaiCompatibleModelId: 'gpt-5.5',
+        openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'My GPT', isPinned: true }],
+      },
+      onUpdate,
+    });
+
+    const fetchButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Fetch Models'),
+    );
+
+    expect(fetchButton).toBeDefined();
+
+    await act(async () => {
+      fetchButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchOpenAICompatibleModelsMock).toHaveBeenCalledWith(
+        'openai-compatible-key',
+        'https://api.openai.com/v1',
+        expect.any(AbortSignal),
+      );
+    });
+    expect(onUpdate).toHaveBeenCalledWith('openaiCompatibleModels', [
+      { id: 'gpt-5.5', name: 'My GPT', isPinned: true },
+      { id: 'deepseek-chat', name: 'deepseek-chat' },
+    ]);
+    expect(onUpdate).not.toHaveBeenCalledWith('openaiCompatibleModelId', expect.anything());
+    expect(renderer.container.textContent).toContain('Fetched 2 models.');
+  });
+
+  it('selects the first fetched OpenAI-compatible model when the current selection is absent', async () => {
+    const onUpdate = vi.fn();
+    fetchOpenAICompatibleModelsMock.mockResolvedValue([
+      { id: 'deepseek-chat', name: 'deepseek-chat' },
+      { id: 'qwen-plus', name: 'qwen-plus' },
+    ]);
+
+    await renderApiConfigSection({
+      settings: {
+        ...settingsFixture,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        openaiCompatibleApiKey: 'openai-compatible-key',
+        openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+        openaiCompatibleModelId: 'missing-model',
+        openaiCompatibleModels: [],
+      },
+      onUpdate,
+    });
+
+    const fetchButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Fetch Models'),
+    );
+
+    await act(async () => {
+      fetchButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    await vi.waitFor(() => {
+      expect(onUpdate).toHaveBeenCalledWith('openaiCompatibleModelId', 'deepseek-chat');
+    });
+  });
+
+  it('removes OpenAI-compatible model IDs and selects the first remaining model when needed', async () => {
+    const onUpdate = vi.fn();
+
+    await renderApiConfigSection({
+      settings: {
+        ...settingsFixture,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        openaiCompatibleModelId: 'gpt-5.5',
+        openaiCompatibleModels: [
+          { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+          { id: 'gpt-4.1', name: 'GPT-4.1' },
+        ],
+      },
+      onUpdate,
+    });
+
+    const removeButtons = Array.from(renderer.container.querySelectorAll('button')).filter((button) =>
+      button.getAttribute('title')?.includes('Remove Model'),
+    );
+
+    await act(async () => {
+      removeButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onUpdate).toHaveBeenCalledWith('openaiCompatibleModels', [
+      { id: 'gpt-4.1', name: 'GPT-4.1', isPinned: true },
+    ]);
+    expect(onUpdate).toHaveBeenCalledWith('openaiCompatibleModelId', 'gpt-4.1');
   });
 
   it('explains that Live uses the browser API key directly without token endpoint settings', async () => {

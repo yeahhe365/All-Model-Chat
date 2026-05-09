@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { logService } from '../../../services/logService';
-import { getApiKeyErrorTranslationKey, getKeyForRequest } from '../../../utils/apiUtils';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../../utils/apiUtils';
 import { transcribeAudioApi } from '../../../services/api/generation/audioApi';
 import { useI18n } from '../../../contexts/I18nContext';
+import { isOpenAICompatibleApiActive } from '../../../utils/openaiCompatibleMode';
 
 interface UseAudioActionsProps {
   appSettings: AppSettings;
@@ -26,7 +27,7 @@ export const useAudioActions = ({
       logService.info('Starting transcription process...');
       setAppFileError(null);
 
-      const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+      const keyResult = getGeminiKeyForRequest(appSettings, currentChatSettings);
       if ('error' in keyResult) {
         const translationKey = getApiKeyErrorTranslationKey(keyResult.error);
         setAppFileError(translationKey ? t(translationKey) : keyResult.error);
@@ -34,7 +35,7 @@ export const useAudioActions = ({
         return null;
       }
 
-      if (keyResult.isNewKey) {
+      if (keyResult.isNewKey && !isOpenAICompatibleApiActive(appSettings)) {
         const fileRequiresApi = selectedFiles.some((f) => f.fileUri);
         if (!fileRequiresApi) {
           logService.info('New API key selected for this session due to transcription.');

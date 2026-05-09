@@ -138,24 +138,24 @@ describe('ModelsSection', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith({ safetySettings: [] });
   });
 
-  it('keeps canvas settings inside models settings', async () => {
+  it('keeps Live Artifacts settings inside models settings', async () => {
     const onUpdateSettings = vi.fn();
 
     await renderModelsSection({
       currentSettings: {
         ...useSettingsStore.getState().appSettings,
-        autoCanvasVisualization: false,
-        autoCanvasModelId: 'gemini-3-flash-preview',
+        autoLiveArtifactsVisualization: false,
+        autoLiveArtifactsModelId: 'gemini-3-flash-preview',
       },
       onUpdateSettings,
     });
 
-    expect(renderer.container.textContent).toContain('Canvas Visualizations');
-    expect(renderer.container.textContent).toContain('Auto-open Canvas Visualization');
-    expect(renderer.container.textContent).toContain('Canvas Model');
+    expect(renderer.container.textContent).toContain('Live Artifacts');
+    expect(renderer.container.textContent).toContain('Auto-open Live Artifacts');
+    expect(renderer.container.textContent).toContain('Live Artifacts Model');
 
     const toggleLabel = Array.from(renderer.container.querySelectorAll('span')).find(
-      (element) => element.textContent?.trim() === 'Auto-open Canvas Visualization',
+      (element) => element.textContent?.trim() === 'Auto-open Live Artifacts',
     );
     const toggleInput = toggleLabel?.closest('.group')?.querySelector<HTMLInputElement>('input[type="checkbox"]');
 
@@ -163,11 +163,11 @@ describe('ModelsSection', () => {
       toggleInput?.click();
     });
 
-    expect(onUpdateSettings).toHaveBeenCalledWith({ autoCanvasVisualization: true });
+    expect(onUpdateSettings).toHaveBeenCalledWith({ autoLiveArtifactsVisualization: true });
 
     await act(async () => {
       renderer.container
-        .querySelector<HTMLButtonElement>('#canvas-model-select')
+        .querySelector<HTMLButtonElement>('#live-artifacts-model-select')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
@@ -177,7 +177,7 @@ describe('ModelsSection', () => {
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(onUpdateSettings).toHaveBeenCalledWith({ autoCanvasModelId: 'gemini-3.1-pro-preview' });
+    expect(onUpdateSettings).toHaveBeenCalledWith({ autoLiveArtifactsModelId: 'gemini-3.1-pro-preview' });
   });
 
   it('keeps language, voice, and translation settings inside models settings', async () => {
@@ -264,7 +264,7 @@ describe('ModelsSection', () => {
     expect(renderer.container.textContent).toContain('Temperature');
     expect(renderer.container.textContent).toContain('Top P');
     expect(renderer.container.textContent).not.toContain('Top K');
-    expect(renderer.container.textContent).not.toContain('Canvas Visualizations');
+    expect(renderer.container.textContent).not.toContain('Live Artifacts');
     expect(renderer.container.textContent).not.toContain('Safety Settings');
     expect(renderer.container.querySelector('[data-testid="language-voice-section"]')).toBeNull();
     expect(

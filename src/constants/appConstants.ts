@@ -16,7 +16,7 @@ import {
   DEFAULT_THINKING_BUDGET,
   DEFAULT_THINKING_LEVEL,
   DEFAULT_TRANSCRIPTION_MODEL_ID,
-  DEFAULT_AUTO_CANVAS_MODEL_ID,
+  DEFAULT_LIVE_ARTIFACTS_MODEL_ID,
   DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
 } from './modelConstants';
 import { getRuntimeConfigAppSettingsOverrides } from '../runtime/runtimeConfig';
@@ -154,8 +154,8 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   autoFullscreenHtml: true,
   showWelcomeSuggestions: true,
   isAudioCompressionEnabled: DEFAULT_IS_AUDIO_COMPRESSION_ENABLED,
-  autoCanvasVisualization: false,
-  autoCanvasModelId: DEFAULT_AUTO_CANVAS_MODEL_ID,
+  autoLiveArtifactsVisualization: false,
+  autoLiveArtifactsModelId: DEFAULT_LIVE_ARTIFACTS_MODEL_ID,
   isPasteRichTextAsMarkdownEnabled: true,
   isPasteAsTextFileEnabled: true,
   showInputPasteButton: true,

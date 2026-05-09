@@ -146,6 +146,7 @@ vi.mock('../../../hooks/useLiveAPI', () => ({
 
 vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: mockApiUtils.getKeyForRequest,
+  getGeminiKeyForRequest: mockApiUtils.getKeyForRequest,
 }));
 
 vi.mock('../../../services/api/generation/textApi', () => ({

@@ -1,7 +1,7 @@
 import { ModelOption } from '../types';
 import { getModelOptionsForGroup } from './modelRegistry';
 
-export const AVAILABLE_CANVAS_MODELS: ModelOption[] = getModelOptionsForGroup('canvas');
+export const AVAILABLE_LIVE_ARTIFACTS_MODELS: ModelOption[] = getModelOptionsForGroup('liveArtifacts');
 
 export const CONNECTION_TEST_MODELS: ModelOption[] = getModelOptionsForGroup('connectionTest');
 

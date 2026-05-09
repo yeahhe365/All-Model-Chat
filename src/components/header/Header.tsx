@@ -17,9 +17,9 @@ interface HeaderProps {
   onSelectModel: (modelId: string) => void;
   isSwitchingModel: boolean;
   isHistorySidebarOpen: boolean;
-  onLoadCanvasPrompt: () => void;
-  isCanvasPromptActive: boolean;
-  isCanvasPromptBusy?: boolean;
+  onLoadLiveArtifactsPrompt: () => void;
+  isLiveArtifactsPromptActive: boolean;
+  isLiveArtifactsPromptBusy?: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onTogglePip: () => void;
@@ -43,9 +43,9 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectModel,
   isSwitchingModel,
   isHistorySidebarOpen,
-  onLoadCanvasPrompt,
-  isCanvasPromptActive,
-  isCanvasPromptBusy = false,
+  onLoadLiveArtifactsPrompt,
+  isLiveArtifactsPromptActive,
+  isLiveArtifactsPromptBusy = false,
   isPipSupported,
   isPipActive,
   onTogglePip,
@@ -65,15 +65,15 @@ export const Header: React.FC<HeaderProps> = ({
   const headerButtonActive =
     'text-[var(--theme-text-link)] bg-[var(--theme-bg-accent)]/10 hover:bg-[var(--theme-bg-accent)]/20';
 
-  const canvasPromptAriaLabel = isCanvasPromptActive ? t('canvasHelperActive_aria') : t('canvasHelperInactive_aria');
-  const canvasPromptTitle = isCanvasPromptActive ? t('canvasHelperActive_title') : t('canvasHelperInactive_title');
+  const liveArtifactsPromptAriaLabel = isLiveArtifactsPromptActive ? t('liveArtifactsHelperActive_aria') : t('liveArtifactsHelperInactive_aria');
+  const liveArtifactsPromptTitle = isLiveArtifactsPromptActive ? t('liveArtifactsHelperActive_title') : t('liveArtifactsHelperInactive_title');
 
   const iconSize = 18;
   const strokeWidth = 2;
 
   const { permissions } = getCachedModelCapabilities(selectedModelId || '');
 
-  // Only show Canvas button for standard chat models (not specialized audio/image models)
+  // Only show Live Artifacts for standard chat models (not specialized audio/image models).
   const showTextTools = permissions.canGenerateSuggestions;
 
   return (
@@ -107,14 +107,14 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Section: Action Buttons (Redesigned) */}
       <div className="flex items-center gap-1 sm:gap-2.5 justify-end flex-shrink-0">
-        {/* 1. Canvas Helper Button (Arc/Wand) */}
+        {/* 1. Live Artifacts helper button */}
         {showTextTools && (
           <button
-            onClick={onLoadCanvasPrompt}
-            disabled={isLoading || isCanvasPromptBusy}
-            className={`${headerButtonBase} ${isCanvasPromptActive ? headerButtonActive : headerButtonInactive}`}
-            aria-label={canvasPromptAriaLabel}
-            title={canvasPromptTitle}
+            onClick={onLoadLiveArtifactsPrompt}
+            disabled={isLoading || isLiveArtifactsPromptBusy}
+            className={`${headerButtonBase} ${isLiveArtifactsPromptActive ? headerButtonActive : headerButtonInactive}`}
+            aria-label={liveArtifactsPromptAriaLabel}
+            title={liveArtifactsPromptTitle}
           >
             <Wand2 size={iconSize} strokeWidth={strokeWidth} />
           </button>

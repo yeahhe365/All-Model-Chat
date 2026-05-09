@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { UploadedFile, AppSettings } from '../../types';
-import { getKeyForRequest } from '../../utils/apiUtils';
 import { buildContentParts } from '../../utils/chat/builder';
 import { generateUniqueId } from '../../utils/chat/ids';
 import { createManagedObjectUrl } from '../../services/objectUrlManager';
@@ -15,6 +14,7 @@ import { createLocalPythonToolDeclaration } from '@/features/local-python/client
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
   getApiKeyErrorTranslationKey,
+  getGeminiKeyForRequest,
   isServerManagedApiEnabledForProxyRequests,
   parseApiKeys,
   SERVER_MANAGED_API_KEY,
@@ -54,7 +54,7 @@ const resolveTokenCountRequestKey = (
   }
 
   const tempSettings = { ...effectiveAppSettings, modelId };
-  const keyResult = getKeyForRequest(effectiveAppSettings, tempSettings, { skipIncrement: true });
+  const keyResult = getGeminiKeyForRequest(effectiveAppSettings, tempSettings, { skipIncrement: true });
 
   if ('error' in keyResult) {
     return { error: keyResult.error };

@@ -15,6 +15,7 @@ const { mockUseMessageStream, mockTranslateText } = vi.hoisted(() => ({
 
 vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
+  getGeminiKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
 }));
 
 vi.mock('../../../services/api/generation/textApi', () => ({

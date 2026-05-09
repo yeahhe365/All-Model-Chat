@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings } from '../../../types';
 import { logService } from '../../../services/logService';
-import { getKeyForRequest } from '../../../utils/apiUtils';
+import { getGeminiKeyForRequest } from '../../../utils/apiUtils';
 import { pcmBase64ToWavUrl } from '@/features/audio/audioProcessing';
 import { generateSpeechApi } from '../../../services/api/generation/audioApi';
 import { DEFAULT_TTS_MODEL_ID } from '../../../constants/appConstants';
@@ -14,7 +14,7 @@ interface TextToSpeechHandlerProps {
 export const useTextToSpeechHandler = ({ appSettings, currentChatSettings }: TextToSpeechHandlerProps) => {
   const handleQuickTTS = useCallback(
     async (text: string): Promise<string | null> => {
-      const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
+      const keyResult = getGeminiKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
       if ('error' in keyResult) {
         logService.error('Quick TTS failed:', { error: keyResult.error });
         return null;

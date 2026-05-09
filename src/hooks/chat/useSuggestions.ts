@@ -2,10 +2,11 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { logService } from '../../services/logService';
-import { getKeyForRequest } from '../../utils/apiUtils';
+import { getGeminiKeyForRequest } from '../../utils/apiUtils';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 import { generateSuggestionsApi } from '../../services/api/generation/textApi';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
+import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
 
 type MessageUpdater = (
   sessionId: string,
@@ -44,14 +45,14 @@ export const useSuggestions = ({
       updateMessageInSession(sessionId, messageId, { isGeneratingSuggestions: true });
 
       // Sticky Key Logic: Prefer key used in the last turn
-      const stickyKey = sessionKeyMapRef?.current?.get(sessionId);
+      const stickyKey = isOpenAICompatibleApiActive(appSettings) ? undefined : sessionKeyMapRef?.current?.get(sessionId);
       let keyToUse: string;
 
       if (stickyKey) {
         keyToUse = stickyKey;
       } else {
         // Use skipIncrement: true to avoid rotating API keys for background suggestions
-        const keyResult = getKeyForRequest(appSettings, sessionSettings, { skipIncrement: true });
+        const keyResult = getGeminiKeyForRequest(appSettings, sessionSettings, { skipIncrement: true });
         if ('error' in keyResult) {
           logService.error('Cannot generate suggestions: API key not configured.');
           // Hide loading state on error

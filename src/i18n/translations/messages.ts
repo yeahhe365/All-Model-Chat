@@ -46,12 +46,12 @@ export const messagesTranslations = {
   suggestion_srt_short: { en: 'Generate SRT subtitles from video.', zh: '从视频生成 SRT 字幕文件。' },
 
   // HTML Generation Translations
-  suggestion_html_title: { en: 'Smart Board', zh: '智能看板' },
+  suggestion_html_title: { en: 'Live Artifacts', zh: 'Live Artifacts' },
   suggestion_html_desc: {
-    en: 'You are a layout artist. Please use the Canvas system to organize the provided information into a structured, interactive HTML page. Ensure the design is modern and responsive. Please keep all information:',
-    zh: '你是一位排版艺术家。请利用 Canvas 系统，将提供的信息整理成一个结构化、交互式的 HTML 页面。确保设计现代、响应式。请保留所有信息：',
+    en: 'Use Live Artifacts to organize the provided information as a structured, responsive HTML artifact. Keep all important information:',
+    zh: '请使用 Live Artifacts，将提供的信息整理成结构化、响应式的 HTML 产物。请保留所有重要信息：',
   },
-  suggestion_html_short: { en: 'Create interactive HTML board.', zh: '创建交互式 HTML 看板。' },
+  suggestion_html_short: { en: 'Create a live HTML artifact.', zh: '创建实时 HTML 产物。' },
 
   welcome_title: { en: 'Welcome to AMC WebUI', zh: '欢迎使用 AMC WebUI' },
   welcome_p1: {
@@ -68,7 +68,7 @@ export const messagesTranslations = {
   assistant_avatar_alt: { en: 'Assistant avatar', zh: '助手头像' },
   continue_generation_title: { en: 'Continue Generating', zh: '继续生成' },
   fork_message_title: { en: 'Fork from here', zh: '从这里分叉' },
-  generate_canvas_title: { en: 'Visualize with Canvas', zh: '使用 Canvas 可视化' },
+  generate_live_artifacts_title: { en: 'Visualize with Live Artifacts', zh: '使用 Live Artifacts 可视化' },
   export_as_title: { en: 'Export as {type}', zh: '导出为 {type}' },
   exporting_title: { en: 'Exporting {type}...', zh: '正在导出 {type}…' },
   export_close_dialog_aria: { en: 'Close export dialog', zh: '关闭导出对话框' },

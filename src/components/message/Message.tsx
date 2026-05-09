@@ -15,7 +15,7 @@ interface MessageProps {
   onImageClick: (file: UploadedFile) => void; // Renamed to onFileClick in logic, kept name for props compat
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   showThoughts: boolean;
-  onGenerateCanvas: (messageId: string, text: string) => void;
+  onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onSuggestionClick?: (suggestion: string) => void;
@@ -81,7 +81,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             onEditMessage={props.onEditMessage}
             onDeleteMessage={props.onDeleteMessage}
             onRetryMessage={props.onRetryMessage}
-            onGenerateCanvas={props.onGenerateCanvas}
+            onGenerateLiveArtifacts={props.onGenerateLiveArtifacts}
             onContinueGeneration={props.onContinueGeneration}
             onForkMessage={props.onForkMessage}
             themeId={themeId}
@@ -114,7 +114,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             onEditMessage={props.onEditMessage}
             onDeleteMessage={props.onDeleteMessage}
             onRetryMessage={props.onRetryMessage}
-            onGenerateCanvas={props.onGenerateCanvas}
+            onGenerateLiveArtifacts={props.onGenerateLiveArtifacts}
             onContinueGeneration={props.onContinueGeneration}
             onForkMessage={props.onForkMessage}
             themeId={themeId}

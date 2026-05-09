@@ -41,7 +41,7 @@ export const commonTranslations = {
   modelPickerBadgeFlash: { en: 'Flash', zh: 'Flash' },
   modelPickerBadgePro: { en: 'Pro', zh: 'Pro' },
   refresh: { en: 'Refresh', zh: '刷新' },
-  canvasHelperToggle: { en: 'Toggle Canvas', zh: '切换 Canvas' },
+  liveArtifactsHelperToggle: { en: 'Toggle Live Artifacts', zh: '切换 Live Artifacts' },
   pipEnter: { en: 'Enter Picture-in-Picture', zh: '进入画中画' },
   pipExit: { en: 'Exit Picture-in-Picture', zh: '退出画中画' },
   pipPlaceholderTitle: { en: 'Chat in Picture-in-Picture', zh: '聊天已在画中画窗口打开' },

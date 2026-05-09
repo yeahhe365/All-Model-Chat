@@ -17,6 +17,7 @@ vi.mock('../../utils/chat/ids', () => ({
 
 vi.mock('../../utils/apiUtils', () => ({
   getKeyForRequest: getKeyForRequestMock,
+  getGeminiKeyForRequest: getKeyForRequestMock,
   getApiKeyErrorTranslationKey: vi.fn((error: string) =>
     error === 'API Key not configured.' ? 'apiRuntime_keyNotConfigured' : null,
   ),

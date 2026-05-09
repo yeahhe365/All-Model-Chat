@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from './../constants/appConstants';
 import { ChatSettings } from './../types';
-import { getKeyForRequest, isServerManagedApiEnabledForProxyRequests, SERVER_MANAGED_API_KEY } from './apiUtils';
+import {
+  getGeminiKeyForRequest,
+  getKeyForRequest,
+  isServerManagedApiEnabledForProxyRequests,
+  SERVER_MANAGED_API_KEY,
+} from './apiUtils';
 import { logService } from './../services/logService';
 
 vi.mock('./../services/logService', async () => {
@@ -150,6 +155,46 @@ describe('getKeyForRequest', () => {
       isNewKey: true,
     });
     expect(logService.recordApiKeyUsage).not.toHaveBeenCalled();
+  });
+
+  it('can force Gemini key handling while OpenAI-compatible mode is active', () => {
+    const result = getGeminiKeyForRequest(
+      {
+        ...DEFAULT_APP_SETTINGS,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        useCustomApiConfig: true,
+        apiKey: 'gemini-key',
+        openaiCompatibleApiKey: 'openai-key',
+      },
+      {
+        ...chatSettings,
+        lockedApiKey: 'openai-key',
+      },
+      { skipIncrement: true },
+    );
+
+    expect(result).toEqual({
+      key: 'gemini-key',
+      isNewKey: true,
+    });
+  });
+
+  it('does not fall back to the OpenAI-compatible key when forcing Gemini key handling', () => {
+    const result = getGeminiKeyForRequest(
+      {
+        ...DEFAULT_APP_SETTINGS,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        useCustomApiConfig: true,
+        apiKey: null,
+        openaiCompatibleApiKey: 'openai-key',
+      },
+      chatSettings,
+      { skipIncrement: true },
+    );
+
+    expect(result).toEqual({ error: 'API Key not configured.' });
   });
 });
 
