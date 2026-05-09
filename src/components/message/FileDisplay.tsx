@@ -6,6 +6,7 @@ import { CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
 import { formatFileSize } from '../../utils/fileHelpers';
 import { getFileCardMeta } from '../../utils/fileCardUtils';
 import { useI18n } from '../../contexts/I18nContext';
+import { FileThumbnail } from '../chat/input/FileThumbnail';
 
 interface FileDisplayProps {
   file: UploadedFile;
@@ -162,8 +163,8 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({
       onClick={handleClick}
       className={`flex items-center gap-3 p-2.5 rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all shadow-sm hover:shadow max-w-sm sm:max-w-md relative group ${file.error ? 'border-[var(--theme-bg-danger)]/50' : ''} ${isClickable ? 'cursor-pointer' : ''}`}
     >
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${bgClass}`}>
-        <Icon size={20} className={colorClass} strokeWidth={1.5} />
+      <div className="w-12 h-12 rounded-lg overflow-hidden border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] flex-shrink-0">
+        <FileThumbnail file={file} Icon={Icon} colorClass={colorClass} bgClass={bgClass} />
       </div>
 
       <div className="flex-grow min-w-0">
