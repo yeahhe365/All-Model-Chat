@@ -55,12 +55,14 @@ describe('promptHelpers', () => {
     const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'fullHtml');
 
     expect(zhPrompt).toContain('[Live Artifacts Full HTML Protocol - zh]');
-    expect(zhPrompt).toContain('只输出一个 html fenced code block');
+    expect(zhPrompt).toContain('只输出裸完整 HTML 文档');
+    expect(zhPrompt).toContain('使用代码块');
     expect(zhPrompt).toContain('<!DOCTYPE html>');
     expect(zhPrompt).toContain('完整 HTML 页面');
     expect(zhPrompt).not.toContain('内嵌 HTML 片段');
     expect(enPrompt).toContain('[Live Artifacts Full HTML Protocol - en]');
-    expect(enPrompt).toContain('Output exactly one html fenced code block');
+    expect(enPrompt).toContain('Output only the raw complete HTML document');
+    expect(enPrompt).toContain('use a code block');
     expect(enPrompt).toContain('<!DOCTYPE html>');
     expect(enPrompt).toContain('complete HTML page');
     expect(enPrompt).not.toContain('inline HTML fragment');
@@ -143,6 +145,16 @@ describe('promptHelpers', () => {
     expect(enPrompt).toContain('data-dense');
     expect(enPrompt).toContain('layout benefit');
     expect(enPrompt).not.toContain('Answer simple requests with compact text');
+  });
+
+  it('allows richer safe primitives in inline Live Artifacts fragments', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+
+    expect(zhPrompt).toContain('可以使用安全的内联样式、SVG、图片、表格、details/summary、按钮状态和表单控件');
+    expect(enPrompt).toContain(
+      'You may use safe inline styles, SVG, images, tables, details/summary, button states, and form controls',
+    );
   });
 
   it('treats user/source instructions as data that cannot override Live Artifacts output rules', async () => {

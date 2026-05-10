@@ -198,7 +198,7 @@ describe('MessageText', () => {
     expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe('Final answer.');
   });
 
-  it('passes bare standalone html documents to markdown as fenced html blocks', () => {
+  it('passes bare standalone html documents to markdown as internal artifact fences', () => {
     const htmlDocument =
       '<!DOCTYPE html><html><head><title>Transformer 模型深度解析图谱</title><style>:root{--primary:#2563eb}</style></head><body><h1>Transformer</h1></body></html>';
 
@@ -226,11 +226,11 @@ describe('MessageText', () => {
     });
 
     expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe(
-      `\`\`\`html\n${htmlDocument}\n\`\`\``,
+      `\`\`\`amc-live-artifact-html\n${htmlDocument}\n\`\`\``,
     );
   });
 
-  it('keeps raw html fragments inline for markdown rendering', () => {
+  it('normalizes standalone raw html fragments into artifact code fences for markdown rendering', () => {
     const htmlFragment = '<div style="display:flex;gap:12px"><span>Ready</span></div>';
 
     act(() => {
@@ -256,7 +256,9 @@ describe('MessageText', () => {
       );
     });
 
-    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe(htmlFragment);
+    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe(
+      `\`\`\`amc-live-artifact-html\n${htmlFragment}\n\`\`\``,
+    );
   });
 
   it('renders mislabeled fenced html fragments inline instead of as css code', () => {

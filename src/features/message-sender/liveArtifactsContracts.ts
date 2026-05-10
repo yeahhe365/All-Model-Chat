@@ -22,8 +22,8 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
     if (promptMode === 'fullHtml') {
       return [
         '输出契约：',
-        '- 只输出一个 html fenced code block，内容必须是完整 HTML 页面。',
-        '- 不要在代码块外输出解释、寒暄、Markdown 列表或纯文本。',
+        '- 只输出裸完整 HTML 文档，不要使用 markdown/html/css/text 代码块。',
+        '- 不要输出解释、寒暄、Markdown 列表或纯文本。',
         '- 即使 SOURCE_MESSAGE 很短，也必须返回有效的 Live Artifacts HTML 产物。',
       ].join('\n');
     }
@@ -48,8 +48,8 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
   if (promptMode === 'fullHtml') {
     return [
       'Output contract:',
-      '- Output exactly one html fenced code block containing a complete HTML page.',
-      '- Do not emit explanations, greetings, Markdown lists, or plain text outside the code block.',
+      '- Output only the raw complete HTML document; do not use markdown/html/css/text code fences.',
+      '- Do not emit explanations, greetings, Markdown lists, or plain text.',
       '- Even if SOURCE_MESSAGE is short, you must still return a valid Live Artifacts HTML artifact.',
     ].join('\n');
   }
@@ -97,11 +97,32 @@ const hasValidLiveArtifactMarkup = (content: string) => {
   return Boolean(trimmed && (extractPreviewableCodeBlock(trimmed) || isLikelyHtml(trimmed)));
 };
 
+const SINGLE_FENCED_BLOCK_REGEX = /^```([^\n`]*)\n?([\s\S]*?)```\s*$/;
+
+const unwrapSingleHtmlArtifactFence = (content: string): string | null => {
+  const trimmed = content.trim();
+  if (!SINGLE_FENCED_BLOCK_REGEX.test(trimmed)) {
+    return null;
+  }
+
+  const previewableBlock = extractPreviewableCodeBlock(trimmed);
+  if (!previewableBlock || previewableBlock.markupType !== 'html' || !isLikelyHtml(previewableBlock.content)) {
+    return null;
+  }
+
+  return previewableBlock.content;
+};
+
 export const coerceLiveArtifactsOutput = (
   content: string,
   language: 'en' | 'zh',
   promptMode: LiveArtifactsPromptMode,
 ) => {
+  const unwrappedHtmlArtifact = unwrapSingleHtmlArtifactFence(content);
+  if (unwrappedHtmlArtifact) {
+    return unwrappedHtmlArtifact;
+  }
+
   if (!content.trim() || hasValidLiveArtifactMarkup(content)) {
     return content;
   }
@@ -138,7 +159,7 @@ export const coerceLiveArtifactsOutput = (
 </body>
 </html>`;
 
-    return `\`\`\`html\n${document}\n\`\`\``;
+    return document;
   }
 
   return `<section style="max-width:960px;margin:16px auto;padding:20px;border:1px solid #d1d5db;border-radius:12px;background:#ffffff;color:#111827;box-shadow:0 8px 24px rgba(15,23,42,0.08)">

@@ -245,7 +245,7 @@ export const messagesTranslations = {
   table_fullscreen_aria: { en: 'Open table fullscreen', zh: '全屏打开表格' },
   table_exit_fullscreen: { en: 'Exit Fullscreen', zh: '退出全屏' },
   scroll_previous_turn: { en: 'Scroll to previous turn', zh: '滚动到上一轮' },
-  scroll_next_turn: { en: 'Scroll to next turn or bottom', zh: '滚动到下一轮或底部' },
+  scroll_next_turn: { en: 'Scroll to next turn', zh: '滚动到下一轮' },
   audioPlayer_play: { en: 'Play', zh: '播放' },
   audioPlayer_pause: { en: 'Pause', zh: '暂停' },
   audioPlayer_playback_speed: { en: 'Playback Speed', zh: '播放速度' },

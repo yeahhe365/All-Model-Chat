@@ -23,6 +23,8 @@ type MessageListScrollMockResult = {
   onRangeChanged: () => void;
   scrollToPrevTurn: () => void;
   scrollToNextTurn: () => void;
+  scrollToTop: () => void;
+  scrollToBottom: () => void;
   showScrollDown: boolean;
   showScrollUp: boolean;
   scrollerRef: { current: null } | null;
@@ -116,6 +118,8 @@ export const createMessageListScrollMock = (overrides: Partial<MessageListScroll
     onRangeChanged: noop,
     scrollToPrevTurn: noop,
     scrollToNextTurn: noop,
+    scrollToTop: noop,
+    scrollToBottom: noop,
     showScrollDown: false,
     showScrollUp: false,
     scrollerRef: { current: null },

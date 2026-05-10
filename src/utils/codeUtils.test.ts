@@ -26,6 +26,12 @@ describe('codeUtils preview detection', () => {
     });
   });
 
+  it('treats richer inline artifact primitives as previewable html fragments', () => {
+    expect(getCodeBlockPreviewType('<label for="tone">Tone</label>')).toBe('html');
+    expect(getCodeBlockPreviewType('<progress value="70" max="100">70%</progress>')).toBe('html');
+    expect(getCodeBlockPreviewType('<meter min="0" max="100" value="70">70</meter>')).toBe('html');
+  });
+
   it('does not treat embedded html strings inside code as previewable fragments', () => {
     expect(getCodeBlockPreviewType('const card = `<div>Ready</div>`;', 'js')).toBe(null);
   });
@@ -45,10 +51,12 @@ describe('codeUtils preview detection', () => {
     expect(extractPreviewableCodeBlock('```xml\n<note><to>Jane</to></note>\n```')).toBe(null);
   });
 
-  it('wraps bare standalone html documents as previewable markdown code blocks', () => {
+  it('wraps bare standalone html documents as internal artifact code blocks', () => {
     const document = '<!DOCTYPE html><html><head><style>body{color:red}</style></head><body>Hello</body></html>';
 
-    expect(wrapBarePreviewableDocument(`\n${document}\n`)).toBe(`\`\`\`html\n${document}\n\`\`\``);
+    expect(wrapBarePreviewableDocument(`\n${document}\n`)).toBe(
+      `\`\`\`amc-live-artifact-html\n${document}\n\`\`\``,
+    );
     expect(extractPreviewableCodeBlock(document)).toEqual({
       content: document,
       markupType: 'html',
@@ -74,7 +82,8 @@ describe('codeUtils preview detection', () => {
   </div>
 </div>`;
 
-    expect(normalizePreviewableMarkdownContent(fragment)).toBe(`<div style="padding:24px">
+    expect(normalizePreviewableMarkdownContent(fragment)).toBe(`\`\`\`amc-live-artifact-html
+<div style="padding:24px">
   <section style="background:white">
     <p>Transformer summary</p>
   </section>
@@ -82,7 +91,8 @@ describe('codeUtils preview detection', () => {
   <div style="display:grid">
     <strong>Self-Attention</strong>
   </div>
-</div>`);
+</div>
+\`\`\``);
   });
 
   it('removes markdown-breaking blank lines inside streaming raw html fragments before they close', () => {
@@ -143,7 +153,7 @@ describe('codeUtils preview detection', () => {
   it('keeps full html documents fenced for preview', () => {
     const document = '<!DOCTYPE html><html><head><style>body{color:red}</style></head><body>Hello</body></html>';
 
-    expect(normalizePreviewableMarkdownContent(document)).toBe(`\`\`\`html\n${document}\n\`\`\``);
+    expect(normalizePreviewableMarkdownContent(document)).toBe(`\`\`\`amc-live-artifact-html\n${document}\n\`\`\``);
     expect(normalizePreviewableMarkdownContent(`\`\`\`html\n${document}\n\`\`\``)).toBe(
       `\`\`\`html\n${document}\n\`\`\``,
     );

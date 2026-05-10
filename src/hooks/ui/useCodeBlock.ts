@@ -253,6 +253,7 @@ export const useCodeBlock = ({
     isExpanded,
     isOverflowing,
     isCopied,
+    sourceLanguage: language,
     finalLanguage,
     showPreview,
     handleToggleExpand,
@@ -261,6 +262,8 @@ export const useCodeBlock = ({
     handleFullscreenPreview,
     handleDownload,
     codeElement,
+    resolvedCodeText,
+    previewMarkupType,
     COLLAPSE_THRESHOLD_PX,
   };
 };

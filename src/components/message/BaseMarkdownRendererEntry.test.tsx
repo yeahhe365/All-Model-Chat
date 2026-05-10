@@ -174,7 +174,7 @@ describe('BaseMarkdownRendererEntry', () => {
       renderer.root.render(
         <BaseMarkdownRendererEntry
           content={
-            '<table><caption>Monthly totals</caption><thead><tr><th>Name</th><th>Total</th></tr></thead><tbody><tr><td>Alice</td><td>42</td></tr></tbody></table>'
+            'Inline raw HTML:\n\n<table><caption>Monthly totals</caption><thead><tr><th>Name</th><th>Total</th></tr></thead><tbody><tr><td>Alice</td><td>42</td></tr></tbody></table>'
           }
           isLoading={false}
           onImageClick={vi.fn()}
@@ -237,6 +237,7 @@ describe('BaseMarkdownRendererEntry', () => {
       renderer.root.render(
         <BaseMarkdownRendererEntry
           content={
+            'Inline raw HTML:\n\n' +
             '<div style="display:flex;gap:12px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:12px;padding:20px 16px">' +
             '<table style="width:100%;border-collapse:collapse;text-align:center">' +
             '<tbody><tr><td style="padding:12px 16px"><span style="background:#e8f5e9;color:#2e7d32;border-radius:20px">Ready</span></td></tr></tbody>' +
@@ -272,11 +273,61 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(badgeStyle).toContain('border-radius:20px');
   });
 
+  it('preserves richer safe controls and svg primitives in allowed raw html', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={
+            'Inline raw HTML:\n\n' +
+            '<section style="display:grid;grid-template-columns:1fr auto;align-content:center;justify-items:start;aspect-ratio:2/1">' +
+            '<label for="tone">Tone</label>' +
+            '<input id="tone" type="range" min="0" max="10" value="7" aria-label="Tone" />' +
+            '<button type="button" disabled>Preview</button>' +
+            '<progress value="70" max="100">70%</progress>' +
+            '<meter min="0" max="100" value="70">70</meter>' +
+            '<svg viewBox="0 0 120 40" width="120" height="40" role="img" aria-label="trend">' +
+            '<rect x="0" y="0" width="120" height="40" fill="#eef2ff" />' +
+            '<circle cx="24" cy="20" r="8" fill="#4f46e5" />' +
+            '<text x="42" y="24" fill="#111827">OK</text>' +
+            '</svg>' +
+            '</section>'
+          }
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const sectionStyle = renderer.container.querySelector('section')?.getAttribute('style')?.replace(/\s+/g, '');
+
+    expect(sectionStyle).toContain('display:grid');
+    expect(sectionStyle).toContain('grid-template-columns:1frauto');
+    expect(sectionStyle).toContain('align-content:center');
+    expect(sectionStyle).toContain('justify-items:start');
+    expect(sectionStyle).toContain('aspect-ratio:2/1');
+    expect(renderer.container.querySelector('label')?.getAttribute('for')).toBe('tone');
+    expect(renderer.container.querySelector('input[type="range"]')?.getAttribute('value')).toBe('7');
+    expect(renderer.container.querySelector('button[disabled]')?.textContent).toBe('Preview');
+    expect(renderer.container.querySelector('progress')?.getAttribute('value')).toBe('70');
+    expect(renderer.container.querySelector('meter')?.getAttribute('value')).toBe('70');
+    expect(renderer.container.querySelector('rect')?.getAttribute('fill')).toBe('#eef2ff');
+    expect(renderer.container.querySelector('circle')?.getAttribute('r')).toBe('8');
+    expect(renderer.container.querySelector('text')?.textContent).toBe('OK');
+  });
+
   it('marks styled raw html tables as rich tables so inline styles can win', () => {
     act(() => {
       renderer.root.render(
         <BaseMarkdownRendererEntry
           content={
+            'Inline raw HTML:\n\n' +
             '<table style="width:100%;border-collapse:collapse;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.08)">' +
             '<thead><tr style="background:#1a1a2e;color:#fff"><th style="padding:12px 16px;background:#16213e">React</th></tr></thead>' +
             '<tbody><tr style="background:#fafafa"><td style="color:#2e7d32;font-weight:600">Ready</td></tr></tbody>' +
@@ -334,7 +385,7 @@ describe('BaseMarkdownRendererEntry', () => {
       renderer.root.render(
         <BaseMarkdownRendererEntry
           content={
-            '<section id="danger-zone" class="fixed inset-0 z-[9999]" style="position:fixed;inset:0">Safe text</section>'
+            'Inline raw HTML:\n\n<section id="danger-zone" class="fixed inset-0 z-[9999]" style="position:fixed;inset:0">Safe text</section>'
           }
           isLoading={false}
           onImageClick={vi.fn()}
@@ -475,8 +526,12 @@ describe('BaseMarkdownRendererEntry', () => {
       );
     });
 
+    const iframe = renderer.container.querySelector('iframe[title="HTML Preview"]');
+
+    expect(renderer.container.querySelector('[data-live-artifact-frame="true"]')).not.toBeNull();
     expect(renderer.container.querySelector('pre')).toBeNull();
-    expect(renderer.container.querySelector('div[style*="display"] strong')?.textContent).toBe('Self-Attention');
+    expect(iframe?.getAttribute('srcdoc')).toContain('Self-Attention');
+    expect(renderer.container.querySelector('div[style*="display"] strong')).toBeNull();
   });
 
   it('keeps streaming raw html fragments out of accidental code blocks before they close', () => {
@@ -529,6 +584,192 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(renderer.container.querySelector('[title="Open in Side Panel"]')).toBeNull();
     expect(renderer.container.querySelector('[title="code_fullscreen_monitor"]')).toBeNull();
     expect(renderer.container.querySelector('[title="code_fullscreen_modal"]')).toBeNull();
+  });
+
+  it('keeps explicit html code blocks in code block chrome instead of artifact frames', () => {
+    const document = '<!DOCTYPE html><html><head><title>Demo Artifact</title></head><body><main>Hello</main></body></html>';
+
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={`\`\`\`html\n${document}\n\`\`\``}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const iframe = renderer.container.querySelector('iframe[title="HTML Preview"]');
+
+    expect(renderer.container.querySelector('[data-live-artifact-frame="true"]')).toBeNull();
+    expect(iframe).toBeNull();
+    expect(renderer.container.querySelector('pre')).not.toBeNull();
+    expect(renderer.container.querySelector('[data-code-header-toolbar]')).not.toBeNull();
+    expect(renderer.container.textContent).toContain('Demo Artifact');
+  });
+
+  it('renders standalone raw html fragments inside artifact frames instead of the message dom', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={'<section style="display:grid"><strong>Inline Artifact</strong></section>'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const iframe = renderer.container.querySelector('iframe[title="HTML Preview"]');
+
+    expect(renderer.container.querySelector('[data-live-artifact-frame="true"]')).not.toBeNull();
+    expect(iframe?.getAttribute('srcdoc')).toContain('Inline Artifact');
+    expect(renderer.container.querySelector('section[style*="display"]')).toBeNull();
+    expect(renderer.container.querySelector('pre')).toBeNull();
+  });
+
+  it('resizes artifact frames from the iframe bridge height message without capping into internal scroll', () => {
+    const document = '<!DOCTYPE html><html><body><main style="height:512px">Tall</main></body></html>';
+
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={document}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const iframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+    const viewport = renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]');
+
+    expect(iframe).not.toBeNull();
+    expect(viewport).not.toBeNull();
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { channel: 'amc-webui-html-preview', event: 'resize', height: 960 },
+          source: iframe?.contentWindow,
+        }),
+      );
+    });
+
+    expect(viewport?.style.height).toBe('960px');
+    expect(iframe?.getAttribute('scrolling')).toBe('no');
+  });
+
+  it('preserves measured artifact height when the same message remounts during list scrolling', () => {
+    const document = '<!DOCTYPE html><html><body><main style="height:960px">Stable</main></body></html>';
+    const renderArtifact = () => (
+      <BaseMarkdownRendererEntry
+        content={document}
+        messageId="artifact-message-1"
+        isLoading={false}
+        onImageClick={vi.fn()}
+        onOpenHtmlPreview={vi.fn()}
+        expandCodeBlocksByDefault={false}
+        isMermaidRenderingEnabled={false}
+        isGraphvizRenderingEnabled={false}
+        themeId="pearl"
+        onOpenSidePanel={vi.fn()}
+      />
+    );
+
+    act(() => {
+      renderer.root.render(renderArtifact());
+    });
+
+    const iframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { channel: 'amc-webui-html-preview', event: 'resize', height: 960 },
+          source: iframe?.contentWindow,
+        }),
+      );
+    });
+
+    expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
+      '960px',
+    );
+
+    act(() => {
+      renderer.root.unmount();
+    });
+
+    act(() => {
+      renderer.root.render(renderArtifact());
+    });
+
+    expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
+      '960px',
+    );
+  });
+
+  it('resets artifact frame height when the html content changes in place', () => {
+    const firstDocument = '<!DOCTYPE html><html><body><main>First</main></body></html>';
+    const secondDocument = '<!DOCTYPE html><html><body><main>Second</main></body></html>';
+    const renderArtifact = (document: string) => (
+      <BaseMarkdownRendererEntry
+        content={document}
+        isLoading={false}
+        onImageClick={vi.fn()}
+        onOpenHtmlPreview={vi.fn()}
+        expandCodeBlocksByDefault={false}
+        isMermaidRenderingEnabled={false}
+        isGraphvizRenderingEnabled={false}
+        themeId="pearl"
+        onOpenSidePanel={vi.fn()}
+      />
+    );
+
+    act(() => {
+      renderer.root.render(renderArtifact(firstDocument));
+    });
+
+    const iframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { channel: 'amc-webui-html-preview', event: 'resize', height: 960 },
+          source: iframe?.contentWindow,
+        }),
+      );
+    });
+
+    expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
+      '960px',
+    );
+
+    act(() => {
+      renderer.root.render(renderArtifact(secondDocument));
+    });
+
+    expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
+      '320px',
+    );
   });
 
   it('does not make markdown images clickable when interactive mode is disabled', () => {

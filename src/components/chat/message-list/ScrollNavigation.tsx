@@ -7,17 +7,66 @@ interface ScrollNavigationProps {
   showDown: boolean;
   onScrollToPrev: () => void;
   onScrollToNext: () => void;
+  onScrollToTop: () => void;
+  onScrollToBottom: () => void;
   bottomOffset: number;
 }
+
+const SINGLE_CLICK_DELAY_MS = 180;
 
 export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
   showUp,
   showDown,
   onScrollToPrev,
   onScrollToNext,
+  onScrollToTop,
+  onScrollToBottom,
   bottomOffset,
 }) => {
   const { t } = useI18n();
+  const prevClickTimeoutRef = React.useRef<number | null>(null);
+  const nextClickTimeoutRef = React.useRef<number | null>(null);
+
+  const clearScheduledClick = React.useCallback((timeoutRef: React.MutableRefObject<number | null>) => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      clearScheduledClick(prevClickTimeoutRef);
+      clearScheduledClick(nextClickTimeoutRef);
+    };
+  }, [clearScheduledClick]);
+
+  const handleSingleClick = React.useCallback(
+    (
+      event: React.MouseEvent<HTMLButtonElement>,
+      timeoutRef: React.MutableRefObject<number | null>,
+      action: () => void,
+    ) => {
+      if (event.detail > 1) {
+        return;
+      }
+
+      clearScheduledClick(timeoutRef);
+      timeoutRef.current = window.setTimeout(() => {
+        timeoutRef.current = null;
+        action();
+      }, SINGLE_CLICK_DELAY_MS);
+    },
+    [clearScheduledClick],
+  );
+
+  const handleDoubleClick = React.useCallback(
+    (timeoutRef: React.MutableRefObject<number | null>, action: () => void) => {
+      clearScheduledClick(timeoutRef);
+      action();
+    },
+    [clearScheduledClick],
+  );
 
   if (!showUp && !showDown) return null;
 
@@ -31,7 +80,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
     >
       {showUp && (
         <button
-          onClick={onScrollToPrev}
+          onClick={(event) => handleSingleClick(event, prevClickTimeoutRef, onScrollToPrev)}
+          onDoubleClick={() => handleDoubleClick(prevClickTimeoutRef, onScrollToTop)}
           className="
                         p-2.5 rounded-full 
                         bg-[var(--theme-bg-secondary)]
@@ -51,7 +101,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
       )}
       {showDown && (
         <button
-          onClick={onScrollToNext}
+          onClick={(event) => handleSingleClick(event, nextClickTimeoutRef, onScrollToNext)}
+          onDoubleClick={() => handleDoubleClick(nextClickTimeoutRef, onScrollToBottom)}
           className="
                         p-2.5 rounded-full 
                         bg-[var(--theme-bg-secondary)]

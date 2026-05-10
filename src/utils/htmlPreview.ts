@@ -8,14 +8,52 @@ const PREVIEW_BRIDGE_SCRIPT = `<script>
       parent.postMessage({ channel, event }, '*');
     } catch {}
   };
+  const notifyResize = () => {
+    try {
+      const body = document.body;
+      const root = document.documentElement;
+      const height = Math.max(
+        body ? body.scrollHeight : 0,
+        body ? body.offsetHeight : 0,
+        root ? root.scrollHeight : 0,
+        root ? root.offsetHeight : 0
+      );
+      parent.postMessage({ channel, event: 'resize', height }, '*');
+    } catch {}
+  };
 
-  const notifyReady = () => notify('ready');
+  let resizeFrame = 0;
+  const scheduleResize = () => {
+    if (resizeFrame) return;
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = 0;
+      notifyResize();
+    });
+  };
+
+  const notifyReady = () => {
+    notify('ready');
+    scheduleResize();
+  };
 
   if (document.readyState === 'complete') {
     Promise.resolve().then(notifyReady);
   } else {
     window.addEventListener('load', notifyReady, { once: true });
   }
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(scheduleResize);
+    if (document.documentElement) observer.observe(document.documentElement);
+    if (document.body) observer.observe(document.body);
+  }
+
+  if ('MutationObserver' in window) {
+    const observer = new MutationObserver(scheduleResize);
+    observer.observe(document.documentElement || document, { childList: true, subtree: true, attributes: true });
+  }
+
+  window.addEventListener('resize', scheduleResize);
 
   window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {

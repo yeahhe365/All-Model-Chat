@@ -1,5 +1,6 @@
 type PreviewMarkupType = 'html' | 'svg';
 
+export const LIVE_ARTIFACT_HTML_LANGUAGE = 'amc-live-artifact-html';
 const HTML_LANGUAGE_ALIASES = new Set(['html', 'htm']);
 const SVG_LANGUAGE_ALIASES = new Set(['svg']);
 const HTML_DOCUMENT_REGEX = /^(?:<!doctype\s+html\b[^>]*>\s*)?<html\b[\s\S]*<\/html>$/i;
@@ -17,12 +18,16 @@ const HTML_FRAGMENT_TAG_NAMES = [
   'form',
   'h[1-6]',
   'header',
+  'label',
   'li',
   'main',
+  'meter',
   'nav',
   'ol',
   'p',
+  'progress',
   'section',
+  'select',
   'span',
   'summary',
   'table',
@@ -57,10 +62,15 @@ const SVG_DOCUMENT_REGEX = /^<svg\b[\s\S]*<\/svg>$/i;
 const FENCED_CODE_BLOCK_REGEX = /```([^\n`]*)\n?([\s\S]*?)```/g;
 const OPEN_FENCED_CODE_BLOCK_AT_END_REGEX = /```([^\n`]*)\n?([\s\S]*)$/;
 const MISLABELED_HTML_FRAGMENT_LANGUAGES = new Set(['css', 'text', 'txt', 'markdown', 'md']);
+const TOOL_RESULT_FRAGMENT_REGEX = /^<div\b(?=[^>]*\bclass=["'][^"']*\btool-result\b)/i;
 
 const normalizeLanguage = (language?: string): string => {
   if (!language) return '';
   return language.trim().split(/\s+/)[0].toLowerCase();
+};
+
+export const isLiveArtifactLanguage = (language?: string): boolean => {
+  return normalizeLanguage(language) === LIVE_ARTIFACT_HTML_LANGUAGE;
 };
 
 const getPreviewMarkupType = (textContent: string): PreviewMarkupType | null => {
@@ -137,6 +147,10 @@ const getStandaloneDocumentPreviewType = (textContent: string): PreviewMarkupTyp
 export const getCodeBlockPreviewType = (textContent: string, language?: string): PreviewMarkupType | null => {
   const normalizedLanguage = normalizeLanguage(language);
 
+  if (isLiveArtifactLanguage(normalizedLanguage)) {
+    return 'html';
+  }
+
   if (HTML_LANGUAGE_ALIASES.has(normalizedLanguage)) {
     return 'html';
   }
@@ -180,7 +194,25 @@ export const wrapBarePreviewableDocument = (markdownContent: string): string => 
     return markdownContent;
   }
 
-  return `\`\`\`${markupType}\n${content}\n\`\`\``;
+  const artifactLanguage = markupType === 'html' ? LIVE_ARTIFACT_HTML_LANGUAGE : markupType;
+  return `\`\`\`${artifactLanguage}\n${content}\n\`\`\``;
+};
+
+const wrapBarePreviewableArtifact = (markdownContent: string): string => {
+  const content = markdownContent.trim();
+
+  if (TOOL_RESULT_FRAGMENT_REGEX.test(content)) {
+    return markdownContent;
+  }
+
+  const markupType = getPreviewMarkupType(content);
+
+  if (!markupType) {
+    return markdownContent;
+  }
+
+  const artifactLanguage = markupType === 'html' ? LIVE_ARTIFACT_HTML_LANGUAGE : markupType;
+  return `\`\`\`${artifactLanguage}\n${content}\n\`\`\``;
 };
 
 const unwrapMislabeledHtmlFragmentCodeBlocks = (markdownContent: string): string => {
@@ -226,7 +258,7 @@ const normalizeStandaloneRawHtmlFragment = (markdownContent: string): string => 
 };
 
 export const normalizePreviewableMarkdownContent = (markdownContent: string): string => {
-  return wrapBarePreviewableDocument(
+  return wrapBarePreviewableArtifact(
     normalizeStandaloneRawHtmlFragment(unwrapMislabeledHtmlFragmentCodeBlocks(markdownContent)),
   );
 };

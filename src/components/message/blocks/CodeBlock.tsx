@@ -4,10 +4,12 @@ import { SideViewContent } from '../../../types';
 import { useCodeBlock } from '../../../hooks/ui/useCodeBlock';
 import { usePyodide } from '@/features/local-python/usePyodide';
 import { CodeHeader } from './parts/CodeHeader';
+import { ArtifactFrame } from './ArtifactFrame';
 import { extractTextFromNode } from '../../../utils/uiUtils';
 import { isImageMimeType } from '../../../utils/fileTypeUtils';
 import { FileDisplay } from '../FileDisplay';
 import { useI18n } from '../../../contexts/I18nContext';
+import { isLikelyHtml, isLiveArtifactLanguage } from '../../../utils/codeUtils';
 
 interface CodeBlockProps {
   children: React.ReactNode;
@@ -26,6 +28,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
     isExpanded,
     isOverflowing,
     isCopied,
+    sourceLanguage,
     finalLanguage,
     showPreview,
     handleToggleExpand,
@@ -34,6 +37,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
     handleFullscreenPreview,
     handleDownload,
     codeElement,
+    resolvedCodeText,
+    previewMarkupType,
     COLLAPSE_THRESHOLD_PX,
   } = useCodeBlock(props);
 
@@ -74,6 +79,25 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
 
   const displayInlineImage = image && !generatedFiles.some((file) => isImageMimeType(file.type));
   const showPreviewControls = (props.showPreviewControls ?? true) && showPreview;
+  const showInlineHtmlPreview =
+    showPreviewControls &&
+    isLiveArtifactLanguage(sourceLanguage) &&
+    previewMarkupType === 'html' &&
+    isLikelyHtml(resolvedCodeText);
+
+  if (showInlineHtmlPreview) {
+    return (
+      <ArtifactFrame
+        html={resolvedCodeText}
+        cacheKey={props.cacheKey}
+        isCopied={isCopied}
+        onCopy={handleCopy}
+        onDownload={handleDownload}
+        onOpenSide={handleOpenSide}
+        onFullscreen={handleFullscreenPreview}
+      />
+    );
+  }
 
   return (
     <div className="group relative my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] shadow-sm">

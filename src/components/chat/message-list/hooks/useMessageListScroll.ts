@@ -8,6 +8,8 @@ interface UseMessageListScrollProps {
   activeSessionId: string | null;
 }
 
+const CURRENT_TURN_VIEWPORT_OFFSET_PX = 96;
+
 export const useMessageListScroll = ({
   messages,
   setScrollContainerRef,
@@ -135,30 +137,89 @@ export const useMessageListScroll = ({
   }, [messages]);
 
   const scrollToNextTurn = useCallback(() => {
-    const currentStartIndex = visibleRangeRef.current.startIndex;
+    const renderedTurnNavigation = (() => {
+      if (!scrollerRef) {
+        return null;
+      }
+
+      const messageIndexById = new Map(messages.map((message, index) => [message.id, index]));
+      const viewportTop = scrollerRef.getBoundingClientRect().top;
+      const currentTurnThreshold = viewportTop + CURRENT_TURN_VIEWPORT_OFFSET_PX;
+      const renderedUserTurns = Array.from(
+        scrollerRef.querySelectorAll<HTMLElement>('[data-message-role="user"][data-message-id]'),
+      );
+
+      let currentUserTurnIndex: number | null = null;
+      let nextUserTurnIndex: number | null = null;
+
+      for (const userTurnElement of renderedUserTurns) {
+        const messageId = userTurnElement.dataset.messageId;
+        if (!messageId) continue;
+
+        const messageIndex = messageIndexById.get(messageId);
+        if (messageIndex === undefined) continue;
+
+        if (userTurnElement.getBoundingClientRect().top <= currentTurnThreshold) {
+          currentUserTurnIndex = messageIndex;
+          continue;
+        }
+
+        nextUserTurnIndex = messageIndex;
+        break;
+      }
+
+      return { currentUserTurnIndex, nextUserTurnIndex };
+    })();
+
     let targetIndex = -1;
 
-    let startSearchIndex = currentStartIndex + 1;
+    if (
+      renderedTurnNavigation?.nextUserTurnIndex !== null &&
+      renderedTurnNavigation?.nextUserTurnIndex !== undefined
+    ) {
+      targetIndex = renderedTurnNavigation.nextUserTurnIndex;
+    } else {
+      const currentStartIndex = visibleRangeRef.current.startIndex;
+      const cursorIndex =
+        renderedTurnNavigation?.currentUserTurnIndex ??
+        (lastScrollTarget.current !== null && lastScrollTarget.current >= currentStartIndex
+          ? lastScrollTarget.current
+          : currentStartIndex);
 
-    if (lastScrollTarget.current !== null && Math.abs(currentStartIndex - lastScrollTarget.current) <= 1) {
-      startSearchIndex = Math.max(startSearchIndex, lastScrollTarget.current + 1);
-    }
+      for (let i = cursorIndex + 1; i < messages.length; i++) {
+        if (messages[i].role === 'user') {
+          targetIndex = i;
+          break;
+        }
+      }
 
-    for (let i = startSearchIndex; i < messages.length; i++) {
-      if (messages[i].role === 'user') {
-        targetIndex = i;
-        break;
+      if (targetIndex === -1) {
+        return;
       }
     }
 
-    if (targetIndex !== -1) {
-      lastScrollTarget.current = targetIndex;
-      virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
-    } else {
-      lastScrollTarget.current = messages.length - 1;
-      virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
+    lastScrollTarget.current = targetIndex;
+    virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+  }, [messages, scrollerRef]);
+
+  const scrollToTop = useCallback(() => {
+    if (messages.length === 0) {
+      return;
     }
-  }, [messages]);
+
+    lastScrollTarget.current = 0;
+    virtuosoRef.current?.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' });
+  }, [messages.length]);
+
+  const scrollToBottom = useCallback(() => {
+    if (messages.length === 0) {
+      return;
+    }
+
+    const targetIndex = messages.length - 1;
+    lastScrollTarget.current = targetIndex;
+    virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'end', behavior: 'smooth' });
+  }, [messages.length]);
 
   const handleScroll = useCallback(() => {
     if (document.hidden) return;
@@ -221,7 +282,7 @@ export const useMessageListScroll = ({
     }
   }, [activeSessionId, messages.length, clearRestoreTimeout]);
 
-  const showScrollDown = !atBottom;
+  const showScrollDown = !atBottom && messages.some((message, index) => index > visibleStartIndex && message.role === 'user');
   const showScrollUp = visibleStartIndex > 0;
 
   return {
@@ -231,6 +292,8 @@ export const useMessageListScroll = ({
     onRangeChanged,
     scrollToPrevTurn,
     scrollToNextTurn,
+    scrollToTop,
+    scrollToBottom,
     showScrollDown,
     showScrollUp,
     scrollerRef,

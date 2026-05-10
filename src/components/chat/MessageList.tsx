@@ -94,6 +94,8 @@ const MessageListComponent: React.FC = () => {
     onRangeChanged,
     scrollToPrevTurn,
     scrollToNextTurn,
+    scrollToTop,
+    scrollToBottom,
     showScrollDown,
     showScrollUp,
     scrollerRef,
@@ -168,6 +170,8 @@ const MessageListComponent: React.FC = () => {
           showDown={showScrollDown}
           onScrollToPrev={scrollToPrevTurn}
           onScrollToNext={scrollToNextTurn}
+          onScrollToTop={scrollToTop}
+          onScrollToBottom={scrollToBottom}
           bottomOffset={chatInputHeight}
         />
       </div>
