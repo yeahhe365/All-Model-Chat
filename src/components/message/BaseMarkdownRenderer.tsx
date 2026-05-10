@@ -276,6 +276,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
               onOpenHtmlPreview={onOpenHtmlPreview}
               expandCodeBlocksByDefault={expandCodeBlocksByDefault}
               showPreviewControls={isInteractive}
+              isLoading={isLoading}
               onOpenSidePanel={onOpenSidePanel}
             >
               {codeElement || children}

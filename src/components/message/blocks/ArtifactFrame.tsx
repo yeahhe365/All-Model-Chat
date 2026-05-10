@@ -1,17 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Copy, Download, Expand, Maximize2, Sidebar } from 'lucide-react';
-import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { useI18n } from '../../../contexts/I18nContext';
 import { buildHtmlPreviewSrcDoc, HTML_PREVIEW_MESSAGE_CHANNEL } from '../../../utils/htmlPreview';
 
 interface ArtifactFrameProps {
   html: string;
   cacheKey?: string;
-  isCopied: boolean;
-  onCopy: () => void;
-  onDownload: () => void;
-  onOpenSide: () => void;
-  onFullscreen: (trueFullscreen: boolean) => void;
+  isLoading?: boolean;
 }
 
 type HtmlPreviewBridgeMessage = {
@@ -37,13 +31,21 @@ const hashString = (value: string): string => {
   return (hash >>> 0).toString(36);
 };
 
-const getFrameHeightCacheKey = (html: string, cacheKey?: string): string => {
+const getContentFrameHeightCacheKey = (html: string, cacheKey?: string): string => {
   const contentHash = `${html.length}:${hashString(html)}`;
   return cacheKey ? `${cacheKey}:${contentHash}` : `html:${contentHash}`;
 };
 
-const readCachedFrameHeight = (heightCacheKey: string): number => {
-  return frameHeightCache.get(heightCacheKey) ?? DEFAULT_FRAME_HEIGHT;
+const getStreamingFrameHeightCacheKey = (cacheKey?: string): string | undefined => {
+  return cacheKey ? `stream:${cacheKey}` : undefined;
+};
+
+const readCachedFrameHeight = (heightCacheKey: string, fallbackHeightCacheKey?: string): number => {
+  return (
+    frameHeightCache.get(heightCacheKey) ??
+    (fallbackHeightCacheKey ? frameHeightCache.get(fallbackHeightCacheKey) : undefined) ??
+    DEFAULT_FRAME_HEIGHT
+  );
 };
 
 const cacheFrameHeight = (heightCacheKey: string, height: number) => {
@@ -64,25 +66,22 @@ const cacheFrameHeight = (heightCacheKey: string, height: number) => {
 export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
   html,
   cacheKey,
-  isCopied,
-  onCopy,
-  onDownload,
-  onOpenSide,
-  onFullscreen,
+  isLoading = false,
 }) => {
   const { t } = useI18n();
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const heightCacheKey = useMemo(() => getFrameHeightCacheKey(html, cacheKey), [cacheKey, html]);
+  const contentHeightCacheKey = useMemo(() => getContentFrameHeightCacheKey(html, cacheKey), [cacheKey, html]);
+  const streamingHeightCacheKey = useMemo(() => getStreamingFrameHeightCacheKey(cacheKey), [cacheKey]);
+  const heightCacheKey = isLoading && streamingHeightCacheKey ? streamingHeightCacheKey : contentHeightCacheKey;
   const [frameHeightState, setFrameHeightState] = useState(() => ({
     heightCacheKey,
-    height: readCachedFrameHeight(heightCacheKey),
+    height: readCachedFrameHeight(heightCacheKey, streamingHeightCacheKey),
   }));
   const frameHeight =
     frameHeightState.heightCacheKey === heightCacheKey
       ? frameHeightState.height
-      : readCachedFrameHeight(heightCacheKey);
+      : readCachedFrameHeight(heightCacheKey, streamingHeightCacheKey);
   const srcDoc = useMemo(() => buildHtmlPreviewSrcDoc(html), [html]);
-  const buttonClass = `${MESSAGE_BLOCK_BUTTON_CLASS} !min-h-9 !min-w-9 !rounded-md !p-0 !bg-white/85 !opacity-95 hover:!bg-white shadow-sm backdrop-blur`;
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<HtmlPreviewBridgeMessage>) => {
@@ -99,6 +98,12 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
       if (typeof data.height === 'number' && Number.isFinite(data.height)) {
         const nextHeight = normalizeFrameHeight(data.height);
         cacheFrameHeight(heightCacheKey, nextHeight);
+        if (heightCacheKey !== contentHeightCacheKey) {
+          cacheFrameHeight(contentHeightCacheKey, nextHeight);
+        }
+        if (streamingHeightCacheKey && heightCacheKey !== streamingHeightCacheKey) {
+          cacheFrameHeight(streamingHeightCacheKey, nextHeight);
+        }
         setFrameHeightState((currentState) =>
           currentState.heightCacheKey === heightCacheKey && currentState.height === nextHeight
             ? currentState
@@ -109,7 +114,7 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [heightCacheKey]);
+  }, [contentHeightCacheKey, heightCacheKey, streamingHeightCacheKey]);
 
   return (
     <div data-live-artifact-frame="true" className="group/artifact relative my-3 w-full overflow-visible">
@@ -127,44 +132,6 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
           allow="clipboard-write"
           scrolling="no"
         />
-      </div>
-
-      <div className="pointer-events-none absolute right-2 top-2 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/artifact:opacity-100 group-focus-within/artifact:opacity-100">
-        <button className={`${buttonClass} pointer-events-auto`} title={t('diagram_open_side_panel')} onClick={onOpenSide}>
-          <Sidebar size={15} strokeWidth={2} />
-        </button>
-        <button
-          className={`${buttonClass} pointer-events-auto`}
-          title={t('code_fullscreen_monitor')}
-          onClick={() => onFullscreen(true)}
-        >
-          <Expand size={15} strokeWidth={2} />
-        </button>
-        <button
-          className={`${buttonClass} pointer-events-auto`}
-          title={t('code_fullscreen_modal')}
-          onClick={() => onFullscreen(false)}
-        >
-          <Maximize2 size={15} strokeWidth={2} />
-        </button>
-        <button
-          className={`${buttonClass} pointer-events-auto`}
-          title={t('code_download_language').replace('{language}', 'HTML')}
-          onClick={onDownload}
-        >
-          <Download size={15} strokeWidth={2} />
-        </button>
-        <button
-          className={`${buttonClass} pointer-events-auto`}
-          title={isCopied ? t('copied_button_title') : t('copy_button_title')}
-          onClick={onCopy}
-        >
-          {isCopied ? (
-            <Check size={15} className="text-[var(--theme-text-success)] icon-animate-pop" strokeWidth={2} />
-          ) : (
-            <Copy size={15} strokeWidth={2} />
-          )}
-        </button>
       </div>
     </div>
   );

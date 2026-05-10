@@ -18,6 +18,11 @@ const escapeHtml = (value: string) =>
     .replace(/'/g, '&#39;');
 
 const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromptMode) => {
+  const formulaRule =
+    language === 'zh'
+      ? '- 公式使用 $...$ 或 $$...$$，不要放进 <code> 或 <pre>；系统会自动渲染。'
+      : '- Use $...$ or $$...$$ for formulas; do not put formulas inside <code> or <pre> because the system renders them automatically.';
+
   if (language === 'zh') {
     if (promptMode === 'fullHtml') {
       return [
@@ -25,6 +30,7 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
         '- 只输出裸完整 HTML 文档，不要使用 markdown/html/css/text 代码块。',
         '- 不要输出解释、寒暄、Markdown 列表或纯文本。',
         '- 即使 SOURCE_MESSAGE 很短，也必须返回有效的 Live Artifacts HTML 产物。',
+        formulaRule,
       ].join('\n');
     }
 
@@ -34,6 +40,7 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
         '- 选择完整 HTML 页面或裸 HTML 片段，但最终结果必须是 HTML 产物。',
         '- 不要输出普通 Markdown、纯文本总结或代码块之外的解释。',
         '- 即使 SOURCE_MESSAGE 很短，也必须返回有效的 Live Artifacts HTML 产物。',
+        formulaRule,
       ].join('\n');
     }
 
@@ -42,6 +49,7 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
       '- 只输出裸 HTML 片段，不要使用 markdown/html/css/text 代码块。',
       '- 不要输出普通 Markdown、纯文本总结或解释。',
       '- 即使 SOURCE_MESSAGE 很短，也必须返回有效的 Live Artifacts HTML 产物。',
+      formulaRule,
     ].join('\n');
   }
 
@@ -51,6 +59,7 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
       '- Output only the raw complete HTML document; do not use markdown/html/css/text code fences.',
       '- Do not emit explanations, greetings, Markdown lists, or plain text.',
       '- Even if SOURCE_MESSAGE is short, you must still return a valid Live Artifacts HTML artifact.',
+      formulaRule,
     ].join('\n');
   }
 
@@ -60,6 +69,7 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
       '- Choose a complete HTML page or a raw HTML fragment, but the final result must be an HTML artifact.',
       '- Do not emit ordinary Markdown, a plain-text summary, or explanations outside the artifact.',
       '- Even if SOURCE_MESSAGE is short, you must still return a valid Live Artifacts HTML artifact.',
+      formulaRule,
     ].join('\n');
   }
 
@@ -68,6 +78,7 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
     '- Output only a raw HTML fragment; do not use markdown/html/css/text code fences.',
     '- Do not emit ordinary Markdown, a plain-text summary, or explanations.',
     '- Even if SOURCE_MESSAGE is short, you must still return a valid Live Artifacts HTML artifact.',
+    formulaRule,
   ].join('\n');
 };
 

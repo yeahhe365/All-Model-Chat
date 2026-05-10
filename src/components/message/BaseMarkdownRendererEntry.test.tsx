@@ -640,6 +640,31 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(renderer.container.querySelector('pre')).toBeNull();
   });
 
+  it('does not show inline action buttons over Live Artifact frames', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={'<section style="display:grid"><strong>Inline Artifact</strong></section>'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const artifactFrame = renderer.container.querySelector('[data-live-artifact-frame="true"]');
+
+    expect(artifactFrame).not.toBeNull();
+    expect(artifactFrame?.querySelector('iframe[title="HTML Preview"]')).not.toBeNull();
+    expect(artifactFrame?.querySelector('button')).toBeNull();
+  });
+
   it('resizes artifact frames from the iframe bridge height message without capping into internal scroll', () => {
     const document = '<!DOCTYPE html><html><body><main style="height:512px">Tall</main></body></html>';
 
@@ -769,6 +794,90 @@ describe('BaseMarkdownRendererEntry', () => {
 
     expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
       '320px',
+    );
+  });
+
+  it('preserves artifact frame height while the same message streams new html content', () => {
+    const firstDocument = '<!DOCTYPE html><html><body><main>Streaming first</main></body></html>';
+    const secondDocument =
+      '<!DOCTYPE html><html><body><main><section>Streaming second</section><section>More content</section></main></body></html>';
+    const renderArtifact = (document: string) => (
+      <BaseMarkdownRendererEntry
+        content={document}
+        messageId="streaming-artifact-message"
+        isLoading={true}
+        onImageClick={vi.fn()}
+        onOpenHtmlPreview={vi.fn()}
+        expandCodeBlocksByDefault={false}
+        isMermaidRenderingEnabled={false}
+        isGraphvizRenderingEnabled={false}
+        themeId="pearl"
+        onOpenSidePanel={vi.fn()}
+      />
+    );
+
+    act(() => {
+      renderer.root.render(renderArtifact(firstDocument));
+    });
+
+    const iframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { channel: 'amc-webui-html-preview', event: 'resize', height: 960 },
+          source: iframe?.contentWindow,
+        }),
+      );
+    });
+
+    act(() => {
+      renderer.root.render(renderArtifact(secondDocument));
+    });
+
+    expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
+      '960px',
+    );
+  });
+
+  it('keeps the measured artifact frame height when streaming completes with the final html content', () => {
+    const document = '<!DOCTYPE html><html><body><main>Streaming final</main></body></html>';
+    const renderArtifact = (isLoading: boolean) => (
+      <BaseMarkdownRendererEntry
+        content={document}
+        messageId="completed-streaming-artifact-message"
+        isLoading={isLoading}
+        onImageClick={vi.fn()}
+        onOpenHtmlPreview={vi.fn()}
+        expandCodeBlocksByDefault={false}
+        isMermaidRenderingEnabled={false}
+        isGraphvizRenderingEnabled={false}
+        themeId="pearl"
+        onOpenSidePanel={vi.fn()}
+      />
+    );
+
+    act(() => {
+      renderer.root.render(renderArtifact(true));
+    });
+
+    const iframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { channel: 'amc-webui-html-preview', event: 'resize', height: 960 },
+          source: iframe?.contentWindow,
+        }),
+      );
+    });
+
+    act(() => {
+      renderer.root.render(renderArtifact(false));
+    });
+
+    expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
+      '960px',
     );
   });
 

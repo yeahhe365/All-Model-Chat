@@ -19,6 +19,7 @@ interface CodeBlockProps {
   expandCodeBlocksByDefault: boolean;
   onOpenSidePanel: (content: SideViewContent) => void;
   showPreviewControls?: boolean;
+  isLoading?: boolean;
 }
 
 export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
@@ -90,11 +91,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
       <ArtifactFrame
         html={resolvedCodeText}
         cacheKey={props.cacheKey}
-        isCopied={isCopied}
-        onCopy={handleCopy}
-        onDownload={handleDownload}
-        onOpenSide={handleOpenSide}
-        onFullscreen={handleFullscreenPreview}
+        isLoading={props.isLoading}
       />
     );
   }

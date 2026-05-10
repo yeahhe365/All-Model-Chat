@@ -15,6 +15,18 @@ describe('liveArtifactsContracts', () => {
     expect(parts[0].text).not.toContain('fenced code block');
   });
 
+  it('reinforces that Live Artifacts formulas should stay as TeX text outside code tags', () => {
+    const parts = buildLiveArtifactsRequestParts({
+      promptInstruction: 'Create a Live Artifact',
+      sourceContent: 'source',
+      language: 'en',
+      promptMode: 'inline',
+    });
+
+    expect(parts[0].text).toContain('Use $...$ or $$...$$ for formulas');
+    expect(parts[0].text).toContain('do not put formulas inside <code> or <pre>');
+  });
+
   it('coerces invalid full HTML output into a raw complete document', () => {
     const output = coerceLiveArtifactsOutput('plain markdown\n- item', 'en', 'fullHtml');
 

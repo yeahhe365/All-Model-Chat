@@ -1,4 +1,12 @@
+import katex from 'katex';
+import katexCss from 'katex/dist/katex.min.css?inline';
+
 export const HTML_PREVIEW_MESSAGE_CHANNEL = 'amc-webui-html-preview';
+
+const KATEX_STYLE_ATTRIBUTE = 'data-amc-katex';
+const MATH_IGNORED_ANCESTOR_SELECTOR = 'script,style,textarea,pre,code,kbd,samp,.katex';
+const TEX_MATH_SIGNAL_REGEX = /[\\^_{}=+\-*/<>|]|[A-Za-z]\d|\d[A-Za-z]|[\u0370-\u03ff]/;
+const TEX_MATH_DELIMITER_REGEX = /\$\$([\s\S]+?)\$\$|\$((?:\\.|[^$\\\n])+?)\$/g;
 
 const PREVIEW_BRIDGE_SCRIPT = `<script>
 (() => {
@@ -90,20 +98,149 @@ const sanitizeElementTree = (root: ParentNode) => {
 
 const cloneIntoDocument = (node: Node, targetDocument: Document): Node => targetDocument.importNode(node, true);
 
+const isLikelyTexMath = (value: string): boolean => {
+  const normalizedValue = value.trim();
+
+  return /^[A-Za-z]$/.test(normalizedValue) || TEX_MATH_SIGNAL_REGEX.test(normalizedValue);
+};
+
+const hasTexMathDelimiterCandidate = (value: string): boolean => {
+  TEX_MATH_DELIMITER_REGEX.lastIndex = 0;
+  const hasCandidate = TEX_MATH_DELIMITER_REGEX.test(value);
+  TEX_MATH_DELIMITER_REGEX.lastIndex = 0;
+  return hasCandidate;
+};
+
+const createRenderedMathFragment = (targetDocument: Document, value: string): DocumentFragment | null => {
+  TEX_MATH_DELIMITER_REGEX.lastIndex = 0;
+
+  let lastIndex = 0;
+  let rendered = false;
+  const fragment = targetDocument.createDocumentFragment();
+
+  for (const match of value.matchAll(TEX_MATH_DELIMITER_REGEX)) {
+    const startIndex = match.index ?? 0;
+
+    if (startIndex > 0 && value[startIndex - 1] === '\\') {
+      continue;
+    }
+
+    const rawMatch = match[0];
+    const latex = (match[1] ?? match[2] ?? '').trim();
+
+    if (!latex || !isLikelyTexMath(latex)) {
+      continue;
+    }
+
+    if (startIndex > lastIndex) {
+      fragment.appendChild(targetDocument.createTextNode(value.slice(lastIndex, startIndex)));
+    }
+
+    try {
+      const template = targetDocument.createElement('template');
+      template.innerHTML = katex.renderToString(latex, {
+        displayMode: match[1] !== undefined,
+        throwOnError: false,
+        strict: false,
+      });
+      fragment.appendChild(template.content.cloneNode(true));
+      rendered = true;
+    } catch {
+      fragment.appendChild(targetDocument.createTextNode(rawMatch));
+    }
+
+    lastIndex = startIndex + rawMatch.length;
+  }
+
+  if (!rendered) {
+    return null;
+  }
+
+  if (lastIndex < value.length) {
+    fragment.appendChild(targetDocument.createTextNode(value.slice(lastIndex)));
+  }
+
+  return fragment;
+};
+
+const renderMathInDocument = (targetDocument: Document): boolean => {
+  if (!targetDocument.body) {
+    return false;
+  }
+
+  const showText = targetDocument.defaultView?.NodeFilter.SHOW_TEXT ?? 4;
+  const walker = targetDocument.createTreeWalker(targetDocument.body, showText);
+  const textNodes: Text[] = [];
+
+  while (walker.nextNode()) {
+    textNodes.push(walker.currentNode as Text);
+  }
+
+  let rendered = false;
+
+  textNodes.forEach((textNode) => {
+    if (textNode.parentElement?.closest(MATH_IGNORED_ANCESTOR_SELECTOR)) {
+      return;
+    }
+
+    const renderedFragment = createRenderedMathFragment(targetDocument, textNode.data);
+    if (!renderedFragment) {
+      return;
+    }
+
+    textNode.replaceWith(renderedFragment);
+    rendered = true;
+  });
+
+  return rendered;
+};
+
+const injectKatexStyles = (targetDocument: Document) => {
+  if (targetDocument.head.querySelector(`style[${KATEX_STYLE_ATTRIBUTE}]`)) {
+    return;
+  }
+
+  const styleElement = targetDocument.createElement('style');
+  styleElement.setAttribute(KATEX_STYLE_ATTRIBUTE, 'true');
+  styleElement.textContent = katexCss;
+  targetDocument.head.appendChild(styleElement);
+};
+
+const renderPreviewMath = (srcDoc: string): string => {
+  if (!hasTexMathDelimiterCandidate(srcDoc) || typeof DOMParser === 'undefined') {
+    return srcDoc;
+  }
+
+  const parser = new DOMParser();
+  const parsedDocument = parser.parseFromString(srcDoc, 'text/html');
+
+  if (renderMathInDocument(parsedDocument)) {
+    injectKatexStyles(parsedDocument);
+  }
+
+  return `<!DOCTYPE html>${parsedDocument.documentElement.outerHTML}`;
+};
+
 export const buildHtmlPreviewSrcDoc = (htmlContent: string): string => {
+  let srcDoc: string;
+
   if (!htmlContent) {
-    return `<!DOCTYPE html><html><body>${PREVIEW_BRIDGE_SCRIPT}</body></html>`;
+    srcDoc = `<!DOCTYPE html><html><body>${PREVIEW_BRIDGE_SCRIPT}</body></html>`;
+    return renderPreviewMath(srcDoc);
   }
 
   if (/<\/body>/i.test(htmlContent)) {
-    return htmlContent.replace(/<\/body>/i, `${PREVIEW_BRIDGE_SCRIPT}</body>`);
+    srcDoc = htmlContent.replace(/<\/body>/i, `${PREVIEW_BRIDGE_SCRIPT}</body>`);
+    return renderPreviewMath(srcDoc);
   }
 
   if (/<\/html>/i.test(htmlContent)) {
-    return htmlContent.replace(/<\/html>/i, `${PREVIEW_BRIDGE_SCRIPT}</html>`);
+    srcDoc = htmlContent.replace(/<\/html>/i, `${PREVIEW_BRIDGE_SCRIPT}</html>`);
+    return renderPreviewMath(srcDoc);
   }
 
-  return `<!DOCTYPE html><html><body>${htmlContent}${PREVIEW_BRIDGE_SCRIPT}</body></html>`;
+  srcDoc = `<!DOCTYPE html><html><body>${htmlContent}${PREVIEW_BRIDGE_SCRIPT}</body></html>`;
+  return renderPreviewMath(srcDoc);
 };
 
 export const createStaticPreviewSnapshotContainer = (

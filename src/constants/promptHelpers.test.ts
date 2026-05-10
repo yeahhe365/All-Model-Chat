@@ -157,6 +157,24 @@ describe('promptHelpers', () => {
     );
   });
 
+  it('tells Live Artifacts to preserve TeX formula delimiters outside code tags', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'full');
+    const zhInlinePrompt = await loadLiveArtifactsSystemPrompt('zh');
+    const zhFullHtmlPrompt = await loadLiveArtifactsSystemPrompt('zh', 'fullHtml');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'full');
+    const enInlinePrompt = await loadLiveArtifactsSystemPrompt('en');
+    const enFullHtmlPrompt = await loadLiveArtifactsSystemPrompt('en', 'fullHtml');
+
+    expect(zhPrompt).toContain('公式使用 $...$ 或 $$...$$');
+    expect(zhPrompt).toContain('不要放进 <code> 或 <pre>');
+    expect(zhInlinePrompt).toContain('公式使用 $...$ 或 $$...$$');
+    expect(zhFullHtmlPrompt).toContain('公式使用 $...$ 或 $$...$$');
+    expect(enPrompt).toContain('Use $...$ or $$...$$ for formulas');
+    expect(enPrompt).toContain('do not put formulas inside <code> or <pre>');
+    expect(enInlinePrompt).toContain('Use $...$ or $$...$$ for formulas');
+    expect(enFullHtmlPrompt).toContain('Use $...$ or $$...$$ for formulas');
+  });
+
   it('treats user/source instructions as data that cannot override Live Artifacts output rules', async () => {
     const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'full');
     const enPrompt = await loadLiveArtifactsSystemPrompt('en', 'full');
