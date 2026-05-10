@@ -1,17 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { buildHtmlPreviewSrcDoc, HTML_PREVIEW_MESSAGE_CHANNEL } from '../../../utils/htmlPreview';
+import {
+  normalizeLiveArtifactFollowupPayload,
+  type LiveArtifactFollowupPayload,
+} from '../../../utils/liveArtifactFollowup';
 
 interface ArtifactFrameProps {
   html: string;
   cacheKey?: string;
   isLoading?: boolean;
+  onFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
 }
 
 type HtmlPreviewBridgeMessage = {
   channel?: string;
-  event?: 'ready' | 'escape' | 'resize';
+  event?: 'ready' | 'escape' | 'resize' | 'followup';
   height?: number;
+  payload?: unknown;
 };
 
 const MIN_FRAME_HEIGHT = 120;
@@ -67,6 +73,7 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
   html,
   cacheKey,
   isLoading = false,
+  onFollowUp,
 }) => {
   const { t } = useI18n();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -86,12 +93,27 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
   useEffect(() => {
     const handleMessage = (event: MessageEvent<HtmlPreviewBridgeMessage>) => {
       const data = event.data;
-      if (!data || data.channel !== HTML_PREVIEW_MESSAGE_CHANNEL || data.event !== 'resize') {
+      if (!data || data.channel !== HTML_PREVIEW_MESSAGE_CHANNEL) {
         return;
       }
 
       const iframeWindow = iframeRef.current?.contentWindow;
       if (iframeWindow && event.source !== iframeWindow) {
+        return;
+      }
+
+      if (data.event === 'followup') {
+        const payload = normalizeLiveArtifactFollowupPayload(data.payload);
+        if (!payload) {
+          console.warn('Ignored invalid Live Artifact follow-up payload.');
+          return;
+        }
+
+        onFollowUp?.(payload);
+        return;
+      }
+
+      if (data.event !== 'resize') {
         return;
       }
 
@@ -114,7 +136,7 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [contentHeightCacheKey, heightCacheKey, streamingHeightCacheKey]);
+  }, [contentHeightCacheKey, heightCacheKey, onFollowUp, streamingHeightCacheKey]);
 
   return (
     <div data-live-artifact-frame="true" className="group/artifact relative my-3 w-full overflow-visible">

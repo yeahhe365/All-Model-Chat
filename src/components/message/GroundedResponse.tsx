@@ -5,6 +5,7 @@ import { insertCitations, extractSources } from './grounded-response/utils';
 import { ContextUrls } from './grounded-response/ContextUrls';
 import { SearchSources } from './grounded-response/SearchSources';
 import { IconGoogle } from '../icons/CustomIcons';
+import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
 
 interface GroundedResponseProps {
   messageId?: string;
@@ -13,6 +14,7 @@ interface GroundedResponseProps {
   urlContextMetadata?: unknown;
   isLoading: boolean;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
   expandCodeBlocksByDefault: boolean;
   onImageClick: (file: UploadedFile) => void;
   isMermaidRenderingEnabled: boolean;
@@ -159,6 +161,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
   urlContextMetadata,
   isLoading,
   onOpenHtmlPreview,
+  onLiveArtifactFollowUp,
   expandCodeBlocksByDefault,
   onImageClick,
   isMermaidRenderingEnabled,
@@ -190,6 +193,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
           isLoading={isLoading}
           onImageClick={onImageClick}
           onOpenHtmlPreview={onOpenHtmlPreview}
+          onLiveArtifactFollowUp={onLiveArtifactFollowUp}
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
           isMermaidRenderingEnabled={isMermaidRenderingEnabled}
           isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}

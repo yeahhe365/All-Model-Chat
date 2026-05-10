@@ -4,12 +4,14 @@ import { useWindowContext } from '../../contexts/WindowContext';
 import { useHtmlPreviewModal } from '../../hooks/ui/useHtmlPreviewModal';
 import { HtmlPreviewHeader } from './html-preview/HtmlPreviewHeader';
 import { HtmlPreviewContent } from './html-preview/HtmlPreviewContent';
+import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   htmlContent: string | null;
   initialTrueFullscreenRequest?: boolean;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
 }
 
 export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
@@ -17,6 +19,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   onClose,
   htmlContent,
   initialTrueFullscreenRequest,
+  onLiveArtifactFollowUp,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { document: targetDocument } = useWindowContext();
@@ -44,6 +47,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     htmlContent,
     initialTrueFullscreenRequest,
     iframeRef,
+    onLiveArtifactFollowUp,
   });
 
   if (!isActuallyOpen || !htmlContent) {

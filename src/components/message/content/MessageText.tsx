@@ -8,6 +8,7 @@ import { extractPreviewableCodeBlock, normalizePreviewableMarkdownContent } from
 import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
 import { useMessageStream } from '../../../hooks/ui/useMessageStream';
 import { extractRawThinkingBlocks } from '../../../utils/chat/reasoning';
+import type { LiveArtifactFollowupPayload } from '../../../utils/liveArtifactFollowup';
 
 interface MessageTextProps {
   message: ChatMessage;
@@ -17,6 +18,7 @@ interface MessageTextProps {
   baseFontSize: number;
   onImageClick: (file: UploadedFile) => void;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
   expandCodeBlocksByDefault: boolean;
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
@@ -31,6 +33,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
   baseFontSize,
   onImageClick,
   onOpenHtmlPreview,
+  onLiveArtifactFollowUp,
   expandCodeBlocksByDefault,
   isMermaidRenderingEnabled,
   isGraphvizRenderingEnabled,
@@ -107,6 +110,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
           onOpenHtmlPreview={onOpenHtmlPreview}
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
           onImageClick={onImageClick}
+          onLiveArtifactFollowUp={onLiveArtifactFollowUp}
           isMermaidRenderingEnabled={isMermaidRenderingEnabled}
           isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
           themeId={themeId}
@@ -121,6 +125,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
             isLoading={isLoading}
             onImageClick={onImageClick}
             onOpenHtmlPreview={onOpenHtmlPreview}
+            onLiveArtifactFollowUp={onLiveArtifactFollowUp}
             expandCodeBlocksByDefault={expandCodeBlocksByDefault}
             isMermaidRenderingEnabled={isMermaidRenderingEnabled}
             isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}

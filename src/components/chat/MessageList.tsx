@@ -15,7 +15,12 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { useChatStore } from '../../stores/chatStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useChatState } from '../../hooks/chat/useChatState';
-import { useChatMessageListRuntime } from '../layout/chat-runtime/ChatRuntimeContext';
+import { useChatInputRuntime, useChatMessageListRuntime } from '../layout/chat-runtime/ChatRuntimeContext';
+import { useI18n } from '../../contexts/I18nContext';
+import {
+  formatLiveArtifactFollowupPrompt,
+  type LiveArtifactFollowupPayload,
+} from '../../utils/liveArtifactFollowup';
 
 const LazyHtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');
@@ -35,10 +40,12 @@ const LazyMarkdownPreviewModal = lazy(async () => {
 const MessageListComponent: React.FC = () => {
   const appSettings = useSettingsStore((state) => state.appSettings);
   const themeId = useSettingsStore((state) => state.currentTheme.id);
+  const { language } = useI18n();
   const messages = useChatStore((state) => state.activeMessages);
   const setCommandedInput = useChatStore((state) => state.setCommandedInput);
   const { activeSessionId, currentChatSettings } = useChatState(appSettings);
   const chatInputHeight = useUIStore((state) => state.chatInputHeight);
+  const { onSendMessage } = useChatInputRuntime();
   const {
     sessionTitle,
     setScrollContainerRef,
@@ -64,6 +71,18 @@ const MessageListComponent: React.FC = () => {
       setCommandedInput({ text, id: Date.now(), mode: 'insert' });
     },
     [setCommandedInput],
+  );
+  const handleLiveArtifactFollowUp = React.useCallback(
+    (payload: LiveArtifactFollowupPayload) => {
+      const followupPrompt = formatLiveArtifactFollowupPrompt(payload, language);
+      if (!followupPrompt) {
+        console.warn('Ignored invalid Live Artifact follow-up payload.');
+        return;
+      }
+
+      onSendMessage(followupPrompt);
+    },
+    [language, onSendMessage],
   );
   const visibleMessages = useMemo(() => getVisibleChatMessages(messages), [messages]);
   // UI Logic (Modals, Previews, Configuration)
@@ -143,6 +162,7 @@ const MessageListComponent: React.FC = () => {
                   onRetryMessage={onRetryMessage}
                   onImageClick={handleFileClick}
                   onOpenHtmlPreview={handleOpenHtmlPreview}
+                  onLiveArtifactFollowUp={handleLiveArtifactFollowUp}
                   showThoughts={currentChatSettings.showThoughts}
                   onGenerateLiveArtifacts={onGenerateLiveArtifacts}
                   onContinueGeneration={onContinueGeneration}
@@ -203,6 +223,7 @@ const MessageListComponent: React.FC = () => {
             onClose={handleCloseHtmlPreview}
             htmlContent={htmlToPreview}
             initialTrueFullscreenRequest={initialTrueFullscreenRequest}
+            onLiveArtifactFollowUp={handleLiveArtifactFollowUp}
           />
         </Suspense>
       )}

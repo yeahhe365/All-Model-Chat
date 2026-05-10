@@ -3,6 +3,7 @@ import { ChatMessage, UploadedFile, SideViewContent } from '../../types';
 import { MessageContent } from './MessageContent';
 import { MessageActions } from './MessageActions';
 import { useSettingsStore } from '../../stores/settingsStore';
+import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
 
 interface MessageProps {
   message: ChatMessage;
@@ -14,6 +15,7 @@ interface MessageProps {
   onRetryMessage: (messageId: string) => void;
   onImageClick: (file: UploadedFile) => void; // Renamed to onFileClick in logic, kept name for props compat
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
   showThoughts: boolean;
   onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
@@ -92,6 +94,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             message={message}
             onImageClick={props.onImageClick}
             onOpenHtmlPreview={props.onOpenHtmlPreview}
+            onLiveArtifactFollowUp={props.onLiveArtifactFollowUp}
             showThoughts={props.showThoughts}
             baseFontSize={appSettings.baseFontSize}
             expandCodeBlocksByDefault={appSettings.expandCodeBlocksByDefault}

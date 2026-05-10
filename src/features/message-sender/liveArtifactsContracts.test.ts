@@ -27,6 +27,31 @@ describe('liveArtifactsContracts', () => {
     expect(parts[0].text).toContain('do not put formulas inside <code> or <pre>');
   });
 
+  it('advertises declarative follow-up buttons in the output contract', () => {
+    const parts = buildLiveArtifactsRequestParts({
+      promptInstruction: 'Create a Live Artifact',
+      sourceContent: 'source',
+      language: 'en',
+      promptMode: 'inline',
+    });
+
+    expect(parts[0].text).toContain('data-amc-followup');
+    expect(parts[0].text).toContain('instruction is required');
+    expect(parts[0].text).toContain('Do not add follow-up buttons by default');
+  });
+
+  it('advertises declarative state keys for dynamic follow-up state', () => {
+    const parts = buildLiveArtifactsRequestParts({
+      promptInstruction: 'Create a Live Artifact',
+      sourceContent: 'source',
+      language: 'en',
+      promptMode: 'inline',
+    });
+
+    expect(parts[0].text).toContain('data-amc-state-key');
+    expect(parts[0].text).toContain('current control values');
+  });
+
   it('coerces invalid full HTML output into a raw complete document', () => {
     const output = coerceLiveArtifactsOutput('plain markdown\n- item', 'en', 'fullHtml');
 

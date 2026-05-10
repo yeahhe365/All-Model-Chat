@@ -665,6 +665,61 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(artifactFrame?.querySelector('button')).toBeNull();
   });
 
+  it('forwards valid Live Artifact follow-up payloads from the current iframe only', () => {
+    const handleFollowUp = vi.fn();
+
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={'<section><button data-amc-followup="{&quot;instruction&quot;:&quot;Continue&quot;}">Continue</button></section>'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          onLiveArtifactFollowUp={handleFollowUp}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const iframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+    expect(iframe).not.toBeNull();
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            channel: 'amc-webui-html-preview',
+            event: 'followup',
+            payload: { instruction: 'Continue', state: { selected: 'B' } },
+          },
+          source: window,
+        }),
+      );
+    });
+
+    expect(handleFollowUp).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            channel: 'amc-webui-html-preview',
+            event: 'followup',
+            payload: { instruction: 'Continue', state: { selected: 'B' } },
+          },
+          source: iframe?.contentWindow,
+        }),
+      );
+    });
+
+    expect(handleFollowUp).toHaveBeenCalledWith({ instruction: 'Continue', state: { selected: 'B' } });
+  });
+
   it('resizes artifact frames from the iframe bridge height message without capping into internal scroll', () => {
     const document = '<!DOCTYPE html><html><body><main style="height:512px">Tall</main></body></html>';
 

@@ -154,4 +154,33 @@ describe('MessageList image preview', () => {
     expect(props).not.toHaveProperty('isGraphvizRenderingEnabled');
     expect(props).not.toHaveProperty('appSettings');
   });
+
+  it('sends a chat follow-up when a Live Artifact follow-up payload is received', () => {
+    const onSendMessage = vi.fn();
+    ({ unmount } = renderWithChatAreaProviders(<MessageList />, {
+      value: createChatAreaProviderValue({
+        messageList: {
+          messages,
+          sessionTitle: 'Test',
+          currentModelId: 'gemini-2.5-flash',
+        },
+        input: { onSendMessage },
+      }),
+    }));
+
+    const props = messagePropsSpy.mock.calls[0]?.[0] as
+      | { onLiveArtifactFollowUp?: (payload: unknown) => void }
+      | undefined;
+    expect(props?.onLiveArtifactFollowUp).toBeTypeOf('function');
+
+    act(() => {
+      props?.onLiveArtifactFollowUp?.({
+        instruction: '基于当前选择继续生成实施计划',
+        state: { selected: '方案B' },
+      });
+    });
+
+    expect(onSendMessage).toHaveBeenCalledWith(expect.stringContaining('基于当前选择继续生成实施计划'));
+    expect(onSendMessage).toHaveBeenCalledWith(expect.stringContaining('"selected": "方案B"'));
+  });
 });

@@ -11,9 +11,9 @@ const TEX_MATH_DELIMITER_REGEX = /\$\$([\s\S]+?)\$\$|\$((?:\\.|[^$\\\n])+?)\$/g;
 const PREVIEW_BRIDGE_SCRIPT = `<script>
 (() => {
   const channel = ${JSON.stringify(HTML_PREVIEW_MESSAGE_CHANNEL)};
-  const notify = (event) => {
+  const notify = (event, payload) => {
     try {
-      parent.postMessage({ channel, event }, '*');
+      parent.postMessage(payload === undefined ? { channel, event } : { channel, event, payload }, '*');
     } catch {}
   };
   const notifyResize = () => {
@@ -68,6 +68,133 @@ const PREVIEW_BRIDGE_SCRIPT = `<script>
       event.preventDefault();
       notify('escape');
     }
+  });
+
+  const readFollowupPayload = (target) => {
+    if (!(target instanceof Element)) return null;
+    const trigger = target.closest('[data-amc-followup]');
+    if (!trigger) return null;
+
+    const rawPayload = trigger.getAttribute('data-amc-followup');
+    if (!rawPayload) return null;
+
+    try {
+      return mergeFollowupState(JSON.parse(rawPayload), collectFollowupState(trigger));
+    } catch (error) {
+      console.warn('Invalid Live Artifact follow-up payload.', error);
+      return null;
+    }
+  };
+
+  const resolveFollowupScope = (trigger) => {
+    const scopeSelector = trigger.getAttribute('data-amc-followup-scope');
+    if (scopeSelector && scopeSelector.trim()) {
+      try {
+        return document.querySelector(scopeSelector) || trigger.closest(scopeSelector) || document;
+      } catch {
+        return document;
+      }
+    }
+
+    return trigger.closest('[data-amc-followup-scope]') || document;
+  };
+
+  const readStateValue = (element) => {
+    if (element instanceof HTMLInputElement) {
+      const inputType = element.type.toLowerCase();
+      if (inputType === 'checkbox') return element.checked;
+      if (inputType === 'radio') return element.checked ? element.value || true : undefined;
+      if (inputType === 'number' || inputType === 'range') {
+        return element.value === '' || Number.isNaN(element.valueAsNumber) ? element.value : element.valueAsNumber;
+      }
+      return element.value;
+    }
+
+    if (element instanceof HTMLSelectElement) {
+      if (element.multiple) {
+        return Array.from(element.selectedOptions).map((option) => option.value);
+      }
+      return element.value;
+    }
+
+    if (element instanceof HTMLTextAreaElement) return element.value;
+
+    const stateValue = element.getAttribute('data-amc-state-value');
+    if (stateValue !== null) {
+      const isToggleLike =
+        element.hasAttribute('aria-pressed') ||
+        element.hasAttribute('aria-selected') ||
+        element.hasAttribute('aria-checked');
+      if (!isToggleLike) return stateValue;
+
+      const isActive =
+        element.getAttribute('aria-pressed') === 'true' ||
+        element.getAttribute('aria-selected') === 'true' ||
+        element.getAttribute('aria-checked') === 'true';
+      return isActive ? stateValue : undefined;
+    }
+
+    const textValue = element.textContent ? element.textContent.trim() : '';
+    return textValue || undefined;
+  };
+
+  const appendStateValue = (state, key, value) => {
+    if (value === undefined) return;
+
+    if (Object.prototype.hasOwnProperty.call(state, key)) {
+      state[key] = Array.isArray(state[key]) ? [...state[key], value] : [state[key], value];
+      return;
+    }
+
+    state[key] = value;
+  };
+
+  const collectFollowupState = (trigger) => {
+    const scope = resolveFollowupScope(trigger);
+    const state = {};
+    const stateElements = [];
+
+    if (scope instanceof Element && scope.matches('[data-amc-state-key]')) {
+      stateElements.push(scope);
+    }
+
+    stateElements.push(...Array.from(scope.querySelectorAll('[data-amc-state-key]')));
+
+    stateElements.forEach((element) => {
+      const key = element.getAttribute('data-amc-state-key');
+      if (!key || element.disabled) return;
+
+      appendStateValue(state, key, readStateValue(element));
+    });
+
+    return state;
+  };
+
+  const mergeFollowupState = (payload, collectedState) => {
+    if (!collectedState || Object.keys(collectedState).length === 0) return payload;
+
+    const existingState =
+      payload && typeof payload.state === 'object' && !Array.isArray(payload.state)
+        ? payload.state
+        : payload && payload.state !== undefined
+          ? { value: payload.state }
+          : {};
+
+    return {
+      ...payload,
+      state: {
+        ...existingState,
+        ...collectedState,
+      },
+    };
+  };
+
+  document.addEventListener('click', (event) => {
+    const payload = readFollowupPayload(event.target);
+    if (!payload) return;
+
+    event.preventDefault();
+    notify('followup', payload);
   });
 })();
 </script>`;

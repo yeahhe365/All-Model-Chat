@@ -10,6 +10,7 @@ import { isImageMimeType } from '../../../utils/fileTypeUtils';
 import { FileDisplay } from '../FileDisplay';
 import { useI18n } from '../../../contexts/I18nContext';
 import { isLikelyHtml, isLiveArtifactLanguage } from '../../../utils/codeUtils';
+import type { LiveArtifactFollowupPayload } from '../../../utils/liveArtifactFollowup';
 
 interface CodeBlockProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ interface CodeBlockProps {
   onOpenSidePanel: (content: SideViewContent) => void;
   showPreviewControls?: boolean;
   isLoading?: boolean;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
 }
 
 export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
@@ -92,6 +94,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
         html={resolvedCodeText}
         cacheKey={props.cacheKey}
         isLoading={props.isLoading}
+        onFollowUp={props.onLiveArtifactFollowUp}
       />
     );
   }

@@ -14,6 +14,31 @@ describe('htmlPreview utilities', () => {
     expect(srcDoc).toContain("event.key === 'Escape'");
   });
 
+  it('injects a declarative Live Artifact follow-up click bridge', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc(
+      `<section><button data-amc-followup='{"instruction":"Continue","state":{"selected":"B"}}'>Continue</button></section>`,
+    );
+
+    expect(srcDoc).toContain('data-amc-followup');
+    expect(srcDoc).toContain("notify('followup'");
+    expect(srcDoc).toContain("closest('[data-amc-followup]')");
+    expect(srcDoc).toContain('JSON.parse');
+  });
+
+  it('injects bridge helpers for collecting current declarative artifact state', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc(
+      `<section data-amc-followup-scope>
+        <input data-amc-state-key="priority" value="low-risk" />
+        <button data-amc-followup='{"instruction":"Continue"}'>Continue</button>
+      </section>`,
+    );
+
+    expect(srcDoc).toContain('data-amc-state-key');
+    expect(srcDoc).toContain('collectFollowupState');
+    expect(srcDoc).toContain('data-amc-followup-scope');
+    expect(srcDoc).toContain('mergeFollowupState');
+  });
+
   it('pre-renders TeX math delimiters inside preview HTML with KaTeX styles', () => {
     const srcDoc = buildHtmlPreviewSrcDoc(
       '<section><p>Action chunk $a_{t:t+H-1}$</p><p>Loss $$L = ||\\epsilon - \\epsilon_\\theta(x_t,t)||^2$$</p></section>',

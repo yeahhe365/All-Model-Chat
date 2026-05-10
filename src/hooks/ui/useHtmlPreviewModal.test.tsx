@@ -101,6 +101,64 @@ describe('useHtmlPreviewModal', () => {
     unmount();
   });
 
+  it('forwards valid Live Artifact follow-up payloads from the preview iframe only', () => {
+    const onLiveArtifactFollowUp = vi.fn();
+    const iframe = document.createElement('iframe');
+    const contentWindowStub = {} as Window;
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: contentWindowStub,
+      configurable: true,
+    });
+    const iframeRef = { current: iframe } as RefObject<HTMLIFrameElement>;
+
+    const { unmount } = renderHook(
+      () =>
+        useHtmlPreviewModal({
+          isOpen: true,
+          onClose: vi.fn(),
+          htmlContent: '<html><body>Hello</body></html>',
+          iframeRef,
+          onLiveArtifactFollowUp,
+        }),
+      { attachToDocument: true, wrapper: HtmlPreviewWrapper },
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+            event: 'followup',
+            payload: { instruction: 'Continue', state: { selected: 'B' } },
+          },
+          source: window,
+        }),
+      );
+    });
+
+    expect(onLiveArtifactFollowUp).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+            event: 'followup',
+            payload: { instruction: 'Continue', state: { selected: 'B' } },
+          },
+          source: contentWindowStub,
+        }),
+      );
+    });
+
+    expect(onLiveArtifactFollowUp).toHaveBeenCalledWith({
+      instruction: 'Continue',
+      state: { selected: 'B' },
+    });
+
+    unmount();
+  });
+
   it('captures the current iframe document when taking a screenshot', async () => {
     const iframe = document.createElement('iframe');
     const iframeDocument = document.implementation.createHTMLDocument('Preview');

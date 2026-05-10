@@ -9,6 +9,10 @@ import {
   HTML_PREVIEW_MESSAGE_CHANNEL,
 } from '../../utils/htmlPreview';
 import { useI18n } from '../../contexts/I18nContext';
+import {
+  normalizeLiveArtifactFollowupPayload,
+  type LiveArtifactFollowupPayload,
+} from '../../utils/liveArtifactFollowup';
 
 const ZOOM_STEP = 0.1;
 const MIN_ZOOM = 0.25;
@@ -20,6 +24,7 @@ interface UseHtmlPreviewModalProps {
   htmlContent: string | null;
   initialTrueFullscreenRequest?: boolean;
   iframeRef: RefObject<HTMLIFrameElement>;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
 }
 
 type DocumentWithWebkitFullscreen = Document & {
@@ -28,7 +33,8 @@ type DocumentWithWebkitFullscreen = Document & {
 
 type HtmlPreviewBridgeMessage = {
   channel?: string;
-  event?: 'ready' | 'escape';
+  event?: 'ready' | 'escape' | 'followup';
+  payload?: unknown;
 };
 
 export const useHtmlPreviewModal = ({
@@ -37,6 +43,7 @@ export const useHtmlPreviewModal = ({
   htmlContent,
   initialTrueFullscreenRequest,
   iframeRef,
+  onLiveArtifactFollowUp,
 }: UseHtmlPreviewModalProps) => {
   const { t } = useI18n();
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
@@ -127,6 +134,17 @@ export const useHtmlPreviewModal = ({
 
       if (data.event === 'escape' && !isTrueFullscreen) {
         onClose();
+        return;
+      }
+
+      if (data.event === 'followup') {
+        const payload = normalizeLiveArtifactFollowupPayload(data.payload);
+        if (!payload) {
+          console.warn('Ignored invalid Live Artifact follow-up payload.');
+          return;
+        }
+
+        onLiveArtifactFollowUp?.(payload);
       }
     };
 
@@ -134,7 +152,7 @@ export const useHtmlPreviewModal = ({
     return () => {
       targetWindow.removeEventListener('message', handleMessage);
     };
-  }, [iframeRef, isOpen, isTrueFullscreen, onClose, targetWindow]);
+  }, [iframeRef, isOpen, isTrueFullscreen, onClose, onLiveArtifactFollowUp, targetWindow]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

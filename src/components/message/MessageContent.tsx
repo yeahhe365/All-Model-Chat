@@ -4,11 +4,13 @@ import { MessageFiles } from './content/MessageFiles';
 import { MessageThoughts } from './content/MessageThoughts';
 import { MessageText } from './content/MessageText';
 import { MessageFooter } from './content/MessageFooter';
+import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
 
 interface MessageContentProps {
   message: ChatMessage;
   onImageClick: (file: UploadedFile) => void;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
   showThoughts: boolean;
   baseFontSize: number;
   expandCodeBlocksByDefault: boolean;

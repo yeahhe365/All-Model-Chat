@@ -16,7 +16,9 @@ export const LIVE_ARTIFACTS_SYSTEM_PROMPT_ZH = `[Live Artifacts Protocol - zh]
 
 5. 交互只在有用途时加入，例如筛选、切换、展开、复制或导出。避免空按钮、无效链接、占位文案、未定义函数、缺失闭合标签和默认加载第三方库。
 
-6. 公式使用 $...$ 或 $$...$$ 保留 TeX 文本分隔符，不要放进 <code> 或 <pre>；系统会自动渲染。
+6. follow-up 按钮不是默认项。仅在选择、调参、编辑、导出后继续或明确下一步工作流时使用 data-amc-followup；instruction 必填。需回传当前选择时给控件加 data-amc-state-key。
+
+7. 公式使用 $...$ 或 $$...$$ 保留 TeX 文本分隔符，不要放进 <code> 或 <pre>；系统会自动渲染。
 `;
 
 export const LIVE_ARTIFACTS_SYSTEM_PROMPT_EN = `[Live Artifacts Protocol - en]
@@ -37,7 +39,9 @@ You are the Live Artifacts Designer for AMC-WebUI. Use HTML artifacts to replace
 
 5. Add interactions only when they are useful, such as filtering, switching views, expanding details, copying, or exporting. Avoid empty buttons, dead links, placeholder text, undefined functions, missing closing tags, and default third-party libraries.
 
-6. Use $...$ or $$...$$ for formulas and do not put formulas inside <code> or <pre>; the system will render them automatically.
+6. Follow-up buttons are opt-in. Use data-amc-followup only for choose, tune, edit, export-and-continue, or clear next-step workflows; instruction is required. Add data-amc-state-key to controls whose current values should be sent.
+
+7. Use $...$ or $$...$$ for formulas and do not put formulas inside <code> or <pre>; the system will render them automatically.
 `;
 
 export const LIVE_ARTIFACTS_INLINE_SYSTEM_PROMPT_ZH = `[Live Artifacts Inline Protocol - zh]
@@ -58,7 +62,9 @@ export const LIVE_ARTIFACTS_INLINE_SYSTEM_PROMPT_ZH = `[Live Artifacts Inline Pr
 
 6. 交互只在无需脚本也有用途时加入，例如 details/summary 展开、表单控件状态或可复制文本。避免空按钮、无效链接、占位文案和缺失闭合标签。
 
-7. 公式使用 $...$ 或 $$...$$ 保留 TeX 文本分隔符，不要放进 <code> 或 <pre>；系统会自动渲染。
+7. follow-up 按钮不是默认项。仅在选择、调参、编辑、导出后继续或明确下一步工作流时使用 data-amc-followup；instruction 必填。需回传当前选择时给控件加 data-amc-state-key。
+
+8. 公式使用 $...$ 或 $$...$$ 保留 TeX 文本分隔符，不要放进 <code> 或 <pre>；系统会自动渲染。
 `;
 
 export const LIVE_ARTIFACTS_INLINE_SYSTEM_PROMPT_EN = `[Live Artifacts Inline Protocol - en]
@@ -79,7 +85,9 @@ You are the Live Artifacts Designer for AMC-WebUI. Use HTML artifacts to replace
 
 6. Add interactions only when they work without scripts and help the content, such as details/summary expansion, form-control states, or copyable text. Avoid empty buttons, dead links, placeholder text, and missing closing tags.
 
-7. Use $...$ or $$...$$ for formulas and do not put formulas inside <code> or <pre>; the system will render them automatically.
+7. Follow-up buttons are opt-in. Use data-amc-followup only for choose, tune, edit, export-and-continue, or clear next-step workflows; instruction is required. Add data-amc-state-key to controls whose current values should be sent.
+
+8. Use $...$ or $$...$$ for formulas and do not put formulas inside <code> or <pre>; the system will render them automatically.
 `;
 
 export const LIVE_ARTIFACTS_FULL_HTML_SYSTEM_PROMPT_ZH = `[Live Artifacts Full HTML Protocol - zh]
@@ -100,7 +108,9 @@ export const LIVE_ARTIFACTS_FULL_HTML_SYSTEM_PROMPT_ZH = `[Live Artifacts Full H
 
 6. 交互只在有用途时加入，例如筛选、切换、展开、复制或导出。避免空按钮、无效链接、占位文案、未定义函数和缺失闭合标签。
 
-7. 公式使用 $...$ 或 $$...$$ 保留 TeX 文本分隔符，不要放进 <code> 或 <pre>；系统会自动渲染。
+7. follow-up 按钮不是默认项。仅在选择、调参、编辑、导出后继续或明确下一步工作流时使用 data-amc-followup；instruction 必填。需回传当前选择时给控件加 data-amc-state-key。
+
+8. 公式使用 $...$ 或 $$...$$ 保留 TeX 文本分隔符，不要放进 <code> 或 <pre>；系统会自动渲染。
 `;
 
 export const LIVE_ARTIFACTS_FULL_HTML_SYSTEM_PROMPT_EN = `[Live Artifacts Full HTML Protocol - en]
@@ -121,5 +131,7 @@ You are the Live Artifacts Designer for AMC-WebUI. Turn the user's information i
 
 6. Add interactions only when they are useful, such as filtering, switching views, expanding details, copying, or exporting. Avoid empty buttons, dead links, placeholder text, undefined functions, and missing closing tags.
 
-7. Use $...$ or $$...$$ for formulas and do not put formulas inside <code> or <pre>; the system will render them automatically.
+7. Follow-up buttons are opt-in. Use data-amc-followup only for choose, tune, edit, export-and-continue, or clear next-step workflows; instruction is required. Add data-amc-state-key to controls whose current values should be sent.
+
+8. Use $...$ or $$...$$ for formulas and do not put formulas inside <code> or <pre>; the system will render them automatically.
 `;

@@ -12,6 +12,7 @@ import { InlineCode } from './code-block/InlineCode';
 import { splitMarkdownSegments } from '../../utils/markdownUtils';
 import { stripGemmaThoughtMarkup, wrapReasoningMarkup } from '../../utils/chat/reasoning';
 import { normalizePreviewableMarkdownContent } from '../../utils/codeUtils';
+import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
 
 const loadMermaidBlock = async () => {
   const module = await import('./blocks/MermaidBlock');
@@ -29,6 +30,7 @@ export interface MarkdownRendererProps {
   isLoading: boolean;
   onImageClick: (file: UploadedFile) => void;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+  onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
   expandCodeBlocksByDefault: boolean;
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
@@ -113,6 +115,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
     isLoading,
     onImageClick,
     onOpenHtmlPreview,
+    onLiveArtifactFollowUp,
     expandCodeBlocksByDefault,
     isMermaidRenderingEnabled,
     isGraphvizRenderingEnabled,
@@ -274,6 +277,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
               }
               className={codeClassName}
               onOpenHtmlPreview={onOpenHtmlPreview}
+              onLiveArtifactFollowUp={onLiveArtifactFollowUp}
               expandCodeBlocksByDefault={expandCodeBlocksByDefault}
               showPreviewControls={isInteractive}
               isLoading={isLoading}
@@ -295,6 +299,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
         isMermaidRenderingEnabled,
         messageId,
         onImageClick,
+        onLiveArtifactFollowUp,
         onOpenHtmlPreview,
         onOpenSidePanel,
         t,
