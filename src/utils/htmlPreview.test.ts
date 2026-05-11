@@ -159,6 +159,31 @@ describe('htmlPreview utilities', () => {
     expect(srcDoc).toContain('.katex');
   });
 
+  it('pre-renders parenthesized and bracketed TeX math inside preview HTML', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc(
+      String.raw`<section><p>Inline \(a_t\)</p><p>Display \[E = mc^2\]</p></section>`,
+    );
+
+    expect(srcDoc).toContain('class="katex"');
+    expect(srcDoc).toContain('a_t');
+    expect(srcDoc).toContain('E = mc^2');
+    expect(srcDoc).toContain('data-amc-katex');
+    expect(srcDoc).not.toContain(String.raw`\(a_t\)`);
+    expect(srcDoc).not.toContain(String.raw`\[E = mc^2\]`);
+  });
+
+  it('pre-renders common TeX math environments inside preview HTML', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc(
+      String.raw`<section><p>\begin{align}a&=b\\c&=d\end{align}</p><p>f(x)=\begin{cases}x,&x>0\\0,&x\le0\end{cases}</p></section>`,
+    );
+
+    expect(srcDoc).toContain('class="katex"');
+    expect(srcDoc).toContain(String.raw`\begin{align}`);
+    expect(srcDoc).toContain(String.raw`\begin{cases}`);
+    expect(srcDoc).toContain('data-amc-katex');
+    expect(srcDoc).not.toContain(String.raw`<p>\begin{align}`);
+  });
+
   it('does not render TeX delimiters inside code-like preview HTML elements', () => {
     const srcDoc = buildHtmlPreviewSrcDoc(
       '<section><p>Formula $x_t$</p><code>$x_t$</code><pre>$$y_t$$</pre></section>',

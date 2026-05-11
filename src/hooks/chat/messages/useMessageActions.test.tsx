@@ -10,12 +10,24 @@ vi.mock('../../../services/logService', async () => {
 });
 
 import { useMessageActions } from './useMessageActions';
+import { finishActiveGenerationJob, startActiveGenerationJob } from '@/features/message-sender/activeGenerationJobs';
 import { renderHook } from '@/test/testUtils';
 
 describe('useMessageActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  const createDeferred = <T,>() => {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((promiseResolve, promiseReject) => {
+      resolve = promiseResolve;
+      reject = promiseReject;
+    });
+
+    return { promise, resolve, reject };
+  };
 
   it('does not abort unrelated active jobs when the current session has no loading message', () => {
     const otherAbort = vi.fn();
@@ -50,6 +62,94 @@ describe('useMessageActions', () => {
 
     expect(otherAbort).not.toHaveBeenCalled();
     expect(setSessionLoading).toHaveBeenCalledWith('session-current', false);
+    unmount();
+  });
+
+  it('keeps the input in stop mode while retry hands off from the aborted generation to the replacement', async () => {
+    const setSessionLoading = vi.fn();
+    const activeJobs = { current: new Map<string, AbortController>() };
+    const oldAbortController = new AbortController();
+    const sendDeferred = createDeferred<void>();
+    const messages: ChatMessage[] = [
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'retry this',
+        timestamp: new Date('2026-05-01T00:00:00.000Z'),
+      },
+      {
+        id: 'model-1',
+        role: 'model',
+        content: 'partial',
+        isLoading: true,
+        timestamp: new Date('2026-05-01T00:00:01.000Z'),
+      },
+    ];
+    const handleSendMessage = vi.fn(() => {
+      finishActiveGenerationJob({
+        activeJobs,
+        setSessionLoading,
+        sessionId: 'session-current',
+        generationId: 'model-1',
+      });
+      return sendDeferred.promise;
+    });
+    startActiveGenerationJob(activeJobs, 'session-current', 'model-1', oldAbortController);
+
+    const { result, unmount } = renderHook(() =>
+      useMessageActions({
+        messages,
+        isLoading: true,
+        activeSessionId: 'session-current',
+        editingMessageId: null,
+        activeJobs,
+        setCommandedInput: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setEditMode: vi.fn(),
+        setAppFileError: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        setActiveSessionId: vi.fn(),
+        userScrolledUpRef: { current: false },
+        handleSendMessage,
+        setSessionLoading,
+      }),
+    );
+
+    let retryPromise!: Promise<void>;
+    await act(async () => {
+      retryPromise = result.current.handleRetryMessage('model-1');
+      await Promise.resolve();
+    });
+
+    expect(handleSendMessage).toHaveBeenCalledWith({
+      text: 'retry this',
+      files: undefined,
+      editingId: 'user-1',
+    });
+    expect(oldAbortController.signal.aborted).toBe(true);
+    expect(setSessionLoading).not.toHaveBeenCalledWith('session-current', false);
+
+    const replacementController = new AbortController();
+    startActiveGenerationJob(activeJobs, 'session-current', 'model-2', replacementController);
+
+    await act(async () => {
+      sendDeferred.resolve();
+      await retryPromise;
+    });
+
+    expect(setSessionLoading).not.toHaveBeenCalledWith('session-current', false);
+
+    act(() => {
+      finishActiveGenerationJob({
+        activeJobs,
+        setSessionLoading,
+        sessionId: 'session-current',
+        generationId: 'model-2',
+      });
+    });
+
+    expect(setSessionLoading).toHaveBeenLastCalledWith('session-current', false);
     unmount();
   });
 

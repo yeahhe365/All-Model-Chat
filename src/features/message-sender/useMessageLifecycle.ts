@@ -1,6 +1,7 @@
 import { useCallback, type MutableRefObject } from 'react';
 import type { ChatMessage } from '../../types';
 import { createMessage } from '../../utils/chat/session';
+import { finishActiveGenerationJob, startActiveGenerationJob } from './activeGenerationJobs';
 import type { SessionsUpdater } from './types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 
@@ -52,15 +53,19 @@ export const useMessageLifecycle = ({
   const startMessageLifecycle = useCallback(
     (sessionId: string, generationId: string, abortController: AbortController) => {
       setSessionLoading(sessionId, true);
-      activeJobs.current.set(generationId, abortController);
+      startActiveGenerationJob(activeJobs, sessionId, generationId, abortController);
     },
     [activeJobs, setSessionLoading],
   );
 
   const finishMessageLifecycle = useCallback(
     (sessionId: string, generationId: string) => {
-      setSessionLoading(sessionId, false);
-      activeJobs.current.delete(generationId);
+      finishActiveGenerationJob({
+        activeJobs,
+        setSessionLoading,
+        sessionId,
+        generationId,
+      });
     },
     [activeJobs, setSessionLoading],
   );

@@ -12,7 +12,18 @@ const PREVIEW_CONTENT_SECURITY_POLICY =
 const PREVIEW_CONTENT_SECURITY_POLICY_META = `<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CONTENT_SECURITY_POLICY}">`;
 const MATH_IGNORED_ANCESTOR_SELECTOR = 'script,style,textarea,pre,code,kbd,samp,.katex';
 const TEX_MATH_SIGNAL_REGEX = /[\\^_{}=+\-*/<>|]|[A-Za-z]\d|\d[A-Za-z]|[\u0370-\u03ff]/;
-const TEX_MATH_DELIMITER_REGEX = /\$\$([\s\S]+?)\$\$|\$((?:\\.|[^$\\\n])+?)\$/g;
+const TEX_MATH_ENVIRONMENT_NAMES =
+  'align\\*?|aligned|alignedat|array|Bmatrix|bmatrix|cases|equation\\*?|gather\\*?|gathered|matrix|multline\\*?|pmatrix|smallmatrix|split|subarray|Vmatrix|vmatrix';
+const TEX_MATH_DELIMITER_REGEX = new RegExp(
+  [
+    String.raw`\$\$([\s\S]+?)\$\$`,
+    String.raw`\$((?:\\.|[^$\\\n])+?)\$`,
+    String.raw`\\\(([\s\S]+?)\\\)`,
+    String.raw`\\\[([\s\S]+?)\\\]`,
+    String.raw`\\begin\{(${TEX_MATH_ENVIRONMENT_NAMES})\}([\s\S]+?)\\end\{\5\}`,
+  ].join('|'),
+  'g',
+);
 const ASYMPTOTIC_COMPLEXITY_REGEX = /^(?:O|Θ|Ω|Theta|Omega)\s*\([^)]*[A-Za-z0-9][^)]*\)$/;
 
 const PREVIEW_BRIDGE_SCRIPT = `<script>
@@ -523,6 +534,28 @@ const hasTexMathDelimiterCandidate = (value: string): boolean => {
   return hasCandidate;
 };
 
+const readTexMathMatch = (
+  match: RegExpMatchArray,
+): { latex: string; displayMode: boolean; shouldValidateMathSignal: boolean } => {
+  if (match[1] !== undefined) {
+    return { latex: match[1], displayMode: true, shouldValidateMathSignal: true };
+  }
+
+  if (match[2] !== undefined) {
+    return { latex: match[2], displayMode: false, shouldValidateMathSignal: true };
+  }
+
+  if (match[3] !== undefined) {
+    return { latex: match[3], displayMode: false, shouldValidateMathSignal: true };
+  }
+
+  if (match[4] !== undefined) {
+    return { latex: match[4], displayMode: true, shouldValidateMathSignal: true };
+  }
+
+  return { latex: match[0], displayMode: true, shouldValidateMathSignal: false };
+};
+
 const createRenderedMathFragment = (targetDocument: Document, value: string): DocumentFragment | null => {
   TEX_MATH_DELIMITER_REGEX.lastIndex = 0;
 
@@ -538,9 +571,10 @@ const createRenderedMathFragment = (targetDocument: Document, value: string): Do
     }
 
     const rawMatch = match[0];
-    const latex = (match[1] ?? match[2] ?? '').trim();
+    const { latex: rawLatex, displayMode, shouldValidateMathSignal } = readTexMathMatch(match);
+    const latex = rawLatex.trim();
 
-    if (!latex || !isLikelyTexMath(latex)) {
+    if (!latex || (shouldValidateMathSignal && !isLikelyTexMath(latex))) {
       continue;
     }
 
@@ -551,7 +585,7 @@ const createRenderedMathFragment = (targetDocument: Document, value: string): Do
     try {
       const template = targetDocument.createElement('template');
       template.innerHTML = katex.renderToString(latex, {
-        displayMode: match[1] !== undefined,
+        displayMode,
         throwOnError: false,
         strict: false,
       });
@@ -650,6 +684,10 @@ const injectPreviewSecurityPolicy = (srcDoc: string): string => {
 };
 
 const prepareHtmlPreviewSrcDoc = (srcDoc: string): string => renderPreviewMath(injectPreviewSecurityPolicy(srcDoc));
+
+export const buildStreamingHtmlPreviewRenderPayload = (htmlContent: string): string => {
+  return renderPreviewMath(htmlContent);
+};
 
 export const buildHtmlPreviewSrcDoc = (htmlContent: string): string => {
   let srcDoc: string;

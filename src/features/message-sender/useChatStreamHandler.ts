@@ -16,6 +16,7 @@ import {
   mergeUniqueFiles,
   reduceMessageStreamEvent,
 } from '@/features/chat-streaming/messageStreamReducer';
+import { finishActiveGenerationJob } from './activeGenerationJobs';
 
 type SessionsUpdater = (
   updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -69,8 +70,12 @@ export const useChatStreamHandler = ({
       const streamOnError = (error: Error) => {
         // Pass accumulated content so it can be saved even on error/abort
         handleApiError(error, currentSessionId, generationId, 'Error', streamState.content, streamState.thoughts);
-        setSessionLoading(currentSessionId, false);
-        activeJobs.current.delete(generationId);
+        finishActiveGenerationJob({
+          activeJobs,
+          setSessionLoading,
+          sessionId: currentSessionId,
+          generationId,
+        });
         streamingStore.clear(generationId);
       };
 
@@ -199,8 +204,12 @@ export const useChatStreamHandler = ({
           { persist: true },
         );
 
-        setSessionLoading(currentSessionId, false);
-        activeJobs.current.delete(generationId);
+        finishActiveGenerationJob({
+          activeJobs,
+          setSessionLoading,
+          sessionId: currentSessionId,
+          generationId,
+        });
         streamingStore.clear(generationId);
 
         if (onSuccess && !abortController.signal.aborted) {

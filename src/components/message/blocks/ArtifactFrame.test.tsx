@@ -124,6 +124,40 @@ describe('ArtifactFrame', () => {
     );
   });
 
+  it('posts KaTeX-rendered html updates while streaming formulas', () => {
+    vi.useFakeTimers();
+
+    act(() => {
+      renderer.root.render(<ArtifactFrame html="<section>Starting</section>" isLoading />);
+    });
+
+    const iframe = renderer.container.querySelector('iframe');
+    expect(iframe).not.toBeNull();
+    const postMessage = vi.fn();
+    Object.defineProperty(iframe!, 'contentWindow', {
+      configurable: true,
+      value: { postMessage },
+    });
+
+    act(() => {
+      renderer.root.render(<ArtifactFrame html={String.raw`<section><p>Action \(a_t\)</p></section>`} isLoading />);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
+    const postedMessage = postMessage.mock.calls.at(-1)?.[0];
+    expect(postedMessage).toMatchObject({
+      channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+      event: HTML_PREVIEW_STREAM_RENDER_EVENT,
+    });
+    expect(postedMessage.html).toContain('class="katex"');
+    expect(postedMessage.html).toContain('a_t');
+    expect(postedMessage.html).toContain('data-amc-katex');
+    expect(postedMessage.html).not.toContain(String.raw`\(a_t\)`);
+  });
+
   it('flushes the latest streaming html during continuous updates', () => {
     vi.useFakeTimers();
 

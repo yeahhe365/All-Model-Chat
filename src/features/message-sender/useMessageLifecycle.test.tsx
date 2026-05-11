@@ -30,6 +30,17 @@ describe('useMessageLifecycle', () => {
     vi.clearAllMocks();
   });
 
+  const createDeferred = <T,>() => {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((promiseResolve, promiseReject) => {
+      resolve = promiseResolve;
+      reject = promiseReject;
+    });
+
+    return { promise, resolve, reject };
+  };
+
   it('creates loading model placeholders with the shared message shape', () => {
     const setSessionLoading = vi.fn();
     const activeJobs = { current: new Map<string, AbortController>() };
@@ -161,6 +172,58 @@ describe('useMessageLifecycle', () => {
     expect(handleApiErrorMock).not.toHaveBeenCalled();
     expect(setSessionLoading).toHaveBeenLastCalledWith('session-1', false);
     expect(activeJobs.current.has('generation-1')).toBe(false);
+
+    unmount();
+  });
+
+  it('keeps the session loading when an older generation finishes after a replacement has started', async () => {
+    const setSessionLoading = vi.fn();
+    const activeJobs = { current: new Map<string, AbortController>() };
+    const firstWork = createDeferred<string>();
+    const secondWork = createDeferred<string>();
+    const { result, unmount } = renderHook(() =>
+      useMessageLifecycle({
+        updateAndPersistSessions: vi.fn(),
+        setSessionLoading,
+        activeJobs,
+      }),
+    );
+
+    let firstLifecycle!: Promise<string | undefined>;
+    let secondLifecycle!: Promise<string | undefined>;
+    act(() => {
+      firstLifecycle = result.current.runMessageLifecycle({
+        sessionId: 'session-1',
+        generationId: 'generation-1',
+        abortController: new AbortController(),
+        execute: () => firstWork.promise,
+      });
+    });
+    act(() => {
+      secondLifecycle = result.current.runMessageLifecycle({
+        sessionId: 'session-1',
+        generationId: 'generation-2',
+        abortController: new AbortController(),
+        execute: () => secondWork.promise,
+      });
+    });
+
+    await act(async () => {
+      firstWork.resolve('old done');
+      await firstLifecycle;
+    });
+
+    expect(activeJobs.current.has('generation-1')).toBe(false);
+    expect(activeJobs.current.has('generation-2')).toBe(true);
+    expect(setSessionLoading).not.toHaveBeenCalledWith('session-1', false);
+
+    await act(async () => {
+      secondWork.resolve('new done');
+      await secondLifecycle;
+    });
+
+    expect(setSessionLoading).toHaveBeenLastCalledWith('session-1', false);
+    expect(activeJobs.current.has('generation-2')).toBe(false);
 
     unmount();
   });

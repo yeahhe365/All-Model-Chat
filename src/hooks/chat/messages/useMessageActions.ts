@@ -7,6 +7,13 @@ import { getVisibleChatMessages } from '../../../utils/chat/visibility';
 import { createNewSession } from '../../../utils/chat/session';
 import { generateUniqueId } from '../../../utils/chat/ids';
 import { updateMessageInSession, updateSessionById } from '../../../utils/chat/sessionMutations';
+import {
+  finishActiveGenerationJob,
+  hasActiveGenerationJobForSession,
+  holdSessionLoadingForGenerationHandoff,
+  releaseSessionLoadingForGenerationHandoff,
+  unregisterActiveGenerationJob,
+} from '../../../features/message-sender/activeGenerationJobs';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -80,10 +87,16 @@ export const useMessageActions = ({
           }
 
           if (!skipLoadingUpdate) {
-            setSessionLoading(activeSessionId, false);
+            finishActiveGenerationJob({
+              activeJobs,
+              setSessionLoading,
+              sessionId: activeSessionId,
+              generationId,
+            });
+          } else {
+            holdSessionLoadingForGenerationHandoff(activeJobs, activeSessionId);
+            unregisterActiveGenerationJob(activeJobs, generationId);
           }
-
-          activeJobs.current.delete(generationId);
         } else {
           logService.error(
             `Could not find active job to stop for generationId: ${generationId}. Leaving other active jobs untouched.`,
@@ -95,7 +108,9 @@ export const useMessageActions = ({
         );
 
         if (!skipLoadingUpdate) {
-          setSessionLoading(activeSessionId, false);
+          if (!hasActiveGenerationJobForSession(activeJobs, activeSessionId)) {
+            setSessionLoading(activeSessionId, false);
+          }
         }
       }
     },
@@ -200,13 +215,23 @@ export const useMessageActions = ({
         handleStopGenerating({ silent: true, skipLoadingUpdate: true });
       }
 
-      await handleSendMessage({
-        text: userMessageToResend.content,
-        files: userMessageToResend.files,
-        editingId: userMessageToResend.id,
-      });
+      try {
+        await handleSendMessage({
+          text: userMessageToResend.content,
+          files: userMessageToResend.files,
+          editingId: userMessageToResend.id,
+        });
+      } finally {
+        if (isLoading) {
+          releaseSessionLoadingForGenerationHandoff({
+            activeJobs,
+            setSessionLoading,
+            sessionId: activeSessionId,
+          });
+        }
+      }
     },
-    [activeSessionId, messages, isLoading, handleStopGenerating, handleSendMessage],
+    [activeSessionId, messages, isLoading, handleStopGenerating, handleSendMessage, activeJobs, setSessionLoading],
   );
 
   const handleRetryLastTurn = useCallback(async () => {

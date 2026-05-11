@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { useI18n } from '../../../contexts/I18nContext';
 import { useWindowContext } from '../../../contexts/WindowContext';
 import {
+  buildStreamingHtmlPreviewRenderPayload,
   buildHtmlPreviewSrcDoc,
   buildStreamingHtmlPreviewSrcDoc,
   HTML_PREVIEW_CLEAR_SELECTION_EVENT,
@@ -124,7 +125,7 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, cacheKey, is
         {
           channel: HTML_PREVIEW_MESSAGE_CHANNEL,
           event: HTML_PREVIEW_STREAM_RENDER_EVENT,
-          html: nextHtml,
+          html: buildStreamingHtmlPreviewRenderPayload(nextHtml),
         },
         '*',
       );
