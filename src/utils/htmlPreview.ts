@@ -2,8 +2,14 @@ import katex from 'katex';
 import katexCss from 'katex/dist/katex.min.css?inline';
 
 export const HTML_PREVIEW_MESSAGE_CHANNEL = 'amc-webui-html-preview';
+export const HTML_PREVIEW_STREAM_RENDER_EVENT = 'stream-render';
+export const HTML_PREVIEW_CLEAR_SELECTION_EVENT = 'clear-selection';
+export const HTML_PREVIEW_DIAGNOSTIC_EVENT = 'diagnostic';
 
 const KATEX_STYLE_ATTRIBUTE = 'data-amc-katex';
+const PREVIEW_CONTENT_SECURITY_POLICY =
+  "default-src 'none'; img-src https: data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; font-src data:; media-src https: data: blob:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+const PREVIEW_CONTENT_SECURITY_POLICY_META = `<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CONTENT_SECURITY_POLICY}">`;
 const MATH_IGNORED_ANCESTOR_SELECTOR = 'script,style,textarea,pre,code,kbd,samp,.katex';
 const TEX_MATH_SIGNAL_REGEX = /[\\^_{}=+\-*/<>|]|[A-Za-z]\d|\d[A-Za-z]|[\u0370-\u03ff]/;
 const TEX_MATH_DELIMITER_REGEX = /\$\$([\s\S]+?)\$\$|\$((?:\\.|[^$\\\n])+?)\$/g;
@@ -17,6 +23,53 @@ const PREVIEW_BRIDGE_SCRIPT = `<script>
       parent.postMessage(payload === undefined ? { channel, event } : { channel, event, payload }, '*');
     } catch {}
   };
+  const notifyDiagnostic = (payload) => notify(${JSON.stringify(HTML_PREVIEW_DIAGNOSTIC_EVENT)}, payload);
+  const readResourceUrl = (element) => {
+    if (!(element instanceof Element)) return undefined;
+    return element.getAttribute('src') || element.getAttribute('href') || element.getAttribute('poster') || undefined;
+  };
+  const maybeNotifyResourceError = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return false;
+
+    const tagName = target.tagName.toLowerCase();
+    if (!['img', 'script', 'link', 'video', 'audio', 'source'].includes(tagName)) {
+      return false;
+    }
+
+    notifyDiagnostic({
+      type: 'resource-error',
+      tagName,
+      url: readResourceUrl(target),
+    });
+    return true;
+  };
+  window.addEventListener('error', (event) => {
+    if (maybeNotifyResourceError(event)) return;
+
+    notifyDiagnostic({
+      type: 'runtime-error',
+      message: event.message || 'Unknown preview runtime error',
+      source: event.filename || undefined,
+      line: event.lineno || undefined,
+      column: event.colno || undefined,
+    });
+  }, true);
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason;
+    notifyDiagnostic({
+      type: 'runtime-error',
+      message: reason && typeof reason.message === 'string' ? reason.message : String(reason || 'Unhandled promise rejection'),
+    });
+  });
+  window.addEventListener('securitypolicyviolation', (event) => {
+    notifyDiagnostic({
+      type: 'csp-violation',
+      blockedURI: event.blockedURI,
+      violatedDirective: event.violatedDirective,
+      effectiveDirective: event.effectiveDirective,
+    });
+  });
   const notifyResize = () => {
     try {
       const body = document.body;
@@ -69,6 +122,77 @@ const PREVIEW_BRIDGE_SCRIPT = `<script>
       event.preventDefault();
       notify('escape');
     }
+  });
+
+  const isEditableElement = (element) => {
+    if (!(element instanceof HTMLElement)) return false;
+    return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.isContentEditable;
+  };
+
+  const getElementForNode = (node) => {
+    if (!node) return null;
+    return node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+  };
+
+  const notifySelection = () => {
+    try {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || !selection.rangeCount) {
+        notify('selection', null);
+        return;
+      }
+
+      const range = selection.getRangeAt(0);
+      const targetElement = getElementForNode(range.commonAncestorContainer);
+      if (isEditableElement(targetElement)) {
+        notify('selection', null);
+        return;
+      }
+
+      const text = selection.toString().trim();
+      if (!text) {
+        notify('selection', null);
+        return;
+      }
+
+      const rect = range.getBoundingClientRect();
+      notify('selection', {
+        text,
+        copyText: text,
+        rect: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+          bottom: rect.bottom,
+        },
+      });
+    } catch {
+      notify('selection', null);
+    }
+  };
+
+  let selectionFrame = 0;
+  const scheduleSelection = () => {
+    if (selectionFrame) return;
+    selectionFrame = requestAnimationFrame(() => {
+      selectionFrame = 0;
+      notifySelection();
+    });
+  };
+
+  document.addEventListener('selectionchange', scheduleSelection);
+  document.addEventListener('mouseup', scheduleSelection);
+  document.addEventListener('keyup', scheduleSelection);
+
+  window.addEventListener('message', (event) => {
+    if (!event.data || event.data.channel !== channel || event.data.event !== 'clear-selection') {
+      return;
+    }
+
+    try {
+      window.getSelection()?.removeAllRanges();
+    } catch {}
   });
 
   const parseFollowupPayload = (rawPayload) => {
@@ -213,6 +337,145 @@ const PREVIEW_BRIDGE_SCRIPT = `<script>
 
     event.preventDefault();
     notify('followup', payload);
+  });
+})();
+</script>`;
+
+const STREAMING_PREVIEW_RUNNER_SCRIPT = `<script>
+(() => {
+  const channel = ${JSON.stringify(HTML_PREVIEW_MESSAGE_CHANNEL)};
+  const streamRenderEvent = ${JSON.stringify(HTML_PREVIEW_STREAM_RENDER_EVENT)};
+  const root = document.querySelector('[data-amc-stream-preview-root]');
+  const dangerousSelector = 'script, iframe, object, embed';
+
+  const sanitizeElementTree = (parent) => {
+    parent.querySelectorAll(dangerousSelector).forEach((element) => element.remove());
+    parent.querySelectorAll('*').forEach((element) => {
+      Array.from(element.attributes).forEach((attribute) => {
+        const attributeName = attribute.name.toLowerCase();
+        const attributeValue = attribute.value.trim().toLowerCase();
+
+        if (attributeName.startsWith('on') || attributeName === 'srcdoc') {
+          element.removeAttribute(attribute.name);
+          return;
+        }
+
+        if ((attributeName === 'src' || attributeName === 'href') && attributeValue.startsWith('javascript:')) {
+          element.removeAttribute(attribute.name);
+        }
+      });
+    });
+  };
+
+  const syncAttributes = (currentElement, nextElement) => {
+    Array.from(currentElement.attributes).forEach((attribute) => {
+      if (!nextElement.hasAttribute(attribute.name)) {
+        currentElement.removeAttribute(attribute.name);
+      }
+    });
+
+    Array.from(nextElement.attributes).forEach((attribute) => {
+      if (currentElement.getAttribute(attribute.name) !== attribute.value) {
+        currentElement.setAttribute(attribute.name, attribute.value);
+      }
+    });
+  };
+
+  const canPatchNode = (currentNode, nextNode) => {
+    if (currentNode.nodeType !== nextNode.nodeType) return false;
+    if (currentNode.nodeType === Node.ELEMENT_NODE) {
+      return currentNode.nodeName === nextNode.nodeName;
+    }
+    return true;
+  };
+
+  const patchNode = (currentNode, nextNode) => {
+    if (!canPatchNode(currentNode, nextNode)) {
+      currentNode.replaceWith(nextNode);
+      return;
+    }
+
+    if (currentNode.nodeType === Node.TEXT_NODE) {
+      if (currentNode.nodeValue !== nextNode.nodeValue) {
+        currentNode.nodeValue = nextNode.nodeValue;
+      }
+      return;
+    }
+
+    if (currentNode.nodeType !== Node.ELEMENT_NODE) {
+      currentNode.replaceWith(nextNode);
+      return;
+    }
+
+    syncAttributes(currentNode, nextNode);
+    patchChildren(currentNode, nextNode);
+  };
+
+  const patchChildren = (currentParent, nextParent) => {
+    const currentChildren = Array.from(currentParent.childNodes);
+    const nextChildren = Array.from(nextParent.childNodes);
+    const maxLength = Math.max(currentChildren.length, nextChildren.length);
+
+    for (let index = 0; index < maxLength; index += 1) {
+      const currentChild = currentChildren[index];
+      const nextChild = nextChildren[index];
+
+      if (!nextChild) {
+        currentChild.remove();
+        continue;
+      }
+
+      if (!currentChild) {
+        currentParent.appendChild(nextChild);
+        continue;
+      }
+
+      patchNode(currentChild, nextChild);
+    }
+  };
+
+  const buildRenderableFragment = (parsedDocument) => {
+    const fragment = document.createDocumentFragment();
+    parsedDocument.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
+      fragment.appendChild(document.importNode(node, true));
+    });
+    Array.from(parsedDocument.body.childNodes).forEach((node) => {
+      fragment.appendChild(document.importNode(node, true));
+    });
+    return fragment;
+  };
+
+  const syncDocumentAttributes = (parsedDocument) => {
+    if (document.documentElement && parsedDocument.documentElement) {
+      syncAttributes(document.documentElement, parsedDocument.documentElement);
+    }
+
+    if (document.body && parsedDocument.body) {
+      syncAttributes(document.body, parsedDocument.body);
+    }
+  };
+
+  const renderHtml = (html) => {
+    if (!root || typeof html !== 'string') return;
+
+    const parser = new DOMParser();
+    const parsedDocument = parser.parseFromString(html, 'text/html');
+    sanitizeElementTree(parsedDocument);
+    syncDocumentAttributes(parsedDocument);
+    const fragment = buildRenderableFragment(parsedDocument);
+    if (!root.hasChildNodes()) {
+      root.replaceChildren(fragment);
+      return;
+    }
+    patchChildren(root, fragment);
+  };
+
+  window.addEventListener('message', (event) => {
+    if (!event.data || event.data.channel !== channel || event.data.event !== 'stream-render') {
+      return;
+    }
+
+    renderHtml(event.data.html);
   });
 })();
 </script>`;
@@ -370,26 +633,49 @@ const renderPreviewMath = (srcDoc: string): string => {
   return `<!DOCTYPE html>${parsedDocument.documentElement.outerHTML}`;
 };
 
+const injectPreviewSecurityPolicy = (srcDoc: string): string => {
+  if (srcDoc.includes(PREVIEW_CONTENT_SECURITY_POLICY)) {
+    return srcDoc;
+  }
+
+  if (/<head\b[^>]*>/i.test(srcDoc)) {
+    return srcDoc.replace(/<head\b[^>]*>/i, (headTag) => `${headTag}${PREVIEW_CONTENT_SECURITY_POLICY_META}`);
+  }
+
+  if (/<html\b[^>]*>/i.test(srcDoc)) {
+    return srcDoc.replace(/<html\b[^>]*>/i, (htmlTag) => `${htmlTag}<head>${PREVIEW_CONTENT_SECURITY_POLICY_META}</head>`);
+  }
+
+  return `<!DOCTYPE html><html><head>${PREVIEW_CONTENT_SECURITY_POLICY_META}</head><body>${srcDoc}</body></html>`;
+};
+
+const prepareHtmlPreviewSrcDoc = (srcDoc: string): string => renderPreviewMath(injectPreviewSecurityPolicy(srcDoc));
+
 export const buildHtmlPreviewSrcDoc = (htmlContent: string): string => {
   let srcDoc: string;
 
   if (!htmlContent) {
     srcDoc = `<!DOCTYPE html><html><body>${PREVIEW_BRIDGE_SCRIPT}</body></html>`;
-    return renderPreviewMath(srcDoc);
+    return prepareHtmlPreviewSrcDoc(srcDoc);
   }
 
   if (/<\/body>/i.test(htmlContent)) {
     srcDoc = htmlContent.replace(/<\/body>/i, `${PREVIEW_BRIDGE_SCRIPT}</body>`);
-    return renderPreviewMath(srcDoc);
+    return prepareHtmlPreviewSrcDoc(srcDoc);
   }
 
   if (/<\/html>/i.test(htmlContent)) {
     srcDoc = htmlContent.replace(/<\/html>/i, `${PREVIEW_BRIDGE_SCRIPT}</html>`);
-    return renderPreviewMath(srcDoc);
+    return prepareHtmlPreviewSrcDoc(srcDoc);
   }
 
   srcDoc = `<!DOCTYPE html><html><body>${htmlContent}${PREVIEW_BRIDGE_SCRIPT}</body></html>`;
-  return renderPreviewMath(srcDoc);
+  return prepareHtmlPreviewSrcDoc(srcDoc);
+};
+
+export const buildStreamingHtmlPreviewSrcDoc = (): string => {
+  const srcDoc = `<!DOCTYPE html><html><body><div data-amc-stream-preview-root="true"></div>${PREVIEW_BRIDGE_SCRIPT}${STREAMING_PREVIEW_RUNNER_SCRIPT}</body></html>`;
+  return prepareHtmlPreviewSrcDoc(srcDoc);
 };
 
 export const createStaticPreviewSnapshotContainer = (

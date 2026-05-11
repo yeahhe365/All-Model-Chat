@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildHtmlPreviewSrcDoc,
+  buildStreamingHtmlPreviewSrcDoc,
   createStaticPreviewSnapshotContainer,
+  HTML_PREVIEW_DIAGNOSTIC_EVENT,
   HTML_PREVIEW_MESSAGE_CHANNEL,
+  HTML_PREVIEW_STREAM_RENDER_EVENT,
 } from './htmlPreview';
 
 describe('htmlPreview utilities', () => {
@@ -12,6 +15,52 @@ describe('htmlPreview utilities', () => {
     expect(srcDoc).toContain(HTML_PREVIEW_MESSAGE_CHANNEL);
     expect(srcDoc).toContain('parent.postMessage');
     expect(srcDoc).toContain("event.key === 'Escape'");
+  });
+
+  it('injects a restrictive preview CSP while allowing inline artifact scripts and HTTPS images', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc(
+      '<html><head><title>Demo</title><script src="https://cdn.example/app.js"></script></head><body><img src="https://example.com/demo.png" alt="Demo"></body></html>',
+    );
+
+    expect(srcDoc).toContain('http-equiv="Content-Security-Policy"');
+    expect(srcDoc).toContain("default-src 'none'");
+    expect(srcDoc).toContain("script-src 'unsafe-inline'");
+    expect(srcDoc).toContain('img-src https: data: blob:');
+    expect(srcDoc).toContain("connect-src 'none'");
+    expect(srcDoc.indexOf('http-equiv="Content-Security-Policy"')).toBeLessThan(srcDoc.indexOf('cdn.example/app.js'));
+  });
+
+  it('injects the preview CSP into fragment wrappers before bridge scripts', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc('<section><p>Fragment</p></section>');
+
+    expect(srcDoc).toContain('<head><meta http-equiv="Content-Security-Policy"');
+    expect(srcDoc.indexOf('Content-Security-Policy')).toBeLessThan(srcDoc.indexOf(HTML_PREVIEW_MESSAGE_CHANNEL));
+  });
+
+  it('builds a stable streaming preview runner that receives html over postMessage', () => {
+    const srcDoc = buildStreamingHtmlPreviewSrcDoc();
+
+    expect(srcDoc).toContain('data-amc-stream-preview-root');
+    expect(srcDoc).toContain(HTML_PREVIEW_MESSAGE_CHANNEL);
+    expect(srcDoc).toContain(HTML_PREVIEW_STREAM_RENDER_EVENT);
+    expect(srcDoc).toContain("event.data.event !== 'stream-render'");
+    expect(srcDoc).toContain('replaceChildren');
+    expect(srcDoc).not.toContain('<section>First chunk</section>');
+  });
+
+  it('streaming preview runner keeps full document attributes in sync', () => {
+    const srcDoc = buildStreamingHtmlPreviewSrcDoc();
+
+    expect(srcDoc).toContain('syncDocumentAttributes');
+    expect(srcDoc).toContain("parsedDocument.documentElement");
+    expect(srcDoc).toContain('parsedDocument.body');
+  });
+
+  it('injects a bridge command for clearing iframe selections from the parent', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc('<section><p>Select this artifact text.</p></section>');
+
+    expect(srcDoc).toContain("event.data.event !== 'clear-selection'");
+    expect(srcDoc).toContain('window.getSelection()?.removeAllRanges()');
   });
 
   it('injects a declarative Live Artifact follow-up click bridge', () => {
@@ -37,6 +86,26 @@ describe('htmlPreview utilities', () => {
     expect(srcDoc).toContain('collectFollowupState');
     expect(srcDoc).toContain('data-amc-followup-scope');
     expect(srcDoc).toContain('mergeFollowupState');
+  });
+
+  it('injects a Live Artifact text selection bridge', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc('<section><p>Select this artifact text.</p></section>');
+
+    expect(srcDoc).toContain("notify('selection'");
+    expect(srcDoc).toContain("document.addEventListener('selectionchange'");
+    expect(srcDoc).toContain('window.getSelection');
+    expect(srcDoc).toContain('getBoundingClientRect');
+  });
+
+  it('injects preview diagnostics for blocked resources and runtime failures', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc('<section><img src="https://example.com/missing.png" alt="Missing"></section>');
+
+    expect(srcDoc).toContain(HTML_PREVIEW_DIAGNOSTIC_EVENT);
+    expect(srcDoc).toContain('resource-error');
+    expect(srcDoc).toContain('runtime-error');
+    expect(srcDoc).toContain('unhandledrejection');
+    expect(srcDoc).toContain('securitypolicyviolation');
+    expect(srcDoc).toContain('csp-violation');
   });
 
   it('treats a plain data-amc-followup value as the follow-up instruction', () => {

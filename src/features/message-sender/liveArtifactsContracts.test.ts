@@ -78,6 +78,44 @@ describe('liveArtifactsContracts', () => {
     expect(parts[0].text).toContain('structured user input');
   });
 
+  it('reinforces content-driven layout choices near the source message', () => {
+    const parts = buildLiveArtifactsRequestParts({
+      promptInstruction: 'Create a Live Artifact',
+      sourceContent: 'source',
+      language: 'en',
+      promptMode: 'inline',
+    });
+
+    expect(parts[0].text).toContain('Choose the structure from the content');
+    expect(parts[0].text).toContain('comparison/decision');
+    expect(parts[0].text).toContain('matrix');
+    expect(parts[0].text).toContain('process');
+    expect(parts[0].text).toContain('timeline');
+    expect(parts[0].text).toContain('data');
+    expect(parts[0].text).toContain('metrics');
+    expect(parts[0].text).toContain('concept');
+    expect(parts[0].text).toContain('relationship diagram');
+  });
+
+  it('reinforces the external image and responsive CSS policy near the source message', () => {
+    const parts = buildLiveArtifactsRequestParts({
+      promptInstruction: 'Create a Live Artifact',
+      sourceContent: 'source',
+      language: 'en',
+      promptMode: 'fullHtml',
+    });
+
+    expect(parts[0].text).toContain('Prefer inline SVG/CSS/text structure');
+    expect(parts[0].text).toContain('Use external images only when');
+    expect(parts[0].text).toContain('HTTPS');
+    expect(parts[0].text).toContain('alt text');
+    expect(parts[0].text).toContain('stable dimensions');
+    expect(parts[0].text).toContain('box-sizing:border-box');
+    expect(parts[0].text).toContain('overflow-wrap:anywhere');
+    expect(parts[0].text).toContain('minmax(0,1fr)');
+    expect(parts[0].text).toContain('overflow-x:auto');
+  });
+
   it('preserves bare interaction JSON output as an interaction artifact fence', () => {
     const interaction = JSON.stringify({
       instruction: 'Collect the writing parameters.',

@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PropsWithChildren, RefObject } from 'react';
 import { WindowProvider } from '../../contexts/WindowContext';
 import { useHtmlPreviewModal } from './useHtmlPreviewModal';
-import { HTML_PREVIEW_MESSAGE_CHANNEL } from '../../utils/htmlPreview';
+import {
+  HTML_PREVIEW_CLEAR_SELECTION_EVENT,
+  HTML_PREVIEW_DIAGNOSTIC_EVENT,
+  HTML_PREVIEW_MESSAGE_CHANNEL,
+} from '../../utils/htmlPreview';
 import { renderHook } from '@/test/testUtils';
 
 const exportElementAsPngMock = vi.hoisted(() => vi.fn(async () => {}));
@@ -157,6 +161,189 @@ describe('useHtmlPreviewModal', () => {
     });
 
     unmount();
+  });
+
+  it('relays iframe text selections to the parent selection toolbar event', () => {
+    const iframe = document.createElement('iframe');
+    const contentWindowStub = {} as Window;
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: contentWindowStub,
+      configurable: true,
+    });
+    iframe.getBoundingClientRect = () =>
+      ({
+        top: 100,
+        left: 50,
+        width: 320,
+        height: 180,
+        bottom: 280,
+        right: 370,
+        x: 50,
+        y: 100,
+        toJSON: () => ({}),
+      }) as DOMRect;
+    const iframeRef = { current: iframe } as RefObject<HTMLIFrameElement>;
+    const handleSelection = vi.fn();
+    window.addEventListener('amc-live-artifact-selection', handleSelection);
+
+    try {
+      const { unmount } = renderHook(
+        () =>
+          useHtmlPreviewModal({
+            isOpen: true,
+            onClose: vi.fn(),
+            htmlContent: '<html><body>Hello</body></html>',
+            iframeRef,
+          }),
+        { attachToDocument: true, wrapper: HtmlPreviewWrapper },
+      );
+
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            data: {
+              channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+              event: 'selection',
+              payload: {
+                text: 'Preview text',
+                copyText: 'Preview text',
+                rect: {
+                  top: 20,
+                  left: 30,
+                  width: 90,
+                  height: 18,
+                  bottom: 38,
+                },
+              },
+            },
+            source: contentWindowStub,
+          }),
+        );
+      });
+
+      expect(handleSelection).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: {
+            text: 'Preview text',
+            copyText: 'Preview text',
+            rect: {
+              top: 120,
+              left: 80,
+              width: 90,
+              height: 18,
+              bottom: 138,
+            },
+          },
+        }),
+      );
+
+      unmount();
+    } finally {
+      window.removeEventListener('amc-live-artifact-selection', handleSelection);
+    }
+  });
+
+  it('asks the sandboxed iframe to clear selection without reading cross-origin selection state', () => {
+    const postMessage = vi.fn();
+    const contentWindowStub = {
+      postMessage,
+      getSelection: vi.fn(() => {
+        throw new DOMException('Blocked', 'SecurityError');
+      }),
+    } as unknown as Window;
+    const iframe = document.createElement('iframe');
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: contentWindowStub,
+      configurable: true,
+    });
+    const iframeRef = { current: iframe } as RefObject<HTMLIFrameElement>;
+
+    const { unmount } = renderHook(
+      () =>
+        useHtmlPreviewModal({
+          isOpen: true,
+          onClose: vi.fn(),
+          htmlContent: '<html><body>Hello</body></html>',
+          iframeRef,
+        }),
+      { attachToDocument: true, wrapper: HtmlPreviewWrapper },
+    );
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent('amc-live-artifact-clear-selection'));
+    });
+
+    expect(contentWindowStub.getSelection).not.toHaveBeenCalled();
+    expect(postMessage).toHaveBeenCalledWith(
+      {
+        channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+        event: HTML_PREVIEW_CLEAR_SELECTION_EVENT,
+      },
+      '*',
+    );
+
+    unmount();
+  });
+
+  it('logs preview diagnostics from the current modal iframe only', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const iframe = document.createElement('iframe');
+    const contentWindowStub = {} as Window;
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: contentWindowStub,
+      configurable: true,
+    });
+    const iframeRef = { current: iframe } as RefObject<HTMLIFrameElement>;
+
+    try {
+      const { unmount } = renderHook(
+        () =>
+          useHtmlPreviewModal({
+            isOpen: true,
+            onClose: vi.fn(),
+            htmlContent: '<html><body>Hello</body></html>',
+            iframeRef,
+          }),
+        { attachToDocument: true, wrapper: HtmlPreviewWrapper },
+      );
+
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            data: {
+              channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+              event: HTML_PREVIEW_DIAGNOSTIC_EVENT,
+              payload: { type: 'csp-violation', blockedURI: 'https://cdn.example/app.js' },
+            },
+            source: window,
+          }),
+        );
+      });
+
+      expect(warnSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            data: {
+              channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+              event: HTML_PREVIEW_DIAGNOSTIC_EVENT,
+              payload: { type: 'csp-violation', blockedURI: 'https://cdn.example/app.js' },
+            },
+            source: contentWindowStub,
+          }),
+        );
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith('Live Artifact preview diagnostic:', {
+        type: 'csp-violation',
+        blockedURI: 'https://cdn.example/app.js',
+      });
+
+      unmount();
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('captures the current iframe document when taking a screenshot', async () => {

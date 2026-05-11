@@ -1,10 +1,16 @@
 /* eslint-disable react-hooks/refs */
-import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 import { copySelectionTextToClipboardEvent } from './selectionClipboard';
+import {
+  dispatchLiveArtifactClearSelection,
+  isLiveArtifactSelectionDetail,
+  LIVE_ARTIFACT_SELECTION_EVENT,
+} from './liveArtifactSelection';
 
 type ContainerRefLike = React.RefObject<HTMLElement> | HTMLElement | null;
+type SelectionBounds = Pick<DOMRect, 'top' | 'left' | 'width' | 'height' | 'bottom'>;
 
 interface UseSelectionPositionProps {
   containerRef: ContainerRefLike;
@@ -82,23 +88,23 @@ export const useSelectionPosition = ({
   const [selectedCopyText, setSelectedCopyText] = useState('');
   const [toolbarElement, setToolbarElement] = useState<HTMLDivElement | null>(null);
   const [toolbarSize, setToolbarSize] = useState<{ width: number; height: number } | null>(null);
-  const selectionBoundsRef = useRef<DOMRect | null>(null);
+  const selectionBoundsRef = useRef<SelectionBounds | null>(null);
   const selectedTextRef = useRef('');
   const selectedPlainTextRef = useRef('');
   const toolbarNode = toolbarRef.current;
   const { document: targetDocument, window: targetWindow } = useWindowContext();
 
+  const clearSelectionState = useCallback(() => {
+    setPosition(null);
+    selectionBoundsRef.current = null;
+    selectedTextRef.current = '';
+    selectedPlainTextRef.current = '';
+    setSelectedText('');
+    setSelectedCopyText('');
+  }, []);
+
   // Monitor selection changes
   useEffect(() => {
-    const clearSelectionState = () => {
-      setPosition(null);
-      selectionBoundsRef.current = null;
-      selectedTextRef.current = '';
-      selectedPlainTextRef.current = '';
-      setSelectedText('');
-      setSelectedCopyText('');
-    };
-
     const handleSelectionChange = () => {
       if (isAudioActive) {
         return;
@@ -162,7 +168,35 @@ export const useSelectionPosition = ({
       targetDocument.removeEventListener('mouseup', handleSelectionChange);
       targetDocument.removeEventListener('keyup', handleSelectionChange);
     };
-  }, [containerRef, isAudioActive, preserveFormattingOnCopy, targetDocument, targetWindow]);
+  }, [clearSelectionState, containerRef, isAudioActive, preserveFormattingOnCopy, targetDocument, targetWindow]);
+
+  useEffect(() => {
+    const handleLiveArtifactSelection = (event: Event) => {
+      if (isAudioActive) {
+        return;
+      }
+
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (!isLiveArtifactSelectionDetail(detail)) {
+        clearSelectionState();
+        return;
+      }
+
+      const copyText = detail.copyText || detail.text;
+      selectionBoundsRef.current = detail.rect;
+      selectedTextRef.current = detail.text;
+      selectedPlainTextRef.current = copyText;
+      setPosition({
+        top: detail.rect.top - 50,
+        left: detail.rect.left + detail.rect.width / 2,
+      });
+      setSelectedText(detail.text);
+      setSelectedCopyText(copyText);
+    };
+
+    targetWindow.addEventListener(LIVE_ARTIFACT_SELECTION_EVENT, handleLiveArtifactSelection);
+    return () => targetWindow.removeEventListener(LIVE_ARTIFACT_SELECTION_EVENT, handleLiveArtifactSelection);
+  }, [clearSelectionState, isAudioActive, targetWindow]);
 
   useEffect(() => {
     const handleCopy = (e: ClipboardEvent) => {
@@ -283,12 +317,8 @@ export const useSelectionPosition = ({
 
   const clearSelection = () => {
     targetWindow.getSelection()?.removeAllRanges();
-    selectionBoundsRef.current = null;
-    selectedTextRef.current = '';
-    selectedPlainTextRef.current = '';
-    setPosition(null);
-    setSelectedText('');
-    setSelectedCopyText('');
+    dispatchLiveArtifactClearSelection(targetWindow);
+    clearSelectionState();
   };
 
   return { position: clampedPosition, setPosition, selectedText, selectedCopyText, clearSelection };

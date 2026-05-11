@@ -9,7 +9,13 @@ import { extractTextFromNode } from '../../../utils/uiUtils';
 import { isImageMimeType } from '../../../utils/fileTypeUtils';
 import { FileDisplay } from '../FileDisplay';
 import { useI18n } from '../../../contexts/I18nContext';
-import { isLikelyHtml, isLiveArtifactInteractionLanguage, isLiveArtifactLanguage } from '../../../utils/codeUtils';
+import {
+  isLikelyHtml,
+  isLikelyStreamingHtmlArtifact,
+  isLikelyStreamingLiveArtifactInteractionJson,
+  isLiveArtifactInteractionLanguage,
+  isLiveArtifactLanguage,
+} from '../../../utils/codeUtils';
 import type { LiveArtifactFollowupPayload } from '../../../utils/liveArtifactFollowup';
 import { parseLiveArtifactInteractionSpec } from '../../../utils/liveArtifactInteraction';
 import { LiveArtifactInteractionFrame } from './LiveArtifactInteractionFrame';
@@ -25,6 +31,24 @@ interface CodeBlockProps {
   isLoading?: boolean;
   onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
 }
+
+const LiveArtifactInteractionPendingFrame: React.FC<{ label: string }> = ({ label }) => (
+  <div
+    data-live-artifact-interaction-pending="true"
+    aria-label={label}
+    aria-live="polite"
+    className="my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-model-message)] p-4 shadow-sm"
+  >
+    <div className="space-y-3">
+      <div className="h-3 w-40 rounded bg-[var(--theme-border-secondary)] animate-pulse" />
+      <div className="grid gap-2">
+        <div className="h-9 rounded-md border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] animate-pulse" />
+        <div className="h-9 rounded-md border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] animate-pulse" />
+      </div>
+      <div className="ml-auto h-8 w-24 rounded-md bg-[var(--theme-bg-accent)]/40 animate-pulse" />
+    </div>
+  </div>
+);
 
 export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
   const { t } = useI18n();
@@ -90,14 +114,23 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
       isLiveArtifactInteractionLanguage(sourceLanguage) ? parseLiveArtifactInteractionSpec(resolvedCodeText) : null,
     [resolvedCodeText, sourceLanguage],
   );
+  const isStreamingInteractionCandidate =
+    isLiveArtifactInteractionLanguage(sourceLanguage) &&
+    Boolean(props.isLoading) &&
+    isLikelyStreamingLiveArtifactInteractionJson(resolvedCodeText);
   const showInlineHtmlPreview =
     showPreviewControls &&
     isLiveArtifactLanguage(sourceLanguage) &&
     previewMarkupType === 'html' &&
-    isLikelyHtml(resolvedCodeText);
+    (isLikelyHtml(resolvedCodeText) ||
+      (Boolean(props.isLoading) && isLikelyStreamingHtmlArtifact(resolvedCodeText)));
 
   if (isInteractive && interactionSpec) {
     return <LiveArtifactInteractionFrame spec={interactionSpec} onFollowUp={props.onLiveArtifactFollowUp} />;
+  }
+
+  if (isInteractive && isStreamingInteractionCandidate) {
+    return <LiveArtifactInteractionPendingFrame label={t('thinking_text')} />;
   }
 
   if (showInlineHtmlPreview) {

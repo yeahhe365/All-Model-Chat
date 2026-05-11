@@ -112,6 +112,35 @@ describe('codeUtils preview detection', () => {
         <strong>Self-Attention</strong>`);
   });
 
+  it('wraps streaming raw html fragments in stable Live Artifact fences when loading', () => {
+    const fragment = `<div style="padding:24px">
+    <section style="background:white">
+        <p>Transformer summary</p>
+    </section>
+
+    <!-- 三大核心特性 -->
+    <div style="display:grid">
+        <strong>Self-Attention</strong>`;
+
+    expect(normalizePreviewableMarkdownContent(fragment, { isStreaming: true })).toBe(`\`\`\`amc-live-artifact-html
+<div style="padding:24px">
+    <section style="background:white">
+        <p>Transformer summary</p>
+    </section>
+    <!-- 三大核心特性 -->
+    <div style="display:grid">
+        <strong>Self-Attention</strong>
+\`\`\``);
+  });
+
+  it('wraps streaming full html documents before the closing html tag arrives', () => {
+    const partialDocument = '<!DOCTYPE html><html><head><title>Live</title></head><body><main>Loading';
+
+    expect(normalizePreviewableMarkdownContent(partialDocument, { isStreaming: true })).toBe(
+      `\`\`\`amc-live-artifact-html\n${partialDocument}\n\`\`\``,
+    );
+  });
+
   it('unwraps mislabeled fenced html fragments so they render inline', () => {
     const fragment =
       '<!-- 核心定义卡片 -->\n<div style="padding:20px;background:#f9fafb"><strong>Transformer</strong></div>';
@@ -173,6 +202,14 @@ describe('codeUtils preview detection', () => {
     );
 
     expect(normalizePreviewableMarkdownContent(interaction)).toBe(
+      `\`\`\`amc-live-artifact-interaction\n${interaction}\n\`\`\``,
+    );
+  });
+
+  it('wraps streaming interaction JSON candidates before they parse completely', () => {
+    const interaction = '{"instruction":"Collect writing options","schema":{';
+
+    expect(normalizePreviewableMarkdownContent(interaction, { isStreaming: true })).toBe(
       `\`\`\`amc-live-artifact-interaction\n${interaction}\n\`\`\``,
     );
   });

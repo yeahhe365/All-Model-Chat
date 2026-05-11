@@ -16,7 +16,11 @@ vi.mock('../GroundedResponse', () => ({
 }));
 
 vi.mock('../LazyMarkdownRenderer', () => ({
-  LazyMarkdownRenderer: ({ content }: { content: string }) => <div data-testid="markdown-renderer">{content}</div>,
+  LazyMarkdownRenderer: ({ content, contentPreNormalized }: { content: string; contentPreNormalized?: boolean }) => (
+    <div data-testid="markdown-renderer" data-pre-normalized={String(Boolean(contentPreNormalized))}>
+      {content}
+    </div>
+  ),
 }));
 
 vi.mock('../../icons/GoogleSpinner', () => ({
@@ -240,6 +244,45 @@ describe('MessageText', () => {
             id: 'message-html-fragment',
             role: 'model',
             content: htmlFragment,
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          }}
+          showThoughts={false}
+          appSettings={createAppSettings({ autoFullscreenHtml: false, hideThinkingInContext: false })}
+          themeId="pearl"
+          baseFontSize={16}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={true}
+          isGraphvizRenderingEnabled={true}
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe(
+      `\`\`\`amc-live-artifact-html\n${htmlFragment}\n\`\`\``,
+    );
+    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.getAttribute('data-pre-normalized')).toBe(
+      'true',
+    );
+  });
+
+  it('normalizes streamed raw html fragments into artifact fences while loading', () => {
+    const htmlFragment = '<div style="display:grid"><strong>Streaming artifact';
+    mockUseMessageStream.mockReturnValue({
+      streamContent: htmlFragment,
+      streamThoughts: '',
+    });
+
+    act(() => {
+      renderer.render(
+        <MessageText
+          message={{
+            id: 'message-streaming-html-fragment',
+            role: 'model',
+            content: '',
+            isLoading: true,
             timestamp: new Date('2026-04-21T00:00:00.000Z'),
           }}
           showThoughts={false}

@@ -536,7 +536,7 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(renderer.container.querySelector('div[style*="display"] strong')).toBeNull();
   });
 
-  it('keeps streaming raw html fragments out of accidental code blocks before they close', () => {
+  it('renders streaming raw html fragments inside stable artifact frames before they close', () => {
     act(() => {
       renderer.root.render(
         <BaseMarkdownRendererEntry
@@ -561,8 +561,63 @@ describe('BaseMarkdownRendererEntry', () => {
       );
     });
 
+    const iframe = renderer.container.querySelector('iframe[title="HTML Preview"]');
+
+    expect(renderer.container.querySelector('[data-live-artifact-frame="true"]')).not.toBeNull();
     expect(renderer.container.querySelector('pre')).toBeNull();
-    expect(renderer.container.textContent).toContain('Self-Attention');
+    expect(iframe?.getAttribute('srcdoc')).toContain('data-amc-stream-preview-root');
+    expect(iframe?.getAttribute('srcdoc')).not.toContain('Self-Attention');
+    expect(renderer.container.querySelector('div[style*="display"] strong')).toBeNull();
+  });
+
+  it('renders streaming full html documents inside artifact frames before they close', () => {
+    const partialDocument = '<!DOCTYPE html><html><head><title>Live</title></head><body><main>Loading';
+
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={partialDocument}
+          isLoading={true}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const iframe = renderer.container.querySelector('iframe[title="HTML Preview"]');
+
+    expect(renderer.container.querySelector('[data-live-artifact-frame="true"]')).not.toBeNull();
+    expect(renderer.container.querySelector('pre')).toBeNull();
+    expect(iframe?.getAttribute('srcdoc')).toContain('data-amc-stream-preview-root');
+    expect(iframe?.getAttribute('srcdoc')).not.toContain('<main>Loading');
+  });
+
+  it('shows a stable pending frame for streaming interaction JSON before it parses', () => {
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={'```amc-live-artifact-interaction\n{"instruction":"Collect","schema":{'}
+          isLoading={true}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    expect(renderer.container.querySelector('[data-live-artifact-interaction-pending="true"]')).not.toBeNull();
+    expect(renderer.container.querySelector('pre')).toBeNull();
   });
 
   it('hides markdown preview affordances when interactive mode is disabled', () => {
@@ -1137,6 +1192,42 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(renderer.container.querySelector<HTMLElement>('[data-live-artifact-viewport="true"]')?.style.height).toBe(
       '960px',
     );
+  });
+
+  it('keeps the same streaming artifact iframe node while html content changes', () => {
+    const firstDocument = '<!DOCTYPE html><html><body><main>Streaming first</main></body></html>';
+    const secondDocument =
+      '<!DOCTYPE html><html><body><main><section>Streaming second</section><section>More content</section></main></body></html>';
+    const renderArtifact = (document: string) => (
+      <BaseMarkdownRendererEntry
+        content={document}
+        messageId="streaming-artifact-identity-message"
+        isLoading={true}
+        onImageClick={vi.fn()}
+        onOpenHtmlPreview={vi.fn()}
+        expandCodeBlocksByDefault={false}
+        isMermaidRenderingEnabled={false}
+        isGraphvizRenderingEnabled={false}
+        themeId="pearl"
+        onOpenSidePanel={vi.fn()}
+      />
+    );
+
+    act(() => {
+      renderer.root.render(renderArtifact(firstDocument));
+    });
+
+    const firstIframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+    const firstSrcDoc = firstIframe?.getAttribute('srcdoc');
+
+    act(() => {
+      renderer.root.render(renderArtifact(secondDocument));
+    });
+
+    const secondIframe = renderer.container.querySelector<HTMLIFrameElement>('iframe[title="HTML Preview"]');
+
+    expect(secondIframe).toBe(firstIframe);
+    expect(secondIframe?.getAttribute('srcdoc')).toBe(firstSrcDoc);
   });
 
   it('keeps the measured artifact frame height when streaming completes with the final html content', () => {

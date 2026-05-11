@@ -40,6 +40,18 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
     language === 'zh'
       ? '- 需要先收集结构化用户输入时，唯一例外是输出一个 ```amc-live-artifact-interaction 代码块，里面放 JSON，至少包含 "instruction" 和 "schema"；schema 使用 object/properties 描述字段，每个字段必须有 type：string、number、integer 或 boolean。'
       : '- When you must collect structured user input first, the only exception is to output one ```amc-live-artifact-interaction fenced code block containing JSON with at least "instruction" and "schema"; use schema object/properties to describe fields, and every field must have type string, number, integer, or boolean.';
+  const structureRule =
+    language === 'zh'
+      ? '- 根据内容选择结构：对比/决策用矩阵、推荐和风险标签；流程用时间线或步骤卡；数据用指标、条形和表格；概念用定义、关系图和例子；长文用摘要、分组和 details。'
+      : '- Choose the structure from the content: comparison/decision uses a matrix, recommendation, and risk tags; process uses a timeline or step cards; data uses metrics, bars, and tables; concept uses a definition, relationship diagram, and examples; long text uses a summary, grouping, and details.';
+  const resourceRule =
+    language === 'zh'
+      ? '- 优先使用内联 SVG/CSS/文字结构；外链图片仅在用户提供 URL、明确需要真实图片或对象必须真实呈现时使用；只用 HTTPS，必须有 alt 文本、稳定尺寸和文本兜底。'
+      : '- Prefer inline SVG/CSS/text structure; Use external images only when the user provides a URL, asks for real imagery, or the object must be shown realistically; use HTTPS only, with alt text, stable dimensions, and text fallback.';
+  const resilienceRule =
+    language === 'zh'
+      ? '- CSS 要抗溢出：box-sizing:border-box; max-width:100%; overflow-wrap:anywhere; grid 用 minmax(0,1fr)；表格外层 overflow-x:auto；img/svg max-width:100%;height:auto。'
+      : '- Use overflow-safe CSS: box-sizing:border-box; max-width:100%; overflow-wrap:anywhere; grid tracks use minmax(0,1fr); wrap tables in overflow-x:auto; img/svg max-width:100%;height:auto.';
 
   if (language === 'zh') {
     if (promptMode === 'fullHtml') {
@@ -48,6 +60,9 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
         '- 只输出裸完整 HTML 文档，不要使用 markdown/html/css/text 代码块。',
         '- 不要输出解释、寒暄、Markdown 列表或纯文本。',
         '- 即使 SOURCE_MESSAGE 很短，也必须返回有效的 Live Artifacts HTML 产物。',
+        structureRule,
+        resourceRule,
+        resilienceRule,
         interactionRule,
         followupRule,
         followupStateRule,
@@ -61,6 +76,9 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
         '- 选择完整 HTML 页面或裸 HTML 片段，但最终结果必须是 HTML 产物。',
         '- 不要输出普通 Markdown、纯文本总结或代码块之外的解释。',
         '- 即使 SOURCE_MESSAGE 很短，也必须返回有效的 Live Artifacts HTML 产物。',
+        structureRule,
+        resourceRule,
+        resilienceRule,
         interactionRule,
         followupRule,
         followupStateRule,
@@ -73,6 +91,9 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
       '- 只输出裸 HTML 片段，不要使用 markdown/html/css/text 代码块。',
       '- 不要输出普通 Markdown、纯文本总结或解释。',
       '- 即使 SOURCE_MESSAGE 很短，也必须返回有效的 Live Artifacts HTML 产物。',
+      structureRule,
+      resourceRule,
+      resilienceRule,
       interactionRule,
       followupRule,
       followupStateRule,
@@ -86,6 +107,9 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
       '- Output only the raw complete HTML document; do not use markdown/html/css/text code fences.',
       '- Do not emit explanations, greetings, Markdown lists, or plain text.',
       '- Even if SOURCE_MESSAGE is short, you must still return a valid Live Artifacts HTML artifact.',
+      structureRule,
+      resourceRule,
+      resilienceRule,
       interactionRule,
       followupRule,
       followupStateRule,
@@ -99,6 +123,9 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
       '- Choose a complete HTML page or a raw HTML fragment, but the final result must be an HTML artifact.',
       '- Do not emit ordinary Markdown, a plain-text summary, or explanations outside the artifact.',
       '- Even if SOURCE_MESSAGE is short, you must still return a valid Live Artifacts HTML artifact.',
+      structureRule,
+      resourceRule,
+      resilienceRule,
       interactionRule,
       followupRule,
       followupStateRule,
@@ -111,6 +138,9 @@ const getOutputContract = (language: 'en' | 'zh', promptMode: LiveArtifactsPromp
     '- Output only a raw HTML fragment; do not use markdown/html/css/text code fences.',
     '- Do not emit ordinary Markdown, a plain-text summary, or explanations.',
     '- Even if SOURCE_MESSAGE is short, you must still return a valid Live Artifacts HTML artifact.',
+    structureRule,
+    resourceRule,
+    resilienceRule,
     interactionRule,
     followupRule,
     followupStateRule,

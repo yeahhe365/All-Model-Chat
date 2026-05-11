@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { isLikelyStreamingHtmlArtifact, isLikelyStreamingLiveArtifactInteractionJson } from '../../utils/codeUtils';
 
 const FENCED_CODE_BLOCK_REGEX = /(```[\s\S]*?```|```[\s\S]*$)/g;
 const GFM_TABLE_REGEX = /(?:^|\n)\|[^\n]*\|\s*\n\|(?:\s*:?-{3,}:?\s*\|)+/;
@@ -16,7 +17,12 @@ const hasStreamingSensitiveMarkdownTable = (text: string) => {
 export const useSmoothStreaming = (text: string | undefined | null, isStreaming: boolean) => {
   const safeText = text || '';
   const isDocumentHidden = typeof document !== 'undefined' && document.hidden;
-  const shouldBypassAnimation = isStreaming && (isDocumentHidden || hasStreamingSensitiveMarkdownTable(safeText));
+  const shouldBypassAnimation =
+    isStreaming &&
+    (isDocumentHidden ||
+      hasStreamingSensitiveMarkdownTable(safeText) ||
+      isLikelyStreamingHtmlArtifact(safeText) ||
+      isLikelyStreamingLiveArtifactInteractionJson(safeText));
   // If we are mounting with existing text and streaming, start from 0 to type it out
   const [displayedText, setDisplayedText] = useState(isStreaming ? '' : safeText);
 

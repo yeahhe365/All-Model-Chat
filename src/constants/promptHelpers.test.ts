@@ -157,6 +157,76 @@ describe('promptHelpers', () => {
     );
   });
 
+  it('allows richer safe primitives in every built-in Live Artifacts prompt mode', async () => {
+    const prompts = await Promise.all([
+      loadLiveArtifactsSystemPrompt('zh', 'full'),
+      loadLiveArtifactsSystemPrompt('zh', 'fullHtml'),
+      loadLiveArtifactsSystemPrompt('en', 'full'),
+      loadLiveArtifactsSystemPrompt('en', 'fullHtml'),
+    ]);
+
+    for (const prompt of prompts) {
+      expect(prompt).toMatch(/SVG|svg/);
+      expect(prompt).toMatch(/图片|images/);
+      expect(prompt).toMatch(/表格|tables/);
+      expect(prompt).toContain('details/summary');
+    }
+  });
+
+  it('gives Live Artifacts task-specific layout routing guidance', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+
+    expect(zhPrompt).toContain('对比/决策');
+    expect(zhPrompt).toContain('矩阵');
+    expect(zhPrompt).toContain('流程');
+    expect(zhPrompt).toContain('时间线');
+    expect(zhPrompt).toContain('数据');
+    expect(zhPrompt).toContain('指标');
+    expect(zhPrompt).toContain('概念');
+    expect(zhPrompt).toContain('关系图');
+    expect(enPrompt).toContain('comparison/decision');
+    expect(enPrompt).toContain('matrix');
+    expect(enPrompt).toContain('process');
+    expect(enPrompt).toContain('timeline');
+    expect(enPrompt).toContain('data');
+    expect(enPrompt).toContain('metrics');
+    expect(enPrompt).toContain('concept');
+    expect(enPrompt).toContain('relationship diagram');
+  });
+
+  it('defines the Live Artifacts external image policy', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+
+    expect(zhPrompt).toContain('优先使用内联 SVG/CSS/文字结构');
+    expect(zhPrompt).toContain('外链图片仅在');
+    expect(zhPrompt).toContain('https');
+    expect(zhPrompt).toContain('alt');
+    expect(zhPrompt).toContain('稳定宽高或比例');
+    expect(enPrompt).toContain('Prefer inline SVG/CSS/text structure');
+    expect(enPrompt).toContain('Use external images only when');
+    expect(enPrompt).toContain('https');
+    expect(enPrompt).toContain('alt');
+    expect(enPrompt).toContain('stable width/height or aspect ratio');
+  });
+
+  it('includes compact CSS overflow guardrails in Live Artifacts prompts', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+
+    expect(zhPrompt).toContain('box-sizing:border-box');
+    expect(zhPrompt).toContain('overflow-wrap:anywhere');
+    expect(zhPrompt).toContain('minmax(0,1fr)');
+    expect(zhPrompt).toContain('overflow-x:auto');
+    expect(zhPrompt).toContain('img/svg max-width:100%');
+    expect(enPrompt).toContain('box-sizing:border-box');
+    expect(enPrompt).toContain('overflow-wrap:anywhere');
+    expect(enPrompt).toContain('minmax(0,1fr)');
+    expect(enPrompt).toContain('overflow-x:auto');
+    expect(enPrompt).toContain('img/svg max-width:100%');
+  });
+
   it('allows schema-driven interaction artifacts when the model needs structured user input', async () => {
     const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
     const enPrompt = await loadLiveArtifactsSystemPrompt('en');

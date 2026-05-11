@@ -42,6 +42,7 @@ export interface MarkdownRendererProps {
   diagramLoadMode?: 'deferred' | 'eager';
   diagramRenderDelayMs?: number;
   interactiveMode?: 'enabled' | 'disabled';
+  contentPreNormalized?: boolean;
 }
 
 type MarkdownCodeProps = React.ComponentPropsWithoutRef<'code'> & {
@@ -81,6 +82,20 @@ const transformMarkdownTextSegments = (value: string, transform: (segment: strin
   splitMarkdownSegments(value)
     .map((segment) => (segment.type === 'literal' ? segment.value : transform(segment.value)))
     .join('');
+
+const SINGLE_LIVE_ARTIFACT_FENCE_REGEX = /^```(amc-live-artifact-html|amc-live-artifact-interaction)\n([\s\S]*?)\n?```\s*$/;
+
+const extractSingleLiveArtifactFence = (content: string): { language: string; code: string } | null => {
+  const match = content.trim().match(SINGLE_LIVE_ARTIFACT_FENCE_REGEX);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    language: match[1],
+    code: match[2] ?? '',
+  };
+};
 
 const isLikelyMathExpression = (value: string): boolean => {
   const trimmedValue = value.trim();
@@ -126,6 +141,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
     diagramLoadMode = 'deferred',
     diagramRenderDelayMs = 500,
     interactiveMode = 'enabled',
+    contentPreNormalized = false,
     remarkPlugins,
     rehypePlugins,
   }) => {
@@ -310,7 +326,9 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
     const processedContent = useMemo(() => {
       if (!content) return '';
 
-      const normalizedContent = normalizePreviewableMarkdownContent(content);
+      const normalizedContent = contentPreNormalized
+        ? content
+        : normalizePreviewableMarkdownContent(content, { isStreaming: isLoading });
       const contentWithNormalizedMath = transformMarkdownTextSegments(
         normalizedContent,
         normalizeEscapedMathDelimiters,
@@ -321,7 +339,27 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
       }
 
       return stripGemmaThoughtMarkup(contentWithNormalizedMath);
-    }, [content, hideThinkingInContext, isLoading, t]);
+    }, [content, contentPreNormalized, hideThinkingInContext, isLoading, t]);
+    const singleLiveArtifact = useMemo(() => extractSingleLiveArtifactFence(processedContent), [processedContent]);
+
+    if (isInteractive && singleLiveArtifact) {
+      return (
+        <div className={isLoading ? 'is-loading' : ''}>
+          <CodeBlock
+            cacheKey={messageId ? `${messageId}:direct-live-artifact` : undefined}
+            className={`language-${singleLiveArtifact.language}`}
+            onOpenHtmlPreview={onOpenHtmlPreview}
+            onLiveArtifactFollowUp={onLiveArtifactFollowUp}
+            expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+            showPreviewControls={isInteractive}
+            isLoading={isLoading}
+            onOpenSidePanel={onOpenSidePanel}
+          >
+            <code className={`language-${singleLiveArtifact.language}`}>{singleLiveArtifact.code}</code>
+          </CodeBlock>
+        </div>
+      );
+    }
 
     return (
       <div className={isLoading ? 'is-loading' : ''}>

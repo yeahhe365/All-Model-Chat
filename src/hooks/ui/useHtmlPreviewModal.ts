@@ -6,6 +6,8 @@ import { useFullscreen } from './useFullscreen';
 import {
   buildHtmlPreviewSrcDoc,
   createStaticPreviewSnapshotContainer,
+  HTML_PREVIEW_CLEAR_SELECTION_EVENT,
+  HTML_PREVIEW_DIAGNOSTIC_EVENT,
   HTML_PREVIEW_MESSAGE_CHANNEL,
 } from '../../utils/htmlPreview';
 import { useI18n } from '../../contexts/I18nContext';
@@ -13,6 +15,11 @@ import {
   normalizeLiveArtifactFollowupPayload,
   type LiveArtifactFollowupPayload,
 } from '../../utils/liveArtifactFollowup';
+import {
+  createRelayedLiveArtifactSelectionDetail,
+  dispatchLiveArtifactSelection,
+  LIVE_ARTIFACT_CLEAR_SELECTION_EVENT,
+} from '../text-selection/liveArtifactSelection';
 
 const ZOOM_STEP = 0.1;
 const MIN_ZOOM = 0.25;
@@ -33,7 +40,7 @@ type DocumentWithWebkitFullscreen = Document & {
 
 type HtmlPreviewBridgeMessage = {
   channel?: string;
-  event?: 'ready' | 'escape' | 'followup';
+  event?: 'ready' | 'escape' | 'followup' | 'selection' | 'diagnostic';
   payload?: unknown;
 };
 
@@ -56,6 +63,15 @@ export const useHtmlPreviewModal = ({
 
   const { document: targetDocument, window: targetWindow } = useWindowContext();
   const { enterFullscreen, exitFullscreen } = useFullscreen();
+  const postClearSelection = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      {
+        channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+        event: HTML_PREVIEW_CLEAR_SELECTION_EVENT,
+      },
+      '*',
+    );
+  }, [iframeRef]);
 
   useEffect(() => {
     if (isOpen) {
@@ -137,6 +153,14 @@ export const useHtmlPreviewModal = ({
         return;
       }
 
+      if (data.event === 'selection') {
+        dispatchLiveArtifactSelection(
+          targetWindow,
+          createRelayedLiveArtifactSelectionDetail(iframeRef.current, data.payload, scale),
+        );
+        return;
+      }
+
       if (data.event === 'followup') {
         const payload = normalizeLiveArtifactFollowupPayload(data.payload);
         if (!payload) {
@@ -145,6 +169,11 @@ export const useHtmlPreviewModal = ({
         }
 
         onLiveArtifactFollowUp?.(payload);
+        return;
+      }
+
+      if (data.event === HTML_PREVIEW_DIAGNOSTIC_EVENT) {
+        console.warn('Live Artifact preview diagnostic:', data.payload);
       }
     };
 
@@ -152,7 +181,16 @@ export const useHtmlPreviewModal = ({
     return () => {
       targetWindow.removeEventListener('message', handleMessage);
     };
-  }, [iframeRef, isOpen, isTrueFullscreen, onClose, onLiveArtifactFollowUp, targetWindow]);
+  }, [iframeRef, isOpen, isTrueFullscreen, onClose, onLiveArtifactFollowUp, scale, targetWindow]);
+
+  useEffect(() => {
+    const handleClearSelection = () => {
+      postClearSelection();
+    };
+
+    targetWindow.addEventListener(LIVE_ARTIFACT_CLEAR_SELECTION_EVENT, handleClearSelection);
+    return () => targetWindow.removeEventListener(LIVE_ARTIFACT_CLEAR_SELECTION_EVENT, handleClearSelection);
+  }, [postClearSelection, targetWindow]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

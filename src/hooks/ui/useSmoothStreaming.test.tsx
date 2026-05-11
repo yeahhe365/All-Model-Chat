@@ -122,4 +122,26 @@ describe('useSmoothStreaming', () => {
     expect(renderer.container.querySelector(OUTPUT_SELECTOR)?.textContent).toBe(tableMarkdown);
     expect(scheduledFrames.size).toBe(0);
   });
+
+  it('bypasses character-by-character animation for streaming Live Artifact html candidates', () => {
+    const partialArtifact = '<div style="display:grid"><strong>Streaming artifact';
+
+    act(() => {
+      renderer.root.render(<TestComponent text={partialArtifact} isStreaming />);
+    });
+
+    expect(renderer.container.querySelector(OUTPUT_SELECTOR)?.textContent).toBe(partialArtifact);
+    expect(scheduledFrames.size).toBe(0);
+  });
+
+  it('bypasses character-by-character animation for streaming fenced interaction artifacts', () => {
+    const partialInteraction = '```amc-live-artifact-interaction\n{"instruction":"Collect","schema":{';
+
+    act(() => {
+      renderer.root.render(<TestComponent text={partialInteraction} isStreaming />);
+    });
+
+    expect(renderer.container.querySelector(OUTPUT_SELECTOR)?.textContent).toBe(partialInteraction);
+    expect(scheduledFrames.size).toBe(0);
+  });
 });

@@ -54,7 +54,10 @@ export const MessageText: React.FC<MessageTextProps> = ({
   // Apply smooth streaming effect only when loading and for model messages
   const shouldSmooth = isLoading && message.role === 'model';
   const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
-  const markdownContent = useMemo(() => normalizePreviewableMarkdownContent(displayedContent), [displayedContent]);
+  const markdownContent = useMemo(
+    () => normalizePreviewableMarkdownContent(displayedContent, { isStreaming: shouldSmooth }),
+    [displayedContent, shouldSmooth],
+  );
 
   // Auto Fullscreen HTML Logic
   const prevIsLoadingRef = useRef(isLoading);
@@ -122,6 +125,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
           <LazyMarkdownRenderer
             messageId={message.id}
             content={markdownContent}
+            contentPreNormalized={true}
             isLoading={isLoading}
             onImageClick={onImageClick}
             onOpenHtmlPreview={onOpenHtmlPreview}

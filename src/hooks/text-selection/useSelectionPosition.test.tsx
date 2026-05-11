@@ -485,6 +485,44 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
+  it('reads text selection relayed from a Live Artifact iframe', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const toolbarRef = createToolbarRef();
+    const { result, unmount } = renderHook(() =>
+      useSelectionPosition({
+        containerRef: host,
+        isAudioActive: false,
+        toolbarRef,
+      }),
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('amc-live-artifact-selection', {
+          detail: {
+            text: 'artifact text',
+            copyText: 'artifact text',
+            rect: {
+              top: 160,
+              left: 240,
+              width: 80,
+              height: 20,
+              bottom: 180,
+            },
+          },
+        }),
+      );
+    });
+
+    expect(result.current.selectedText).toBe('artifact text');
+    expect(result.current.selectedCopyText).toBe('artifact text');
+    expect(result.current.position).toEqual({ top: 110, left: 280 });
+
+    unmount();
+  });
+
   it('re-clamps the toolbar position after the toolbar ref becomes available', () => {
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
