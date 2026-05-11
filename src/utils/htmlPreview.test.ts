@@ -39,6 +39,45 @@ describe('htmlPreview utilities', () => {
     expect(srcDoc).toContain('mergeFollowupState');
   });
 
+  it('treats a plain data-amc-followup value as the follow-up instruction', () => {
+    const messages: unknown[] = [];
+    const srcDoc = buildHtmlPreviewSrcDoc(
+      `<section><button data-amc-followup="生成参考文献">生成参考文献</button></section>`,
+    );
+    const scriptContent = srcDoc.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+    expect(scriptContent).toBeDefined();
+
+    const originalPostMessage = window.postMessage;
+    const originalRequestAnimationFrame = window.requestAnimationFrame;
+    const originalCancelAnimationFrame = window.cancelAnimationFrame;
+
+    window.postMessage = ((message: unknown) => {
+      messages.push(message);
+    }) as Window['postMessage'];
+    window.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    }) as Window['requestAnimationFrame'];
+    window.cancelAnimationFrame = (() => {}) as Window['cancelAnimationFrame'];
+
+    try {
+      document.body.innerHTML = '<section><button data-amc-followup="生成参考文献">生成参考文献</button></section>';
+      window.eval(scriptContent!);
+      document.querySelector('button')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      expect(messages).toContainEqual({
+        channel: HTML_PREVIEW_MESSAGE_CHANNEL,
+        event: 'followup',
+        payload: { instruction: '生成参考文献' },
+      });
+    } finally {
+      document.body.innerHTML = '';
+      window.postMessage = originalPostMessage;
+      window.requestAnimationFrame = originalRequestAnimationFrame;
+      window.cancelAnimationFrame = originalCancelAnimationFrame;
+    }
+  });
+
   it('pre-renders TeX math delimiters inside preview HTML with KaTeX styles', () => {
     const srcDoc = buildHtmlPreviewSrcDoc(
       '<section><p>Action chunk $a_{t:t+H-1}$</p><p>Loss $$L = ||\\epsilon - \\epsilon_\\theta(x_t,t)||^2$$</p></section>',
@@ -66,6 +105,16 @@ describe('htmlPreview utilities', () => {
 
     expect(srcDoc).not.toContain('class="katex"');
     expect(srcDoc).toContain('Budget $20 and $30 this week.');
+  });
+
+  it('renders asymptotic complexity formulas in preview HTML', () => {
+    const srcDoc = buildHtmlPreviewSrcDoc('<section><p>AR $O(L)$</p><p>NAR $O(1)$</p></section>');
+
+    expect(srcDoc).toContain('class="katex"');
+    expect(srcDoc).toContain('O(L)');
+    expect(srcDoc).toContain('O(1)');
+    expect(srcDoc).not.toContain('$O(L)$');
+    expect(srcDoc).not.toContain('$O(1)$');
   });
 
   it('creates a static screenshot container without scripts or inline event handlers', () => {

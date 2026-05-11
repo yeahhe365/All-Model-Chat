@@ -41,6 +41,8 @@ const stringifyState = (state: unknown): string | null => {
   }
 };
 
+export const isLiveArtifactFollowupStateWithinLimit = (state: unknown): boolean => stringifyState(state) !== null;
+
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 };
@@ -103,10 +105,7 @@ export const mergeLiveArtifactFollowupState = (
   });
 };
 
-export const formatLiveArtifactFollowupPrompt = (
-  payload: unknown,
-  language: PromptLanguage = 'zh',
-): string | null => {
+export const formatLiveArtifactFollowupPrompt = (payload: unknown, language: PromptLanguage = 'zh'): string | null => {
   const normalizedPayload = normalizeLiveArtifactFollowupPayload(payload);
   if (!normalizedPayload) {
     return null;

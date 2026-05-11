@@ -89,7 +89,8 @@ The project currently focuses on one main application shape: a **Vite + React SP
 ### Live Artifacts
 
 - Detects code blocks and renders interactive HTML previews.
-- Supports ECharts, Mermaid, and Graphviz diagrams.
+- Supports safe inline HTML/SVG, form controls, and follow-up interactions.
+- Supports Mermaid and Graphviz diagrams.
 - Includes an automatic Live Artifacts generation mode with configurable trigger models, prompt versions, and custom prompts.
 
 ### Advanced File Handling
@@ -172,12 +173,14 @@ VITE_OPENAI_API_KEY=your_openai_compatible_key_here
 ```
 
 To use OpenAI Compatible mode:
+
 1. Open **Settings -> API Configuration** and switch the API mode to **OpenAI Compatible**.
 2. Enter an OpenAI-compatible API key, or preload `VITE_OPENAI_API_KEY` in `.env.local`.
 3. Set the OpenAI-compatible Base URL, for example `https://api.openai.com/v1`.
 4. Open **Settings -> Models** and choose or edit the dedicated model list for this mode.
 
 Example Base URLs:
+
 - OpenAI: `https://api.openai.com/v1`
 - Gemini OpenAI-compatible endpoint: `https://generativelanguage.googleapis.com/v1beta/openai`
 - Any other compatible provider: use the `/v1` root or equivalent root that serves `chat/completions`
@@ -212,16 +215,16 @@ Notes:
 
 ### Runtime Configuration and Environment Variables
 
-| Variable | Purpose | Public | Docker default |
-| :--- | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | Optional server-managed Gemini API key; when set, it takes precedence over browser settings keys | Server only | Empty |
-| `PORT` | Port used by the API service | Server only | `3001` |
-| `GEMINI_API_BASE` | Upstream Gemini API base URL | Server only | `https://generativelanguage.googleapis.com` |
-| `ALLOWED_ORIGINS` | Comma-separated CORS allowlist for cross-origin deployments | Server only | Empty |
-| `RUNTIME_SERVER_MANAGED_API` | Enables server-managed API mode by default in the frontend | Public runtime config | `false` |
-| `RUNTIME_USE_CUSTOM_API_CONFIG` | Enables custom API configuration by default | Public runtime config | `true` |
-| `RUNTIME_USE_API_PROXY` | Enables API proxy mode by default | Public runtime config | `true` |
-| `RUNTIME_API_PROXY_URL` | Default Gemini proxy URL for the frontend | Public runtime config | `/api/gemini` |
+| Variable                        | Purpose                                                                                          | Public                | Docker default                              |
+| :------------------------------ | :----------------------------------------------------------------------------------------------- | :-------------------- | :------------------------------------------ |
+| `GEMINI_API_KEY`                | Optional server-managed Gemini API key; when set, it takes precedence over browser settings keys | Server only           | Empty                                       |
+| `PORT`                          | Port used by the API service                                                                     | Server only           | `3001`                                      |
+| `GEMINI_API_BASE`               | Upstream Gemini API base URL                                                                     | Server only           | `https://generativelanguage.googleapis.com` |
+| `ALLOWED_ORIGINS`               | Comma-separated CORS allowlist for cross-origin deployments                                      | Server only           | Empty                                       |
+| `RUNTIME_SERVER_MANAGED_API`    | Enables server-managed API mode by default in the frontend                                       | Public runtime config | `false`                                     |
+| `RUNTIME_USE_CUSTOM_API_CONFIG` | Enables custom API configuration by default                                                      | Public runtime config | `true`                                      |
+| `RUNTIME_USE_API_PROXY`         | Enables API proxy mode by default                                                                | Public runtime config | `true`                                      |
+| `RUNTIME_API_PROXY_URL`         | Default Gemini proxy URL for the frontend                                                        | Public runtime config | `/api/gemini`                               |
 
 The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. The public/runtime-config.js template is used for static builds and keeps custom API configuration and proxy mode disabled by default; Docker overwrites it through `docker/web-entrypoint.sh` using the defaults above.
 
@@ -257,6 +260,7 @@ RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
 4. Set `GEMINI_API_KEY` in the backend environment if you want server-managed credentials for regular Gemini requests. For BYOK, you can omit it. For cross-origin deployments, optionally set `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`. Live API does not use a standalone API token endpoint; it connects directly from the browser.
 
 Additional notes:
+
 - `server/` currently serves the Gemini-native proxy path. OpenAI Compatible mode does not use that Node API by default.
 - If you want OpenAI Compatible traffic to use a self-hosted gateway, set that gateway's compatible Base URL in the frontend settings directly.
 
@@ -321,18 +325,18 @@ Optional variable:
 
 ## Architecture
 
-| Layer | Stack |
-| :--- | :--- |
-| Core framework | React 18 + TypeScript 5.5 + Vite 7 |
-| Styling | Tailwind CSS 4 + CSS variable based theme system |
-| Persistence | Native IndexedDB wrapper with Web Locks for cross-tab write safety |
-| Gemini SDK | `@google/genai` 1.50+ for streaming, non-streaming, file upload, image generation, TTS, and transcription |
-| Audio | AudioWorklet API plus browser Worker based audio preprocessing and compression |
-| Rendering | React-Markdown + KaTeX + Highlight.js + Mermaid + Graphviz |
-| Python sandbox | Pyodide (WASM) in a Web Worker, with common packages preloaded and extra packages installed on demand |
-| API proxy | Gemini proxy through `@google/genai` `httpOptions.baseUrl` |
-| PWA | Web App Manifest + install/update event handling |
-| Deployment | Vite static build, Docker Compose (`web + api`), or Cloudflare Pages + standalone API |
+| Layer          | Stack                                                                                                     |
+| :------------- | :-------------------------------------------------------------------------------------------------------- |
+| Core framework | React 18 + TypeScript 5.5 + Vite 7                                                                        |
+| Styling        | Tailwind CSS 4 + CSS variable based theme system                                                          |
+| Persistence    | Native IndexedDB wrapper with Web Locks for cross-tab write safety                                        |
+| Gemini SDK     | `@google/genai` 1.50+ for streaming, non-streaming, file upload, image generation, TTS, and transcription |
+| Audio          | AudioWorklet API plus browser Worker based audio preprocessing and compression                            |
+| Rendering      | React-Markdown + KaTeX + Highlight.js + Mermaid + Graphviz                                                |
+| Python sandbox | Pyodide (WASM) in a Web Worker, with common packages preloaded and extra packages installed on demand     |
+| API proxy      | Gemini proxy through `@google/genai` `httpOptions.baseUrl`                                                |
+| PWA            | Web App Manifest + install/update event handling                                                          |
+| Deployment     | Vite static build, Docker Compose (`web + api`), or Cloudflare Pages + standalone API                     |
 
 When using server-managed mode for regular Gemini API requests in production, the frontend calls:
 
@@ -385,14 +389,14 @@ AMC-WebUI/
 
 OpenAI Compatible mode uses a separate model list that you can manage manually or fetch from a compatible endpoint. The table below lists the built-in Gemini Native defaults.
 
-| Type | Models |
-| :--- | :--- |
-| Gemini 3.x | `gemini-3-flash-preview`, `gemini-3.1-flash-live-preview`, `gemini-3.1-flash-lite-preview`, `gemini-3.1-pro-preview` |
-| Robotics | `gemini-robotics-er-1.6-preview` |
-| Gemma 4 | `gemma-4-31b-it`, `gemma-4-26b-a4b-it` |
-| Imagen 4.0 | `imagen-4.0-fast-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-ultra-generate-001` |
-| Image generation | `gemini-2.5-flash-image`, `gemini-3-pro-image-preview`, `gemini-3.1-flash-image-preview` |
-| TTS | `gemini-3.1-flash-tts-preview` with 30 voices |
+| Type             | Models                                                                                                               |
+| :--------------- | :------------------------------------------------------------------------------------------------------------------- |
+| Gemini 3.x       | `gemini-3-flash-preview`, `gemini-3.1-flash-live-preview`, `gemini-3.1-flash-lite-preview`, `gemini-3.1-pro-preview` |
+| Robotics         | `gemini-robotics-er-1.6-preview`                                                                                     |
+| Gemma 4          | `gemma-4-31b-it`, `gemma-4-26b-a4b-it`                                                                               |
+| Imagen 4.0       | `imagen-4.0-fast-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-ultra-generate-001`                           |
+| Image generation | `gemini-2.5-flash-image`, `gemini-3-pro-image-preview`, `gemini-3.1-flash-image-preview`                             |
+| TTS              | `gemini-3.1-flash-tts-preview` with 30 voices                                                                        |
 
 ---
 

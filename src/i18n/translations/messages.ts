@@ -52,6 +52,19 @@ export const messagesTranslations = {
     zh: '请使用 Live Artifacts，将提供的信息整理成结构化、响应式的 HTML 产物。请保留所有重要信息：',
   },
   suggestion_html_short: { en: 'Create a live HTML artifact.', zh: '创建实时 HTML 产物。' },
+  liveArtifactInteraction_continue: { en: 'Continue', zh: '继续' },
+  liveArtifactInteraction_required: { en: 'This field is required.', zh: '此字段为必填项。' },
+  liveArtifactInteraction_invalidNumber: { en: 'Enter a valid number.', zh: '请输入有效数字。' },
+  liveArtifactInteraction_integer: { en: 'Enter a whole number.', zh: '请输入整数。' },
+  liveArtifactInteraction_range: {
+    en: 'Enter a value within the allowed range.',
+    zh: '请输入允许范围内的值。',
+  },
+  liveArtifactInteraction_enum: { en: 'Choose an allowed option.', zh: '请选择允许的选项。' },
+  liveArtifactInteraction_stateTooLarge: {
+    en: 'The submitted interaction state is too large.',
+    zh: '提交的交互状态过大。',
+  },
 
   welcome_title: { en: 'Welcome to AMC WebUI', zh: '欢迎使用 AMC WebUI' },
   welcome_p1: {

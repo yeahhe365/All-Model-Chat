@@ -9,8 +9,10 @@ import { extractTextFromNode } from '../../../utils/uiUtils';
 import { isImageMimeType } from '../../../utils/fileTypeUtils';
 import { FileDisplay } from '../FileDisplay';
 import { useI18n } from '../../../contexts/I18nContext';
-import { isLikelyHtml, isLiveArtifactLanguage } from '../../../utils/codeUtils';
+import { isLikelyHtml, isLiveArtifactInteractionLanguage, isLiveArtifactLanguage } from '../../../utils/codeUtils';
 import type { LiveArtifactFollowupPayload } from '../../../utils/liveArtifactFollowup';
+import { parseLiveArtifactInteractionSpec } from '../../../utils/liveArtifactInteraction';
+import { LiveArtifactInteractionFrame } from './LiveArtifactInteractionFrame';
 
 interface CodeBlockProps {
   children: React.ReactNode;
@@ -81,12 +83,22 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
   }, [files]);
 
   const displayInlineImage = image && !generatedFiles.some((file) => isImageMimeType(file.type));
-  const showPreviewControls = (props.showPreviewControls ?? true) && showPreview;
+  const isInteractive = props.showPreviewControls ?? true;
+  const showPreviewControls = isInteractive && showPreview;
+  const interactionSpec = useMemo(
+    () =>
+      isLiveArtifactInteractionLanguage(sourceLanguage) ? parseLiveArtifactInteractionSpec(resolvedCodeText) : null,
+    [resolvedCodeText, sourceLanguage],
+  );
   const showInlineHtmlPreview =
     showPreviewControls &&
     isLiveArtifactLanguage(sourceLanguage) &&
     previewMarkupType === 'html' &&
     isLikelyHtml(resolvedCodeText);
+
+  if (isInteractive && interactionSpec) {
+    return <LiveArtifactInteractionFrame spec={interactionSpec} onFollowUp={props.onLiveArtifactFollowUp} />;
+  }
 
   if (showInlineHtmlPreview) {
     return (

@@ -63,7 +63,8 @@ export const useAppPromptModes = ({
   const [pendingLiveArtifactsPromptActivation, setPendingLiveArtifactsPromptActivation] =
     useState<PendingLiveArtifactsPromptActivation | null>(null);
   const [liveArtifactsPromptBusySessionId, setLiveArtifactsPromptBusySessionId] = useState<string | null>(null);
-  const [liveArtifactsPromptOverrideState, setLiveArtifactsPromptOverrideState] = useState<LiveArtifactsPromptOverrideState | null>(null);
+  const [liveArtifactsPromptOverrideState, setLiveArtifactsPromptOverrideState] =
+    useState<LiveArtifactsPromptOverrideState | null>(null);
   const liveArtifactsPromptMode = appSettings.liveArtifactsPromptMode ?? 'inline';
   const configuredLiveArtifactsSystemPrompt = appSettings.liveArtifactsSystemPrompt?.trim() ?? '';
   const isConfiguredLiveArtifactsSystemInstruction = useCallback(
@@ -208,7 +209,9 @@ export const useAppPromptModes = ({
       }
     } catch (error) {
       setLiveArtifactsPromptOverrideState((current) =>
-        current?.targetSessionId === targetSessionId ? { active: isCurrentlyLiveArtifactsPrompt, targetSessionId } : current,
+        current?.targetSessionId === targetSessionId
+          ? { active: isCurrentlyLiveArtifactsPrompt, targetSessionId }
+          : current,
       );
       setLiveArtifactsPromptBusySessionId((current) => (current === targetSessionId ? null : current));
       throw error;

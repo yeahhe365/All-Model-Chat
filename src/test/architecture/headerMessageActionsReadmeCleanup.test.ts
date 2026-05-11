@@ -29,4 +29,19 @@ describe('header, message actions, and readme cleanup guards', () => {
     expect(source).not.toContain('Tailwind CSS 3.4 (CDN)');
     expect(source).not.toContain('HTML import map 零构建');
   });
+
+  it('does not advertise a dedicated ECharts renderer that is not implemented', () => {
+    const zhReadme = readProjectFile('README.md');
+    const enReadme = readProjectFile('README.en.md');
+
+    expect(zhReadme).not.toContain('ECharts');
+    expect(enReadme).not.toContain('ECharts');
+  });
+
+  it('keeps local Live Artifact demo artifacts out of git status', () => {
+    const gitignore = readProjectFile('.gitignore');
+
+    expect(gitignore).toContain('.playwright-visible-demo-profile/');
+    expect(gitignore).toContain('tmp-live-artifact-demo/');
+  });
 });

@@ -187,7 +187,12 @@ describe('certain redundancy cleanup guards', () => {
     expect(mainSenderSource).toContain('useMessageLifecycle');
     expect(mainSenderSource).toMatch(/const \{ runMessageLifecycle \} = useMessageLifecycle\(/);
 
-    for (const hookName of ['useStandardChat', 'useLiveArtifactsGenerator', 'useTtsImagenSender', 'useImageEditSender']) {
+    for (const hookName of [
+      'useStandardChat',
+      'useLiveArtifactsGenerator',
+      'useTtsImagenSender',
+      'useImageEditSender',
+    ]) {
       expect(mainSenderSource).not.toContain(hookName);
       expect(fs.existsSync(path.join(projectRoot, `src/features/message-sender/${hookName}.ts`))).toBe(false);
     }

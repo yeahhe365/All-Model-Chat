@@ -45,7 +45,9 @@ export const useSuggestions = ({
       updateMessageInSession(sessionId, messageId, { isGeneratingSuggestions: true });
 
       // Sticky Key Logic: Prefer key used in the last turn
-      const stickyKey = isOpenAICompatibleApiActive(appSettings) ? undefined : sessionKeyMapRef?.current?.get(sessionId);
+      const stickyKey = isOpenAICompatibleApiActive(appSettings)
+        ? undefined
+        : sessionKeyMapRef?.current?.get(sessionId);
       let keyToUse: string;
 
       if (stickyKey) {

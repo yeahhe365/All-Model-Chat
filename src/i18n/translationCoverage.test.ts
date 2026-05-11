@@ -331,6 +331,10 @@ describe('translation coverage for protected UI surfaces', () => {
         ],
       },
       {
+        file: 'src/components/message/blocks/LiveArtifactInteractionFrame.tsx',
+        snippets: ['This field is required.', "'Continue'"],
+      },
+      {
         file: 'src/components/message/code-block/InlineCode.tsx',
         snippets: ['Click to copy', 'Copied!'],
       },

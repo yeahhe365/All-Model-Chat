@@ -38,7 +38,9 @@ export const useAutoTitling = ({
       logService.info(`Auto-generating title for session ${sessionId}`);
 
       // Sticky Key Logic: Prefer key used in the last turn if available
-      const stickyKey = isOpenAICompatibleApiActive(appSettings) ? undefined : sessionKeyMapRef?.current?.get(sessionId);
+      const stickyKey = isOpenAICompatibleApiActive(appSettings)
+        ? undefined
+        : sessionKeyMapRef?.current?.get(sessionId);
 
       let keyToUse: string;
       if (stickyKey) {

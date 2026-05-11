@@ -1,4 +1,4 @@
-import { useCallback, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import type { UploadedFile } from '../../types';
 import type { ChatSettings } from '../../types/settings';
 import { areFilesStillProcessing, buildPendingChatInputSubmission } from './pendingSubmissionUtils';
@@ -67,6 +67,7 @@ export const useChatInputSubmission = ({
   onAddUserMessage,
   onSendMessage,
 }: UseChatInputSubmissionParams) => {
+  const sendAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     inputText,
     quotes,
@@ -92,6 +93,17 @@ export const useChatInputSubmission = ({
     onAddUserMessage,
     onSendMessage,
   });
+
+  const clearSendAnimationTimer = useCallback(() => {
+    if (sendAnimationTimeoutRef.current === null) {
+      return;
+    }
+
+    clearTimeout(sendAnimationTimeoutRef.current);
+    sendAnimationTimeoutRef.current = null;
+  }, []);
+
+  useEffect(() => clearSendAnimationTimer, [clearSendAnimationTimer]);
 
   const completeEditSubmission = useCallback(
     (messageId: string, content: string) => {
@@ -130,7 +142,11 @@ export const useChatInputSubmission = ({
 
       onMessageSent();
       startSendAnimation();
-      setTimeout(() => stopSendAnimation(), 400);
+      clearSendAnimationTimer();
+      sendAnimationTimeoutRef.current = setTimeout(() => {
+        sendAnimationTimeoutRef.current = null;
+        stopSendAnimation();
+      }, 400);
 
       if (!preserveComposer && isFullscreen) {
         exitFullscreen();
@@ -138,6 +154,7 @@ export const useChatInputSubmission = ({
     },
     [
       clearCurrentDraft,
+      clearSendAnimationTimer,
       exitFullscreen,
       handleSmartSendMessage,
       isFullscreen,

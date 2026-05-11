@@ -15,13 +15,7 @@ const scenario: SavedScenario = {
 describe('ScenarioItem', () => {
   it('localizes the message count in Chinese', () => {
     const { container } = renderWithProviders(
-      <ScenarioItem
-        scenario={scenario}
-        isSystem={false}
-        onLoad={vi.fn()}
-        onDuplicate={vi.fn()}
-        onExport={vi.fn()}
-      />,
+      <ScenarioItem scenario={scenario} isSystem={false} onLoad={vi.fn()} onDuplicate={vi.fn()} onExport={vi.fn()} />,
       { language: 'zh' },
     );
 

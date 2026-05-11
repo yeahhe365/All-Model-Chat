@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   extractPreviewableCodeBlock,
   getCodeBlockPreviewType,
@@ -54,9 +54,7 @@ describe('codeUtils preview detection', () => {
   it('wraps bare standalone html documents as internal artifact code blocks', () => {
     const document = '<!DOCTYPE html><html><head><style>body{color:red}</style></head><body>Hello</body></html>';
 
-    expect(wrapBarePreviewableDocument(`\n${document}\n`)).toBe(
-      `\`\`\`amc-live-artifact-html\n${document}\n\`\`\``,
-    );
+    expect(wrapBarePreviewableDocument(`\n${document}\n`)).toBe(`\`\`\`amc-live-artifact-html\n${document}\n\`\`\``);
     expect(extractPreviewableCodeBlock(document)).toEqual({
       content: document,
       markupType: 'html',
@@ -157,5 +155,64 @@ describe('codeUtils preview detection', () => {
     expect(normalizePreviewableMarkdownContent(`\`\`\`html\n${document}\n\`\`\``)).toBe(
       `\`\`\`html\n${document}\n\`\`\``,
     );
+  });
+
+  it('wraps bare Live Artifact interaction JSON in the dedicated interaction fence', () => {
+    const interaction = JSON.stringify(
+      {
+        instruction: 'Continue with these choices.',
+        schema: {
+          type: 'object',
+          properties: {
+            tone: { type: 'string', enum: ['brief', 'detailed'] },
+          },
+        },
+      },
+      null,
+      2,
+    );
+
+    expect(normalizePreviewableMarkdownContent(interaction)).toBe(
+      `\`\`\`amc-live-artifact-interaction\n${interaction}\n\`\`\``,
+    );
+  });
+
+  it('does not treat generic JSON schema examples as Live Artifact interactions', () => {
+    const schemaExample = JSON.stringify(
+      {
+        instruction: 'This is only an API example.',
+        schema: {
+          type: 'object',
+          properties: {
+            topic: { title: 'Topic' },
+          },
+        },
+      },
+      null,
+      2,
+    );
+
+    expect(normalizePreviewableMarkdownContent(schemaExample)).toBe(schemaExample);
+  });
+
+  it('skips interaction JSON parsing when content cannot be an interaction object', async () => {
+    vi.resetModules();
+    const parseLiveArtifactInteractionSpec = vi.fn(() => {
+      throw new Error('Unexpected interaction parse');
+    });
+    vi.doMock('./liveArtifactInteraction', () => ({ parseLiveArtifactInteractionSpec }));
+
+    try {
+      const { normalizePreviewableMarkdownContent: isolatedNormalizePreviewableMarkdownContent } =
+        await import('./codeUtils');
+
+      expect(isolatedNormalizePreviewableMarkdownContent('plain markdown without json')).toBe(
+        'plain markdown without json',
+      );
+      expect(parseLiveArtifactInteractionSpec).not.toHaveBeenCalled();
+    } finally {
+      vi.doUnmock('./liveArtifactInteraction');
+      vi.resetModules();
+    }
   });
 });

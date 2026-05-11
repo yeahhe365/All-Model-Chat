@@ -1,6 +1,9 @@
+import { parseLiveArtifactInteractionSpec } from './liveArtifactInteraction';
+
 type PreviewMarkupType = 'html' | 'svg';
 
-export const LIVE_ARTIFACT_HTML_LANGUAGE = 'amc-live-artifact-html';
+const LIVE_ARTIFACT_HTML_LANGUAGE = 'amc-live-artifact-html';
+export const LIVE_ARTIFACT_INTERACTION_LANGUAGE = 'amc-live-artifact-interaction';
 const HTML_LANGUAGE_ALIASES = new Set(['html', 'htm']);
 const SVG_LANGUAGE_ALIASES = new Set(['svg']);
 const HTML_DOCUMENT_REGEX = /^(?:<!doctype\s+html\b[^>]*>\s*)?<html\b[\s\S]*<\/html>$/i;
@@ -71,6 +74,24 @@ const normalizeLanguage = (language?: string): string => {
 
 export const isLiveArtifactLanguage = (language?: string): boolean => {
   return normalizeLanguage(language) === LIVE_ARTIFACT_HTML_LANGUAGE;
+};
+
+export const isLiveArtifactInteractionLanguage = (language?: string): boolean => {
+  return normalizeLanguage(language) === LIVE_ARTIFACT_INTERACTION_LANGUAGE;
+};
+
+export const isLikelyLiveArtifactInteractionJson = (textContent: string): boolean => {
+  const normalizedContent = textContent.trim();
+  if (
+    !normalizedContent ||
+    !normalizedContent.startsWith('{') ||
+    !normalizedContent.includes('"instruction"') ||
+    !normalizedContent.includes('"schema"')
+  ) {
+    return false;
+  }
+
+  return Boolean(parseLiveArtifactInteractionSpec(normalizedContent));
 };
 
 const getPreviewMarkupType = (textContent: string): PreviewMarkupType | null => {
@@ -215,6 +236,16 @@ const wrapBarePreviewableArtifact = (markdownContent: string): string => {
   return `\`\`\`${artifactLanguage}\n${content}\n\`\`\``;
 };
 
+const wrapBareLiveArtifactInteraction = (markdownContent: string): string => {
+  const content = markdownContent.trim();
+
+  if (!isLikelyLiveArtifactInteractionJson(content)) {
+    return markdownContent;
+  }
+
+  return `\`\`\`${LIVE_ARTIFACT_INTERACTION_LANGUAGE}\n${content}\n\`\`\``;
+};
+
 const unwrapMislabeledHtmlFragmentCodeBlocks = (markdownContent: string): string => {
   if (!markdownContent) return markdownContent;
 
@@ -258,8 +289,10 @@ const normalizeStandaloneRawHtmlFragment = (markdownContent: string): string => 
 };
 
 export const normalizePreviewableMarkdownContent = (markdownContent: string): string => {
-  return wrapBarePreviewableArtifact(
-    normalizeStandaloneRawHtmlFragment(unwrapMislabeledHtmlFragmentCodeBlocks(markdownContent)),
+  return wrapBareLiveArtifactInteraction(
+    wrapBarePreviewableArtifact(
+      normalizeStandaloneRawHtmlFragment(unwrapMislabeledHtmlFragmentCodeBlocks(markdownContent)),
+    ),
   );
 };
 

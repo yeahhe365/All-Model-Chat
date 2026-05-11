@@ -69,12 +69,7 @@ const cacheFrameHeight = (heightCacheKey: string, height: number) => {
   }
 };
 
-export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({
-  html,
-  cacheKey,
-  isLoading = false,
-  onFollowUp,
-}) => {
+export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, cacheKey, isLoading = false, onFollowUp }) => {
   const { t } = useI18n();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const contentHeightCacheKey = useMemo(() => getContentFrameHeightCacheKey(html, cacheKey), [cacheKey, html]);

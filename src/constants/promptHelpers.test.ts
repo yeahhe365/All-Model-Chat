@@ -157,6 +157,37 @@ describe('promptHelpers', () => {
     );
   });
 
+  it('allows schema-driven interaction artifacts when the model needs structured user input', async () => {
+    const zhPrompt = await loadLiveArtifactsSystemPrompt('zh');
+    const enPrompt = await loadLiveArtifactsSystemPrompt('en');
+
+    expect(zhPrompt).toContain('amc-live-artifact-interaction');
+    expect(zhPrompt).toContain('```amc-live-artifact-interaction');
+    expect(zhPrompt).toContain('"schema"');
+    expect(zhPrompt).toContain('"instruction"');
+    expect(enPrompt).toContain('amc-live-artifact-interaction');
+    expect(enPrompt).toContain('```amc-live-artifact-interaction');
+    expect(enPrompt).toContain('"schema"');
+    expect(enPrompt).toContain('"instruction"');
+  });
+
+  it('keeps interaction artifact fencing instructions in every built-in Live Artifacts prompt mode', async () => {
+    const prompts = await Promise.all([
+      loadLiveArtifactsSystemPrompt('zh', 'inline'),
+      loadLiveArtifactsSystemPrompt('zh', 'full'),
+      loadLiveArtifactsSystemPrompt('zh', 'fullHtml'),
+      loadLiveArtifactsSystemPrompt('en', 'inline'),
+      loadLiveArtifactsSystemPrompt('en', 'full'),
+      loadLiveArtifactsSystemPrompt('en', 'fullHtml'),
+    ]);
+
+    for (const prompt of prompts) {
+      expect(prompt).toContain('```amc-live-artifact-interaction');
+      expect(prompt).toContain('"instruction"');
+      expect(prompt).toContain('"schema"');
+    }
+  });
+
   it('tells Live Artifacts to preserve TeX formula delimiters outside code tags', async () => {
     const zhPrompt = await loadLiveArtifactsSystemPrompt('zh', 'full');
     const zhInlinePrompt = await loadLiveArtifactsSystemPrompt('zh');

@@ -122,7 +122,10 @@ const ChatHeaderRuntimeContext = createContext<ChatHeaderRuntimeValue | null>(nu
 const ChatMessageListRuntimeContext = createContext<ChatMessageListRuntimeValue | null>(null);
 const ChatInputRuntimeContext = createContext<ChatInputRuntimeValue | null>(null);
 
-const buildHeaderModels = (appSettings: AppViewModel['appSettings'], apiModels: AppViewModel['chatState']['apiModels']) => {
+const buildHeaderModels = (
+  appSettings: AppViewModel['appSettings'],
+  apiModels: AppViewModel['chatState']['apiModels'],
+) => {
   const seenIds = new Set<string>();
   const geminiModels = apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));
   const openAICompatibleModels =

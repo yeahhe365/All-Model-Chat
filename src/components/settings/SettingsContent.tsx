@@ -76,14 +76,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   const animClass = 'animate-in fade-in duration-200 ease-out';
   const isOpenAICompatibleMode = isOpenAICompatibleApiActive(currentSettings);
   const effectiveModelId = currentSettings.modelId;
-  const effectiveAvailableModels = React.useMemo(
-    () => buildGeminiModelList(availableModels),
-    [availableModels],
-  );
-  const effectiveDefaultModels = React.useMemo(
-    () => buildGeminiModelList(getDefaultModelOptions()),
-    [],
-  );
+  const effectiveAvailableModels = React.useMemo(() => buildGeminiModelList(availableModels), [availableModels]);
+  const effectiveDefaultModels = React.useMemo(() => buildGeminiModelList(getDefaultModelOptions()), []);
 
   const handleBatchUpdate = (updates: Partial<AppSettings>) => {
     (Object.entries(updates) as Array<[keyof AppSettings, AppSettings[keyof AppSettings]]>).forEach(([key, value]) => {

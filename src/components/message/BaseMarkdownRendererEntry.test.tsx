@@ -1,7 +1,9 @@
 import { act } from 'react';
+import { fireEvent } from '@testing-library/react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { BaseMarkdownRendererEntry } from './BaseMarkdownRendererEntry';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 describe('BaseMarkdownRendererEntry', () => {
   const renderer = setupTestRenderer();
@@ -587,7 +589,8 @@ describe('BaseMarkdownRendererEntry', () => {
   });
 
   it('keeps explicit html code blocks in code block chrome instead of artifact frames', () => {
-    const document = '<!DOCTYPE html><html><head><title>Demo Artifact</title></head><body><main>Hello</main></body></html>';
+    const document =
+      '<!DOCTYPE html><html><head><title>Demo Artifact</title></head><body><main>Hello</main></body></html>';
 
     act(() => {
       renderer.root.render(
@@ -671,7 +674,9 @@ describe('BaseMarkdownRendererEntry', () => {
     act(() => {
       renderer.root.render(
         <BaseMarkdownRendererEntry
-          content={'<section><button data-amc-followup="{&quot;instruction&quot;:&quot;Continue&quot;}">Continue</button></section>'}
+          content={
+            '<section><button data-amc-followup="{&quot;instruction&quot;:&quot;Continue&quot;}">Continue</button></section>'
+          }
           isLoading={false}
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -718,6 +723,245 @@ describe('BaseMarkdownRendererEntry', () => {
     });
 
     expect(handleFollowUp).toHaveBeenCalledWith({ instruction: 'Continue', state: { selected: 'B' } });
+  });
+
+  it('renders schema-driven Live Artifact interaction forms and sends structured state', () => {
+    const handleFollowUp = vi.fn();
+    const interaction = {
+      version: 1,
+      title: '论文写作参数',
+      instruction: '根据这些论文参数继续写作。',
+      submitLabel: '开始写作',
+      schema: {
+        type: 'object',
+        required: ['topic'],
+        properties: {
+          topic: {
+            type: 'string',
+            title: '论文主题',
+            description: '用一句话说明你想写什么。',
+          },
+          citationStyle: {
+            type: 'string',
+            title: '引用格式',
+            enum: ['APA', 'MLA', 'GB/T 7714'],
+            default: 'APA',
+          },
+          includeOutline: {
+            type: 'boolean',
+            title: '先生成大纲',
+            default: true,
+          },
+          wordCount: {
+            type: 'number',
+            title: '目标字数',
+            default: 2000,
+          },
+          notes: {
+            type: 'string',
+            title: '补充要求',
+            format: 'textarea',
+          },
+        },
+      },
+    };
+
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={`\`\`\`amc-live-artifact-interaction\n${JSON.stringify(interaction, null, 2)}\n\`\`\``}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          onLiveArtifactFollowUp={handleFollowUp}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const form = renderer.container.querySelector<HTMLFormElement>('[data-live-artifact-interaction="true"]');
+    expect(form).not.toBeNull();
+    expect(renderer.container.querySelector('pre')).toBeNull();
+
+    const topicInput = renderer.container.querySelector<HTMLInputElement>('input[name="topic"]');
+    const citationSelect = renderer.container.querySelector<HTMLSelectElement>('select[name="citationStyle"]');
+    const outlineInput = renderer.container.querySelector<HTMLInputElement>('input[name="includeOutline"]');
+    const wordCountInput = renderer.container.querySelector<HTMLInputElement>('input[name="wordCount"]');
+    const notesInput = renderer.container.querySelector<HTMLTextAreaElement>('textarea[name="notes"]');
+
+    expect(topicInput).not.toBeNull();
+    expect(citationSelect?.value).toBe('APA');
+    expect(outlineInput?.checked).toBe(true);
+    expect(wordCountInput?.value).toBe('2000');
+
+    fireEvent.change(topicInput!, { target: { value: '人工智能辅助学术写作的伦理边界' } });
+    fireEvent.change(citationSelect!, { target: { value: 'MLA' } });
+    fireEvent.change(wordCountInput!, { target: { value: '2400' } });
+    fireEvent.change(notesInput!, { target: { value: '需要包含反方观点和案例分析。' } });
+    fireEvent.submit(form!);
+
+    expect(handleFollowUp).toHaveBeenCalledWith({
+      instruction: '根据这些论文参数继续写作。',
+      title: '论文写作参数',
+      source: 'amc-live-artifact-interaction:v1',
+      state: {
+        topic: '人工智能辅助学术写作的伦理边界',
+        citationStyle: 'MLA',
+        includeOutline: true,
+        wordCount: 2400,
+        notes: '需要包含反方观点和案例分析。',
+      },
+    });
+  });
+
+  it('resets schema-driven interaction form state when the artifact spec changes', () => {
+    const handleFollowUp = vi.fn();
+    const firstInteraction = {
+      version: 1,
+      title: 'First form',
+      instruction: 'Continue from first form.',
+      schema: {
+        type: 'object',
+        properties: {
+          topic: { type: 'string', title: 'Topic', default: 'Initial topic' },
+        },
+      },
+    };
+    const secondInteraction = {
+      version: 1,
+      title: 'Second form',
+      instruction: 'Continue from second form.',
+      schema: {
+        type: 'object',
+        properties: {
+          audience: { type: 'string', title: 'Audience', default: 'Review team' },
+        },
+      },
+    };
+    const renderInteraction = (interaction: object) => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={`\`\`\`amc-live-artifact-interaction\n${JSON.stringify(interaction, null, 2)}\n\`\`\``}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          onLiveArtifactFollowUp={handleFollowUp}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    };
+
+    act(() => {
+      renderInteraction(firstInteraction);
+    });
+
+    const topicInput = renderer.container.querySelector<HTMLInputElement>('input[name="topic"]');
+    fireEvent.change(topicInput!, { target: { value: 'Changed topic' } });
+
+    act(() => {
+      renderInteraction(secondInteraction);
+    });
+
+    expect(renderer.container.querySelector('input[name="topic"]')).toBeNull();
+    expect(renderer.container.querySelector<HTMLInputElement>('input[name="audience"]')?.value).toBe('Review team');
+
+    fireEvent.submit(renderer.container.querySelector<HTMLFormElement>('[data-live-artifact-interaction="true"]')!);
+
+    expect(handleFollowUp).toHaveBeenCalledWith({
+      instruction: 'Continue from second form.',
+      title: 'Second form',
+      source: 'amc-live-artifact-interaction:v1',
+      state: { audience: 'Review team' },
+    });
+  });
+
+  it('keeps schema-driven interaction artifacts as inert code when interactive mode is disabled', () => {
+    const interaction = {
+      version: 1,
+      instruction: 'Collect choices.',
+      schema: {
+        type: 'object',
+        properties: {
+          topic: { type: 'string', title: 'Topic' },
+        },
+      },
+    };
+
+    act(() => {
+      renderer.root.render(
+        <BaseMarkdownRendererEntry
+          content={`\`\`\`amc-live-artifact-interaction\n${JSON.stringify(interaction, null, 2)}\n\`\`\``}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          onLiveArtifactFollowUp={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+          interactiveMode="disabled"
+        />,
+      );
+    });
+
+    expect(renderer.container.querySelector('[data-live-artifact-interaction="true"]')).toBeNull();
+    expect(renderer.container.querySelector('pre')).not.toBeNull();
+  });
+
+  it('localizes schema-driven interaction defaults and validation messages', () => {
+    useSettingsStore.setState({ language: 'zh' });
+    const interaction = {
+      version: 1,
+      instruction: '根据填写内容继续。',
+      schema: {
+        type: 'object',
+        required: ['topic'],
+        properties: {
+          topic: { type: 'string', title: '主题' },
+        },
+      },
+    };
+
+    try {
+      act(() => {
+        renderer.root.render(
+          <BaseMarkdownRendererEntry
+            content={`\`\`\`amc-live-artifact-interaction\n${JSON.stringify(interaction, null, 2)}\n\`\`\``}
+            isLoading={false}
+            onImageClick={vi.fn()}
+            onOpenHtmlPreview={vi.fn()}
+            onLiveArtifactFollowUp={vi.fn()}
+            expandCodeBlocksByDefault={false}
+            isMermaidRenderingEnabled={false}
+            isGraphvizRenderingEnabled={false}
+            allowHtml
+            themeId="pearl"
+            onOpenSidePanel={vi.fn()}
+          />,
+        );
+      });
+
+      expect(renderer.container.querySelector('button[type="submit"]')?.textContent).toContain('继续');
+
+      fireEvent.submit(renderer.container.querySelector<HTMLFormElement>('[data-live-artifact-interaction="true"]')!);
+
+      expect(renderer.container.textContent).toContain('此字段为必填项。');
+      expect(renderer.container.textContent).not.toContain('This field is required.');
+    } finally {
+      useSettingsStore.setState({ language: 'en' });
+    }
   });
 
   it('resizes artifact frames from the iframe bridge height message without capping into internal scroll', () => {

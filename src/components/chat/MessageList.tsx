@@ -17,10 +17,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useChatState } from '../../hooks/chat/useChatState';
 import { useChatInputRuntime, useChatMessageListRuntime } from '../layout/chat-runtime/ChatRuntimeContext';
 import { useI18n } from '../../contexts/I18nContext';
-import {
-  formatLiveArtifactFollowupPrompt,
-  type LiveArtifactFollowupPayload,
-} from '../../utils/liveArtifactFollowup';
+import { formatLiveArtifactFollowupPrompt, type LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
 
 const LazyHtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');

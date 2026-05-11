@@ -7,6 +7,7 @@ const KATEX_STYLE_ATTRIBUTE = 'data-amc-katex';
 const MATH_IGNORED_ANCESTOR_SELECTOR = 'script,style,textarea,pre,code,kbd,samp,.katex';
 const TEX_MATH_SIGNAL_REGEX = /[\\^_{}=+\-*/<>|]|[A-Za-z]\d|\d[A-Za-z]|[\u0370-\u03ff]/;
 const TEX_MATH_DELIMITER_REGEX = /\$\$([\s\S]+?)\$\$|\$((?:\\.|[^$\\\n])+?)\$/g;
+const ASYMPTOTIC_COMPLEXITY_REGEX = /^(?:O|Θ|Ω|Theta|Omega)\s*\([^)]*[A-Za-z0-9][^)]*\)$/;
 
 const PREVIEW_BRIDGE_SCRIPT = `<script>
 (() => {
@@ -70,6 +71,27 @@ const PREVIEW_BRIDGE_SCRIPT = `<script>
     }
   });
 
+  const parseFollowupPayload = (rawPayload) => {
+    const trimmedPayload = rawPayload.trim();
+    if (!trimmedPayload) return null;
+
+    try {
+      const parsedPayload = JSON.parse(trimmedPayload);
+      if (typeof parsedPayload === 'string') {
+        const instruction = parsedPayload.trim();
+        return instruction ? { instruction } : null;
+      }
+      return parsedPayload;
+    } catch (error) {
+      if (/^[{[]/.test(trimmedPayload)) {
+        console.warn('Invalid Live Artifact follow-up payload.', error);
+        return null;
+      }
+
+      return { instruction: trimmedPayload };
+    }
+  };
+
   const readFollowupPayload = (target) => {
     if (!(target instanceof Element)) return null;
     const trigger = target.closest('[data-amc-followup]');
@@ -78,12 +100,8 @@ const PREVIEW_BRIDGE_SCRIPT = `<script>
     const rawPayload = trigger.getAttribute('data-amc-followup');
     if (!rawPayload) return null;
 
-    try {
-      return mergeFollowupState(JSON.parse(rawPayload), collectFollowupState(trigger));
-    } catch (error) {
-      console.warn('Invalid Live Artifact follow-up payload.', error);
-      return null;
-    }
+    const payload = parseFollowupPayload(rawPayload);
+    return payload ? mergeFollowupState(payload, collectFollowupState(trigger)) : null;
   };
 
   const resolveFollowupScope = (trigger) => {
@@ -228,7 +246,11 @@ const cloneIntoDocument = (node: Node, targetDocument: Document): Node => target
 const isLikelyTexMath = (value: string): boolean => {
   const normalizedValue = value.trim();
 
-  return /^[A-Za-z]$/.test(normalizedValue) || TEX_MATH_SIGNAL_REGEX.test(normalizedValue);
+  return (
+    /^[A-Za-z]$/.test(normalizedValue) ||
+    TEX_MATH_SIGNAL_REGEX.test(normalizedValue) ||
+    ASYMPTOTIC_COMPLEXITY_REGEX.test(normalizedValue)
+  );
 };
 
 const hasTexMathDelimiterCandidate = (value: string): boolean => {

@@ -173,10 +173,7 @@ export const useMessageListScroll = ({
 
     let targetIndex = -1;
 
-    if (
-      renderedTurnNavigation?.nextUserTurnIndex !== null &&
-      renderedTurnNavigation?.nextUserTurnIndex !== undefined
-    ) {
+    if (renderedTurnNavigation?.nextUserTurnIndex !== null && renderedTurnNavigation?.nextUserTurnIndex !== undefined) {
       targetIndex = renderedTurnNavigation.nextUserTurnIndex;
     } else {
       const currentStartIndex = visibleRangeRef.current.startIndex;
@@ -282,7 +279,8 @@ export const useMessageListScroll = ({
     }
   }, [activeSessionId, messages.length, clearRestoreTimeout]);
 
-  const showScrollDown = !atBottom && messages.some((message, index) => index > visibleStartIndex && message.role === 'user');
+  const showScrollDown =
+    !atBottom && messages.some((message, index) => index > visibleStartIndex && message.role === 'user');
   const showScrollUp = visibleStartIndex > 0;
 
   return {
