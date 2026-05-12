@@ -313,7 +313,11 @@ export const useMessageActions = ({
       const forkIndex = visibleMessages.findIndex((message) => message.id === messageId);
       if (forkIndex === -1) return;
 
-      const sourceMessages = visibleMessages.slice(0, forkIndex + 1);
+      const selectedMessage = visibleMessages[forkIndex];
+      const sourceIndex = messages.findIndex((message) => message.id === selectedMessage.id);
+      if (sourceIndex === -1) return;
+
+      const sourceMessages = messages.slice(0, sourceIndex + 1);
       const idMap = new Map<string, string>();
 
       const forkedMessages = sourceMessages.map((message) => {

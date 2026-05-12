@@ -227,4 +227,108 @@ describe('useMessageActions', () => {
 
     unmount();
   });
+
+  it('preserves internal tool messages before the selected visible message when forking', () => {
+    const messages: ChatMessage[] = [
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'plot sales',
+        timestamp: new Date('2026-04-29T00:00:00.000Z'),
+      },
+      {
+        id: 'tool-model-1',
+        role: 'model',
+        content: '',
+        isInternalToolMessage: true,
+        toolParentMessageId: 'model-1',
+        apiParts: [{ functionCall: { id: 'call-1', name: 'run_local_python', args: { code: 'print(42)' } } }],
+        timestamp: new Date('2026-04-29T00:00:01.000Z'),
+      },
+      {
+        id: 'tool-user-1',
+        role: 'user',
+        content: '',
+        isInternalToolMessage: true,
+        toolParentMessageId: 'model-1',
+        apiParts: [
+          {
+            functionResponse: {
+              id: 'call-1',
+              name: 'run_local_python',
+              response: { result: { output: '42' } },
+            },
+          },
+        ],
+        timestamp: new Date('2026-04-29T00:00:02.000Z'),
+      },
+      {
+        id: 'model-1',
+        role: 'model',
+        content: 'Here is the chart.',
+        timestamp: new Date('2026-04-29T00:00:03.000Z'),
+      },
+      {
+        id: 'user-2',
+        role: 'user',
+        content: 'next question',
+        timestamp: new Date('2026-04-29T00:00:04.000Z'),
+      },
+    ];
+    let sessions: SavedChatSession[] = [
+      {
+        id: 'session-current',
+        title: 'Tool chat',
+        timestamp: 1,
+        messages,
+        settings: createChatSettings(),
+      },
+    ];
+    const updateAndPersistSessions = vi.fn((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
+      sessions = updater(sessions);
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useMessageActions({
+        messages,
+        isLoading: false,
+        activeSessionId: 'session-current',
+        editingMessageId: null,
+        activeJobs: { current: new Map() },
+        setCommandedInput: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setEditMode: vi.fn(),
+        setAppFileError: vi.fn(),
+        updateAndPersistSessions,
+        setActiveSessionId: vi.fn(),
+        userScrolledUpRef: { current: false },
+        handleSendMessage: vi.fn(),
+        setSessionLoading: vi.fn(),
+      }),
+    );
+
+    act(() => {
+      result.current.handleForkMessage('model-1');
+    });
+
+    const forkedMessages = sessions[0].messages;
+    expect(forkedMessages).toHaveLength(4);
+    expect(forkedMessages.map((message) => message.content)).toEqual([
+      'plot sales',
+      '',
+      '',
+      'Here is the chart.',
+    ]);
+    expect(forkedMessages.map((message) => message.isInternalToolMessage ?? false)).toEqual([
+      false,
+      true,
+      true,
+      false,
+    ]);
+    expect(forkedMessages[1].toolParentMessageId).toBe(forkedMessages[3].id);
+    expect(forkedMessages[2].toolParentMessageId).toBe(forkedMessages[3].id);
+
+    unmount();
+  });
 });

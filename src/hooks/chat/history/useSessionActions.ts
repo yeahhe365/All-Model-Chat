@@ -78,17 +78,28 @@ export const useSessionActions = ({ updateAndPersistSessions, activeJobs }: UseS
         const fullSessionToDuplicate =
           sessionToDuplicate.messages.length > 0 ? sessionToDuplicate : (persistedSession ?? sessionToDuplicate);
 
-        const duplicatedMessages = fullSessionToDuplicate.messages.map((message) => ({
-          ...message,
-          id: generateUniqueId(),
-          files: message.files?.map((file) => ({
-            ...file,
-            id: generateUniqueId(),
-          })),
-          isLoading: false,
-          generationStartTime: undefined,
-          generationEndTime: undefined,
-        }));
+        const idMap = new Map<string, string>();
+        const duplicatedMessages = fullSessionToDuplicate.messages
+          .map((message) => {
+            const nextMessageId = generateUniqueId();
+            idMap.set(message.id, nextMessageId);
+
+            return {
+              ...message,
+              id: nextMessageId,
+              files: message.files?.map((file) => ({
+                ...file,
+                id: generateUniqueId(),
+              })),
+              isLoading: false,
+              generationStartTime: undefined,
+              generationEndTime: undefined,
+            };
+          })
+          .map((message) => ({
+            ...message,
+            toolParentMessageId: message.toolParentMessageId ? idMap.get(message.toolParentMessageId) : undefined,
+          }));
 
         const duplicateTitle =
           fullSessionToDuplicate.title === 'New Chat' ? t('newChat') : fullSessionToDuplicate.title;

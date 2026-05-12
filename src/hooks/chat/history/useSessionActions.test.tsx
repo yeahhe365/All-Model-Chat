@@ -95,6 +95,51 @@ describe('useSessionActions', () => {
     unmount();
   });
 
+  it('remaps internal tool message parent ids when duplicating a session', async () => {
+    const toolCallMessage = createMessage({
+      id: 'tool-model-1',
+      role: 'model',
+      content: '',
+      isInternalToolMessage: true,
+      toolParentMessageId: 'model-1',
+      apiParts: [{ functionCall: { id: 'call-1', name: 'run_local_python', args: { code: 'print(42)' } } }],
+      files: undefined,
+    });
+    const modelMessage = createMessage({
+      id: 'model-1',
+      role: 'model',
+      content: 'The answer is 42.',
+      files: undefined,
+    });
+    let sessions: SavedChatSession[] = [
+      createSession({
+        messages: [createMessage({ id: 'user-1', files: undefined }), toolCallMessage, modelMessage],
+      }),
+    ];
+    vi.mocked(dbService.getSession).mockResolvedValue(sessions[0]);
+    const updateAndPersistSessions = vi.fn((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
+      sessions = updater(sessions);
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useSessionActions({
+        updateAndPersistSessions,
+        activeJobs: { current: new Map() },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleDuplicateSession('session-1');
+    });
+
+    const duplicatedToolMessage = sessions[0].messages.find((message) => message.isInternalToolMessage);
+    const duplicatedModelMessage = sessions[0].messages.find((message) => message.content === 'The answer is 42.');
+    expect(duplicatedToolMessage?.toolParentMessageId).toBe(duplicatedModelMessage?.id);
+    expect(duplicatedToolMessage?.toolParentMessageId).not.toBe('model-1');
+
+    unmount();
+  });
+
   it('duplicates a metadata-only session using the persisted full history', async () => {
     const persistedSession = createSession({
       id: 'session-2',

@@ -85,6 +85,8 @@ export const finalizeMessages = (
     finalMessages = finalMessages.filter(
       (m) =>
         m.role !== 'model' ||
+        m.isInternalToolMessage ||
+        (m.apiParts && m.apiParts.length > 0) ||
         m.content?.trim() !== '' ||
         (m.files && m.files.length > 0) ||
         m.audioSrc ||
