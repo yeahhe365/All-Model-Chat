@@ -290,6 +290,15 @@ describe('ChatInputActions', () => {
     expect(toolsMenuMock.mock.calls[0]?.[0]).not.toHaveProperty('isGemini3ImageModel');
   });
 
+  it('allows active action effects to paint beyond their button bounds', () => {
+    renderActions();
+
+    const actionRow = renderer.container.querySelector('[data-testid="chat-input-actions-root"]');
+
+    expect(actionRow?.className).toContain('overflow-visible');
+    expect(actionRow?.className).not.toContain('overflow-hidden');
+  });
+
   it('keeps auxiliary composer actions direct when the single action row has enough room', async () => {
     mockActionRowMeasurements({ containerWidth: 500, leftWidth: 88, rightWidth: 292 });
 

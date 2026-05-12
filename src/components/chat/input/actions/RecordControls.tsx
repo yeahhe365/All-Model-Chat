@@ -11,7 +11,10 @@ export const RecordControls: React.FC = () => {
   const micIconSize = 20;
 
   return (
-    <>
+    <div
+      data-testid="record-controls-group"
+      className={`flex items-center ${isRecording ? 'gap-3 overflow-visible pr-2.5' : ''}`}
+    >
       {isRecording && (
         <button
           type="button"
@@ -32,7 +35,7 @@ export const RecordControls: React.FC = () => {
         type="button"
         onClick={onRecordButtonClick}
         disabled={disabled || isTranscribing || isMicInitializing}
-        className={`${CHAT_INPUT_BUTTON_CLASS} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
+        className={`${CHAT_INPUT_BUTTON_CLASS} ${isRecording ? 'relative z-10 mic-recording-animate' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
         aria-label={
           isRecording
             ? t('voiceInput_stop_aria')
@@ -58,6 +61,6 @@ export const RecordControls: React.FC = () => {
           <Mic size={micIconSize} strokeWidth={2} />
         )}
       </button>
-    </>
+    </div>
   );
 };

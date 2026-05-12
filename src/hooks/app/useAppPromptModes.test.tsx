@@ -403,10 +403,45 @@ describe('useAppPromptModes', () => {
     unmount();
   });
 
-  it('turns off Live Artifacts prompt and clears only the text input when Live Artifacts is clicked while active', async () => {
+  it('fills the Live Artifacts suggestion into the input and activates the prompt without sending', async () => {
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
     const setCommandedInput = vi.fn() as unknown as (command: InputCommand) => void;
+    const handleSendMessage = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: createAppSettings(),
+        setAppSettings,
+        activeChat: createLiveArtifactsSession({ title: 'Session 1' }),
+        activeSessionId: 'session-1',
+        currentChatSettings: createLiveArtifactsChatSettings(),
+        setCurrentChatSettings,
+        handleSendMessage,
+        setCommandedInput,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSuggestionClick('organize', 'Create interactive HTML board.');
+    });
+
+    expect(handleSendMessage).not.toHaveBeenCalled();
+    expect(setCommandedInput).toHaveBeenCalledWith({
+      text: 'Create interactive HTML board.\n',
+      id: expect.any(Number),
+    });
+    expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
+    expect(result.current.isLiveArtifactsPromptActive).toBe(true);
+
+    unmount();
+  });
+
+  it('turns off Live Artifacts and clears the input when the suggestion is clicked while already active', async () => {
+    const setAppSettings = vi.fn();
+    const setCurrentChatSettings = vi.fn();
+    const setCommandedInput = vi.fn() as unknown as (command: InputCommand) => void;
+    const handleSendMessage = vi.fn();
 
     const { result, unmount } = renderHook(() =>
       useAppPromptModes({
@@ -416,7 +451,7 @@ describe('useAppPromptModes', () => {
         activeSessionId: 'session-1',
         currentChatSettings: createLiveArtifactsChatSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT }),
         setCurrentChatSettings,
-        handleSendMessage: vi.fn(),
+        handleSendMessage,
         setCommandedInput,
       }),
     );
@@ -425,6 +460,7 @@ describe('useAppPromptModes', () => {
       await result.current.handleSuggestionClick('organize', 'Create interactive HTML board.');
     });
 
+    expect(handleSendMessage).not.toHaveBeenCalled();
     expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
     expect(setCurrentChatSettings).toHaveBeenCalledWith(expect.any(Function));
 

@@ -121,8 +121,8 @@ describe('ApiConfigSection', () => {
     expect(renderer.container.textContent).not.toContain('API & Connections');
     expect(renderer.container.textContent).toContain('Test Connection');
     expect(renderer.container.textContent).toContain('File Transfer Method');
-    expect(renderer.container.textContent).not.toContain('API Mode');
-    expect(renderer.container.textContent).toContain('Gemini Native');
+    expect(renderer.container.textContent).toContain('API Provider');
+    expect(renderer.container.textContent).toContain('Gemini Official API');
     expect(renderer.container.textContent).toContain('OpenAI-Compatible API');
 
     act(() => {
@@ -132,31 +132,35 @@ describe('ApiConfigSection', () => {
     expect(renderer.container.textContent).not.toContain('API 与连接');
     expect(renderer.container.textContent).toContain('测试连通性');
     expect(renderer.container.textContent).toContain('文件传输方式');
-    expect(renderer.container.textContent).toContain('OpenAI 兼容 API');
-    expect(renderer.container.textContent).not.toContain('API 模式');
+    expect(renderer.container.textContent).toContain('API 提供方');
+    expect(renderer.container.textContent).toContain('Gemini 官方接口');
+    expect(renderer.container.textContent).toContain('OpenAI 兼容接口');
   });
 
-  it('renders the OpenAI-compatible API switch off by default and enables the provider when toggled', async () => {
+  it('renders a single provider selector and enables OpenAI-compatible mode from it', async () => {
     const onUpdate = vi.fn();
 
     await renderApiConfigSection({ onUpdate });
 
-    const openAIToggle = renderer.container.querySelector<HTMLInputElement>('#openai-compatible-api-enabled-toggle');
+    const providerSelector = renderer.container.querySelector('[role="group"][aria-label="API Provider"]');
+    const openAIProviderButton = Array.from(renderer.container.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'OpenAI-Compatible API',
+    );
 
-    expect(openAIToggle).not.toBeNull();
-    expect(openAIToggle!.checked).toBe(false);
-    expect(renderer.container.querySelector('[role="group"][aria-label="API Mode"]')).toBeNull();
+    expect(providerSelector).not.toBeNull();
+    expect(renderer.container.querySelector('#openai-compatible-api-enabled-toggle')).toBeNull();
+    expect(openAIProviderButton).toBeDefined();
     expect(renderer.container.textContent).not.toContain('OpenAI-Compatible API Keys');
 
     await act(async () => {
-      openAIToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      openAIProviderButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(onUpdate).toHaveBeenCalledWith('isOpenAICompatibleApiEnabled', true);
     expect(onUpdate).toHaveBeenCalledWith('apiMode', 'openai-compatible');
   });
 
-  it('turns the OpenAI-compatible provider off and returns to Gemini Native mode', async () => {
+  it('returns to Gemini provider from the same selector and hides OpenAI-compatible settings', async () => {
     const onUpdate = vi.fn();
 
     await renderApiConfigSection({
@@ -168,14 +172,16 @@ describe('ApiConfigSection', () => {
       onUpdate,
     });
 
-    const openAIToggle = renderer.container.querySelector<HTMLInputElement>('#openai-compatible-api-enabled-toggle');
+    const geminiProviderButton = Array.from(renderer.container.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Gemini Official API',
+    );
 
-    expect(openAIToggle).not.toBeNull();
-    expect(openAIToggle!.checked).toBe(true);
+    expect(renderer.container.querySelector('#openai-compatible-api-enabled-toggle')).toBeNull();
+    expect(geminiProviderButton).toBeDefined();
     expect(renderer.container.textContent).toContain('OpenAI-Compatible API Keys');
 
     await act(async () => {
-      openAIToggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      geminiProviderButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(onUpdate).toHaveBeenCalledWith('isOpenAICompatibleApiEnabled', false);

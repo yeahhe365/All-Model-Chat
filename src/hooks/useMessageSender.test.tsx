@@ -98,7 +98,7 @@ vi.mock('@/services/api/fileApi', () => ({
 
 import { useMessageSender } from './useMessageSender';
 import { createMessageSenderProps, type MessageSenderPropsOverrides } from '@/test/hookFactories';
-import { createUploadedFile } from '@/test/factories';
+import { createChatSettings, createUploadedFile } from '@/test/factories';
 
 describe('useMessageSender', () => {
   const renderMessageSender = (overrides: MessageSenderPropsOverrides = {}) =>
@@ -330,6 +330,45 @@ describe('useMessageSender', () => {
 
     expect(setAppFileError).toHaveBeenCalledWith(null);
     expect(mockSendStandardMessage).toHaveBeenCalled();
+    unmount();
+  });
+
+  it('passes per-send settings overrides into the standard message route', async () => {
+    mockGetModelCapabilities.mockReturnValue({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: false,
+    });
+
+    const settingsOverride = createChatSettings({
+      modelId: 'gemini-3-flash-preview',
+      systemInstruction: '[Live Artifacts Protocol - zh]\nLive prompt',
+    });
+
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: '',
+      },
+    });
+
+    await act(async () => {
+      await result.current.handleSendMessage({
+        text: 'Create interactive HTML board.',
+        settingsOverride,
+      });
+    });
+
+    expect(mockSendStandardMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        props: expect.objectContaining({
+          currentChatSettings: expect.objectContaining({
+            systemInstruction: '[Live Artifacts Protocol - zh]\nLive prompt',
+          }),
+        }),
+      }),
+    );
     unmount();
   });
 

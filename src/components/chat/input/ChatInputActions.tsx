@@ -192,7 +192,7 @@ const ChatInputActionsComponent: React.FC = () => {
     <div
       ref={rootRef}
       data-testid="chat-input-actions-root"
-      className="flex w-full items-center justify-between gap-2 overflow-hidden"
+      className="flex w-full items-center justify-between gap-2 overflow-visible"
     >
       <div
         ref={leftActionsRef}

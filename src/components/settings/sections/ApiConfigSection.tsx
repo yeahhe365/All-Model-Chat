@@ -13,7 +13,6 @@ import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
 import { FileStrategyControl } from './appearance/FileStrategyControl';
-import { Toggle } from '@/components/shared/Toggle';
 import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 interface ApiConfigSectionProps {
@@ -60,8 +59,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     useApiProxy,
     apiProxyUrl,
   });
-  const apiMode = settings.apiMode ?? 'gemini-native';
-  const isOpenAICompatibleApiEnabled = settings.isOpenAICompatibleApiEnabled === true;
   const isOpenAICompatibleMode = isOpenAICompatibleApiActive(settings);
   const openaiCompatibleApiKey = settings.openaiCompatibleApiKey;
 
@@ -93,9 +90,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     setAllowOverflow(false);
   };
 
-  const handleOpenAICompatibleApiEnabledChange = (enabled: boolean) => {
-    onUpdate('isOpenAICompatibleApiEnabled', enabled);
-    onUpdate('apiMode', enabled ? 'openai-compatible' : 'gemini-native');
+  const handleApiProviderChange = (nextApiMode: AppSettings['apiMode']) => {
+    onUpdate('apiMode', nextApiMode);
+    onUpdate('isOpenAICompatibleApiEnabled', nextApiMode === 'openai-compatible');
     setTestStatus('idle');
     setTestMessage(null);
   };
@@ -197,28 +194,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     <div className="space-y-6">
       <div>
         <div className="space-y-3 pb-4">
-          <div
-            className="flex items-center justify-between py-3 cursor-pointer group select-none relative z-10"
-            onClick={() => handleOpenAICompatibleApiEnabledChange(!isOpenAICompatibleApiEnabled)}
-          >
-            <div className="flex flex-col flex-grow pr-4">
-              <span className="text-sm font-medium text-[var(--theme-text-primary)] group-hover:text-[var(--theme-text-link)] transition-colors">
-                {t('settingsOpenAICompatibleToggleLabel')}
-              </span>
-              <span className="text-xs text-[var(--theme-text-tertiary)] mt-0.5">
-                {t('settingsOpenAICompatibleToggleHelp')}
-              </span>
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+              {t('settingsApiModeLabel')}
             </div>
-            <div onClick={(event) => event.stopPropagation()}>
-              <Toggle
-                id="openai-compatible-api-enabled-toggle"
-                checked={isOpenAICompatibleApiEnabled}
-                onChange={handleOpenAICompatibleApiEnabledChange}
-                ariaLabel={t('settingsOpenAICompatibleToggleLabel')}
-              />
-            </div>
-          </div>
-          {isOpenAICompatibleApiEnabled && (
             <div
               role="group"
               aria-label={t('settingsApiModeLabel')}
@@ -226,9 +205,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             >
               <button
                 type="button"
-                className={modeButtonClass(apiMode === 'gemini-native')}
-                aria-pressed={apiMode === 'gemini-native'}
-                onClick={() => onUpdate('apiMode', 'gemini-native')}
+                className={modeButtonClass(!isOpenAICompatibleMode)}
+                aria-pressed={!isOpenAICompatibleMode}
+                onClick={() => handleApiProviderChange('gemini-native')}
               >
                 {t('settingsApiModeGeminiNative')}
               </button>
@@ -236,12 +215,12 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 type="button"
                 className={modeButtonClass(isOpenAICompatibleMode)}
                 aria-pressed={isOpenAICompatibleMode}
-                onClick={() => onUpdate('apiMode', 'openai-compatible')}
+                onClick={() => handleApiProviderChange('openai-compatible')}
               >
                 {t('settingsApiModeOpenAICompatible')}
               </button>
             </div>
-          )}
+          </div>
           {isOpenAICompatibleMode && (
             <div className="space-y-4">
               <ApiKeyInput

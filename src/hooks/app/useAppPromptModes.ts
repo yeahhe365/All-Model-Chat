@@ -305,26 +305,37 @@ export const useAppPromptModes = ({
     async (type: 'homepage' | 'organize' | 'follow-up', text: string) => {
       const { isAutoSendOnSuggestionClick } = appSettings;
 
-      if (type === 'organize' && isLiveArtifactsPromptActive) {
-        setPendingLiveArtifactsPromptActivation(null);
+      if (type === 'organize') {
+        if (isLiveArtifactsPromptActive) {
+          setPendingLiveArtifactsPromptActivation(null);
+          setLiveArtifactsPromptOverrideState({
+            active: false,
+            targetSessionId: currentLiveArtifactsPromptTargetSessionId,
+          });
+          setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
+          if (activeSessionId) {
+            setCurrentChatSettings((prev) => ({
+              ...prev,
+              systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
+            }));
+          }
+          setCommandedInput({ text: '', id: Date.now(), mode: 'replace' });
+          focusChatInput(0);
+          return;
+        }
+
         setLiveArtifactsPromptOverrideState({
-          active: false,
+          active: true,
           targetSessionId: currentLiveArtifactsPromptTargetSessionId,
         });
-        setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
-        if (activeSessionId) {
-          setCurrentChatSettings((prev) => ({
-            ...prev,
-            systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-          }));
+
+        if (!isConfiguredLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction)) {
+          await activateLiveArtifactsPrompt(activeSessionId);
         }
-        setCommandedInput({ text: '', id: Date.now(), mode: 'replace' });
+
+        setCommandedInput({ text: `${text}\n`, id: Date.now() });
         focusChatInput(0);
         return;
-      }
-
-      if (type === 'organize' && !isConfiguredLiveArtifactsSystemInstruction(currentChatSettings.systemInstruction)) {
-        await activateLiveArtifactsPrompt(activeSessionId);
       }
 
       if (type === 'follow-up' && (isAutoSendOnSuggestionClick ?? true)) {

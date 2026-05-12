@@ -132,6 +132,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
       editingId?: string;
       isContinueMode?: boolean;
       isFastMode?: boolean;
+      settingsOverride?: IndividualChatSettings;
     }) => {
       const textToUse = overrideOptions?.text ?? '';
       const filesToUse = overrideOptions?.files ?? selectedFiles;
@@ -139,7 +140,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
       const isContinueMode = overrideOptions?.isContinueMode ?? false;
       const isFastMode = overrideOptions?.isFastMode ?? false;
 
-      const sessionToUpdate = currentChatSettings;
+      const sessionToUpdate = overrideOptions?.settingsOverride ?? currentChatSettings;
       const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
       const activeModelId = isOpenAICompatibleMode ? appSettings.openaiCompatibleModelId : sessionToUpdate.modelId;
       const capabilities = getModelCapabilities(activeModelId);
@@ -342,6 +343,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
       await sendStandardMessage({
         props: {
           ...props,
+          currentChatSettings: sessionToUpdate,
           ...senderStoreActions,
         },
         getStreamHandlers,
