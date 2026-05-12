@@ -468,3 +468,11 @@ OpenAI 兼容模式使用独立模型列表，可在设置中手动维护或从�
 <div align="center">
   <p>Developed with :heart: by <strong>yeahhe365</strong></p>
 </div>
+
+
+
+
+
+[audio-1778587124509.wav](https://github.com/user-attachments/files/27637291/audio-1778587124509.wav)
+[audio-1778587124509 (2).wav](https://github.com/user-attachments/files/27637289/audio-1778587124509.2.wav)
+[audio-1778587124509 (1).wav](https://github.com/user-attachments/files/27637285/audio-1778587124509.1.wav)
