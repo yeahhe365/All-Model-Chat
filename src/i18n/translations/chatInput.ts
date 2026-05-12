@@ -344,6 +344,14 @@ export const chatInputTranslations = {
     en: 'Attachment upload failed. Remove the failed file or upload it again before sending.',
     zh: '附件上传失败。请移除失败文件或重新上传后再发送。',
   },
+  messageSender_fileReferenceExpiredNoBackup: {
+    en: 'The remote file reference for {filename} expired, and the local backup is unavailable. Please attach the file again.',
+    zh: '{filename} 的远端文件引用已失效，且本地备份不可用。请重新附加该文件。',
+  },
+  messageSender_fileReferenceRefreshFailed: {
+    en: 'Could not refresh the remote file reference for {filename}. Please try again or attach the file again.',
+    zh: '无法刷新 {filename} 的远端文件引用。请重试或重新附加该文件。',
+  },
   messageSender_imageModelSupportsImageAndPdfOnly: {
     en: 'Nano Banana 2 supports image and PDF attachments only.',
     zh: 'Nano Banana 2 仅支持图片和 PDF 附件。',

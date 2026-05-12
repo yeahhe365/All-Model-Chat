@@ -7,6 +7,7 @@ import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '@/constants/themeConstants';
 import { logService } from '@/services/logService';
 import { resolveSupportedModelId, sanitizeModelOptions } from '@/utils/modelHelpers';
 import { dbService } from '@/services/db/dbService';
+import { normalizeLiveArtifactsSystemPrompts } from '@/utils/liveArtifactsPromptSettings';
 
 interface SettingsState {
   appSettings: AppSettings;
@@ -74,6 +75,7 @@ function sanitizeAppSettings(settings: AppSettings): AppSettings {
       settings.thoughtTranslationModelId,
       defaultSettings.thoughtTranslationModelId ?? defaultSettings.modelId,
     ),
+    liveArtifactsSystemPrompts: normalizeLiveArtifactsSystemPrompts(settings),
   };
 }
 

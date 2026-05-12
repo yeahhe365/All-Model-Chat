@@ -18,6 +18,29 @@ describe('appSettingsSchema', () => {
     expect((settings as { liveArtifactsSystemPrompt?: string }).liveArtifactsSystemPrompt).toBe('');
   });
 
+  it('preserves per-version custom Live Artifacts prompts from imported settings', () => {
+    const settings = sanitizeImportedAppSettings({
+      liveArtifactsSystemPrompts: {
+        inline: 'Inline custom prompt',
+        full: 'Full custom prompt',
+        fullHtml: 'Complete HTML custom prompt',
+        unsupported: 'Ignore me',
+      },
+    });
+
+    expect(
+      (
+        settings as {
+          liveArtifactsSystemPrompts?: Record<string, string>;
+        }
+      ).liveArtifactsSystemPrompts,
+    ).toEqual({
+      inline: 'Inline custom prompt',
+      full: 'Full custom prompt',
+      fullHtml: 'Complete HTML custom prompt',
+    });
+  });
+
   it('defaults Live Artifacts built-in prompt mode to inline', () => {
     const settings = sanitizeImportedAppSettings({});
 

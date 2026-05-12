@@ -27,6 +27,17 @@ describe('DEFAULT_APP_SETTINGS', () => {
 
   it('defaults the Live Artifacts custom prompt to blank', () => {
     expect((DEFAULT_APP_SETTINGS as { liveArtifactsSystemPrompt?: string }).liveArtifactsSystemPrompt).toBe('');
+    expect(
+      (
+        DEFAULT_APP_SETTINGS as {
+          liveArtifactsSystemPrompts?: Record<string, string>;
+        }
+      ).liveArtifactsSystemPrompts,
+    ).toEqual({
+      inline: '',
+      full: '',
+      fullHtml: '',
+    });
   });
 });
 

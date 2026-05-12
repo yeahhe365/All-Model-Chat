@@ -16,7 +16,7 @@ const MODEL_REGISTRY: RegisteredModel[] = [
     groups: ['defaultPinned', 'liveArtifacts', 'connectionTest', 'transcription'],
     groupLabels: {
       liveArtifacts: 'Gemini 3 Flash',
-      transcription: 'Gemini 3.0 Flash (Fastest)',
+      transcription: 'Gemini 3.0 Flash',
     },
   },
   {

@@ -3,11 +3,14 @@ import { useI18n } from '@/contexts/I18nContext';
 import { ChevronDown, Shield } from 'lucide-react';
 import { type ApiMode, type AppSettings, type ModelOption } from '@/types';
 import { ModelSelector } from '@/components/settings/controls/ModelSelector';
+import { fetchOpenAICompatibleModels } from '@/services/api/openaiCompatibleApi';
+import { parseApiKeys } from '@/utils/apiUtils';
 import { LiveArtifactsSection } from './LiveArtifactsSection';
 import { GenerationSection } from './GenerationSection';
 import { LanguageVoiceSection } from './LanguageVoiceSection';
 import { SafetySection } from './SafetySection';
 import type { SettingsUpdateHandler } from '@/components/settings/settingsTypes';
+import { OpenAICompatibleModelListEditor } from './api-config/OpenAICompatibleModelListEditor';
 
 interface ModelsSectionProps {
   modelId: string;
@@ -20,6 +23,38 @@ interface ModelsSectionProps {
   currentSettings: AppSettings;
   onUpdateSettings: (settings: Partial<AppSettings>) => void;
 }
+
+const mergeOpenAICompatibleModels = (currentModels: ModelOption[], fetchedModels: ModelOption[]): ModelOption[] => {
+  const seenIds = new Set<string>();
+  const mergedModels: ModelOption[] = [];
+
+  const appendModel = (model: ModelOption) => {
+    const modelId = model.id.trim();
+    if (!modelId || seenIds.has(modelId)) {
+      return;
+    }
+
+    seenIds.add(modelId);
+    mergedModels.push({
+      ...model,
+      id: modelId,
+      name: model.name.trim() || modelId,
+    });
+  };
+
+  currentModels.forEach(appendModel);
+  fetchedModels.forEach(appendModel);
+
+  return mergedModels.map((model, index) => {
+    const nextModel = { ...model };
+    if (index === 0) {
+      nextModel.isPinned = true;
+    } else {
+      delete nextModel.isPinned;
+    }
+    return nextModel;
+  });
+};
 
 export const ModelsSection: React.FC<ModelsSectionProps> = ({
   modelId,
@@ -34,6 +69,11 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
 }) => {
   const { t } = useI18n();
   const [isSafetyExpanded, setIsSafetyExpanded] = useState(false);
+  const [modelFetchStatus, setModelFetchStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [modelFetchMessage, setModelFetchMessage] = useState<string | null>(null);
+  const viteEnv = (import.meta as ImportMeta & { env?: { VITE_OPENAI_API_KEY?: string } }).env;
+  const hasOpenAIEnvKey = !!viteEnv?.VITE_OPENAI_API_KEY;
+  const isOpenAICompatibleApiEnabled = currentSettings.isOpenAICompatibleApiEnabled === true;
 
   const updateSetting: SettingsUpdateHandler = (key, value) => {
     onUpdateSettings({ [key]: value } as Partial<AppSettings>);
@@ -46,6 +86,87 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
       return nextModel;
     });
 
+  const resetOpenAICompatibleModelFetch = () => {
+    setModelFetchStatus('idle');
+    setModelFetchMessage(null);
+  };
+
+  const resolveOpenAICompatibleKey = (): string | null =>
+    currentSettings.openaiCompatibleApiKey || viteEnv?.VITE_OPENAI_API_KEY || null;
+
+  const handleFetchOpenAICompatibleModels = async () => {
+    const keyToFetch = resolveOpenAICompatibleKey();
+
+    if (!keyToFetch) {
+      setModelFetchStatus('error');
+      setModelFetchMessage(t('apiConfig_noKeyAvailable'));
+      return;
+    }
+
+    const keys = parseApiKeys(keyToFetch);
+    const firstKey = keys[0];
+
+    if (!firstKey) {
+      setModelFetchStatus('error');
+      setModelFetchMessage(t('apiConfig_invalidKeyFormat'));
+      return;
+    }
+
+    setModelFetchStatus('loading');
+    setModelFetchMessage(null);
+
+    try {
+      const fetchedModels = await fetchOpenAICompatibleModels(
+        firstKey,
+        currentSettings.openaiCompatibleBaseUrl,
+        new AbortController().signal,
+      );
+
+      if (fetchedModels.length === 0) {
+        setModelFetchStatus('error');
+        setModelFetchMessage(t('settingsOpenAICompatibleModelFetchEmpty'));
+        return;
+      }
+
+      const mergedModels = mergeOpenAICompatibleModels(currentSettings.openaiCompatibleModels ?? [], fetchedModels);
+      onUpdateSettings({ openaiCompatibleModels: mergedModels });
+
+      if (!mergedModels.some((model) => model.id === currentSettings.openaiCompatibleModelId)) {
+        onUpdateSettings({ openaiCompatibleModelId: mergedModels[0].id });
+      }
+
+      setModelFetchStatus('success');
+      setModelFetchMessage(
+        t('settingsOpenAICompatibleModelFetchSuccess').replace('{count}', String(fetchedModels.length)),
+      );
+    } catch (error) {
+      setModelFetchStatus('error');
+      setModelFetchMessage(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const openAICompatibleModelListEditor = isOpenAICompatibleApiEnabled ? (
+    <OpenAICompatibleModelListEditor
+      models={currentSettings.openaiCompatibleModels ?? []}
+      selectedModelId={currentSettings.openaiCompatibleModelId}
+      onModelsChange={(models) => {
+        onUpdateSettings({ openaiCompatibleModels: models });
+        resetOpenAICompatibleModelFetch();
+      }}
+      onSelectedModelChange={(modelId) => {
+        onUpdateSettings({ openaiCompatibleModelId: modelId });
+        resetOpenAICompatibleModelFetch();
+      }}
+      onFetchModels={handleFetchOpenAICompatibleModels}
+      isFetchingModels={modelFetchStatus === 'loading'}
+      isFetchModelsDisabled={
+        modelFetchStatus === 'loading' || (!currentSettings.openaiCompatibleApiKey && !hasOpenAIEnvKey)
+      }
+      fetchModelsStatus={modelFetchStatus === 'loading' ? 'idle' : modelFetchStatus}
+      fetchModelsMessage={modelFetchMessage}
+    />
+  ) : null;
+
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <ModelSelector
@@ -56,6 +177,7 @@ export const ModelsSection: React.FC<ModelsSectionProps> = ({
         setAvailableModels={setAvailableModels}
         defaultModels={defaultModels}
         defaultApiMode={defaultApiMode}
+        extraModelListContent={openAICompatibleModelListEditor}
       />
 
       <GenerationSection

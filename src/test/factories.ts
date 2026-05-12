@@ -63,6 +63,11 @@ export const createAppSettings = (overrides: Partial<AppSettings> = {}): AppSett
   autoLiveArtifactsModelId: 'gemini-3.1-pro-preview',
   liveArtifactsPromptMode: 'inline',
   liveArtifactsSystemPrompt: '',
+  liveArtifactsSystemPrompts: {
+    inline: '',
+    full: '',
+    fullHtml: '',
+  },
   isPasteRichTextAsMarkdownEnabled: true,
   isSystemAudioRecordingEnabled: false,
   customShortcuts: {},

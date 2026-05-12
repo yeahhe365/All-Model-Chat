@@ -1,9 +1,10 @@
-import { act, type ComponentProps } from 'react';
+import { act, type ComponentProps, type ReactNode, useState } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { ModelsSection } from './ModelsSection';
+import type { AppSettings } from '@/types';
 import type { ModelSelector } from '@/components/settings/controls/ModelSelector';
 import type { LanguageVoiceSection } from './LanguageVoiceSection';
 import type { SafetySection } from './SafetySection';
@@ -25,11 +26,21 @@ const mockModelSelector = vi.hoisted(() => ({
   lastProps: null as ModelSelectorProps | null,
 }));
 
+const { fetchOpenAICompatibleModelsMock } = vi.hoisted(() => ({
+  fetchOpenAICompatibleModelsMock: vi.fn(),
+}));
+
 vi.mock('@/components/settings/controls/ModelSelector', () => ({
   ModelSelector: (props: ModelSelectorProps) => {
     mockModelSelector.lastProps = props;
-    return <div data-testid="model-selector">model selector</div>;
+    const extraModelListContent = (props as ModelSelectorProps & { extraModelListContent?: ReactNode })
+      .extraModelListContent;
+    return <div data-testid="model-selector">model selector{extraModelListContent}</div>;
   },
+}));
+
+vi.mock('@/services/api/openaiCompatibleApi', () => ({
+  fetchOpenAICompatibleModels: fetchOpenAICompatibleModelsMock,
 }));
 
 vi.mock('./LanguageVoiceSection', () => ({
@@ -72,6 +83,7 @@ describe('ModelsSection', () => {
     mockSafetySection.lastProps = null;
     mockLanguageVoiceSection.lastProps = null;
     mockModelSelector.lastProps = null;
+    vi.clearAllMocks();
   });
 
   it('keeps tab cycle model settings out of models settings', async () => {
@@ -140,28 +152,52 @@ describe('ModelsSection', () => {
 
   it('keeps Live Artifacts settings inside models settings', async () => {
     const onUpdateSettings = vi.fn();
-
-    await renderModelsSection({
-      currentSettings: {
-        ...useSettingsStore.getState().appSettings,
-        autoLiveArtifactsVisualization: false,
-        autoLiveArtifactsModelId: 'gemini-3-flash-preview',
-        liveArtifactsPromptMode: 'inline',
-        liveArtifactsSystemPrompt: 'Custom Live Artifacts prompt',
+    const initialSettings = {
+      ...useSettingsStore.getState().appSettings,
+      autoLiveArtifactsVisualization: false,
+      autoLiveArtifactsModelId: 'gemini-3-flash-preview',
+      liveArtifactsPromptMode: 'inline',
+      liveArtifactsSystemPrompts: {
+        inline: 'Inline custom Live Artifacts prompt',
+        full: 'Full custom Live Artifacts prompt',
+        fullHtml: 'Complete HTML custom Live Artifacts prompt',
       },
-      onUpdateSettings,
+    } as AppSettings;
+
+    const StatefulModelsSection = () => {
+      const [settings, setSettings] = useState(initialSettings);
+      const handleUpdateSettings = (updates: Partial<AppSettings>) => {
+        onUpdateSettings(updates);
+        setSettings((previous) => ({ ...previous, ...updates }));
+      };
+
+      return (
+        <ModelsSection
+          modelId="gemini-3.1-pro-preview"
+          setModelId={vi.fn()}
+          availableModels={[{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true }]}
+          setAvailableModels={vi.fn()}
+          currentSettings={settings}
+          onUpdateSettings={handleUpdateSettings}
+        />
+      );
+    };
+
+    await act(async () => {
+      renderer.root.render(<StatefulModelsSection />);
     });
 
     expect(renderer.container.textContent).toContain('Live Artifacts');
     expect(renderer.container.textContent).toContain('Auto-open Live Artifacts');
     expect(renderer.container.textContent).toContain('Live Artifacts Model');
-    expect(renderer.container.textContent).toContain('Live Artifacts Prompt Version');
+    expect(renderer.container.textContent).not.toContain('Live Artifacts Prompt Version');
     expect(renderer.container.textContent).toContain('Inline HTML Only');
     expect(renderer.container.textContent).toContain('Live Artifacts Prompt');
 
     const promptToggle = renderer.container.querySelector<HTMLButtonElement>('#live-artifacts-prompt-toggle');
     expect(promptToggle?.getAttribute('aria-expanded')).toBe('false');
     expect(renderer.container.querySelector<HTMLTextAreaElement>('#live-artifacts-prompt-input')).toBeNull();
+    expect(renderer.container.querySelector<HTMLButtonElement>('#live-artifacts-prompt-reset')).toBeNull();
 
     const toggleLabel = Array.from(renderer.container.querySelectorAll('span')).find(
       (element) => element.textContent?.trim() === 'Auto-open Live Artifacts',
@@ -219,12 +255,19 @@ describe('ModelsSection', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith({ liveArtifactsPromptMode: 'fullHtml' });
 
     await act(async () => {
-      promptToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      renderer.container
+        .querySelector<HTMLButtonElement>('#live-artifacts-prompt-toggle')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(promptToggle?.getAttribute('aria-expanded')).toBe('true');
+    const expandedPromptToggle = renderer.container.querySelector<HTMLButtonElement>('#live-artifacts-prompt-toggle');
+    expect(expandedPromptToggle?.getAttribute('aria-expanded')).toBe('true');
     const promptTextarea = renderer.container.querySelector<HTMLTextAreaElement>('#live-artifacts-prompt-input');
-    expect(promptTextarea?.value).toBe('Custom Live Artifacts prompt');
+    expect(promptTextarea?.value).toBe('Complete HTML custom Live Artifacts prompt');
+    const promptPanel = renderer.container.querySelector<HTMLElement>('#live-artifacts-prompt-panel');
+    const promptReset = renderer.container.querySelector<HTMLButtonElement>('#live-artifacts-prompt-reset');
+    expect(promptReset).not.toBeNull();
+    expect(promptPanel?.contains(promptReset)).toBe(true);
 
     await act(async () => {
       const descriptor = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
@@ -233,8 +276,40 @@ describe('ModelsSection', () => {
       promptTextarea?.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
+    expect(onUpdateSettings).toHaveBeenCalledWith({ liveArtifactsSystemPrompt: '' });
     expect(onUpdateSettings).toHaveBeenCalledWith({
-      liveArtifactsSystemPrompt: 'Use product-dashboard HTML artifacts.',
+      liveArtifactsSystemPrompts: {
+        inline: 'Inline custom Live Artifacts prompt',
+        full: 'Full custom Live Artifacts prompt',
+        fullHtml: 'Use product-dashboard HTML artifacts.',
+      },
+    });
+  });
+
+  it('shows the selected built-in Live Artifacts prompt in the prompt editor when there is no custom prompt', async () => {
+    await renderModelsSection({
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        liveArtifactsPromptMode: 'inline',
+        liveArtifactsSystemPrompt: '',
+        liveArtifactsSystemPrompts: {
+          inline: '',
+          full: '',
+          fullHtml: '',
+        },
+      } as AppSettings,
+    });
+
+    await act(async () => {
+      renderer.container
+        .querySelector<HTMLButtonElement>('#live-artifacts-prompt-toggle')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    await vi.waitFor(() => {
+      expect(renderer.container.querySelector<HTMLTextAreaElement>('#live-artifacts-prompt-input')?.value).toContain(
+        '[Live Artifacts Inline Protocol - en]',
+      );
     });
   });
 
@@ -294,6 +369,109 @@ describe('ModelsSection', () => {
     expect(mockLanguageVoiceSection.lastProps!.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' },
     ]);
+  });
+
+  it('manages OpenAI-compatible model IDs inside the models settings screen', async () => {
+    const onUpdateSettings = vi.fn();
+
+    await renderModelsSection({
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        openaiCompatibleModelId: 'gpt-5.5',
+        openaiCompatibleModels: [
+          { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+          { id: 'gpt-4.1', name: 'GPT-4.1' },
+        ],
+      },
+      onUpdateSettings,
+    });
+
+    const modelSelector = renderer.container.querySelector('[data-testid="model-selector"]');
+    expect(modelSelector).not.toBeNull();
+    expect(modelSelector!.textContent).toContain('OpenAI-Compatible Model IDs');
+
+    const modelIdInputs = Array.from(
+      modelSelector!.querySelectorAll<HTMLInputElement>('input[data-openai-compatible-model-id-input="true"]'),
+    );
+    expect(modelIdInputs.map((input) => input.value)).toEqual(['gpt-5.5', 'gpt-4.1']);
+
+    await act(async () => {
+      const addButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Add Model'),
+      );
+      addButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const updatedModelIdInputs = Array.from(
+      modelSelector!.querySelectorAll<HTMLInputElement>('input[data-openai-compatible-model-id-input="true"]'),
+    );
+
+    await act(async () => {
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+      descriptor?.set?.call(updatedModelIdInputs[2], 'deepseek-chat');
+      updatedModelIdInputs[2].dispatchEvent(new Event('input', { bubbles: true }));
+      updatedModelIdInputs[2].dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(onUpdateSettings).toHaveBeenCalledWith({
+      openaiCompatibleModels: [
+        { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true },
+        { id: 'gpt-4.1', name: 'GPT-4.1' },
+        { id: 'deepseek-chat', name: 'deepseek-chat' },
+      ],
+    });
+  });
+
+  it('fetches OpenAI-compatible models from the models settings screen', async () => {
+    const onUpdateSettings = vi.fn();
+    fetchOpenAICompatibleModelsMock.mockResolvedValue([
+      { id: 'gpt-5.5', name: 'gpt-5.5' },
+      { id: 'deepseek-chat', name: 'deepseek-chat' },
+    ]);
+
+    await renderModelsSection({
+      currentSettings: {
+        ...useSettingsStore.getState().appSettings,
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        openaiCompatibleApiKey: 'openai-compatible-key',
+        openaiCompatibleBaseUrl: 'https://api.openai.com/v1',
+        openaiCompatibleModelId: 'missing-model',
+        openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'My GPT', isPinned: true }],
+      },
+      onUpdateSettings,
+    });
+
+    const modelSelector = renderer.container.querySelector('[data-testid="model-selector"]');
+    expect(modelSelector).not.toBeNull();
+
+    const fetchButton = Array.from(modelSelector!.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Fetch Models'),
+    );
+
+    expect(fetchButton).toBeDefined();
+
+    await act(async () => {
+      fetchButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchOpenAICompatibleModelsMock).toHaveBeenCalledWith(
+        'openai-compatible-key',
+        'https://api.openai.com/v1',
+        expect.any(AbortSignal),
+      );
+    });
+    expect(onUpdateSettings).toHaveBeenCalledWith({
+      openaiCompatibleModels: [
+        { id: 'gpt-5.5', name: 'My GPT', isPinned: true },
+        { id: 'deepseek-chat', name: 'deepseek-chat' },
+      ],
+    });
+    expect(onUpdateSettings).toHaveBeenCalledWith({ openaiCompatibleModelId: 'gpt-5.5' });
+    expect(renderer.container.textContent).toContain('Fetched 2 models.');
   });
 
   it('shows only GPT-compatible model and chat controls in OpenAI-compatible mode', async () => {

@@ -57,4 +57,10 @@ describe('settingsModelOptions', () => {
       'gemini-3.1-pro-preview',
     ]);
   });
+
+  it('shows the Gemini 3 Flash transcription option without the Fastest suffix', () => {
+    expect(AVAILABLE_TRANSCRIPTION_MODELS.find((model) => model.id === 'gemini-3-flash-preview')?.name).toBe(
+      'Gemini 3.0 Flash',
+    );
+  });
 });

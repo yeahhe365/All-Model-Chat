@@ -5,6 +5,7 @@ import type { AppSettings } from '@/types';
 import { renderHook } from '@/test/testUtils';
 import { createAppSettings, createChatSettings, createTheme } from '@/test/factories';
 import { useChatRuntimeValues } from './chat-runtime/ChatRuntimeContext';
+import { CHAT_INPUT_TEXTAREA_SELECTOR } from '@/constants/appConstants';
 
 const mockStores = vi.hoisted(() => {
   const ui = {
@@ -203,6 +204,7 @@ const buildApp = (overrides: Partial<AppViewModel> = {}) => {
 describe('chat runtime values', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    document.body.innerHTML = '';
   });
 
   it('shows API-configured OpenAI-compatible models in the header while OpenAI mode is active', () => {
@@ -286,6 +288,41 @@ describe('chat runtime values', () => {
     );
 
     unmount();
+  });
+
+  it('focuses the chat input after selecting an OpenAI-compatible model from Gemini-native mode', () => {
+    vi.useFakeTimers();
+    const previousFocus = document.createElement('button');
+    const textarea = document.createElement('textarea');
+    textarea.setAttribute('data-chat-input-textarea', 'true');
+    document.body.append(previousFocus, textarea);
+    previousFocus.focus();
+
+    const app = buildApp({
+      appSettings: {
+        ...createAppSettings(),
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'gemini-native',
+        modelId: 'gemini-3-flash-preview',
+        openaiCompatibleModelId: 'gpt-5.5',
+        openaiCompatibleModels: [{ id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true }],
+      },
+      getCurrentModelDisplayName: vi.fn(() => 'Gemini 3 Flash Preview'),
+    });
+    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
+
+    try {
+      act(() => {
+        result.current.header.onSelectModel('gpt-5.5');
+        vi.runAllTimers();
+      });
+
+      expect(document.querySelector(CHAT_INPUT_TEXTAREA_SELECTOR)).toBe(textarea);
+      expect(document.activeElement).toBe(textarea);
+    } finally {
+      unmount();
+      vi.useRealTimers();
+    }
   });
 
   it('keeps OpenAI-compatible models hidden while the provider switch is off', () => {

@@ -16,6 +16,7 @@ import type {
 } from '@/types';
 import type { MediaResolution } from '@/types/settings';
 import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
+import { CHAT_INPUT_TEXTAREA_SELECTOR } from '@/constants/appConstants';
 
 type ThinkingLevel = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -144,6 +145,12 @@ const buildHeaderModels = (
     seenIds.add(model.id);
     return true;
   });
+};
+
+const focusChatInputSoon = () => {
+  setTimeout(() => {
+    document.querySelector<HTMLTextAreaElement>(CHAT_INPUT_TEXTAREA_SELECTOR)?.focus();
+  }, 50);
 };
 
 const useRequiredContext = <T,>(context: React.Context<T | null>, name: string) => {
@@ -275,6 +282,7 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
           apiMode: 'openai-compatible',
           openaiCompatibleModelId: modelId,
         }));
+        focusChatInputSoon();
         return;
       }
 

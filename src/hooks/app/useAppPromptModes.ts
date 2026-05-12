@@ -9,6 +9,7 @@ import {
   loadHdGuideSystemPrompt,
 } from '@/constants/promptHelpers';
 import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_SYSTEM_INSTRUCTION } from '@/constants/appConstants';
+import { getLiveArtifactsSystemPromptOverride } from '@/utils/liveArtifactsPromptSettings';
 import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '@/types';
 
 interface PendingLiveArtifactsPromptActivation {
@@ -28,6 +29,7 @@ interface UseAppPromptModesOptions {
     systemInstruction?: string | null;
     liveArtifactsPromptMode?: AppSettings['liveArtifactsPromptMode'];
     liveArtifactsSystemPrompt?: string | null;
+    liveArtifactsSystemPrompts?: AppSettings['liveArtifactsSystemPrompts'];
   };
   setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   activeChat: SavedChatSession | undefined;
@@ -66,7 +68,10 @@ export const useAppPromptModes = ({
   const [liveArtifactsPromptOverrideState, setLiveArtifactsPromptOverrideState] =
     useState<LiveArtifactsPromptOverrideState | null>(null);
   const liveArtifactsPromptMode = appSettings.liveArtifactsPromptMode ?? 'inline';
-  const configuredLiveArtifactsSystemPrompt = appSettings.liveArtifactsSystemPrompt?.trim() ?? '';
+  const configuredLiveArtifactsSystemPrompt = getLiveArtifactsSystemPromptOverride(
+    appSettings,
+    liveArtifactsPromptMode,
+  );
   const isConfiguredLiveArtifactsSystemInstruction = useCallback(
     (instruction?: string | null) =>
       isLiveArtifactsSystemInstruction(instruction) ||

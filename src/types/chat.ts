@@ -34,6 +34,7 @@ export interface UploadedFile {
   // Gemini Files API metadata for uploaded media and documents.
   fileUri?: string;
   fileApiName?: string;
+  fileApiExpirationTime?: string;
   uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled';
   abortController?: AbortController;
   uploadSpeed?: string;

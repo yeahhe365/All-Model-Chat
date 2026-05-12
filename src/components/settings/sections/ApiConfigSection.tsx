@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RadioTower } from 'lucide-react';
-import type { AppSettings, ModelOption } from '@/types';
+import type { AppSettings } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
 import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID, SETTINGS_INPUT_CLASS } from '@/constants/appConstants';
 import { CONNECTION_TEST_MODELS } from '@/constants/settingsModelOptions';
 import { getClient } from '@/services/api/apiClient';
-import { fetchOpenAICompatibleModels, sendOpenAICompatibleMessageNonStream } from '@/services/api/openaiCompatibleApi';
+import { sendOpenAICompatibleMessageNonStream } from '@/services/api/openaiCompatibleApi';
 import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '@/utils/apiProxyUrl';
 import { isServerManagedApiEnabledForProxyRequests, parseApiKeys, SERVER_MANAGED_API_KEY } from '@/utils/apiUtils';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
-import { OpenAICompatibleModelListEditor } from './api-config/OpenAICompatibleModelListEditor';
 import { FileStrategyControl } from './appearance/FileStrategyControl';
 import { Toggle } from '@/components/shared/Toggle';
 import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
@@ -27,42 +26,9 @@ interface ApiConfigSectionProps {
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
   serverManagedApi: boolean;
-  availableModels?: ModelOption[];
   settings: AppSettings;
   onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }
-
-const mergeOpenAICompatibleModels = (currentModels: ModelOption[], fetchedModels: ModelOption[]): ModelOption[] => {
-  const seenIds = new Set<string>();
-  const mergedModels: ModelOption[] = [];
-
-  const appendModel = (model: ModelOption) => {
-    const modelId = model.id.trim();
-    if (!modelId || seenIds.has(modelId)) {
-      return;
-    }
-
-    seenIds.add(modelId);
-    mergedModels.push({
-      ...model,
-      id: modelId,
-      name: model.name.trim() || modelId,
-    });
-  };
-
-  currentModels.forEach(appendModel);
-  fetchedModels.forEach(appendModel);
-
-  return mergedModels.map((model, index) => {
-    const nextModel = { ...model };
-    if (index === 0) {
-      nextModel.isPinned = true;
-    } else {
-      delete nextModel.isPinned;
-    }
-    return nextModel;
-  });
-};
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   useCustomApiConfig,
@@ -80,8 +46,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const { t } = useI18n();
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
-  const [modelFetchStatus, setModelFetchStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [modelFetchMessage, setModelFetchMessage] = useState<string | null>(null);
   const [testModelId, setTestModelId] = useState<string>(DEFAULT_LIVE_ARTIFACTS_MODEL_ID);
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
   const overflowTimerRef = useRef<number | null>(null);
@@ -134,70 +98,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     onUpdate('apiMode', enabled ? 'openai-compatible' : 'gemini-native');
     setTestStatus('idle');
     setTestMessage(null);
-    setModelFetchStatus('idle');
-    setModelFetchMessage(null);
-  };
-
-  const resetOpenAICompatibleModelFetch = () => {
-    setModelFetchStatus('idle');
-    setModelFetchMessage(null);
   };
 
   const resolveOpenAICompatibleKey = (): string | null =>
     openaiCompatibleApiKey || viteEnv?.VITE_OPENAI_API_KEY || null;
-
-  const handleFetchOpenAICompatibleModels = async () => {
-    const keyToFetch = resolveOpenAICompatibleKey();
-
-    if (!keyToFetch) {
-      setModelFetchStatus('error');
-      setModelFetchMessage(t('apiConfig_noKeyAvailable'));
-      return;
-    }
-
-    const keys = parseApiKeys(keyToFetch);
-    const firstKey = keys[0];
-
-    if (!firstKey) {
-      setModelFetchStatus('error');
-      setModelFetchMessage(t('apiConfig_invalidKeyFormat'));
-      return;
-    }
-
-    setModelFetchStatus('loading');
-    setModelFetchMessage(null);
-
-    try {
-      const fetchedModels = await fetchOpenAICompatibleModels(
-        firstKey,
-        settings.openaiCompatibleBaseUrl,
-        new AbortController().signal,
-      );
-
-      if (fetchedModels.length === 0) {
-        setModelFetchStatus('error');
-        setModelFetchMessage(t('settingsOpenAICompatibleModelFetchEmpty'));
-        return;
-      }
-
-      const mergedModels = mergeOpenAICompatibleModels(settings.openaiCompatibleModels ?? [], fetchedModels);
-      onUpdate('openaiCompatibleModels', mergedModels);
-
-      if (!mergedModels.some((model) => model.id === settings.openaiCompatibleModelId)) {
-        onUpdate('openaiCompatibleModelId', mergedModels[0].id);
-      }
-
-      setModelFetchStatus('success');
-      setModelFetchMessage(
-        t('settingsOpenAICompatibleModelFetchSuccess').replace('{count}', String(fetchedModels.length)),
-      );
-      setTestStatus('idle');
-      setTestMessage(null);
-    } catch (error) {
-      setModelFetchStatus('error');
-      setModelFetchMessage(error instanceof Error ? error.message : String(error));
-    }
-  };
 
   const handleTestConnection = async () => {
     const resolveKeyToTest = (): string | null => {
@@ -345,30 +249,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 setApiKey={(val) => {
                   onUpdate('openaiCompatibleApiKey', val);
                   setTestStatus('idle');
-                  resetOpenAICompatibleModelFetch();
                 }}
                 label={t('settingsOpenAICompatibleApiKey')}
                 placeholder={t('apiConfig_openai_key_placeholder')}
                 helpText={t('settingsOpenAICompatibleApiKeyHelp')}
-              />
-              <OpenAICompatibleModelListEditor
-                models={settings.openaiCompatibleModels ?? []}
-                selectedModelId={settings.openaiCompatibleModelId}
-                onModelsChange={(models) => {
-                  onUpdate('openaiCompatibleModels', models);
-                  setTestStatus('idle');
-                  resetOpenAICompatibleModelFetch();
-                }}
-                onSelectedModelChange={(modelId) => {
-                  onUpdate('openaiCompatibleModelId', modelId);
-                  setTestStatus('idle');
-                  resetOpenAICompatibleModelFetch();
-                }}
-                onFetchModels={handleFetchOpenAICompatibleModels}
-                isFetchingModels={modelFetchStatus === 'loading'}
-                isFetchModelsDisabled={modelFetchStatus === 'loading' || (!openaiCompatibleApiKey && !hasOpenAIEnvKey)}
-                fetchModelsStatus={modelFetchStatus === 'loading' ? 'idle' : modelFetchStatus}
-                fetchModelsMessage={modelFetchMessage}
               />
               <div className="space-y-2">
                 <label
@@ -383,7 +267,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                   value={settings.openaiCompatibleBaseUrl || ''}
                   onChange={(event) => {
                     onUpdate('openaiCompatibleBaseUrl', event.target.value);
-                    resetOpenAICompatibleModelFetch();
                   }}
                   className={`w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono ${SETTINGS_INPUT_CLASS}`}
                   placeholder={DEFAULT_OPENAI_COMPATIBLE_BASE_URL}

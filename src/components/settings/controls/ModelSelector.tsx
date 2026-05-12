@@ -12,6 +12,7 @@ interface ModelSelectorProps {
   setAvailableModels: (models: ModelOption[]) => void;
   defaultModels?: ModelOption[];
   defaultApiMode?: ApiMode;
+  extraModelListContent?: React.ReactNode;
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
@@ -22,6 +23,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   setAvailableModels,
   defaultModels,
   defaultApiMode,
+  extraModelListContent,
 }) => {
   const [isEditingList, setIsEditingList] = useState(false);
   const isProviderAwareList =
@@ -47,6 +49,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           selectedModelId={selectedModelId}
           selectedApiMode={selectedApiMode}
           onSelectModel={onSelectModel}
+          extraContent={extraModelListContent}
         />
       )}
     </div>

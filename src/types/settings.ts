@@ -33,6 +33,7 @@ export type ImageOutputMode = 'IMAGE_TEXT' | 'IMAGE_ONLY';
 export type ImagePersonGeneration = 'ALLOW_ADULT' | 'ALLOW_ALL' | 'DONT_ALLOW';
 export type ApiMode = 'gemini-native' | 'openai-compatible';
 export type LiveArtifactsPromptMode = 'inline' | 'full' | 'fullHtml';
+export type LiveArtifactsSystemPrompts = Record<LiveArtifactsPromptMode, string>;
 export type TranslationTargetLanguage =
   | 'English'
   | 'Simplified Chinese'
@@ -120,6 +121,7 @@ export interface AppSettings extends ChatSettings {
   autoLiveArtifactsModelId: string;
   liveArtifactsPromptMode?: LiveArtifactsPromptMode;
   liveArtifactsSystemPrompt?: string;
+  liveArtifactsSystemPrompts?: LiveArtifactsSystemPrompts;
   isPasteRichTextAsMarkdownEnabled?: boolean;
   isPasteAsTextFileEnabled?: boolean;
   showInputPasteButton?: boolean;

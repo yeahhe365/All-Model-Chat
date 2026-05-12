@@ -15,6 +15,8 @@ import { sendImageEditMessage } from '@/features/message-sender/imageEditStrateg
 import { sendStandardMessage } from '@/features/message-sender/standardChatStrategy';
 import { createSenderStoreActions } from '@/features/message-sender/senderStoreActions';
 import { sendTtsImagenMessage } from '@/features/message-sender/ttsImagenStrategy';
+import { ensureFilesApiReferences } from '@/features/message-sender/fileApiReference';
+import { formatMessageSenderText } from '@/features/message-sender/i18nFormat';
 import { getModelCapabilities } from '@/utils/modelHelpers';
 import { useI18n } from '@/contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '@/utils/apiUtils';
@@ -138,9 +140,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
       const isFastMode = overrideOptions?.isFastMode ?? false;
 
       const sessionToUpdate = currentChatSettings;
-      const activeModelId = isOpenAICompatibleApiActive(appSettings)
-        ? appSettings.openaiCompatibleModelId
-        : sessionToUpdate.modelId;
+      const isOpenAICompatibleMode = isOpenAICompatibleApiActive(appSettings);
+      const activeModelId = isOpenAICompatibleMode ? appSettings.openaiCompatibleModelId : sessionToUpdate.modelId;
       const capabilities = getModelCapabilities(activeModelId);
       const isTtsModel = capabilities.isTtsModel;
       const isImagenModel = capabilities.isRealImagenModel;
@@ -257,6 +258,31 @@ export const useMessageSender = (props: MessageSenderProps) => {
         return;
       }
       const { keyToUse, shouldLockKey, generationId, abortController: newAbortController } = request;
+      const fileReferenceResult = isOpenAICompatibleMode
+        ? ({ ok: true, files: filesToUse } as const)
+        : await ensureFilesApiReferences({
+            files: filesToUse,
+            apiKey: keyToUse,
+            abortSignal: newAbortController.signal,
+            onFileUpdate: (fileId, patch) => {
+              if (overrideOptions?.files !== undefined) {
+                return;
+              }
+
+              setSelectedFiles((prev) => prev.map((file) => (file.id === fileId ? { ...file, ...patch } : file)));
+            },
+          });
+
+      if (!fileReferenceResult.ok) {
+        const template = t(fileReferenceResult.errorKey);
+        setAppFileError(
+          fileReferenceResult.fileName
+            ? formatMessageSenderText(template, { filename: fileReferenceResult.fileName })
+            : template,
+        );
+        return;
+      }
+      const filesReadyForSend = fileReferenceResult.files;
 
       if (appSettings.isAutoScrollOnSendEnabled) {
         userScrolledUpRef.current = false;
@@ -297,7 +323,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
           appSettings,
           currentChatSettings: sessionToUpdate,
           text: textToUse.trim(),
-          files: filesToUse,
+          files: filesReadyForSend,
           editingMessageId: effectiveEditingId,
           aspectRatio,
           imageSize,
@@ -322,7 +348,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         handleGenerateLiveArtifacts,
         runMessageLifecycle,
         text: textToUse,
-        files: filesToUse,
+        files: filesReadyForSend,
         editingMessageId: effectiveEditingId,
         activeModelId,
         isContinueMode,

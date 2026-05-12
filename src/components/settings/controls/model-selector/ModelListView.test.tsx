@@ -75,4 +75,24 @@ describe('ModelListView', () => {
 
     expect(onSelectModel).toHaveBeenCalledWith('gpt-5.5', 'openai-compatible');
   });
+
+  it('renders extra model list content inside the list container', () => {
+    act(() => {
+      renderer.root.render(
+        <ModelListView
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true }]}
+          selectedModelId="gemini-3-flash-preview"
+          onSelectModel={vi.fn()}
+          extraContent={<div data-testid="extra-model-list-content">OpenAI-compatible Model IDs</div>}
+        />,
+      );
+    });
+
+    const listContainer = renderer.container.querySelector('[data-testid="settings-model-list-container"]');
+    const extraContent = renderer.container.querySelector('[data-testid="extra-model-list-content"]');
+
+    expect(listContainer).not.toBeNull();
+    expect(extraContent).not.toBeNull();
+    expect(listContainer!.contains(extraContent)).toBe(true);
+  });
 });

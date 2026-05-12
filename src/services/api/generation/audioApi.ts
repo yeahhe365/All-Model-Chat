@@ -1,4 +1,4 @@
-import type { GenerateContentConfig, ThinkingConfig } from '@google/genai';
+import { ThinkingLevel, type GenerateContentConfig, type ThinkingConfig } from '@google/genai';
 import { executeConfiguredApiRequest } from '@/services/api/apiExecutor';
 import { logService } from '@/services/logService';
 import type { Part } from '@google/genai';
@@ -184,7 +184,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
       const capabilities = getModelCapabilities(modelId);
       if (capabilities.isGemini3) {
         thinkingConfig.includeThoughts = false;
-        thinkingConfig.thinkingLevel = 'MINIMAL' as ThinkingConfig['thinkingLevel'];
+        thinkingConfig.thinkingLevel = capabilities.isFlashModel ? ThinkingLevel.MINIMAL : ThinkingLevel.LOW;
       } else if (capabilities.isFlashModel) {
         thinkingConfig.thinkingBudget = 512;
       } else {

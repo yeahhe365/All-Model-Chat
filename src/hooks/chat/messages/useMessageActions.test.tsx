@@ -314,18 +314,8 @@ describe('useMessageActions', () => {
 
     const forkedMessages = sessions[0].messages;
     expect(forkedMessages).toHaveLength(4);
-    expect(forkedMessages.map((message) => message.content)).toEqual([
-      'plot sales',
-      '',
-      '',
-      'Here is the chart.',
-    ]);
-    expect(forkedMessages.map((message) => message.isInternalToolMessage ?? false)).toEqual([
-      false,
-      true,
-      true,
-      false,
-    ]);
+    expect(forkedMessages.map((message) => message.content)).toEqual(['plot sales', '', '', 'Here is the chart.']);
+    expect(forkedMessages.map((message) => message.isInternalToolMessage ?? false)).toEqual([false, true, true, false]);
     expect(forkedMessages[1].toolParentMessageId).toBe(forkedMessages[3].id);
     expect(forkedMessages[2].toolParentMessageId).toBe(forkedMessages[3].id);
 

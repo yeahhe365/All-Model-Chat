@@ -107,12 +107,16 @@ export const modelSettings = {
   settings_liveArtifactsPromptMode_fullHtml: { en: 'Complete HTML Only', zh: '仅完整 HTML' },
   settings_liveArtifactsSystemPrompt_label: { en: 'Live Artifacts Prompt', zh: 'Live Artifacts 提示词' },
   settings_liveArtifactsSystemPrompt_placeholder: {
-    en: 'Leave blank to use the built-in Live Artifacts prompt.',
-    zh: '留空则使用内置 Live Artifacts 提示词。',
+    en: 'The current built-in prompt appears here; edit it to customize this version.',
+    zh: '这里会显示当前内置提示词；编辑后只会自定义当前版本。',
   },
   settings_liveArtifactsSystemPrompt_help: {
-    en: 'This prompt is used by the Live Artifacts button, suggestions, and automatic visualizations.',
-    zh: '此提示词会用于 Live Artifacts 按钮、建议入口和自动可视化。',
+    en: 'The Live Artifacts button, suggestions, and automatic visualizations use the prompt for the selected version.',
+    zh: 'Live Artifacts 按钮、建议入口和自动可视化都会使用当前版本对应的提示词。',
+  },
+  settings_liveArtifactsSystemPrompt_reset: {
+    en: 'Reset current prompt version to the built-in prompt',
+    zh: '将当前提示词版本恢复为内置提示词',
   },
   settingsTranslationSectionTitle: { en: 'Translation', zh: '翻译设置' },
   settingsInputTranslationSectionTitle: { en: 'Input Translation', zh: '输入框翻译' },

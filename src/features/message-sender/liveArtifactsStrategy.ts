@@ -5,6 +5,7 @@ import { sendStatelessMessageStreamApi } from '@/services/api/chatApi';
 import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID } from '@/constants/appConstants';
 import { buildGenerationConfig } from '@/services/api/generationConfig';
 import { loadLiveArtifactsSystemPrompt } from '@/constants/promptHelpers';
+import { getLiveArtifactsSystemPromptOverride } from '@/utils/liveArtifactsPromptSettings';
 import { runOptimisticMessagePipeline } from './messagePipeline';
 import { buildLiveArtifactsRequestParts, coerceLiveArtifactsOutput } from './liveArtifactsContracts';
 import type { LiveArtifactsGeneratorProps, GetStreamHandlers } from './types';
@@ -79,7 +80,7 @@ export const generateLiveArtifactsMessage = async ({
     },
     execute: async () => {
       const liveArtifactsSystemPrompt =
-        appSettings.liveArtifactsSystemPrompt?.trim() ||
+        getLiveArtifactsSystemPromptOverride(appSettings, appSettings.liveArtifactsPromptMode ?? 'inline') ||
         (await loadLiveArtifactsSystemPrompt(language, appSettings.liveArtifactsPromptMode ?? 'inline'));
       const liveArtifactsPromptMode = appSettings.liveArtifactsPromptMode ?? 'inline';
       const t = getTranslator(language);

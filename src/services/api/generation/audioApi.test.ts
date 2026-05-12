@@ -152,4 +152,19 @@ describe('transcribeAudioApi request config', () => {
 
     await expect(transcribeAudioApi('api-key', audioFile, 'gemini-3-flash-preview')).resolves.toBe('');
   });
+
+  it('uses LOW thinking for Gemini 3.1 Pro transcription because Pro does not support MINIMAL', async () => {
+    await transcribeAudioApi('api-key', audioFile, 'gemini-3.1-pro-preview');
+
+    expect(generateContentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          thinkingConfig: {
+            includeThoughts: false,
+            thinkingLevel: 'LOW',
+          },
+        }),
+      }),
+    );
+  });
 });

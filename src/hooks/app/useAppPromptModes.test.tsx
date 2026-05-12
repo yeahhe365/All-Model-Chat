@@ -189,6 +189,42 @@ describe('useAppPromptModes', () => {
     unmount();
   });
 
+  it('uses the custom Live Artifacts prompt for the selected prompt version', async () => {
+    const setAppSettings = vi.fn();
+    const setCurrentChatSettings = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: createAppSettings({
+          liveArtifactsPromptMode: 'fullHtml',
+          liveArtifactsSystemPrompts: {
+            inline: 'Inline custom prompt',
+            full: 'Full custom prompt',
+            fullHtml: 'Complete HTML custom prompt',
+          },
+        } as unknown as Partial<AppSettings>),
+        setAppSettings,
+        activeChat: createLiveArtifactsSession(),
+        activeSessionId: 'session-1',
+        currentChatSettings: createLiveArtifactsChatSettings(),
+        setCurrentChatSettings,
+        handleSendMessage: vi.fn(),
+        setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+        language: 'en',
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleLoadLiveArtifactsPromptAndSave();
+    });
+
+    expect(mockLoadLiveArtifactsSystemPrompt).not.toHaveBeenCalled();
+    const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
+    expect(appSettingsUpdater(createAppSettings()).systemInstruction).toBe('Complete HTML custom prompt');
+
+    unmount();
+  });
+
   it('ignores repeated Live Artifacts button presses while a Live Artifacts prompt load is already in flight', async () => {
     const deferred = createDeferred<string>();
     mockLoadLiveArtifactsSystemPrompt.mockReturnValue(deferred.promise);

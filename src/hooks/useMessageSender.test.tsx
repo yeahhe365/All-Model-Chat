@@ -11,6 +11,8 @@ const {
   mockCreateMessage,
   mockCreateNewSession,
   mockSenderStoreActions,
+  mockGetFileMetadataApi,
+  mockUploadFileApi,
 } = vi.hoisted(() => ({
   mockSendStandardMessage: vi.fn(),
   mockSendTtsImagenMessage: vi.fn(),
@@ -31,6 +33,8 @@ const {
     setSessionLoading: vi.fn(),
     activeJobs: { current: new Map() },
   },
+  mockGetFileMetadataApi: vi.fn(),
+  mockUploadFileApi: vi.fn(),
 }));
 
 vi.mock('@/features/message-sender/useChatStreamHandler', () => ({
@@ -87,6 +91,11 @@ vi.mock('@/services/logService', async () => {
   return createLogServiceMockModule();
 });
 
+vi.mock('@/services/api/fileApi', () => ({
+  getFileMetadataApi: mockGetFileMetadataApi,
+  uploadFileApi: mockUploadFileApi,
+}));
+
 import { useMessageSender } from './useMessageSender';
 import { createMessageSenderProps, type MessageSenderPropsOverrides } from '@/test/hookFactories';
 import { createUploadedFile } from '@/test/factories';
@@ -101,6 +110,8 @@ describe('useMessageSender', () => {
     vi.clearAllMocks();
     mockCreateNewSession.mockReturnValue({ id: 'new-session' });
     mockSenderStoreActions.updateAndPersistSessions.mockImplementation((updater) => updater([]));
+    mockGetFileMetadataApi.mockResolvedValue({ state: 'ACTIVE', name: 'files/current', uri: 'https://files/current' });
+    mockUploadFileApi.mockResolvedValue({ state: 'ACTIVE', name: 'files/refreshed', uri: 'https://files/refreshed' });
     mockGetModelCapabilities.mockReturnValue({
       isTtsModel: false,
       isRealImagenModel: true,
@@ -335,6 +346,8 @@ describe('useMessageSender', () => {
       createUploadedFile({
         name: 'reference.pdf',
         type: 'application/pdf',
+        fileApiName: 'files/gemini-reference',
+        fileUri: 'https://files/gemini-reference',
       }),
     ];
 
@@ -356,6 +369,7 @@ describe('useMessageSender', () => {
     });
 
     expect(mockGetModelCapabilities).toHaveBeenCalledWith('gpt-5.5');
+    expect(mockGetFileMetadataApi).not.toHaveBeenCalled();
     expect(setAppFileError).toHaveBeenCalledWith(null);
     expect(mockSendImageEditMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).toHaveBeenCalledWith(
@@ -406,6 +420,107 @@ describe('useMessageSender', () => {
       '错误',
     );
     expect(mockSenderStoreActions.setActiveSessionId).toHaveBeenCalledWith('new-session');
+    unmount();
+  });
+
+  it('refreshes an expired Files API reference from the local file before sending', async () => {
+    mockGetModelCapabilities.mockReturnValue({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: false,
+    });
+    mockGetFileMetadataApi.mockResolvedValue(null);
+
+    const rawFile = new File(['image-bytes'], 'reference.png', { type: 'image/png' });
+    const staleFile = createUploadedFile({
+      id: 'file-stale',
+      name: 'reference.png',
+      type: 'image/png',
+      size: rawFile.size,
+      rawFile,
+      fileApiName: 'files/expired',
+      fileUri: 'https://files/expired',
+      uploadState: 'active',
+      isProcessing: false,
+    });
+    const setSelectedFiles = vi.fn();
+
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'gemini-3.1-pro-preview',
+      },
+      selectedFiles: [staleFile],
+      setSelectedFiles,
+    });
+
+    await act(async () => {
+      await result.current.handleSendMessage({ text: 'describe this image' });
+    });
+
+    expect(mockGetFileMetadataApi).toHaveBeenCalledWith('api-key', 'files/expired');
+    expect(mockUploadFileApi).toHaveBeenCalledWith(
+      'api-key',
+      rawFile,
+      'image/png',
+      'reference.png',
+      expect.any(AbortSignal),
+    );
+    expect(mockSendStandardMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        files: [
+          expect.objectContaining({
+            id: 'file-stale',
+            fileApiName: 'files/refreshed',
+            fileUri: 'https://files/refreshed',
+            uploadState: 'active',
+            isProcessing: false,
+          }),
+        ],
+      }),
+    );
+    expect(setSelectedFiles).toHaveBeenCalledWith(expect.any(Function));
+    unmount();
+  });
+
+  it('blocks an expired Files API reference when no local backup is available', async () => {
+    mockGetModelCapabilities.mockReturnValue({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: false,
+    });
+    mockGetFileMetadataApi.mockResolvedValue(null);
+
+    const setAppFileError = vi.fn();
+    const { result, unmount } = renderMessageSender({
+      currentChatSettings: {
+        modelId: 'gemini-3.1-pro-preview',
+      },
+      selectedFiles: [
+        createUploadedFile({
+          id: 'file-remote-only',
+          name: 'remote-only.pdf',
+          type: 'application/pdf',
+          fileApiName: 'files/expired',
+          fileUri: 'https://files/expired',
+          uploadState: 'active',
+          isProcessing: false,
+          rawFile: undefined,
+        }),
+      ],
+      setAppFileError,
+    });
+
+    await act(async () => {
+      await result.current.handleSendMessage({ text: 'summarize this PDF' });
+    });
+
+    expect(mockUploadFileApi).not.toHaveBeenCalled();
+    expect(setAppFileError).toHaveBeenCalledWith(
+      'remote-only.pdf 的远端文件引用已失效，且本地备份不可用。请重新附加该文件。',
+    );
+    expect(mockSendStandardMessage).not.toHaveBeenCalled();
     unmount();
   });
 });

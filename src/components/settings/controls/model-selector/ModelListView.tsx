@@ -15,6 +15,7 @@ interface ModelListViewProps {
   selectedModelId: string;
   selectedApiMode?: ApiMode;
   onSelectModel: (id: string, apiMode?: ApiMode) => void;
+  extraContent?: React.ReactNode;
 }
 
 export const ModelListView: React.FC<ModelListViewProps> = ({
@@ -22,6 +23,7 @@ export const ModelListView: React.FC<ModelListViewProps> = ({
   selectedModelId,
   selectedApiMode,
   onSelectModel,
+  extraContent,
 }) => {
   const { t } = useI18n();
 
@@ -31,7 +33,10 @@ export const ModelListView: React.FC<ModelListViewProps> = ({
   const sections = useMemo(() => buildModelCatalogSections(filteredEntries), [filteredEntries]);
 
   return (
-    <div className="border border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-input)]/30 overflow-hidden">
+    <div
+      data-testid="settings-model-list-container"
+      className="border border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-input)]/30 overflow-hidden"
+    >
       <div className="max-h-[280px] overflow-y-auto custom-scrollbar p-1.5 space-y-2">
         {sections.map((section) => (
           <div key={section.key} className="space-y-1" data-provider-section={section.providerKey}>
@@ -101,6 +106,7 @@ export const ModelListView: React.FC<ModelListViewProps> = ({
           </div>
         )}
       </div>
+      {extraContent && <div className="border-t border-[var(--theme-border-secondary)] p-3">{extraContent}</div>}
     </div>
   );
 };

@@ -196,6 +196,49 @@ describe('liveArtifactsStrategy', () => {
     );
   });
 
+  it('uses the custom Live Artifacts system prompt for the selected prompt version', async () => {
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError: vi.fn(),
+      streamOnComplete: vi.fn(),
+      streamOnPart: vi.fn(),
+      onThoughtChunk: vi.fn(),
+    }));
+    const runMessageLifecycle = vi.fn(async ({ execute }) => execute());
+
+    await act(async () => {
+      await generateLiveArtifactsMessage({
+        appSettings: createAppSettings({
+          autoLiveArtifactsModelId: 'gemini-live-artifacts-default',
+          liveArtifactsPromptMode: 'full',
+          liveArtifactsSystemPrompts: {
+            inline: 'Inline custom Live Artifacts system prompt',
+            full: 'Full custom Live Artifacts system prompt',
+            fullHtml: 'Complete HTML custom Live Artifacts system prompt',
+          },
+        } as unknown as Parameters<typeof createAppSettings>[0]),
+        currentChatSettings: createChatSettings({ modelId: 'gemini-3-flash-preview' }),
+        activeSessionId: 'session-1',
+        updateAndPersistSessions: vi.fn(),
+        getStreamHandlers,
+        setAppFileError: vi.fn(),
+        aspectRatio: '16:9',
+        language: 'en',
+        runMessageLifecycle,
+        sourceMessageId: 'source-message-id',
+        content: 'source content',
+      });
+    });
+
+    expect(mockLoadLiveArtifactsSystemPrompt).not.toHaveBeenCalled();
+    expect(mockBuildGenerationConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({
+          systemInstruction: 'Full custom Live Artifacts system prompt',
+        }),
+      }),
+    );
+  });
+
   it('loads the selected built-in Live Artifacts prompt version for generated artifacts', async () => {
     const getStreamHandlers = vi.fn(() => ({
       streamOnError: vi.fn(),

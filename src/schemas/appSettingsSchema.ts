@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
-import type { AppSettings, FilesApiConfig, ModelOption, SafetySetting } from '@/types';
+import type { AppSettings, FilesApiConfig, LiveArtifactsSystemPrompts, ModelOption, SafetySetting } from '@/types';
 import {
   HarmBlockThreshold,
   HarmCategory,
@@ -8,6 +8,7 @@ import {
   type ApiMode,
   type TranslationTargetLanguage,
 } from '@/types/settings';
+import { createEmptyLiveArtifactsSystemPrompts } from '@/utils/liveArtifactsPromptSettings';
 
 const THEME_IDS = ['system', 'onyx', 'pearl'] as const;
 const LANGUAGE_IDS = ['en', 'zh', 'system'] as const;
@@ -100,6 +101,15 @@ const safetySettingSchema = z.object({
   category: z.nativeEnum(HarmCategory),
   threshold: z.nativeEnum(HarmBlockThreshold),
 });
+
+const liveArtifactsSystemPromptsSchema: z.ZodType<LiveArtifactsSystemPrompts> = z
+  .object({
+    inline: z.string().optional().default(''),
+    full: z.string().optional().default(''),
+    fullHtml: z.string().optional().default(''),
+  })
+  .default(createEmptyLiveArtifactsSystemPrompts())
+  .catch(createEmptyLiveArtifactsSystemPrompts());
 
 const sanitizeSafetySettings = (value: unknown, fallback: SafetySetting[] | undefined): SafetySetting[] | undefined => {
   if (!Array.isArray(value)) {
@@ -239,6 +249,7 @@ const appSettingsSchema: z.ZodType<AppSettings> = z.object({
     DEFAULT_APP_SETTINGS.liveArtifactsPromptMode,
   ),
   liveArtifactsSystemPrompt: optionalStringWithDefault(DEFAULT_APP_SETTINGS.liveArtifactsSystemPrompt),
+  liveArtifactsSystemPrompts: liveArtifactsSystemPromptsSchema,
   isPasteRichTextAsMarkdownEnabled: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.isPasteRichTextAsMarkdownEnabled),
   isPasteAsTextFileEnabled: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.isPasteAsTextFileEnabled),
   showInputPasteButton: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.showInputPasteButton),
