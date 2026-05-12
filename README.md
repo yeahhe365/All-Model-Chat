@@ -468,6 +468,3 @@ OpenAI 兼容模式使用独立模型列表，可在设置中手动维护或从�
 <div align="center">
   <p>Developed with :heart: by <strong>yeahhe365</strong></p>
 </div>
-
-
-
