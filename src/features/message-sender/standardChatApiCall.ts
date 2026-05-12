@@ -260,6 +260,7 @@ export const performStandardChatApiCall = async ({
       const toolLoopResult = await runStandardToolLoop({
         initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
         clientFunctions: standardClientFunctions,
+        abortSignal: newAbortController.signal,
         runTurn: (contents) =>
           generateContentTurnApi(keyToUse, apiModelId, contents, requestConfig, newAbortController.signal),
       });

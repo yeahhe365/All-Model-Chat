@@ -66,7 +66,7 @@ export interface StandardClientFunctionExecutionResult {
 
 export interface StandardClientFunction {
   declaration: FunctionDeclaration;
-  handler: (args: unknown) => Promise<StandardClientFunctionExecutionResult>;
+  handler: (args: unknown, options?: { abortSignal?: AbortSignal }) => Promise<StandardClientFunctionExecutionResult>;
 }
 
 export type StandardClientFunctions = Record<string, StandardClientFunction>;

@@ -8,7 +8,10 @@ import {
 interface CreateStandardClientFunctionsOptions {
   isLocalPythonEnabled: boolean;
   inputFiles: UploadedFile[];
-  runPython: (code: string, options?: { files?: UploadedFile[] }) => Promise<Omit<ExecutionResult, 'status'>>;
+  runPython: (
+    code: string,
+    options?: { files?: UploadedFile[]; abortSignal?: AbortSignal },
+  ) => Promise<Omit<ExecutionResult, 'status'>>;
 }
 
 export const createStandardClientFunctions = ({
@@ -24,7 +27,8 @@ export const createStandardClientFunctions = ({
     run_local_python: {
       declaration: createLocalPythonToolDeclaration(),
       handler: createLocalPythonToolHandler({
-        getRunOptions: () => ({ files: inputFiles }),
+        getRunOptions: (options) =>
+          options?.abortSignal ? { files: inputFiles, abortSignal: options.abortSignal } : { files: inputFiles },
         runPython,
       }),
     },

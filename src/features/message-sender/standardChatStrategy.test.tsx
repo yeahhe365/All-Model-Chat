@@ -784,6 +784,47 @@ describe('standardChatStrategy', () => {
     unmount();
   });
 
+  it('passes the prepared abort signal into the standard tool loop', async () => {
+    const getStreamHandlers = vi.fn(() => ({
+      streamOnError: vi.fn(),
+      streamOnComplete: vi.fn(),
+      streamOnPart: vi.fn(),
+      onThoughtChunk: vi.fn(),
+    }));
+    const preparedRequest = createPreparedRequest();
+
+    mockBuildGenerationConfig.mockResolvedValue({ systemInstruction: 'base config' });
+    mockAppendFunctionDeclarationsToTools.mockImplementation((_modelId, config, declarations) => ({
+      ...config,
+      tools: [{ functionDeclarations: declarations }],
+    }));
+
+    const { result, unmount } = renderStandardChat({
+      currentChatSettings: {
+        isLocalPythonEnabled: true,
+      },
+      getStreamHandlers,
+    });
+
+    await act(async () => {
+      await result.current.sendStandardMessage({
+        text: '用 Python 算一下',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: preparedRequest,
+      });
+    });
+
+    expect(mockRunStandardToolLoop).toHaveBeenCalledWith(
+      expect.objectContaining({
+        abortSignal: preparedRequest.abortController.signal,
+      }),
+    );
+
+    unmount();
+  });
+
   it('routes thrown standard stream errors through the stream error handler', async () => {
     const streamOnError = vi.fn();
     const streamOnComplete = vi.fn();

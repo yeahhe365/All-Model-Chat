@@ -21,6 +21,7 @@ interface RunStandardToolLoopOptions {
   initialContents: ChatHistoryItem[];
   clientFunctions: StandardClientFunctions;
   runTurn: (contents: ChatHistoryItem[]) => Promise<StandardToolTurnResult>;
+  abortSignal?: AbortSignal;
   maxIterations?: number;
 }
 
@@ -212,6 +213,7 @@ export const runStandardToolLoop = async ({
   initialContents,
   clientFunctions,
   runTurn,
+  abortSignal,
   maxIterations = 8,
 }: RunStandardToolLoopOptions): Promise<{
   finalTurn: StandardToolTurnResult;
@@ -271,7 +273,7 @@ export const runStandardToolLoop = async ({
       }
 
       try {
-        const result = await clientFunction.handler(call.args);
+        const result = await clientFunction.handler(call.args, abortSignal ? { abortSignal } : undefined);
         if (result.generatedFiles?.length) {
           generatedFiles.push(...result.generatedFiles);
         }

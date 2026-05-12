@@ -70,4 +70,39 @@ describe('createStandardClientFunctions', () => {
 
     expect(runPython).toHaveBeenCalledWith('print(42)', { files: inputFiles });
   });
+
+  it('forwards abort signals to the local Python runner', async () => {
+    const inputFiles = [
+      createUploadedFile({
+        id: 'file-1',
+        name: 'dataset.csv',
+        rawFile: new File(['a,b\n1,2\n'], 'dataset.csv', { type: 'text/csv' }),
+        uploadState: 'active',
+      }),
+    ];
+    const abortController = new AbortController();
+    const runPython = vi.fn(async () => ({
+      output: '42',
+      result: '42',
+      files: [],
+    }));
+
+    const functions = createStandardClientFunctions({
+      isLocalPythonEnabled: true,
+      inputFiles,
+      runPython,
+    });
+
+    await functions.run_local_python.handler(
+      {
+        code: 'print(42)',
+      },
+      { abortSignal: abortController.signal },
+    );
+
+    expect(runPython).toHaveBeenCalledWith('print(42)', {
+      files: inputFiles,
+      abortSignal: abortController.signal,
+    });
+  });
 });

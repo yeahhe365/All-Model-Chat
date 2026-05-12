@@ -122,6 +122,59 @@ describe('runStandardToolLoop', () => {
     expect(result.finalTurn.parts).toEqual([{ text: 'The result is 42.' }]);
   });
 
+  it('passes the request abort signal to client tool handlers', async () => {
+    const abortController = new AbortController();
+    const toolHandler = vi.fn(async () => ({
+      response: { result: 'ok' },
+    }));
+    const runTurn = vi
+      .fn()
+      .mockResolvedValueOnce({
+        modelContent: {
+          role: 'model' as const,
+          parts: [
+            {
+              functionCall: {
+                id: 'call-1',
+                name: 'run_local_python',
+                args: { code: 'print(42)' },
+              },
+            },
+          ],
+        },
+        parts: [],
+        functionCalls: [
+          {
+            id: 'call-1',
+            name: 'run_local_python',
+            args: { code: 'print(42)' },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        modelContent: { role: 'model' as const, parts: [{ text: 'done' }] },
+        parts: [{ text: 'done' }],
+        functionCalls: [],
+      });
+
+    await runStandardToolLoop({
+      initialContents: [{ role: 'user', parts: [{ text: 'Calculate.' }] }],
+      clientFunctions: {
+        run_local_python: {
+          declaration: {
+            name: 'run_local_python',
+            description: 'Run Python locally.',
+          },
+          handler: toolHandler,
+        },
+      },
+      runTurn,
+      abortSignal: abortController.signal,
+    });
+
+    expect(toolHandler).toHaveBeenCalledWith({ code: 'print(42)' }, { abortSignal: abortController.signal });
+  });
+
   it('aggregates usage and metadata from earlier tool turns into the returned final turn', async () => {
     const initialContents: ChatHistoryItem[] = [{ role: 'user', parts: [{ text: 'Research and calculate.' }] }];
     const toolCallMessage = {
