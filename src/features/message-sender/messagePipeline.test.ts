@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SavedChatSession } from '../../types';
+import type { SavedChatSession } from '@/types';
 import { createAppSettings, createChatSettings, createUploadedFile } from '@/test/factories';
 
 const { playCompletionSoundMock } = vi.hoisted(() => ({
   playCompletionSoundMock: vi.fn(),
 }));
 
-vi.mock('../../utils/uiUtils', () => ({
+vi.mock('@/utils/uiUtils', () => ({
   playCompletionSound: playCompletionSoundMock,
   showNotification: vi.fn(),
 }));

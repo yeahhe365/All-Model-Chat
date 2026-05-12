@@ -1,6 +1,6 @@
 import type { GenerateContentResponse, UsageMetadata } from '@google/genai';
-import { ChatHistoryItem, StreamMessageSender, NonStreamMessageSender } from '../../types';
-import { logService } from '../logService';
+import { type ChatHistoryItem, type StreamMessageSender, type NonStreamMessageSender } from '@/types';
+import { logService } from '@/services/logService';
 import { getHttpOptionsForContents } from './apiClient';
 import { executeConfiguredApiRequest } from './apiExecutor';
 import { adaptGenAiResponse, mergeGroundingMetadata, type MetadataWithCitations } from './chatResponseAdapter';

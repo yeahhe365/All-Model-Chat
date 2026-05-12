@@ -6,8 +6,8 @@ import {
   createChatAreaProviderValue,
   applyChatAreaProviderValue,
   createChatRuntimeValues,
-} from '../../test/chatAreaFixtures';
-import { useChatStore } from '../../stores/chatStore';
+} from '@/test/chatAreaFixtures';
+import { useChatStore } from '@/stores/chatStore';
 import { ChatArea } from './ChatArea';
 import { ChatRuntimeValuesProvider } from './chat-runtime/ChatRuntimeContext';
 
@@ -28,30 +28,30 @@ const dispatchTouchEvent = (
   node.dispatchEvent(event);
 };
 
-vi.mock('../header/Header', () => ({
+vi.mock('@/components/header/Header', () => ({
   Header: ({ currentModelName }: { currentModelName: string }) => (
     <div data-testid="header">{currentModelName || 'no-model'}</div>
   ),
 }));
 
-vi.mock('../chat/overlays/DragDropOverlay', () => ({
+vi.mock('@/components/chat/overlays/DragDropOverlay', () => ({
   DragDropOverlay: ({ isDraggingOver }: { isDraggingOver: boolean }) => (
     <div data-testid="drag-overlay">{String(isDraggingOver)}</div>
   ),
 }));
 
-vi.mock('../chat/overlays/ModelsErrorDisplay', () => ({
+vi.mock('@/components/chat/overlays/ModelsErrorDisplay', () => ({
   ModelsErrorDisplay: ({ error }: { error: string | null }) => <div data-testid="models-error">{error}</div>,
 }));
 
-vi.mock('../chat/MessageList', () => ({
+vi.mock('@/components/chat/MessageList', () => ({
   MessageList: React.memo(() => {
     const messages = useChatStore((state) => state.activeMessages);
     return <div data-testid="message-list">{messages.length}</div>;
   }),
 }));
 
-vi.mock('../chat/input/ChatInput', () => ({
+vi.mock('@/components/chat/input/ChatInput', () => ({
   ChatInput: React.memo(() => {
     const commandedInput = useChatStore((state) => state.commandedInput);
     return <div data-testid="chat-input">{commandedInput?.text ?? 'empty'}</div>;

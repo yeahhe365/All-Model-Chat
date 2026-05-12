@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { Modal } from '../shared/Modal';
+import { useI18n } from '@/contexts/I18nContext';
+import { Modal } from '@/components/shared/Modal';
 import { X, HelpCircle, Search, Check, Copy } from 'lucide-react';
-import { CommandIcon } from '../icons/CommandIcon';
-import { CommandInfo } from '../../types';
-import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import { CommandIcon } from '@/components/icons/CommandIcon';
+import { type CommandInfo } from '@/types';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 import {
   FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
   FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
-} from '../../constants/appConstants';
+} from '@/constants/appConstants';
 
 interface HelpModalProps {
   isOpen: boolean;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { isLikelyStreamingHtmlArtifact, isLikelyStreamingLiveArtifactInteractionJson } from '../../utils/codeUtils';
+import { isLikelyStreamingHtmlArtifact, isLikelyStreamingLiveArtifactInteractionJson } from '@/utils/codeUtils';
 
 const FENCED_CODE_BLOCK_REGEX = /(```[\s\S]*?```|```[\s\S]*$)/g;
 const GFM_TABLE_REGEX = /(?:^|\n)\|[^\n]*\|\s*\n\|(?:\s*:?-{3,}:?\s*\|)+/;

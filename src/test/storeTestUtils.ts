@@ -1,10 +1,10 @@
 import { afterEach, beforeEach } from 'vitest';
-import { useChatStore } from '../stores/chatStore';
-import { useChatDraftStore } from '../stores/chatDraftStore';
-import { useModelPreferencesStore } from '../stores/modelPreferencesStore';
-import { useSettingsStore } from '../stores/settingsStore';
-import { useSettingsUiStore } from '../stores/settingsUiStore';
-import { useUIStore } from '../stores/uiStore';
+import { useChatStore } from '@/stores/chatStore';
+import { useChatDraftStore } from '@/stores/chatDraftStore';
+import { useModelPreferencesStore } from '@/stores/modelPreferencesStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useSettingsUiStore } from '@/stores/settingsUiStore';
+import { useUIStore } from '@/stores/uiStore';
 
 const initialSettingsState = useSettingsStore.getState();
 const initialChatState = useChatStore.getState();

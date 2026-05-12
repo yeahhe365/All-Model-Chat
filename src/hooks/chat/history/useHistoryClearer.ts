@@ -1,10 +1,10 @@
-import { useCallback, Dispatch, SetStateAction } from 'react';
-import { SavedChatSession, ChatGroup } from '../../../types';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { type SavedChatSession, type ChatGroup } from '@/types';
 import { dbService } from '@/services/db/dbService';
-import { logService } from '../../../services/logService';
-import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
-import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
-import { useChatDraftStore } from '../../../stores/chatDraftStore';
+import { logService } from '@/services/logService';
+import { cleanupFilePreviewUrls } from '@/utils/fileHelpers';
+import { removeSessionScopedLocalStorageEntries } from '@/utils/sessionLocalStorage';
+import { useChatDraftStore } from '@/stores/chatDraftStore';
 
 interface UseHistoryClearerProps {
   savedSessions: SavedChatSession[];
@@ -42,7 +42,7 @@ export const useHistoryClearer = ({
       useChatDraftStore.getState().clearSessionDrafts(sessionIds);
       logService.info(`Cleaned up session-scoped LocalStorage entries for ${savedSessions.length} sessions.`);
     } catch (e) {
-      console.error('Failed to clean up localStorage:', e);
+      logService.error('Failed to clean up localStorage:', e);
     }
 
     setSavedSessions([]);
@@ -57,12 +57,12 @@ export const useHistoryClearer = ({
     try {
       localStorage.clear();
     } catch (error) {
-      console.error('Failed to clear localStorage:', error);
+      logService.error('Failed to clear localStorage:', error);
     }
     try {
       sessionStorage.clear();
     } catch (error) {
-      console.error('Failed to clear sessionStorage:', error);
+      logService.error('Failed to clear sessionStorage:', error);
     }
 
     try {
@@ -71,7 +71,7 @@ export const useHistoryClearer = ({
         await Promise.all(registrations.map((registration) => registration.unregister()));
       }
     } catch (error) {
-      console.error('Failed to unregister service workers:', error);
+      logService.error('Failed to unregister service workers:', error);
     }
 
     try {
@@ -80,7 +80,7 @@ export const useHistoryClearer = ({
         await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
       }
     } catch (error) {
-      console.error('Failed to clear CacheStorage:', error);
+      logService.error('Failed to clear CacheStorage:', error);
     }
 
     await dbService.clearAllData();

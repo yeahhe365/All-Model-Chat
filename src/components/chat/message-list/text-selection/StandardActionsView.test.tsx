@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '../../../../stores/settingsStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { StandardActionsView } from './StandardActionsView';
 
 describe('StandardActionsView', () => {

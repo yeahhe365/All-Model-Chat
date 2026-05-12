@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { Toggle } from '../../../shared/Toggle';
+import { useI18n } from '@/contexts/I18nContext';
+import { Toggle } from '@/components/shared/Toggle';
 
 interface ApiConfigToggleProps {
   useCustomApiConfig: boolean;

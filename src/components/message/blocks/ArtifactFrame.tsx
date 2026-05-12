@@ -1,6 +1,7 @@
+import { logService } from '@/services/logService';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { useWindowContext } from '../../../contexts/WindowContext';
+import { useI18n } from '@/contexts/I18nContext';
+import { useWindowContext } from '@/contexts/WindowContext';
 import {
   buildStreamingHtmlPreviewRenderPayload,
   buildHtmlPreviewSrcDoc,
@@ -9,16 +10,13 @@ import {
   HTML_PREVIEW_DIAGNOSTIC_EVENT,
   HTML_PREVIEW_MESSAGE_CHANNEL,
   HTML_PREVIEW_STREAM_RENDER_EVENT,
-} from '../../../utils/htmlPreview';
-import {
-  normalizeLiveArtifactFollowupPayload,
-  type LiveArtifactFollowupPayload,
-} from '../../../utils/liveArtifactFollowup';
+} from '@/utils/htmlPreview';
+import { normalizeLiveArtifactFollowupPayload, type LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 import {
   createRelayedLiveArtifactSelectionDetail,
   dispatchLiveArtifactSelection,
   LIVE_ARTIFACT_CLEAR_SELECTION_EVENT,
-} from '../../../hooks/text-selection/liveArtifactSelection';
+} from '@/hooks/text-selection/liveArtifactSelection';
 
 interface ArtifactFrameProps {
   html: string;
@@ -191,7 +189,7 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, cacheKey, is
       if (data.event === 'followup') {
         const payload = normalizeLiveArtifactFollowupPayload(data.payload);
         if (!payload) {
-          console.warn('Ignored invalid Live Artifact follow-up payload.');
+          logService.warn('Ignored invalid Live Artifact follow-up payload.');
           return;
         }
 
@@ -200,7 +198,7 @@ export const ArtifactFrame: React.FC<ArtifactFrameProps> = ({ html, cacheKey, is
       }
 
       if (data.event === HTML_PREVIEW_DIAGNOSTIC_EVENT) {
-        console.warn('Live Artifact preview diagnostic:', data.payload);
+        logService.warn('Live Artifact preview diagnostic:', data.payload);
         return;
       }
 

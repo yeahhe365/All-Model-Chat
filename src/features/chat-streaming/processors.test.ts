@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Part } from '@google/genai';
 
-vi.mock('../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: () => 'generated-id',
 }));
 
-vi.mock('../../utils/modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   calculateTokenStats: () => ({
     promptTokens: 0,
     cachedPromptTokens: 0,
@@ -16,7 +16,7 @@ vi.mock('../../utils/modelHelpers', () => ({
   }),
 }));
 
-vi.mock('../../utils/chat/parsing', () => ({
+vi.mock('@/utils/chat/parsing', () => ({
   createUploadedFileFromBase64: vi.fn((data: string, type: string, name: string) => ({
     id: 'generated-id',
     name: `${name}.png`,
@@ -31,7 +31,7 @@ vi.mock('@/i18n/translations', () => ({
   getTranslator: () => (key: string) => key,
 }));
 
-import { createChatSettings } from '../../test/factories';
+import { createChatSettings } from '@/test/factories';
 import { appendApiPart, finalizeMessages } from './processors';
 
 describe('appendApiPart', () => {

@@ -1,14 +1,14 @@
 import { act, cloneElement, isValidElement, type ReactNode } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type ChatSettings, type InputCommand, type UploadedFile } from '../../../types';
+import { ChatRuntimeValuesProvider } from '@/components/layout/chat-runtime/ChatRuntimeContext';
 import {
   applyChatAreaProviderValue,
   createChatAreaProviderValue,
   createChatRuntimeValues,
   type ChatAreaProviderValue,
-} from '../../../test/chatAreaFixtures';
-import { ChatRuntimeValuesProvider } from '../../layout/chat-runtime/ChatRuntimeContext';
+} from '@/test/chatAreaFixtures';
+import { type ChatSettings, type InputCommand, type UploadedFile } from '@/types';
 import { ChatInput } from './ChatInput';
 
 const mockChatStoreState = vi.hoisted(() => ({
@@ -118,19 +118,19 @@ const mockChatStoreSubscribers = vi.hoisted(
     new Set<(state: Partial<typeof mockChatStoreState>, previousState: Partial<typeof mockChatStoreState>) => void>(),
 );
 
-vi.mock('../../../hooks/useDevice', () => ({
+vi.mock('@/hooks/useDevice', () => ({
   useIsDesktop: () => true,
   useIsMobile: () => false,
 }));
 
-vi.mock('../../../contexts/WindowContext', () => ({
+vi.mock('@/contexts/WindowContext', () => ({
   WindowProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useWindowContext: () => ({
     document,
   }),
 }));
 
-vi.mock('../../../hooks/useVoiceInput', () => ({
+vi.mock('@/hooks/useVoiceInput', () => ({
   useVoiceInput: () => ({
     isRecording: false,
     isMicInitializing: false,
@@ -140,20 +140,20 @@ vi.mock('../../../hooks/useVoiceInput', () => ({
   }),
 }));
 
-vi.mock('../../../hooks/useLiveAPI', () => ({
+vi.mock('@/hooks/useLiveAPI', () => ({
   useLiveAPI: () => mockLiveApiState,
 }));
 
-vi.mock('../../../utils/apiUtils', () => ({
+vi.mock('@/utils/apiUtils', () => ({
   getKeyForRequest: mockApiUtils.getKeyForRequest,
   getGeminiKeyForRequest: mockApiUtils.getKeyForRequest,
 }));
 
-vi.mock('../../../services/api/generation/textApi', () => ({
+vi.mock('@/services/api/generation/textApi', () => ({
   translateTextApi: mockTextApi.translateTextApi,
 }));
 
-vi.mock('../../../hooks/ui/useFileModalState', () => ({
+vi.mock('@/hooks/ui/useFileModalState', () => ({
   useFileModalState: () => ({
     previewFile: null,
     closePreview: vi.fn(),
@@ -169,12 +169,12 @@ vi.mock('../../../hooks/ui/useFileModalState', () => ({
   }),
 }));
 
-vi.mock('../../../utils/modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   getModelCapabilities: () => mockModelCapabilities.value,
   isGemini3Model: (modelId: string) => modelId.includes('gemini-3'),
 }));
 
-vi.mock('../../../stores/chatStore', () => {
+vi.mock('@/stores/chatStore', () => {
   const useChatStore = Object.assign(
     (selector?: (state: typeof mockChatStoreState) => unknown) =>
       selector ? selector(mockChatStoreState) : mockChatStoreState,
@@ -357,6 +357,14 @@ describe('ChatInput', () => {
     element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }));
   };
 
+  const renderChatInput = (providerValue: ChatAreaProviderValue) => {
+    renderer.root.render(
+      <ChatAreaProvider value={providerValue}>
+        <ChatInput />
+      </ChatAreaProvider>,
+    );
+  };
+
   beforeEach(() => {
     localStorage.clear();
     mockChatStoreState.activeSessionId = 'session-1';
@@ -425,11 +433,7 @@ describe('ChatInput', () => {
     });
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -460,11 +464,7 @@ describe('ChatInput', () => {
     providerValue.input.onSendMessage = onSendMessage;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -492,11 +492,7 @@ describe('ChatInput', () => {
     providerValue.input.onSendMessage = onSendMessage;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -523,11 +519,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -557,11 +549,7 @@ describe('ChatInput', () => {
     providerValue.input.onSendMessage = onSendMessage;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -607,11 +595,7 @@ describe('ChatInput', () => {
     };
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -650,11 +634,7 @@ describe('ChatInput', () => {
     };
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     await act(async () => {
@@ -677,11 +657,7 @@ describe('ChatInput', () => {
     };
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     await act(async () => {
@@ -700,11 +676,7 @@ describe('ChatInput', () => {
     mockLiveApiState.error = 'Live reconnecting';
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     expect(renderer.container.querySelector('[data-testid="live-connected"]')?.textContent).toBe('true');
@@ -722,11 +694,7 @@ describe('ChatInput', () => {
     providerValue.input.onSendMessage = onSendMessage;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -761,11 +729,7 @@ describe('ChatInput', () => {
     } satisfies ChatAreaProviderValue;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={completedProviderValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(completedProviderValue);
     });
 
     expect(onSendMessage).toHaveBeenCalledWith('Queue this next', { isFastMode: false, files: undefined });
@@ -781,11 +745,7 @@ describe('ChatInput', () => {
     providerValue.input.onSendMessage = onSendMessage;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -814,11 +774,7 @@ describe('ChatInput', () => {
     } satisfies ChatAreaProviderValue;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={completedProviderValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(completedProviderValue);
     });
 
     expect(onSendMessage).toHaveBeenCalledWith('Queue this via Enter', { isFastMode: false, files: undefined });
@@ -834,11 +790,7 @@ describe('ChatInput', () => {
     providerValue.input.onSendMessage = onSendMessage;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -872,11 +824,7 @@ describe('ChatInput', () => {
     } satisfies ChatAreaProviderValue;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={completedProviderValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(completedProviderValue);
     });
 
     expect(onSendMessage).toHaveBeenCalledWith('Queue this next', { isFastMode: false, files: undefined });
@@ -894,11 +842,7 @@ describe('ChatInput', () => {
     providerValue.input.onSendMessage = sessionOneSend;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -930,11 +874,7 @@ describe('ChatInput', () => {
     } satisfies ChatAreaProviderValue;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={sessionTwoProviderValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(sessionTwoProviderValue);
     });
 
     expect(sessionTwoSend).not.toHaveBeenCalled();
@@ -950,11 +890,7 @@ describe('ChatInput', () => {
     } satisfies ChatAreaProviderValue;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={completedOriginalSession}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(completedOriginalSession);
     });
 
     expect(sessionOneSend).toHaveBeenCalledWith('Queue for session one', {
@@ -971,11 +907,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1026,11 +958,7 @@ describe('ChatInput', () => {
     providerValue.input.setSelectedFiles = setSelectedFiles;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1067,11 +995,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1114,11 +1038,7 @@ describe('ChatInput', () => {
 
     try {
       await act(async () => {
-        renderer.root.render(
-          <ChatAreaProvider value={providerValue}>
-            <ChatInput />
-          </ChatAreaProvider>,
-        );
+        renderChatInput(providerValue);
       });
 
       const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1158,11 +1078,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1201,11 +1117,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     expect(renderer.container.querySelector('[data-testid="translate-button"]')).toBeNull();
@@ -1222,11 +1134,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     expect(renderer.container.querySelector('[data-testid="translate-button"]')).toBeNull();
@@ -1244,11 +1152,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1296,11 +1200,7 @@ describe('ChatInput', () => {
     providerValue.input.onProcessFiles = onProcessFiles;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1365,11 +1265,7 @@ describe('ChatInput', () => {
     providerValue.input.onProcessFiles = onProcessFiles;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1431,11 +1327,7 @@ describe('ChatInput', () => {
     providerValue.input.onProcessFiles = onProcessFiles;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1471,11 +1363,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     expect(renderer.container.querySelector('[data-testid="paste-button"]')).toBeNull();
@@ -1492,11 +1380,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1533,11 +1417,7 @@ describe('ChatInput', () => {
     providerValue.input.editingMessageId = null;
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     expect(renderer.container.querySelector('[data-testid="clear-input-button"]')).not.toBeNull();
@@ -1571,11 +1451,7 @@ describe('ChatInput', () => {
     mockChatStoreState.selectedFiles = [processingFile];
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
@@ -1630,11 +1506,7 @@ describe('ChatInput', () => {
     mockChatStoreState.selectedFiles = [processingFile];
 
     await act(async () => {
-      renderer.root.render(
-        <ChatAreaProvider value={providerValue}>
-          <ChatInput />
-        </ChatAreaProvider>,
-      );
+      renderChatInput(providerValue);
     });
 
     const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');

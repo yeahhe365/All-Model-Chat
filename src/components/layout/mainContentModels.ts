@@ -1,5 +1,5 @@
-import type { AppSettings, ChatSettings, SideViewContent } from '../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import type { AppSettings, ChatSettings, SideViewContent } from '@/types';
+import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
 export type SettingsScope = 'defaults' | 'currentChat';
 
 interface BuildSettingsForModalArgs {

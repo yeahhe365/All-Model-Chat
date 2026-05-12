@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { UploadedFile } from '../../types';
+import type { UploadedFile } from '@/types';
 import { readUploadedTextFileContent } from './textFileToInput';
 
 const createUploadedFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({

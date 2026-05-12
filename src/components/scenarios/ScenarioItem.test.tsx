@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/providerTestUtils';
-import type { SavedScenario } from '../../types';
+import type { SavedScenario } from '@/types';
 import { ScenarioItem } from './ScenarioItem';
 
 const scenario: SavedScenario = {

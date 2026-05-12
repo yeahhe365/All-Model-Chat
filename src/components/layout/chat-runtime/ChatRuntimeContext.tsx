@@ -3,9 +3,9 @@ import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import type { DragEvent, ReactNode } from 'react';
 import type { Part } from '@google/genai';
 
-import type { AppViewModel } from '../../../hooks/app/useApp';
-import { useChatStore } from '../../../stores/chatStore';
-import { useUIStore } from '../../../stores/uiStore';
+import type { AppViewModel } from '@/hooks/app/useApp';
+import { useChatStore } from '@/stores/chatStore';
+import { useUIStore } from '@/stores/uiStore';
 import type {
   ChatSettingsUpdater,
   LiveClientFunctions,
@@ -13,9 +13,9 @@ import type {
   SideViewContent,
   UploadedFile,
   VideoMetadata,
-} from '../../../types';
-import type { MediaResolution } from '../../../types/settings';
-import { isOpenAICompatibleApiActive } from '../../../utils/openaiCompatibleMode';
+} from '@/types';
+import type { MediaResolution } from '@/types/settings';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 type ThinkingLevel = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 

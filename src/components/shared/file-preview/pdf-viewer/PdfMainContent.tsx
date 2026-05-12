@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page } from 'react-pdf';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PdfMainContentProps {
   fileUrl: string | undefined;

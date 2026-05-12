@@ -1,12 +1,12 @@
 import type { Part } from '@google/genai';
-import type { LiveArtifactsPromptMode } from '../../types';
+import type { LiveArtifactsPromptMode } from '@/types';
 import {
   LIVE_ARTIFACT_INTERACTION_LANGUAGE,
   extractPreviewableCodeBlock,
   isLikelyHtml,
   isLikelyLiveArtifactInteractionJson,
   isLiveArtifactInteractionLanguage,
-} from '../../utils/codeUtils';
+} from '@/utils/codeUtils';
 
 interface LiveArtifactsRequestPartsParams {
   promptInstruction: string;

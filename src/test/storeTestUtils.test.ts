@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { useChatStore } from '../stores/chatStore';
-import { useSettingsStore } from '../stores/settingsStore';
+import { useChatStore } from '@/stores/chatStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { createUploadedFile } from './factories';
 import { resetAllStoreState, resetChatStoreState, resetSettingsStoreState } from './storeTestUtils';
 

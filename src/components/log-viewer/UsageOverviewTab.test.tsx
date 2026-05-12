@@ -21,7 +21,7 @@ const {
 }));
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule({
     getApiUsageByTimeRange: mockGetApiUsageByTimeRange,

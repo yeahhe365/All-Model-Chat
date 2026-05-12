@@ -1,9 +1,9 @@
 import React from 'react';
-import { ChatMessage, UploadedFile, SideViewContent } from '../../types';
+import { type ChatMessage, type UploadedFile, type SideViewContent } from '@/types';
 import { MessageContent } from './MessageContent';
 import { MessageActions } from './MessageActions';
-import { useSettingsStore } from '../../stores/settingsStore';
-import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
+import { useSettingsStore } from '@/stores/settingsStore';
+import type { LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 
 interface MessageProps {
   message: ChatMessage;

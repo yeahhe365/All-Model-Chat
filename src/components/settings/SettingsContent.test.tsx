@@ -1,9 +1,9 @@
 import { act, type ComponentProps } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
 import { SettingsContent } from './SettingsContent';
-import type { SettingsTab } from '../../hooks/features/useSettingsLogic';
+import type { SettingsTab } from '@/hooks/features/useSettingsLogic';
 import type { ModelsSection } from './sections/ModelsSection';
 import type { GenerationSection } from './sections/GenerationSection';
 import type { ShortcutsSection } from './sections/ShortcutsSection';
@@ -382,7 +382,7 @@ describe('SettingsContent', () => {
     expect(handleModelChange).toHaveBeenCalledWith('gemini-3-flash-preview');
   });
 
-  it('keeps OpenAI-compatible models out of Tab cycle shortcut settings when the provider is enabled', () => {
+  it('includes OpenAI-compatible models in Tab cycle shortcut settings when the provider is enabled', () => {
     act(() => {
       renderer.root.render(
         <SettingsContent
@@ -420,6 +420,8 @@ describe('SettingsContent', () => {
 
     expect(mockShortcutsSection.lastProps!.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
+      { id: 'gpt-5.5', name: 'GPT-5.5', isPinned: true, apiMode: 'openai-compatible' },
+      { id: 'gpt-4.1', name: 'GPT-4.1', apiMode: 'openai-compatible' },
     ]);
   });
 

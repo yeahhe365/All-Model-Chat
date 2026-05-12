@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 const WelcomeEasterEggText: React.FC<{ text: string }> = ({ text }) => {
   const supportsHoverPointer = useMemo(

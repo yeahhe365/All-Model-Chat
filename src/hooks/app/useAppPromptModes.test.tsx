@@ -1,15 +1,15 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '../../types';
+import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '@/types';
 import { createAppSettings, createChatSettings, createSavedChatSession } from '@/test/factories';
 
 const { mockLoadLiveArtifactsSystemPrompt } = vi.hoisted(() => ({
   mockLoadLiveArtifactsSystemPrompt: vi.fn(),
 }));
 
-vi.mock('../../constants/promptHelpers', async () => {
-  const actual = await vi.importActual<typeof import('../../constants/promptHelpers')>('../../constants/promptHelpers');
+vi.mock('@/constants/promptHelpers', async () => {
+  const actual = await vi.importActual<typeof import('@/constants/promptHelpers')>('@/constants/promptHelpers');
 
   return {
     ...actual,

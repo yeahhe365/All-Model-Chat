@@ -1,7 +1,7 @@
 import React from 'react';
 import { Globe } from 'lucide-react';
 import { getDomain, getFavicon } from './utils';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface SearchSourcesProps {
   sources: Array<{ uri: string; title: string }>;

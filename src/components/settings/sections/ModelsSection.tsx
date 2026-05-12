@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { ChevronDown, Shield } from 'lucide-react';
-import { ApiMode, AppSettings, ModelOption } from '../../../types';
-import { ModelSelector } from '../controls/ModelSelector';
+import { type ApiMode, type AppSettings, type ModelOption } from '@/types';
+import { ModelSelector } from '@/components/settings/controls/ModelSelector';
 import { LiveArtifactsSection } from './LiveArtifactsSection';
 import { GenerationSection } from './GenerationSection';
 import { LanguageVoiceSection } from './LanguageVoiceSection';
 import { SafetySection } from './SafetySection';
-import type { SettingsUpdateHandler } from '../settingsTypes';
+import type { SettingsUpdateHandler } from '@/components/settings/settingsTypes';
 
 interface ModelsSectionProps {
   modelId: string;

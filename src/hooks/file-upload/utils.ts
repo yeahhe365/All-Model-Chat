@@ -5,10 +5,10 @@ import {
   SUPPORTED_PDF_MIME_TYPES,
   SUPPORTED_AUDIO_MIME_TYPES,
   SUPPORTED_VIDEO_MIME_TYPES,
-} from '../../constants/fileConstants';
-import { AppSettings, UploadedFile } from '../../types';
-import { isTextFile } from '../../utils/fileTypeUtils';
-import { getTranslator } from '../../i18n/translations';
+} from '@/constants/fileConstants';
+import { type AppSettings, type UploadedFile } from '@/types';
+import { isTextFile } from '@/utils/fileTypeUtils';
+import { getTranslator } from '@/i18n/translations';
 
 type Translator = ReturnType<typeof getTranslator>;
 

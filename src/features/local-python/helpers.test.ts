@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ChatMessage, UploadedFile } from '../../types';
+import type { ChatMessage, UploadedFile } from '@/types';
 import { collectLocalPythonInputFiles } from './helpers';
 
 const makeFile = (id: string, name: string): UploadedFile => ({

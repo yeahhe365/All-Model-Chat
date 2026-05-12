@@ -1,11 +1,11 @@
-import React from 'react';
+import type React from 'react';
 import {
-  AppSettings,
-  ChatMessage,
-  ChatSettings as IndividualChatSettings,
-  SavedChatSession,
-  UploadedFile,
-} from '../../types';
+  type AppSettings,
+  type ChatMessage,
+  type ChatSettings as IndividualChatSettings,
+  type SavedChatSession,
+  type UploadedFile,
+} from '@/types';
 import { useModelSelection } from './actions/useModelSelection';
 import { useChatSessionActions } from './actions/useChatSessionActions';
 import { useMessageUpdates } from './actions/useMessageUpdates';

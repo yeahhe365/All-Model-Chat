@@ -1,7 +1,7 @@
 import React from 'react';
-import { LazyMarkdownRenderer } from '../../LazyMarkdownRenderer';
-import { SideViewContent, UploadedFile } from '../../../../types';
-import { useMessageStream } from '../../../../hooks/ui/useMessageStream';
+import { LazyMarkdownRenderer } from '@/components/message/LazyMarkdownRenderer';
+import { type SideViewContent, type UploadedFile } from '@/types';
+import { useMessageStream } from '@/hooks/ui/useMessageStream';
 
 interface ThoughtContentProps {
   messageId: string;

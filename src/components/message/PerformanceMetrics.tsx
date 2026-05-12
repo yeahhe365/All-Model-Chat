@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
-import { ChatMessage } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
+import { type ChatMessage } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PerformanceMetricsProps {
   message: ChatMessage;

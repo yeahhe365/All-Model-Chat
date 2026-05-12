@@ -249,11 +249,14 @@ docker compose up -d --build
 | `RUNTIME_USE_CUSTOM_API_CONFIG` | 前端默认启用“自定义 API 配置”                                 | 公开运行时配置     | `true`                                      |
 | `RUNTIME_USE_API_PROXY`         | 前端默认启用 API 代理                                         | 公开运行时配置     | `true`                                      |
 | `RUNTIME_API_PROXY_URL`         | 前端默认 Gemini 代理地址                                      | 公开运行时配置     | `/api/gemini`                               |
+| `RUNTIME_PYODIDE_BASE_URL`      | 可选 Pyodide 运行时资源地址；留空时使用同源 `/pyodide/`       | 公开运行时配置     | 空                                          |
 
 说明：
 
 - 上述 `RUNTIME_*` 会在容器启动时写入 `runtime-config.js`，可被浏览器读取，因此只能放“可公开”信息。
 - public/runtime-config.js 模板用于纯静态构建，默认不启用自定义 API 配置或代理；Docker 部署会由 `docker/web-entrypoint.sh` 按上表默认值覆盖该文件。
+- Pyodide 产物会在生产构建时复制到 `dist/pyodide/`，运行时默认从同源 `/pyodide/` 加载；如需改用 CDN 或独立静态域，可将 `RUNTIME_PYODIDE_BASE_URL` 设置为完整目录 URL，例如 `https://cdn.jsdelivr.net/pyodide/v0.25.1/full/`。
+- PWA 预缓存默认排除 `pyodide/` 大体积产物，首次执行本地 Python 时仍会按上述地址按需加载。
 - 默认 BYOK 模式只需要在设置界面填写 API Key：普通 Gemini 代理会使用浏览器请求携带的 key；Live API 会使用浏览器本地 key 直接建立官方 Live WebSocket 连接，不再经过 AMC 后端换取临时 token。
 - 如需服务端统一托管普通 Gemini 请求的 key，可配置 `GEMINI_API_KEY` 并将 `RUNTIME_SERVER_MANAGED_API=true`；Live API 仍需要浏览器中可用的 API Key。
 - OpenAI 兼容模式当前不读取 `RUNTIME_API_PROXY_URL`、`RUNTIME_USE_API_PROXY` 或 `RUNTIME_SERVER_MANAGED_API`；它会直接使用设置里的 OpenAI 兼容 Base URL 和独立 Key 发起 `chat/completions` 请求。如需走你自己的网关，请直接把该网关地址填为 OpenAI 兼容 Base URL。
@@ -319,6 +322,7 @@ npm run lint
 npm run test
 npm run knip
 npm run build
+npm run build:api
 
 # 或者一次性执行
 npm run verify
@@ -382,6 +386,16 @@ Live API 默认由浏览器使用本地 API Key 直连官方 Live 服务。
 ## 项目结构
 
 核心前端目录包括 `src/components/`、`src/features/`、`src/hooks/`、`src/services/`、`src/pwa/`、`src/schemas/` 与 `src/test/`。
+
+放置规则：
+
+- `src/components/` 只放可渲染 UI 与 UI 专属的小型 view model；跨页面复用的控件放 `components/shared/`。
+- `src/features/` 放领域能力的实现边界，例如消息发送、本地 Python、音频处理、标准聊天工具循环。
+- `src/hooks/` 放 React 编排层；如果 hook 只是某个领域能力的 React 入口，优先靠近对应领域目录命名。
+- `src/services/` 放外部系统与持久化边界，例如 API client、IndexedDB、日志和对象 URL 生命周期。
+- `src/utils/` 放无 React 状态、无外部副作用的纯工具；领域工具超过一个文件时使用子目录。
+- `src/test/architecture/` 放结构和风格护栏测试，用来防止历史清理问题回流。
+- `src` 内跨目录引用统一使用 `@/` alias，同目录引用保留 `./`。
 
 ```
 AMC-WebUI/

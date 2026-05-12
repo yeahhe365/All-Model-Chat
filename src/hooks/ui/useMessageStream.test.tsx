@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMessageStream } from './useMessageStream';
-import { streamingStore } from '../../services/streamingStore';
+import { streamingStore } from '@/services/streamingStore';
 import { renderHook } from '@/test/testUtils';
 
 describe('useMessageStream', () => {

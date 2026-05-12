@@ -1,12 +1,13 @@
+import { logService } from '@/services/logService';
 import React, { useState } from 'react';
-import { UploadedFile } from '../../types';
+import { type UploadedFile } from '@/types';
 import { Check, Copy, Download, SlidersHorizontal, Scissors } from 'lucide-react';
-import { triggerDownload } from '../../utils/export/core';
-import { CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
-import { formatFileSize } from '../../utils/fileHelpers';
-import { getFileCardMeta } from '../../utils/fileCardUtils';
-import { useI18n } from '../../contexts/I18nContext';
-import { FileThumbnail } from '../chat/input/FileThumbnail';
+import { triggerDownload } from '@/utils/export/core';
+import { CATEGORY_STYLES, getResolutionColor } from '@/utils/uiUtils';
+import { formatFileSize } from '@/utils/fileHelpers';
+import { getFileCardMeta } from '@/utils/fileCardUtils';
+import { useI18n } from '@/contexts/I18nContext';
+import { FileThumbnail } from '@/components/chat/input/FileThumbnail';
 
 interface FileDisplayProps {
   file: UploadedFile;
@@ -68,7 +69,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({
         setIdCopied(true);
         setTimeout(() => setIdCopied(false), 2000);
       })
-      .catch((err) => console.error('Failed to copy file ID:', err));
+      .catch((err) => logService.error('Failed to copy file ID:', err));
   };
 
   const handleDownloadFile = (event: React.MouseEvent) => {

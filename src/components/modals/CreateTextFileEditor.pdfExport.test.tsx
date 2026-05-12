@@ -5,7 +5,7 @@ import { CreateTextFileEditor } from './CreateTextFileEditor';
 
 const createMarkdownPdfBlobMock = vi.hoisted(() => vi.fn(async () => new Blob(['pdf'], { type: 'application/pdf' })));
 
-vi.mock('../../utils/export/markdownPdf', () => ({
+vi.mock('@/utils/export/markdownPdf', () => ({
   createMarkdownPdfBlob: createMarkdownPdfBlobMock,
 }));
 

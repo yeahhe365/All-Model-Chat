@@ -1,6 +1,6 @@
 import { useCallback, type MutableRefObject } from 'react';
-import type { ChatMessage } from '../../types';
-import { createMessage } from '../../utils/chat/session';
+import type { ChatMessage } from '@/types';
+import { createMessage } from '@/utils/chat/session';
 import { finishActiveGenerationJob, startActiveGenerationJob } from './activeGenerationJobs';
 import type { SessionsUpdater } from './types';
 import { useApiErrorHandler } from './useApiErrorHandler';

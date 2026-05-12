@@ -1,28 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RadioTower } from 'lucide-react';
-import type { AppSettings, ModelOption } from '../../../types';
-import { useI18n } from '../../../contexts/I18nContext';
-import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
-import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
-import { getClient } from '../../../services/api/apiClient';
-import {
-  fetchOpenAICompatibleModels,
-  sendOpenAICompatibleMessageNonStream,
-} from '../../../services/api/openaiCompatibleApi';
-import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../../../utils/apiProxyUrl';
-import {
-  isServerManagedApiEnabledForProxyRequests,
-  parseApiKeys,
-  SERVER_MANAGED_API_KEY,
-} from '../../../utils/apiUtils';
+import type { AppSettings, ModelOption } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID, SETTINGS_INPUT_CLASS } from '@/constants/appConstants';
+import { CONNECTION_TEST_MODELS } from '@/constants/settingsModelOptions';
+import { getClient } from '@/services/api/apiClient';
+import { fetchOpenAICompatibleModels, sendOpenAICompatibleMessageNonStream } from '@/services/api/openaiCompatibleApi';
+import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '@/utils/apiProxyUrl';
+import { isServerManagedApiEnabledForProxyRequests, parseApiKeys, SERVER_MANAGED_API_KEY } from '@/utils/apiUtils';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
 import { OpenAICompatibleModelListEditor } from './api-config/OpenAICompatibleModelListEditor';
 import { FileStrategyControl } from './appearance/FileStrategyControl';
-import { Toggle } from '../../shared/Toggle';
-import { isOpenAICompatibleApiActive } from '../../../utils/openaiCompatibleMode';
+import { Toggle } from '@/components/shared/Toggle';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;

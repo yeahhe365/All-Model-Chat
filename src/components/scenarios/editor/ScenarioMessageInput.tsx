@@ -1,8 +1,8 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { User, Bot, Send } from 'lucide-react';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { getShortcutDisplay, isShortcutPressed } from '../../../utils/shortcutUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { getShortcutDisplay, isShortcutPressed } from '@/utils/shortcutUtils';
 
 interface ScenarioMessageInputProps {
   role: 'user' | 'model';

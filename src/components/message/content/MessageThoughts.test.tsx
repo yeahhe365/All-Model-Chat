@@ -13,23 +13,23 @@ const { mockUseMessageStream, mockTranslateText } = vi.hoisted(() => ({
   mockTranslateText: vi.fn(),
 }));
 
-vi.mock('../../../utils/apiUtils', () => ({
+vi.mock('@/utils/apiUtils', () => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
   getGeminiKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
 }));
 
-vi.mock('../../../services/api/generation/textApi', () => ({
+vi.mock('@/services/api/generation/textApi', () => ({
   translateTextApi: mockTranslateText,
 }));
 
-vi.mock('../../../hooks/useCopyToClipboard', () => ({
+vi.mock('@/hooks/useCopyToClipboard', () => ({
   useCopyToClipboard: () => ({
     isCopied: false,
     copyToClipboard: vi.fn(),
   }),
 }));
 
-vi.mock('../../../hooks/ui/useMessageStream', () => ({
+vi.mock('@/hooks/ui/useMessageStream', () => ({
   useMessageStream: mockUseMessageStream,
 }));
 

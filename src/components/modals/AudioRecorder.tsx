@@ -1,13 +1,14 @@
+import { logService } from '@/services/logService';
 import React, { useState } from 'react';
 import { Mic, X, Loader2, AlertCircle, ChevronRight } from 'lucide-react';
-import { Modal } from '../shared/Modal';
-import { AudioPlayer } from '../shared/AudioPlayer';
+import { Modal } from '@/components/shared/Modal';
+import { AudioPlayer } from '@/components/shared/AudioPlayer';
 import { useAudioRecorder } from '@/features/audio/useAudioRecorder';
 import { SYSTEM_AUDIO_CAPTURE_FAILED_WARNING, SYSTEM_AUDIO_NOT_SHARED_WARNING } from '@/features/audio/audioProcessing';
-import { AudioVisualizer } from '../recorder/AudioVisualizer';
-import { RecorderControls } from '../recorder/RecorderControls';
-import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS, MODAL_CLOSE_BUTTON_CLASS } from '../../constants/appConstants';
-import { useI18n } from '../../contexts/I18nContext';
+import { AudioVisualizer } from '@/components/recorder/AudioVisualizer';
+import { RecorderControls } from '@/components/recorder/RecorderControls';
+import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS, MODAL_CLOSE_BUTTON_CLASS } from '@/constants/appConstants';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface AudioRecorderProps {
   onRecord: (file: File) => Promise<void>;
@@ -49,7 +50,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
       const file = new File([audioBlob], fileName, { type: 'audio/webm' });
       await onRecord(file);
     } catch (e) {
-      console.error(e);
+      logService.error('Failed to save audio recording.', e);
       alert(t('audioRecorder_failedToSave'));
       setIsSaving(false);
     }

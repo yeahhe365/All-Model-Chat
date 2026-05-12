@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { SavedScenario } from '../../types';
-import { TextEditorModal } from '../modals/TextEditorModal';
+import { useI18n } from '@/contexts/I18nContext';
+import { type SavedScenario } from '@/types';
+import { TextEditorModal } from '@/components/modals/TextEditorModal';
 import { ScenarioEditorHeader } from './editor/ScenarioEditorHeader';
 import { ScenarioSystemPrompt } from './editor/ScenarioSystemPrompt';
 import { ScenarioMessageList } from './editor/ScenarioMessageList';

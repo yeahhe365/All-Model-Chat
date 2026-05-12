@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ApiMode, ModelOption } from '../../../types';
+import { type ApiMode, type ModelOption } from '@/types';
 import { ModelSelectorHeader } from './model-selector/ModelSelectorHeader';
 import { ModelListEditor } from './model-selector/ModelListEditor';
 import { ModelListView } from './model-selector/ModelListView';

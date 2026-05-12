@@ -3,10 +3,10 @@ import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerT
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { pdfjs } from 'react-pdf';
 import { SelectedFileDisplay } from './SelectedFileDisplay';
-import type { UploadedFile } from '../../../types';
-import { createUploadedFile } from '../../../test/factories';
+import type { UploadedFile } from '@/types';
+import { createUploadedFile } from '@/test/factories';
 
-vi.mock('../../../hooks/useCopyToClipboard', () => ({
+vi.mock('@/hooks/useCopyToClipboard', () => ({
   useCopyToClipboard: () => ({
     isCopied: false,
     copyToClipboard: vi.fn(),

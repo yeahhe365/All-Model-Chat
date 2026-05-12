@@ -1,14 +1,14 @@
 import React from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { Modal } from '../shared/Modal';
-import { UploadedFile, AppSettings, ModelOption } from '../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { Modal } from '@/components/shared/Modal';
+import { type UploadedFile, type AppSettings, type ModelOption } from '@/types';
 import { ChevronDown, X, Calculator } from 'lucide-react';
-import { getModelIcon, ModelPicker } from '../shared/ModelPicker';
-import { useTokenCountLogic } from '../../hooks/features/useTokenCountLogic';
+import { getModelIcon, ModelPicker } from '@/components/shared/ModelPicker';
+import { useTokenCountLogic } from '@/hooks/features/useTokenCountLogic';
 import { TokenCountInput } from './token-count/TokenCountInput';
 import { TokenCountFiles } from './token-count/TokenCountFiles';
 import { TokenCountFooter } from './token-count/TokenCountFooter';
-import { MODAL_CLOSE_BUTTON_CLASS } from '../../constants/appConstants';
+import { MODAL_CLOSE_BUTTON_CLASS } from '@/constants/appConstants';
 
 interface TokenCountModalProps {
   isOpen: boolean;

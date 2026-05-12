@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { SafetySetting, HarmCategory, HarmBlockThreshold } from '../../../types/settings';
+import { useI18n } from '@/contexts/I18nContext';
+import { type SafetySetting, HarmCategory, HarmBlockThreshold } from '@/types/settings';
 import { Shield, Info } from 'lucide-react';
-import { DEFAULT_SAFETY_SETTINGS } from '../../../constants/appConstants';
+import { DEFAULT_SAFETY_SETTINGS } from '@/constants/appConstants';
 
 interface SafetySectionProps {
   safetySettings: SafetySetting[] | undefined;

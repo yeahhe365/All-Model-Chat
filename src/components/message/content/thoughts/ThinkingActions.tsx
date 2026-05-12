@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Languages, Loader2, ClipboardCopy, Check } from 'lucide-react';
 
 interface ThinkingActionsProps {

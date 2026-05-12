@@ -1,7 +1,7 @@
 import React from 'react';
 import { Paperclip } from 'lucide-react';
-import { useResponsiveValue } from '../../../hooks/useDevice';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useResponsiveValue } from '@/hooks/useDevice';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface DragDropOverlayProps {
   isDraggingOver: boolean;

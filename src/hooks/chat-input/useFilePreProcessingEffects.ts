@@ -1,10 +1,11 @@
+import { logService } from '@/services/logService';
 import { useCallback, useRef, useState, type MutableRefObject, type RefObject } from 'react';
-import type { UploadedFile } from '../../types';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { generateFolderContext } from '../../utils/folderImportUtils';
-import { readDirectoryHandle } from '../../utils/import-context/directoryHandleReader';
-import { captureScreenImage } from '../../utils/mediaUtils';
-import { useI18n } from '../../contexts/I18nContext';
+import type { UploadedFile } from '@/types';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { generateFolderContext } from '@/utils/folderImportUtils';
+import { readDirectoryHandle } from '@/utils/import-context/directoryHandleReader';
+import { captureScreenImage } from '@/utils/mediaUtils';
+import { useI18n } from '@/contexts/I18nContext';
 
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
 
@@ -56,7 +57,7 @@ export const useFilePreProcessingEffects = ({
       justInitiatedFileOpRef.current = true;
       await onProcessFiles([file]);
     } catch (error) {
-      console.error('Failed to capture screenshot:', error);
+      logService.error('Failed to capture screenshot:', error);
       setAppFileError(t('screenshot_capture_failed'));
     } finally {
       isScreenCapturingRef.current = false;
@@ -94,7 +95,7 @@ export const useFilePreProcessingEffects = ({
         setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
         await onProcessFiles([contextFile]);
       } catch (error) {
-        console.error(error);
+        logService.error('Failed to process folder import.', error);
         setAppFileError(t('folder_process_failed'));
         setSelectedFiles((prev) => prev.filter((file) => file.id !== tempId));
       } finally {
@@ -116,7 +117,7 @@ export const useFilePreProcessingEffects = ({
     } catch (error) {
       const errorName = error instanceof DOMException ? error.name : '';
       if (errorName !== 'AbortError' && errorName !== 'NotAllowedError') {
-        console.error(error);
+        logService.error('Failed to read folder picker selection.', error);
         setAppFileError(t('folder_process_failed'));
       }
     }

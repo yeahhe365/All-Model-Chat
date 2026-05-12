@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Modal } from '../shared/Modal';
-import { UploadedFile, VideoMetadata } from '../../types';
-import { MediaResolution } from '../../types/settings';
+import { Modal } from '@/components/shared/Modal';
+import { type UploadedFile, type VideoMetadata } from '@/types';
+import { type MediaResolution } from '@/types/settings';
 import { FileConfigHeader } from './file-config/FileConfigHeader';
 import { ResolutionConfig } from './file-config/ResolutionConfig';
 import { VideoConfig } from './file-config/VideoConfig';
 import { FileConfigFooter } from './file-config/FileConfigFooter';
-import { getFileKindFlags } from '../../utils/fileTypeUtils';
+import { getFileKindFlags } from '@/utils/fileTypeUtils';
 
 interface FileConfigurationModalProps {
   isOpen: boolean;

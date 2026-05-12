@@ -1,8 +1,8 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Quote, Copy, Check, CornerRightDown, Volume2 } from 'lucide-react';
-import { IconGoogle } from '../../../icons/CustomIcons';
-import { translations } from '@/i18n/translations';
+import { IconGoogle } from '@/components/icons/CustomIcons';
+import { type translations } from '@/i18n/translations';
 
 interface StandardActionsViewProps {
   onQuote: (e: React.MouseEvent) => void;

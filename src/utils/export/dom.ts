@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 type ColorChannels = {
   r: number;
   g: number;
@@ -352,14 +353,14 @@ export const gatherPageStyles = async (): Promise<string> => {
         // Check Content-Type to avoid inlining HTML error pages as CSS
         const contentType = res.headers.get('content-type');
         if (contentType && !contentType.includes('text/css') && !contentType.includes('application/octet-stream')) {
-          console.warn(`Skipping stylesheet ${href} due to invalid MIME: ${contentType}`);
+          logService.warn(`Skipping stylesheet ${href} due to invalid MIME: ${contentType}`);
           return '';
         }
 
         const css = await res.text();
         return `<style>${sanitizeCssColorFunctionsForPngExport(css)}</style>`;
       } catch (err) {
-        console.warn('Could not fetch stylesheet for export:', href, err);
+        logService.warn('Could not fetch stylesheet for export.', { href, error: err });
         // Fallback: If we can't fetch it, we ignore it rather than linking it,
         // because cross-origin links often cause taint issues in html2canvas.
         // Or we could return empty string.
@@ -404,7 +405,7 @@ const embedImagesInClone = async (clone: HTMLElement): Promise<void> => {
           reader.readAsDataURL(blob);
         });
       } catch (e) {
-        console.warn('Failed to embed image for export:', e);
+        logService.warn('Failed to embed image for export:', e);
       }
     }),
   );

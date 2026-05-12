@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
-import { useCopyToClipboard } from '../useCopyToClipboard';
-import { extractTextFromNode } from '../../utils/uiUtils';
-import { getCodeBlockPreviewType } from '../../utils/codeUtils';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
-import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
-import { SideViewContent } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
+import { extractTextFromNode } from '@/utils/uiUtils';
+import { getCodeBlockPreviewType } from '@/utils/codeUtils';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload, sanitizeFilename } from '@/utils/export/core';
+import { type SideViewContent } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
 
 const COLLAPSE_THRESHOLD_PX = 320;
 

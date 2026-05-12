@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SavedChatSession, UploadedFile } from '../../types';
-import { extractPersistedSessionFileRecords } from '../../utils/chat/session';
+import type { SavedChatSession, UploadedFile } from '@/types';
+import { extractPersistedSessionFileRecords } from '@/utils/chat/session';
 import { useDataExport } from './useDataExport';
 import { useDataImport } from './useDataImport';
 import { renderHook } from '@/test/testUtils';
@@ -10,14 +10,14 @@ import { createAppSettings, createChatSettings } from '@/test/factories';
 const mockGetAllSessions = vi.fn();
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule({
     getAllSessions: vi.fn((...args: unknown[]) => mockGetAllSessions(...args)),
   });
 });
 
-vi.mock('../../utils/export/core', () => ({
+vi.mock('@/utils/export/core', () => ({
   triggerDownload: vi.fn(),
 }));
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import {
   Loader2,
   Download,
@@ -12,12 +12,12 @@ import {
   Expand,
   Atom,
 } from 'lucide-react';
-import { IconHtml5 } from '../../icons/CustomIcons';
+import { IconHtml5 } from '@/components/icons/CustomIcons';
 import {
   FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
   ICON_BUTTON_CLASS,
   MODAL_CLOSE_BUTTON_DANGER_HOVER_CLASS,
-} from '../../../constants/appConstants';
+} from '@/constants/appConstants';
 
 interface HtmlPreviewHeaderProps {
   title: string;

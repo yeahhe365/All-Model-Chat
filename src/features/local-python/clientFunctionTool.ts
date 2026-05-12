@@ -1,7 +1,7 @@
 import { Type, type FunctionDeclaration } from '@google/genai';
 import type { ExecutionResult } from './pyodideService';
-import type { UploadedFile } from '../../types';
-import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
+import type { UploadedFile } from '@/types';
+import { createUploadedFileFromBase64 } from '@/utils/chat/parsing';
 import { hasGeneratedImageFile } from './helpers';
 
 type PythonRunOptions = { files?: UploadedFile[]; abortSignal?: AbortSignal };

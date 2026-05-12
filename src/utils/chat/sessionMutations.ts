@@ -1,4 +1,4 @@
-import type { ChatMessage, SavedChatSession, UploadedFile } from '../../types';
+import type { ChatMessage, SavedChatSession, UploadedFile } from '@/types';
 
 type MessagePatchOrUpdater = Partial<ChatMessage> | ((message: ChatMessage) => ChatMessage);
 type FilePatchOrUpdater = Partial<UploadedFile> | ((file: UploadedFile) => UploadedFile);

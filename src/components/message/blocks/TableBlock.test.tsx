@@ -1,12 +1,12 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { WindowProvider } from '../../../contexts/WindowContext';
+import { WindowProvider } from '@/contexts/WindowContext';
 import { TableBlock } from './TableBlock';
 
 const triggerDownloadMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../../utils/export/core', () => ({
+vi.mock('@/utils/export/core', () => ({
   triggerDownload: triggerDownloadMock,
 }));
 

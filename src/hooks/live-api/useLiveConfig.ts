@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { ChatSettings } from '../../types';
+import { type ChatSettings } from '@/types';
 import type { Tool } from '@google/genai';
-import type { LiveClientFunctions } from '../../types';
+import type { LiveClientFunctions } from '@/types';
 import { LOCAL_PYTHON_SYSTEM_PROMPT } from '@/features/prompts/localPython';
-import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
 
 interface UseLiveConfigProps {
   chatSettings: ChatSettings;

@@ -46,10 +46,7 @@ export const isLiveArtifactSelectionDetail = (value: unknown): value is LiveArti
   );
 };
 
-export const dispatchLiveArtifactSelection = (
-  targetWindow: Window,
-  detail: LiveArtifactSelectionDetail | null,
-) => {
+export const dispatchLiveArtifactSelection = (targetWindow: Window, detail: LiveArtifactSelectionDetail | null) => {
   targetWindow.dispatchEvent(
     new CustomEvent(LIVE_ARTIFACT_SELECTION_EVENT, {
       detail,

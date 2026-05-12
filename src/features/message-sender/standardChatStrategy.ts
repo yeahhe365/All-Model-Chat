@@ -1,8 +1,8 @@
-import { logService } from '../../services/logService';
-import { buildContentParts } from '../../utils/chat/builder';
-import { getModelCapabilities } from '../../utils/modelHelpers';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
-import type { UploadedFile } from '../../types';
+import { logService } from '@/services/logService';
+import { buildContentParts } from '@/utils/chat/builder';
+import { getModelCapabilities } from '@/utils/modelHelpers';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
+import type { UploadedFile } from '@/types';
 import { runOptimisticMessagePipeline } from './messagePipeline';
 import { resolveStandardChatTurn } from './standardChatTurn';
 import { performStandardChatApiCall } from './standardChatApiCall';

@@ -1,4 +1,4 @@
-import { SavedScenario } from '../../types';
+import { type SavedScenario } from '@/types';
 
 export const succinctScenario: SavedScenario = {
   id: 'succinct-scenario-default',

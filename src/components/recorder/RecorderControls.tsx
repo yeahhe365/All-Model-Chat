@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mic, Square, Trash2, Check, Loader2, X } from 'lucide-react';
-import { RecorderState } from '@/features/audio/useAudioRecorder';
-import { useI18n } from '../../contexts/I18nContext';
+import { type RecorderState } from '@/features/audio/useAudioRecorder';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface RecorderControlsProps {
   viewState: RecorderState;

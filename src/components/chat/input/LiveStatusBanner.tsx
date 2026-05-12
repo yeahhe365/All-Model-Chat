@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mic, Activity, X } from 'lucide-react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface LiveStatusBannerProps {
   isConnected: boolean;

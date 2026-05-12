@@ -1,23 +1,24 @@
-import React, { useRef, useCallback, useMemo } from 'react';
-import { AppSettings, UploadedFile } from '../../types';
-import { useModels } from '../core/useModels';
+import type React from 'react';
+import { useRef, useCallback, useMemo } from 'react';
+import { type AppSettings, type UploadedFile } from '@/types';
+import { useModels } from '@/hooks/core/useModels';
 import { useChatHistory } from './useChatHistory';
-import { useFileHandling } from '../files/useFileHandling';
-import { useFileDragDrop } from '../files/useFileDragDrop';
-import { usePreloadedScenarios } from '../usePreloadedScenarios';
-import { useMessageSender } from '../useMessageSender';
+import { useFileHandling } from '@/hooks/files/useFileHandling';
+import { useFileDragDrop } from '@/hooks/files/useFileDragDrop';
+import { usePreloadedScenarios } from '@/hooks/usePreloadedScenarios';
+import { useMessageSender } from '@/hooks/useMessageSender';
 import { useChatScroll } from './useChatScroll';
 import { useAutoTitling } from './useAutoTitling';
 import { useSuggestions } from './useSuggestions';
 import { useChatState } from './useChatState';
 import { useChatActions } from './useChatActions';
 import { useChatEffects } from './useChatEffects';
-import { useBackgroundKeepAlive } from '../core/useBackgroundKeepAlive';
+import { useBackgroundKeepAlive } from '@/hooks/core/useBackgroundKeepAlive';
 import { useMessageActions } from './messages/useMessageActions';
 import { useTextToSpeechHandler } from './messages/useTextToSpeechHandler';
-import { createLiveClientFunctions } from '../live-api/liveClientFunctions';
+import { createLiveClientFunctions } from '@/hooks/live-api/liveClientFunctions';
 import { getPyodideService } from '@/features/local-python/loadPyodideService';
-import { useChatStore } from '../../stores/chatStore';
+import { useChatStore } from '@/stores/chatStore';
 
 export const useChat = (
   appSettings: AppSettings,

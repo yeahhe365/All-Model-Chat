@@ -1,12 +1,12 @@
 import { vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
+import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
 import type {
   ChatInputActionsContextValue,
   ChatInputComposerStatusContextValue,
   ChatInputToolbarContextValue,
-} from '../components/chat/input/ChatInputContext';
-import { getModelCapabilities } from '../utils/modelHelpers';
-import type { ChatToolToggleStates } from '../types/chatTools';
+} from '@/components/chat/input/ChatInputContext';
+import { getModelCapabilities } from '@/utils/modelHelpers';
+import type { ChatToolToggleStates } from '@/types/chatTools';
 
 const createChatToolToggleStates = (overrides: ChatToolToggleStates = {}): ChatToolToggleStates => ({
   deepSearch: { isEnabled: false, onToggle: vi.fn() },

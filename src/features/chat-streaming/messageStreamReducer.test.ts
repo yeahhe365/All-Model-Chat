@@ -4,7 +4,7 @@ import { createMessageStreamState, reduceMessageStreamEvent } from './messageStr
 
 type MessageStreamEvent = Parameters<typeof reduceMessageStreamEvent>[1];
 
-vi.mock('../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: () => 'generated-id',
 }));
 

@@ -1,8 +1,8 @@
 import type { Part, UsageMetadata } from '@google/genai';
-import type { ChatHistoryItem, ModelOption, NonStreamMessageSender, StreamMessageSender } from '../../types';
-import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../../utils/apiProxyUrl';
-import { isAudioMimeType, isImageMimeType } from '../../utils/fileTypeUtils';
-import { logService } from '../logService';
+import type { ChatHistoryItem, ModelOption, NonStreamMessageSender, StreamMessageSender } from '@/types';
+import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '@/utils/apiProxyUrl';
+import { isAudioMimeType, isImageMimeType } from '@/utils/fileTypeUtils';
+import { logService } from '@/services/logService';
 
 interface OpenAICompatibleChatConfig {
   baseUrl?: string | null;

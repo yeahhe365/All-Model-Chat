@@ -1,10 +1,12 @@
-import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
-import { translations } from '@/i18n/translations';
-import { AttachmentAction, ModelOption } from '../types';
-import type { SlashCommand as Command } from '../types/slashCommands';
-import type { ChatToolToggleStates, ToggleableChatToolId } from '../types/chatTools';
-import { getSlashCommandToolDefinitions } from '../features/chat-tools/toolRegistry';
-import { getCachedModelCapabilities } from '../stores/modelCapabilitiesStore';
+import { type Dispatch, type SetStateAction } from 'react';
+import type React from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { type translations } from '@/i18n/translations';
+import { type AttachmentAction, type ModelOption } from '@/types';
+import type { SlashCommand as Command } from '@/types/slashCommands';
+import type { ChatToolToggleStates, ToggleableChatToolId } from '@/types/chatTools';
+import { getSlashCommandToolDefinitions } from '@/features/chat-tools/toolRegistry';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
 
 export type SlashCommandState = {
   isOpen: boolean;

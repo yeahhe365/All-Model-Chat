@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { logService } from '../../services/logService';
-import type { LogEntry, TokenUsageStats } from '../../types/logging';
-import { AppSettings, ChatSettings } from '../../types';
+import { logService } from '@/services/logService';
+import type { LogEntry, TokenUsageStats } from '@/types/logging';
+import { type AppSettings, type ChatSettings } from '@/types';
 import { X, Terminal, KeyRound, Coins } from 'lucide-react';
-import { Modal } from '../shared/Modal';
+import { Modal } from '@/components/shared/Modal';
 import { ConsoleTab } from './ConsoleTab';
 import { TokenUsageTab } from './TokenUsageTab';
 import { ApiUsageTab } from './ApiUsageTab';
-import { ConfirmationModal } from '../modals/ConfirmationModal';
+import { ConfirmationModal } from '@/components/modals/ConfirmationModal';
 import { UsageOverviewTab } from './UsageOverviewTab';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import {
   FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
   FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
-} from '../../constants/appConstants';
+} from '@/constants/appConstants';
 
 export interface LogViewerProps {
   isOpen: boolean;

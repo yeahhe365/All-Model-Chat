@@ -6,7 +6,7 @@ import {
   SUPPORTED_TEXT_MIME_TYPES,
   SUPPORTED_VIDEO_MIME_TYPES,
   TEXT_BASED_EXTENSIONS,
-} from '../constants/fileConstants';
+} from '@/constants/fileConstants';
 
 export type FileCategory =
   | 'image'

@@ -1,13 +1,18 @@
-import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
-import { logService } from '../../services/logService';
-import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
-import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
+import { useCallback, type Dispatch, type SetStateAction, useRef } from 'react';
+import {
+  type AppSettings,
+  type ChatSettings as IndividualChatSettings,
+  type UploadedFile,
+  MediaResolution,
+} from '@/types';
+import { logService } from '@/services/logService';
+import { releaseManagedObjectUrl } from '@/services/objectUrlManager';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '@/utils/apiUtils';
 import { buildFileUploadPreflight, checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
 import { uploadFileItem } from './uploadFileItem';
 import { runWithConcurrencyLimit } from './uploadQueue';
-import { useI18n } from '../../contexts/I18nContext';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import { useI18n } from '@/contexts/I18nContext';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 const MAX_CONCURRENT_FILE_UPLOADS = 3;
 

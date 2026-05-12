@@ -1,15 +1,16 @@
 import type { Part } from '@google/genai';
-import type { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
-import { editImageApi } from '../../services/api/generation/imageEditApi';
-import { logService } from '../../services/logService';
-import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
-import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
-import { shouldStripThinkingFromContext } from '../../utils/modelHelpers';
-import { isImageMimeType } from '../../utils/fileTypeUtils';
+import type { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '@/types';
+import type { ImageOutputMode, ImagePersonGeneration } from '@/types/settings';
+import { editImageApi } from '@/services/api/generation/imageEditApi';
+import { logService } from '@/services/logService';
+import { buildContentParts, createChatHistoryForApi } from '@/utils/chat/builder';
+import { createUploadedFileFromBase64 } from '@/utils/chat/parsing';
+import { shouldStripThinkingFromContext } from '@/utils/modelHelpers';
+import { isImageMimeType } from '@/utils/fileTypeUtils';
 import { appendApiPart } from '@/features/chat-streaming/processors';
+import { formatMessageSenderText } from './i18nFormat';
 import { runOptimisticMessagePipeline } from './messagePipeline';
-import type { SessionsUpdater } from './types';
+import type { MessageSenderTranslator, SessionsUpdater } from './types';
 
 type MessageLifecycleRunner = Parameters<typeof runOptimisticMessagePipeline>[0]['runMessageLifecycle'];
 
@@ -45,6 +46,7 @@ interface SendImageEditMessageParams {
   updateAndPersistSessions: SessionsUpdater;
   setActiveSessionId: (id: string | null) => void;
   runMessageLifecycle: MessageLifecycleRunner;
+  t: MessageSenderTranslator;
 }
 
 export const sendImageEditMessage = async ({
@@ -66,6 +68,7 @@ export const sendImageEditMessage = async ({
   updateAndPersistSessions,
   setActiveSessionId,
   runMessageLifecycle,
+  t,
 }: SendImageEditMessageParams) => {
   const imageFiles = files.filter((file) => isImageMimeType(file.type));
 
@@ -83,7 +86,7 @@ export const sendImageEditMessage = async ({
     shouldLockKey,
     keyToLock: keyToUse,
     abortController,
-    errorPrefix: 'Image Edit Error',
+    errorPrefix: t('messageSender_imageEditErrorPrefix'),
     runMessageLifecycle,
     execute: async () => {
       const { contentParts: promptParts } = await buildContentParts(text, imageFiles, currentChatSettings.modelId);
@@ -137,7 +140,10 @@ export const sendImageEditMessage = async ({
       let successfulImageCount = 0;
 
       results.forEach((result, index) => {
-        const prefix = results.length > 1 ? `Image ${index + 1}: ` : '';
+        const prefix =
+          results.length > 1
+            ? formatMessageSenderText(t('messageSender_imageEditResultPrefix'), { index: index + 1 })
+            : '';
 
         if (result.status === 'fulfilled') {
           const parts: Part[] = result.value;
@@ -165,23 +171,26 @@ export const sendImageEditMessage = async ({
           if (textPartContent.trim()) {
             combinedText += `${prefix}${textPartContent.trim()}\n\n`;
           } else if (!hasImagePart && results.length > 1) {
-            combinedText += `${prefix}No image was generated for this request.\n\n`;
+            combinedText += `${prefix}${t('messageSender_imageEditNoImageGenerated')}\n\n`;
           }
         } else {
           logService.error(`Image edit API call failed for index ${index}`, { error: result.reason });
-          combinedText += `${prefix}Request failed. Error: ${
-            result.reason instanceof Error ? result.reason.message : String(result.reason)
-          }\n\n`;
+          combinedText += `${prefix}${formatMessageSenderText(t('messageSender_imageEditRequestFailed'), {
+            message: result.reason instanceof Error ? result.reason.message : String(result.reason),
+          })}\n\n`;
         }
       });
 
       if (appSettings.generateQuadImages && successfulImageCount < 4 && successfulImageCount > 0) {
         const failureReason = combinedText.toLowerCase().includes('block')
-          ? 'Some images may have been blocked due to safety policies.'
-          : 'Some image requests may have failed.';
-        combinedText += `\n*[Note: Only ${successfulImageCount} of 4 images were generated successfully. ${failureReason}]*`;
+          ? t('messageSender_imageEditSafetyFailure')
+          : t('messageSender_imageEditPartialFailure');
+        combinedText += `\n${formatMessageSenderText(t('messageSender_imageEditPartialNote'), {
+          count: successfulImageCount,
+          reason: failureReason,
+        })}`;
       } else if (successfulImageCount === 0 && combinedText.trim() === '') {
-        combinedText = '[Error: Image generation failed with no specific message.]';
+        combinedText = t('messageSender_imageEditEmptyFailure');
       }
 
       return {

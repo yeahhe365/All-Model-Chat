@@ -18,7 +18,7 @@ vi.mock('./useApiErrorHandler', () => ({
   }),
 }));
 
-vi.mock('../../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   createMessage: createMessageMock,
 }));
 

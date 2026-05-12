@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../types';
+import type { ChatMessage } from '@/types';
 
 const isVisibleChatMessage = (message: ChatMessage): boolean => !message.isInternalToolMessage;
 

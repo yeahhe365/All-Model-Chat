@@ -1,10 +1,10 @@
-import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import { logService } from '../../services/logService';
-import { useFilePreProcessing } from '../file-upload/useFilePreProcessing';
-import { useFileUploader } from '../file-upload/useFileUploader';
-import { useFileIdAdder } from '../file-upload/useFileIdAdder';
-import { useChatStore } from '../../stores/chatStore';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { type AppSettings, type ChatSettings as IndividualChatSettings, type UploadedFile } from '@/types';
+import { logService } from '@/services/logService';
+import { useFilePreProcessing } from '@/hooks/file-upload/useFilePreProcessing';
+import { useFileUploader } from '@/hooks/file-upload/useFileUploader';
+import { useFileIdAdder } from '@/hooks/file-upload/useFileIdAdder';
+import { useChatStore } from '@/stores/chatStore';
 
 interface UseFileUploadProps {
   appSettings: AppSettings;

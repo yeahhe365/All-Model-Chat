@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { FileDisplay } from './FileDisplay';
-import { createUploadedFile } from '../../test/factories';
+import { createUploadedFile } from '@/test/factories';
 
 vi.mock('react-pdf', () => ({
   Document: ({ children }: { children: ReactNode }) => <div data-testid="mock-pdf-document">{children}</div>,

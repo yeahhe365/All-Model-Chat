@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react';
-import { Header } from '../header/Header';
-import { MessageList } from '../chat/MessageList';
-import { ChatInput } from '../chat/input/ChatInput';
-import { DragDropOverlay } from '../chat/overlays/DragDropOverlay';
-import { ModelsErrorDisplay } from '../chat/overlays/ModelsErrorDisplay';
+import { Header } from '@/components/header/Header';
+import { MessageList } from '@/components/chat/MessageList';
+import { ChatInput } from '@/components/chat/input/ChatInput';
+import { DragDropOverlay } from '@/components/chat/overlays/DragDropOverlay';
+import { ModelsErrorDisplay } from '@/components/chat/overlays/ModelsErrorDisplay';
 import { useChatArea } from './chat-area/useChatArea';
-import { getShortcutDisplay } from '../../utils/shortcutUtils';
-import { useChatStore } from '../../stores/chatStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { useUIStore } from '../../stores/uiStore';
-import { useChatState } from '../../hooks/chat/useChatState';
+import { getShortcutDisplay } from '@/utils/shortcutUtils';
+import { useChatStore } from '@/stores/chatStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useChatState } from '@/hooks/chat/useChatState';
 import { useChatHeaderRuntime } from './chat-runtime/ChatRuntimeContext';
 
 export const ChatArea: React.FC = () => {

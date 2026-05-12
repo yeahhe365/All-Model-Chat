@@ -1,4 +1,4 @@
-import { SavedScenario } from '../../types';
+import { type SavedScenario } from '@/types';
 
 export const voxelScenario: SavedScenario = {
   id: 'voxel-designer-scenario-default',

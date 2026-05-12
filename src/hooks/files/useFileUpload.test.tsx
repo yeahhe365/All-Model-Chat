@@ -1,9 +1,9 @@
 import { act } from 'react';
 import { renderHookWithProviders } from '@/test/providerTestUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import type { UploadedFile } from '../../types';
-import { useChatStore } from '../../stores/chatStore';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import type { UploadedFile } from '@/types';
+import { useChatStore } from '@/stores/chatStore';
 import { useFileUpload } from './useFileUpload';
 import { createDeferred } from '@/test/testUtils';
 
@@ -11,18 +11,18 @@ const { mockUploadFileItem } = vi.hoisted(() => ({
   mockUploadFileItem: vi.fn(),
 }));
 
-vi.mock('../file-upload/uploadFileItem', () => ({
+vi.mock('@/hooks/file-upload/uploadFileItem', () => ({
   uploadFileItem: mockUploadFileItem,
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule();
 });

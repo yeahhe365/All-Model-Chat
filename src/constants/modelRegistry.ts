@@ -1,4 +1,4 @@
-import type { ModelOption } from '../types';
+import type { ModelOption } from '@/types';
 
 type ModelRegistryGroup = 'defaultPinned' | 'tts' | 'image' | 'liveArtifacts' | 'connectionTest' | 'transcription';
 

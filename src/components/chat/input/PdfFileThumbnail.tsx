@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import type { UploadedFile } from '../../../types';
-import { configurePdfWorker } from '../../../utils/pdfWorker';
+import type { UploadedFile } from '@/types';
+import { configurePdfWorker } from '@/utils/pdfWorker';
 
 configurePdfWorker(pdfjs);
 

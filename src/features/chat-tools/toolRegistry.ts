@@ -1,5 +1,5 @@
-import type { ModelCapabilities } from '../../stores/modelCapabilitiesStore';
-import type { ChatToolId, ChatToolSettingKey } from '../../types/chatTools';
+import type { ModelCapabilities } from '@/stores/modelCapabilitiesStore';
+import type { ChatToolId, ChatToolSettingKey } from '@/types/chatTools';
 
 type ChatToolSurface = 'tools-menu' | 'slash-command';
 

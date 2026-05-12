@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { AppSettings } from '../../types';
-import { useChatStore } from '../../stores/chatStore';
+import { type AppSettings } from '@/types';
+import { useChatStore } from '@/stores/chatStore';
 
 export const useChatState = (appSettings: AppSettings) => {
   const activeSessionId = useChatStore((s) => s.activeSessionId);

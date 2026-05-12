@@ -1,6 +1,6 @@
 import React from 'react';
-import { UploadedFile } from '../../../../types';
-import { SelectedFileDisplay } from '../SelectedFileDisplay';
+import { type UploadedFile } from '@/types';
+import { SelectedFileDisplay } from '@/components/chat/input/SelectedFileDisplay';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 
 interface ChatFilePreviewListProps {

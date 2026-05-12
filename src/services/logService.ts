@@ -1,5 +1,5 @@
 import { dbService, type ApiUsageExactPricing } from '@/services/db/dbService';
-import type { LogCategory, LogEntry, LogLevel, TokenUsageStats } from '../types/logging';
+import type { LogCategory, LogEntry, LogLevel, TokenUsageStats } from '@/types/logging';
 
 type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;

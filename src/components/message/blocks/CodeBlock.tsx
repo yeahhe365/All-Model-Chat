@@ -1,23 +1,23 @@
 import React, { useMemo } from 'react';
 import { ChevronDown, ChevronUp, X, Terminal, AlertTriangle, FileOutput, RotateCcw } from 'lucide-react';
-import { SideViewContent } from '../../../types';
-import { useCodeBlock } from '../../../hooks/ui/useCodeBlock';
+import { type SideViewContent } from '@/types';
+import { useCodeBlock } from '@/hooks/ui/useCodeBlock';
 import { usePyodide } from '@/features/local-python/usePyodide';
 import { CodeHeader } from './parts/CodeHeader';
 import { ArtifactFrame } from './ArtifactFrame';
-import { extractTextFromNode } from '../../../utils/uiUtils';
-import { isImageMimeType } from '../../../utils/fileTypeUtils';
-import { FileDisplay } from '../FileDisplay';
-import { useI18n } from '../../../contexts/I18nContext';
+import { extractTextFromNode } from '@/utils/uiUtils';
+import { isImageMimeType } from '@/utils/fileTypeUtils';
+import { FileDisplay } from '@/components/message/FileDisplay';
+import { useI18n } from '@/contexts/I18nContext';
 import {
   isLikelyHtml,
   isLikelyStreamingHtmlArtifact,
   isLikelyStreamingLiveArtifactInteractionJson,
   isLiveArtifactInteractionLanguage,
   isLiveArtifactLanguage,
-} from '../../../utils/codeUtils';
-import type { LiveArtifactFollowupPayload } from '../../../utils/liveArtifactFollowup';
-import { parseLiveArtifactInteractionSpec } from '../../../utils/liveArtifactInteraction';
+} from '@/utils/codeUtils';
+import type { LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
+import { parseLiveArtifactInteractionSpec } from '@/utils/liveArtifactInteraction';
 import { LiveArtifactInteractionFrame } from './LiveArtifactInteractionFrame';
 
 interface CodeBlockProps {
@@ -122,8 +122,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
     showPreviewControls &&
     isLiveArtifactLanguage(sourceLanguage) &&
     previewMarkupType === 'html' &&
-    (isLikelyHtml(resolvedCodeText) ||
-      (Boolean(props.isLoading) && isLikelyStreamingHtmlArtifact(resolvedCodeText)));
+    (isLikelyHtml(resolvedCodeText) || (Boolean(props.isLoading) && isLikelyStreamingHtmlArtifact(resolvedCodeText)));
 
   if (isInteractive && interactionSpec) {
     return <LiveArtifactInteractionFrame spec={interactionSpec} onFollowUp={props.onLiveArtifactFollowUp} />;

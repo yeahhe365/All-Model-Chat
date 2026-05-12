@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useMemo } from 'react';
-import { useSettingsStore } from '../stores/settingsStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { getTranslator } from '@/i18n/translations';
 
 type Translator = ReturnType<typeof getTranslator>;

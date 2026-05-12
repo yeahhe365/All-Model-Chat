@@ -43,7 +43,7 @@ describe('htmlPreview utilities', () => {
     expect(srcDoc).toContain('data-amc-stream-preview-root');
     expect(srcDoc).toContain(HTML_PREVIEW_MESSAGE_CHANNEL);
     expect(srcDoc).toContain(HTML_PREVIEW_STREAM_RENDER_EVENT);
-    expect(srcDoc).toContain("event.data.event !== 'stream-render'");
+    expect(srcDoc).toContain('event.data.event !== streamRenderEvent');
     expect(srcDoc).toContain('replaceChildren');
     expect(srcDoc).not.toContain('<section>First chunk</section>');
   });
@@ -52,7 +52,7 @@ describe('htmlPreview utilities', () => {
     const srcDoc = buildStreamingHtmlPreviewSrcDoc();
 
     expect(srcDoc).toContain('syncDocumentAttributes');
-    expect(srcDoc).toContain("parsedDocument.documentElement");
+    expect(srcDoc).toContain('parsedDocument.documentElement');
     expect(srcDoc).toContain('parsedDocument.body');
   });
 
@@ -98,7 +98,9 @@ describe('htmlPreview utilities', () => {
   });
 
   it('injects preview diagnostics for blocked resources and runtime failures', () => {
-    const srcDoc = buildHtmlPreviewSrcDoc('<section><img src="https://example.com/missing.png" alt="Missing"></section>');
+    const srcDoc = buildHtmlPreviewSrcDoc(
+      '<section><img src="https://example.com/missing.png" alt="Missing"></section>',
+    );
 
     expect(srcDoc).toContain(HTML_PREVIEW_DIAGNOSTIC_EVENT);
     expect(srcDoc).toContain('resource-error');

@@ -1,13 +1,13 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLiveTools } from './useLiveTools';
-import type { LiveClientFunctions } from '../../types';
+import type { LiveClientFunctions } from '@/types';
 import { createUploadedFile } from '@/test/factories';
 import { createLiveSessionRef, createLiveSessionStub, createLiveToolCall } from '@/test/liveApiFixtures';
 import { renderHook } from '@/test/testUtils';
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

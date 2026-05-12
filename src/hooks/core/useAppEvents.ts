@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
-import { AppSettings, ChatSettings, ModelOption } from '../../types';
-import { logService } from '../../services/logService';
-import { isShortcutPressed } from '../../utils/shortcutUtils';
-import { useFullscreen } from '../ui/useFullscreen';
-import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';
-import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
-import { loadRegisterSW } from '../../pwa/loadRegisterSw';
-import { getTabCycleModelIds } from '../../utils/modelCatalog';
-import { CHAT_INPUT_TEXTAREA_SELECTOR } from '../../constants/appConstants';
-import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import { type AppSettings, type ChatSettings, type ModelOption } from '@/types';
+import { logService } from '@/services/logService';
+import { isShortcutPressed } from '@/utils/shortcutUtils';
+import { useFullscreen } from '@/hooks/ui/useFullscreen';
+import { getManualInstallMessage, getPwaInstallState } from '@/pwa/install';
+import { registerPwa, type UpdateServiceWorker } from '@/pwa/register';
+import { loadRegisterSW } from '@/pwa/loadRegisterSw';
+import { getTabCycleModelIds } from '@/utils/modelCatalog';
+import { CHAT_INPUT_TEXTAREA_SELECTOR } from '@/constants/appConstants';
+import { FOCUS_HISTORY_SEARCH_EVENT } from '@/constants/shortcuts';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 interface AppEventsProps {
   appSettings: AppSettings;
@@ -25,6 +25,26 @@ interface AppEventsProps {
   isLoading: boolean;
   onStopGenerating: () => void;
 }
+
+const buildTabCycleAvailableModels = (appSettings: AppSettings, availableModels: ModelOption[]): ModelOption[] => {
+  const seenIds = new Set<string>();
+  const openAICompatibleModels =
+    appSettings.isOpenAICompatibleApiEnabled === true
+      ? appSettings.openaiCompatibleModels.map((model) => ({
+          ...model,
+          apiMode: 'openai-compatible' as const,
+        }))
+      : [];
+
+  return [...availableModels, ...openAICompatibleModels].filter((model) => {
+    if (seenIds.has(model.id)) {
+      return false;
+    }
+
+    seenIds.add(model.id);
+    return true;
+  });
+};
 
 export const useAppEvents = ({
   appSettings,
@@ -283,7 +303,8 @@ export const useAppEvents = ({
           const currentModelId = isOpenAICompatibleMode
             ? appSettings.openaiCompatibleModelId
             : currentChatSettings.modelId;
-          const cycleModels = getTabCycleModelIds(availableModels, appSettings.tabModelCycleIds);
+          const tabCycleModels = buildTabCycleAvailableModels(appSettings, availableModels);
+          const cycleModels = getTabCycleModelIds(tabCycleModels, appSettings.tabModelCycleIds);
           if (cycleModels.length === 0) {
             return;
           }
@@ -293,7 +314,7 @@ export const useAppEvents = ({
           else nextIndex = (currentIndex + 1) % cycleModels.length;
           const newModelId = cycleModels[nextIndex];
           if (newModelId) {
-            const targetModel = availableModels.find((model) => model.id === newModelId);
+            const targetModel = tabCycleModels.find((model) => model.id === newModelId);
             if (appSettings.isOpenAICompatibleApiEnabled === true && targetModel?.apiMode === 'openai-compatible') {
               setAppSettings((prev) => ({
                 ...prev,

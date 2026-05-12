@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Pin, MoreHorizontal } from 'lucide-react';
-import { SavedChatSession } from '../../types';
+import { type SavedChatSession } from '@/types';
 import { SessionItemMenu } from './SessionItemMenu';
-import { LoadingDots } from '../shared/LoadingDots';
+import { LoadingDots } from '@/components/shared/LoadingDots';
 
 interface SessionItemProps {
   session: SavedChatSession;

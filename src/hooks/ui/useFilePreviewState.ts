@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { UploadedFile } from '../../types';
+import type { UploadedFile } from '@/types';
 import { useImageNavigation } from './useImageNavigation';
 
 export const useFilePreviewState = (files: UploadedFile[]) => {

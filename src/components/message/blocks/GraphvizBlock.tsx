@@ -1,9 +1,10 @@
+import { logService } from '@/services/logService';
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Loader2, Repeat } from 'lucide-react';
-import { SideViewContent, UploadedFile } from '../../../types';
-import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
+import { type SideViewContent, type UploadedFile } from '@/types';
+import { MESSAGE_BLOCK_BUTTON_CLASS } from '@/constants/appConstants';
 import { DiagramWrapper } from './parts/DiagramWrapper';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 const graphvizCache = new Map<string, string>();
 type VizInstance = {
@@ -78,7 +79,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
         }
       })
       .catch((e) => {
-        console.error('Failed to initialize Viz', e);
+        logService.error('Failed to initialize Viz', e);
       });
 
     return () => {
@@ -198,7 +199,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
     const timeoutId = setTimeout(() => {
       if (!isMounted) return;
       renderGraph().catch((e) => {
-        console.error('Failed to render Graphviz diagram', e);
+        logService.error('Failed to render Graphviz diagram', e);
       });
     }, renderDelayMs);
 
@@ -216,7 +217,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
     if (!svgContent || isDownloading) return;
     setIsDownloading(true);
     try {
-      const { exportSvgAsImage } = await import('../../../utils/export/image');
+      const { exportSvgAsImage } = await import('@/utils/export/image');
       await exportSvgAsImage(svgContent, `graphviz-diagram-${Date.now()}.jpg`, 5, 'image/jpeg');
     } catch (e) {
       setError(e instanceof Error ? e.message : t('diagram_export_failed'));

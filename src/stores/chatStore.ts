@@ -1,15 +1,21 @@
 import { create } from 'zustand';
-import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, ChatSettingsUpdater } from '../types';
+import {
+  type SavedChatSession,
+  type ChatGroup,
+  type ChatMessage,
+  type UploadedFile,
+  type ChatSettingsUpdater,
+} from '@/types';
 import { dbService } from '@/services/db/dbService';
-import { logService } from '../services/logService';
-import { rehydrateSessionFiles } from '../utils/chat/session';
+import { logService } from '@/services/logService';
+import { rehydrateSessionFiles } from '@/utils/chat/session';
 import { syncActiveSessionRoute, type SessionHistoryMode } from './sessionRouteSync';
 import { broadcastSyncMessage } from './chatSyncChannel';
 import { sanitizeSessionModel, sortSessionsInPlace } from './sessionModels';
 import {
   updateMessageInSession as updateMessageInSessions,
   updateSessionById as updateSessionByIdInSessions,
-} from '../utils/chat/sessionMutations';
+} from '@/utils/chat/sessionMutations';
 import { mergeSessionMetadata } from './sessionRefresh';
 import {
   createVirtualFullSessions,

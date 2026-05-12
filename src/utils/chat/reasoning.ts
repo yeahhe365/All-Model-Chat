@@ -1,4 +1,4 @@
-import { splitMarkdownSegments } from '../markdownUtils';
+import { splitMarkdownSegments } from '@/utils/markdownUtils';
 
 const GEMMA_THOUGHT_CHANNEL_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/gi;
 const GEMMA_THOUGHT_CHANNEL_PRESENCE_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/i;

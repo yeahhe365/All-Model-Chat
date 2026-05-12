@@ -1,5 +1,5 @@
-import { AppSettings } from '../types';
-import { DEFAULT_SHORTCUTS } from '../constants/shortcuts';
+import { type AppSettings } from '@/types';
+import { DEFAULT_SHORTCUTS } from '@/constants/shortcuts';
 
 const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 

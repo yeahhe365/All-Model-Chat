@@ -1,6 +1,6 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
+import { useI18n } from '@/contexts/I18nContext';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 
 type InlineCodeProps = React.ComponentPropsWithoutRef<'code'> & {
   children?: React.ReactNode;

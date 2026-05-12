@@ -1,4 +1,4 @@
-import { Theme, ThemeColors } from '../types/theme';
+import { type Theme, type ThemeColors } from '@/types/theme';
 
 const ONYX_THEME_COLORS: ThemeColors = {
   // Backgrounds

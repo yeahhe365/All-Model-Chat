@@ -1,10 +1,10 @@
-import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useI18n } from '../../contexts/I18nContext';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { IconHistory } from '../icons/CustomIcons';
-import type { SavedChatSession } from '../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { IconHistory } from '@/components/icons/CustomIcons';
+import type { SavedChatSession } from '@/types';
 
 interface CollapsedRecentChatsButtonProps {
   sessions: SavedChatSession[];

@@ -1,8 +1,8 @@
 import React from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { SavedScenario } from '../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { type SavedScenario } from '@/types';
 import { Download, Edit3, Trash2, Shield, MessageSquare, Eye, Copy, Sparkles } from 'lucide-react';
-import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../constants/appConstants';
+import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '@/constants/appConstants';
 
 interface ScenarioItemProps {
   scenario: SavedScenario;

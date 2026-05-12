@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Language, Outcome } from '@google/genai';
 import { buildContentParts, createChatHistoryForApi } from './builder';
-import { UploadedFile, ChatMessage, MediaResolution } from '../../types';
+import { type UploadedFile, type ChatMessage, MediaResolution } from '@/types';
 
 // Mock fileHelpers to avoid real file I/O
-vi.mock('../fileHelpers', () => ({
+vi.mock('@/utils/fileHelpers', () => ({
   blobToBase64: vi.fn().mockResolvedValue('base64data'),
   fileToString: vi.fn().mockResolvedValue('file text content'),
   isTextFile: vi.fn((file: { name: string; type: string }) => {
@@ -19,14 +19,14 @@ vi.mock('../fileHelpers', () => ({
   base64ToBlob: vi.fn(() => new Blob(['data'])),
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
 // Mock modelHelpers
-vi.mock('../modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   isGemini3Model: vi.fn((id: string) => id?.includes('gemini-3')),
 }));
 

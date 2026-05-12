@@ -1,9 +1,9 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-import { ChatMessage } from '../../../types';
-import { PerformanceMetrics } from '../PerformanceMetrics';
-import { AudioPlayer } from '../../shared/AudioPlayer';
-import { useI18n } from '../../../contexts/I18nContext';
+import { type ChatMessage } from '@/types';
+import { PerformanceMetrics } from '@/components/message/PerformanceMetrics';
+import { AudioPlayer } from '@/components/shared/AudioPlayer';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface MessageFooterProps {
   message: ChatMessage;

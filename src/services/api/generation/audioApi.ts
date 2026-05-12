@@ -1,11 +1,11 @@
 import type { GenerateContentConfig, ThinkingConfig } from '@google/genai';
-import { executeConfiguredApiRequest } from '../apiExecutor';
-import { logService } from '../../logService';
+import { executeConfiguredApiRequest } from '@/services/api/apiExecutor';
+import { logService } from '@/services/logService';
 import type { Part } from '@google/genai';
-import { blobToBase64 } from '../../../utils/fileHelpers';
-import { calculateTokenStats, getModelCapabilities } from '../../../utils/modelHelpers';
-import { buildExactPricingFromUsageMetadata } from '../../../utils/usagePricingTelemetry';
-import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
+import { blobToBase64 } from '@/utils/fileHelpers';
+import { calculateTokenStats, getModelCapabilities } from '@/utils/modelHelpers';
+import { buildExactPricingFromUsageMetadata } from '@/utils/usagePricingTelemetry';
+import { AVAILABLE_TTS_VOICES } from '@/constants/voiceOptions';
 
 const SUPPORTED_TTS_VOICE_NAMES = new Set(AVAILABLE_TTS_VOICES.map((voice) => voice.id));
 const SPEAKER_VOICES_HEADER_REGEX = /^#{1,6}\s*SPEAKER VOICES(?:\s*\(.*\))?\s*$/i;

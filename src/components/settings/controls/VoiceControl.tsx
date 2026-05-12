@@ -1,10 +1,10 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Mic, Info, AudioLines } from 'lucide-react';
-import { AVAILABLE_TRANSCRIPTION_MODELS } from '../../../constants/settingsModelOptions';
-import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
-import { Tooltip } from '../../shared/Tooltip';
-import { Select } from '../../shared/Select';
+import { AVAILABLE_TRANSCRIPTION_MODELS } from '@/constants/settingsModelOptions';
+import { AVAILABLE_TTS_VOICES } from '@/constants/voiceOptions';
+import { Tooltip } from '@/components/shared/Tooltip';
+import { Select } from '@/components/shared/Select';
 
 interface VoiceControlProps {
   transcriptionModelId: string;

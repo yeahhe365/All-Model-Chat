@@ -1,15 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { AppSettings, ChatSettings, ModelOption } from '../../types';
-import { Modal } from '../shared/Modal';
-import { ConfirmationModal } from '../modals/ConfirmationModal';
-import { useSettingsLogic } from '../../hooks/features/useSettingsLogic';
+import { useI18n } from '@/contexts/I18nContext';
+import { type AppSettings, type ChatSettings, type ModelOption } from '@/types';
+import { Modal } from '@/components/shared/Modal';
+import { ConfirmationModal } from '@/components/modals/ConfirmationModal';
+import { useSettingsLogic } from '@/hooks/features/useSettingsLogic';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsContent } from './SettingsContent';
-import { SettingsTransferProps } from './settingsTypes';
-import type { LogViewerProps } from '../log-viewer/LogViewer';
-import { buildSettingsForModal, SettingsScope, splitScopedSettingsUpdate } from '../layout/mainContentModels';
-import { useSettingsTransferActions } from '../../hooks/data-management/useSettingsTransferActions';
+import { type SettingsTransferProps } from './settingsTypes';
+import type { LogViewerProps } from '@/components/log-viewer/LogViewer';
+import {
+  buildSettingsForModal,
+  type SettingsScope,
+  splitScopedSettingsUpdate,
+} from '@/components/layout/mainContentModels';
+import { useSettingsTransferActions } from '@/hooks/data-management/useSettingsTransferActions';
 
 interface SettingsModalProps extends SettingsTransferProps {
   isOpen: boolean;

@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { VirtuosoHandle } from 'react-virtuoso';
-import type { ChatMessage } from '../../../../types';
+import type { ChatMessage } from '@/types';
 import { useMessageListScroll } from './useMessageListScroll';
 import { renderHook } from '@/test/testUtils';
 

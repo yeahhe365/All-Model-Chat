@@ -1,9 +1,9 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { ChevronDown } from 'lucide-react';
-import { GoogleSpinner } from '../../../icons/GoogleSpinner';
-import { ThinkingTimer } from '../../ThinkingTimer';
-import { formatDuration } from '../../../../utils/dateHelpers';
+import { GoogleSpinner } from '@/components/icons/GoogleSpinner';
+import { ThinkingTimer } from '@/components/message/ThinkingTimer';
+import { formatDuration } from '@/utils/dateHelpers';
 
 interface ThinkingHeaderProps {
   isLoading: boolean;

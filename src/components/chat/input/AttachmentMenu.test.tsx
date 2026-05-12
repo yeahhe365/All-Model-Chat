@@ -1,17 +1,17 @@
 import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { setupStoreStateReset } from '../../../test/storeTestUtils';
-import { createChatInputActionsContextValue } from '../../../test/chatInputContextFixtures';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
+import { createChatInputActionsContextValue } from '@/test/chatInputContextFixtures';
 import { ChatInputActionsContext } from './ChatInputContext';
 
-vi.mock('../../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
-vi.mock('../../../hooks/ui/usePortaledMenu', () => ({
+vi.mock('@/hooks/ui/usePortaledMenu', () => ({
   usePortaledMenu: () => ({
     isOpen: true,
     menuPosition: {},

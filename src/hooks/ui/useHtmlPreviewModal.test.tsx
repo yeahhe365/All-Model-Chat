@@ -1,13 +1,14 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PropsWithChildren, RefObject } from 'react';
-import { WindowProvider } from '../../contexts/WindowContext';
+import { logService } from '@/services/logService';
+import { WindowProvider } from '@/contexts/WindowContext';
 import { useHtmlPreviewModal } from './useHtmlPreviewModal';
 import {
   HTML_PREVIEW_CLEAR_SELECTION_EVENT,
   HTML_PREVIEW_DIAGNOSTIC_EVENT,
   HTML_PREVIEW_MESSAGE_CHANNEL,
-} from '../../utils/htmlPreview';
+} from '@/utils/htmlPreview';
 import { renderHook } from '@/test/testUtils';
 
 const exportElementAsPngMock = vi.hoisted(() => vi.fn(async () => {}));
@@ -19,7 +20,7 @@ vi.mock('./useFullscreen', () => ({
   }),
 }));
 
-vi.mock('../../utils/export/image', () => ({
+vi.mock('@/utils/export/image', () => ({
   exportElementAsPng: exportElementAsPngMock,
 }));
 
@@ -286,7 +287,7 @@ describe('useHtmlPreviewModal', () => {
   });
 
   it('logs preview diagnostics from the current modal iframe only', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(logService, 'warn').mockImplementation(() => {});
     const iframe = document.createElement('iframe');
     const contentWindowStub = {} as Window;
     Object.defineProperty(iframe, 'contentWindow', {

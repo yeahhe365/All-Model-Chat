@@ -2,7 +2,7 @@ import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it } from 'vitest';
 import { PerformanceMetrics } from './PerformanceMetrics';
-import type { ChatMessage } from '../../types';
+import type { ChatMessage } from '@/types';
 
 const createMessage = (overrides: Partial<ChatMessage> = {}): ChatMessage => ({
   id: 'message-1',

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/refs */
 import React from 'react';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '@/constants/fileConstants';
 
 interface ChatInputFileInputs {
   fileInputRef: React.RefObject<HTMLInputElement>;

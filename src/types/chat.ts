@@ -1,4 +1,4 @@
-import { ChatSettings, MediaResolution } from './settings';
+import { type ChatSettings, type MediaResolution } from './settings';
 import type { Part } from '@google/genai';
 
 export interface VideoMetadata {
@@ -9,7 +9,7 @@ export interface VideoMetadata {
 
 export interface UploadedFile {
   id: string;
-  name: string; // Original filename
+  name: string;
   type: string;
   size: number;
 
@@ -31,14 +31,14 @@ export interface UploadedFile {
   progress?: number;
   error?: string;
 
-  // Fields for API uploaded files like PDFs
-  fileUri?: string; // URI returned by Gemini API (e.g., "files/xxxxxxxx")
-  fileApiName?: string; // Full resource name from API (e.g., "files/xxxxxxxx")
-  uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled'; // State of the file on Gemini API
-  abortController?: AbortController; // Added for cancelling uploads
-  uploadSpeed?: string; // Added for upload speed display
-  videoMetadata?: VideoMetadata; // Added for video clipping
-  mediaResolution?: MediaResolution; // Added for Gemini 3 per-part resolution
+  // Gemini Files API metadata for uploaded media and documents.
+  fileUri?: string;
+  fileApiName?: string;
+  uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled';
+  abortController?: AbortController;
+  uploadSpeed?: string;
+  videoMetadata?: VideoMetadata;
+  mediaResolution?: MediaResolution;
 }
 
 export interface PersistedSessionFileRecord {
@@ -67,23 +67,23 @@ export interface ChatMessage {
   generationStartTime?: Date;
   generationEndTime?: Date;
   thinkingTimeMs?: number;
-  firstTokenTimeMs?: number; // Time to First Token (TTFT) in ms
+  firstTokenTimeMs?: number;
   promptTokens?: number;
   cachedPromptTokens?: number;
   completionTokens?: number;
   toolUsePromptTokens?: number;
   totalTokens?: number;
-  thoughtTokens?: number; // Added for tracking thinking tokens
-  cumulativeTotalTokens?: number; // Added for cumulative token count
-  audioSrc?: string; // For TTS responses
-  audioAutoplay?: boolean; // Controls whether the audioSrc should play automatically on render
+  thoughtTokens?: number;
+  cumulativeTotalTokens?: number;
+  audioSrc?: string;
+  audioAutoplay?: boolean;
   groundingMetadata?: unknown;
   urlContextMetadata?: unknown;
   suggestions?: string[];
   isGeneratingSuggestions?: boolean;
   stoppedByUser?: boolean;
-  thoughtSignatures?: string[]; // Added for Gemini 3 Pro reasoning continuity
-  excludeFromContext?: boolean; // Added to exclude message from API history context
+  thoughtSignatures?: string[];
+  excludeFromContext?: boolean;
   apiParts?: Part[]; // Preserves raw API parts for either user or model turns.
   isInternalToolMessage?: boolean; // Hidden client-side tool plumbing turn used to rebuild API context.
   toolParentMessageId?: string; // Visible model message ID associated with an internal tool turn.

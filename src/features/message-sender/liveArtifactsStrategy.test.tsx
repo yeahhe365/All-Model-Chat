@@ -21,16 +21,16 @@ const {
   mockLoadLiveArtifactsSystemPrompt: vi.fn(),
 }));
 
-vi.mock('../../utils/apiUtils', () => ({
+vi.mock('@/utils/apiUtils', () => ({
   getKeyForRequest: mockGetKeyForRequest,
   getGeminiKeyForRequest: mockGetKeyForRequest,
 }));
 
-vi.mock('../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: mockGenerateUniqueId,
 }));
 
-vi.mock('../../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   createMessage: mockCreateMessage,
 }));
 
@@ -38,21 +38,26 @@ vi.mock('@/i18n/translations', () => ({
   getTranslator: mockGetTranslator,
 }));
 
-vi.mock('../../services/api/chatApi', () => ({
+vi.mock('@/services/api/chatApi', () => ({
   sendStatelessMessageStreamApi: mockSendMessageStream,
 }));
 
-vi.mock('../../services/api/generationConfig', () => ({
+vi.mock('@/services/api/generationConfig', () => ({
   buildGenerationConfig: mockBuildGenerationConfig,
 }));
 
-vi.mock('../../constants/promptHelpers', () => ({
+vi.mock('@/constants/promptHelpers', () => ({
   loadLiveArtifactsSystemPrompt: mockLoadLiveArtifactsSystemPrompt,
 }));
 
-vi.mock('../../constants/appConstants', () => ({
-  DEFAULT_LIVE_ARTIFACTS_MODEL_ID: 'gemini-live-artifacts-default',
-}));
+vi.mock('@/constants/appConstants', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/constants/appConstants')>();
+
+  return {
+    ...actual,
+    DEFAULT_LIVE_ARTIFACTS_MODEL_ID: 'gemini-live-artifacts-default',
+  };
+});
 
 describe('liveArtifactsStrategy', () => {
   beforeEach(() => {

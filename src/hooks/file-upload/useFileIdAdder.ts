@@ -1,14 +1,19 @@
-import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
-import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
-import { logService } from '../../services/logService';
-import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { getFileMetadataApi } from '../../services/api/fileApi';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import {
+  type AppSettings,
+  type ChatSettings as IndividualChatSettings,
+  type UploadedFile,
+  MediaResolution,
+} from '@/types';
+import { ALL_SUPPORTED_MIME_TYPES } from '@/constants/fileConstants';
+import { logService } from '@/services/logService';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '@/utils/apiUtils';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { getFileMetadataApi } from '@/services/api/fileApi';
 import { getUploadLifecycleForGeminiState } from './utils';
-import { useI18n } from '../../contexts/I18nContext';
-import { isVideoMimeType } from '../../utils/fileTypeUtils';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import { useI18n } from '@/contexts/I18nContext';
+import { isVideoMimeType } from '@/utils/fileTypeUtils';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 interface UseFileIdAdderProps {
   appSettings: AppSettings;

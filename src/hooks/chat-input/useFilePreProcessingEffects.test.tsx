@@ -2,9 +2,9 @@ import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@/test/testUtils';
 import { useFilePreProcessingEffects } from './useFilePreProcessingEffects';
-import { captureScreenImage } from '../../utils/mediaUtils';
+import { captureScreenImage } from '@/utils/mediaUtils';
 
-vi.mock('../../utils/mediaUtils', () => ({
+vi.mock('@/utils/mediaUtils', () => ({
   captureScreenImage: vi.fn(),
 }));
 

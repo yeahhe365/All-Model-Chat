@@ -4,6 +4,8 @@ import path from 'path';
 
 const projectRoot = path.resolve(__dirname, '../../..');
 const viteConfigPath = path.join(projectRoot, 'vite.config.ts');
+const viteChunksPath = path.join(projectRoot, 'vite/chunks.ts');
+const viteStaticAssetsPath = path.join(projectRoot, 'vite/staticAssets.ts');
 const lazyMarkdownRendererPath = path.join(projectRoot, 'src/components/message/LazyMarkdownRenderer.tsx');
 const markdownRendererPath = path.join(projectRoot, 'src/components/message/MarkdownRenderer.tsx');
 const baseMarkdownRendererEntryPath = path.join(projectRoot, 'src/components/message/BaseMarkdownRendererEntry.tsx');
@@ -28,33 +30,36 @@ describe('vite.config runtime ownership', () => {
 
   it('splits heavy runtime libraries into dedicated lazy chunks', () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
+    const chunks = fs.readFileSync(viteChunksPath, 'utf8');
 
-    expect(config).toContain("'pdfjs-vendor'");
-    expect(config).toContain("'highlight-vendor'");
-    expect(config).toContain("'graphviz-vendor'");
-    expect(config).not.toContain("'html-export-vendor'");
-    expect(config).not.toContain("'mermaid-vendor'");
-    expect(config).toMatch(/highlight\.js/);
-    expect(config).toMatch(/pdfjs-dist/);
+    expect(chunks).toContain("'pdfjs-vendor'");
+    expect(chunks).toContain("'highlight-vendor'");
+    expect(chunks).toContain("'graphviz-vendor'");
+    expect(chunks).not.toContain("'html-export-vendor'");
+    expect(chunks).not.toContain("'mermaid-vendor'");
+    expect(chunks).toMatch(/highlight\.js/);
+    expect(chunks).toMatch(/pdfjs-dist/);
     expect(config).toMatch(/chunkSizeWarningLimit:\s*1500/);
   });
 
   it("copies the PDF worker from react-pdf's pinned pdfjs-dist version", () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
+    const staticAssets = fs.readFileSync(viteStaticAssetsPath, 'utf8');
 
-    expect(config).toContain(
+    expect(staticAssets).toContain(
       "const PDF_WORKER_COPY_SOURCE = 'node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs'",
     );
     expect(config).toContain('src: PDF_WORKER_COPY_SOURCE');
-    expect(config).not.toContain("src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'");
+    expect(staticAssets).not.toContain("src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'");
   });
 
   it('copies the lamejs encoder asset used by the audio compression worker', () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
+    const staticAssets = fs.readFileSync(viteStaticAssetsPath, 'utf8');
     const packageJson = fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8');
 
     expect(packageJson).toContain('"lamejs"');
-    expect(config).toContain("const LAMEJS_WORKER_COPY_SOURCE = 'node_modules/lamejs/lame.min.js'");
+    expect(staticAssets).toContain("const LAMEJS_WORKER_COPY_SOURCE = 'node_modules/lamejs/lame.min.js'");
     expect(config).toContain('src: LAMEJS_WORKER_COPY_SOURCE');
   });
 
@@ -127,7 +132,7 @@ describe('Runtime loading boundaries', () => {
   it('keeps TTS voice options on a single static import path to avoid mixed-import build warnings', () => {
     const ttsVoiceSelectorSource = fs.readFileSync(ttsVoiceSelectorPath, 'utf8');
 
-    expect(ttsVoiceSelectorSource).toContain("from '../../../../constants/voiceOptions'");
-    expect(ttsVoiceSelectorSource).not.toContain("import('../../../../constants/voiceOptions')");
+    expect(ttsVoiceSelectorSource).toContain("from '@/constants/voiceOptions'");
+    expect(ttsVoiceSelectorSource).not.toContain("import('@/constants/voiceOptions')");
   });
 });

@@ -1,16 +1,16 @@
 import { waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { useSettingsStore } from '../../stores/settingsStore';
-import type { AppSettings, UploadedFile } from '../../types';
-import { createAppSettings } from '../../test/factories';
-import { renderHook } from '../../test/testUtils';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import { useSettingsStore } from '@/stores/settingsStore';
+import type { AppSettings, UploadedFile } from '@/types';
+import { createAppSettings } from '@/test/factories';
+import { renderHook } from '@/test/testUtils';
 
 const { countTokensApiMock } = vi.hoisted(() => ({
   countTokensApiMock: vi.fn(),
 }));
 
-vi.mock('../../services/api/generation/tokenApi', () => ({
+vi.mock('@/services/api/generation/tokenApi', () => ({
   countTokensApi: countTokensApiMock,
 }));
 

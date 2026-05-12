@@ -1,6 +1,6 @@
 import React from 'react';
 import { PictureInPicture2 } from 'lucide-react';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PiPPlaceholderProps {
   onClosePip: () => void;

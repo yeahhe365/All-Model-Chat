@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 import { useEffect, useState } from 'react';
 import { dbService, type AppDataSizeEstimate } from '@/services/db/dbService';
 
@@ -44,7 +45,7 @@ export const useAppDataSize = (): AppDataSizeState => {
       const nextEstimate = await dbService.estimateAppDataSize();
       setEstimate(nextEstimate);
     } catch (error) {
-      console.error('Failed to estimate app data size:', error);
+      logService.error('Failed to estimate app data size:', error);
       setEstimate(null);
       setHasError(true);
     } finally {

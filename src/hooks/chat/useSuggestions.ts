@@ -1,12 +1,13 @@
 // hooks/chat/useSuggestions.ts
-import React, { useEffect, useRef, useCallback } from 'react';
-import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
-import { logService } from '../../services/logService';
-import { getGeminiKeyForRequest } from '../../utils/apiUtils';
-import { getModelCapabilities } from '../../utils/modelHelpers';
-import { generateSuggestionsApi } from '../../services/api/generation/textApi';
-import { getVisibleChatMessages } from '../../utils/chat/visibility';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import type React from 'react';
+import { useEffect, useRef, useCallback } from 'react';
+import { type AppSettings, type SavedChatSession, type ChatSettings as IndividualChatSettings } from '@/types';
+import { logService } from '@/services/logService';
+import { getGeminiKeyForRequest } from '@/utils/apiUtils';
+import { getModelCapabilities } from '@/utils/modelHelpers';
+import { generateSuggestionsApi } from '@/services/api/generation/textApi';
+import { getVisibleChatMessages } from '@/utils/chat/visibility';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 type MessageUpdater = (
   sessionId: string,

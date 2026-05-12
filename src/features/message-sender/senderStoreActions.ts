@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useChatStore } from '../../stores/chatStore';
+import { useChatStore } from '@/stores/chatStore';
 import type { SessionsUpdater } from './types';
 
 interface SenderStoreActions {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ChatMessage } from '../../types';
+import type { ChatMessage } from '@/types';
 import { resolveStandardChatTurn } from './standardChatTurn';
 
 describe('resolveStandardChatTurn', () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { CornerDownLeft, Trash2 } from 'lucide-react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../constants/appConstants';
+import { useI18n } from '@/contexts/I18nContext';
+import { FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '@/constants/appConstants';
 
 interface QueuedSubmissionCardProps {
   title: string;

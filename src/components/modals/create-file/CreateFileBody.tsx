@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
+import { useI18n } from '@/contexts/I18nContext';
+import { LazyMarkdownRenderer } from '@/components/message/LazyMarkdownRenderer';
 
 interface CreateFileBodyProps {
   textContent: string;

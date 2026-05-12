@@ -1,7 +1,7 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { ChevronDown, Save, FilePlus, Loader2 } from 'lucide-react';
-import { SUPPORTED_EXTENSIONS } from '../../../hooks/useCreateFileEditor';
+import { SUPPORTED_EXTENSIONS } from '@/hooks/useCreateFileEditor';
 
 interface CreateFileFooterProps {
   filenameBase: string;

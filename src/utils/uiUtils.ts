@@ -1,8 +1,9 @@
+import { logService } from '@/services/logService';
 import React from 'react';
-import { ThemeColors } from '../types/theme';
-import { AppSettings, MediaResolution } from '../types';
-import { Theme } from '../types/theme';
-import { AVAILABLE_THEMES } from '../constants/themeConstants';
+import { type ThemeColors } from '@/types/theme';
+import { type AppSettings, MediaResolution } from '@/types';
+import { type Theme } from '@/types/theme';
+import { AVAILABLE_THEMES } from '@/constants/themeConstants';
 import {
   ImageIcon,
   FileAudio,
@@ -53,7 +54,7 @@ export const applyThemeToDocument = (doc: Document, theme: Theme, settings: AppS
 
 export const showNotification = async (title: string, options?: NotificationOptions) => {
   if (!('Notification' in window)) {
-    console.warn('This browser does not support desktop notification');
+    logService.warn('This browser does not support desktop notification');
     return;
   }
 
@@ -132,7 +133,7 @@ export const playCompletionSound = () => {
     playNote(659.25, 0, 0.15); // First high note (E5)
     playNote(523.25, 0.15, 0.2); // Second low note (C5)
   } catch (e) {
-    console.error('Error playing completion sound', e);
+    logService.error('Error playing completion sound', e);
   }
 };
 

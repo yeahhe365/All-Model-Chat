@@ -2,7 +2,7 @@ import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sendStandardMessage } from './standardChatStrategy';
 import { createStandardChatProps, type StandardChatPropsOverrides } from '@/test/hookFactories';
-import { MediaResolution } from '../../types';
+import { MediaResolution } from '@/types';
 import type { PreparedModelRequest } from './useModelRequestRunner';
 
 const {
@@ -36,26 +36,26 @@ const {
   })),
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
-vi.mock('../../utils/apiUtils', () => ({
+vi.mock('@/utils/apiUtils', () => ({
   getKeyForRequest: mockGetKeyForRequest,
 }));
 
-vi.mock('../../utils/chat/builder', () => ({
+vi.mock('@/utils/chat/builder', () => ({
   buildContentParts: mockBuildContentParts,
   createChatHistoryForApi: mockCreateChatHistoryForApi,
 }));
 
-vi.mock('../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generated-id'),
 }));
 
-vi.mock('../../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   performOptimisticSessionUpdate: vi.fn((prev) => prev),
   generateSessionTitle: vi.fn(() => 'New Chat'),
   createMessage: vi.fn((role: string, content: string, options?: Record<string, unknown>) => ({
@@ -67,34 +67,39 @@ vi.mock('../../utils/chat/session', () => ({
   })),
 }));
 
-vi.mock('../../utils/modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   isGemini3Model: vi.fn((id: string) => id.includes('gemini-3')),
   isImageModel: vi.fn((id: string) => id.includes('image')),
   shouldStripThinkingFromContext: vi.fn(() => false),
   getModelCapabilities: mockModelCapabilities,
 }));
 
-vi.mock('../../constants/appConstants', () => ({
-  DEFAULT_CHAT_SETTINGS: {},
-}));
+vi.mock('@/constants/appConstants', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/constants/appConstants')>();
 
-vi.mock('../../services/api/generationConfig', () => ({
+  return {
+    ...actual,
+    DEFAULT_CHAT_SETTINGS: {},
+  };
+});
+
+vi.mock('@/services/api/generationConfig', () => ({
   buildGenerationConfig: mockBuildGenerationConfig,
   appendFunctionDeclarationsToTools: mockAppendFunctionDeclarationsToTools,
 }));
 
-vi.mock('../../services/api/chatApi', () => ({
+vi.mock('@/services/api/chatApi', () => ({
   generateContentTurnApi: vi.fn(),
   sendStatelessMessageStreamApi: mockSendMessageStream,
   sendStatelessMessageNonStreamApi: mockSendMessageNonStream,
 }));
 
-vi.mock('../../services/api/openaiCompatibleApi', () => ({
+vi.mock('@/services/api/openaiCompatibleApi', () => ({
   sendOpenAICompatibleMessageStream: mockSendOpenAICompatibleMessageStream,
   sendOpenAICompatibleMessageNonStream: mockSendOpenAICompatibleMessageNonStream,
 }));
 
-vi.mock('../../utils/codeUtils', () => ({
+vi.mock('@/utils/codeUtils', () => ({
   isLikelyHtml: vi.fn(() => false),
 }));
 

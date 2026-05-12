@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 /**
  * Captures the current screen content as an image Blob.
  * Handles browser support checks, stream acquisition, and fallback to video element capture.
@@ -30,7 +31,7 @@ export const captureScreenImage = async (messages: ScreenCaptureMessages): Promi
       audio: false,
     });
   } catch (err) {
-    console.error('Error starting screen capture:', err);
+    logService.error('Error starting screen capture:', err);
     if ((err as DOMException).name !== 'NotAllowedError') {
       alert(messages.startFailed((err as Error).message));
     }
@@ -39,7 +40,7 @@ export const captureScreenImage = async (messages: ScreenCaptureMessages): Promi
 
   const track = stream.getVideoTracks()[0];
   if (!track) {
-    console.error('No video track found in the stream.');
+    logService.error('No video track found in the stream.');
     stream.getTracks().forEach((t) => t.stop());
     return null;
   }
@@ -71,7 +72,7 @@ export const captureScreenImage = async (messages: ScreenCaptureMessages): Promi
           finish(blob);
         }, 'image/png');
       } catch (e) {
-        console.error('Error drawing bitmap:', e);
+        logService.error('Error drawing bitmap:', e);
         finish(null);
       }
     };
@@ -84,7 +85,7 @@ export const captureScreenImage = async (messages: ScreenCaptureMessages): Promi
         .grabFrame()
         .then(processBitmap)
         .catch((err: unknown) => {
-          console.warn('ImageCapture failed, falling back to video element:', err);
+          logService.warn('ImageCapture failed, falling back to video element:', err);
           fallbackToVideo();
         });
     } else {
@@ -109,7 +110,7 @@ export const captureScreenImage = async (messages: ScreenCaptureMessages): Promi
 
       const fail = (error?: unknown) => {
         if (error) {
-          console.warn('Video fallback failed:', error);
+          logService.warn('Video fallback failed:', error);
         }
         removeVideo();
         finish(null);

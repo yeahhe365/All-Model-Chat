@@ -2,9 +2,9 @@ import { act } from 'react';
 import type { ComponentProps } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { setupStoreStateReset } from '../../test/storeTestUtils';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { SettingsModal } from './SettingsModal';
 
 describe('SettingsModal', () => {

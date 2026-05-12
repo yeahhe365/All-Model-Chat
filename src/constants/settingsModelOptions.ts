@@ -1,4 +1,4 @@
-import { ModelOption } from '../types';
+import { type ModelOption } from '@/types';
 import { getModelOptionsForGroup } from './modelRegistry';
 
 export const AVAILABLE_LIVE_ARTIFACTS_MODELS: ModelOption[] = getModelOptionsForGroup('liveArtifacts');

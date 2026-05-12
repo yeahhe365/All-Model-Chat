@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { PreloadedMessage } from '../../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { type PreloadedMessage } from '@/types';
 import { User, Bot, ArrowUp, ArrowDown, Edit3, Trash2, MessageSquare } from 'lucide-react';
-import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../constants/appConstants';
+import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '@/constants/appConstants';
 
 interface ScenarioMessageListProps {
   messages: PreloadedMessage[];

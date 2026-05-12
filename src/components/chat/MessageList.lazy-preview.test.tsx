@@ -1,9 +1,9 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ChatMessage } from '../../types';
-import { createChatAreaProviderValue } from '../../test/chatAreaFixtures';
-import { createUploadedFile } from '../../test/factories';
+import type { ChatMessage } from '@/types';
+import { createChatAreaProviderValue } from '@/test/chatAreaFixtures';
+import { createUploadedFile } from '@/test/factories';
 
 const file = createUploadedFile({
   name: 'demo.png',
@@ -50,13 +50,13 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
     createMessagePreviewButtonMock,
     createNullComponentMock,
     createVirtuosoMock,
-  } = await import('../../test/messageListTestDoubles');
+  } = await import('@/test/messageListTestDoubles');
 
   vi.doMock('react-virtuoso', () => createVirtuosoMock<ChatMessage>());
 
-  vi.doMock('../message/Message', () => createMessagePreviewButtonMock());
+  vi.doMock('@/components/message/Message', () => createMessagePreviewButtonMock());
 
-  vi.doMock('../modals/FilePreviewModal', () => {
+  vi.doMock('@/components/modals/FilePreviewModal', () => {
     return createFilePreviewModalMock({
       onModuleLoad: () => {
         moduleLoadTracker.count += 1;
@@ -64,7 +64,7 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
     });
   });
 
-  vi.doMock('../modals/FileConfigurationModal', () => createNullComponentMock('FileConfigurationModal'));
+  vi.doMock('@/components/modals/FileConfigurationModal', () => createNullComponentMock('FileConfigurationModal'));
 
   vi.doMock('./message-list/hooks/useMessageListScroll', () => createMessageListScrollMock());
 
@@ -77,9 +77,9 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
   vi.doMock('./message-list/WelcomeScreen', () => createNullComponentMock('WelcomeScreen'));
 
   const module = await import('./MessageList');
-  const fixtureModule = await import('../../test/chatAreaFixtures');
-  const i18nModule = await import('../../contexts/I18nContext');
-  const runtimeModule = await import('../layout/chat-runtime/ChatRuntimeContext');
+  const fixtureModule = await import('@/test/chatAreaFixtures');
+  const i18nModule = await import('@/contexts/I18nContext');
+  const runtimeModule = await import('@/components/layout/chat-runtime/ChatRuntimeContext');
 
   return {
     MessageList: module.MessageList,

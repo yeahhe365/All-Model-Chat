@@ -1,10 +1,10 @@
-import { getGeminiKeyForRequest } from '../../utils/apiUtils';
-import { generateUniqueId } from '../../utils/chat/ids';
+import { getGeminiKeyForRequest } from '@/utils/apiUtils';
+import { generateUniqueId } from '@/utils/chat/ids';
 import { getTranslator } from '@/i18n/translations';
-import { sendStatelessMessageStreamApi } from '../../services/api/chatApi';
-import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID } from '../../constants/appConstants';
-import { buildGenerationConfig } from '../../services/api/generationConfig';
-import { loadLiveArtifactsSystemPrompt } from '../../constants/promptHelpers';
+import { sendStatelessMessageStreamApi } from '@/services/api/chatApi';
+import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID } from '@/constants/appConstants';
+import { buildGenerationConfig } from '@/services/api/generationConfig';
+import { loadLiveArtifactsSystemPrompt } from '@/constants/promptHelpers';
 import { runOptimisticMessagePipeline } from './messagePipeline';
 import { buildLiveArtifactsRequestParts, coerceLiveArtifactsOutput } from './liveArtifactsContracts';
 import type { LiveArtifactsGeneratorProps, GetStreamHandlers } from './types';

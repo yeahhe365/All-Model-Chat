@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { setupStoreStateReset } from '../../test/storeTestUtils';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { PwaUpdateBanner } from './PwaUpdateBanner';
 
 describe('PwaUpdateBanner', () => {

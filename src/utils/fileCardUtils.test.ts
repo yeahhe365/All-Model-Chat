@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Edit3, Scissors, SlidersHorizontal } from 'lucide-react';
-import type { UploadedFile } from '../types';
+import type { UploadedFile } from '@/types';
 import { getFileCardMeta } from './fileCardUtils';
 
 const createFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({

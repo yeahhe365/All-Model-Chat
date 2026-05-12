@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link as LinkIcon, AlertTriangle, CheckCircle, Globe } from 'lucide-react';
 import { getDomain } from './utils';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UrlContextItem {
   retrievedUrl?: string;

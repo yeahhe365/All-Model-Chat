@@ -31,11 +31,11 @@ const { scenarioManagerState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../hooks/features/useScenarioManager', () => ({
+vi.mock('@/hooks/features/useScenarioManager', () => ({
   useScenarioManager: () => scenarioManagerState,
 }));
 
-vi.mock('../shared/Modal', () => ({
+vi.mock('@/components/shared/Modal', () => ({
   Modal: ({ children, contentClassName }: { children: React.ReactNode; contentClassName?: string }) => (
     <div data-testid="modal-shell" className={contentClassName}>
       {children}

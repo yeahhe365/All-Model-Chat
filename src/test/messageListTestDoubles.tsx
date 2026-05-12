@@ -1,5 +1,5 @@
 import { forwardRef, type ComponentType, type ReactNode } from 'react';
-import type { ChatMessage, UploadedFile } from '../types';
+import type { ChatMessage, UploadedFile } from '@/types';
 
 export interface VirtuosoMockProps<T> {
   data: T[];

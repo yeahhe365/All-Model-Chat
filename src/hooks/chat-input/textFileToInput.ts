@@ -1,5 +1,5 @@
-import type { UploadedFile } from '../../types';
-import { fileToString } from '../../utils/fileHelpers';
+import type { UploadedFile } from '@/types';
+import { fileToString } from '@/utils/fileHelpers';
 
 export const readUploadedTextFileContent = async (
   file: Pick<UploadedFile, 'name' | 'textContent' | 'rawFile' | 'dataUrl'>,

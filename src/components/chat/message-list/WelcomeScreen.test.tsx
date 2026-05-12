@@ -2,7 +2,7 @@ import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { setTestMatchMedia } from '@/test/browserEnvironment';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '../../../stores/settingsStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { WelcomeScreen } from './WelcomeScreen';
 
 const advanceTypewriter = async (characterCount: number) => {

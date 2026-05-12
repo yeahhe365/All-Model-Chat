@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, RefObject } from 'react';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
-import { sanitizeFilename, triggerDownload } from '../../utils/export/core';
+import { logService } from '@/services/logService';
+import { useState, useEffect, useCallback, type RefObject } from 'react';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { sanitizeFilename, triggerDownload } from '@/utils/export/core';
 import { useFullscreen } from './useFullscreen';
 import {
   buildHtmlPreviewSrcDoc,
@@ -9,17 +10,14 @@ import {
   HTML_PREVIEW_CLEAR_SELECTION_EVENT,
   HTML_PREVIEW_DIAGNOSTIC_EVENT,
   HTML_PREVIEW_MESSAGE_CHANNEL,
-} from '../../utils/htmlPreview';
-import { useI18n } from '../../contexts/I18nContext';
-import {
-  normalizeLiveArtifactFollowupPayload,
-  type LiveArtifactFollowupPayload,
-} from '../../utils/liveArtifactFollowup';
+} from '@/utils/htmlPreview';
+import { useI18n } from '@/contexts/I18nContext';
+import { normalizeLiveArtifactFollowupPayload, type LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 import {
   createRelayedLiveArtifactSelectionDetail,
   dispatchLiveArtifactSelection,
   LIVE_ARTIFACT_CLEAR_SELECTION_EVENT,
-} from '../text-selection/liveArtifactSelection';
+} from '@/hooks/text-selection/liveArtifactSelection';
 
 const ZOOM_STEP = 0.1;
 const MIN_ZOOM = 0.25;
@@ -164,7 +162,7 @@ export const useHtmlPreviewModal = ({
       if (data.event === 'followup') {
         const payload = normalizeLiveArtifactFollowupPayload(data.payload);
         if (!payload) {
-          console.warn('Ignored invalid Live Artifact follow-up payload.');
+          logService.warn('Ignored invalid Live Artifact follow-up payload.');
           return;
         }
 
@@ -173,7 +171,7 @@ export const useHtmlPreviewModal = ({
       }
 
       if (data.event === HTML_PREVIEW_DIAGNOSTIC_EVENT) {
-        console.warn('Live Artifact preview diagnostic:', data.payload);
+        logService.warn('Live Artifact preview diagnostic:', data.payload);
       }
     };
 
@@ -251,7 +249,7 @@ export const useHtmlPreviewModal = ({
     setIsScreenshotting(true);
     let cleanup = () => {};
     try {
-      const { exportElementAsPng } = await import('../../utils/export/image');
+      const { exportElementAsPng } = await import('@/utils/export/image');
       const target = getCurrentPreviewScreenshotTarget();
       const screenshotTarget =
         target ??
@@ -272,7 +270,7 @@ export const useHtmlPreviewModal = ({
         },
       });
     } catch (err) {
-      console.error('Failed to take screenshot of iframe content:', err);
+      logService.error('Failed to take screenshot of iframe content:', err);
       alert(t('htmlPreview_screenshot_failed'));
     } finally {
       cleanup();

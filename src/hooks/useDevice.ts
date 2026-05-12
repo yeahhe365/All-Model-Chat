@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useWindowContext } from '../contexts/WindowContext';
+import { useWindowContext } from '@/contexts/WindowContext';
 
 const MOBILE_BREAKPOINT = 640; // Matches Tailwind 'sm'
 

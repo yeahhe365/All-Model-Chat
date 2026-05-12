@@ -9,9 +9,9 @@ import { QuadImageToggle } from './toolbar/QuadImageToggle';
 import { TtsVoiceSelector } from './toolbar/TtsVoiceSelector';
 import { MediaResolutionSelector } from './toolbar/MediaResolutionSelector';
 import { Clapperboard } from 'lucide-react';
-import { useChatStore } from '../../../stores/chatStore';
+import { useChatStore } from '@/stores/chatStore';
 import { useChatInputToolbarContext } from './ChatInputContext';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 const ChatInputToolbarComponent: React.FC = () => {
   const { t } = useI18n();

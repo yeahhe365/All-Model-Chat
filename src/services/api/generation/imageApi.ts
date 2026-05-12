@@ -1,9 +1,9 @@
 import type { GenerateImagesConfig } from '@google/genai';
-import type { GenerateImagesRequestOptions } from '../../../types';
-import { executeConfiguredApiRequest } from '../apiExecutor';
-import { buildExactImageGenerationPricing } from '../../../utils/usagePricingTelemetry';
-import { normalizeAspectRatioForModel, normalizeImageSizeForModel } from '../../../utils/modelHelpers';
-import { logService } from '../../logService';
+import type { GenerateImagesRequestOptions } from '@/types';
+import { executeConfiguredApiRequest } from '@/services/api/apiExecutor';
+import { buildExactImageGenerationPricing } from '@/utils/usagePricingTelemetry';
+import { normalizeAspectRatioForModel, normalizeImageSizeForModel } from '@/utils/modelHelpers';
+import { logService } from '@/services/logService';
 
 const mapPersonGenerationForApi = (
   personGeneration: GenerateImagesRequestOptions['personGeneration'],

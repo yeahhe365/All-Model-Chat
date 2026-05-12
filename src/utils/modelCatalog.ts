@@ -1,4 +1,4 @@
-import type { ApiMode, ModelOption } from '../types';
+import type { ApiMode, ModelOption } from '@/types';
 import { getModelCapabilities, isGeminiRoboticsModel, sortModels } from './modelHelpers';
 
 type ModelCatalogGroup = 'pinned' | 'standard';

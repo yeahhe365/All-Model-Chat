@@ -7,9 +7,9 @@ import {
   loadBboxSystemPrompt,
   loadLiveArtifactsSystemPrompt,
   loadHdGuideSystemPrompt,
-} from '../../constants/promptHelpers';
-import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_SYSTEM_INSTRUCTION } from '../../constants/appConstants';
-import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '../../types';
+} from '@/constants/promptHelpers';
+import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_SYSTEM_INSTRUCTION } from '@/constants/appConstants';
+import type { AppSettings, ChatSettings, InputCommand, SavedChatSession } from '@/types';
 
 interface PendingLiveArtifactsPromptActivation {
   systemInstruction: string;

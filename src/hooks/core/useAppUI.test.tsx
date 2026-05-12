@@ -1,8 +1,8 @@
-import React from 'react';
+import type React from 'react';
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppUI } from './useAppUI';
-import { useUIStore } from '../../stores/uiStore';
+import { useUIStore } from '@/stores/uiStore';
 import { renderHook } from '@/test/testUtils';
 
 const createTouchEvent = (target: EventTarget, x: number, y: number): React.TouchEvent =>

@@ -1,13 +1,13 @@
 // hooks/file-upload/useFilePreProcessing.ts
-import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, UploadedFile } from '../../types';
-import { logService } from '../../services/logService';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { isAudioMimeType, isTextFile } from '../../utils/fileTypeUtils';
-import { generateZipContext } from '../../utils/folderImportUtils';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { type AppSettings, type UploadedFile } from '@/types';
+import { logService } from '@/services/logService';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { isAudioMimeType, isTextFile } from '@/utils/fileTypeUtils';
+import { generateZipContext } from '@/utils/folderImportUtils';
 import { compressAudioToMp3 } from '@/features/audio/audioCompression';
-import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
-import { useI18n } from '../../contexts/I18nContext';
+import { extractDocxText, isDocxFile } from '@/utils/docxPreview';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseFilePreProcessingProps {
   appSettings: AppSettings;

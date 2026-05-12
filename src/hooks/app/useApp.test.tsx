@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ChatMessage, ModelOption, SavedChatSession } from '../../types';
-import { createAppSettings, createChatSettings } from '../../test/chatAreaFixtures';
+import type { AppSettings, ChatMessage, ModelOption, SavedChatSession } from '@/types';
+import { createAppSettings, createChatSettings } from '@/test/chatAreaFixtures';
 import { useApp } from './useApp';
 import { renderHook } from '@/test/testUtils';
 
@@ -80,7 +80,7 @@ const mockSetCurrentChatSettings = vi.fn(
   },
 );
 
-vi.mock('../core/useAppSettings', () => ({
+vi.mock('@/hooks/core/useAppSettings', () => ({
   useAppSettings: () => ({
     appSettings: currentAppSettings,
     setAppSettings: mockSetAppSettings,
@@ -89,7 +89,7 @@ vi.mock('../core/useAppSettings', () => ({
   }),
 }));
 
-vi.mock('../chat/useChat', () => ({
+vi.mock('@/hooks/chat/useChat', () => ({
   useChat: () => ({
     ...currentChatState,
     currentChatSettings: currentChatState.activeChat?.settings ?? currentAppSettings,
@@ -97,7 +97,7 @@ vi.mock('../chat/useChat', () => ({
   }),
 }));
 
-vi.mock('../../constants/promptHelpers', () => ({
+vi.mock('@/constants/promptHelpers', () => ({
   isLiveArtifactsSystemInstruction: (instruction?: string | null) =>
     !!instruction && instruction.includes('[Live Artifacts Protocol - zh]'),
   isBboxSystemInstruction: () => false,
@@ -107,15 +107,15 @@ vi.mock('../../constants/promptHelpers', () => ({
   loadHdGuideSystemPrompt: vi.fn(async () => 'guide prompt'),
 }));
 
-vi.mock('../core/useAppUI', () => ({
+vi.mock('@/hooks/core/useAppUI', () => ({
   useAppUI: () => ({}),
 }));
 
-vi.mock('../core/useAppEvents', () => ({
+vi.mock('@/hooks/core/useAppEvents', () => ({
   useAppEvents: () => ({}),
 }));
 
-vi.mock('../core/usePictureInPicture', () => ({
+vi.mock('@/hooks/core/usePictureInPicture', () => ({
   usePictureInPicture: () => ({
     pipWindow: null,
     togglePip: vi.fn(),
@@ -131,7 +131,7 @@ vi.mock('./useAppTitle', () => ({
   useAppTitle: vi.fn(),
 }));
 
-vi.mock('../data-management/useDataExport', () => ({
+vi.mock('@/hooks/data-management/useDataExport', () => ({
   useDataExport: () => ({
     handleExportSettings: vi.fn(),
     handleExportHistory: vi.fn(),
@@ -139,7 +139,7 @@ vi.mock('../data-management/useDataExport', () => ({
   }),
 }));
 
-vi.mock('../data-management/useDataImport', () => ({
+vi.mock('@/hooks/data-management/useDataImport', () => ({
   useDataImport: () => ({
     handleImportSettings: vi.fn(),
     handleImportHistory: vi.fn(),
@@ -147,13 +147,13 @@ vi.mock('../data-management/useDataImport', () => ({
   }),
 }));
 
-vi.mock('../data-management/useChatSessionExport', () => ({
+vi.mock('@/hooks/data-management/useChatSessionExport', () => ({
   useChatSessionExport: () => ({
     exportChatLogic: vi.fn(),
   }),
 }));
 
-vi.mock('../../stores/uiStore', () => ({
+vi.mock('@/stores/uiStore', () => ({
   useUIStore: (
     selector: (state: {
       setIsHistorySidebarOpen: typeof mockSetIsHistorySidebarOpen;
@@ -170,12 +170,12 @@ vi.mock('@/i18n/translations', () => ({
   getTranslator: () => (key: string) => key,
 }));
 
-vi.mock('../../utils/uiUtils', () => ({
+vi.mock('@/utils/uiUtils', () => ({
   applyThemeToDocument: vi.fn(),
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

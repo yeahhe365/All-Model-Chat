@@ -1,20 +1,20 @@
 import React, { Suspense, lazy, useState } from 'react';
-import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../types';
-import type { LogViewerProps } from '../log-viewer/LogViewer';
-import type { PwaInstallState } from '../../pwa/install';
+import { type AppSettings, type ModelOption, type ChatSettings, type SavedScenario } from '@/types';
+import type { LogViewerProps } from '@/components/log-viewer/LogViewer';
+import type { PwaInstallState } from '@/pwa/install';
 
 const LazySettingsModal = lazy(async () => {
-  const module = await import('../settings/SettingsModal');
+  const module = await import('@/components/settings/SettingsModal');
   return { default: module.SettingsModal };
 });
 
 const LazyLogViewer = lazy(async () => {
-  const module = await import('../log-viewer/LogViewer');
+  const module = await import('@/components/log-viewer/LogViewer');
   return { default: module.LogViewer };
 });
 
 const LazyPreloadedMessagesModal = lazy(async () => {
-  const module = await import('../scenarios/PreloadedMessagesModal');
+  const module = await import('@/components/scenarios/PreloadedMessagesModal');
   return { default: module.PreloadedMessagesModal };
 });
 

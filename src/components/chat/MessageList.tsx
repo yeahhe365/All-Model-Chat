@@ -1,36 +1,37 @@
+import { logService } from '@/services/logService';
 import React, { Suspense, lazy, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Message } from '../message/Message';
+import { Message } from '@/components/message/Message';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
-import { FileConfigurationModal } from '../modals/FileConfigurationModal';
+import { FileConfigurationModal } from '@/components/modals/FileConfigurationModal';
 import { TextSelectionToolbar } from './message-list/TextSelectionToolbar';
-import { useMessageListUI } from '../../hooks/useMessageListUI';
+import { useMessageListUI } from '@/hooks/useMessageListUI';
 import { useMessageListScroll } from './message-list/hooks/useMessageListScroll';
 import { MessageListFooter } from './message-list/MessageListFooter';
-import { isGemini3Model } from '../../utils/modelHelpers';
-import { getVisibleChatMessages } from '../../utils/chat/visibility';
-import { isMarkdownFile } from '../../utils/fileTypeUtils';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { useChatStore } from '../../stores/chatStore';
-import { useUIStore } from '../../stores/uiStore';
-import { useChatState } from '../../hooks/chat/useChatState';
-import { useChatInputRuntime, useChatMessageListRuntime } from '../layout/chat-runtime/ChatRuntimeContext';
-import { useI18n } from '../../contexts/I18nContext';
-import { formatLiveArtifactFollowupPrompt, type LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
+import { isGemini3Model } from '@/utils/modelHelpers';
+import { getVisibleChatMessages } from '@/utils/chat/visibility';
+import { isMarkdownFile } from '@/utils/fileTypeUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useChatStore } from '@/stores/chatStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useChatState } from '@/hooks/chat/useChatState';
+import { useChatInputRuntime, useChatMessageListRuntime } from '@/components/layout/chat-runtime/ChatRuntimeContext';
+import { useI18n } from '@/contexts/I18nContext';
+import { formatLiveArtifactFollowupPrompt, type LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 
 const LazyHtmlPreviewModal = lazy(async () => {
-  const module = await import('../modals/HtmlPreviewModal');
+  const module = await import('@/components/modals/HtmlPreviewModal');
   return { default: module.HtmlPreviewModal };
 });
 
 const LazyFilePreviewModal = lazy(async () => {
-  const module = await import('../modals/FilePreviewModal');
+  const module = await import('@/components/modals/FilePreviewModal');
   return { default: module.FilePreviewModal };
 });
 
 const LazyMarkdownPreviewModal = lazy(async () => {
-  const module = await import('../modals/MarkdownPreviewModal');
+  const module = await import('@/components/modals/MarkdownPreviewModal');
   return { default: module.MarkdownPreviewModal };
 });
 
@@ -73,7 +74,7 @@ const MessageListComponent: React.FC = () => {
     (payload: LiveArtifactFollowupPayload) => {
       const followupPrompt = formatLiveArtifactFollowupPrompt(payload, language);
       if (!followupPrompt) {
-        console.warn('Ignored invalid Live Artifact follow-up payload.');
+        logService.warn('Ignored invalid Live Artifact follow-up payload.');
         return;
       }
 

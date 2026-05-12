@@ -1,14 +1,14 @@
 import { act, type ComponentProps, type ReactNode } from 'react';
 import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { vi } from 'vitest';
-import { I18nProvider } from '../contexts/I18nContext';
-import { WindowProvider } from '../contexts/WindowContext';
-import { ChatRuntimeValuesProvider } from '../components/layout/chat-runtime/ChatRuntimeContext';
-import { useChatStore } from '../stores/chatStore';
-import { useSettingsStore } from '../stores/settingsStore';
-import { useUIStore } from '../stores/uiStore';
-import { AVAILABLE_THEMES } from '../constants/themeConstants';
-import type { AppSettings, ChatMessage, ChatSettings, ChatToolToggleStates, ModelOption, UploadedFile } from '../types';
+import { I18nProvider } from '@/contexts/I18nContext';
+import { WindowProvider } from '@/contexts/WindowContext';
+import { ChatRuntimeValuesProvider } from '@/components/layout/chat-runtime/ChatRuntimeContext';
+import { useChatStore } from '@/stores/chatStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useUIStore } from '@/stores/uiStore';
+import { AVAILABLE_THEMES } from '@/constants/themeConstants';
+import type { AppSettings, ChatMessage, ChatSettings, ChatToolToggleStates, ModelOption, UploadedFile } from '@/types';
 import { createAppSettings, createChatSettings } from './factories';
 
 export { createAppSettings, createChatSettings } from './factories';

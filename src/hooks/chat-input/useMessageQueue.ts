@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
-import type { UploadedFile } from '../../types';
-import { useChatStore } from '../../stores/chatStore';
+import type { UploadedFile } from '@/types';
+import { useChatStore } from '@/stores/chatStore';
 import {
   areFilesStillProcessing,
   buildQueuedChatInputSubmission,

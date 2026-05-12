@@ -1,5 +1,5 @@
-import type { PwaInstallState } from '../../pwa/install';
-import type { AppSettings } from '../../types';
+import type { PwaInstallState } from '@/pwa/install';
+import type { AppSettings } from '@/types';
 
 export type SettingsUpdateHandler = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 

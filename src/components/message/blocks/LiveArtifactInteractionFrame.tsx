@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { Send } from 'lucide-react';
-import { useI18n } from '../../../contexts/I18nContext';
-import {
-  isLiveArtifactFollowupStateWithinLimit,
-  type LiveArtifactFollowupPayload,
-} from '../../../utils/liveArtifactFollowup';
+import { useI18n } from '@/contexts/I18nContext';
+import { isLiveArtifactFollowupStateWithinLimit, type LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 import {
   buildLiveArtifactInteractionPayload,
   getLiveArtifactInteractionDefaultValue,
@@ -13,7 +10,7 @@ import {
   type LiveArtifactInteractionPrimitive,
   type LiveArtifactInteractionProperty,
   type LiveArtifactInteractionSpec,
-} from '../../../utils/liveArtifactInteraction';
+} from '@/utils/liveArtifactInteraction';
 
 interface LiveArtifactInteractionFrameProps {
   spec: LiveArtifactInteractionSpec;

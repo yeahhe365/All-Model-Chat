@@ -1,18 +1,21 @@
-import React from 'react';
+import type React from 'react';
 import {
-  AppSettings,
-  ChatMessage,
-  ChatSettings as IndividualChatSettings,
-  SavedChatSession,
-  UploadedFile,
-} from '../../types';
+  type AppSettings,
+  type ChatMessage,
+  type ChatSettings as IndividualChatSettings,
+  type SavedChatSession,
+  type UploadedFile,
+} from '@/types';
 import type { Part, UsageMetadata } from '@google/genai';
-import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
+import type { ImageOutputMode, ImagePersonGeneration } from '@/types/settings';
+import type { getTranslator } from '@/i18n/translations';
 
 export type SessionsUpdater = (
   updater: (prev: SavedChatSession[]) => SavedChatSession[],
   options?: { persist?: boolean },
 ) => void;
+
+export type MessageSenderTranslator = ReturnType<typeof getTranslator>;
 
 export interface StreamHandlerFunctions {
   streamOnError: (error: Error) => void;

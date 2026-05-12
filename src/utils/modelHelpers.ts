@@ -1,12 +1,12 @@
-import { ModelOption } from '../types';
+import { type ModelOption } from '@/types';
 import {
   GEMINI_3_RO_MODELS,
   THINKING_BUDGET_RANGES,
   MODELS_MANDATORY_THINKING,
   MODELS_SUPPORTING_RAW_MODE,
-} from '../constants/appConstants';
-import { MediaResolution } from '../types/settings';
-import { useModelPreferencesStore, type CachedModelSettings } from '../stores/modelPreferencesStore';
+} from '@/constants/appConstants';
+import { MediaResolution } from '@/types/settings';
+import { useModelPreferencesStore, type CachedModelSettings } from '@/stores/modelPreferencesStore';
 import type { UsageMetadata } from '@google/genai';
 
 // --- Model Sorting & Defaults ---

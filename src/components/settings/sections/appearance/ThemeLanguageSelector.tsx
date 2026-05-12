@@ -1,8 +1,8 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { IconThemeSystem, IconThemeDark, IconThemeLight } from '../../../icons/CustomIcons';
-import { AppSettings } from '../../../../types';
-import { Select } from '../../../shared/Select';
+import { useI18n } from '@/contexts/I18nContext';
+import { IconThemeSystem, IconThemeDark, IconThemeLight } from '@/components/icons/CustomIcons';
+import { type AppSettings } from '@/types';
+import { Select } from '@/components/shared/Select';
 
 interface ThemeLanguageSelectorProps {
   settings: AppSettings;

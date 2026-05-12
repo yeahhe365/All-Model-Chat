@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { UploadedFile, SavedChatSession, ChatSettings } from '../../types';
-import { logService } from '../../services/logService';
-import { cleanupFilePreviewUrls } from '../../utils/fileHelpers';
-import {
-  getModelCapabilities,
-  normalizeAspectRatioForModel,
-  normalizeImageSizeForModel,
-} from '../../utils/modelHelpers';
-import { getTranslator } from '../../i18n/translations';
+import { type UploadedFile, type SavedChatSession, type ChatSettings } from '@/types';
+import { logService } from '@/services/logService';
+import { cleanupFilePreviewUrls } from '@/utils/fileHelpers';
+import { getModelCapabilities, normalizeAspectRatioForModel, normalizeImageSizeForModel } from '@/utils/modelHelpers';
+import { getTranslator } from '@/i18n/translations';
 
 interface UseChatEffectsProps {
   activeSessionId: string | null;

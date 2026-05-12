@@ -4,11 +4,11 @@ import type { Part } from '@google/genai';
 const buildGenerationConfigMock = vi.fn();
 const sendStatelessMessageNonStreamApiMock = vi.fn();
 
-vi.mock('../generationConfig', () => ({
+vi.mock('@/services/api/generationConfig', () => ({
   buildGenerationConfig: buildGenerationConfigMock,
 }));
 
-vi.mock('../chatApi', () => ({
+vi.mock('@/services/api/chatApi', () => ({
   sendStatelessMessageNonStreamApi: sendStatelessMessageNonStreamApiMock,
 }));
 

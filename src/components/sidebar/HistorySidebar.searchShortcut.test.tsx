@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { FOCUS_HISTORY_SEARCH_EVENT } from '../../constants/shortcuts';
+import { FOCUS_HISTORY_SEARCH_EVENT } from '@/constants/shortcuts';
 import { HistorySidebar } from './HistorySidebar';
 
 vi.mock('@formkit/auto-animate/react', () => ({

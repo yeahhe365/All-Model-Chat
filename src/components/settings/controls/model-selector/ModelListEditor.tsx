@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, RotateCcw, Check } from 'lucide-react';
-import { ApiMode, ModelOption } from '../../../../types';
+import { type ApiMode, type ModelOption } from '@/types';
 import { ModelListEditorRow } from './ModelListEditorRow';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface ModelListEditorProps {
   availableModels: ModelOption[];
@@ -74,7 +74,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
         return;
       }
 
-      const { getDefaultModelOptions } = await import('../../../../utils/defaultModelOptions');
+      const { getDefaultModelOptions } = await import('@/utils/defaultModelOptions');
       setTempModels(toEditableRows(getDefaultModelOptions()));
     }
   };

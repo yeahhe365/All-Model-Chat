@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { useHtmlPreviewModal } from '../../hooks/ui/useHtmlPreviewModal';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { useHtmlPreviewModal } from '@/hooks/ui/useHtmlPreviewModal';
 import { HtmlPreviewHeader } from './html-preview/HtmlPreviewHeader';
 import { HtmlPreviewContent } from './html-preview/HtmlPreviewContent';
-import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
+import type { LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;

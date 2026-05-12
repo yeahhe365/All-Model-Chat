@@ -1,8 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import { logService } from '@/services/logService';
+import type React from 'react';
+import { useState, useCallback } from 'react';
 import { compressAudioToMp3 } from '@/features/audio/audioCompression';
 import { useRecorder } from './core/useRecorder';
 import { useTextAreaInsert } from './useTextAreaInsert';
-import { useI18n } from '../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
@@ -54,7 +56,7 @@ export const useVoiceInput = ({
             try {
               fileToTranscribe = await compressAudioToMp3(audioBlob);
             } catch (error) {
-              console.error('Error compressing audio, falling back to original:', error);
+              logService.error('Error compressing audio, falling back to original:', error);
               fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
             }
           } else {
@@ -68,7 +70,7 @@ export const useVoiceInput = ({
             insertText(transcribedText.trim(), { ensurePadding: true });
           }
         } catch (error) {
-          console.error('Error processing/transcribing audio:', error);
+          logService.error('Error processing/transcribing audio:', error);
           const message = error instanceof Error ? error.message : t('voiceInput_failed');
           reportError(t('voiceInput_failedWithMessage').replace('{message}', message));
         } finally {

@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { AppSettings } from '../types';
-import type { SyncMessage } from '../types/sync';
-import { Theme } from '../types/theme';
-import { DEFAULT_FILES_API_CONFIG, getDefaultAppSettings } from '../constants/appConstants';
-import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
-import { logService } from '../services/logService';
-import { resolveSupportedModelId, sanitizeModelOptions } from '../utils/modelHelpers';
+import { type AppSettings } from '@/types';
+import type { SyncMessage } from '@/types/sync';
+import { type Theme } from '@/types/theme';
+import { DEFAULT_FILES_API_CONFIG, getDefaultAppSettings } from '@/constants/appConstants';
+import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '@/constants/themeConstants';
+import { logService } from '@/services/logService';
+import { resolveSupportedModelId, sanitizeModelOptions } from '@/utils/modelHelpers';
 import { dbService } from '@/services/db/dbService';
 
 interface SettingsState {

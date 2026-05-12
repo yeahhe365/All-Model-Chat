@@ -1,14 +1,14 @@
 import React from 'react';
 import { AlertCircle, ArrowRight, RotateCcw } from 'lucide-react';
-import { Toggle } from '../../../shared/Toggle';
-import { SETTINGS_INPUT_CLASS } from '../../../../constants/appConstants';
-import { DEFAULT_MODEL_ID } from '../../../../constants/modelConstants';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { Toggle } from '@/components/shared/Toggle';
+import { SETTINGS_INPUT_CLASS } from '@/constants/appConstants';
+import { DEFAULT_MODEL_ID } from '@/constants/modelConstants';
+import { useI18n } from '@/contexts/I18nContext';
 import {
   buildGeminiRequestPreviewUrl,
   DEFAULT_GEMINI_API_BASE_URL,
   DEFAULT_GEMINI_PROXY_URL,
-} from '../../../../utils/apiProxyUrl';
+} from '@/utils/apiProxyUrl';
 
 interface ApiProxySettingsProps {
   useApiProxy: boolean;

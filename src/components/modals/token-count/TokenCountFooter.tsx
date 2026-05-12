@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Loader2, Trash2, RefreshCw } from 'lucide-react';
 
 interface TokenCountFooterProps {

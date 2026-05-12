@@ -49,6 +49,20 @@ describe('translation coverage for protected UI surfaces', () => {
     expect(t('scenarios_copy_title').replace('{title}', 'A')).toBe('A（副本）');
     expect(t('scenarios_message_count').replace('{count}', '2')).toBe('2 条消息');
     expect(t('assistant_avatar_alt')).toBe('助手头像');
+    expect(t('messageSender_errorWithPrefix').replace('{prefix}', '错误').replace('{message}', 'X')).toBe('错误：X');
+    expect(t('messageSender_apiKeyNotConfigured')).toBe('未在设置中配置 API 密钥。');
+    expect(t('messageSender_ttsErrorPrefix')).toBe('语音生成错误');
+    expect(t('messageSender_imageGenErrorPrefix')).toBe('图像生成错误');
+    expect(t('messageSender_imageEditErrorPrefix')).toBe('图像编辑错误');
+    expect(t('messageSender_audioReadyTitle')).toBe('音频已生成');
+    expect(t('messageSender_imageReadyTitle')).toBe('图片已生成');
+    expect(t('messageSender_generatedImagesForPrompt').replace('{prompt}', 'A').replace('{count}', '2')).toBe(
+      '已为“A”生成 2 张图片',
+    );
+    expect(t('messageSender_imageEditResultPrefix').replace('{index}', '2')).toBe('图片 2：');
+    expect(t('messageSender_imageEditPartialNote').replace('{count}', '1').replace('{reason}', '原因。')).toBe(
+      '*[提示：4 张图片中仅 1 张生成成功。原因。]*',
+    );
     expect(t('settingsImport_invalidFileFormat').replace('{expectedType}', 'A').replace('{foundType}', 'B')).toBe(
       '文件格式无效。应为 A，实际为 B。',
     );
@@ -417,6 +431,25 @@ describe('translation coverage for protected UI surfaces', () => {
         snippets: ['Could not find message content in DOM. Please ensure the message is visible.'],
       },
       {
+        file: 'src/features/message-sender/useApiErrorHandler.ts',
+        snippets: ['An unknown error occurred.', 'API key is not configured in settings.'],
+      },
+      {
+        file: 'src/features/message-sender/ttsImagenStrategy.ts',
+        snippets: ['TTS Error', 'Image Gen Error', 'Audio Ready', 'Image Ready', 'Generated '],
+      },
+      {
+        file: 'src/features/message-sender/imageEditStrategy.ts',
+        snippets: [
+          'Image Edit Error',
+          'No image was generated for this request.',
+          'Request failed. Error:',
+          'Some images may have been blocked',
+          'Some image requests may have failed.',
+          '[Error: Image generation failed',
+        ],
+      },
+      {
         file: 'src/utils/chat/reasoning.ts',
         snippets: ['Raw Thinking Process'],
       },
@@ -631,7 +664,7 @@ describe('translation coverage for protected UI surfaces', () => {
   });
 
   it('defines translations for every t() key used in source files', () => {
-    const sourceFiles = ['src/components', 'src/hooks', 'src/utils'];
+    const sourceFiles = ['src/components', 'src/features', 'src/hooks', 'src/utils'];
 
     const collectFiles = (dir: string): string[] =>
       fs.readdirSync(path.join(projectRoot, dir), { withFileTypes: true }).flatMap((entry) => {

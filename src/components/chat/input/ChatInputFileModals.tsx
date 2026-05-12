@@ -1,22 +1,22 @@
 import React, { Suspense, lazy } from 'react';
-import { UploadedFile, AppSettings, ModelOption } from '../../../types';
-import { FileConfigurationModal } from '../../modals/FileConfigurationModal';
-import { VideoMetadata } from '../../../types';
-import { MediaResolution } from '../../../types/settings';
-import { isMarkdownFile } from '../../../utils/fileTypeUtils';
+import { type UploadedFile, type AppSettings, type ModelOption } from '@/types';
+import { FileConfigurationModal } from '@/components/modals/FileConfigurationModal';
+import { type VideoMetadata } from '@/types';
+import { type MediaResolution } from '@/types/settings';
+import { isMarkdownFile } from '@/utils/fileTypeUtils';
 
 const LazyTokenCountModal = lazy(async () => {
-  const module = await import('../../modals/TokenCountModal');
+  const module = await import('@/components/modals/TokenCountModal');
   return { default: module.TokenCountModal };
 });
 
 const LazyFilePreviewModal = lazy(async () => {
-  const module = await import('../../modals/FilePreviewModal');
+  const module = await import('@/components/modals/FilePreviewModal');
   return { default: module.FilePreviewModal };
 });
 
 const LazyMarkdownPreviewModal = lazy(async () => {
-  const module = await import('../../modals/MarkdownPreviewModal');
+  const module = await import('@/components/modals/MarkdownPreviewModal');
   return { default: module.MarkdownPreviewModal };
 });
 

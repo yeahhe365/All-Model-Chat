@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ModelOption } from '../../types';
+import type { ModelOption } from '@/types';
 import { ModelPicker } from './ModelPicker';
 
 const renderPicker = ({

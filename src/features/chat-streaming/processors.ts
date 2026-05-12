@@ -1,6 +1,6 @@
-import { ChatMessage, ChatSettings } from '../../types';
+import { type ChatMessage, type ChatSettings } from '@/types';
 import type { UsageMetadata } from '@google/genai';
-import { calculateTokenStats } from '../../utils/modelHelpers';
+import { calculateTokenStats } from '@/utils/modelHelpers';
 import { getTranslator } from '@/i18n/translations';
 import { appendApiPart } from '@/features/chat-streaming/messageStreamReducer';
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render } from './testUtils';
-import type { ChatMessage, UploadedFile } from '../types';
+import type { ChatMessage, UploadedFile } from '@/types';
 import {
   createMessageListScrollMock,
   createMessagePreviewButtonMock,

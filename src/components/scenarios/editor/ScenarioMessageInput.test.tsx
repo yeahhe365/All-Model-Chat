@@ -12,7 +12,7 @@ const { mockSettingsState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../stores/settingsStore', () => ({
+vi.mock('@/stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
 }));
 

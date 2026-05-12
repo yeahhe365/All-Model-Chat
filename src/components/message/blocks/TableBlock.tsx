@@ -1,18 +1,19 @@
+import { logService } from '@/services/logService';
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Minimize2, Download, FileSpreadsheet, FileText, Copy, Check } from 'lucide-react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { useWindowContext } from '../../../contexts/WindowContext';
-import { createManagedObjectUrl } from '../../../services/objectUrlManager';
-import { triggerDownload } from '../../../utils/export/core';
-import { useClickOutside } from '../../../hooks/useClickOutside';
-import { convertHtmlToMarkdown } from '../../../utils/htmlToMarkdown';
+import { useI18n } from '@/contexts/I18nContext';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload } from '@/utils/export/core';
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { convertHtmlToMarkdown } from '@/utils/htmlToMarkdown';
 import {
   FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
   MENU_ITEM_BUTTON_CLASS,
   MENU_ITEM_COMPACT_BUTTON_CLASS,
   MENU_ITEM_DEFAULT_STATE_CLASS,
-} from '../../../constants/appConstants';
+} from '@/constants/appConstants';
 
 type HastElementLike = {
   properties?: Record<string, unknown>;
@@ -62,7 +63,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, nod
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (e) {
-      console.error('Failed to copy markdown table', e);
+      logService.error('Failed to copy markdown table', e);
     }
   };
 

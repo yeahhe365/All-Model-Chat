@@ -1,11 +1,11 @@
 import React from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-import type { AppSettings, SavedChatSession, SideViewContent, UploadedFile } from '../../types';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { I18nProvider } from '../../contexts/I18nContext';
-import { MessageContent } from '../../components/message/MessageContent';
-import { getVisibleChatMessages } from '../chat/visibility';
+import type { AppSettings, SavedChatSession, SideViewContent, UploadedFile } from '@/types';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import { I18nProvider } from '@/contexts/I18nContext';
+import { MessageContent } from '@/components/message/MessageContent';
+import { getVisibleChatMessages } from '@/utils/chat/visibility';
 
 const noop = () => {};
 

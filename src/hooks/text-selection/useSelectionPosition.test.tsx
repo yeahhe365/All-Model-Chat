@@ -1,4 +1,5 @@
-import React, { act } from 'react';
+import type React from 'react';
+import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSelectionPosition } from './useSelectionPosition';
 import { renderHook } from '@/test/testUtils';

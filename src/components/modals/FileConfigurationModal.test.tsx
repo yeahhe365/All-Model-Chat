@@ -3,9 +3,9 @@ import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerT
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { setupStoreStateReset } from '../../test/storeTestUtils';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { FileConfigurationModal } from './FileConfigurationModal';
-import { UploadedFile } from '../../types';
+import { type UploadedFile } from '@/types';
 
 const projectRoot = path.resolve(__dirname, '../../..');
 const modalPath = path.join(projectRoot, 'src/components/modals/FileConfigurationModal.tsx');

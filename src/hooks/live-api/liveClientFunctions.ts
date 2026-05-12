@@ -1,4 +1,4 @@
-import type { LiveClientFunctions, UploadedFile } from '../../types';
+import type { LiveClientFunctions, UploadedFile } from '@/types';
 import type { ExecutionResult } from '@/features/local-python/pyodideService';
 import {
   createLocalPythonToolDeclaration,

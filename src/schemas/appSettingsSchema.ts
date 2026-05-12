@@ -1,13 +1,13 @@
 import { z } from 'zod';
-import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
-import type { AppSettings, FilesApiConfig, ModelOption, SafetySetting } from '../types';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import type { AppSettings, FilesApiConfig, ModelOption, SafetySetting } from '@/types';
 import {
   HarmBlockThreshold,
   HarmCategory,
   MediaResolution,
   type ApiMode,
   type TranslationTargetLanguage,
-} from '../types/settings';
+} from '@/types/settings';
 
 const THEME_IDS = ['system', 'onyx', 'pearl'] as const;
 const LANGUAGE_IDS = ['en', 'zh', 'system'] as const;

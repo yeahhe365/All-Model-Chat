@@ -1,8 +1,8 @@
 import React from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { IconSidebarToggle } from '../icons/CustomIcons';
-import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
-import { getProjectUrl } from '../../runtime/runtimeConfig';
+import { useI18n } from '@/contexts/I18nContext';
+import { IconSidebarToggle } from '@/components/icons/CustomIcons';
+import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '@/constants/appConstants';
+import { getProjectUrl } from '@/runtime/runtimeConfig';
 
 interface SidebarHeaderProps {
   onToggle: () => void;

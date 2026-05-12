@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { LiveServerMessage, Part, Session as LiveSession, Tool } from '@google/genai';
-import type { AppSettings, UploadedFile } from '../../types';
-import { logService } from '../../services/logService';
-import { getLiveApiClient, LiveApiAuthConfigurationError } from '../../services/api/liveApiAuth';
 import { float32ToPCM16Base64 } from '@/features/audio/audioProcessing';
+import { getLiveApiClient, LiveApiAuthConfigurationError } from '@/services/api/liveApiAuth';
+import { logService } from '@/services/logService';
+import type { AppSettings, UploadedFile } from '@/types';
 import type { LiveErrorState } from './liveErrorState';
-import { useStateWithRef } from '../useStateWithRef';
+import { useStateWithRef } from '@/hooks/useStateWithRef';
 
 interface UseLiveConnectionProps {
   appSettings: AppSettings;
@@ -58,6 +58,7 @@ export const useLiveConnection = ({
 
   const isProactiveReconnectRef = useRef(false);
   const disconnectRef = useRef<() => void>(() => {});
+  const isConnectingRef = useRef(false);
   const setupCompleteResolveRef = useRef<(() => void) | null>(null);
   const setupCompleteRejectRef = useRef<((error: Error) => void) | null>(null);
 
@@ -161,12 +162,18 @@ export const useLiveConnection = ({
 
     setErrorState(null);
     isUserDisconnectRef.current = false; // Reset user disconnect flag
+    isConnectingRef.current = true;
 
     isProactiveReconnectRef.current = false;
+    const shouldAbortConnect = () => isUserDisconnectRef.current || !isConnectingRef.current;
 
     try {
       // Specify API version v1alpha for Live API support
       const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' }, liveApiKeyForConnection);
+      if (shouldAbortConnect()) {
+        return false;
+      }
+
       const setupCompletePromise = new Promise<void>((resolve, reject) => {
         setupCompleteResolveRef.current = resolve;
         setupCompleteRejectRef.current = reject;
@@ -190,11 +197,15 @@ export const useLiveConnection = ({
               });
             } catch (e) {
               // Catch synchronous send errors (e.g. if socket closed between checks)
-              console.warn('Failed to send audio frame:', e);
+              logService.warn('Failed to send audio frame:', e);
             }
           });
         }
       });
+      if (shouldAbortConnect()) {
+        resetAudioState();
+        return false;
+      }
 
       // Connect Session
       const sessionPromise = ai.live.connect({
@@ -268,14 +279,38 @@ export const useLiveConnection = ({
       });
 
       sessionRef.current = sessionPromise;
-      await sessionPromise;
+      const session = await sessionPromise;
+      if (shouldAbortConnect()) {
+        if (sessionRef.current === sessionPromise) {
+          session.close();
+          sessionRef.current = null;
+        }
+        return false;
+      }
+
       await setupCompletePromise;
+      if (shouldAbortConnect()) {
+        if (sessionRef.current === sessionPromise) {
+          session.close();
+          sessionRef.current = null;
+        }
+        return false;
+      }
+
+      isConnectingRef.current = false;
       return true;
     } catch (err) {
-      logService.error('Failed to connect to Live API', err);
+      const wasUserDisconnect = isUserDisconnectRef.current || !isConnectingRef.current;
+      isConnectingRef.current = false;
       clearSetupCompleteWaiters();
 
       setIsConnected(false);
+      if (wasUserDisconnect) {
+        setIsReconnecting(false);
+        return false;
+      }
+
+      logService.error('Failed to connect to Live API', err);
 
       if (
         err instanceof LiveApiAuthConfigurationError ||
@@ -374,6 +409,7 @@ export const useLiveConnection = ({
 
   const disconnect = useCallback(() => {
     isUserDisconnectRef.current = true; // Mark as user initiated
+    isConnectingRef.current = false;
 
     // Cancel pending reconnects
     if (reconnectTimeoutRef.current) {
@@ -383,7 +419,7 @@ export const useLiveConnection = ({
     rejectSetupComplete(new Error('Live API connection closed before setup completed.'));
 
     if (sessionRef.current) {
-      sessionRef.current.then((session) => session.close());
+      sessionRef.current.then((session) => session.close()).catch(() => undefined);
     }
     sessionRef.current = null;
 
@@ -422,10 +458,11 @@ export const useLiveConnection = ({
   useEffect(() => {
     const connectedRef = isConnectedRef;
     const reconnectingRef = isReconnectingRef;
+    const connectingRef = isConnectingRef;
 
     return () => {
       isUserDisconnectRef.current = true;
-      if (connectedRef.current || reconnectingRef.current) {
+      if (connectedRef.current || reconnectingRef.current || connectingRef.current) {
         disconnectRef.current();
       }
     };

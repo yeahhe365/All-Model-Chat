@@ -1,4 +1,4 @@
-import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES } from '@/constants/fileConstants';
 import { convertHtmlToMarkdown } from './htmlToMarkdown';
 
 const PASTE_TEXT_AS_FILE_THRESHOLD = 5000;

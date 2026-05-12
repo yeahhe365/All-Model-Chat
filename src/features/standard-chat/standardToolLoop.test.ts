@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ChatHistoryItem } from '../../types';
-import { createUploadedFile } from '../../test/factories';
+import type { ChatHistoryItem } from '@/types';
+import { createUploadedFile } from '@/test/factories';
 import { runStandardToolLoop } from './standardToolLoop';
 
 describe('runStandardToolLoop', () => {

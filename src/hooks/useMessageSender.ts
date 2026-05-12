@@ -1,6 +1,12 @@
-import React, { useCallback, useMemo } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
-import { logService } from '../services/logService';
+import type React from 'react';
+import { useCallback, useMemo } from 'react';
+import {
+  type AppSettings,
+  type ChatMessage,
+  type UploadedFile,
+  type ChatSettings as IndividualChatSettings,
+} from '@/types';
+import { logService } from '@/services/logService';
 import { useChatStreamHandler } from '@/features/message-sender/useChatStreamHandler';
 import { useModelRequestRunner } from '@/features/message-sender/useModelRequestRunner';
 import { useMessageLifecycle } from '@/features/message-sender/useMessageLifecycle';
@@ -9,12 +15,12 @@ import { sendImageEditMessage } from '@/features/message-sender/imageEditStrateg
 import { sendStandardMessage } from '@/features/message-sender/standardChatStrategy';
 import { createSenderStoreActions } from '@/features/message-sender/senderStoreActions';
 import { sendTtsImagenMessage } from '@/features/message-sender/ttsImagenStrategy';
-import { getModelCapabilities } from '../utils/modelHelpers';
-import { useI18n } from '../contexts/I18nContext';
-import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
-import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
-import { isImageMimeType, isPdfMimeType, isTextFile } from '../utils/fileTypeUtils';
-import { isOpenAICompatibleApiActive } from '../utils/openaiCompatibleMode';
+import { getModelCapabilities } from '@/utils/modelHelpers';
+import { useI18n } from '@/contexts/I18nContext';
+import { getApiKeyErrorTranslationKey } from '@/utils/apiUtils';
+import type { ImageOutputMode, ImagePersonGeneration } from '@/types/settings';
+import { isImageMimeType, isPdfMimeType, isTextFile } from '@/utils/fileTypeUtils';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 const CODE_EXECUTION_TEXT_FILE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024;
 
@@ -273,6 +279,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
           updateAndPersistSessions,
           setActiveSessionId,
           runMessageLifecycle,
+          t,
         });
         if (editingMessageId) setEditingMessageId(null);
         return;
@@ -300,6 +307,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
           updateAndPersistSessions,
           setActiveSessionId,
           runMessageLifecycle,
+          t,
         });
         if (editingMessageId) setEditingMessageId(null);
         return;

@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChatMessage } from '../types';
+import type { ChatMessage } from '@/types';
 import { renderHook } from '@/test/testUtils';
 import { useMessageExport } from './useMessageExport';
 
@@ -9,7 +9,7 @@ const prepareElementForExport = vi.fn(async (element: HTMLElement) => element.cl
 const exportHtmlStringAsFile = vi.fn();
 const buildHtmlDocument = vi.fn(async () => '<html></html>');
 
-vi.mock('../utils/export/runtime', () => ({
+vi.mock('@/utils/export/runtime', () => ({
   buildMessageExportFilenameBase: vi.fn(() => 'message-export'),
   createExportDateMeta: vi.fn(() => ({ dateStr: '2026-05-09 10:00', isoDate: '2026-05-09' })),
   loadExportRuntime: vi.fn(async () => ({

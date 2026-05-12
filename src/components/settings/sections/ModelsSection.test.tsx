@@ -1,10 +1,10 @@
 import { act, type ComponentProps } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { setupStoreStateReset } from '../../../test/storeTestUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { ModelsSection } from './ModelsSection';
-import type { ModelSelector } from '../controls/ModelSelector';
+import type { ModelSelector } from '@/components/settings/controls/ModelSelector';
 import type { LanguageVoiceSection } from './LanguageVoiceSection';
 import type { SafetySection } from './SafetySection';
 
@@ -25,7 +25,7 @@ const mockModelSelector = vi.hoisted(() => ({
   lastProps: null as ModelSelectorProps | null,
 }));
 
-vi.mock('../controls/ModelSelector', () => ({
+vi.mock('@/components/settings/controls/ModelSelector', () => ({
   ModelSelector: (props: ModelSelectorProps) => {
     mockModelSelector.lastProps = props;
     return <div data-testid="model-selector">model selector</div>;

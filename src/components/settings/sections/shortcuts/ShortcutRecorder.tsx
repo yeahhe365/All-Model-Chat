@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, RotateCcw } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { formatShortcut, recordKeyCombination } from '../../../../utils/shortcutUtils';
+import { useI18n } from '@/contexts/I18nContext';
+import { formatShortcut, recordKeyCombination } from '@/utils/shortcutUtils';
 
 interface ShortcutRecorderProps {
   value: string; // The current shortcut string (e.g. "mod+shift+p")

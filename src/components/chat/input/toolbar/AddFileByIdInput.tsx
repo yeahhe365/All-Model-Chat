@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Link } from 'lucide-react';
 import { InputBar } from './InputBar';
 

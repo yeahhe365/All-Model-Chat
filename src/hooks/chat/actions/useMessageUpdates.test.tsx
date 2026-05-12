@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Part } from '@google/genai';
-import type { SavedChatSession } from '../../../types';
+import type { SavedChatSession } from '@/types';
 import { useMessageUpdates } from './useMessageUpdates';
 import { createAppSettings, createChatSettings, createSavedChatSession, createUploadedFile } from '@/test/factories';
 import { renderHook } from '@/test/testUtils';

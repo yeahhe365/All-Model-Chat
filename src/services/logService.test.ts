@@ -13,7 +13,7 @@ const { mockAddApiUsageRecord, mockAddLogs, mockPruneLogs, mockClearLogs, mockCl
 );
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule({
     addApiUsageRecord: mockAddApiUsageRecord,

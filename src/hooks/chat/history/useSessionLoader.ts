@@ -1,24 +1,24 @@
-import { useCallback, Dispatch, SetStateAction, useEffect, useRef } from 'react';
+import { useCallback, type Dispatch, type SetStateAction, useEffect, useRef } from 'react';
 import {
-  AppSettings,
-  SavedChatSession,
-  ChatGroup,
-  UploadedFile,
-  ChatSettings,
-  ChatMessage,
-  InputCommand,
-} from '../../../types';
+  type AppSettings,
+  type SavedChatSession,
+  type ChatGroup,
+  type UploadedFile,
+  type ChatSettings,
+  type ChatMessage,
+  type InputCommand,
+} from '@/types';
 import {
   ACTIVE_CHAT_SESSION_ID_KEY,
   CHAT_INPUT_TEXTAREA_SELECTOR,
   DEFAULT_CHAT_SETTINGS,
-} from '../../../constants/appConstants';
-import { logService } from '../../../services/logService';
-import { createNewSession, rehydrateSessionFiles } from '../../../utils/chat/session';
-import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
-import { resolveSupportedModelId } from '../../../utils/modelHelpers';
+} from '@/constants/appConstants';
+import { logService } from '@/services/logService';
+import { createNewSession, rehydrateSessionFiles } from '@/utils/chat/session';
+import { cleanupFilePreviewUrls } from '@/utils/fileHelpers';
+import { resolveSupportedModelId } from '@/utils/modelHelpers';
 import { dbService } from '@/services/db/dbService';
-import { useChatStore, type SetActiveSessionOptions } from '../../../stores/chatStore';
+import { useChatStore, type SetActiveSessionOptions } from '@/stores/chatStore';
 
 type SessionLoaderHistoryOptions = Pick<SetActiveSessionOptions, 'history'>;
 

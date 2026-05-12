@@ -1,6 +1,6 @@
-import { MIME_TO_EXTENSION_MAP } from '../constants/fileConstants';
-import { createManagedObjectUrl, releaseManagedObjectUrl } from '../services/objectUrlManager';
-import { UploadedFile } from '../types';
+import { MIME_TO_EXTENSION_MAP } from '@/constants/fileConstants';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '@/services/objectUrlManager';
+import { type UploadedFile } from '@/types';
 import { isAudioMimeType, isImageMimeType, isVideoMimeType } from './fileTypeUtils';
 
 export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {

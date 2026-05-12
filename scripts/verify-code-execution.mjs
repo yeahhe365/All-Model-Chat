@@ -159,17 +159,23 @@ async function main() {
       throw new Error('Second response returned empty text.');
     }
 
-    console.log(JSON.stringify({
-      model,
-      uploadedMimeType: uploadedFile.mimeType || 'text/csv',
-      firstTurn: {
-        executableCodeCount: firstSummary.executableCodes.length,
-        executionResultCount: firstSummary.executionResults.length,
-        thoughtSignatureCount: firstSummary.thoughtSignatures,
-        inlineMimeTypes: firstSummary.inlineMimeTypes,
-      },
-      secondTurnText: followUpText,
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          model,
+          uploadedMimeType: uploadedFile.mimeType || 'text/csv',
+          firstTurn: {
+            executableCodeCount: firstSummary.executableCodes.length,
+            executionResultCount: firstSummary.executionResults.length,
+            thoughtSignatureCount: firstSummary.thoughtSignatures,
+            inlineMimeTypes: firstSummary.inlineMimeTypes,
+          },
+          secondTurnText: followUpText,
+        },
+        null,
+        2,
+      ),
+    );
   } finally {
     await fs.rm(tempCsvPath, { force: true });
     await deleteGeminiFile(ai, uploadedFile?.name);

@@ -6,13 +6,13 @@ const { mockGetLiveApiClient, mockFloat32ToPCM16Base64 } = vi.hoisted(() => ({
   mockFloat32ToPCM16Base64: vi.fn(() => 'pcm-base64'),
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
-vi.mock('../../services/api/liveApiAuth', () => ({
+vi.mock('@/services/api/liveApiAuth', () => ({
   LiveApiAuthConfigurationError: class LiveApiAuthConfigurationError extends Error {
     constructor(message: string) {
       super(message);
@@ -694,6 +694,71 @@ describe('useLiveConnection', () => {
     expect(didResolve).toBe(true);
 
     unmount();
+  });
+
+  it('cleans up audio and closes a pending live session when unmounted before setup completes', async () => {
+    const close = vi.fn();
+    const cleanupAudio = vi.fn();
+    const clearBufferedAudio = vi.fn();
+    const stopVideo = vi.fn();
+    const sessionRef = createLiveSessionRef();
+
+    const connectLiveSession = vi.fn(({ callbacks }) => {
+      callbacks.onopen?.();
+      return Promise.resolve({
+        sendRealtimeInput: vi.fn(),
+        close,
+      });
+    });
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: connectLiveSession,
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: createAppSettings(),
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio,
+        clearBufferedAudio,
+        stopVideo,
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+        sessionRef,
+      }),
+    );
+
+    let connectPromise!: Promise<boolean>;
+    await act(async () => {
+      connectPromise = result.current.connect();
+      await flushAsyncConnect();
+    });
+
+    expect(connectLiveSession).toHaveBeenCalledTimes(1);
+    expect(result.current.isConnected).toBe(false);
+
+    unmount();
+    await flushAsyncConnect();
+
+    expect(cleanupAudio).toHaveBeenCalledTimes(1);
+    expect(clearBufferedAudio).toHaveBeenCalledTimes(1);
+    expect(stopVideo).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(sessionRef.current).toBeNull();
+
+    const connectOutcome = await Promise.race([
+      connectPromise,
+      new Promise<'pending'>((resolve) => {
+        setTimeout(() => resolve('pending'), 0);
+      }),
+    ]);
+    expect(connectOutcome).toBe(false);
   });
 
   it('reconnects immediately when the server sends goAway and a resumable handle is available', async () => {

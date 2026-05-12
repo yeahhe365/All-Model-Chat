@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { FileText, Download, Loader2, Edit3, Eye, X } from 'lucide-react';
 
 interface CreateFileHeaderProps {

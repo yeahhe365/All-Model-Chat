@@ -1,6 +1,7 @@
+import { logService } from '@/services/logService';
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { buildHtmlPreviewSrcDoc } from '../../../utils/htmlPreview';
+import { useI18n } from '@/contexts/I18nContext';
+import { buildHtmlPreviewSrcDoc } from '@/utils/htmlPreview';
 
 interface HtmlPreviewContentProps {
   iframeRef: React.RefObject<HTMLIFrameElement>;
@@ -11,7 +12,7 @@ interface HtmlPreviewContentProps {
 export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({ iframeRef, htmlContent, scale }) => {
   const { t } = useI18n();
   const handleIframeError = (event: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
-    console.error('Iframe loading error:', event);
+    logService.error('Iframe loading error:', event);
   };
 
   return (

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Gauge, Feather, Zap, Sparkles, Cpu } from 'lucide-react';
 import { LevelButton } from './LevelButton';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 type ThinkingLevelOption = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 

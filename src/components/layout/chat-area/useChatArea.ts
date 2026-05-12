@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useChatInputHeight } from '../../../hooks/chat-input/useChatInputHeight';
-import { useUIStore } from '../../../stores/uiStore';
+import { useChatInputHeight } from '@/hooks/chat-input/useChatInputHeight';
+import { useUIStore } from '@/stores/uiStore';
 
 export const useChatArea = () => {
   const { chatInputHeight, chatInputContainerRef } = useChatInputHeight();

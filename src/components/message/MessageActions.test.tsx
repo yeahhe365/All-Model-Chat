@@ -2,7 +2,7 @@ import { act } from 'react';
 import { renderWithProviders, setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageActions } from './MessageActions';
-import type { ChatMessage } from '../../types';
+import type { ChatMessage } from '@/types';
 
 vi.mock('./buttons/ExportMessageButton', () => ({
   ExportMessageButton: ({ className }: { className?: string }) => (

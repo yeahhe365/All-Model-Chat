@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SavedChatSession, Theme } from '../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import type { SavedChatSession, Theme } from '@/types';
+import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
 import { useChatSessionExport } from './useChatSessionExport';
 import { renderHook } from '@/test/testUtils';
 
@@ -12,7 +12,7 @@ const prepareElementForExport = vi.fn(async (element: HTMLElement) => element);
 const buildHtmlDocument = vi.fn(async ({ contentHtml }: { contentHtml: string }) => contentHtml);
 const buildTextDocument = vi.fn(() => 'txt export');
 
-vi.mock('../../utils/export/runtime', () => ({
+vi.mock('@/utils/export/runtime', () => ({
   buildChatExportFilename: vi.fn(() => 'chat-export.html'),
   createExportDateMeta: vi.fn(() => ({ dateStr: '4/26/2026 2:00:00 AM', isoDate: '2026-04-26' })),
   loadExportRuntime: vi.fn(async () => ({

@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { setupStoreStateReset } from '../../../test/storeTestUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { AboutSection } from './AboutSection';
 
 describe('AboutSection', () => {

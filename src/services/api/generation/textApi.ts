@@ -1,6 +1,6 @@
-import { executeConfiguredApiRequest } from '../apiExecutor';
-import { logService } from '../../logService';
-import { DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/modelConstants';
+import { executeConfiguredApiRequest } from '@/services/api/apiExecutor';
+import { logService } from '@/services/logService';
+import { DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '@/constants/modelConstants';
 
 const SCHEMA_TYPE = {
   OBJECT: 'OBJECT',

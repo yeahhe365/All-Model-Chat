@@ -1,16 +1,17 @@
+import { logService } from '@/services/logService';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { convertHtmlToMarkdown } from '../utils/htmlToMarkdown';
-import { createManagedObjectUrl } from '../services/objectUrlManager';
-import { triggerDownload } from '../utils/export/core';
-import { createMarkdownPdfBlob } from '../utils/export/markdownPdf';
+import { convertHtmlToMarkdown } from '@/utils/htmlToMarkdown';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload } from '@/utils/export/core';
+import { createMarkdownPdfBlob } from '@/utils/export/markdownPdf';
 import {
   createInlineImagePlaceholder,
   extractInlineImagePlaceholders,
   resolveInlineImagePlaceholders,
-} from '../utils/inlineImagePlaceholders';
-import { isImageMimeType } from '../utils/fileTypeUtils';
-import { CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY } from '../constants/appConstants';
-import { useI18n } from '../contexts/I18nContext';
+} from '@/utils/inlineImagePlaceholders';
+import { isImageMimeType } from '@/utils/fileTypeUtils';
+import { CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY } from '@/constants/appConstants';
+import { useI18n } from '@/contexts/I18nContext';
 
 export const SUPPORTED_EXTENSIONS = [
   '.md',
@@ -124,7 +125,7 @@ export const useCreateFileEditor = ({
         const pdfBlob = await generatePdfBlob(finalName);
         onConfirm(pdfBlob, finalName);
       } catch (error) {
-        console.error('PDF generation error:', error);
+        logService.error('PDF generation error:', error);
         alert(t('createText_pdf_error'));
       } finally {
         setIsExportingPdf(false);
@@ -142,7 +143,7 @@ export const useCreateFileEditor = ({
       const pdfBlob = await generatePdfBlob(finalName);
       triggerDownload(createManagedObjectUrl(pdfBlob), finalName);
     } catch (error) {
-      console.error('PDF Export failed:', error);
+      logService.error('PDF Export failed:', error);
       alert(t('createText_pdf_error'));
     } finally {
       setIsExportingPdf(false);

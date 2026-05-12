@@ -1,9 +1,9 @@
 import React from 'react';
 import { Activity, BarChart3, Coins, Loader2 } from 'lucide-react';
-import { useI18n } from '../../contexts/I18nContext';
-import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
-import { useUsageStats, type UsageTimeRange } from '../../hooks/features/useUsageStats';
-import { formatPriceUsd } from '../../utils/usagePricing';
+import { useI18n } from '@/contexts/I18nContext';
+import { SETTINGS_INPUT_CLASS } from '@/constants/appConstants';
+import { useUsageStats, type UsageTimeRange } from '@/hooks/features/useUsageStats';
+import { formatPriceUsd } from '@/utils/usagePricing';
 
 const RANGE_OPTIONS: Array<{ value: UsageTimeRange; labelKey: string }> = [
   { value: 'today', labelKey: 'usageToday' },

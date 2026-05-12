@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { reasonerScenario, voxelScenario } from '../../constants/defaultScenarios';
+import { reasonerScenario, voxelScenario } from '@/constants/defaultScenarios';
 import {
   buildSavedScenarios,
   buildScenarioExportPayload,

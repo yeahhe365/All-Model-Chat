@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import { UploadedFile, ChatMessage, VideoMetadata } from '../types';
-import { MediaResolution } from '../types/settings';
+import { type UploadedFile, type ChatMessage, type VideoMetadata } from '@/types';
+import { type MediaResolution } from '@/types/settings';
 import { useFileModalState } from './ui/useFileModalState';
 
 interface UseMessageListUIProps {

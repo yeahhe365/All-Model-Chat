@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 import TurndownService from 'turndown';
 import { gfm } from 'turndown-plugin-gfm';
 
@@ -37,7 +38,7 @@ export const convertHtmlToMarkdown = (html: string): string => {
   try {
     return turndownService.turndown(html);
   } catch (error) {
-    console.error('Failed to convert HTML to Markdown:', error);
+    logService.error('Failed to convert HTML to Markdown:', error);
     return '';
   }
 };

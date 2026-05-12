@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 
-import type { AppViewModel } from '../../hooks/app/useApp';
-import { useUIStore } from '../../stores/uiStore';
-import { getShortcutDisplay } from '../../utils/shortcutUtils';
+import type { AppViewModel } from '@/hooks/app/useApp';
+import { useUIStore } from '@/stores/uiStore';
+import { getShortcutDisplay } from '@/utils/shortcutUtils';
 import { buildSidePanelKey } from './mainContentModels';
 
 interface UseMainContentViewModelOptions {

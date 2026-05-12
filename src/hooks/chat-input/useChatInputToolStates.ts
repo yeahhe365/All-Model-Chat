@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import type { ChatSettings } from '../../types';
-import type { ChatToolSettingKey, ChatToolToggleStates, ToggleableChatToolId } from '../../types/chatTools';
-import { useChatStore } from '../../stores/chatStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import type { ChatSettings } from '@/types';
+import type { ChatToolSettingKey, ChatToolToggleStates, ToggleableChatToolId } from '@/types/chatTools';
+import { useChatStore } from '@/stores/chatStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 interface UseChatInputToolStatesParams {
   currentChatSettings: ChatSettings;

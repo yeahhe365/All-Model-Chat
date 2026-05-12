@@ -1,6 +1,6 @@
 import type { FunctionCall, Part, UsageMetadata } from '@google/genai';
-import type { ChatHistoryItem, StandardClientFunctions, UploadedFile } from '../../types';
-import { mergeUsageMetadata, mergeUrlContextMetadata } from '../chat-streaming/messageStreamReducer';
+import type { ChatHistoryItem, StandardClientFunctions, UploadedFile } from '@/types';
+import { mergeUsageMetadata, mergeUrlContextMetadata } from '@/features/chat-streaming/messageStreamReducer';
 
 interface StandardToolTurnResult {
   modelContent: ChatHistoryItem;

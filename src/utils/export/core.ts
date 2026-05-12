@@ -1,4 +1,4 @@
-import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
+import { releaseManagedObjectUrl } from '@/services/objectUrlManager';
 
 /**
  * Triggers a file download in the browser.

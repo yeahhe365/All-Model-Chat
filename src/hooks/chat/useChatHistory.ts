@@ -1,5 +1,13 @@
-import React, { Dispatch, SetStateAction } from 'react';
-import { AppSettings, SavedChatSession, UploadedFile, ChatGroup, InputCommand, ChatMessage } from '../../types';
+import { type Dispatch, type SetStateAction } from 'react';
+import type React from 'react';
+import {
+  type AppSettings,
+  type SavedChatSession,
+  type UploadedFile,
+  type ChatGroup,
+  type InputCommand,
+  type ChatMessage,
+} from '@/types';
 import { getTranslator } from '@/i18n/translations';
 import { useSessionLoader } from './history/useSessionLoader';
 import { useSessionActions } from './history/useSessionActions';

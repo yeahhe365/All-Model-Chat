@@ -1,20 +1,21 @@
+import { logService } from '@/services/logService';
 import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
-import { UploadedFile } from '../../types';
+import { type UploadedFile } from '@/types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
-import { useI18n } from '../../contexts/I18nContext';
-import { Modal } from '../shared/Modal';
-import { FilePreviewHeader, type FilePreviewHeaderHandle } from '../shared/file-preview/FilePreviewHeader';
-import { ImageViewer } from '../shared/file-preview/ImageViewer';
-import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
-import { IconYoutube } from '../icons/CustomIcons';
-import { copyFileToClipboard } from '../../utils/fileHelpers';
-import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { isShortcutPressed } from '../../utils/shortcutUtils';
-import { getFileKindFlags, isMarkdownFile, isTextFile } from '../../utils/fileTypeUtils';
+import { useI18n } from '@/contexts/I18nContext';
+import { Modal } from '@/components/shared/Modal';
+import { FilePreviewHeader, type FilePreviewHeaderHandle } from '@/components/shared/file-preview/FilePreviewHeader';
+import { ImageViewer } from '@/components/shared/file-preview/ImageViewer';
+import { TextFileViewer } from '@/components/shared/file-preview/TextFileViewer';
+import { IconYoutube } from '@/components/icons/CustomIcons';
+import { copyFileToClipboard } from '@/utils/fileHelpers';
+import { extractDocxText, isDocxFile } from '@/utils/docxPreview';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { isShortcutPressed } from '@/utils/shortcutUtils';
+import { getFileKindFlags, isMarkdownFile, isTextFile } from '@/utils/fileTypeUtils';
 
 const LazyPdfViewer = lazy(async () => {
-  const module = await import('../shared/file-preview/PdfViewerEntry');
+  const module = await import('@/components/shared/file-preview/PdfViewerEntry');
   return { default: module.PdfViewer };
 });
 
@@ -64,7 +65,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
       await copyFileToClipboard(file);
       filePreviewHeaderRef.current?.showCopyFeedback();
     } catch (err) {
-      console.error('Failed to copy content:', err);
+      logService.error('Failed to copy content:', err);
     }
   }, [file]);
 

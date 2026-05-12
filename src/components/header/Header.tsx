@@ -1,10 +1,10 @@
 import React from 'react';
 import { Wand2, PictureInPicture, PictureInPicture2 } from 'lucide-react';
-import { ModelOption } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
-import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
+import { type ModelOption } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { IconNewChat, IconSidebarToggle, IconScenarios } from '@/components/icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
-import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
 
 interface HeaderProps {
   onNewChat: () => void;

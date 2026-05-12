@@ -1,6 +1,6 @@
-import type { AppSettings, ChatMessage, ChatSettings, SavedChatSession, Theme, UploadedFile } from '../types';
-import { MediaResolution } from '../types';
-import { AVAILABLE_THEMES } from '../constants/themeConstants';
+import type { AppSettings, ChatMessage, ChatSettings, SavedChatSession, Theme, UploadedFile } from '@/types';
+import { MediaResolution } from '@/types';
+import { AVAILABLE_THEMES } from '@/constants/themeConstants';
 
 export const createChatSettings = (overrides: Partial<ChatSettings> = {}): ChatSettings => ({
   modelId: 'gemini-3.1-pro-preview',

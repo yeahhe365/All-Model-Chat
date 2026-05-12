@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 
-import { fileToString } from '../fileHelpers';
+import { fileToString } from '@/utils/fileHelpers';
 import { generateRepomixPlainOutput } from './repomixPlainOutput';
 import {
   compareFilePaths,

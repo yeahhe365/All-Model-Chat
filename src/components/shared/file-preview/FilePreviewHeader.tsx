@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 import React, { useState, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import {
   X,
@@ -13,12 +14,12 @@ import {
   Save,
   Edit3,
 } from 'lucide-react';
-import { UploadedFile } from '../../../types';
-import { useI18n } from '../../../contexts/I18nContext';
-import { createManagedObjectUrl } from '../../../services/objectUrlManager';
-import { triggerDownload } from '../../../utils/export/core';
-import { copyFileToClipboard, formatFileSize } from '../../../utils/fileHelpers';
-import { getFileKindFlags } from '../../../utils/fileTypeUtils';
+import { type UploadedFile } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload } from '@/utils/export/core';
+import { copyFileToClipboard, formatFileSize } from '@/utils/fileHelpers';
+import { getFileKindFlags } from '@/utils/fileTypeUtils';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider } from './FloatingToolbar';
 
 interface FilePreviewHeaderProps {
@@ -76,7 +77,7 @@ export const FilePreviewHeader = React.forwardRef<FilePreviewHeaderHandle, FileP
         await copyFileToClipboard(file);
         showCopyFeedback();
       } catch (err) {
-        console.error('Failed to copy content:', err);
+        logService.error('Failed to copy content:', err);
         alert(t('filePreview_copy_failed'));
       }
     }, [file, isCopied, showCopyFeedback, t]);
@@ -94,7 +95,7 @@ export const FilePreviewHeader = React.forwardRef<FilePreviewHeaderHandle, FileP
           const filename = `${file.name.split('.')[0] || 'diagram'}.svg`;
           triggerDownload(url, filename, true);
         } catch (e) {
-          console.error('Failed to download SVG:', e);
+          logService.error('Failed to download SVG:', e);
         } finally {
           setIsDownloading(false);
         }
@@ -105,7 +106,7 @@ export const FilePreviewHeader = React.forwardRef<FilePreviewHeaderHandle, FileP
       try {
         triggerDownload(file.dataUrl, file.name, false);
       } catch (e) {
-        console.error('Failed to initiate download:', e);
+        logService.error('Failed to initiate download:', e);
       } finally {
         setIsDownloading(false);
       }

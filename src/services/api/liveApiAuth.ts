@@ -1,5 +1,5 @@
 import type { GoogleGenAI } from '@google/genai';
-import type { AppSettings } from '../../types';
+import type { AppSettings } from '@/types';
 import { getClient, resolveLiveClientBaseUrl, type ClientHttpOptions } from './apiClient';
 
 export class LiveApiAuthConfigurationError extends Error {

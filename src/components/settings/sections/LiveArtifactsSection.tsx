@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { ChevronDown, Wand2 } from 'lucide-react';
-import { AVAILABLE_LIVE_ARTIFACTS_MODELS } from '../../../constants/settingsModelOptions';
-import { ToggleItem } from '../../shared/ToggleItem';
-import { Select } from '../../shared/Select';
-import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
-import type { AppSettings } from '../../../types';
-import type { SettingsUpdateHandler } from '../settingsTypes';
+import { AVAILABLE_LIVE_ARTIFACTS_MODELS } from '@/constants/settingsModelOptions';
+import { ToggleItem } from '@/components/shared/ToggleItem';
+import { Select } from '@/components/shared/Select';
+import { DEFAULT_LIVE_ARTIFACTS_MODEL_ID, SETTINGS_INPUT_CLASS } from '@/constants/appConstants';
+import type { AppSettings } from '@/types';
+import type { SettingsUpdateHandler } from '@/components/settings/settingsTypes';
 
 interface LiveArtifactsSectionProps {
   currentSettings: AppSettings;

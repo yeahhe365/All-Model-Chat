@@ -1,9 +1,9 @@
 import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { setupStoreStateReset } from '../../../test/storeTestUtils';
-import type { AppSettings } from '../../../types';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
+import type { AppSettings } from '@/types';
 import { AppearanceSection } from './AppearanceSection';
 
 const settingsFixture: AppSettings = {

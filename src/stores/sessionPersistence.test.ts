@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ChatMessage, SavedChatSession } from '../types';
-import { createChatSettings } from '../test/factories';
+import type { ChatMessage, SavedChatSession } from '@/types';
+import { createChatSettings } from '@/test/factories';
 import {
   createVirtualFullSessions,
   getSessionPersistenceChanges,

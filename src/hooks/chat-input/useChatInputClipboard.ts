@@ -1,8 +1,8 @@
 import { useCallback, type MutableRefObject, type RefObject } from 'react';
-import type { AppSettings, UploadedFile } from '../../types';
-import { processClipboardData } from '../../utils/clipboardUtils';
-import { useI18n } from '../../contexts/I18nContext';
-import { MIME_TO_EXTENSION_MAP, SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
+import type { AppSettings, UploadedFile } from '@/types';
+import { processClipboardData } from '@/utils/clipboardUtils';
+import { useI18n } from '@/contexts/I18nContext';
+import { MIME_TO_EXTENSION_MAP, SUPPORTED_IMAGE_MIME_TYPES } from '@/constants/fileConstants';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 const DEFAULT_CLIPBOARD_IMAGE_EXTENSION = '.image';

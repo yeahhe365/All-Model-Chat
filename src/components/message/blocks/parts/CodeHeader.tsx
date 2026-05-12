@@ -1,8 +1,8 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand, Sidebar, Play, Loader2 } from 'lucide-react';
-import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../../constants/appConstants';
-import { LanguageIcon } from '../../code-block/LanguageIcon';
+import { MESSAGE_BLOCK_BUTTON_CLASS } from '@/constants/appConstants';
+import { LanguageIcon } from '@/components/message/code-block/LanguageIcon';
 
 interface CodeHeaderProps {
   language: string;

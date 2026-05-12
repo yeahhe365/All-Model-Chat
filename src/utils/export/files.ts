@@ -1,5 +1,5 @@
 import { triggerDownload } from './core';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
 
 /**
  * Exports a string of HTML content as an .html file.

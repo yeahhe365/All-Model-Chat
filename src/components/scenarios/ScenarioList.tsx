@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { SavedScenario } from '../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { type SavedScenario } from '@/types';
 import { Search, Layers, User, Shield, Inbox } from 'lucide-react';
 import { ScenarioItem } from './ScenarioItem';
 

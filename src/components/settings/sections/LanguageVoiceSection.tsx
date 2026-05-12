@@ -1,15 +1,12 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Languages } from 'lucide-react';
-import {
-  DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
-  TRANSLATION_TARGET_LANGUAGE_OPTIONS,
-} from '../../../constants/appConstants';
-import { AppSettings, ModelOption } from '../../../types';
-import { TranslationTargetLanguage } from '../../../types/settings';
-import { Select } from '../../shared/Select';
-import { VoiceControl } from '../controls/VoiceControl';
-import type { SettingsUpdateHandler } from '../settingsTypes';
+import { DEFAULT_THOUGHT_TRANSLATION_MODEL_ID, TRANSLATION_TARGET_LANGUAGE_OPTIONS } from '@/constants/appConstants';
+import { type AppSettings, type ModelOption } from '@/types';
+import { type TranslationTargetLanguage } from '@/types/settings';
+import { Select } from '@/components/shared/Select';
+import { VoiceControl } from '@/components/settings/controls/VoiceControl';
+import type { SettingsUpdateHandler } from '@/components/settings/settingsTypes';
 
 interface LanguageVoiceSectionProps {
   availableModels: ModelOption[];

@@ -1,28 +1,28 @@
-import { logService } from '../../services/logService';
-import { createChatHistoryForApi } from '../../utils/chat/builder';
-import { createMessage } from '../../utils/chat/session';
-import { isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '../../utils/modelHelpers';
-import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/generationConfig';
+import { logService } from '@/services/logService';
+import { createChatHistoryForApi } from '@/utils/chat/builder';
+import { createMessage } from '@/utils/chat/session';
+import { isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '@/utils/modelHelpers';
+import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '@/services/api/generationConfig';
 import {
   generateContentTurnApi,
   sendStatelessMessageNonStreamApi,
   sendStatelessMessageStreamApi,
-} from '../../services/api/chatApi';
+} from '@/services/api/chatApi';
 import {
   sendOpenAICompatibleMessageNonStream,
   sendOpenAICompatibleMessageStream,
-} from '../../services/api/openaiCompatibleApi';
-import { isLikelyHtml } from '../../utils/codeUtils';
+} from '@/services/api/openaiCompatibleApi';
+import { isLikelyHtml } from '@/utils/codeUtils';
 import { createStandardClientFunctions } from '@/features/standard-chat/standardClientFunctions';
 import { runStandardToolLoop } from '@/features/standard-chat/standardToolLoop';
 import { collectLocalPythonInputFiles } from '@/features/local-python/helpers';
 import { getPyodideService } from '@/features/local-python/loadPyodideService';
-import { updateSessionById } from '../../utils/chat/sessionMutations';
-import type { ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import type { ContentPart } from '../../types/chat';
+import { updateSessionById } from '@/utils/chat/sessionMutations';
+import type { ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '@/types';
+import type { ContentPart } from '@/types/chat';
 import type { GetStreamHandlers, SessionsUpdater, StandardChatProps } from './types';
 import type { resolveStandardChatTurn } from './standardChatTurn';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 interface StandardChatApiCallContext {
   appSettings: StandardChatProps['appSettings'];

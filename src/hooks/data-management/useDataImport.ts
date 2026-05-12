@@ -1,9 +1,9 @@
-import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, SavedChatSession, SavedScenario, ChatGroup, ChatMessage } from '../../types';
-import { logService } from '../../services/logService';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { mergeImportedScenarios } from '../../features/scenarios/scenarioLibrary';
-import { sanitizeImportedAppSettings } from '../../schemas/appSettingsSchema';
+import { useCallback, type Dispatch, type SetStateAction } from 'react';
+import { type AppSettings, type SavedChatSession, type SavedScenario, type ChatGroup, type ChatMessage } from '@/types';
+import { logService } from '@/services/logService';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { mergeImportedScenarios } from '@/features/scenarios/scenarioLibrary';
+import { sanitizeImportedAppSettings } from '@/schemas/appSettingsSchema';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;

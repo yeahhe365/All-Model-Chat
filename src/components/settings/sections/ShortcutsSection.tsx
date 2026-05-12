@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { SHORTCUT_REGISTRY, DEFAULT_SHORTCUTS } from '../../../constants/shortcuts';
-import { AppSettings, ModelOption } from '../../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { SHORTCUT_REGISTRY, DEFAULT_SHORTCUTS } from '@/constants/shortcuts';
+import { type AppSettings, type ModelOption } from '@/types';
 import { ShortcutRecorder } from './shortcuts/ShortcutRecorder';
 import { TabCycleModelsCard } from './models/TabCycleModelsCard';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronDown, MoreHorizontal } from 'lucide-react';
-import { ChatGroup, SavedChatSession } from '../../types';
+import { type ChatGroup, type SavedChatSession } from '@/types';
 import { SessionItem } from './SessionItem';
 import { GroupItemMenu } from './GroupItemMenu';
 

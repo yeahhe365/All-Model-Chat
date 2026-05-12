@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import type { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { logService } from '../../services/logService';
-import { getKeyForRequest } from '../../utils/apiUtils';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { createMessage, createNewSession } from '../../utils/chat/session';
+import type { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '@/types';
+import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
+import { logService } from '@/services/logService';
+import { getKeyForRequest } from '@/utils/apiUtils';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { createMessage, createNewSession } from '@/utils/chat/session';
 import type { SessionsUpdater } from './types';
 
 export interface PreparedModelRequest {

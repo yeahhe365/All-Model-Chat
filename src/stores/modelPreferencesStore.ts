@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { ApiMode, MediaResolution, ModelOption } from '../types';
+import type { ApiMode, MediaResolution, ModelOption } from '@/types';
 import {
   createPersistedStateStorage,
   readPersistentStorageItem,

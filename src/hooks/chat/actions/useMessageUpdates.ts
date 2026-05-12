@@ -1,18 +1,19 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import type { Part } from '@google/genai';
 import {
-  SavedChatSession,
-  ChatMessage,
-  UploadedFile,
-  VideoMetadata,
-  AppSettings,
-  ChatSettings as IndividualChatSettings,
-} from '../../../types';
-import { logService } from '../../../services/logService';
-import { createNewSession, createMessage } from '../../../utils/chat/session';
-import { updateFileInMessage, updateMessageInSession, updateSessionById } from '../../../utils/chat/sessionMutations';
-import { MediaResolution } from '../../../types/settings';
-import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+  type SavedChatSession,
+  type ChatMessage,
+  type UploadedFile,
+  type VideoMetadata,
+  type AppSettings,
+  type ChatSettings as IndividualChatSettings,
+} from '@/types';
+import { logService } from '@/services/logService';
+import { createNewSession, createMessage } from '@/utils/chat/session';
+import { updateFileInMessage, updateMessageInSession, updateSessionById } from '@/utils/chat/sessionMutations';
+import { type MediaResolution } from '@/types/settings';
+import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
 import {
   createMessageStreamState,
   mergeUniqueFiles,

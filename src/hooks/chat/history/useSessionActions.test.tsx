@@ -1,19 +1,19 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
+import type { ChatMessage, SavedChatSession, UploadedFile } from '@/types';
 import { dbService } from '@/services/db/dbService';
-import { createChatSettings } from '../../../test/factories';
+import { createChatSettings } from '@/test/factories';
 import { useSessionActions } from './useSessionActions';
 import { renderHook } from '@/test/testUtils';
-import { useSettingsStore } from '../../../stores/settingsStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule();
 });
 
-vi.mock('../../../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   createNewSession: vi.fn((settings, messages, title) => ({
     id: `copy-${Math.random().toString(36).slice(2, 8)}`,
     title,
@@ -23,17 +23,17 @@ vi.mock('../../../utils/chat/session', () => ({
   })),
 }));
 
-vi.mock('../../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
-vi.mock('../../../utils/fileHelpers', () => ({
+vi.mock('@/utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: vi.fn(),
 }));
 
-vi.mock('../../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => `generated-${Math.random().toString(36).slice(2, 8)}`),
 }));
 

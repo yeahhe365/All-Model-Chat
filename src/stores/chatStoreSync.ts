@@ -1,8 +1,8 @@
-import type { SavedChatSession } from '../types';
-import type { SyncMessage } from '../types/sync';
-import { logService } from '../services/logService';
+import type { SavedChatSession } from '@/types';
+import type { SyncMessage } from '@/types/sync';
+import { logService } from '@/services/logService';
 import { dbService } from '@/services/db/dbService';
-import { rehydrateSessionFiles } from '../utils/chat/session';
+import { rehydrateSessionFiles } from '@/utils/chat/session';
 import { getChatSyncChannel } from './chatSyncChannel';
 
 type UpdaterOrValue<T> = T | ((prev: T) => T);

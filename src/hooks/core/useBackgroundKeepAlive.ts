@@ -1,21 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { logService } from '../../services/logService';
-import { createManagedObjectUrl, releaseManagedObjectUrl } from '../../services/objectUrlManager';
-
-const WORKER_CODE = `
-let intervalId = null;
-self.onmessage = function(e) {
-  if (e.data === 'start') {
-    if (intervalId) clearInterval(intervalId);
-    intervalId = setInterval(() => {
-      self.postMessage('tick');
-    }, 250); // 4Hz heartbeat to keep main thread awake
-  } else if (e.data === 'stop') {
-    if (intervalId) clearInterval(intervalId);
-    intervalId = null;
-  }
-};
-`;
+import { logService } from '@/services/logService';
 
 export const useBackgroundKeepAlive = (isActive: boolean) => {
   const workerRef = useRef<Worker | null>(null);
@@ -26,18 +10,17 @@ export const useBackgroundKeepAlive = (isActive: boolean) => {
       // 1. Web Worker Keep-Alive
       try {
         if (!workerRef.current) {
-          const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
-          const url = createManagedObjectUrl(blob);
-          workerRef.current = new Worker(url);
+          workerRef.current = new Worker(new URL('./backgroundKeepAliveWorker.ts', import.meta.url), {
+            type: 'module',
+          });
           workerRef.current.onmessage = () => {
             // The message event wakes up the main thread
           };
-          releaseManagedObjectUrl(url);
           logService.debug('[KeepAlive] Worker started');
         }
         workerRef.current.postMessage('start');
       } catch (e) {
-        console.error('Failed to start KeepAlive worker', e);
+        logService.error('Failed to start KeepAlive worker', e);
       }
 
       // 2. Silent Audio Keep-Alive (Force High Priority Network)
@@ -69,7 +52,7 @@ export const useBackgroundKeepAlive = (isActive: boolean) => {
           audioCtxRef.current.resume().catch(() => {});
         }
       } catch (e) {
-        console.error('Failed to start KeepAlive audio', e);
+        logService.error('Failed to start KeepAlive audio', e);
       }
     } else {
       // Stop Worker

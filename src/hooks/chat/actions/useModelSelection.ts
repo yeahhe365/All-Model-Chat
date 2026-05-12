@@ -1,8 +1,9 @@
-import React, { useCallback } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../../types';
-import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
-import { createNewSession } from '../../../utils/chat/session';
-import { resolveModelSwitchSettings } from '../../../utils/modelHelpers';
+import type React from 'react';
+import { useCallback } from 'react';
+import { type AppSettings, type ChatSettings as IndividualChatSettings, type SavedChatSession } from '@/types';
+import { CHAT_INPUT_TEXTAREA_SELECTOR, DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
+import { createNewSession } from '@/utils/chat/session';
+import { resolveModelSwitchSettings } from '@/utils/modelHelpers';
 
 interface UseModelSelectionProps {
   appSettings: AppSettings;

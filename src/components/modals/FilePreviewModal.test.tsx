@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { UploadedFile } from '../../types';
+import type { UploadedFile } from '@/types';
 
 const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockTextFileViewer } = vi.hoisted(() => ({
   mockCopyFileToClipboard: vi.fn(),
@@ -24,15 +24,15 @@ const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockTex
   ),
 }));
 
-vi.mock('../../stores/settingsStore', () => ({
+vi.mock('@/stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
 }));
 
-vi.mock('../shared/Modal', () => ({
+vi.mock('@/components/shared/Modal', () => ({
   Modal: ({ children }: { children: React.ReactNode }) => <div data-testid="modal-shell">{children}</div>,
 }));
 
-vi.mock('../shared/file-preview/FilePreviewHeader', async () => {
+vi.mock('@/components/shared/file-preview/FilePreviewHeader', async () => {
   const React = await import('react');
 
   const FilePreviewHeader = React.forwardRef<{ showCopyFeedback: () => void }>((_, ref) => {
@@ -63,11 +63,11 @@ vi.mock('../shared/file-preview/FilePreviewHeader', async () => {
   return { FilePreviewHeader };
 });
 
-vi.mock('../shared/file-preview/TextFileViewer', () => ({
+vi.mock('@/components/shared/file-preview/TextFileViewer', () => ({
   TextFileViewer: mockTextFileViewer,
 }));
 
-vi.mock('../../utils/fileHelpers', () => ({
+vi.mock('@/utils/fileHelpers', () => ({
   copyFileToClipboard: mockCopyFileToClipboard,
   isMarkdownFile: (file: { name: string; type: string }) =>
     file.type === 'text/markdown' ||
@@ -77,7 +77,7 @@ vi.mock('../../utils/fileHelpers', () => ({
     file.type.startsWith('text/') || /\.(md|markdown|txt|json|js|ts|tsx|jsx|css|html)$/i.test(file.name),
 }));
 
-vi.mock('../../utils/docxPreview', () => ({
+vi.mock('@/utils/docxPreview', () => ({
   extractDocxText: mockExtractDocxText,
   isDocxFile: (file: { name: string; type: string }) =>
     file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||

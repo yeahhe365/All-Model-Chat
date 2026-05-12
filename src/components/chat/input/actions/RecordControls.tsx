@@ -1,8 +1,8 @@
 import React from 'react';
 import { Loader2, Mic } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
-import { useChatInputActionsContext } from '../ChatInputContext';
+import { useI18n } from '@/contexts/I18nContext';
+import { CHAT_INPUT_BUTTON_CLASS } from '@/constants/appConstants';
+import { useChatInputActionsContext } from '@/components/chat/input/ChatInputContext';
 
 export const RecordControls: React.FC = () => {
   const { isRecording, isTranscribing, isMicInitializing, onRecordButtonClick, onCancelRecording, disabled } =

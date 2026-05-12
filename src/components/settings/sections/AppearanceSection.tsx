@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppSettings } from '../../../types';
+import { type AppSettings } from '@/types';
 import { ThemeLanguageSelector } from './appearance/ThemeLanguageSelector';
 import { FontSizeControl } from './appearance/FontSizeControl';
 import { InterfaceToggles } from './appearance/InterfaceToggles';

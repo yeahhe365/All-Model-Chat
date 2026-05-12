@@ -1,6 +1,9 @@
-import type { StandardClientFunctions, UploadedFile } from '../../types';
+import type { StandardClientFunctions, UploadedFile } from '@/types';
 import type { ExecutionResult } from '@/features/local-python/pyodideService';
-import { createLocalPythonToolDeclaration, createLocalPythonToolHandler } from '../local-python/clientFunctionTool';
+import {
+  createLocalPythonToolDeclaration,
+  createLocalPythonToolHandler,
+} from '@/features/local-python/clientFunctionTool';
 
 interface CreateStandardClientFunctionsOptions {
   isLocalPythonEnabled: boolean;

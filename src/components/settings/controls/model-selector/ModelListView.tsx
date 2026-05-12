@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 import { Check } from 'lucide-react';
-import { ApiMode, ModelOption } from '../../../../types';
-import { getModelIcon } from '../../../shared/ModelPicker';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { type ApiMode, type ModelOption } from '@/types';
+import { getModelIcon } from '@/components/shared/ModelPicker';
+import { useI18n } from '@/contexts/I18nContext';
 import {
   buildModelCatalog,
   buildModelCatalogSections,
   filterModelCatalog,
   getModelProviderSectionLabelKey,
-} from '../../../../utils/modelCatalog';
+} from '@/utils/modelCatalog';
 
 interface ModelListViewProps {
   availableModels: ModelOption[];

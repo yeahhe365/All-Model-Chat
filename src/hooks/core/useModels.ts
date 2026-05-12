@@ -1,9 +1,10 @@
+import { logService } from '@/services/logService';
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { ModelOption } from '../../types';
-import { sanitizeModelOptions } from '../../utils/modelHelpers';
-import { useModelPreferencesStore } from '../../stores/modelPreferencesStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { getTranslator } from '../../i18n/translations';
+import { type ModelOption } from '@/types';
+import { sanitizeModelOptions } from '@/utils/modelHelpers';
+import { useModelPreferencesStore } from '@/stores/modelPreferencesStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { getTranslator } from '@/i18n/translations';
 
 export const useModels = () => {
   useModelPreferencesStore.getState().hydrateLegacyModelPreferences();
@@ -26,14 +27,14 @@ export const useModels = () => {
     let isActive = true;
     setIsDefaultModelsLoading(true);
 
-    void import('../../utils/defaultModelOptions')
+    void import('@/utils/defaultModelOptions')
       .then(({ getDefaultModelOptions }) => {
         if (!isActive) return;
         setDefaultModels(getDefaultModelOptions());
         setIsDefaultModelsLoading(false);
       })
       .catch((error) => {
-        console.error('Default model import failed', error);
+        logService.error('Default model import failed', error);
         if (!isActive) return;
         setModelsLoadingError(t('appDefaultModelsLoadError'));
         setIsDefaultModelsLoading(false);

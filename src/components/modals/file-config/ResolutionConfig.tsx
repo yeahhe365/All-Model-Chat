@@ -1,8 +1,8 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Image as ImageIcon } from 'lucide-react';
-import { MediaResolution } from '../../../types/settings';
-import { Select } from '../../shared/Select';
+import { MediaResolution } from '@/types/settings';
+import { Select } from '@/components/shared/Select';
 
 interface ResolutionConfigProps {
   mediaResolution: MediaResolution | '';

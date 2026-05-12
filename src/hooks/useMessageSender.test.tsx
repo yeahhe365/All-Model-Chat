@@ -59,15 +59,15 @@ vi.mock('@/features/message-sender/senderStoreActions', () => ({
   createSenderStoreActions: () => mockSenderStoreActions,
 }));
 
-vi.mock('../utils/modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   getModelCapabilities: mockGetModelCapabilities,
 }));
 
-vi.mock('../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generation-id'),
 }));
 
-vi.mock('../utils/apiUtils', () => ({
+vi.mock('@/utils/apiUtils', () => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
   getApiKeyErrorTranslationKey: vi.fn((error: string) => {
     if (error === 'API Key not configured.') return 'apiRuntime_keyNotConfigured';
@@ -76,13 +76,13 @@ vi.mock('../utils/apiUtils', () => ({
   }),
 }));
 
-vi.mock('../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   createMessage: mockCreateMessage,
   createNewSession: mockCreateNewSession,
 }));
 
-vi.mock('../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

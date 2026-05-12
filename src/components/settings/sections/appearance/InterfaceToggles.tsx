@@ -1,7 +1,7 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { ToggleItem } from '../../../shared/ToggleItem';
-import { AppSettings } from '../../../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { ToggleItem } from '@/components/shared/ToggleItem';
+import { type AppSettings } from '@/types';
 
 interface InterfaceTogglesProps {
   settings: AppSettings;

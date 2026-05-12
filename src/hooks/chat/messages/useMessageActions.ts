@@ -1,19 +1,21 @@
-import React, { useCallback, Dispatch, SetStateAction } from 'react';
-import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../../../types';
-import { logService } from '../../../services/logService';
-import { CHAT_INPUT_TEXTAREA_SELECTOR } from '../../../constants/appConstants';
-import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
-import { getVisibleChatMessages } from '../../../utils/chat/visibility';
-import { createNewSession } from '../../../utils/chat/session';
-import { generateUniqueId } from '../../../utils/chat/ids';
-import { updateMessageInSession, updateSessionById } from '../../../utils/chat/sessionMutations';
+import { type Dispatch, type SetStateAction } from 'react';
+import type React from 'react';
+import { useCallback } from 'react';
+import { type ChatMessage, type UploadedFile, type SavedChatSession, type InputCommand } from '@/types';
+import { logService } from '@/services/logService';
+import { CHAT_INPUT_TEXTAREA_SELECTOR } from '@/constants/appConstants';
+import { cleanupFilePreviewUrls } from '@/utils/fileHelpers';
+import { getVisibleChatMessages } from '@/utils/chat/visibility';
+import { createNewSession } from '@/utils/chat/session';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { updateMessageInSession, updateSessionById } from '@/utils/chat/sessionMutations';
 import {
   finishActiveGenerationJob,
   hasActiveGenerationJobForSession,
   holdSessionLoadingForGenerationHandoff,
   releaseSessionLoadingForGenerationHandoff,
   unregisterActiveGenerationJob,
-} from '../../../features/message-sender/activeGenerationJobs';
+} from '@/features/message-sender/activeGenerationJobs';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;

@@ -1,18 +1,18 @@
 import React, { useMemo } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import ReactMarkdown from 'react-markdown';
 import type { PluggableList } from 'unified';
 import { CodeBlock } from './blocks/CodeBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { ToolResultBlock } from './blocks/ToolResultBlock';
 import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock';
-import { UploadedFile, SideViewContent } from '../../types';
-import { extractTextFromNode } from '../../utils/uiUtils';
+import { type UploadedFile, type SideViewContent } from '@/types';
+import { extractTextFromNode } from '@/utils/uiUtils';
 import { InlineCode } from './code-block/InlineCode';
-import { splitMarkdownSegments } from '../../utils/markdownUtils';
-import { stripGemmaThoughtMarkup, wrapReasoningMarkup } from '../../utils/chat/reasoning';
-import { normalizePreviewableMarkdownContent } from '../../utils/codeUtils';
-import type { LiveArtifactFollowupPayload } from '../../utils/liveArtifactFollowup';
+import { splitMarkdownSegments } from '@/utils/markdownUtils';
+import { stripGemmaThoughtMarkup, wrapReasoningMarkup } from '@/utils/chat/reasoning';
+import { normalizePreviewableMarkdownContent } from '@/utils/codeUtils';
+import type { LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 
 const loadMermaidBlock = async () => {
   const module = await import('./blocks/MermaidBlock');
@@ -83,7 +83,8 @@ const transformMarkdownTextSegments = (value: string, transform: (segment: strin
     .map((segment) => (segment.type === 'literal' ? segment.value : transform(segment.value)))
     .join('');
 
-const SINGLE_LIVE_ARTIFACT_FENCE_REGEX = /^```(amc-live-artifact-html|amc-live-artifact-interaction)\n([\s\S]*?)\n?```\s*$/;
+const SINGLE_LIVE_ARTIFACT_FENCE_REGEX =
+  /^```(amc-live-artifact-html|amc-live-artifact-interaction)\n([\s\S]*?)\n?```\s*$/;
 
 const extractSingleLiveArtifactFence = (content: string): { language: string; code: string } | null => {
   const match = content.trim().match(SINGLE_LIVE_ARTIFACT_FENCE_REGEX);

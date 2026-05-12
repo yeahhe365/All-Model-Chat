@@ -1,8 +1,14 @@
-import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord, UploadedFile } from '../../types';
+import {
+  type ChatMessage,
+  type SavedChatSession,
+  type ChatSettings,
+  type PersistedSessionFileRecord,
+  type UploadedFile,
+} from '@/types';
 import { generateUniqueId } from './ids';
-import { base64ToBlob, blobToBase64 } from '../fileHelpers';
+import { base64ToBlob, blobToBase64 } from '@/utils/fileHelpers';
 import { getVisibleChatMessages } from './visibility';
-import { createManagedObjectUrl, releaseManagedObjectUrlsByOwner } from '../../services/objectUrlManager';
+import { createManagedObjectUrl, releaseManagedObjectUrlsByOwner } from '@/services/objectUrlManager';
 
 const logSessionWarning = (message: string, data?: unknown) => {
   console.warn(`[session] ${message}`, data);

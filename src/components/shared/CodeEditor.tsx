@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import type { HLJSApi } from 'highlight.js';
-import { registerHighlightLanguages } from '../../utils/highlightConfig';
+import { registerHighlightLanguages } from '@/utils/highlightConfig';
 
 interface CodeEditorProps {
   value: string;

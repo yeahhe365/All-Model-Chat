@@ -2,10 +2,10 @@ import { act } from 'react';
 import type { ComponentProps } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { setupStoreStateReset } from '../../../test/storeTestUtils';
-import type { AppSettings } from '../../../types';
-import { SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
+import type { AppSettings } from '@/types';
+import { SERVER_MANAGED_API_KEY } from '@/utils/apiUtils';
 import { ApiConfigSection } from './ApiConfigSection';
 
 const {
@@ -20,21 +20,21 @@ const {
   sendOpenAICompatibleMessageNonStreamMock: vi.fn(),
 }));
 
-vi.mock('../../../hooks/useDevice', () => ({
+vi.mock('@/hooks/useDevice', () => ({
   useResponsiveValue: vi.fn(() => 18),
 }));
 
-vi.mock('../../../services/api/apiClient', () => ({
+vi.mock('@/services/api/apiClient', () => ({
   getClient: getClientMock,
 }));
 
-vi.mock('../../../services/api/openaiCompatibleApi', () => ({
+vi.mock('@/services/api/openaiCompatibleApi', () => ({
   fetchOpenAICompatibleModels: fetchOpenAICompatibleModelsMock,
   sendOpenAICompatibleMessageNonStream: sendOpenAICompatibleMessageNonStreamMock,
 }));
 
-vi.mock('../../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Pin, PinOff, Trash2 } from 'lucide-react';
-import { ApiMode, ModelOption } from '../../../../types';
-import { getModelIcon } from '../../../shared/ModelPicker';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../../constants/appConstants';
+import { type ApiMode, type ModelOption } from '@/types';
+import { getModelIcon } from '@/components/shared/ModelPicker';
+import { useI18n } from '@/contexts/I18nContext';
+import { SMALL_ICON_DANGER_BUTTON_CLASS } from '@/constants/appConstants';
 
 interface ModelListEditorRowProps {
   model: ModelOption;

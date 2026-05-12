@@ -1,10 +1,10 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChatMessage, SavedChatSession } from '../../../types';
-import { createChatSettings } from '../../../test/factories';
+import type { ChatMessage, SavedChatSession } from '@/types';
+import { createChatSettings } from '@/test/factories';
 
-vi.mock('../../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

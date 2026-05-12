@@ -1,13 +1,13 @@
-import React from 'react';
-import { AppSettings, UploadedFile, MediaResolution } from '../../types';
-import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
-import { logService } from '../../services/logService';
-import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { fileToBlobUrl } from '../../utils/fileHelpers';
-import { uploadFileApi } from '../../services/api/fileApi';
+import type React from 'react';
+import { type AppSettings, type UploadedFile, type MediaResolution } from '@/types';
+import { ALL_SUPPORTED_MIME_TYPES } from '@/constants/fileConstants';
+import { logService } from '@/services/logService';
+import { releaseManagedObjectUrl } from '@/services/objectUrlManager';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { fileToBlobUrl } from '@/utils/fileHelpers';
+import { uploadFileApi } from '@/services/api/fileApi';
 import { formatSpeed, getEffectiveMimeType, getUploadLifecycleForGeminiState, shouldUseFileApi } from './utils';
-import { getTranslator } from '../../i18n/translations';
+import { getTranslator } from '@/i18n/translations';
 
 type Translator = ReturnType<typeof getTranslator>;
 

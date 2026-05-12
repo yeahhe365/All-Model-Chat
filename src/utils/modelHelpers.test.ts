@@ -10,10 +10,10 @@ import {
   calculateTokenStats,
   resolveModelSwitchSettings,
 } from './modelHelpers';
-import { ModelOption } from './../types';
+import { type ModelOption } from './../types';
 import type { UsageMetadata } from '@google/genai';
-import { MediaResolution } from '../types/settings';
-import { useModelPreferencesStore } from '../stores/modelPreferencesStore';
+import { MediaResolution } from '@/types/settings';
+import { useModelPreferencesStore } from '@/stores/modelPreferencesStore';
 
 type LegacyUsageMetadata = UsageMetadata & {
   candidatesTokenCount?: number;

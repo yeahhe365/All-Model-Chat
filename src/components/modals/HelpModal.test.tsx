@@ -3,7 +3,7 @@ import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { HelpModal } from './HelpModal';
 
-vi.mock('../../hooks/useCopyToClipboard', () => ({
+vi.mock('@/hooks/useCopyToClipboard', () => ({
   useCopyToClipboard: () => ({
     copyToClipboard: vi.fn(),
   }),

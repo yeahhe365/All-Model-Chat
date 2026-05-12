@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
 import { buildPyodideWorkerScript, PyodideService, type ExecutionResult } from './pyodideService';
-import { createUploadedFile } from '../../test/factories';
+import { createUploadedFile } from '@/test/factories';
 
 type PyodideServiceInternals = {
   pendingPromises: Map<string, unknown>;
@@ -51,6 +51,10 @@ const createService = (overrides: Partial<ConstructorParameters<typeof PyodideSe
   });
 
   return { service, workers, createWorker, createObjectUrl, revokeObjectUrl };
+};
+
+const setRuntimeConfig = (config: Record<string, unknown>) => {
+  (window as Window & { __AMC_RUNTIME_CONFIG__?: Record<string, unknown> }).__AMC_RUNTIME_CONFIG__ = config;
 };
 
 const flushMicrotasks = async () => {
@@ -111,7 +115,111 @@ describe('buildPyodideWorkerScript', () => {
 
 describe('PyodideService', () => {
   afterEach(() => {
+    delete window.__AMC_RUNTIME_CONFIG__;
     vi.useRealTimers();
+  });
+
+  it('loads Pyodide from the same-origin copied assets by default', async () => {
+    const originalUrl = window.location.href;
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob) => {
+      capturedBlobs.push(blob);
+      return 'blob:pyodide-worker';
+    });
+    const { service, workers } = createService({ baseUri: undefined, createObjectUrl });
+    const [worker] = workers;
+
+    window.history.pushState({}, '', '/chat/123?thread=abc');
+
+    try {
+      const runPromise = service.runPython('print("local")');
+
+      await waitForWorkerPost();
+
+      expect(createObjectUrl).toHaveBeenCalledTimes(1);
+      await expect(capturedBlobs[0]?.text()).resolves.toContain(
+        'const PYODIDE_BASE_URL = "http://localhost/pyodide/";',
+      );
+
+      worker.emit({
+        id: 'mount-1',
+        status: 'success',
+        output: 'local',
+      });
+
+      await expect(runPromise).resolves.toMatchObject({
+        status: 'success',
+        output: 'local',
+      });
+    } finally {
+      window.history.pushState({}, '', originalUrl);
+    }
+  });
+
+  it('uses the runtime Pyodide base URL override when configured', async () => {
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob) => {
+      capturedBlobs.push(blob);
+      return 'blob:pyodide-worker';
+    });
+    const { service, workers } = createService({ baseUri: undefined, createObjectUrl });
+    const [worker] = workers;
+
+    setRuntimeConfig({
+      pyodideBaseUrl: 'https://cdn.example.com/pyodide/v0.25.1/full/',
+    });
+
+    const runPromise = service.runPython('print("cdn")');
+
+    await waitForWorkerPost();
+
+    await expect(capturedBlobs[0]?.text()).resolves.toContain(
+      'const PYODIDE_BASE_URL = "https://cdn.example.com/pyodide/v0.25.1/full/";',
+    );
+
+    worker.emit({
+      id: 'mount-1',
+      status: 'success',
+      output: 'cdn',
+    });
+
+    await expect(runPromise).resolves.toMatchObject({
+      status: 'success',
+      output: 'cdn',
+    });
+  });
+
+  it('treats arbitrary runtime Pyodide directory URLs as exact asset roots', async () => {
+    const capturedBlobs: Blob[] = [];
+    const createObjectUrl = vi.fn((blob: Blob) => {
+      capturedBlobs.push(blob);
+      return 'blob:pyodide-worker';
+    });
+    const { service, workers } = createService({ baseUri: undefined, createObjectUrl });
+    const [worker] = workers;
+
+    setRuntimeConfig({
+      pyodideBaseUrl: 'https://static.example.com/vendor/python-wasm',
+    });
+
+    const runPromise = service.runPython('print("custom")');
+
+    await waitForWorkerPost();
+
+    const workerCode = await capturedBlobs[0]?.text();
+    expect(workerCode).toContain('const PYODIDE_BASE_URL = "https://static.example.com/vendor/python-wasm/";');
+    expect(workerCode).not.toContain('https://static.example.com/vendor/python-wasm/pyodide/');
+
+    worker.emit({
+      id: 'mount-1',
+      status: 'success',
+      output: 'custom',
+    });
+
+    await expect(runPromise).resolves.toMatchObject({
+      status: 'success',
+      output: 'custom',
+    });
   });
 
   it('mounts raw file buffers through the worker and resolves on mount completion', async () => {

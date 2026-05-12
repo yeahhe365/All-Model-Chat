@@ -3,7 +3,7 @@ import { fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { setupTestRenderer } from '@/test/testUtils';
 import { LiveArtifactInteractionFrame } from './LiveArtifactInteractionFrame';
-import type { LiveArtifactInteractionSpec } from '../../../utils/liveArtifactInteraction';
+import type { LiveArtifactInteractionSpec } from '@/utils/liveArtifactInteraction';
 
 describe('LiveArtifactInteractionFrame', () => {
   const renderer = setupTestRenderer();

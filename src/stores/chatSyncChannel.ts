@@ -1,4 +1,4 @@
-import type { SyncMessage } from '../types/sync';
+import type { SyncMessage } from '@/types/sync';
 
 const CHAT_SYNC_CHANNEL_NAME = 'all_model_chat_sync_v1';
 

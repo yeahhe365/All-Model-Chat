@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
+import { useI18n } from '@/contexts/I18nContext';
+import { SUGGESTIONS_KEYS } from '@/constants/appConstants';
 import { SuggestionIcon } from './SuggestionIcon';
-import { translations } from '@/i18n/translations';
+import { type translations } from '@/i18n/translations';
 
 interface ChatSuggestionsProps {
   show: boolean;

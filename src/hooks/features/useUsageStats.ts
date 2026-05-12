@@ -1,6 +1,7 @@
+import { logService } from '@/services/logService';
 import { useEffect, useMemo, useState } from 'react';
 import { dbService, type ApiUsageRecord } from '@/services/db/dbService';
-import { calculateApiUsageRecordPriceUsd } from '../../utils/usagePricing';
+import { calculateApiUsageRecordPriceUsd } from '@/utils/usagePricing';
 
 export type UsageTimeRange = 'today' | '7d' | '30d' | 'all';
 
@@ -117,7 +118,7 @@ export const useUsageStats = () => {
           setRecords(result);
         }
       } catch (error) {
-        console.error('Failed to load API usage data:', error);
+        logService.error('Failed to load API usage data:', error);
         if (!cancelled) {
           setRecords([]);
         }

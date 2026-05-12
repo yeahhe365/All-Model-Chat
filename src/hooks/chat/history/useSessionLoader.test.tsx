@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ChatGroup, ChatMessage, SavedChatSession } from '../../../types';
-import { MediaResolution } from '../../../types';
+import type { ChatGroup, ChatMessage, SavedChatSession } from '@/types';
+import { MediaResolution } from '@/types';
 
 const {
   mockCreateNewSession,
@@ -24,28 +24,28 @@ const {
   mockResolveSupportedModelId: vi.fn((modelId: string | undefined, fallback: string) => modelId ?? fallback),
 }));
 
-vi.mock('../../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule({ getSession: mockGetSession });
 });
 
-vi.mock('../../../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   createNewSession: mockCreateNewSession,
   rehydrateSessionFiles: mockRehydrateSessionFiles,
 }));
 
-vi.mock('../../../utils/fileHelpers', () => ({
+vi.mock('@/utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: mockCleanupFilePreviewUrls,
 }));
 
-vi.mock('../../../utils/modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   resolveSupportedModelId: mockResolveSupportedModelId,
 }));
 

@@ -1,7 +1,8 @@
+import { logService } from '@/services/logService';
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Download } from 'lucide-react';
-import { triggerDownload } from '../../utils/export/core';
-import { useI18n } from '../../contexts/I18nContext';
+import { triggerDownload } from '@/utils/export/core';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface AudioPlayerProps {
   src: string;
@@ -23,7 +24,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, autoPlay = false,
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch((error) => {
-          console.warn('Auto-play prevented:', error);
+          logService.warn('Auto-play prevented:', error);
           setIsPlaying(false);
         });
       }

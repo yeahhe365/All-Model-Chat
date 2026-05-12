@@ -1,16 +1,16 @@
 import React from 'react';
-import type { ApiMode, AppSettings, ModelOption } from '../../types';
-import { SettingsTab } from '../../hooks/features/useSettingsLogic';
-import { getDefaultModelOptions } from '../../utils/defaultModelOptions';
+import type { ApiMode, AppSettings, ModelOption } from '@/types';
+import { type SettingsTab } from '@/hooks/features/useSettingsLogic';
+import { getDefaultModelOptions } from '@/utils/defaultModelOptions';
 import { ApiConfigSection } from './sections/ApiConfigSection';
 import { AppearanceSection } from './sections/AppearanceSection';
 import { DataManagementSection } from './sections/DataManagementSection';
 import { ModelsSection } from './sections/ModelsSection';
 import { ShortcutsSection } from './sections/ShortcutsSection';
 import { AboutSection } from './sections/AboutSection';
-import { SettingsTransferProps } from './settingsTypes';
-import type { LogViewerProps } from '../log-viewer/LogViewer';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import { type SettingsTransferProps } from './settingsTypes';
+import type { LogViewerProps } from '@/components/log-viewer/LogViewer';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 interface SettingsContentProps extends SettingsTransferProps {
   activeTab: SettingsTab;
   currentSettings: AppSettings;
@@ -78,6 +78,16 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
   const effectiveModelId = currentSettings.modelId;
   const effectiveAvailableModels = React.useMemo(() => buildGeminiModelList(availableModels), [availableModels]);
   const effectiveDefaultModels = React.useMemo(() => buildGeminiModelList(getDefaultModelOptions()), []);
+  const shortcutAvailableModels = React.useMemo(() => {
+    if (currentSettings.isOpenAICompatibleApiEnabled !== true) {
+      return effectiveAvailableModels;
+    }
+
+    return [
+      ...effectiveAvailableModels,
+      ...tagModelsWithApiMode(currentSettings.openaiCompatibleModels ?? [], 'openai-compatible'),
+    ];
+  }, [currentSettings.isOpenAICompatibleApiEnabled, currentSettings.openaiCompatibleModels, effectiveAvailableModels]);
 
   const handleBatchUpdate = (updates: Partial<AppSettings>) => {
     (Object.entries(updates) as Array<[keyof AppSettings, AppSettings[keyof AppSettings]]>).forEach(([key, value]) => {
@@ -174,7 +184,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
         <div className={animClass}>
           <ShortcutsSection
             currentSettings={currentSettings}
-            availableModels={effectiveAvailableModels}
+            availableModels={shortcutAvailableModels}
             onUpdateSettings={handleBatchUpdate}
           />
         </div>

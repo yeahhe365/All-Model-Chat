@@ -1,8 +1,10 @@
-import { AppSettings, FilesApiConfig, ModelOption, TranslationTargetLanguage } from '../types';
-import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
+import { type AppSettings, type FilesApiConfig, type ModelOption, type TranslationTargetLanguage } from '@/types';
+import { HarmCategory, HarmBlockThreshold, type SafetySetting, MediaResolution } from '@/types/settings';
 
 export * from './modelConstants';
 export * from './shortcuts';
+export * from './storageKeys';
+export * from './styleClasses';
 
 export const DEFAULT_SYSTEM_INSTRUCTION = '';
 
@@ -19,8 +21,8 @@ import {
   DEFAULT_LIVE_ARTIFACTS_MODEL_ID,
   DEFAULT_THOUGHT_TRANSLATION_MODEL_ID,
 } from './modelConstants';
-import { getRuntimeConfigAppSettingsOverrides } from '../runtime/runtimeConfig';
-import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '../utils/apiProxyUrl';
+import { getRuntimeConfigAppSettingsOverrides } from '@/runtime/runtimeConfig';
+import { DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from '@/utils/apiProxyUrl';
 
 const DEFAULT_IS_STREAMING_ENABLED = true;
 const DEFAULT_BASE_FONT_SIZE = 16;
@@ -46,37 +48,6 @@ export const TRANSLATION_TARGET_LANGUAGE_OPTIONS: Array<{
   { value: 'French', labelKey: 'translationTargetLanguage_french' },
   { value: 'German', labelKey: 'translationTargetLanguage_german' },
 ];
-
-export const ACTIVE_CHAT_SESSION_ID_KEY = 'activeChatSessionId';
-export const API_KEY_LAST_USED_INDEX_KEY = 'chatApiKeyLastUsedIndex';
-export const CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY = 'createTextFileEditorLastExtension';
-export const CHAT_INPUT_TEXTAREA_SELECTOR = 'textarea[data-chat-input-textarea="true"]';
-
-const FOCUS_VISIBLE_RING_CLASS =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2';
-export const FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS = `${FOCUS_VISIBLE_RING_CLASS} focus-visible:ring-offset-[var(--theme-bg-primary)]`;
-export const FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS = `${FOCUS_VISIBLE_RING_CLASS} focus-visible:ring-offset-[var(--theme-bg-secondary)]`;
-export const FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS = `${FOCUS_VISIBLE_RING_CLASS} focus-visible:ring-offset-[var(--theme-bg-input)]`;
-export const MESSAGE_BLOCK_BUTTON_CLASS =
-  'min-h-11 min-w-11 p-1.5 rounded-md inline-flex items-center justify-center text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all duration-200 focus:outline-none opacity-70 hover:opacity-100';
-export const CHAT_INPUT_BUTTON_CLASS = `h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${FOCUS_VISIBLE_RING_INPUT_OFFSET_CLASS} p-0 m-0 border-0 leading-none`;
-export const ICON_BUTTON_CLASS =
-  'p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors';
-export const MODAL_CLOSE_BUTTON_CLASS = `p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS}`;
-export const MODAL_CLOSE_BUTTON_DANGER_HOVER_CLASS = `p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-lg transition-colors ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS}`;
-export const SMALL_ICON_BUTTON_CLASS = `p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`;
-export const SMALL_ICON_BUTTON_ROUND_CLASS = `p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`;
-export const SMALL_ICON_DANGER_BUTTON_CLASS = `p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-md transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`;
-export const MENU_ITEM_BUTTON_CLASS =
-  'w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 transition-colors focus:outline-none';
-export const MENU_ITEM_DEFAULT_STATE_CLASS =
-  'text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus-visible:bg-[var(--theme-bg-tertiary)]';
-export const MENU_ITEM_DANGER_STATE_CLASS =
-  'text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-accent)] focus-visible:bg-[var(--theme-bg-danger)] focus-visible:text-[var(--theme-text-accent)]';
-export const MENU_ITEM_COMPACT_BUTTON_CLASS =
-  'w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors focus:outline-none';
-export const SETTINGS_INPUT_CLASS =
-  'bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] focus:ring-[var(--theme-border-focus)]/20 text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]';
 
 export const DEFAULT_SAFETY_SETTINGS: SafetySetting[] = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },

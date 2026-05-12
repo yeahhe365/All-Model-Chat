@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { VirtuosoHandle } from 'react-virtuoso';
-import { ChatMessage } from '../../../../types';
+import { type VirtuosoHandle } from 'react-virtuoso';
+import { type ChatMessage } from '@/types';
 
 interface UseMessageListScrollProps {
   messages: ChatMessage[];

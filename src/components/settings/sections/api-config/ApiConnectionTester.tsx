@@ -1,8 +1,8 @@
 import React from 'react';
 import { Activity, Loader2, XCircle } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { Select } from '../../../shared/Select';
-import { ModelOption } from '../../../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { Select } from '@/components/shared/Select';
+import { type ModelOption } from '@/types';
 
 interface ApiConnectionTesterProps {
   onTest: () => void;

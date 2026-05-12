@@ -1,9 +1,9 @@
 import React from 'react';
 import { KeyRound, CheckCircle } from 'lucide-react';
-import { AppSettings, ChatSettings } from '../../types';
+import { type AppSettings, type ChatSettings } from '@/types';
 import { ObfuscatedApiKey } from './ObfuscatedApiKey';
-import { parseApiKeys } from '../../utils/apiUtils';
-import { useI18n } from '../../contexts/I18nContext';
+import { parseApiKeys } from '@/utils/apiUtils';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface ApiUsageTabProps {
   apiKeyUsage: Map<string, number>;

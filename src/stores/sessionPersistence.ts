@@ -1,4 +1,4 @@
-import type { ChatMessage, SavedChatSession } from '../types';
+import type { ChatMessage, SavedChatSession } from '@/types';
 import { shouldRetainRuntimeMessages } from './sessionModels';
 
 interface SessionPersistenceChanges {

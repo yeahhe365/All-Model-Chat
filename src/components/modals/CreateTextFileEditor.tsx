@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCreateFileEditor } from '../../hooks/useCreateFileEditor';
+import { useCreateFileEditor } from '@/hooks/useCreateFileEditor';
 import { CreateFileHeader } from './create-file/CreateFileHeader';
 import { CreateFileBody } from './create-file/CreateFileBody';
 import { CreateFileFooter } from './create-file/CreateFileFooter';

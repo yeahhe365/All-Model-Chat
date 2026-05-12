@@ -1,11 +1,12 @@
-import React, { useCallback, useEffect } from 'react';
-import { AppSettings, SavedChatSession } from '../../types';
-import { logService } from '../../services/logService';
-import { getGeminiKeyForRequest } from '../../utils/apiUtils';
-import { generateSessionTitle } from '../../utils/chat/session';
-import { generateTitleApi } from '../../services/api/generation/textApi';
-import { getVisibleChatMessages } from '../../utils/chat/visibility';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import type React from 'react';
+import { useCallback, useEffect } from 'react';
+import { type AppSettings, type SavedChatSession } from '@/types';
+import { logService } from '@/services/logService';
+import { getGeminiKeyForRequest } from '@/utils/apiUtils';
+import { generateSessionTitle } from '@/utils/chat/session';
+import { generateTitleApi } from '@/services/api/generation/textApi';
+import { getVisibleChatMessages } from '@/utils/chat/visibility';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 

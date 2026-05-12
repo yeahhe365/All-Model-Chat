@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { Zap } from 'lucide-react';
-import { ModelOption } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
-import { GoogleSpinner } from '../icons/GoogleSpinner';
-import { ModelPicker } from '../shared/ModelPicker';
-import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
+import { type ModelOption } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { GoogleSpinner } from '@/components/icons/GoogleSpinner';
+import { ModelPicker } from '@/components/shared/ModelPicker';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
 
 interface HeaderModelSelectorProps {
   currentModelName?: string;

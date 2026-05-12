@@ -11,11 +11,11 @@ const { mockUseMessageStream } = vi.hoisted(() => ({
   })),
 }));
 
-vi.mock('../GroundedResponse', () => ({
+vi.mock('@/components/message/GroundedResponse', () => ({
   GroundedResponse: () => <div data-testid="grounded-response" />,
 }));
 
-vi.mock('../LazyMarkdownRenderer', () => ({
+vi.mock('@/components/message/LazyMarkdownRenderer', () => ({
   LazyMarkdownRenderer: ({ content, contentPreNormalized }: { content: string; contentPreNormalized?: boolean }) => (
     <div data-testid="markdown-renderer" data-pre-normalized={String(Boolean(contentPreNormalized))}>
       {content}
@@ -23,15 +23,15 @@ vi.mock('../LazyMarkdownRenderer', () => ({
   ),
 }));
 
-vi.mock('../../icons/GoogleSpinner', () => ({
+vi.mock('@/components/icons/GoogleSpinner', () => ({
   GoogleSpinner: () => <div data-testid="google-spinner" />,
 }));
 
-vi.mock('../../../hooks/ui/useSmoothStreaming', () => ({
+vi.mock('@/hooks/ui/useSmoothStreaming', () => ({
   useSmoothStreaming: (content: string) => content,
 }));
 
-vi.mock('../../../hooks/ui/useMessageStream', () => ({
+vi.mock('@/hooks/ui/useMessageStream', () => ({
   useMessageStream: mockUseMessageStream,
 }));
 
@@ -263,9 +263,9 @@ describe('MessageText', () => {
     expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.textContent).toBe(
       `\`\`\`amc-live-artifact-html\n${htmlFragment}\n\`\`\``,
     );
-    expect(renderer.container.querySelector('[data-testid="markdown-renderer"]')?.getAttribute('data-pre-normalized')).toBe(
-      'true',
-    );
+    expect(
+      renderer.container.querySelector('[data-testid="markdown-renderer"]')?.getAttribute('data-pre-normalized'),
+    ).toBe('true');
   });
 
   it('normalizes streamed raw html fragments into artifact fences while loading', () => {

@@ -1,8 +1,9 @@
+import { logService } from '@/services/logService';
 import React, { useEffect, useState } from 'react';
 import { Github, Star, ExternalLink } from 'lucide-react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { useResponsiveValue } from '../../../hooks/useDevice';
-import { useSettingsStore } from '../../../stores/settingsStore';
+import { useI18n } from '@/contexts/I18nContext';
+import { useResponsiveValue } from '@/hooks/useDevice';
+import { useSettingsStore } from '@/stores/settingsStore';
 import packageJson from '../../../../package.json';
 
 const compareVersions = (v1: string, v2: string) => {
@@ -67,7 +68,7 @@ export const AboutSection: React.FC = () => {
         }
       } catch (err) {
         if (!isCancelled) {
-          console.error('Failed to fetch about info', err);
+          logService.error('Failed to fetch about info', err);
           setHasReleaseData(false);
         }
       } finally {

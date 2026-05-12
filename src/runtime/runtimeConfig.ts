@@ -1,6 +1,12 @@
-import type { AppSettings } from '../types/settings';
+import type { AppSettings } from '@/types/settings';
 
-type RuntimeConfigKey = 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'projectUrl';
+type RuntimeConfigKey =
+  | 'serverManagedApi'
+  | 'useCustomApiConfig'
+  | 'useApiProxy'
+  | 'apiProxyUrl'
+  | 'projectUrl'
+  | 'pyodideBaseUrl';
 
 type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
 
@@ -51,6 +57,10 @@ export function getProjectUrl(): string {
   const projectUrl = readNullableString(getRuntimeConfig()?.projectUrl);
 
   return projectUrl ?? DEFAULT_PROJECT_URL;
+}
+
+export function getPyodideBaseUrl(): string | null {
+  return readNullableString(getRuntimeConfig()?.pyodideBaseUrl) ?? null;
 }
 
 export function getRuntimeConfigAppSettingsOverrides(): Partial<

@@ -1,9 +1,9 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Ellipsis } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { usePortaledMenu } from '../../../../hooks/ui/usePortaledMenu';
-import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
+import { useI18n } from '@/contexts/I18nContext';
+import { usePortaledMenu } from '@/hooks/ui/usePortaledMenu';
+import { CHAT_INPUT_BUTTON_CLASS } from '@/constants/appConstants';
 import type { ComposerAuxiliaryAction } from './useComposerAuxiliaryActions';
 
 export const ComposerMoreMenu: React.FC<{ actions: ComposerAuxiliaryAction[]; disabled?: boolean }> = ({

@@ -4,12 +4,12 @@ import type {
   ChatSettings as IndividualChatSettings,
   SavedChatSession,
   UploadedFile,
-} from '../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { createMessage, generateSessionTitle, performOptimisticSessionUpdate } from '../../utils/chat/session';
-import { insertMessageAfter, updateMessageInSession } from '../../utils/chat/sessionMutations';
-import { playCompletionSound, showNotification } from '../../utils/uiUtils';
+} from '@/types';
+import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { createMessage, generateSessionTitle, performOptimisticSessionUpdate } from '@/utils/chat/session';
+import { insertMessageAfter, updateMessageInSession } from '@/utils/chat/sessionMutations';
+import { playCompletionSound, showNotification } from '@/utils/uiUtils';
 import { createLoadingModelMessage } from './useMessageLifecycle';
 import type { SessionsUpdater } from './types';
 
@@ -185,7 +185,7 @@ const emitCompletionFeedback = async (appSettings: AppSettings, feedback: Comple
     typeof document !== 'undefined' &&
     document.hidden
   ) {
-    const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
+    const { APP_LOGO_SVG_DATA_URI } = await import('@/constants/assets');
     showNotification(feedback.notification.title, {
       body: feedback.notification.body,
       icon: APP_LOGO_SVG_DATA_URI,

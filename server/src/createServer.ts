@@ -1,4 +1,4 @@
-import http, { IncomingMessage, ServerResponse } from 'node:http';
+import http, { type IncomingMessage, type ServerResponse } from 'node:http';
 import net from 'node:net';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';

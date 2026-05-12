@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { releaseManagedObjectUrl } from '../../services/objectUrlManager';
+import { releaseManagedObjectUrl } from '@/services/objectUrlManager';
 
 export const useSelectionAudio = () => {
   const [isPlaying, setIsPlaying] = useState(false);

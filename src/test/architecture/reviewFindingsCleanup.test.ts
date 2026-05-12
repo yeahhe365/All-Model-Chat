@@ -9,8 +9,10 @@ const readProjectFile = (relativePath: string) => fs.readFileSync(path.join(proj
 describe('review findings cleanup guards', () => {
   it('keeps the shared chat input selector in tracked app constants', () => {
     const appConstants = readProjectFile('src/constants/appConstants.ts');
+    const storageKeys = readProjectFile('src/constants/storageKeys.ts');
 
-    expect(appConstants).toContain('export const CHAT_INPUT_TEXTAREA_SELECTOR');
+    expect(appConstants).toContain("export * from './storageKeys';");
+    expect(storageKeys).toContain('export const CHAT_INPUT_TEXTAREA_SELECTOR');
     expect(fs.existsSync(path.join(projectRoot, 'src/constants/domSelectors.ts'))).toBe(false);
   });
 

@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getTranslator } from '@/i18n/translations';
 import { createAppSettings, createChatSettings } from '@/test/factories';
 
 const {
@@ -29,22 +30,22 @@ vi.mock('./useApiErrorHandler', () => ({
   }),
 }));
 
-vi.mock('../../services/api/generation/imageEditApi', () => ({
+vi.mock('@/services/api/generation/imageEditApi', () => ({
   editImageApi: editImageMock,
 }));
 
-vi.mock('../../utils/chat/builder', () => ({
+vi.mock('@/utils/chat/builder', () => ({
   buildContentParts: buildContentPartsMock,
   createChatHistoryForApi: createChatHistoryForApiMock,
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
-vi.mock('../../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   performOptimisticSessionUpdate: performOptimisticSessionUpdateMock,
   createMessage: (role: 'user' | 'model', content: string, options: Record<string, unknown> = {}) => ({
     id: options.id ?? `${role}-message`,
@@ -56,19 +57,19 @@ vi.mock('../../utils/chat/session', () => ({
   generateSessionTitle: vi.fn(() => 'Generated Title'),
 }));
 
-vi.mock('../../utils/chat/parsing', () => ({
+vi.mock('@/utils/chat/parsing', () => ({
   createUploadedFileFromBase64: createUploadedFileFromBase64Mock,
 }));
 
-vi.mock('../../utils/modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   shouldStripThinkingFromContext: vi.fn(() => false),
 }));
 
-vi.mock('../../utils/uiUtils', () => ({
+vi.mock('@/utils/uiUtils', () => ({
   playCompletionSound: vi.fn(),
 }));
 
-vi.mock('../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generated-session'),
 }));
 
@@ -120,6 +121,7 @@ describe('imageEditStrategy', () => {
         imageSize: '2K',
         imageOutputMode: 'IMAGE_TEXT',
         personGeneration: 'ALLOW_ADULT',
+        t: getTranslator('en'),
         updateAndPersistSessions,
         setActiveSessionId,
         runMessageLifecycle,
@@ -163,5 +165,80 @@ describe('imageEditStrategy', () => {
       }),
     );
     expect(runMessageLifecycle).toHaveBeenCalledOnce();
+  });
+
+  it('uses translated image edit errors and partial failure notes', async () => {
+    const updateAndPersistSessions = vi.fn();
+    const setActiveSessionId = vi.fn();
+    const runMessageLifecycle = vi.fn(async ({ execute }) => execute());
+    editImageMock
+      .mockResolvedValueOnce([
+        {
+          inlineData: {
+            mimeType: 'image/png',
+            data: 'base64-image',
+          },
+        },
+      ])
+      .mockRejectedValueOnce(new Error('blocked by policy'))
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce('network down');
+
+    await act(async () => {
+      await sendImageEditMessage({
+        keyToUse: 'api-key',
+        activeSessionId: 'session-1',
+        messages: [],
+        generationId: 'generation-1',
+        abortController: new AbortController(),
+        appSettings: createAppSettings({
+          generateQuadImages: true,
+          isCompletionSoundEnabled: false,
+        }),
+        currentChatSettings: createChatSettings({
+          modelId: 'gemini-3.1-flash-image-preview',
+          systemInstruction: '',
+        }),
+        text: 'edit this image',
+        files: [],
+        editingMessageId: null,
+        aspectRatio: '1:1',
+        imageSize: '2K',
+        imageOutputMode: 'IMAGE_TEXT',
+        personGeneration: 'ALLOW_ADULT',
+        t: getTranslator('zh'),
+        updateAndPersistSessions,
+        setActiveSessionId,
+        runMessageLifecycle,
+      });
+    });
+
+    expect(runMessageLifecycle).toHaveBeenCalledWith(expect.objectContaining({ errorPrefix: '图像编辑错误' }));
+
+    const finalUpdater = updateAndPersistSessions.mock.calls[1]?.[0];
+    const finalState = finalUpdater([
+      {
+        id: 'session-1',
+        title: 'Session',
+        timestamp: 1,
+        settings: createChatSettings(),
+        messages: [
+          {
+            id: 'generation-1',
+            role: 'model',
+            content: '',
+            isLoading: true,
+            timestamp: new Date('2026-04-21T00:00:00.000Z'),
+          },
+        ],
+      },
+    ]);
+
+    expect(finalState[0].messages[0].content).toContain('图片 2：请求失败。错误：blocked by policy');
+    expect(finalState[0].messages[0].content).toContain('图片 3：这次请求没有生成图片。');
+    expect(finalState[0].messages[0].content).toContain('图片 4：请求失败。错误：network down');
+    expect(finalState[0].messages[0].content).toContain(
+      '*[提示：4 张图片中仅 1 张生成成功。部分图片可能因安全策略被拦截。]*',
+    );
   });
 });

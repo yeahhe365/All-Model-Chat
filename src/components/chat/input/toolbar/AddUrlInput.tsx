@@ -1,6 +1,6 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { IconYoutube } from '../../../icons/CustomIcons';
+import { useI18n } from '@/contexts/I18nContext';
+import { IconYoutube } from '@/components/icons/CustomIcons';
 import { InputBar } from './InputBar';
 
 interface AddUrlInputProps {

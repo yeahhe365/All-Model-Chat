@@ -1,5 +1,5 @@
-import type { SavedChatSession } from '../types';
-import type { SyncMessage } from '../types/sync';
+import type { SavedChatSession } from '@/types';
+import type { SyncMessage } from '@/types/sync';
 import { mergePersistedSessionMessages } from './sessionPersistence';
 
 interface PersistSessionChangesOptions {

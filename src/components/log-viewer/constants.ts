@@ -1,4 +1,4 @@
-import type { LogLevel, LogCategory } from '../../types/logging';
+import type { LogLevel, LogCategory } from '@/types/logging';
 
 export const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   INFO: 'text-blue-400',

@@ -1,9 +1,9 @@
 import React from 'react';
 import { CloudUpload, Info } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { FilesApiConfig, AppSettings } from '../../../../types';
-import { Tooltip } from '../../../shared/Tooltip';
-import { ToggleItem } from '../../../shared/ToggleItem';
+import { useI18n } from '@/contexts/I18nContext';
+import { type FilesApiConfig, type AppSettings } from '@/types';
+import { Tooltip } from '@/components/shared/Tooltip';
+import { ToggleItem } from '@/components/shared/ToggleItem';
 
 interface FileStrategyControlProps {
   settings: AppSettings;

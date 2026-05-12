@@ -1,14 +1,15 @@
+import { logService } from '@/services/logService';
 import { useCallback, useMemo, useState } from 'react';
 import type React from 'react';
 
-import type { UploadedFile } from '../../types';
-import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
-import { cleanupFilePreviewUrl, cleanupReplacedFilePreviewUrl } from '../../utils/fileHelpers';
-import { isTextFile } from '../../utils/fileTypeUtils';
-import { useFileModalState } from '../ui/useFileModalState';
+import type { UploadedFile } from '@/types';
+import { EXTENSION_TO_MIME } from '@/constants/fileConstants';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { cleanupFilePreviewUrl, cleanupReplacedFilePreviewUrl } from '@/utils/fileHelpers';
+import { isTextFile } from '@/utils/fileTypeUtils';
+import { useFileModalState } from '@/hooks/ui/useFileModalState';
 import { readUploadedTextFileContent } from './textFileToInput';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseChatInputFileUiOptions {
   selectedFiles: UploadedFile[];
@@ -260,7 +261,7 @@ export const useChatInputFileUi = ({
           textarea.setSelectionRange(content.length, content.length);
         });
       } catch (error) {
-        console.error('Failed to move text file into input:', error);
+        logService.error('Failed to move text file into input:', error);
         setAppFileError(t('selectedFile_readTextFailed'));
       }
     },

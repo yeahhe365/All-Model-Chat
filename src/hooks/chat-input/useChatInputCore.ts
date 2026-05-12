@@ -1,18 +1,18 @@
 import { useRef } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { isBboxSystemInstruction, isHdGuideSystemInstruction } from '../../constants/promptHelpers';
-import { useChatInputRuntime } from '../../components/layout/chat-runtime/ChatRuntimeContext';
-import { useChatStore } from '../../stores/chatStore';
-import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { getVisibleChatMessages } from '../../utils/chat/visibility';
-import { useChatState } from '../chat/useChatState';
-import { useLiveAPI } from '../useLiveAPI';
-import { useTextAreaInsert } from '../useTextAreaInsert';
+import { useI18n } from '@/contexts/I18nContext';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { isBboxSystemInstruction, isHdGuideSystemInstruction } from '@/constants/promptHelpers';
+import { useChatInputRuntime } from '@/components/layout/chat-runtime/ChatRuntimeContext';
+import { useChatStore } from '@/stores/chatStore';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { getVisibleChatMessages } from '@/utils/chat/visibility';
+import { useChatState } from '@/hooks/chat/useChatState';
+import { useLiveAPI } from '@/hooks/useLiveAPI';
+import { useTextAreaInsert } from '@/hooks/useTextAreaInsert';
 import { useChatInputState } from './useChatInputState';
 import { useChatInputToolStates } from './useChatInputToolStates';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
 export const useChatInputCore = () => {
   const { t } = useI18n();

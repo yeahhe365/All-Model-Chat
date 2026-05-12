@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { useClickOutside } from '../../hooks/useClickOutside';
-import { useI18n } from '../../contexts/I18nContext';
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   label: string;

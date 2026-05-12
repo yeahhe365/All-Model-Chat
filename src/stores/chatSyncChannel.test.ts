@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SyncMessage } from '../types/sync';
+import type { SyncMessage } from '@/types/sync';
 
 describe('chatSyncChannel', () => {
   beforeEach(() => {

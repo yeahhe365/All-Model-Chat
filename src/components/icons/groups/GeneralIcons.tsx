@@ -1,122 +1,56 @@
 import React from 'react';
-import { IconProps, StrokeIcon, defaultSize, defaultStroke, defaultColor } from '../iconUtils';
+import { FolderPlus, History as HistoryIcon, PanelLeft, ScrollText, Square, SquarePen } from 'lucide-react';
+import { type IconProps, defaultSize, defaultStroke, defaultColor } from '@/components/icons/iconUtils';
 
-// New Chat Icon
 export const IconNewChat: React.FC<IconProps> = ({
   size = defaultSize,
   strokeWidth = defaultStroke,
   className,
   color = defaultColor,
-}) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-    <path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
-  </svg>
-);
+}) => <SquarePen size={size} strokeWidth={strokeWidth} className={className} color={color} />;
 
-// New Group Icon
 export const IconNewGroup: React.FC<IconProps> = ({
   size = defaultSize,
   strokeWidth = defaultStroke,
   className,
   color = defaultColor,
 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
+  <FolderPlus
+    size={size}
     strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
     className={className}
+    color={color}
     data-testid="new-group-folder-icon"
-  >
-    <path d="M3 7.5C3 6.67 3.67 6 4.5 6H9l2 2h8.5c.83 0 1.5.67 1.5 1.5V12" />
-    <path d="M3 7.5V18c0 .83.67 1.5 1.5 1.5h8" />
-    <path d="M18 15v6M15 18h6" />
-  </svg>
+  />
 );
 
-// Sidebar Toggle Icon
 export const IconSidebarToggle: React.FC<IconProps> = ({
   size = defaultSize,
   strokeWidth = defaultStroke,
   className,
   color = defaultColor,
-}) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <line x1="4" x2="20" y1="8" y2="8" />
-    <line x1="4" x2="14" y1="16" y2="16" />
-  </svg>
-);
+}) => <PanelLeft size={size} strokeWidth={strokeWidth} className={className} color={color} />;
 
-// History / Recent Chats Icon
-export const IconHistory: React.FC<IconProps> = (props) => (
-  <StrokeIcon {...props}>
-    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-    <path d="M3 3v5h5" />
-    <path d="M12 7v5l4 2" />
-  </StrokeIcon>
-);
+export const IconHistory: React.FC<IconProps> = ({
+  size = defaultSize,
+  strokeWidth = defaultStroke,
+  className,
+  color = defaultColor,
+}) => <HistoryIcon size={size} strokeWidth={strokeWidth} className={className} color={color} />;
 
-// Stop Generation
-export const IconStop: React.FC<IconProps> = ({ size = defaultSize, className, color = defaultColor }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <rect x="4" y="4" width="16" height="16" rx="2" fill={color} />
-  </svg>
-);
+export const IconStop: React.FC<IconProps> = ({
+  size = defaultSize,
+  strokeWidth = defaultStroke,
+  className,
+  color = defaultColor,
+}) => <Square size={size} strokeWidth={strokeWidth} className={className} color={color} fill={color} />;
 
-// Scenarios (Scroll style)
 export const IconScenarios: React.FC<IconProps> = ({
   size = defaultSize,
   strokeWidth = defaultStroke,
   className,
   color = defaultColor,
-}) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4" />
-    <path d="M19 17V5a2 2 0 0 0-2-2H4" />
-  </svg>
-);
+}) => <ScrollText size={size} strokeWidth={strokeWidth} className={className} color={color} />;
 
 // Google G Icon
 export const IconGoogle: React.FC<IconProps> = ({ size = defaultSize, className }) => (

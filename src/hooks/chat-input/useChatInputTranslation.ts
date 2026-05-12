@@ -1,8 +1,9 @@
+import { logService } from '@/services/logService';
 import { useCallback, type Dispatch, type SetStateAction } from 'react';
-import type { AppSettings, ChatSettings } from '../../types/settings';
-import { translateTextApi } from '../../services/api/generation/textApi';
-import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
-import { useI18n } from '../../contexts/I18nContext';
+import type { AppSettings, ChatSettings } from '@/types/settings';
+import { translateTextApi } from '@/services/api/generation/textApi';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '@/utils/apiUtils';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseChatInputTranslationParams {
   appSettings: AppSettings;
@@ -49,7 +50,7 @@ export const useChatInputTranslation = ({
       );
       setInputText(translatedText);
     } catch (error) {
-      console.error('Input translation failed:', error);
+      logService.error('Input translation failed:', error);
       const message = error instanceof Error ? error.message : String(error);
       setAppFileError(t('translate_failed_with_message').replace('{message}', message));
     } finally {

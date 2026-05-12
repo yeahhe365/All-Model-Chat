@@ -3,8 +3,8 @@ import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfToolbar } from './PdfToolbar';
-import { usePdfViewer } from '../../../../hooks/ui/usePdfViewer';
-import { UploadedFile } from '../../../../types';
+import { usePdfViewer } from '@/hooks/ui/usePdfViewer';
+import { type UploadedFile } from '@/types';
 
 const file: UploadedFile = {
   id: 'pdf-file',

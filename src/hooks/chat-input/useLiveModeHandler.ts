@@ -1,7 +1,8 @@
+import { logService } from '@/services/logService';
 import { useCallback } from 'react';
-import type { UploadedFile } from '../../types';
-import type { MediaResolution } from '../../types/settings';
-import { buildContentParts } from '../../utils/chat/builder';
+import type { UploadedFile } from '@/types';
+import type { MediaResolution } from '@/types/settings';
+import { buildContentParts } from '@/utils/chat/builder';
 
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
 
@@ -46,7 +47,7 @@ export const useLiveModeHandler = ({
         try {
           didConnect = await liveAPI.connect();
         } catch (error) {
-          console.error('Failed to auto-connect Live API:', error);
+          logService.error('Failed to auto-connect Live API:', error);
           return;
         }
       }

@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { UploadedFile } from '../../types';
-import { MediaResolution } from '../../types/settings';
+import type { UploadedFile } from '@/types';
+import { MediaResolution } from '@/types/settings';
 import { useLiveModeHandler } from './useLiveModeHandler';
 import { renderHook } from '@/test/testUtils';
 
@@ -9,7 +9,7 @@ const { mockBuildContentParts } = vi.hoisted(() => ({
   mockBuildContentParts: vi.fn(),
 }));
 
-vi.mock('../../utils/chat/builder', () => ({
+vi.mock('@/utils/chat/builder', () => ({
   buildContentParts: mockBuildContentParts,
 }));
 

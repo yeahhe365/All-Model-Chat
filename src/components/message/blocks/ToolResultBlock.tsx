@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Download, Check, FileOutput } from 'lucide-react';
-import { createManagedObjectUrl } from '../../../services/objectUrlManager';
-import { triggerDownload } from '../../../utils/export/core';
-import { extractTextFromNode } from '../../../utils/uiUtils';
-import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
-import { UploadedFile } from '../../../types';
-import { FileDisplay } from '../FileDisplay';
-import { useI18n } from '../../../contexts/I18nContext';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload } from '@/utils/export/core';
+import { extractTextFromNode } from '@/utils/uiUtils';
+import { MESSAGE_BLOCK_BUTTON_CLASS } from '@/constants/appConstants';
+import { type UploadedFile } from '@/types';
+import { FileDisplay } from '@/components/message/FileDisplay';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface ToolResultBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   files?: UploadedFile[];

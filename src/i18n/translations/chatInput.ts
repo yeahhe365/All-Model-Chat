@@ -234,6 +234,54 @@ export const chatInputTranslations = {
   transcription_unknown_error: { en: 'An unknown error occurred.', zh: '发生未知错误。' },
   transcription_failedWithMessage: { en: 'Transcription failed: {message}', zh: '转录失败：{message}' },
 
+  // Message sending errors and generation feedback
+  messageSender_apiErrorPrefix: { en: 'Error', zh: '错误' },
+  messageSender_unknownError: { en: 'An unknown error occurred.', zh: '发生未知错误。' },
+  messageSender_apiKeyNotConfigured: {
+    en: 'API key is not configured in settings.',
+    zh: '未在设置中配置 API 密钥。',
+  },
+  messageSender_errorWithPrefix: { en: '{prefix}: {message}', zh: '{prefix}：{message}' },
+  messageSender_ttsErrorPrefix: { en: 'TTS Error', zh: '语音生成错误' },
+  messageSender_imageGenErrorPrefix: { en: 'Image Gen Error', zh: '图像生成错误' },
+  messageSender_imageEditErrorPrefix: { en: 'Image Edit Error', zh: '图像编辑错误' },
+  messageSender_audioReadyTitle: { en: 'Audio Ready', zh: '音频已生成' },
+  messageSender_audioReadyBody: {
+    en: 'Text-to-speech audio has been generated.',
+    zh: '文本转语音音频已生成。',
+  },
+  messageSender_imageReadyTitle: { en: 'Image Ready', zh: '图片已生成' },
+  messageSender_imageReadyBody: { en: 'Your image has been generated.', zh: '图片已生成。' },
+  messageSender_generatedImagesForPrompt: {
+    en: 'Generated {count} image(s) for: "{prompt}"',
+    zh: '已为“{prompt}”生成 {count} 张图片',
+  },
+  messageSender_imageEditResultPrefix: { en: 'Image {index}: ', zh: '图片 {index}：' },
+  messageSender_imageEditNoImageGenerated: {
+    en: 'No image was generated for this request.',
+    zh: '这次请求没有生成图片。',
+  },
+  messageSender_imageEditRequestFailed: {
+    en: 'Request failed. Error: {message}',
+    zh: '请求失败。错误：{message}',
+  },
+  messageSender_imageEditSafetyFailure: {
+    en: 'Some images may have been blocked due to safety policies.',
+    zh: '部分图片可能因安全策略被拦截。',
+  },
+  messageSender_imageEditPartialFailure: {
+    en: 'Some image requests may have failed.',
+    zh: '部分图片请求可能失败。',
+  },
+  messageSender_imageEditPartialNote: {
+    en: '*[Note: Only {count} of 4 images were generated successfully. {reason}]*',
+    zh: '*[提示：4 张图片中仅 {count} 张生成成功。{reason}]*',
+  },
+  messageSender_imageEditEmptyFailure: {
+    en: '[Error: Image generation failed with no specific message.]',
+    zh: '[错误：图片生成失败，且没有具体错误信息。]',
+  },
+
   // File Settings Modal
   fileSettings_title: { en: 'File Configuration', zh: '文件配置' },
   fileSettings_resolution: { en: 'Token Resolution', zh: 'Token 分辨率' },

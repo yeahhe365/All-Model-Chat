@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
-import { isImageMimeType } from '../fileTypeUtils';
+import { isImageMimeType } from '@/utils/fileTypeUtils';
 
 interface MarkdownPdfOptions {
   filename: string;

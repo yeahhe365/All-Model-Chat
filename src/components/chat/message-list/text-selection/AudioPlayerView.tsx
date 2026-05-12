@@ -1,6 +1,6 @@
 import React from 'react';
 import { GripVertical, X, Loader2 } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface AudioPlayerViewProps {
   audioUrl: string | null;

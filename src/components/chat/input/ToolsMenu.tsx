@@ -1,17 +1,17 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator, AlertTriangle } from 'lucide-react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { IconPython } from '../../icons/CustomIcons';
-import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
-import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
-import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
+import { useI18n } from '@/contexts/I18nContext';
+import { IconPython } from '@/components/icons/CustomIcons';
+import { CHAT_INPUT_BUTTON_CLASS } from '@/constants/appConstants';
+import { usePortaledMenu } from '@/hooks/ui/usePortaledMenu';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
 import {
   getChatToolsForSurface,
   type ChatToolDefinition,
   type ChatToolIconKey,
-} from '../../../features/chat-tools/toolRegistry';
-import type { ChatToolId, ChatToolToggleStates, ChatToolUtilityActions, ToggleableChatToolId } from '../../../types';
+} from '@/features/chat-tools/toolRegistry';
+import type { ChatToolId, ChatToolToggleStates, ChatToolUtilityActions, ToggleableChatToolId } from '@/types';
 
 interface ToolsMenuProps {
   currentModelId: string;

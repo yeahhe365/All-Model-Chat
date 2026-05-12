@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { UploadedFile } from '../../types';
+import type { UploadedFile } from '@/types';
 import { useFilePreviewState } from './useFilePreviewState';
 
 interface PreviewOptions {

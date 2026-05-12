@@ -1,15 +1,15 @@
 import React from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { SavedChatSession, ChatGroup } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
+import { type SavedChatSession, type ChatGroup } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
 import { SessionItem } from './SessionItem';
 import { GroupItem, type SessionItemPassedProps } from './GroupItem';
 import { CollapsedRecentChatsButton } from './CollapsedRecentChatsButton';
 import { Search, Settings } from 'lucide-react';
-import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
-import { useHistorySidebarLogic } from '../../hooks/useHistorySidebarLogic';
+import { IconNewChat, IconSidebarToggle } from '@/components/icons/CustomIcons';
+import { useHistorySidebarLogic } from '@/hooks/useHistorySidebarLogic';
 
 interface HistorySidebarProps {
   isOpen: boolean;

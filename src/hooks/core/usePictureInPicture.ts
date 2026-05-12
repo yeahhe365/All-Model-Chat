@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { logService } from '../../services/logService';
+import { logService } from '@/services/logService';
 
 export const usePictureInPicture = (
   isHistorySidebarOpen: boolean,

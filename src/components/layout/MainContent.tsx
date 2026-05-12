@@ -1,8 +1,8 @@
 import React, { Suspense, lazy } from 'react';
-import { HistorySidebar } from '../sidebar/HistorySidebar';
+import { HistorySidebar } from '@/components/sidebar/HistorySidebar';
 import { ChatArea } from './ChatArea';
-import { AppModals } from '../modals/AppModals';
-import type { AppViewModel } from '../../hooks/app/useApp';
+import { AppModals } from '@/components/modals/AppModals';
+import type { AppViewModel } from '@/hooks/app/useApp';
 import { useMainContentViewModel } from './useMainContentViewModel';
 import { ChatRuntimeProvider } from './chat-runtime/ChatRuntimeContext';
 

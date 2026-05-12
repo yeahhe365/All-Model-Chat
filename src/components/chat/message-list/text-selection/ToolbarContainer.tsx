@@ -1,6 +1,6 @@
 import React, { forwardRef, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useWindowContext } from '../../../../contexts/WindowContext';
+import { useWindowContext } from '@/contexts/WindowContext';
 
 interface ToolbarContainerProps {
   children: React.ReactNode;

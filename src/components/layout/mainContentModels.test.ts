@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createAppSettings, createChatSettings } from '../../test/factories';
+import { createAppSettings, createChatSettings } from '@/test/factories';
 import { buildSettingsForModal, splitScopedSettingsUpdate } from './mainContentModels';
 
 describe('settings modal models', () => {

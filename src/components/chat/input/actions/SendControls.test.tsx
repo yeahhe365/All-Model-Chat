@@ -1,13 +1,13 @@
 import { act } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { createChatAreaProviderValue, createChatRuntimeValues } from '../../../../test/chatAreaFixtures';
+import { createChatAreaProviderValue, createChatRuntimeValues } from '@/test/chatAreaFixtures';
 import {
   createChatInputActionsContextValue,
   createChatInputComposerStatusContextValue,
-} from '../../../../test/chatInputContextFixtures';
-import { ChatRuntimeValuesProvider } from '../../../layout/chat-runtime/ChatRuntimeContext';
-import { ChatInputActionsContext, ChatInputComposerStatusContext } from '../ChatInputContext';
+} from '@/test/chatInputContextFixtures';
+import { ChatRuntimeValuesProvider } from '@/components/layout/chat-runtime/ChatRuntimeContext';
+import { ChatInputActionsContext, ChatInputComposerStatusContext } from '@/components/chat/input/ChatInputContext';
 
 import { SendControls } from './SendControls';
 

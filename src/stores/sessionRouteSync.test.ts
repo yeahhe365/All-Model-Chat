@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
+import { ACTIVE_CHAT_SESSION_ID_KEY } from '@/constants/appConstants';
 import { syncActiveSessionRoute } from './sessionRouteSync';
 
 describe('syncActiveSessionRoute', () => {

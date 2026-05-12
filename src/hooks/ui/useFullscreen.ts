@@ -1,5 +1,6 @@
+import { logService } from '@/services/logService';
 import { useCallback } from 'react';
-import { useWindowContext } from '../../contexts/WindowContext';
+import { useWindowContext } from '@/contexts/WindowContext';
 
 export const useFullscreen = () => {
   const { document: targetDocument } = useWindowContext();
@@ -12,7 +13,7 @@ export const useFullscreen = () => {
         await element.webkitRequestFullscreen();
       }
     } catch (err) {
-      console.error('Error attempting to enable full-screen mode:', err);
+      logService.error('Error attempting to enable full-screen mode:', err);
       throw err; // Propagate error so callers can handle fallback
     }
   }, []);
@@ -23,13 +24,13 @@ export const useFullscreen = () => {
         try {
           await targetDocument.exitFullscreen();
         } catch (err) {
-          console.error('Error attempting to disable full-screen mode:', err);
+          logService.error('Error attempting to disable full-screen mode:', err);
         }
       } else if (targetDocument.webkitExitFullscreen) {
         try {
           await targetDocument.webkitExitFullscreen();
         } catch (err) {
-          console.error('Error attempting to disable webkit full-screen mode:', err);
+          logService.error('Error attempting to disable webkit full-screen mode:', err);
         }
       }
     }

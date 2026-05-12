@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useVoiceInput } from '../useVoiceInput';
-import { useSlashCommands } from '../useSlashCommands';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
+import { useSlashCommands } from '@/hooks/useSlashCommands';
 import { useChatInputCore } from './useChatInputCore';
 import { useChatInputFile } from './useChatInputFile';
 import { useChatInputGlobalEffects } from './useChatInputGlobalEffects';

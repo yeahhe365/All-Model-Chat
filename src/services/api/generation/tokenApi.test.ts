@@ -6,16 +6,16 @@ const { mockGetConfiguredApiClient, mockCountTokens } = vi.hoisted(() => ({
   mockCountTokens: vi.fn(),
 }));
 
-vi.mock('../apiClient', async () => {
-  const actual = await vi.importActual<typeof import('../apiClient')>('../apiClient');
+vi.mock('@/services/api/apiClient', async () => {
+  const actual = await vi.importActual<typeof import('@/services/api/apiClient')>('@/services/api/apiClient');
   return {
     ...actual,
     getConfiguredApiClient: mockGetConfiguredApiClient,
   };
 });
 
-vi.mock('../../logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

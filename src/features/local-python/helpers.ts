@@ -1,5 +1,5 @@
-import type { ChatMessage, UploadedFile } from '../../types';
-import { isImageMimeType } from '../../utils/fileTypeUtils';
+import type { ChatMessage, UploadedFile } from '@/types';
+import { isImageMimeType } from '@/utils/fileTypeUtils';
 
 export const collectLocalPythonInputFiles = (messages: ChatMessage[], targetMessageId: string) => {
   const targetIndex = messages.findIndex((message) => message.id === targetMessageId);

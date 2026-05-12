@@ -1,16 +1,18 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { SavedScenario } from '../../types';
-import { translations } from '@/i18n/translations';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
-import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
+import { logService } from '@/services/logService';
+import type React from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { type SavedScenario } from '@/types';
+import { type translations } from '@/i18n/translations';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload, sanitizeFilename } from '@/utils/export/core';
 import {
   buildSavedScenarios,
   buildScenarioExportPayload,
   getExportableUserScenarios,
   mergeImportedScenarios,
   SYSTEM_SCENARIO_IDS,
-} from '../../features/scenarios/scenarioLibrary';
+} from '@/features/scenarios/scenarioLibrary';
 
 type ModalView = 'list' | 'editor';
 
@@ -183,7 +185,7 @@ export const useScenarioManager = ({
             throw new Error('Invalid format');
           }
         } catch (error) {
-          console.error('Import failed', error);
+          logService.error('Import failed', error);
           showFeedback('error', t('scenarios_feedback_importFailed'));
         } finally {
           if (importInputRef.current) importInputRef.current.value = '';

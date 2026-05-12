@@ -1,18 +1,16 @@
-import { act } from 'react';
+import { act, type ComponentProps } from 'react';
 import { fireEvent } from '@testing-library/react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it, vi } from 'vitest';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { BaseMarkdownRendererEntry } from './BaseMarkdownRendererEntry';
-import { useSettingsStore } from '../../stores/settingsStore';
 
 describe('BaseMarkdownRendererEntry', () => {
   const renderer = setupTestRenderer();
-
-  it('renders bold text when quoted emphasis is adjacent to surrounding CJK text', () => {
+  const renderMarkdown = (props: Partial<ComponentProps<typeof BaseMarkdownRendererEntry>> & { content: string }) => {
     act(() => {
       renderer.root.render(
         <BaseMarkdownRendererEntry
-          content="遇到的**“不定式”**问题。"
           isLoading={false}
           onImageClick={vi.fn()}
           onOpenHtmlPreview={vi.fn()}
@@ -21,9 +19,14 @@ describe('BaseMarkdownRendererEntry', () => {
           isGraphvizRenderingEnabled={false}
           themeId="pearl"
           onOpenSidePanel={vi.fn()}
+          {...props}
         />,
       );
     });
+  };
+
+  it('renders bold text when quoted emphasis is adjacent to surrounding CJK text', () => {
+    renderMarkdown({ content: '遇到的**“不定式”**问题。' });
 
     const strong = renderer.container.querySelector('strong');
 
@@ -33,21 +36,7 @@ describe('BaseMarkdownRendererEntry', () => {
   });
 
   it('renders bold text when wrapped quotes are followed by additional CJK text inside emphasis', () => {
-    act(() => {
-      renderer.root.render(
-        <BaseMarkdownRendererEntry
-          content="这句话听起来像是一个**“反差萌”的幽默表达**"
-          isLoading={false}
-          onImageClick={vi.fn()}
-          onOpenHtmlPreview={vi.fn()}
-          expandCodeBlocksByDefault={false}
-          isMermaidRenderingEnabled={false}
-          isGraphvizRenderingEnabled={false}
-          themeId="pearl"
-          onOpenSidePanel={vi.fn()}
-        />,
-      );
-    });
+    renderMarkdown({ content: '这句话听起来像是一个**“反差萌”的幽默表达**' });
 
     const strong = renderer.container.querySelector('strong');
 
@@ -57,21 +46,7 @@ describe('BaseMarkdownRendererEntry', () => {
   });
 
   it('renders bold title text that ends with punctuation before adjacent content', () => {
-    act(() => {
-      renderer.root.render(
-        <BaseMarkdownRendererEntry
-          content="**背景：**这是说明。"
-          isLoading={false}
-          onImageClick={vi.fn()}
-          onOpenHtmlPreview={vi.fn()}
-          expandCodeBlocksByDefault={false}
-          isMermaidRenderingEnabled={false}
-          isGraphvizRenderingEnabled={false}
-          themeId="pearl"
-          onOpenSidePanel={vi.fn()}
-        />,
-      );
-    });
+    renderMarkdown({ content: '**背景：**这是说明。' });
 
     const strong = renderer.container.querySelector('strong');
 
@@ -81,21 +56,7 @@ describe('BaseMarkdownRendererEntry', () => {
   });
 
   it('renders wrapped and title-style fallback bold text in the same paragraph', () => {
-    act(() => {
-      renderer.root.render(
-        <BaseMarkdownRendererEntry
-          content="先看**“不定式”**，再看**背景：**这是说明。"
-          isLoading={false}
-          onImageClick={vi.fn()}
-          onOpenHtmlPreview={vi.fn()}
-          expandCodeBlocksByDefault={false}
-          isMermaidRenderingEnabled={false}
-          isGraphvizRenderingEnabled={false}
-          themeId="pearl"
-          onOpenSidePanel={vi.fn()}
-        />,
-      );
-    });
+    renderMarkdown({ content: '先看**“不定式”**，再看**背景：**这是说明。' });
 
     const strongTexts = Array.from(renderer.container.querySelectorAll('strong')).map((strong) => strong.textContent);
 
@@ -104,21 +65,7 @@ describe('BaseMarkdownRendererEntry', () => {
   });
 
   it('renders underscored bold text adjacent to CJK text', () => {
-    act(() => {
-      renderer.root.render(
-        <BaseMarkdownRendererEntry
-          content="这是__重点__内容。"
-          isLoading={false}
-          onImageClick={vi.fn()}
-          onOpenHtmlPreview={vi.fn()}
-          expandCodeBlocksByDefault={false}
-          isMermaidRenderingEnabled={false}
-          isGraphvizRenderingEnabled={false}
-          themeId="pearl"
-          onOpenSidePanel={vi.fn()}
-        />,
-      );
-    });
+    renderMarkdown({ content: '这是__重点__内容。' });
 
     const strong = renderer.container.querySelector('strong');
 
@@ -128,42 +75,14 @@ describe('BaseMarkdownRendererEntry', () => {
   });
 
   it('keeps underscore markers literal inside ASCII identifiers', () => {
-    act(() => {
-      renderer.root.render(
-        <BaseMarkdownRendererEntry
-          content="Keep foo__bar__baz literal."
-          isLoading={false}
-          onImageClick={vi.fn()}
-          onOpenHtmlPreview={vi.fn()}
-          expandCodeBlocksByDefault={false}
-          isMermaidRenderingEnabled={false}
-          isGraphvizRenderingEnabled={false}
-          themeId="pearl"
-          onOpenSidePanel={vi.fn()}
-        />,
-      );
-    });
+    renderMarkdown({ content: 'Keep foo__bar__baz literal.' });
 
     expect(renderer.container.textContent).toBe('Keep foo__bar__baz literal.');
     expect(renderer.container.querySelector('strong')).toBeNull();
   });
 
   it('keeps quoted emphasis markers literal inside inline code', () => {
-    act(() => {
-      renderer.root.render(
-        <BaseMarkdownRendererEntry
-          content="示例：`遇到的**“不定式”**问题。`"
-          isLoading={false}
-          onImageClick={vi.fn()}
-          onOpenHtmlPreview={vi.fn()}
-          expandCodeBlocksByDefault={false}
-          isMermaidRenderingEnabled={false}
-          isGraphvizRenderingEnabled={false}
-          themeId="pearl"
-          onOpenSidePanel={vi.fn()}
-        />,
-      );
-    });
+    renderMarkdown({ content: '示例：`遇到的**“不定式”**问题。`' });
 
     const code = renderer.container.querySelector('code');
 

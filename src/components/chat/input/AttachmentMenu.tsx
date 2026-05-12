@@ -1,8 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, FolderUp } from 'lucide-react';
-import { useI18n } from '../../../contexts/I18nContext';
-import type { AttachmentAction } from '../../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import type { AttachmentAction } from '@/types';
 import {
   IconUpload,
   IconGallery,
@@ -13,13 +13,13 @@ import {
   IconFileEdit,
   IconZip,
   IconYoutube,
-} from '../../icons/CustomIcons';
+} from '@/components/icons/CustomIcons';
 import {
   CHAT_INPUT_BUTTON_CLASS,
   MENU_ITEM_BUTTON_CLASS,
   MENU_ITEM_DEFAULT_STATE_CLASS,
-} from '../../../constants/appConstants';
-import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
+} from '@/constants/appConstants';
+import { usePortaledMenu } from '@/hooks/ui/usePortaledMenu';
 import { useChatInputActionsContext } from './ChatInputContext';
 
 const attachIconSize = 20;

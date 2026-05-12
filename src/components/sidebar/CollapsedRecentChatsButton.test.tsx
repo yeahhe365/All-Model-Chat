@@ -2,8 +2,8 @@ import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { SavedChatSession } from '../../types';
-import { createChatSettings } from '../../test/factories';
+import type { SavedChatSession } from '@/types';
+import { createChatSettings } from '@/test/factories';
 import { CollapsedRecentChatsButton } from './CollapsedRecentChatsButton';
 
 const createSession = (id: string, timestamp: string): SavedChatSession => ({

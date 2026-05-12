@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createUploadedFile } from '../../test/factories';
+import { createUploadedFile } from '@/test/factories';
 
 const { mockMarkdownFileViewer, mockSettingsState } = vi.hoisted(() => ({
   mockMarkdownFileViewer: vi.fn(
@@ -30,19 +30,19 @@ const { mockMarkdownFileViewer, mockSettingsState } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../stores/settingsStore', () => ({
+vi.mock('@/stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
 }));
 
-vi.mock('../shared/Modal', () => ({
+vi.mock('@/components/shared/Modal', () => ({
   Modal: ({ children }: { children: React.ReactNode }) => <div data-testid="modal-shell">{children}</div>,
 }));
 
-vi.mock('../shared/file-preview/MarkdownFileViewer', () => ({
+vi.mock('@/components/shared/file-preview/MarkdownFileViewer', () => ({
   MarkdownFileViewer: mockMarkdownFileViewer,
 }));
 
-vi.mock('../../utils/export/core', () => ({
+vi.mock('@/utils/export/core', () => ({
   triggerDownload: vi.fn(),
 }));
 

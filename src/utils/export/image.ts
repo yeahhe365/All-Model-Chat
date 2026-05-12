@@ -1,5 +1,6 @@
+import { logService } from '@/services/logService';
 import { triggerDownload } from './core';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
 import { createSnapshotContainer, createExportDOMHeader, sanitizeDocumentStylesForPngExport } from './dom';
 
 export interface PngExportMessages {
@@ -48,14 +49,14 @@ export const exportElementAsPng = async (
   // Reduce scale if height is too large
   if (height * targetScale > MAX_CANVAS_HEIGHT) {
     targetScale = MAX_CANVAS_HEIGHT / height;
-    console.warn(`[Export] Content too tall, reducing scale to ${targetScale.toFixed(2)}`);
+    logService.warn(`[Export] Content too tall, reducing scale to ${targetScale.toFixed(2)}`);
   }
 
   // Reduce scale if total area is too large
   if (width * targetScale * (height * targetScale) > MAX_CANVAS_AREA) {
     const areaRatio = MAX_CANVAS_AREA / (width * height);
     targetScale = Math.min(targetScale, Math.sqrt(areaRatio));
-    console.warn(`[Export] Area too large, reducing scale to ${targetScale.toFixed(2)}`);
+    logService.warn(`[Export] Area too large, reducing scale to ${targetScale.toFixed(2)}`);
   }
 
   // Minimum scale floor
@@ -95,12 +96,12 @@ export const exportElementAsPng = async (
       triggerDownload(url, filename);
       return true;
     } else {
-      console.error('Canvas to Blob conversion failed (Result is null). The chat may be too long.');
+      logService.error('Canvas to Blob conversion failed (Result is null). The chat may be too long.');
       alert(options.messages.imageTooLarge);
       return false;
     }
   } catch (error) {
-    console.error('html2canvas error:', error);
+    logService.error('html2canvas error:', error);
     alert(options.messages.exportFailed(error instanceof Error ? error.message : String(error)));
     return false;
   }

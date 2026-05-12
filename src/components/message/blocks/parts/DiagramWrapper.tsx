@@ -1,9 +1,9 @@
 import React from 'react';
 import { Loader2, AlertTriangle, Download, Maximize, Code, Copy, Check, Sidebar } from 'lucide-react';
-import { UploadedFile } from '../../../../types';
-import { useCopyToClipboard } from '../../../../hooks/useCopyToClipboard';
-import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../../constants/appConstants';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { type UploadedFile } from '@/types';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
+import { MESSAGE_BLOCK_BUTTON_CLASS } from '@/constants/appConstants';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface DiagramWrapperProps {
   title: string;

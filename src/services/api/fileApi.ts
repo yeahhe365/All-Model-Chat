@@ -1,6 +1,6 @@
 import type { File as GeminiFile } from '@google/genai';
 import { getConfiguredApiBaseUrl, getConfiguredApiClient, getConfiguredProxyBaseUrl } from './apiClient';
-import { logService } from '../logService';
+import { logService } from '@/services/logService';
 
 const ABORT_ERROR_MESSAGE = 'Upload cancelled by user.';
 const MAX_UPLOAD_CHUNK_SIZE = 8 * 1024 * 1024;

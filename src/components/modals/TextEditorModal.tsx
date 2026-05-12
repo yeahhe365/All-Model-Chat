@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { X, Check } from 'lucide-react';
 import { TextEditorModalShell } from './TextEditorModalShell';
-import { FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '../../constants/appConstants';
+import { FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '@/constants/appConstants';
 
 interface TextEditorModalProps {
   isOpen: boolean;

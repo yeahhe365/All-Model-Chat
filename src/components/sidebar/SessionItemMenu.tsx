@@ -1,12 +1,12 @@
 import React from 'react';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { SquarePen, Trash2, Pin, PinOff, Download, Copy } from 'lucide-react';
-import { SavedChatSession } from '../../types';
+import { type SavedChatSession } from '@/types';
 import {
   MENU_ITEM_BUTTON_CLASS,
   MENU_ITEM_DEFAULT_STATE_CLASS,
   MENU_ITEM_DANGER_STATE_CLASS,
-} from '../../constants/appConstants';
+} from '@/constants/appConstants';
 
 interface SessionItemMenuProps {
   session: SavedChatSession;

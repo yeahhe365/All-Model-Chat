@@ -1,15 +1,16 @@
+import { logService } from '@/services/logService';
 import React, { useMemo, useState } from 'react';
-import { ChatMessage, AppSettings, SideViewContent, UploadedFile } from '../../../types';
-import { getGeminiKeyForRequest } from '../../../utils/apiUtils';
-import { parseThoughtProcess } from '../../../utils/chat/parsing';
-import { translateTextApi } from '../../../services/api/generation/textApi';
-import { DEFAULT_CHAT_SETTINGS, DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '../../../constants/appConstants';
-import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
+import { type ChatMessage, type AppSettings, type SideViewContent, type UploadedFile } from '@/types';
+import { getGeminiKeyForRequest } from '@/utils/apiUtils';
+import { parseThoughtProcess } from '@/utils/chat/parsing';
+import { translateTextApi } from '@/services/api/generation/textApi';
+import { DEFAULT_CHAT_SETTINGS, DEFAULT_THOUGHT_TRANSLATION_MODEL_ID } from '@/constants/appConstants';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 import { ThinkingHeader } from './thoughts/ThinkingHeader';
 import { ThinkingActions } from './thoughts/ThinkingActions';
 import { ThoughtContent } from './thoughts/ThoughtContent';
-import { useMessageStream } from '../../../hooks/ui/useMessageStream';
-import { extractRawThinkingBlocks } from '../../../utils/chat/reasoning';
+import { useMessageStream } from '@/hooks/ui/useMessageStream';
+import { extractRawThinkingBlocks } from '@/utils/chat/reasoning';
 
 interface MessageThoughtsProps {
   message: ChatMessage;
@@ -79,7 +80,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
       const tempSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
       const keyResult = getGeminiKeyForRequest(appSettings, tempSettings, { skipIncrement: true });
       if ('error' in keyResult) {
-        console.error('API Key error for translation:', keyResult.error);
+        logService.error('API Key error for translation:', keyResult.error);
         return;
       }
 
@@ -92,7 +93,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
       setTranslatedThoughts(result);
       setIsShowingTranslation(true);
     } catch (error) {
-      console.error('Failed to translate thoughts:', error);
+      logService.error('Failed to translate thoughts:', error);
     } finally {
       setIsTranslatingThoughts(false);
     }

@@ -1,5 +1,6 @@
+import { logService } from '@/services/logService';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { getTranslator } from '../../i18n/translations';
+import { getTranslator } from '@/i18n/translations';
 
 interface Props {
   children: ReactNode;
@@ -21,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    logService.error('[ErrorBoundary] Caught error.', { error, componentStack: errorInfo.componentStack });
   }
 
   render() {

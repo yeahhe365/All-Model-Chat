@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand';
 import type { StateStorage } from 'zustand/middleware';
 import { broadcastSyncMessage, getChatSyncChannel } from './chatSyncChannel';
-import type { SyncMessage } from '../types/sync';
+import type { SyncMessage } from '@/types/sync';
 
 type StorageArea = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 

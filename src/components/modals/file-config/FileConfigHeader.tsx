@@ -1,7 +1,7 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Settings2, Scissors, X } from 'lucide-react';
-import { FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '../../../constants/appConstants';
+import { FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '@/constants/appConstants';
 
 interface FileConfigHeaderProps {
   onClose: () => void;

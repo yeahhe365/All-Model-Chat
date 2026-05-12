@@ -1,6 +1,6 @@
 import { useRef, useEffect, useMemo } from 'react';
 import type { Part, Session as LiveSession } from '@google/genai';
-import type { AppSettings, ChatSettings, LiveClientFunctions, UploadedFile } from '../types';
+import type { AppSettings, ChatSettings, LiveClientFunctions, UploadedFile } from '@/types';
 import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
 import { useLiveConfig } from './live-api/useLiveConfig';
@@ -9,8 +9,8 @@ import { useLiveConnection } from './live-api/useLiveConnection';
 import { useLiveFrameCapture } from './live-api/useLiveFrameCapture';
 import { resolveLiveErrorText } from './live-api/liveErrorState';
 import { useBackgroundKeepAlive } from './core/useBackgroundKeepAlive';
-import { useI18n } from '../contexts/I18nContext';
-import { getGeminiKeyForRequest, SERVER_MANAGED_API_KEY } from '../utils/apiUtils';
+import { useI18n } from '@/contexts/I18nContext';
+import { getGeminiKeyForRequest, SERVER_MANAGED_API_KEY } from '@/utils/apiUtils';
 import { useStateWithRef } from './useStateWithRef';
 
 interface UseLiveAPIProps {

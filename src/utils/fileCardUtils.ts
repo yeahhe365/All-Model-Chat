@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
 import { Edit3, Scissors, Settings2, SlidersHorizontal } from 'lucide-react';
-import type { UploadedFile } from '../types';
+import type { UploadedFile } from '@/types';
 import { getFileTypeCategory } from './uiUtils';
 
 interface FileCardMetaOptions {

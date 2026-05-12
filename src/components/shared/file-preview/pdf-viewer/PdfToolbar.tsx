@@ -1,7 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw, PanelLeft } from 'lucide-react';
-import { FloatingToolbar, ToolbarButton, ToolbarDivider, ToolbarLabel } from '../FloatingToolbar';
-import { useI18n } from '../../../../contexts/I18nContext';
+import {
+  FloatingToolbar,
+  ToolbarButton,
+  ToolbarDivider,
+  ToolbarLabel,
+} from '@/components/shared/file-preview/FloatingToolbar';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PdfToolbarProps {
   currentPage: number;

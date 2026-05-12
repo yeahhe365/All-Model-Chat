@@ -1,12 +1,13 @@
 import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { logService } from '@/services/logService';
 import { setupTestRenderer } from '@/test/testUtils';
 import {
   HTML_PREVIEW_CLEAR_SELECTION_EVENT,
   HTML_PREVIEW_DIAGNOSTIC_EVENT,
   HTML_PREVIEW_MESSAGE_CHANNEL,
   HTML_PREVIEW_STREAM_RENDER_EVENT,
-} from '../../../utils/htmlPreview';
+} from '@/utils/htmlPreview';
 import { ArtifactFrame } from './ArtifactFrame';
 
 const createRect = (overrides: Partial<DOMRect> = {}): DOMRect =>
@@ -232,11 +233,13 @@ describe('ArtifactFrame', () => {
   });
 
   it('logs preview diagnostics reported by the sandboxed iframe', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(logService, 'warn').mockImplementation(() => {});
 
     try {
       act(() => {
-        renderer.root.render(<ArtifactFrame html="<section><img src='https://example.com/missing.png' alt='Missing'></section>" />);
+        renderer.root.render(
+          <ArtifactFrame html="<section><img src='https://example.com/missing.png' alt='Missing'></section>" />,
+        );
       });
 
       const iframe = renderer.container.querySelector('iframe');

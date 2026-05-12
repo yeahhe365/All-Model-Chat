@@ -1,9 +1,9 @@
 import { act, type SetStateAction } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppViewModel } from '../../hooks/app/useApp';
-import type { AppSettings } from '../../types';
+import type { AppViewModel } from '@/hooks/app/useApp';
+import type { AppSettings } from '@/types';
 import { renderHook } from '@/test/testUtils';
-import { createAppSettings, createChatSettings, createTheme } from '../../test/factories';
+import { createAppSettings, createChatSettings, createTheme } from '@/test/factories';
 import { useChatRuntimeValues } from './chat-runtime/ChatRuntimeContext';
 
 const mockStores = vi.hoisted(() => {
@@ -29,15 +29,15 @@ const mockStores = vi.hoisted(() => {
   };
 });
 
-vi.mock('../../stores/uiStore', () => ({
+vi.mock('@/stores/uiStore', () => ({
   useUIStore: (selector: (state: typeof mockStores.ui) => unknown) => selector(mockStores.ui),
 }));
 
-vi.mock('../../stores/chatStore', () => ({
+vi.mock('@/stores/chatStore', () => ({
   useChatStore: mockStores.useChatStoreMock,
 }));
 
-vi.mock('../../utils/shortcutUtils', () => ({
+vi.mock('@/utils/shortcutUtils', () => ({
   getShortcutDisplay: vi.fn(() => 'shortcut'),
 }));
 

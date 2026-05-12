@@ -2,7 +2,7 @@ import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it } from 'vitest';
 import { MessageFiles } from './MessageFiles';
-import { createUploadedFile } from '../../../test/factories';
+import { createUploadedFile } from '@/test/factories';
 
 const createImageFile = (id: string, name: string) =>
   createUploadedFile({

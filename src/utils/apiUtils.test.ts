@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from './../constants/appConstants';
-import { ChatSettings } from './../types';
+import { type ChatSettings } from './../types';
 import {
   getGeminiKeyForRequest,
   getKeyForRequest,
@@ -10,7 +10,7 @@ import {
 import { logService } from './../services/logService';
 
 vi.mock('./../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../test/moduleMockDoubles');
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

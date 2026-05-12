@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
-import { useChatInput } from '../../../hooks/chat-input/useChatInput';
-import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
+import { useI18n } from '@/contexts/I18nContext';
+import { useChatInput } from '@/hooks/chat-input/useChatInput';
+import { INITIAL_TEXTAREA_HEIGHT_PX } from '@/hooks/chat-input/useChatInputState';
 import {
   ChatInputActionsContext,
   ChatInputComposerStatusContext,

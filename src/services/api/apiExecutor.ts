@@ -1,5 +1,5 @@
 import type { GoogleGenAI } from '@google/genai';
-import { logService } from '../logService';
+import { logService } from '@/services/logService';
 import { getConfiguredApiClient, type ClientHttpOptions } from './apiClient';
 
 type ApiExecutorContext = {

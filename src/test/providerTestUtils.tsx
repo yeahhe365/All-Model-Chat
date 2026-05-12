@@ -2,9 +2,9 @@
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
 import { render as testingLibraryRender } from '@testing-library/react';
 import type { RenderOptions } from '@testing-library/react';
-import { I18nProvider } from '../contexts/I18nContext';
-import { WindowProvider } from '../contexts/WindowContext';
-import { useSettingsStore } from '../stores/settingsStore';
+import { I18nProvider } from '@/contexts/I18nContext';
+import { WindowProvider } from '@/contexts/WindowContext';
+import { useSettingsStore } from '@/stores/settingsStore';
 import {
   createTestRenderer,
   renderHook,

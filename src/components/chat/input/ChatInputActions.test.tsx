@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createChatInputActionsContextValue,
   createChatInputComposerStatusContextValue,
-} from '../../../test/chatInputContextFixtures';
+} from '@/test/chatInputContextFixtures';
 
 const attachmentMenuMock = vi.fn();
 const toolsMenuMock = vi.fn();

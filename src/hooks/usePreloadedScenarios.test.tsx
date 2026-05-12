@@ -1,9 +1,9 @@
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
-import { SYSTEM_SCENARIO_IDS } from '../features/scenarios/scenarioLibrary';
-import type { SavedChatSession } from '../types';
-import { createNewSession } from '../utils/chat/session';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import { SYSTEM_SCENARIO_IDS } from '@/features/scenarios/scenarioLibrary';
+import type { SavedChatSession } from '@/types';
+import { createNewSession } from '@/utils/chat/session';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 import { renderHook } from '@/test/testUtils';
 
@@ -31,16 +31,16 @@ const { localStorageMock } = vi.hoisted(() => {
 });
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule();
 });
 
-vi.mock('../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: () => 'generated-id',
 }));
 
-vi.mock('../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   generateSessionTitle: () => 'Generated title',
   createNewSession: vi.fn((settings, messages, title) => ({
     id: 'new-session',
@@ -51,8 +51,8 @@ vi.mock('../utils/chat/session', () => ({
   })),
 }));
 
-vi.mock('../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
+import { CHAT_INPUT_BUTTON_CLASS } from '@/constants/appConstants';
 import type { ComposerAuxiliaryAction } from './useComposerAuxiliaryActions';
 
 export const UtilityControls: React.FC<{ actions: ComposerAuxiliaryAction[] }> = ({ actions }) => {

@@ -4,8 +4,8 @@ import {
   socraticScenario,
   succinctScenario,
   voxelScenario,
-} from '../../constants/defaultScenarios';
-import { SavedScenario } from '../../types';
+} from '@/constants/defaultScenarios';
+import { type SavedScenario } from '@/types';
 
 type ScenarioSeedStorage = Pick<Storage, 'getItem' | 'setItem'>;
 

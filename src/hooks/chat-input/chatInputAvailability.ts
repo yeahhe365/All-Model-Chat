@@ -1,4 +1,4 @@
-import type { UploadedFile } from '../../types';
+import type { UploadedFile } from '@/types';
 import { hasSendableChatInputContent } from './chatInputUtils';
 import { getChatInputMode, type ChatInputMachineState } from './chatInputStateMachine';
 import { areFilesStillProcessing } from './pendingSubmissionUtils';

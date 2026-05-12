@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { setupTestRenderer } from '@/test/testUtils';
 import { describe, expect, it } from 'vitest';
-import { setupStoreStateReset } from '../test/storeTestUtils';
-import { useSettingsStore } from '../stores/settingsStore';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { I18nProvider, useI18n } from './I18nContext';
 
 const TranslationProbe = () => {

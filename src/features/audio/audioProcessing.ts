@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 import { decodeBase64ToArrayBuffer } from '@/utils/fileHelpers';
 import { createManagedObjectUrl } from '@/services/objectUrlManager';
 
@@ -172,7 +173,7 @@ export const getMixedAudioStream = async (
 
     // Check if audio track exists (user might have unchecked "Share Audio")
     if (displayStream.getAudioTracks().length === 0) {
-      console.warn("System audio not shared (user might have unchecked 'Share Audio').");
+      logService.warn("System audio not shared (user might have unchecked 'Share Audio').");
       displayStream.getTracks().forEach((t) => t.stop());
       return { stream: micStream, cleanup: () => {}, warning: SYSTEM_AUDIO_NOT_SHARED_WARNING };
     }
@@ -194,13 +195,13 @@ export const getMixedAudioStream = async (
         displayStream.getTracks().forEach((t) => t.stop());
         ctx.close().catch(() => {});
       } catch (e) {
-        console.error('Error cleaning up mixed stream:', e);
+        logService.error('Error cleaning up mixed stream:', e);
       }
     };
 
     return { stream: dest.stream, cleanup };
   } catch (error) {
-    console.warn('System audio capture cancelled or failed:', error);
+    logService.warn('System audio capture cancelled or failed:', error);
     // Fallback to mic only
     return { stream: micStream, cleanup: () => {}, warning: SYSTEM_AUDIO_CAPTURE_FAILED_WARNING };
   }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { renderWithChatAreaProviders } from '../../../test/chatAreaFixtures';
+import { renderWithChatAreaProviders } from '@/test/chatAreaFixtures';
 import { ChatInputProvider } from './ChatInputProvider';
 import { useChatInputActionsContext, useChatInputContext } from './ChatInputContext';
 

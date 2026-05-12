@@ -1,7 +1,7 @@
 import React from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Sparkles } from 'lucide-react';
-import { Select } from '../../../shared/Select';
+import { Select } from '@/components/shared/Select';
 
 const AspectRatioIcon = ({ ratio, className }: { ratio: string; className?: string }) => {
   if (ratio === 'Auto') {

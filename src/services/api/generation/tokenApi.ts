@@ -1,6 +1,6 @@
-import { getHttpOptionsForContents } from '../apiClient';
-import { executeConfiguredApiRequest } from '../apiExecutor';
-import { logService } from '../../logService';
+import { getHttpOptionsForContents } from '@/services/api/apiClient';
+import { executeConfiguredApiRequest } from '@/services/api/apiExecutor';
+import { logService } from '@/services/logService';
 import type { ContentListUnion, CountTokensConfig, CountTokensResponse, Part } from '@google/genai';
 
 const sanitizeCountTokensConfig = (config?: CountTokensConfig): CountTokensConfig | undefined => {

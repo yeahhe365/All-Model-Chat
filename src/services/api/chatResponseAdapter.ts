@@ -1,6 +1,6 @@
 import type { FunctionCall, GenerateContentResponse, Part, UsageMetadata } from '@google/genai';
-import type { ThoughtSupportingPart } from '../../types';
-import { extractGemmaThoughtChannel } from '../../utils/chat/reasoning';
+import type { ThoughtSupportingPart } from '@/types';
+import { extractGemmaThoughtChannel } from '@/utils/chat/reasoning';
 import {
   mergeGroundingMetadata as mergeSharedGroundingMetadata,
   type MetadataWithCitations,

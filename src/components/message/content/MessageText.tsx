@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
-import { useI18n } from '../../../contexts/I18nContext';
-import { LazyMarkdownRenderer } from '../LazyMarkdownRenderer';
-import { GroundedResponse } from '../GroundedResponse';
-import { GoogleSpinner } from '../../icons/GoogleSpinner';
-import { extractPreviewableCodeBlock, normalizePreviewableMarkdownContent } from '../../../utils/codeUtils';
-import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
-import { useMessageStream } from '../../../hooks/ui/useMessageStream';
-import { extractRawThinkingBlocks } from '../../../utils/chat/reasoning';
-import type { LiveArtifactFollowupPayload } from '../../../utils/liveArtifactFollowup';
+import { type ChatMessage, type UploadedFile, type AppSettings, type SideViewContent } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { LazyMarkdownRenderer } from '@/components/message/LazyMarkdownRenderer';
+import { GroundedResponse } from '@/components/message/GroundedResponse';
+import { GoogleSpinner } from '@/components/icons/GoogleSpinner';
+import { extractPreviewableCodeBlock, normalizePreviewableMarkdownContent } from '@/utils/codeUtils';
+import { useSmoothStreaming } from '@/hooks/ui/useSmoothStreaming';
+import { useMessageStream } from '@/hooks/ui/useMessageStream';
+import { extractRawThinkingBlocks } from '@/utils/chat/reasoning';
+import type { LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
 
 interface MessageTextProps {
   message: ChatMessage;

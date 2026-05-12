@@ -225,8 +225,11 @@ Notes:
 | `RUNTIME_USE_CUSTOM_API_CONFIG` | Enables custom API configuration by default                                                      | Public runtime config | `true`                                      |
 | `RUNTIME_USE_API_PROXY`         | Enables API proxy mode by default                                                                | Public runtime config | `true`                                      |
 | `RUNTIME_API_PROXY_URL`         | Default Gemini proxy URL for the frontend                                                        | Public runtime config | `/api/gemini`                               |
+| `RUNTIME_PYODIDE_BASE_URL`      | Optional Pyodide runtime asset URL; when blank, same-origin `/pyodide/` is used                  | Public runtime config | Empty                                       |
 
 The `RUNTIME_*` values are written into `runtime-config.js` at container startup and are readable by the browser. Only put public configuration there. The public/runtime-config.js template is used for static builds and keeps custom API configuration and proxy mode disabled by default; Docker overwrites it through `docker/web-entrypoint.sh` using the defaults above.
+
+Pyodide assets are copied to `dist/pyodide/` during production builds and load from same-origin `/pyodide/` by default. To use a CDN or a separate static host, set `RUNTIME_PYODIDE_BASE_URL` to a full directory URL such as `https://cdn.jsdelivr.net/pyodide/v0.25.1/full/`. The PWA precache excludes large `pyodide/` assets by default, so local Python loads them on demand the first time it runs.
 
 Docker defaults to BYOK: after you enter an API key in Settings, regular Gemini proxy requests use the browser-provided key, and Live API uses the browser-local key directly to open the official Live WebSocket connection. AMC no longer mints a backend Live token.
 
@@ -293,6 +296,7 @@ npm run lint
 npm run test
 npm run knip
 npm run build
+npm run build:api
 
 # Or run the full verification pipeline
 npm run verify
@@ -349,6 +353,16 @@ Live API uses the browser-local API key to connect directly to the official Live
 ## Project Structure
 
 Core frontend areas include `src/components/`, `src/features/`, `src/hooks/`, `src/services/`, `src/pwa/`, `src/schemas/`, and `src/test/`.
+
+Placement rules:
+
+- `src/components/` contains renderable UI and UI-specific view models; reusable controls belong in `components/shared/`.
+- `src/features/` contains domain capability boundaries such as message sending, local Python, audio processing, and the standard chat tool loop.
+- `src/hooks/` contains React orchestration; hooks that are only a React entry point for one domain should keep naming close to that domain.
+- `src/services/` contains external-system and persistence boundaries such as API clients, IndexedDB, logging, and object URL lifecycle management.
+- `src/utils/` contains pure utilities without React state or external side effects; multi-file domain utilities should use a subdirectory.
+- `src/test/architecture/` contains structure and style guardrail tests that keep cleaned-up problems from returning.
+- Cross-directory imports inside `src` use the `@/` alias; same-directory imports keep `./`.
 
 ```text
 AMC-WebUI/

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/refs */
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { convertHtmlToMarkdown } from '@/utils/htmlToMarkdown';
 import { copySelectionTextToClipboardEvent } from './selectionClipboard';
 import {
   dispatchLiveArtifactClearSelection,

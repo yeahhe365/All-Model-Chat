@@ -1,6 +1,6 @@
 import { createContext, useContext, type Context } from 'react';
-import { useChatInput } from '../../../hooks/chat-input/useChatInput';
-import type { AttachmentAction } from '../../../types';
+import { type useChatInput } from '@/hooks/chat-input/useChatInput';
+import type { AttachmentAction } from '@/types';
 
 type ChatInputLogic = ReturnType<typeof useChatInput>;
 

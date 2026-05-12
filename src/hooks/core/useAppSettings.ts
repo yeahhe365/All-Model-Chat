@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { applyThemeToDocument } from '../../utils/uiUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { applyThemeToDocument } from '@/utils/uiUtils';
 
 export const useAppSettings = () => {
   const appSettings = useSettingsStore((s) => s.appSettings);

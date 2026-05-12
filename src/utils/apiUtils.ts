@@ -1,6 +1,6 @@
-import { AppSettings, ChatSettings } from '../types';
-import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
-import { logService } from '../services/logService';
+import { type AppSettings, type ChatSettings } from '@/types';
+import { API_KEY_LAST_USED_INDEX_KEY } from '@/constants/appConstants';
+import { logService } from '@/services/logService';
 import { isOpenAICompatibleApiActive } from './openaiCompatibleMode';
 
 export const SERVER_MANAGED_API_KEY = '__SERVER_MANAGED_API_KEY__';

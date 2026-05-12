@@ -1,9 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { buildImportContextFile } from '../../utils/import-context/importContextBuilder';
-import { processDroppedItems } from '../../utils/import-context/droppedItems';
-import { UploadedFile } from '../../types';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { useI18n } from '../../contexts/I18nContext';
+import { logService } from '@/services/logService';
+import type React from 'react';
+import { useState, useCallback } from 'react';
+import { buildImportContextFile } from '@/utils/import-context/importContextBuilder';
+import { processDroppedItems } from '@/utils/import-context/droppedItems';
+import { type UploadedFile } from '@/types';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseFileDragDropProps {
   onFilesDropped: (files: FileList | File[]) => Promise<void>;
@@ -102,7 +104,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
           }
         }
       } catch (error) {
-        console.error('Error processing dropped files:', error);
+        logService.error('Error processing dropped files:', error);
       } finally {
         setIsProcessingDrop(false);
       }

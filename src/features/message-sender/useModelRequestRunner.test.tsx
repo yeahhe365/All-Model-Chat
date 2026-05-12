@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook } from '@/test/testUtils';
-import type { SavedChatSession } from '../../types';
+import type { SavedChatSession } from '@/types';
 import { createAppSettings, createChatSettings, createUploadedFile } from '@/test/factories';
 import { useModelRequestRunner } from './useModelRequestRunner';
 
@@ -9,16 +9,16 @@ const { mockGetKeyForRequest, mockGenerateUniqueId } = vi.hoisted(() => ({
   mockGenerateUniqueId: vi.fn(),
 }));
 
-vi.mock('../../utils/apiUtils', () => ({
+vi.mock('@/utils/apiUtils', () => ({
   getKeyForRequest: mockGetKeyForRequest,
 }));
 
-vi.mock('../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: mockGenerateUniqueId,
 }));
 
-vi.mock('../../constants/appConstants', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../constants/appConstants')>();
+vi.mock('@/constants/appConstants', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/constants/appConstants')>();
   return {
     ...actual,
     DEFAULT_CHAT_SETTINGS: { modelId: 'default-model', temperature: 0.3 },

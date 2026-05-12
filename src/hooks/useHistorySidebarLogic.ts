@@ -1,9 +1,10 @@
+import { logService } from '@/services/logService';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { SavedChatSession, ChatGroup } from '../types';
-import { useWindowContext } from '../contexts/WindowContext';
-import { useI18n } from '../contexts/I18nContext';
+import { type SavedChatSession, type ChatGroup } from '@/types';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { dbService } from '@/services/db/dbService';
-import { FOCUS_HISTORY_SEARCH_EVENT } from '../constants/shortcuts';
+import { FOCUS_HISTORY_SEARCH_EVENT } from '@/constants/shortcuts';
 
 type HistoryTranslator = (key: string) => string;
 
@@ -165,7 +166,7 @@ export const useHistorySidebarLogic = ({
         const ids = await dbService.searchSessions(trimmedQuery);
         setSearchResults({ query: trimmedQuery, ids: new Set(ids) });
       } catch (e) {
-        console.error('Search error', e);
+        logService.error('Search error', e);
       }
     }, 300);
 

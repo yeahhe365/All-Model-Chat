@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import type { AppSettings } from '../../types';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import type { AppSettings } from '@/types';
 import {
   buildFileUploadPreflight,
   checkBatchNeedsApiKey,
@@ -9,7 +9,7 @@ import {
   shouldUseFileApi,
 } from './utils';
 
-vi.mock('../../utils/fileHelpers', () => ({
+vi.mock('@/utils/fileHelpers', () => ({
   isTextFile: (file: { name: string; type: string }) => {
     const lowerName = file.name.toLowerCase();
     return (

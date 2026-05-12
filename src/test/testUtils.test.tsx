@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { useI18n } from '../contexts/I18nContext';
-import { useWindowContext } from '../contexts/WindowContext';
+import { useI18n } from '@/contexts/I18nContext';
+import { useWindowContext } from '@/contexts/WindowContext';
 import { createDeferred, createTestRenderer, flushPromises, render, renderHook, setupTestRenderer } from './testUtils';
 import { renderHookWithProviders, renderWithProviders, setupProviderTestRenderer } from './providerTestUtils';
 

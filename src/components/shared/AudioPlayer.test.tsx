@@ -3,7 +3,7 @@ import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
 import { AudioPlayer } from './AudioPlayer';
 
-vi.mock('../../utils/export/core', () => ({
+vi.mock('@/utils/export/core', () => ({
   triggerDownload: vi.fn(),
 }));
 

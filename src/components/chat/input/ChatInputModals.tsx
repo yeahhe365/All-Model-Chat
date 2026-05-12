@@ -1,10 +1,10 @@
 import React from 'react';
-import { AudioRecorder } from '../../modals/AudioRecorder';
-import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
-import { HelpModal } from '../../modals/HelpModal';
-import { TextEditorModal } from '../../modals/TextEditorModal';
-import { CommandInfo, UploadedFile } from '../../../types';
-import { useI18n } from '../../../contexts/I18nContext';
+import { AudioRecorder } from '@/components/modals/AudioRecorder';
+import { CreateTextFileEditor } from '@/components/modals/CreateTextFileEditor';
+import { HelpModal } from '@/components/modals/HelpModal';
+import { TextEditorModal } from '@/components/modals/TextEditorModal';
+import { type CommandInfo, type UploadedFile } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface ChatInputModalsProps {
   showRecorder: boolean;

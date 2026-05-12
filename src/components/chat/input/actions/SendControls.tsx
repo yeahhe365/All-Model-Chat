@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Edit2, ArrowUp, CornerDownLeft, Ban } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { IconStop } from '../../../icons/CustomIcons';
-import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
-import { useChatInputRuntime } from '../../../layout/chat-runtime/ChatRuntimeContext';
-import { useChatStore } from '../../../../stores/chatStore';
-import { useChatInputActionsContext, useChatInputComposerStatusContext } from '../ChatInputContext';
+import { useI18n } from '@/contexts/I18nContext';
+import { IconStop } from '@/components/icons/CustomIcons';
+import { CHAT_INPUT_BUTTON_CLASS } from '@/constants/appConstants';
+import { useChatInputRuntime } from '@/components/layout/chat-runtime/ChatRuntimeContext';
+import { useChatStore } from '@/stores/chatStore';
+import {
+  useChatInputActionsContext,
+  useChatInputComposerStatusContext,
+} from '@/components/chat/input/ChatInputContext';
 
 interface Ripple {
   x: number;

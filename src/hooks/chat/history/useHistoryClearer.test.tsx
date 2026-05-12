@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
-import type { SavedChatSession } from '../../../types';
+import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
+import type { SavedChatSession } from '@/types';
 import { useHistoryClearer } from './useHistoryClearer';
 import { renderHook } from '@/test/testUtils';
 
@@ -16,18 +16,18 @@ const { dbServiceMock, cleanupFilePreviewUrlsMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../../../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule(dbServiceMock);
 });
 
-vi.mock('../../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
-vi.mock('../../../utils/fileHelpers', () => ({
+vi.mock('@/utils/fileHelpers', () => ({
   cleanupFilePreviewUrls: cleanupFilePreviewUrlsMock,
 }));
 

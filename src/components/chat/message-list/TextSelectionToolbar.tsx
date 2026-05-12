@@ -1,12 +1,13 @@
+import { logService } from '@/services/logService';
 import React, { useEffect, useRef, useState } from 'react';
-import { translations } from '@/i18n/translations';
-import { useSettingsStore } from '../../../stores/settingsStore';
+import { type translations } from '@/i18n/translations';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 // Hooks
-import { useSelectionPosition } from '../../../hooks/text-selection/useSelectionPosition';
-import { useSelectionDrag } from '../../../hooks/text-selection/useSelectionDrag';
-import { useSelectionAudio } from '../../../hooks/text-selection/useSelectionAudio';
-import { writeSelectionTextToClipboard } from '../../../hooks/text-selection/selectionClipboard';
+import { useSelectionPosition } from '@/hooks/text-selection/useSelectionPosition';
+import { useSelectionDrag } from '@/hooks/text-selection/useSelectionDrag';
+import { useSelectionAudio } from '@/hooks/text-selection/useSelectionAudio';
+import { writeSelectionTextToClipboard } from '@/hooks/text-selection/selectionClipboard';
 
 // Components
 import { ToolbarContainer } from './text-selection/ToolbarContainer';
@@ -118,7 +119,7 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({
         audioState.play(url);
       }
     } catch (err) {
-      console.error('TTS Failed:', err);
+      logService.error('TTS Failed:', err);
     } finally {
       audioState.setIsLoading(false);
     }

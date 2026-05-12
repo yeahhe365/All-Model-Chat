@@ -1,7 +1,7 @@
 import { renderHook } from '@/test/testUtils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import type { SavedChatSession } from '../../types';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import type { SavedChatSession } from '@/types';
 import { useAutoTitling } from './useAutoTitling';
 
 const { generateTitleApiMock, getGeminiKeyForRequestMock } = vi.hoisted(() => ({
@@ -9,16 +9,16 @@ const { generateTitleApiMock, getGeminiKeyForRequestMock } = vi.hoisted(() => ({
   getGeminiKeyForRequestMock: vi.fn(),
 }));
 
-vi.mock('../../services/api/generation/textApi', () => ({
+vi.mock('@/services/api/generation/textApi', () => ({
   generateTitleApi: generateTitleApiMock,
 }));
 
-vi.mock('../../utils/apiUtils', () => ({
+vi.mock('@/utils/apiUtils', () => ({
   getGeminiKeyForRequest: getGeminiKeyForRequestMock,
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

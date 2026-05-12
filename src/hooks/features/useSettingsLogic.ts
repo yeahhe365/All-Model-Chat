@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
-import { AppSettings } from '../../types';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { logService } from '../../services/logService';
-import { resolveModelSwitchSettings } from '../../utils/modelHelpers';
-import { translations } from '@/i18n/translations';
-import { useSettingsUiStore, type SettingsTab, type SettingsTabDescriptor } from '../../stores/settingsUiStore';
+import { type AppSettings } from '@/types';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import { logService } from '@/services/logService';
+import { resolveModelSwitchSettings } from '@/utils/modelHelpers';
+import { type translations } from '@/i18n/translations';
+import { useSettingsUiStore, type SettingsTab, type SettingsTabDescriptor } from '@/stores/settingsUiStore';
 
 export type { SettingsTab, SettingsTabDescriptor };
 

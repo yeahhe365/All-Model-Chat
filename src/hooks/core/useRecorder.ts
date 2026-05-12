@@ -1,6 +1,7 @@
+import { logService } from '@/services/logService';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getMixedAudioStream } from '@/features/audio/audioProcessing';
-import { getTranslator } from '../../i18n/translations';
+import { getTranslator } from '@/i18n/translations';
 
 type RecorderStatus = 'idle' | 'recording' | 'paused';
 
@@ -155,7 +156,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         setDuration(0);
         timerRef.current = window.setInterval(() => setDuration((d) => d + 1), 1000);
       } catch (err) {
-        console.error('Recorder error:', err);
+        logService.error('Recorder error:', err);
         const msg = permissionErrorMessage ?? getTranslator('en')('voiceInput_permission_error');
         setError(msg);
         if (onError) onError(msg);

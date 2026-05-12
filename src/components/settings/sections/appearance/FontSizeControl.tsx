@@ -1,7 +1,7 @@
 import React from 'react';
 import { Type } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { AppSettings } from '../../../../types';
+import { useI18n } from '@/contexts/I18nContext';
+import { type AppSettings } from '@/types';
 
 interface FontSizeControlProps {
   settings: AppSettings;

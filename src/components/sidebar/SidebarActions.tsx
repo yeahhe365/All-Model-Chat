@@ -1,7 +1,7 @@
 import React from 'react';
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Search, X } from 'lucide-react';
-import { IconNewChat, IconNewGroup } from '../icons/CustomIcons';
+import { IconNewChat, IconNewGroup } from '@/components/icons/CustomIcons';
 
 interface SidebarActionsProps {
   onNewChat: () => void;

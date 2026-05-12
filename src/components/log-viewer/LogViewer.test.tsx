@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import { DEFAULT_APP_SETTINGS, DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
 
 const {
   mockGetRecentLogs,
@@ -19,8 +19,8 @@ const {
   mockClearLogs: vi.fn(),
 }));
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule({
     getRecentLogs: mockGetRecentLogs,

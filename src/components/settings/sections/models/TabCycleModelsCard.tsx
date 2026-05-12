@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { ChevronDown, Keyboard } from 'lucide-react';
-import { ModelOption } from '../../../../types';
-import { getQuickSwitchModelIds, getTabCycleModelIds } from '../../../../utils/modelCatalog';
+import { type ModelOption } from '@/types';
+import { getQuickSwitchModelIds, getTabCycleModelIds } from '@/utils/modelCatalog';
 
 interface TabCycleModelsCardProps {
   availableModels: ModelOption[];

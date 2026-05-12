@@ -1,22 +1,28 @@
 import { useCallback } from 'react';
-import { logService } from '../../services/logService';
-import { SavedChatSession } from '../../types';
-import { updateMessageInSession } from '../../utils/chat/sessionMutations';
+import { logService } from '@/services/logService';
+import { type SavedChatSession } from '@/types';
+import { updateMessageInSession } from '@/utils/chat/sessionMutations';
+import { useI18n } from '@/contexts/I18nContext';
+import { formatMessageSenderText } from './i18nFormat';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
 export const useApiErrorHandler = (updateAndPersistSessions: SessionsUpdater) => {
+  const { t } = useI18n();
+
   const handleApiError = useCallback(
     (
       error: unknown,
       sessionId: string,
       modelMessageId: string,
-      errorPrefix: string = 'Error',
+      errorPrefix?: string,
       partialContent?: string,
       partialThoughts?: string,
     ) => {
+      const resolvedErrorPrefix =
+        !errorPrefix || errorPrefix === 'Error' ? t('messageSender_apiErrorPrefix') : errorPrefix;
       const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
-      logService.error(`API Error (${errorPrefix}) for message ${modelMessageId} in session ${sessionId}`, {
+      logService.error(`API Error (${resolvedErrorPrefix}) for message ${modelMessageId} in session ${sessionId}`, {
         error,
         isAborted,
       });
@@ -38,12 +44,20 @@ export const useApiErrorHandler = (updateAndPersistSessions: SessionsUpdater) =>
         return;
       }
 
-      let errorMessage = 'An unknown error occurred.';
+      let errorMessage = t('messageSender_unknownError');
       if (error instanceof Error) {
         errorMessage =
-          error.name === 'SilentError' ? 'API key is not configured in settings.' : `${errorPrefix}: ${error.message}`;
+          error.name === 'SilentError'
+            ? t('messageSender_apiKeyNotConfigured')
+            : formatMessageSenderText(t('messageSender_errorWithPrefix'), {
+                prefix: resolvedErrorPrefix,
+                message: error.message,
+              });
       } else {
-        errorMessage = `${errorPrefix}: ${String(error)}`;
+        errorMessage = formatMessageSenderText(t('messageSender_errorWithPrefix'), {
+          prefix: resolvedErrorPrefix,
+          message: String(error),
+        });
       }
 
       updateAndPersistSessions((prev) =>
@@ -58,7 +72,7 @@ export const useApiErrorHandler = (updateAndPersistSessions: SessionsUpdater) =>
         })),
       );
     },
-    [updateAndPersistSessions],
+    [t, updateAndPersistSessions],
   );
 
   return { handleApiError };

@@ -1,15 +1,21 @@
-import React, { useCallback } from 'react';
-import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
+import type React from 'react';
+import { useCallback } from 'react';
+import {
+  type AppSettings,
+  type SavedChatSession,
+  type ChatSettings as IndividualChatSettings,
+  type UploadedFile,
+} from '@/types';
 import type { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { logService } from '../../services/logService';
-import { calculateTokenStats } from '../../utils/modelHelpers';
-import { showNotification, playCompletionSound } from '../../utils/uiUtils';
+import { logService } from '@/services/logService';
+import { calculateTokenStats } from '@/utils/modelHelpers';
+import { showNotification, playCompletionSound } from '@/utils/uiUtils';
 import { finalizeMessages } from '@/features/chat-streaming/processors';
-import { streamingStore } from '../../services/streamingStore';
-import { buildExactPricingFromUsageMetadata } from '../../utils/usagePricingTelemetry';
-import { resolveChatExactPricing } from '../../utils/chatPricingEvidence';
-import { updateMessageInSession, updateSessionById } from '../../utils/chat/sessionMutations';
+import { streamingStore } from '@/services/streamingStore';
+import { buildExactPricingFromUsageMetadata } from '@/utils/usagePricingTelemetry';
+import { resolveChatExactPricing } from '@/utils/chatPricingEvidence';
+import { updateMessageInSession, updateSessionById } from '@/utils/chat/sessionMutations';
 import {
   createMessageStreamState,
   getContentDeltaFromPart,
@@ -187,7 +193,7 @@ export const useChatStreamHandler = ({
                   const notificationBody =
                     (msg.content || 'Media or tool response received').substring(0, 150) +
                     (msg.content && msg.content.length > 150 ? '...' : '');
-                  void import('../../constants/assets').then(({ APP_LOGO_SVG_DATA_URI }) => {
+                  void import('@/constants/assets').then(({ APP_LOGO_SVG_DATA_URI }) => {
                     showNotification('Response Ready', {
                       body: notificationBody,
                       icon: APP_LOGO_SVG_DATA_URI,

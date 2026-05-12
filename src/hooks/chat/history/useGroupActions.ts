@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { ChatGroup, SavedChatSession } from '../../../types';
-import { logService } from '../../../services/logService';
+import { type ChatGroup, type SavedChatSession } from '@/types';
+import { logService } from '@/services/logService';
 
 interface UseGroupActionsProps {
   updateAndPersistGroups: (updater: (prev: ChatGroup[]) => ChatGroup[]) => void | Promise<void>;

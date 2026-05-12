@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
-import { UploadedFile } from '../../../types';
+import { type UploadedFile } from '@/types';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider, ToolbarLabel } from './FloatingToolbar';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface ImageViewerProps {
   file: UploadedFile;

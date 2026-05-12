@@ -1,6 +1,6 @@
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { useClickOutside } from '../useClickOutside';
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { useWindowContext } from '@/contexts/WindowContext';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface UsePortaledMenuOptions {
   menuWidth?: number;

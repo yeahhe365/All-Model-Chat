@@ -11,7 +11,7 @@ import { LiveStatusBanner } from './LiveStatusBanner';
 import { QueuedSubmissionCard } from './QueuedSubmissionCard';
 import { HiddenFileInputs } from './HiddenFileInputs';
 import { useChatInputAreaLayout } from './useChatInputAreaLayout';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { useChatInputContext } from './ChatInputContext';
 
 export const ChatInputArea: React.FC = () => {

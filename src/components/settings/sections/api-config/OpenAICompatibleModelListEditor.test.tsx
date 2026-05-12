@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { setupStoreStateReset } from '../../../../test/storeTestUtils';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { OpenAICompatibleModelListEditor } from './OpenAICompatibleModelListEditor';
 
 describe('OpenAICompatibleModelListEditor', () => {

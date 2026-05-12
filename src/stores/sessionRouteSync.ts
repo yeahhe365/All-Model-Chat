@@ -1,4 +1,4 @@
-import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
+import { ACTIVE_CHAT_SESSION_ID_KEY } from '@/constants/appConstants';
 
 export type SessionHistoryMode = 'auto' | 'push' | 'replace' | 'none';
 

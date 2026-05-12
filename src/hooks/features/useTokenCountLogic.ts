@@ -1,25 +1,26 @@
+import { logService } from '@/services/logService';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { UploadedFile, AppSettings } from '../../types';
-import { buildContentParts } from '../../utils/chat/builder';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
-import { cleanupFilePreviewUrl, cleanupFilePreviewUrls } from '../../utils/fileHelpers';
-import { countTokensApi } from '../../services/api/generation/tokenApi';
+import { type UploadedFile, type AppSettings } from '@/types';
+import { buildContentParts } from '@/utils/chat/builder';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { cleanupFilePreviewUrl, cleanupFilePreviewUrls } from '@/utils/fileHelpers';
+import { countTokensApi } from '@/services/api/generation/tokenApi';
 import {
   appendFunctionDeclarationsToTools,
   buildGenerationConfig,
   toCountTokensConfig,
-} from '../../services/api/generationConfig';
+} from '@/services/api/generationConfig';
 import { createLocalPythonToolDeclaration } from '@/features/local-python/clientFunctionTool';
-import { useSettingsStore } from '../../stores/settingsStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import {
   getApiKeyErrorTranslationKey,
   getGeminiKeyForRequest,
   isServerManagedApiEnabledForProxyRequests,
   parseApiKeys,
   SERVER_MANAGED_API_KEY,
-} from '../../utils/apiUtils';
-import { useI18n } from '../../contexts/I18nContext';
+} from '@/utils/apiUtils';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseTokenCountLogicProps {
   isOpen: boolean;
@@ -127,7 +128,7 @@ export const useTokenCountLogic = ({
         const count = await countTokensApi(keyResult.key, modelId, contentParts, toCountTokensConfig(requestConfig));
         setTokenCount(count);
       } catch (err) {
-        console.error('Token calculation failed', err);
+        logService.error('Token calculation failed', err);
         const message = err instanceof Error ? err.message : String(err);
         setError(t('token_count_error_with_message').replace('{message}', message));
       } finally {

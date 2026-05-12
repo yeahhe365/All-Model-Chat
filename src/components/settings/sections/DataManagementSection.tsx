@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import {
   Settings,
   MessageSquare,
@@ -11,9 +11,9 @@ import {
   Database,
   RefreshCw,
 } from 'lucide-react';
-import type { LogViewerProps } from '../../log-viewer/LogViewer';
-import type { PwaInstallState } from '../../../pwa/install';
-import { useAppDataSize } from '../../../hooks/data-management/useAppDataSize';
+import type { LogViewerProps } from '@/components/log-viewer/LogViewer';
+import type { PwaInstallState } from '@/pwa/install';
+import { useAppDataSize } from '@/hooks/data-management/useAppDataSize';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;

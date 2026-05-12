@@ -1,12 +1,13 @@
+import { logService } from '@/services/logService';
 import React, { useCallback, useState } from 'react';
 import { Check, ClipboardCopy, Download, Edit3, FileText, Save, X } from 'lucide-react';
-import { UploadedFile } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
-import { Modal } from '../shared/Modal';
-import { MarkdownFileViewer } from '../shared/file-preview/MarkdownFileViewer';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { createManagedObjectUrl } from '../../services/objectUrlManager';
-import { triggerDownload } from '../../utils/export/core';
+import { type UploadedFile } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { Modal } from '@/components/shared/Modal';
+import { MarkdownFileViewer } from '@/components/shared/file-preview/MarkdownFileViewer';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload } from '@/utils/export/core';
 
 interface MarkdownPreviewModalProps {
   file: UploadedFile | null;
@@ -50,7 +51,7 @@ export const MarkdownPreviewModal: React.FC<MarkdownPreviewModalProps> = ({
       setIsCopied(true);
       window.setTimeout(() => setIsCopied(false), 1500);
     } catch (error) {
-      console.error('Failed to copy markdown content:', error);
+      logService.error('Failed to copy markdown content:', error);
     }
   }, [contentForActions]);
 

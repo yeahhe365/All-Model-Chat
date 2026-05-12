@@ -30,18 +30,18 @@ Object.defineProperty(window, 'location', {
 });
 
 vi.mock('@/services/db/dbService', async () => {
-  const { createDbServiceMockModule } = await import('../test/moduleMockDoubles');
+  const { createDbServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createDbServiceMockModule();
 });
 
-vi.mock('../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
 
-vi.mock('../utils/chat/session', () => ({
+vi.mock('@/utils/chat/session', () => ({
   rehydrateSessionFiles: vi.fn((session: any) => session),
 }));
 
@@ -49,18 +49,18 @@ vi.mock('@/i18n/translations', () => ({
   getTranslator: vi.fn(),
 }));
 
-vi.mock('../utils/uiUtils', () => ({
+vi.mock('@/utils/uiUtils', () => ({
   applyThemeToDocument: vi.fn(),
 }));
 
-vi.mock('../utils/modelHelpers', () => ({
+vi.mock('@/utils/modelHelpers', () => ({
   resolveSupportedModelId: vi.fn((modelId: string | null | undefined, fallback: string) => modelId || fallback),
 }));
 
 import { useChatStore } from './chatStore';
 import { dbService } from '@/services/db/dbService';
-import { SavedChatSession, ChatGroup } from '../types';
-import { createChatSettings, createUploadedFile } from '../test/factories';
+import { type SavedChatSession, type ChatGroup } from '@/types';
+import { createChatSettings, createUploadedFile } from '@/test/factories';
 
 const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSession => ({
   id: `sess-${Math.random().toString(36).slice(2, 8)}`,

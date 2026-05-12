@@ -1,16 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioLines, Image as ImageIcon, Info, SquarePen, X } from 'lucide-react';
-import { SETTINGS_INPUT_CLASS, SMALL_ICON_BUTTON_CLASS } from '../../../constants/appConstants';
-import type { AppSettings } from '../../../types';
-import { MediaResolution } from '../../../types/settings';
-import { getCachedModelCapabilities } from '../../../stores/modelCapabilitiesStore';
-import { useI18n } from '../../../contexts/I18nContext';
-import { Tooltip } from '../../shared/Tooltip';
-import { Select } from '../../shared/Select';
-import { ToggleItem } from '../../shared/ToggleItem';
-import { TextEditorModal } from '../../modals/TextEditorModal';
-import { ThinkingControl } from '../controls/thinking/ThinkingControl';
-import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
+import { SETTINGS_INPUT_CLASS, SMALL_ICON_BUTTON_CLASS } from '@/constants/appConstants';
+import type { AppSettings } from '@/types';
+import { MediaResolution } from '@/types/settings';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
+import { useI18n } from '@/contexts/I18nContext';
+import { Tooltip } from '@/components/shared/Tooltip';
+import { Select } from '@/components/shared/Select';
+import { ToggleItem } from '@/components/shared/ToggleItem';
+import { TextEditorModal } from '@/components/modals/TextEditorModal';
+import { ThinkingControl } from '@/components/settings/controls/thinking/ThinkingControl';
+import { AVAILABLE_TTS_VOICES } from '@/constants/voiceOptions';
 
 interface GenerationSectionProps {
   isOpenAICompatibleMode?: boolean;

@@ -11,12 +11,12 @@ import {
   MoreHorizontal,
   GitBranch,
 } from 'lucide-react';
-import { ChatMessage } from '../../types';
-import { useI18n } from '../../contexts/I18nContext';
+import { type ChatMessage } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
-import { useIsMobile, useResponsiveValue } from '../../hooks/useDevice';
-import { useWindowContext } from '../../contexts/WindowContext';
+import { useIsMobile, useResponsiveValue } from '@/hooks/useDevice';
+import { useWindowContext } from '@/contexts/WindowContext';
 
 const AvatarWrapper: React.FC<{ children: React.ReactNode; onClick: () => void; showEditOverlay: boolean }> = ({
   children,

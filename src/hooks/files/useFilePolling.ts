@@ -1,10 +1,10 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '../../utils/apiUtils';
-import { logService } from '../../services/logService';
-import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../../services/api/filePollingConfig';
-import { getFileMetadataApi } from '../../services/api/fileApi';
-import { useI18n } from '../../contexts/I18nContext';
+import { type AppSettings, type ChatSettings as IndividualChatSettings, type UploadedFile } from '@/types';
+import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '@/utils/apiUtils';
+import { logService } from '@/services/logService';
+import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '@/services/api/filePollingConfig';
+import { getFileMetadataApi } from '@/services/api/fileApi';
+import { useI18n } from '@/contexts/I18nContext';
 
 const MAX_POLLING_BACKOFF_MULTIPLIER = 8;
 

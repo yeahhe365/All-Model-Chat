@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { CornerDownLeft } from 'lucide-react';
-import { CommandIcon } from '../../icons/CommandIcon';
-import type { SlashCommand as SlashMenuItem } from '../../../types/slashCommands';
-import { useI18n } from '../../../contexts/I18nContext';
+import { CommandIcon } from '@/components/icons/CommandIcon';
+import type { SlashCommand as SlashMenuItem } from '@/types/slashCommands';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface SlashCommandMenuProps {
   isOpen: boolean;

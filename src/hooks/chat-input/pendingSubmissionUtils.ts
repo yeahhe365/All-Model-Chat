@@ -1,4 +1,4 @@
-import type { UploadedFile } from '../../types';
+import type { UploadedFile } from '@/types';
 import { buildChatInputSubmitText } from './chatInputUtils';
 
 export type PendingChatInputSubmission =

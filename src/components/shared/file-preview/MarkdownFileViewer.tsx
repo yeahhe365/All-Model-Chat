@@ -1,8 +1,9 @@
+import { logService } from '@/services/logService';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { UploadedFile } from '../../../types';
-import { useI18n } from '../../../contexts/I18nContext';
-import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
+import { type UploadedFile } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { LazyMarkdownRenderer } from '@/components/message/LazyMarkdownRenderer';
 
 interface MarkdownFileViewerProps {
   file: UploadedFile;
@@ -82,7 +83,7 @@ export const MarkdownFileViewer: React.FC<MarkdownFileViewerProps> = ({
         })
         .catch((err) => {
           if (cancelled) return;
-          console.error('Failed to load markdown content', err);
+          logService.error('Failed to load markdown content', err);
           setLocalContent(t('filePreview_failed_text_content'));
           setIsLoading(false);
         });

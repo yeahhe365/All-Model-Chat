@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createUploadedFile } from '@/test/factories';
-import type { UploadedFile } from '../../types';
+import type { UploadedFile } from '@/types';
 import {
   getBlockingFileUploadFailure,
   buildPendingChatInputSubmission,

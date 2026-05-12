@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UploadedFile } from '../../../types';
+import { type UploadedFile } from '@/types';
 import {
   Ban,
   Trash2,
@@ -12,12 +12,12 @@ import {
   FileText,
   Ellipsis,
 } from 'lucide-react';
-import { CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
-import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
-import { formatFileSize } from '../../../utils/fileHelpers';
-import { isTextFile } from '../../../utils/fileTypeUtils';
-import { getFileCardMeta } from '../../../utils/fileCardUtils';
-import { useI18n } from '../../../contexts/I18nContext';
+import { CATEGORY_STYLES, getResolutionColor } from '@/utils/uiUtils';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
+import { formatFileSize } from '@/utils/fileHelpers';
+import { isTextFile } from '@/utils/fileTypeUtils';
+import { getFileCardMeta } from '@/utils/fileCardUtils';
+import { useI18n } from '@/contexts/I18nContext';
 import { FileThumbnail } from './FileThumbnail';
 
 interface SelectedFileDisplayProps {

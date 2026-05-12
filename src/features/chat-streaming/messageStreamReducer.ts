@@ -1,9 +1,9 @@
 import type { ModalityTokenCount, Part, UsageMetadata } from '@google/genai';
-import type { UploadedFile } from '../../types';
-import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
-import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
-import { generateUniqueId } from '../../utils/chat/ids';
-import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '../../utils/fileTypeUtils';
+import type { UploadedFile } from '@/types';
+import { SUPPORTED_GENERATED_MIME_TYPES } from '@/constants/fileConstants';
+import { createUploadedFileFromBase64 } from '@/utils/chat/parsing';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { isAudioMimeType, isImageMimeType, isVideoMimeType } from '@/utils/fileTypeUtils';
 
 type MessageStreamEvent =
   | { type: 'part'; part: Part; receivedAt?: Date }

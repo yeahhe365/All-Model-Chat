@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Download } from 'lucide-react';
-import { ChatMessage } from '../../../types';
-import { useMessageExport } from '../../../hooks/useMessageExport';
-import { useResponsiveValue } from '../../../hooks/useDevice';
+import { type ChatMessage } from '@/types';
+import { useMessageExport } from '@/hooks/useMessageExport';
+import { useResponsiveValue } from '@/hooks/useDevice';
 import { ExportModal } from './export/ExportModal';
 
 interface ExportMessageButtonProps {

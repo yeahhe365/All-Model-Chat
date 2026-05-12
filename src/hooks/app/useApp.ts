@@ -1,23 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAppSettings } from '../core/useAppSettings';
-import { useChat } from '../chat/useChat';
-import { useAppUI } from '../core/useAppUI';
-import { useAppEvents } from '../core/useAppEvents';
-import { usePictureInPicture } from '../core/usePictureInPicture';
-import { logService } from '../../services/logService';
+import { useAppSettings } from '@/hooks/core/useAppSettings';
+import { useChat } from '@/hooks/chat/useChat';
+import { useAppUI } from '@/hooks/core/useAppUI';
+import { useAppEvents } from '@/hooks/core/useAppEvents';
+import { usePictureInPicture } from '@/hooks/core/usePictureInPicture';
+import { logService } from '@/services/logService';
 import { getTranslator } from '@/i18n/translations';
-import { applyThemeToDocument } from '../../utils/uiUtils';
-import { useUIStore } from '../../stores/uiStore';
-import { AppSettings, ChatSettings, ModelOption, SideViewContent } from '../../types';
-import { isOpenAICompatibleApiActive } from '../../utils/openaiCompatibleMode';
-import { useDataExport } from '../data-management/useDataExport';
-import { useDataImport } from '../data-management/useDataImport';
-import { useChatSessionExport } from '../data-management/useChatSessionExport';
+import { applyThemeToDocument } from '@/utils/uiUtils';
+import { useUIStore } from '@/stores/uiStore';
+import { type AppSettings, type ChatSettings, type ModelOption, type SideViewContent } from '@/types';
+import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
+import { useDataExport } from '@/hooks/data-management/useDataExport';
+import { useDataImport } from '@/hooks/data-management/useDataImport';
+import { useChatSessionExport } from '@/hooks/data-management/useChatSessionExport';
 import { useAppInitialization } from './useAppInitialization';
 import { useAppTitle } from './useAppTitle';
 import { focusChatInput, useAppPromptModes } from './useAppPromptModes';
-import { DEFAULT_THINKING_BUDGET } from '../../constants/modelConstants';
-import { getModelCapabilities } from '../../utils/modelHelpers';
+import { DEFAULT_THINKING_BUDGET } from '@/constants/modelConstants';
+import { getModelCapabilities } from '@/utils/modelHelpers';
 
 const buildProviderAwareModels = (apiModels: ModelOption[]): ModelOption[] => {
   return apiModels.map((model) => ({ ...model, apiMode: 'gemini-native' as const }));

@@ -1,15 +1,15 @@
-import { useState, useEffect, Dispatch, SetStateAction } from 'react';
-import { ChatMessage, SavedScenario, SavedChatSession, AppSettings } from '../types';
-import { logService } from '../services/logService';
-import { generateUniqueId } from '../utils/chat/ids';
-import { generateSessionTitle, createNewSession } from '../utils/chat/session';
-import { DEFAULT_CHAT_SETTINGS, DEFAULT_SYSTEM_INSTRUCTION } from '../constants/appConstants';
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
+import { type ChatMessage, type SavedScenario, type SavedChatSession, type AppSettings } from '@/types';
+import { logService } from '@/services/logService';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { generateSessionTitle, createNewSession } from '@/utils/chat/session';
+import { DEFAULT_CHAT_SETTINGS, DEFAULT_SYSTEM_INSTRUCTION } from '@/constants/appConstants';
 import { dbService } from '@/services/db/dbService';
 import {
   buildSavedScenarios,
   getExportableUserScenarios,
   initializeScenarioState,
-} from '../features/scenarios/scenarioLibrary';
+} from '@/features/scenarios/scenarioLibrary';
 
 type SessionsUpdater = (
   updater: (prev: SavedChatSession[]) => SavedChatSession[],

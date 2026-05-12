@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import type { UploadedFile } from '../../types';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import type { UploadedFile } from '@/types';
 
 const { uploadFileMock, generateUniqueIdMock, fileToBlobUrlMock } = vi.hoisted(() => ({
   uploadFileMock: vi.fn(),
@@ -8,16 +8,16 @@ const { uploadFileMock, generateUniqueIdMock, fileToBlobUrlMock } = vi.hoisted((
   fileToBlobUrlMock: vi.fn(),
 }));
 
-vi.mock('../../services/api/fileApi', () => ({
+vi.mock('@/services/api/fileApi', () => ({
   uploadFileApi: uploadFileMock,
 }));
 
-vi.mock('../../utils/chat/ids', () => ({
+vi.mock('@/utils/chat/ids', () => ({
   generateUniqueId: generateUniqueIdMock,
 }));
 
-vi.mock('../../utils/fileHelpers', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../utils/fileHelpers')>();
+vi.mock('@/utils/fileHelpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/fileHelpers')>();
   return {
     ...actual,
     fileToBlobUrl: fileToBlobUrlMock,
@@ -25,8 +25,8 @@ vi.mock('../../utils/fileHelpers', async (importOriginal) => {
   };
 });
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

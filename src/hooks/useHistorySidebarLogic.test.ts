@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { SavedChatSession } from '../types';
-import { createChatSettings } from '../test/factories';
-import { renderHook } from '../test/testUtils';
-import { useSettingsStore } from '../stores/settingsStore';
+import type { SavedChatSession } from '@/types';
+import { createChatSettings } from '@/test/factories';
+import { renderHook } from '@/test/testUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useHistorySidebarLogic } from './useHistorySidebarLogic';
 
 const createSession = (id: string, daysAgo: number): SavedChatSession => {

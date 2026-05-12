@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ChatMessage } from '../../types';
+import { type ChatMessage } from '@/types';
 
 interface UseAppTitleProps {
   isLoading: boolean;

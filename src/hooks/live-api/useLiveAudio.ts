@@ -1,9 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { audioWorkletCode } from '@/features/audio/audioWorklet';
 import { decodeBase64ToArrayBuffer, decodeAudioData } from '@/features/audio/audioProcessing';
-import { logService } from '../../services/logService';
-import { createManagedObjectUrl, releaseManagedObjectUrl } from '../../services/objectUrlManager';
-import { useStateWithRef } from '../useStateWithRef';
+import { logService } from '@/services/logService';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '@/services/objectUrlManager';
+import { useStateWithRef } from '@/hooks/useStateWithRef';
 
 export const useLiveAudio = () => {
   const [volume, setVolume] = useState(0);

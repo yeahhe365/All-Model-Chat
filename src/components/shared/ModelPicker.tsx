@@ -1,7 +1,7 @@
-import { useI18n } from '../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 /* eslint-disable react-refresh/only-export-components */
 import React, { useMemo, useRef, useState } from 'react';
-import { ModelOption } from '../../types';
+import { type ModelOption } from '@/types';
 import {
   Banana,
   Box,
@@ -13,15 +13,15 @@ import {
   ScanEye,
   Speech,
 } from 'lucide-react';
-import { useClickOutside } from '../../hooks/useClickOutside';
-import { isGeminiRoboticsModel } from '../../utils/modelHelpers';
-import { getCachedModelCapabilities } from '../../stores/modelCapabilitiesStore';
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { isGeminiRoboticsModel } from '@/utils/modelHelpers';
+import { getCachedModelCapabilities } from '@/stores/modelCapabilitiesStore';
 import {
   buildModelCatalog,
   buildModelCatalogSections,
   filterModelCatalog,
   getModelProviderSectionLabelKey,
-} from '../../utils/modelCatalog';
+} from '@/utils/modelCatalog';
 
 const MODEL_ICON_SIZE = 18;
 

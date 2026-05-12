@@ -1,4 +1,4 @@
-import { createManagedObjectUrl, releaseManagedObjectUrl } from '../services/objectUrlManager';
+import { createManagedObjectUrl, releaseManagedObjectUrl } from '@/services/objectUrlManager';
 
 const DOCX_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 

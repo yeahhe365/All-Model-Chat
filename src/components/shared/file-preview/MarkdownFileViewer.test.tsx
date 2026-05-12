@@ -2,7 +2,7 @@ import { act } from 'react';
 import { createProviderTestRenderer } from '@/test/providerTestUtils';
 import type { TestRenderer } from '@/test/testUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { UploadedFile } from '../../../types';
+import type { UploadedFile } from '@/types';
 import { MarkdownFileViewer } from './MarkdownFileViewer';
 
 const { mockLazyMarkdownRenderer } = vi.hoisted(() => ({
@@ -11,7 +11,7 @@ const { mockLazyMarkdownRenderer } = vi.hoisted(() => ({
   )),
 }));
 
-vi.mock('../../message/LazyMarkdownRenderer', () => ({
+vi.mock('@/components/message/LazyMarkdownRenderer', () => ({
   LazyMarkdownRenderer: mockLazyMarkdownRenderer,
 }));
 

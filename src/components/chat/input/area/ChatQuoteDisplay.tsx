@@ -1,7 +1,7 @@
 import React from 'react';
 import { Quote, Trash2 } from 'lucide-react';
-import { LazyMarkdownRenderer } from '../../../message/LazyMarkdownRenderer';
-import { useI18n } from '../../../../contexts/I18nContext';
+import { LazyMarkdownRenderer } from '@/components/message/LazyMarkdownRenderer';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface ChatQuoteDisplayProps {
   quotes: string[];

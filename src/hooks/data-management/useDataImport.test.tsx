@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ChatGroup, SavedChatSession } from '../../types';
-import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { HarmBlockThreshold, HarmCategory, MediaResolution } from '../../types/settings';
+import type { AppSettings, ChatGroup, SavedChatSession } from '@/types';
+import { DEFAULT_APP_SETTINGS } from '@/constants/appConstants';
+import { HarmBlockThreshold, HarmCategory, MediaResolution } from '@/types/settings';
 import { useDataImport } from './useDataImport';
 import { renderHook } from '@/test/testUtils';
 

@@ -1,10 +1,11 @@
+import { logService } from '@/services/logService';
 import { useState } from 'react';
-import { ChatMessage } from '../types';
-import { serializeMessageForPortableExport } from '../utils/chat/session';
-import { createManagedObjectUrl } from '../services/objectUrlManager';
-import { triggerDownload } from '../utils/export/core';
-import { buildMessageExportFilenameBase, createExportDateMeta, loadExportRuntime } from '../utils/export/runtime';
-import { useI18n } from '../contexts/I18nContext';
+import { type ChatMessage } from '@/types';
+import { serializeMessageForPortableExport } from '@/utils/chat/session';
+import { createManagedObjectUrl } from '@/services/objectUrlManager';
+import { triggerDownload } from '@/utils/export/core';
+import { buildMessageExportFilenameBase, createExportDateMeta, loadExportRuntime } from '@/utils/export/runtime';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseMessageExportProps {
   message: ChatMessage;
@@ -130,7 +131,7 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
 
       if (onSuccess) onSuccess();
     } catch (err) {
-      console.error(`Failed to export message as ${type.toUpperCase()}:`, err);
+      logService.error(`Failed to export message as ${type.toUpperCase()}:`, err);
       alert(t('export_failed_with_message').replace('{message}', err instanceof Error ? err.message : String(err)));
     } finally {
       setExportingType(null);

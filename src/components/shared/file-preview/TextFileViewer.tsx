@@ -1,8 +1,9 @@
+import { logService } from '@/services/logService';
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { UploadedFile } from '../../../types';
-import { useI18n } from '../../../contexts/I18nContext';
-import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
+import { type UploadedFile } from '@/types';
+import { useI18n } from '@/contexts/I18nContext';
+import { LazyMarkdownRenderer } from '@/components/message/LazyMarkdownRenderer';
 
 interface TextFileViewerProps {
   file: UploadedFile;
@@ -124,7 +125,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
           setIsLoading(false);
         })
         .catch((err) => {
-          console.error('Failed to load text content', err);
+          logService.error('Failed to load text content', err);
           setLocalContent(t('filePreview_failed_text_content'));
           setIsLoading(false);
         });

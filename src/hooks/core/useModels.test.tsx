@@ -2,7 +2,7 @@ import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useModels } from './useModels';
 import { renderHook } from '@/test/testUtils';
-import { useModelPreferencesStore } from '../../stores/modelPreferencesStore';
+import { useModelPreferencesStore } from '@/stores/modelPreferencesStore';
 
 let storage: Map<string, string>;
 

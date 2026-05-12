@@ -6,16 +6,16 @@ const { blobToBase64Mock, generateContentMock, getConfiguredApiClientMock } = vi
   getConfiguredApiClientMock: vi.fn(),
 }));
 
-vi.mock('../apiClient', () => ({
+vi.mock('@/services/api/apiClient', () => ({
   getConfiguredApiClient: getConfiguredApiClientMock,
 }));
 
-vi.mock('../../../utils/fileHelpers', () => ({
+vi.mock('@/utils/fileHelpers', () => ({
   blobToBase64: blobToBase64Mock,
 }));
 
-vi.mock('../../logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });

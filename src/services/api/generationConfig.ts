@@ -1,8 +1,8 @@
 import type { CountTokensConfig, FunctionDeclaration } from '@google/genai';
-import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from '../../constants/promptHelpers';
-import type { ChatSettings, ImageOutputMode, ImagePersonGeneration, SafetySetting } from '../../types/settings';
-import { MediaResolution } from '../../types/settings';
-import { logService } from '../logService';
+import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from '@/constants/promptHelpers';
+import type { ChatSettings, ImageOutputMode, ImagePersonGeneration, SafetySetting } from '@/types/settings';
+import { MediaResolution } from '@/types/settings';
+import { logService } from '@/services/logService';
 import {
   isGemini3Model,
   isGeminiRoboticsModel,
@@ -10,7 +10,7 @@ import {
   getModelCapabilities,
   normalizeAspectRatioForModel,
   normalizeImageSizeForModel,
-} from '../../utils/modelHelpers';
+} from '@/utils/modelHelpers';
 
 const IMAGE_TEXT_MODALITIES = ['IMAGE', 'TEXT'] as const;
 const IMAGE_ONLY_MODALITIES = ['IMAGE'] as const;

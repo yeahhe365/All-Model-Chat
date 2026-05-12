@@ -2,8 +2,8 @@ import { act } from 'react';
 import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../services/logService', async () => {
-  const { createLogServiceMockModule } = await import('../../../test/moduleMockDoubles');
+vi.mock('@/components/services/logService', async () => {
+  const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
 });
@@ -114,7 +114,7 @@ describe('lazy diagram loading', () => {
     });
 
     try {
-      const { MarkdownRenderer } = await import('../MarkdownRenderer');
+      const { MarkdownRenderer } = await import('@/components/message/MarkdownRenderer');
       const { container } = renderIntoDom(
         <MarkdownRenderer
           content={'```mermaid\ngraph TD\n  A --> B\n```'}
@@ -165,7 +165,7 @@ describe('lazy diagram loading', () => {
     });
 
     try {
-      const { MarkdownRenderer } = await import('../MarkdownRenderer');
+      const { MarkdownRenderer } = await import('@/components/message/MarkdownRenderer');
       const { container } = renderIntoDom(
         <MarkdownRenderer
           content={'```dot\ndigraph G {\n  A -> B;\n}\n```'}

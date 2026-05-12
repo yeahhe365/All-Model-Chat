@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ChatMessage } from '../../../types';
-import { setupTestRenderer } from '../../../test/testUtils';
+import type { ChatMessage } from '@/types';
+import { setupTestRenderer } from '@/test/testUtils';
 import { MessageListFooter } from './MessageListFooter';
 
 const createModelMessage = (overrides: Partial<ChatMessage> = {}): ChatMessage => ({

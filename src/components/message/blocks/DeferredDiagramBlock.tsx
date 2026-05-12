@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -62,7 +63,7 @@ export const DeferredDiagramBlock = <TProps extends object>({
         setComponent(() => module.default);
       })
       .catch((error) => {
-        console.error(`Failed to load ${label}`, error);
+        logService.error(`Failed to load ${label}`, error);
         if (!isCancelled && !eager) {
           setLoadRequested(false);
         }

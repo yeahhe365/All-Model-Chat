@@ -1,8 +1,9 @@
+import { logService } from '@/services/logService';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { pdfjs } from 'react-pdf';
-import { UploadedFile } from '../../types';
-import { configurePdfWorker } from '../../utils/pdfWorker';
-import { useI18n } from '../../contexts/I18nContext';
+import { type UploadedFile } from '@/types';
+import { configurePdfWorker } from '@/utils/pdfWorker';
+import { useI18n } from '@/contexts/I18nContext';
 
 // Configure PDF worker globally
 configurePdfWorker(pdfjs);
@@ -78,7 +79,7 @@ export const usePdfViewer = (_file: UploadedFile) => {
   const onDocumentLoadError = (err: Error) => {
     setIsLoading(false);
     setError(t('pdf_load_failed_with_message').replace('{message}', err.message));
-    console.error('PDF Load Error:', err);
+    logService.error('PDF Load Error:', err);
   };
 
   const scrollToPage = (pageNum: number) => {

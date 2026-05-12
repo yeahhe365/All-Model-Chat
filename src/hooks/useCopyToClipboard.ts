@@ -1,3 +1,4 @@
+import { logService } from '@/services/logService';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 export const useCopyToClipboard = (resetDuration = 2000) => {
@@ -20,7 +21,7 @@ export const useCopyToClipboard = (resetDuration = 2000) => {
           timeoutRef.current = null;
         }, resetDuration);
       } catch (err) {
-        console.error('Failed to copy text:', err);
+        logService.error('Failed to copy text:', err);
         setIsCopied(false);
       }
     },

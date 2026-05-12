@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react';
 import { ClipboardPaste, Eraser, Languages, Loader2, Maximize2, Minimize2 } from 'lucide-react';
-import { useI18n } from '../../../../contexts/I18nContext';
-import { useChatInputActionsContext, useChatInputComposerStatusContext } from '../ChatInputContext';
+import { useI18n } from '@/contexts/I18nContext';
+import {
+  useChatInputActionsContext,
+  useChatInputComposerStatusContext,
+} from '@/components/chat/input/ChatInputContext';
 
 export type ComposerAuxiliaryActionId = 'fullscreen' | 'translate' | 'clear' | 'paste';
 

@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
-import { SavedChatSession } from '../../../types';
-import { logService } from '../../../services/logService';
-import { generateUniqueId } from '../../../utils/chat/ids';
-import { createNewSession } from '../../../utils/chat/session';
-import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
+import { type SavedChatSession } from '@/types';
+import { logService } from '@/services/logService';
+import { generateUniqueId } from '@/utils/chat/ids';
+import { createNewSession } from '@/utils/chat/session';
+import { cleanupFilePreviewUrls } from '@/utils/fileHelpers';
 import { dbService } from '@/services/db/dbService';
-import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
-import { useI18n } from '../../../contexts/I18nContext';
+import { removeSessionScopedLocalStorageEntries } from '@/utils/sessionLocalStorage';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UseSessionActionsProps {
   updateAndPersistSessions: (
@@ -27,7 +27,7 @@ export const useSessionActions = ({ updateAndPersistSessions, activeJobs }: UseS
       try {
         removeSessionScopedLocalStorageEntries([sessionId]);
       } catch (e) {
-        console.error('Failed to clean up session localStorage:', e);
+        logService.error('Failed to clean up session localStorage:', e);
       }
       // ---------------------------------------------------------
 

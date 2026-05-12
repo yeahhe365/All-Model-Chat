@@ -89,8 +89,8 @@ describe('certain redundancy cleanup guards', () => {
     expect(chatInputFileSource).toContain('useChatInputFileUi');
     expect(useAppSource).toContain('useAppPromptModes');
     expect(useAppPromptModesSource).toContain('loadLiveArtifactsSystemPrompt');
-    expect(messageExportSource).toContain("from '../utils/export/runtime'");
-    expect(chatSessionExportSource).toContain("from '../../utils/export/runtime'");
+    expect(messageExportSource).toContain("from '@/utils/export/runtime'");
+    expect(chatSessionExportSource).toContain("from '@/utils/export/runtime'");
   });
 
   it('does not keep sanitizeSessionForExport as an identity wrapper', () => {
@@ -124,16 +124,16 @@ describe('certain redundancy cleanup guards', () => {
     expect(source).toContain('useChatInputKeyboard');
     expect(source).not.toContain('isComposingRef.current =');
     expect(source.length).toBeLessThan(10000);
-    expect(chatInputProviderSource).toContain("from '../../../hooks/chat-input/useChatInput'");
-    expect(chatInputProviderSource).toContain("from '../../../hooks/chat-input/useChatInputState'");
-    expect(chatTextAreaSource).toContain("from '../../../../hooks/chat-input/useChatInputState'");
-    expect(chatAreaSource).toContain("from '../../../hooks/chat-input/useChatInputHeight'");
+    expect(chatInputProviderSource).toContain("from '@/hooks/chat-input/useChatInput'");
+    expect(chatInputProviderSource).toContain("from '@/hooks/chat-input/useChatInputState'");
+    expect(chatTextAreaSource).toContain("from '@/hooks/chat-input/useChatInputState'");
+    expect(chatAreaSource).toContain("from '@/hooks/chat-input/useChatInputHeight'");
   });
 
   it('keeps chat store selectors close to their consumer instead of behind a bulk binding hook', () => {
     const chatHookSource = readProjectFile('src/hooks/chat/useChat.ts');
 
-    expect(chatHookSource).toContain("from '../../stores/chatStore'");
+    expect(chatHookSource).toContain("from '@/stores/chatStore'");
     expect(chatHookSource).not.toContain('useChatStoreBindings');
     expect(fs.existsSync(path.join(projectRoot, 'src/hooks/chat/useChatStoreBindings.ts'))).toBe(false);
   });
@@ -370,8 +370,8 @@ describe('certain redundancy cleanup guards', () => {
     expect(chatAreaSource).not.toContain('ChatAreaProvider');
     expect(chatAreaSource).not.toContain('providerValue');
     expect(readProjectFile('src/components/chat/input/ChatInput.tsx')).not.toContain('ChatInputViewProvider');
-    expect(chatInputCoreSource).toContain("from '../../stores/chatStore'");
-    expect(chatInputCoreSource).toContain("from '../../stores/settingsStore'");
+    expect(chatInputCoreSource).toContain("from '@/stores/chatStore'");
+    expect(chatInputCoreSource).toContain("from '@/stores/settingsStore'");
     expect(chatInputCoreSource).toContain('useChatInputRuntime');
     expect(runtimeContextSource).toContain('ChatInputRuntimeContext');
   });
@@ -480,9 +480,9 @@ describe('certain redundancy cleanup guards', () => {
     expect(fixtureSource).toContain('createChatInputComposerStatusContextValue');
 
     for (const [relativePath, expectedImport] of [
-      ['src/components/chat/input/AttachmentMenu.test.tsx', "from '../../../test/chatInputContextFixtures'"],
-      ['src/components/chat/input/actions/SendControls.test.tsx', "from '../../../../test/chatInputContextFixtures'"],
-      ['src/components/chat/input/ChatInputActions.test.tsx', "from '../../../test/chatInputContextFixtures'"],
+      ['src/components/chat/input/AttachmentMenu.test.tsx', "from '@/test/chatInputContextFixtures'"],
+      ['src/components/chat/input/actions/SendControls.test.tsx', "from '@/test/chatInputContextFixtures'"],
+      ['src/components/chat/input/ChatInputActions.test.tsx', "from '@/test/chatInputContextFixtures'"],
     ] as const) {
       const source = readProjectFile(relativePath);
 

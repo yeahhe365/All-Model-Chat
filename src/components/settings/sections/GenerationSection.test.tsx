@@ -1,20 +1,20 @@
 import { act } from 'react';
 import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useSettingsStore } from '../../../stores/settingsStore';
-import { setupStoreStateReset } from '../../../test/storeTestUtils';
-import { MediaResolution } from '../../../types/settings';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { setupStoreStateReset } from '@/test/storeTestUtils';
+import { MediaResolution } from '@/types/settings';
 import { GenerationSection } from './GenerationSection';
 
-vi.mock('../controls/thinking/ThinkingControl', () => ({
+vi.mock('@/components/settings/controls/thinking/ThinkingControl', () => ({
   ThinkingControl: () => <div data-testid="thinking-control" />,
 }));
 
-vi.mock('../../modals/TextEditorModal', () => ({
+vi.mock('@/components/modals/TextEditorModal', () => ({
   TextEditorModal: () => null,
 }));
 
-vi.mock('../../shared/Tooltip', () => ({
+vi.mock('@/components/shared/Tooltip', () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

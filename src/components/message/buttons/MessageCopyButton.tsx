@@ -1,7 +1,7 @@
 import React from 'react';
-import { useI18n } from '../../../contexts/I18nContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Check, ClipboardCopy } from 'lucide-react';
-import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
 
 interface MessageCopyButtonProps {
   textToCopy?: string;
