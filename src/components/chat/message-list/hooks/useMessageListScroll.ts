@@ -9,6 +9,7 @@ interface UseMessageListScrollProps {
 }
 
 const CURRENT_TURN_VIEWPORT_OFFSET_PX = 96;
+const SCROLL_BOTTOM_TOP = Number.MAX_SAFE_INTEGER;
 
 export const useMessageListScroll = ({
   messages,
@@ -213,9 +214,8 @@ export const useMessageListScroll = ({
       return;
     }
 
-    const targetIndex = messages.length - 1;
-    lastScrollTarget.current = targetIndex;
-    virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'end', behavior: 'smooth' });
+    lastScrollTarget.current = messages.length - 1;
+    virtuosoRef.current?.scrollTo({ top: SCROLL_BOTTOM_TOP, behavior: 'smooth' });
   }, [messages.length]);
 
   const handleScroll = useCallback(() => {
@@ -257,7 +257,6 @@ export const useMessageListScroll = ({
       if (messages.length > 0) {
         const savedPos = localStorage.getItem(`chat_scroll_pos_${activeSessionId}`);
         const sessionIdForRestore = activeSessionId;
-        const messageCountForRestore = messages.length;
         clearRestoreTimeout();
 
         // Use setTimeout to allow Virtuoso to layout the items first
@@ -270,7 +269,7 @@ export const useMessageListScroll = ({
             virtuosoRef.current?.scrollTo({ top });
           } else {
             // Default to bottom for new/unvisited sessions
-            virtuosoRef.current?.scrollToIndex({ index: messageCountForRestore - 1, align: 'end' });
+            virtuosoRef.current?.scrollTo({ top: SCROLL_BOTTOM_TOP });
           }
           // Mark restoration as complete for this session ID
           lastRestoredSessionIdRef.current = sessionIdForRestore;

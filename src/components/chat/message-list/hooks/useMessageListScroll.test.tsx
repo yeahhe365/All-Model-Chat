@@ -184,6 +184,31 @@ describe('useMessageListScroll', () => {
     unmount();
   });
 
+  it('restores new sessions through the footer spacer by default', () => {
+    const { result, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages: createMessages(),
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-new',
+      }),
+    );
+
+    const scrollTo = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo,
+      scrollToIndex: vi.fn(),
+    } as unknown as VirtuosoHandle;
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollTo).toHaveBeenCalledWith({ top: Number.MAX_SAFE_INTEGER });
+
+    unmount();
+  });
+
   it('cancels pending scroll restoration when the hook unmounts', () => {
     localStorage.setItem('chat_scroll_pos_session-restore', '144');
 
@@ -439,7 +464,7 @@ describe('useMessageListScroll', () => {
     unmount();
   });
 
-  it('scrolls directly to top and bottom for double-click navigation shortcuts', () => {
+  it('scrolls directly to top and through the footer spacer for double-click navigation shortcuts', () => {
     const { result, unmount } = renderHook(() =>
       useMessageListScroll({
         messages: createMessages(),
@@ -448,10 +473,11 @@ describe('useMessageListScroll', () => {
       }),
     );
 
+    const scrollTo = vi.fn();
     const scrollToIndex = vi.fn();
     const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
     virtuosoRef.current = {
-      scrollTo: vi.fn(),
+      scrollTo,
       scrollToIndex,
     } as unknown as VirtuosoHandle;
 
@@ -465,9 +491,8 @@ describe('useMessageListScroll', () => {
       align: 'start',
       behavior: 'smooth',
     });
-    expect(scrollToIndex).toHaveBeenNthCalledWith(2, {
-      index: 3,
-      align: 'end',
+    expect(scrollTo).toHaveBeenCalledWith({
+      top: Number.MAX_SAFE_INTEGER,
       behavior: 'smooth',
     });
 

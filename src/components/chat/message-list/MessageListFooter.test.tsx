@@ -23,4 +23,12 @@ describe('MessageListFooter', () => {
     expect(spacer?.style.transition).toBe('');
     expect(spacer?.style.overflowAnchor).toBe('none');
   });
+
+  it('rounds the spacer up to a stable whole pixel when the input height is fractional', () => {
+    renderer.render(<MessageListFooter messages={[createModelMessage()]} chatInputHeight={160.8} />);
+
+    const spacer = renderer.container.firstElementChild as HTMLDivElement | null;
+
+    expect(spacer?.style.height).toBe('181px');
+  });
 });
