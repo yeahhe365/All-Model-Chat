@@ -93,7 +93,7 @@
   },
   "overrides": {
     "dompurify": "^3.4.1",
-    "protobufjs": "7.5.5",
+    "protobufjs": "7.5.8",
     "uuid": "14.0.0",
     "serialize-javascript": "7.0.5",
     "postcss": "8.5.12"
