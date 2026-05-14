@@ -117,8 +117,6 @@ export interface AppSettings extends ChatSettings {
   autoFullscreenHtml?: boolean;
   showWelcomeSuggestions?: boolean;
   isAudioCompressionEnabled: boolean;
-  autoLiveArtifactsVisualization?: boolean;
-  autoLiveArtifactsModelId: string;
   liveArtifactsPromptMode?: LiveArtifactsPromptMode;
   liveArtifactsSystemPrompt?: string;
   liveArtifactsSystemPrompts?: LiveArtifactsSystemPrompts;

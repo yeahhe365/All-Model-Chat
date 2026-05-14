@@ -5,6 +5,7 @@ import { type ApiMode, type AppSettings, type ModelOption } from '@/types';
 import { ModelSelector } from '@/components/settings/controls/ModelSelector';
 import { fetchOpenAICompatibleModels } from '@/services/api/openaiCompatibleApi';
 import { parseApiKeys } from '@/utils/apiUtils';
+import { sanitizeModelOptions } from '@/utils/modelHelpers';
 import { LiveArtifactsSection } from './LiveArtifactsSection';
 import { GenerationSection } from './GenerationSection';
 import { LanguageVoiceSection } from './LanguageVoiceSection';
@@ -25,25 +26,7 @@ interface ModelsSectionProps {
 }
 
 const mergeOpenAICompatibleModels = (currentModels: ModelOption[], fetchedModels: ModelOption[]): ModelOption[] => {
-  const seenIds = new Set<string>();
-  const mergedModels: ModelOption[] = [];
-
-  const appendModel = (model: ModelOption) => {
-    const modelId = model.id.trim();
-    if (!modelId || seenIds.has(modelId)) {
-      return;
-    }
-
-    seenIds.add(modelId);
-    mergedModels.push({
-      ...model,
-      id: modelId,
-      name: model.name.trim() || modelId,
-    });
-  };
-
-  currentModels.forEach(appendModel);
-  fetchedModels.forEach(appendModel);
+  const mergedModels = sanitizeModelOptions([...currentModels, ...fetchedModels]);
 
   return mergedModels.map((model, index) => {
     const nextModel = { ...model };

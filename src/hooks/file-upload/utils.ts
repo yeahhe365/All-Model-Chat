@@ -19,6 +19,25 @@ const INLINE_PART_JSON_OVERHEAD_BYTES = 512;
 
 const getFileSignature = (file: Pick<File, 'name' | 'size'>) => `${file.name.toLowerCase()}::${file.size}`;
 
+type ProcessingPlaceholderFileInput = Pick<UploadedFile, 'id' | 'name' | 'type' | 'size'> &
+  Partial<Omit<UploadedFile, 'id' | 'name' | 'type' | 'size'>>;
+
+export const createProcessingPlaceholderFile = ({
+  id,
+  name,
+  type,
+  size,
+  ...overrides
+}: ProcessingPlaceholderFileInput): UploadedFile => ({
+  id,
+  name,
+  type,
+  size,
+  isProcessing: true,
+  uploadState: 'pending',
+  ...overrides,
+});
+
 export const formatSpeed = (bytesPerSecond: number): string => {
   if (!isFinite(bytesPerSecond) || bytesPerSecond < 0) return '';
   if (bytesPerSecond < 1024) return `${Math.round(bytesPerSecond)} B/s`;

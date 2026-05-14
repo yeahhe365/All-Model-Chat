@@ -6,8 +6,7 @@ import { logService } from '@/services/logService';
 import { CHAT_INPUT_TEXTAREA_SELECTOR } from '@/constants/appConstants';
 import { cleanupFilePreviewUrls } from '@/utils/fileHelpers';
 import { getVisibleChatMessages } from '@/utils/chat/visibility';
-import { createNewSession } from '@/utils/chat/session';
-import { generateUniqueId } from '@/utils/chat/ids';
+import { cloneMessagesWithFreshIds, createNewSession } from '@/utils/chat/session';
 import { updateMessageInSession, updateSessionById } from '@/utils/chat/sessionMutations';
 import {
   finishActiveGenerationJob,
@@ -317,30 +316,7 @@ export const useMessageActions = ({
       const sourceIndex = messages.findIndex((message) => message.id === selectedMessage.id);
       if (sourceIndex === -1) return;
 
-      const sourceMessages = messages.slice(0, sourceIndex + 1);
-      const idMap = new Map<string, string>();
-
-      const forkedMessages = sourceMessages.map((message) => {
-        const nextMessageId = generateUniqueId();
-        idMap.set(message.id, nextMessageId);
-
-        return {
-          ...message,
-          id: nextMessageId,
-          files: message.files?.map((file) => ({
-            ...file,
-            id: generateUniqueId(),
-          })),
-          isLoading: false,
-          generationStartTime: undefined,
-          generationEndTime: undefined,
-        };
-      });
-
-      const normalizedMessages = forkedMessages.map((message) => ({
-        ...message,
-        toolParentMessageId: message.toolParentMessageId ? idMap.get(message.toolParentMessageId) : undefined,
-      }));
+      const normalizedMessages = cloneMessagesWithFreshIds(messages.slice(0, sourceIndex + 1));
 
       let forkedSessionId: string | null = null;
 

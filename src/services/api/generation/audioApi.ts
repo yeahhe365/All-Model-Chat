@@ -1,4 +1,4 @@
-import { ThinkingLevel, type GenerateContentConfig, type ThinkingConfig } from '@google/genai';
+import { ThinkingLevel, type GenerateContentConfig, type ThinkingConfig, type UsageMetadata } from '@google/genai';
 import { executeConfiguredApiRequest } from '@/services/api/apiExecutor';
 import { logService } from '@/services/logService';
 import type { Part } from '@google/genai';
@@ -72,6 +72,23 @@ const extractMultiSpeakerVoiceConfig = (text: string) => {
   return null;
 };
 
+const recordAudioTokenUsage = (modelId: string, usageMetadata: UsageMetadata, modality: 'tts' | 'transcription') => {
+  const { promptTokens, cachedPromptTokens, completionTokens, thoughtTokens, toolUsePromptTokens, totalTokens } =
+    calculateTokenStats(usageMetadata);
+  logService.recordTokenUsage(
+    modelId,
+    {
+      promptTokens,
+      cachedPromptTokens,
+      completionTokens,
+      thoughtTokens,
+      toolUsePromptTokens,
+      totalTokens,
+    },
+    buildExactPricingFromUsageMetadata(modality, usageMetadata),
+  );
+};
+
 export const generateSpeechApi = async (
   apiKey: string,
   modelId: string,
@@ -111,26 +128,7 @@ export const generateSpeechApi = async (
 
       if (typeof audioData === 'string' && audioData.length > 0) {
         if (response.usageMetadata) {
-          const {
-            promptTokens,
-            cachedPromptTokens,
-            completionTokens,
-            thoughtTokens,
-            toolUsePromptTokens,
-            totalTokens,
-          } = calculateTokenStats(response.usageMetadata);
-          logService.recordTokenUsage(
-            modelId,
-            {
-              promptTokens,
-              cachedPromptTokens,
-              completionTokens,
-              thoughtTokens,
-              toolUsePromptTokens,
-              totalTokens,
-            },
-            buildExactPricingFromUsageMetadata('tts', response.usageMetadata),
-          );
+          recordAudioTokenUsage(modelId, response.usageMetadata, 'tts');
         }
         return audioData;
       }
@@ -201,26 +199,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
 
       if (typeof response.text === 'string') {
         if (response.usageMetadata) {
-          const {
-            promptTokens,
-            cachedPromptTokens,
-            completionTokens,
-            thoughtTokens,
-            toolUsePromptTokens,
-            totalTokens,
-          } = calculateTokenStats(response.usageMetadata);
-          logService.recordTokenUsage(
-            modelId,
-            {
-              promptTokens,
-              cachedPromptTokens,
-              completionTokens,
-              thoughtTokens,
-              toolUsePromptTokens,
-              totalTokens,
-            },
-            buildExactPricingFromUsageMetadata('transcription', response.usageMetadata),
-          );
+          recordAudioTokenUsage(modelId, response.usageMetadata, 'transcription');
         }
         return response.text;
       } else {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FolderPlus, History as HistoryIcon, PanelLeft, ScrollText, Square, SquarePen } from 'lucide-react';
+import { FolderPlus, History as HistoryIcon, ScrollText, Square, SquarePen } from 'lucide-react';
 import { type IconProps, defaultSize, defaultStroke, defaultColor } from '@/components/icons/iconUtils';
 
 export const IconNewChat: React.FC<IconProps> = ({
@@ -29,7 +29,22 @@ export const IconSidebarToggle: React.FC<IconProps> = ({
   strokeWidth = defaultStroke,
   className,
   color = defaultColor,
-}) => <PanelLeft size={size} strokeWidth={strokeWidth} className={className} color={color} />;
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <line x1="4" x2="20" y1="8" y2="8" />
+    <line x1="4" x2="14" y1="16" y2="16" />
+  </svg>
+);
 
 export const IconHistory: React.FC<IconProps> = ({
   size = defaultSize,

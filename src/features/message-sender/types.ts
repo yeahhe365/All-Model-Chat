@@ -50,13 +50,6 @@ export interface BaseSenderProps {
   language: 'en' | 'zh';
 }
 
-export interface LiveArtifactsGeneratorProps extends BaseSenderProps {
-  messages: ChatMessage[];
-  activeSessionId: string | null;
-  getStreamHandlers: GetStreamHandlers;
-  aspectRatio: string;
-}
-
 export interface StandardChatProps extends BaseSenderProps {
   messages: ChatMessage[];
   setEditingMessageId: (id: string | null) => void;
@@ -69,5 +62,4 @@ export interface StandardChatProps extends BaseSenderProps {
   setActiveSessionId: (id: string | null) => void;
   getStreamHandlers: GetStreamHandlers;
   sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
-  handleGenerateLiveArtifacts: (sourceMessageId: string, content: string) => Promise<void>;
 }

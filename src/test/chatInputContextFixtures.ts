@@ -6,16 +6,7 @@ import type {
   ChatInputToolbarContextValue,
 } from '@/components/chat/input/ChatInputContext';
 import { getModelCapabilities } from '@/utils/modelHelpers';
-import type { ChatToolToggleStates } from '@/types/chatTools';
-
-const createChatToolToggleStates = (overrides: ChatToolToggleStates = {}): ChatToolToggleStates => ({
-  deepSearch: { isEnabled: false, onToggle: vi.fn() },
-  googleSearch: { isEnabled: false, onToggle: vi.fn() },
-  codeExecution: { isEnabled: false, onToggle: vi.fn() },
-  localPython: { isEnabled: false, onToggle: vi.fn() },
-  urlContext: { isEnabled: false, onToggle: vi.fn() },
-  ...overrides,
-});
+import { createChatToolToggleStates } from './chatToolFixtures';
 
 export const createChatInputActionsContextValue = (
   overrides: Partial<ChatInputActionsContextValue> = {},

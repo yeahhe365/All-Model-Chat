@@ -6,7 +6,6 @@ const {
   mockSendStandardMessage,
   mockSendTtsImagenMessage,
   mockSendImageEditMessage,
-  mockGenerateLiveArtifactsMessage,
   mockGetModelCapabilities,
   mockCreateMessage,
   mockCreateNewSession,
@@ -17,7 +16,6 @@ const {
   mockSendStandardMessage: vi.fn(),
   mockSendTtsImagenMessage: vi.fn(),
   mockSendImageEditMessage: vi.fn(),
-  mockGenerateLiveArtifactsMessage: vi.fn(),
   mockGetModelCapabilities: vi.fn(),
   mockCreateMessage: vi.fn((role: string, content: string, options?: Record<string, unknown>) => ({
     id: 'error-message-id',
@@ -41,10 +39,6 @@ vi.mock('@/features/message-sender/useChatStreamHandler', () => ({
   useChatStreamHandler: () => ({
     getStreamHandlers: vi.fn(),
   }),
-}));
-
-vi.mock('@/features/message-sender/liveArtifactsStrategy', () => ({
-  generateLiveArtifactsMessage: mockGenerateLiveArtifactsMessage,
 }));
 
 vi.mock('@/features/message-sender/standardChatStrategy', () => ({

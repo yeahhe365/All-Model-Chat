@@ -1,22 +1,17 @@
 export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview';
 
-export const GEMINI_3_RO_MODELS: string[] = [
+const GEMINI_3_REQUIRED_THINKING_MODEL_IDS = [
   'gemini-3.1-pro-preview',
   'models/gemini-3.1-pro-preview',
   'gemini-3-flash-preview',
   'models/gemini-3-flash-preview',
   'gemini-3.1-flash-lite-preview',
   'models/gemini-3.1-flash-lite-preview',
-];
+] as const;
 
-export const MODELS_MANDATORY_THINKING = [
-  'gemini-3.1-pro-preview',
-  'models/gemini-3.1-pro-preview',
-  'gemini-3-flash-preview',
-  'models/gemini-3-flash-preview',
-  'gemini-3.1-flash-lite-preview',
-  'models/gemini-3.1-flash-lite-preview',
-];
+export const GEMINI_3_RO_MODELS: string[] = [...GEMINI_3_REQUIRED_THINKING_MODEL_IDS];
+
+export const MODELS_MANDATORY_THINKING: string[] = [...GEMINI_3_REQUIRED_THINKING_MODEL_IDS];
 
 export const MODELS_SUPPORTING_RAW_MODE = [
   'gemini-3-flash-preview',
@@ -27,16 +22,23 @@ export const MODELS_SUPPORTING_RAW_MODE = [
 
 export const DEFAULT_THINKING_LEVEL = 'HIGH';
 
-export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = {
-  'gemini-3.1-pro-preview': { min: 128, max: 32768 },
-  'models/gemini-3.1-pro-preview': { min: 128, max: 32768 },
-  'gemini-3-flash-preview': { min: 128, max: 32768 },
-  'models/gemini-3-flash-preview': { min: 128, max: 32768 },
-  'gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
-  'models/gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
-  'gemini-robotics-er-1.6-preview': { min: 128, max: 24576 },
-  'models/gemini-robotics-er-1.6-preview': { min: 128, max: 24576 },
-};
+const thinkingBudgetRange = (min: number, max: number) => ({ min, max });
+
+const buildThinkingBudgetRanges = (
+  entries: Array<{ modelIds: readonly string[]; range: { min: number; max: number } }>,
+): { [key: string]: { min: number; max: number } } =>
+  Object.fromEntries(entries.flatMap(({ modelIds, range }) => modelIds.map((modelId) => [modelId, range])));
+
+export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = buildThinkingBudgetRanges([
+  {
+    modelIds: GEMINI_3_REQUIRED_THINKING_MODEL_IDS,
+    range: thinkingBudgetRange(128, 32768),
+  },
+  {
+    modelIds: ['gemini-robotics-er-1.6-preview', 'models/gemini-robotics-er-1.6-preview'],
+    range: thinkingBudgetRange(128, 24576),
+  },
+]);
 
 export const DEFAULT_TEMPERATURE = 1.0;
 export const DEFAULT_TOP_P = 0.95;

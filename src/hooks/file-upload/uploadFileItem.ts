@@ -6,7 +6,13 @@ import { releaseManagedObjectUrl } from '@/services/objectUrlManager';
 import { generateUniqueId } from '@/utils/chat/ids';
 import { fileToBlobUrl } from '@/utils/fileHelpers';
 import { uploadFileApi } from '@/services/api/fileApi';
-import { formatSpeed, getEffectiveMimeType, getUploadLifecycleForGeminiState, shouldUseFileApi } from './utils';
+import {
+  createProcessingPlaceholderFile,
+  formatSpeed,
+  getEffectiveMimeType,
+  getUploadLifecycleForGeminiState,
+  shouldUseFileApi,
+} from './utils';
 import { getTranslator } from '@/i18n/translations';
 
 type Translator = ReturnType<typeof getTranslator>;
@@ -85,12 +91,11 @@ export const uploadFileItem = async ({
     const controller = new AbortController();
 
     // Initialize with 'uploading' state to show progress UI immediately
-    const initialFileState: UploadedFile = {
+    const initialFileState: UploadedFile = createProcessingPlaceholderFile({
       id: fileId,
       name: file.name,
       type: effectiveMimeType,
       size: file.size,
-      isProcessing: true,
       progress: 0,
       rawFile: file,
       dataUrl: dataUrl, // Add local preview URL
@@ -98,7 +103,7 @@ export const uploadFileItem = async ({
       abortController: controller,
       uploadSpeed: t('upload_starting'),
       mediaResolution: defaultResolution,
-    };
+    });
 
     // Initialize tracking for speed calculation
     uploadStatsRef.current.set(fileId, { lastLoaded: 0, lastTime: Date.now() });
@@ -210,18 +215,16 @@ export const uploadFileItem = async ({
     }
   } else {
     // Inline processing (Base64 or Text content)
-    const initialFileState: UploadedFile = {
+    const initialFileState: UploadedFile = createProcessingPlaceholderFile({
       id: fileId,
       name: file.name,
       type: effectiveMimeType,
       size: file.size,
-      isProcessing: true,
       progress: 0,
-      uploadState: 'pending',
       rawFile: file,
       dataUrl: dataUrl,
       mediaResolution: defaultResolution,
-    };
+    });
     setSelectedFiles((prev) => [...prev, initialFileState]);
 
     // Mark active immediately

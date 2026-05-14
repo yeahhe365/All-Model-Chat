@@ -1,15 +1,13 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { HistorySidebar } from '@/components/sidebar/HistorySidebar';
 import { ChatArea } from './ChatArea';
 import { AppModals } from '@/components/modals/AppModals';
 import type { AppViewModel } from '@/hooks/app/useApp';
 import { useMainContentViewModel } from './useMainContentViewModel';
 import { ChatRuntimeProvider } from './chat-runtime/ChatRuntimeContext';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
-const LazySidePanel = lazy(async () => {
-  const module = await import('./SidePanel');
-  return { default: module.SidePanel };
-});
+const LazySidePanel = lazyNamedComponent(() => import('./SidePanel'), 'SidePanel');
 
 interface MainContentProps {
   app: AppViewModel;

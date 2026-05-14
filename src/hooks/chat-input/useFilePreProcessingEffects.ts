@@ -6,6 +6,7 @@ import { generateFolderContext } from '@/utils/folderImportUtils';
 import { readDirectoryHandle } from '@/utils/import-context/directoryHandleReader';
 import { captureScreenImage } from '@/utils/mediaUtils';
 import { useI18n } from '@/contexts/I18nContext';
+import { createProcessingPlaceholderFile } from '@/hooks/file-upload/utils';
 
 type SetSelectedFiles = (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
 
@@ -77,14 +78,12 @@ export const useFilePreProcessingEffects = ({
       setIsConverting(true);
       setSelectedFiles((prev) => [
         ...prev,
-        {
+        createProcessingPlaceholderFile({
           id: tempId,
           name: t('folder_processing'),
           type: 'application/x-directory',
           size: 0,
-          isProcessing: true,
-          uploadState: 'pending',
-        },
+        }),
       ]);
 
       try {

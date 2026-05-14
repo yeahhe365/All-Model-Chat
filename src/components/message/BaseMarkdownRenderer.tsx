@@ -13,16 +13,10 @@ import { splitMarkdownSegments } from '@/utils/markdownUtils';
 import { stripGemmaThoughtMarkup, wrapReasoningMarkup } from '@/utils/chat/reasoning';
 import { normalizePreviewableMarkdownContent } from '@/utils/codeUtils';
 import type { LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
+import { loadNamedComponent } from '@/utils/lazyNamedComponent';
 
-const loadMermaidBlock = async () => {
-  const module = await import('./blocks/MermaidBlock');
-  return { default: module.MermaidBlock };
-};
-
-const loadGraphvizBlock = async () => {
-  const module = await import('./blocks/GraphvizBlock');
-  return { default: module.GraphvizBlock };
-};
+const loadMermaidBlock = () => loadNamedComponent(() => import('./blocks/MermaidBlock'), 'MermaidBlock');
+const loadGraphvizBlock = () => loadNamedComponent(() => import('./blocks/GraphvizBlock'), 'GraphvizBlock');
 
 export interface MarkdownRendererProps {
   content: string;

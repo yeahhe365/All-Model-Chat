@@ -59,8 +59,6 @@ export const createAppSettings = (overrides: Partial<AppSettings> = {}): AppSett
   isAutoScrollOnSendEnabled: true,
   generateQuadImages: false,
   isAudioCompressionEnabled: false,
-  autoLiveArtifactsVisualization: false,
-  autoLiveArtifactsModelId: 'gemini-3.1-pro-preview',
   liveArtifactsPromptMode: 'inline',
   liveArtifactsSystemPrompt: '',
   liveArtifactsSystemPrompts: {

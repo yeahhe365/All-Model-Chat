@@ -1,6 +1,12 @@
 import type { FunctionCall, Part, UsageMetadata } from '@google/genai';
 import type { ChatHistoryItem, StandardClientFunctions, UploadedFile } from '@/types';
 import { mergeUsageMetadata, mergeUrlContextMetadata } from '@/features/chat-streaming/messageStreamReducer';
+import {
+  getGroundingChunkSource,
+  isRecord,
+  type GroundingChunkLike,
+  type GroundingSource,
+} from '@/utils/groundingMetadata';
 
 interface StandardToolTurnResult {
   modelContent: ChatHistoryItem;
@@ -25,29 +31,12 @@ interface RunStandardToolLoopOptions {
   maxIterations?: number;
 }
 
-interface GroundingSource {
-  uri?: string;
-  title?: string;
-}
-
-interface GroundingChunkLike {
-  web?: GroundingSource;
-  image?: {
-    sourceUri?: string;
-    imageUri?: string;
-    title?: string;
-    domain?: string;
-  };
-}
-
 interface GroundingCarryover {
   webSearchQueries?: string[];
   imageSearchQueries?: string[];
   citations?: GroundingSource[];
   searchEntryPoint?: unknown;
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 const mergeUniqueStrings = (existing: string[] = [], incoming: string[] = []) =>
   Array.from(new Set([...existing, ...incoming]));
@@ -70,21 +59,6 @@ const mergeGroundingSources = (
   }
 
   return merged.size > 0 ? Array.from(merged.values()) : undefined;
-};
-
-const getGroundingChunkSource = (chunk: GroundingChunkLike): GroundingSource | undefined => {
-  if (chunk.web?.uri) {
-    return chunk.web;
-  }
-
-  if (chunk.image?.sourceUri) {
-    return {
-      uri: chunk.image.sourceUri,
-      title: chunk.image.title || chunk.image.domain,
-    };
-  }
-
-  return undefined;
 };
 
 const extractGroundingCarryover = (metadata: unknown): GroundingCarryover | undefined => {

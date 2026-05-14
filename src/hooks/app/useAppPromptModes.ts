@@ -233,73 +233,46 @@ export const useAppPromptModes = ({
     setCurrentChatSettings,
   ]);
 
-  const handleToggleBBoxMode = useCallback(async () => {
-    const isCurrentlyBBox = isBboxSystemInstruction(currentChatSettings.systemInstruction);
-
-    if (isCurrentlyBBox) {
+  const setCodePromptModeSettings = useCallback(
+    (systemInstruction: string, isCodeExecutionEnabled: boolean) => {
       setAppSettings((prev) => ({
         ...prev,
-        systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-        isCodeExecutionEnabled: false,
+        systemInstruction,
+        isCodeExecutionEnabled,
       }));
       if (activeSessionId) {
         setCurrentChatSettings((prev) => ({
           ...prev,
-          systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-          isCodeExecutionEnabled: false,
+          systemInstruction,
+          isCodeExecutionEnabled,
         }));
       }
-      return;
-    }
+    },
+    [activeSessionId, setAppSettings, setCurrentChatSettings],
+  );
 
-    const bboxPrompt = await loadBboxSystemPrompt();
-    setAppSettings((prev) => ({
-      ...prev,
-      systemInstruction: bboxPrompt,
-      isCodeExecutionEnabled: true,
-    }));
-    if (activeSessionId) {
-      setCurrentChatSettings((prev) => ({
-        ...prev,
-        systemInstruction: bboxPrompt,
-        isCodeExecutionEnabled: true,
-      }));
-    }
-  }, [activeSessionId, currentChatSettings.systemInstruction, setAppSettings, setCurrentChatSettings]);
+  const toggleCodePromptMode = useCallback(
+    async (isCurrentlyActive: boolean, loadPrompt: () => Promise<string>) => {
+      if (isCurrentlyActive) {
+        setCodePromptModeSettings(DEFAULT_SYSTEM_INSTRUCTION, false);
+        return;
+      }
+
+      setCodePromptModeSettings(await loadPrompt(), true);
+    },
+    [setCodePromptModeSettings],
+  );
+
+  const handleToggleBBoxMode = useCallback(async () => {
+    await toggleCodePromptMode(isBboxSystemInstruction(currentChatSettings.systemInstruction), loadBboxSystemPrompt);
+  }, [currentChatSettings.systemInstruction, toggleCodePromptMode]);
 
   const handleToggleGuideMode = useCallback(async () => {
-    const isCurrentlyGuide = isHdGuideSystemInstruction(currentChatSettings.systemInstruction);
-
-    if (isCurrentlyGuide) {
-      setAppSettings((prev) => ({
-        ...prev,
-        systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-        isCodeExecutionEnabled: false,
-      }));
-      if (activeSessionId) {
-        setCurrentChatSettings((prev) => ({
-          ...prev,
-          systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-          isCodeExecutionEnabled: false,
-        }));
-      }
-      return;
-    }
-
-    const guidePrompt = await loadHdGuideSystemPrompt();
-    setAppSettings((prev) => ({
-      ...prev,
-      systemInstruction: guidePrompt,
-      isCodeExecutionEnabled: true,
-    }));
-    if (activeSessionId) {
-      setCurrentChatSettings((prev) => ({
-        ...prev,
-        systemInstruction: guidePrompt,
-        isCodeExecutionEnabled: true,
-      }));
-    }
-  }, [activeSessionId, currentChatSettings.systemInstruction, setAppSettings, setCurrentChatSettings]);
+    await toggleCodePromptMode(
+      isHdGuideSystemInstruction(currentChatSettings.systemInstruction),
+      loadHdGuideSystemPrompt,
+    );
+  }, [currentChatSettings.systemInstruction, toggleCodePromptMode]);
 
   const handleSuggestionClick = useCallback(
     async (type: 'homepage' | 'organize' | 'follow-up', text: string) => {

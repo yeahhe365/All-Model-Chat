@@ -10,7 +10,6 @@ import { logService } from '@/services/logService';
 import { useChatStreamHandler } from '@/features/message-sender/useChatStreamHandler';
 import { useModelRequestRunner } from '@/features/message-sender/useModelRequestRunner';
 import { useMessageLifecycle } from '@/features/message-sender/useMessageLifecycle';
-import { generateLiveArtifactsMessage } from '@/features/message-sender/liveArtifactsStrategy';
 import { sendImageEditMessage } from '@/features/message-sender/imageEditStrategy';
 import { sendStandardMessage } from '@/features/message-sender/standardChatStrategy';
 import { createSenderStoreActions } from '@/features/message-sender/senderStoreActions';
@@ -95,35 +94,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
     setActiveSessionId,
     translateApiKeyError,
   });
-
-  const handleGenerateLiveArtifacts = useCallback(
-    async (sourceMessageId: string, content: string) => {
-      await generateLiveArtifactsMessage({
-        appSettings,
-        currentChatSettings,
-        activeSessionId,
-        updateAndPersistSessions,
-        getStreamHandlers,
-        setAppFileError,
-        aspectRatio,
-        language: props.language,
-        runMessageLifecycle,
-        sourceMessageId,
-        content,
-      });
-    },
-    [
-      appSettings,
-      currentChatSettings,
-      activeSessionId,
-      updateAndPersistSessions,
-      getStreamHandlers,
-      setAppFileError,
-      aspectRatio,
-      props.language,
-      runMessageLifecycle,
-    ],
-  );
 
   const handleSendMessage = useCallback(
     async (overrideOptions?: {
@@ -347,7 +317,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
           ...senderStoreActions,
         },
         getStreamHandlers,
-        handleGenerateLiveArtifacts,
         runMessageLifecycle,
         text: textToUse,
         files: filesReadyForSend,
@@ -376,7 +345,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
       updateAndPersistSessions,
       setActiveSessionId,
       getStreamHandlers,
-      handleGenerateLiveArtifacts,
       runMessageLifecycle,
       senderStoreActions,
       props,
@@ -385,5 +353,5 @@ export const useMessageSender = (props: MessageSenderProps) => {
     ],
   );
 
-  return { handleSendMessage, handleGenerateLiveArtifacts };
+  return { handleSendMessage };
 };

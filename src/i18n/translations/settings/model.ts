@@ -95,12 +95,6 @@ export const modelSettings = {
     en: 'When enabled, prompts sent to an Imagen model will generate four independent image variations at once. This will consume more API credits.',
     zh: '启用后，使用 Imagen 模型将一次性生成四张独立的图片变体。这将消耗更多 API 用量。',
   },
-  settings_autoLiveArtifactsVisualization_label: { en: 'Auto-open Live Artifacts', zh: '自动打开 Live Artifacts' },
-  settings_autoLiveArtifactsVisualization_tooltip: {
-    en: 'Automatically trigger Live Artifacts after the model finishes generating a text response.',
-    zh: '在模型生成文本回复后，自动触发 Live Artifacts。',
-  },
-  settings_autoLiveArtifactsModel_label: { en: 'Live Artifacts Model', zh: 'Live Artifacts 模型' },
   settings_liveArtifactsPromptMode_label: { en: 'Live Artifacts Prompt Version', zh: 'Live Artifacts 提示词版本' },
   settings_liveArtifactsPromptMode_inline: { en: 'Inline HTML Only', zh: '仅嵌入 HTML' },
   settings_liveArtifactsPromptMode_full: { en: 'Full or Inline HTML', zh: '完整或嵌入 HTML' },

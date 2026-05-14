@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState, useEffect, useRef, useCallback } from 'react';
+import React, { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { X, Code, Eye, Download, FileCode2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { type SideViewContent } from '@/types';
@@ -7,6 +7,7 @@ import { triggerDownload, sanitizeFilename } from '@/utils/export/core';
 import { useIsMobile } from '@/hooks/useDevice';
 import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '@/constants/appConstants';
 import { useI18n } from '@/contexts/I18nContext';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
 interface PanelTabButtonProps {
   activeTab: 'code' | 'preview';
@@ -30,20 +31,12 @@ const PanelTabButton: React.FC<PanelTabButtonProps> = ({ activeTab, id, icon: Ic
   </button>
 );
 
-const LazyMermaidBlock = lazy(async () => {
-  const module = await import('@/components/message/blocks/MermaidBlock');
-  return { default: module.MermaidBlock };
-});
-
-const LazyGraphvizBlock = lazy(async () => {
-  const module = await import('@/components/message/blocks/GraphvizBlock');
-  return { default: module.GraphvizBlock };
-});
-
-const LazyCodeEditor = lazy(async () => {
-  const module = await import('@/components/shared/CodeEditor');
-  return { default: module.CodeEditor };
-});
+const LazyMermaidBlock = lazyNamedComponent(() => import('@/components/message/blocks/MermaidBlock'), 'MermaidBlock');
+const LazyGraphvizBlock = lazyNamedComponent(
+  () => import('@/components/message/blocks/GraphvizBlock'),
+  'GraphvizBlock',
+);
+const LazyCodeEditor = lazyNamedComponent(() => import('@/components/shared/CodeEditor'), 'CodeEditor');
 
 interface SidePanelProps {
   content: SideViewContent | null;

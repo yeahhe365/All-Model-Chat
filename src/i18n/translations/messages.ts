@@ -81,7 +81,6 @@ export const messagesTranslations = {
   assistant_avatar_alt: { en: 'Assistant avatar', zh: '助手头像' },
   continue_generation_title: { en: 'Continue Generating', zh: '继续生成' },
   fork_message_title: { en: 'Fork from here', zh: '从这里分叉' },
-  generate_live_artifacts_title: { en: 'Visualize with Live Artifacts', zh: '使用 Live Artifacts 可视化' },
   export_as_title: { en: 'Export as {type}', zh: '导出为 {type}' },
   exporting_title: { en: 'Exporting {type}...', zh: '正在导出 {type}…' },
   export_close_dialog_aria: { en: 'Close export dialog', zh: '关闭导出对话框' },

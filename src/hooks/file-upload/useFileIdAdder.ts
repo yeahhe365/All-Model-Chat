@@ -10,7 +10,7 @@ import { logService } from '@/services/logService';
 import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '@/utils/apiUtils';
 import { generateUniqueId } from '@/utils/chat/ids';
 import { getFileMetadataApi } from '@/services/api/fileApi';
-import { getUploadLifecycleForGeminiState } from './utils';
+import { createProcessingPlaceholderFile, getUploadLifecycleForGeminiState } from './utils';
 import { useI18n } from '@/contexts/I18nContext';
 import { isVideoMimeType } from '@/utils/fileTypeUtils';
 import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
@@ -79,17 +79,16 @@ export const useFileIdAdder = ({
 
       setSelectedFiles((prev) => [
         ...prev,
-        {
+        createProcessingPlaceholderFile({
           id: tempId,
           name: t('fileIdAdder_loadingFile').replace('{id}', fileApiId),
           type: 'application/octet-stream',
           size: 0,
-          isProcessing: true,
           progress: 50,
           uploadState: 'processing_api',
           fileApiName: fileApiId,
           mediaResolution: defaultResolution,
-        },
+        }),
       ]);
 
       try {

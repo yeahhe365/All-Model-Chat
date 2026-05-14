@@ -1,24 +1,20 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { type UploadedFile, type AppSettings, type ModelOption } from '@/types';
 import { FileConfigurationModal } from '@/components/modals/FileConfigurationModal';
 import { type VideoMetadata } from '@/types';
 import { type MediaResolution } from '@/types/settings';
 import { isMarkdownFile } from '@/utils/fileTypeUtils';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
-const LazyTokenCountModal = lazy(async () => {
-  const module = await import('@/components/modals/TokenCountModal');
-  return { default: module.TokenCountModal };
-});
-
-const LazyFilePreviewModal = lazy(async () => {
-  const module = await import('@/components/modals/FilePreviewModal');
-  return { default: module.FilePreviewModal };
-});
-
-const LazyMarkdownPreviewModal = lazy(async () => {
-  const module = await import('@/components/modals/MarkdownPreviewModal');
-  return { default: module.MarkdownPreviewModal };
-});
+const LazyTokenCountModal = lazyNamedComponent(() => import('@/components/modals/TokenCountModal'), 'TokenCountModal');
+const LazyFilePreviewModal = lazyNamedComponent(
+  () => import('@/components/modals/FilePreviewModal'),
+  'FilePreviewModal',
+);
+const LazyMarkdownPreviewModal = lazyNamedComponent(
+  () => import('@/components/modals/MarkdownPreviewModal'),
+  'MarkdownPreviewModal',
+);
 
 interface ChatInputFileModalsProps {
   configuringFile: UploadedFile | null;

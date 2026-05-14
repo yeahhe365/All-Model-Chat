@@ -1,5 +1,5 @@
 import { logService } from '@/services/logService';
-import React, { Suspense, lazy, useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { Message } from '@/components/message/Message';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
@@ -19,21 +19,20 @@ import { useChatState } from '@/hooks/chat/useChatState';
 import { useChatInputRuntime, useChatMessageListRuntime } from '@/components/layout/chat-runtime/ChatRuntimeContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { formatLiveArtifactFollowupPrompt, type LiveArtifactFollowupPayload } from '@/utils/liveArtifactFollowup';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
-const LazyHtmlPreviewModal = lazy(async () => {
-  const module = await import('@/components/modals/HtmlPreviewModal');
-  return { default: module.HtmlPreviewModal };
-});
-
-const LazyFilePreviewModal = lazy(async () => {
-  const module = await import('@/components/modals/FilePreviewModal');
-  return { default: module.FilePreviewModal };
-});
-
-const LazyMarkdownPreviewModal = lazy(async () => {
-  const module = await import('@/components/modals/MarkdownPreviewModal');
-  return { default: module.MarkdownPreviewModal };
-});
+const LazyHtmlPreviewModal = lazyNamedComponent(
+  () => import('@/components/modals/HtmlPreviewModal'),
+  'HtmlPreviewModal',
+);
+const LazyFilePreviewModal = lazyNamedComponent(
+  () => import('@/components/modals/FilePreviewModal'),
+  'FilePreviewModal',
+);
+const LazyMarkdownPreviewModal = lazyNamedComponent(
+  () => import('@/components/modals/MarkdownPreviewModal'),
+  'MarkdownPreviewModal',
+);
 
 const MessageListComponent: React.FC = () => {
   const appSettings = useSettingsStore((state) => state.appSettings);
@@ -52,7 +51,6 @@ const MessageListComponent: React.FC = () => {
     onRetryMessage,
     onUpdateMessageFile,
     onFollowUpSuggestionClick,
-    onGenerateLiveArtifacts,
     onContinueGeneration,
     onForkMessage,
     onQuickTTS,
@@ -162,7 +160,6 @@ const MessageListComponent: React.FC = () => {
                   onOpenHtmlPreview={handleOpenHtmlPreview}
                   onLiveArtifactFollowUp={handleLiveArtifactFollowUp}
                   showThoughts={currentChatSettings.showThoughts}
-                  onGenerateLiveArtifacts={onGenerateLiveArtifacts}
                   onContinueGeneration={onContinueGeneration}
                   onForkMessage={onForkMessage}
                   onSuggestionClick={onFollowUpSuggestionClick}

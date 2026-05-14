@@ -10,19 +10,11 @@ import { useUIStore } from '@/stores/uiStore';
 import { AVAILABLE_THEMES } from '@/constants/themeConstants';
 import type { AppSettings, ChatMessage, ChatSettings, ChatToolToggleStates, ModelOption, UploadedFile } from '@/types';
 import { createAppSettings, createChatSettings } from './factories';
+import { createChatToolToggleStates } from './chatToolFixtures';
 
 export { createAppSettings, createChatSettings } from './factories';
 
 type ChatRuntimeValues = ComponentProps<typeof ChatRuntimeValuesProvider>['value'];
-
-const createToolStates = (overrides: Partial<ChatToolToggleStates> = {}): ChatToolToggleStates => ({
-  googleSearch: { isEnabled: false, onToggle: vi.fn() },
-  deepSearch: { isEnabled: false, onToggle: vi.fn() },
-  codeExecution: { isEnabled: false, onToggle: vi.fn() },
-  localPython: { isEnabled: false, onToggle: vi.fn() },
-  urlContext: { isEnabled: false, onToggle: vi.fn() },
-  ...overrides,
-});
 
 type ChatAreaInputValue = {
   appSettings: AppSettings;
@@ -92,7 +84,6 @@ type ChatAreaMessageListValue = {
   onSuggestionClick: (suggestion: string) => void;
   onOrganizeInfoClick: (suggestion: string) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
-  onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
@@ -163,7 +154,6 @@ export const createChatAreaProviderValue = (overrides: ChatAreaProviderValueOver
       onSuggestionClick: vi.fn(),
       onOrganizeInfoClick: vi.fn(),
       onFollowUpSuggestionClick: vi.fn(),
-      onGenerateLiveArtifacts: vi.fn(),
       onContinueGeneration: vi.fn(),
       onForkMessage: vi.fn(),
       onQuickTTS: vi.fn(async () => null),
@@ -198,7 +188,7 @@ export const createChatAreaProviderValue = (overrides: ChatAreaProviderValueOver
       setAspectRatio: vi.fn(),
       imageSize: '1K',
       setImageSize: vi.fn(),
-      toolStates: createToolStates(toolStates),
+      toolStates: createChatToolToggleStates(toolStates),
       onClearChat: vi.fn(),
       onNewChat: vi.fn(),
       onOpenSettings: vi.fn(),

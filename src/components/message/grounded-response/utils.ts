@@ -1,17 +1,4 @@
-interface GroundingSource {
-  uri?: string;
-  title?: string;
-}
-
-interface GroundingChunk {
-  web?: GroundingSource;
-  image?: {
-    sourceUri?: string;
-    imageUri?: string;
-    title?: string;
-    domain?: string;
-  };
-}
+import { getGroundingChunkSource, type GroundingChunkLike, type GroundingSource } from '@/utils/groundingMetadata';
 
 interface GroundingSupport {
   segment?: {
@@ -22,7 +9,7 @@ interface GroundingSupport {
 
 interface GroundingMetadataLike {
   groundingSupports?: GroundingSupport[];
-  groundingChunks?: GroundingChunk[];
+  groundingChunks?: GroundingChunkLike[];
   citations?: GroundingSource[];
 }
 
@@ -51,21 +38,6 @@ export const getFavicon = (url: string, title?: string) => {
 const isGroundingMetadataLike = (value: unknown): value is GroundingMetadataLike =>
   typeof value === 'object' && value !== null;
 
-const getChunkSource = (chunk: GroundingChunk): GroundingSource | undefined => {
-  if (chunk.web?.uri) {
-    return chunk.web;
-  }
-
-  if (chunk.image?.sourceUri) {
-    return {
-      uri: chunk.image.sourceUri,
-      title: chunk.image.title || chunk.image.domain,
-    };
-  }
-
-  return undefined;
-};
-
 export const insertCitations = (text: string, metadata: unknown): string => {
   if (!isGroundingMetadataLike(metadata) || !metadata.groundingSupports) {
     return text;
@@ -77,7 +49,7 @@ export const insertCitations = (text: string, metadata: unknown): string => {
 
   // Combine grounding chunks and citations into a single, indexed array
   const sources = [
-    ...(metadata.groundingChunks?.map((chunk) => getChunkSource(chunk)) || []),
+    ...(metadata.groundingChunks?.map((chunk) => getGroundingChunkSource(chunk)) || []),
     ...(metadata.citations || []),
   ].filter(Boolean);
 
@@ -134,7 +106,7 @@ export const extractSources = (metadata: unknown) => {
 
   if (metadata.groundingChunks && Array.isArray(metadata.groundingChunks)) {
     metadata.groundingChunks.forEach((chunk) => {
-      const source = getChunkSource(chunk);
+      const source = getGroundingChunkSource(chunk);
       if (source?.uri) {
         addSource(source.uri, source.title);
       }

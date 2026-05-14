@@ -32,12 +32,16 @@ const createRowId = () => `openai-compatible-model-row-${Math.random().toString(
 const buildModelsKey = (models: Pick<ModelOption, 'id' | 'name'>[]): string =>
   models.map((model) => `${model.id}\u0001${model.name}`).join('\u0000');
 
+const modelNameOrId = (id: string, name: string) => name.trim() || id;
+
+const createModelOption = (id: string, name: string, isPinned = false): ModelOption => ({
+  id,
+  name: modelNameOrId(id, name),
+  ...(isPinned ? { isPinned: true } : {}),
+});
+
 const buildModelOptions = (rows: EditableModelRow[]): ModelOption[] =>
-  normalizeRows(rows).map((row, index) => ({
-    id: row.id,
-    name: row.name.trim() || row.id,
-    ...(index === 0 ? { isPinned: true } : {}),
-  }));
+  normalizeRows(rows).map((row, index) => createModelOption(row.id, row.name, index === 0));
 
 const collectModels = (models: ModelOption[], selectedModelId: string): ModelOption[] => {
   const collectedModels = models.reduce<ModelOption[]>((result, model) => {
@@ -46,11 +50,7 @@ const collectModels = (models: ModelOption[], selectedModelId: string): ModelOpt
       return result;
     }
 
-    result.push({
-      id: modelId,
-      name: model.name.trim() || modelId,
-      ...(model.isPinned ? { isPinned: true } : {}),
-    });
+    result.push(createModelOption(modelId, model.name, !!model.isPinned));
     return result;
   }, []);
 
@@ -59,7 +59,7 @@ const collectModels = (models: ModelOption[], selectedModelId: string): ModelOpt
   }
 
   const fallbackModelId = selectedModelId.trim();
-  return fallbackModelId ? [{ id: fallbackModelId, name: fallbackModelId, isPinned: true }] : [];
+  return fallbackModelId ? [createModelOption(fallbackModelId, fallbackModelId, true)] : [];
 };
 
 const toEditableRows = (models: ModelOption[]): EditableModelRow[] =>

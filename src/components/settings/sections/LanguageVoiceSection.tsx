@@ -14,6 +14,17 @@ interface LanguageVoiceSectionProps {
   onUpdateSetting: SettingsUpdateHandler;
 }
 
+const withSelectedModelOption = (models: ModelOption[], selectedModelId: string): ModelOption[] =>
+  models.some((model) => model.id === selectedModelId)
+    ? models
+    : [
+        ...models,
+        {
+          id: selectedModelId,
+          name: selectedModelId,
+        },
+      ];
+
 export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props) => {
   const { t } = useI18n();
   const inputTranslationModelId = props.currentSettings.inputTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID;
@@ -21,24 +32,8 @@ export const LanguageVoiceSection: React.FC<LanguageVoiceSectionProps> = (props)
     props.currentSettings.thoughtTranslationTargetLanguage || 'Simplified Chinese';
   const thoughtTranslationModelId =
     props.currentSettings.thoughtTranslationModelId || DEFAULT_THOUGHT_TRANSLATION_MODEL_ID;
-  const inputTranslationModelOptions = props.availableModels.some((model) => model.id === inputTranslationModelId)
-    ? props.availableModels
-    : [
-        ...props.availableModels,
-        {
-          id: inputTranslationModelId,
-          name: inputTranslationModelId,
-        },
-      ];
-  const thoughtTranslationModelOptions = props.availableModels.some((model) => model.id === thoughtTranslationModelId)
-    ? props.availableModels
-    : [
-        ...props.availableModels,
-        {
-          id: thoughtTranslationModelId,
-          name: thoughtTranslationModelId,
-        },
-      ];
+  const inputTranslationModelOptions = withSelectedModelOption(props.availableModels, inputTranslationModelId);
+  const thoughtTranslationModelOptions = withSelectedModelOption(props.availableModels, thoughtTranslationModelId);
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">

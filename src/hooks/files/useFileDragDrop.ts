@@ -6,6 +6,7 @@ import { processDroppedItems } from '@/utils/import-context/droppedItems';
 import { type UploadedFile } from '@/types';
 import { generateUniqueId } from '@/utils/chat/ids';
 import { useI18n } from '@/contexts/I18nContext';
+import { createProcessingPlaceholderFile } from '@/hooks/file-upload/utils';
 
 interface UseFileDragDropProps {
   onFilesDropped: (files: FileList | File[]) => Promise<void>;
@@ -77,14 +78,14 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
 
         if (hasDirectory) {
           const tempId = generateUniqueId();
-          onAddTempFile({
-            id: tempId,
-            name: t('fileProcessing_dropped'),
-            type: 'application/x-directory', // Dummy type for icon
-            size: 0,
-            isProcessing: true,
-            uploadState: 'pending',
-          });
+          onAddTempFile(
+            createProcessingPlaceholderFile({
+              id: tempId,
+              name: t('fileProcessing_dropped'),
+              type: 'application/x-directory', // Dummy type for icon
+              size: 0,
+            }),
+          );
 
           const dropped = await processDroppedItems(items);
 

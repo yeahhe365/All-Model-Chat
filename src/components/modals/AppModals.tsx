@@ -1,27 +1,16 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { type AppSettings, type ModelOption, type ChatSettings, type SavedScenario } from '@/types';
 import type { LogViewerProps } from '@/components/log-viewer/LogViewer';
 import type { PwaInstallState } from '@/pwa/install';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
-const LazySettingsModal = lazy(async () => {
-  const module = await import('@/components/settings/SettingsModal');
-  return { default: module.SettingsModal };
-});
-
-const LazyLogViewer = lazy(async () => {
-  const module = await import('@/components/log-viewer/LogViewer');
-  return { default: module.LogViewer };
-});
-
-const LazyPreloadedMessagesModal = lazy(async () => {
-  const module = await import('@/components/scenarios/PreloadedMessagesModal');
-  return { default: module.PreloadedMessagesModal };
-});
-
-const LazyExportChatModal = lazy(async () => {
-  const module = await import('./ExportChatModal');
-  return { default: module.ExportChatModal };
-});
+const LazySettingsModal = lazyNamedComponent(() => import('@/components/settings/SettingsModal'), 'SettingsModal');
+const LazyLogViewer = lazyNamedComponent(() => import('@/components/log-viewer/LogViewer'), 'LogViewer');
+const LazyPreloadedMessagesModal = lazyNamedComponent(
+  () => import('@/components/scenarios/PreloadedMessagesModal'),
+  'PreloadedMessagesModal',
+);
+const LazyExportChatModal = lazyNamedComponent(() => import('./ExportChatModal'), 'ExportChatModal');
 
 interface AppModalsProps {
   isSettingsModalOpen?: boolean;

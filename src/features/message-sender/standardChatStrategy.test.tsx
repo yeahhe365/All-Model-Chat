@@ -99,10 +99,6 @@ vi.mock('@/services/api/openaiCompatibleApi', () => ({
   sendOpenAICompatibleMessageNonStream: mockSendOpenAICompatibleMessageNonStream,
 }));
 
-vi.mock('@/utils/codeUtils', () => ({
-  isLikelyHtml: vi.fn(() => false),
-}));
-
 vi.mock('@/features/standard-chat/standardClientFunctions', () => ({
   createStandardClientFunctions: mockCreateStandardClientFunctions,
 }));
@@ -125,7 +121,6 @@ describe('standardChatStrategy', () => {
     appSettings: {
       hideThinkingInContext: false,
       isRawModeEnabled: false,
-      autoLiveArtifactsVisualization: false,
       isStreamingEnabled: true,
       ...overrides.appSettings,
     },
@@ -161,13 +156,12 @@ describe('standardChatStrategy', () => {
           sendStandardMessage: (
             input: Omit<
               Parameters<typeof sendStandardMessage>[0],
-              'props' | 'getStreamHandlers' | 'handleGenerateLiveArtifacts' | 'runMessageLifecycle'
+              'props' | 'getStreamHandlers' | 'runMessageLifecycle'
             >,
           ) =>
             sendStandardMessage({
               props,
               getStreamHandlers: props.getStreamHandlers,
-              handleGenerateLiveArtifacts: props.handleGenerateLiveArtifacts,
               runMessageLifecycle,
               ...input,
             }),
@@ -268,6 +262,40 @@ describe('standardChatStrategy', () => {
       expect.any(Function),
       'user',
     );
+
+    unmount();
+  });
+
+  it('does not register an auto Live Artifacts completion callback for standard chat', async () => {
+    const getStreamHandlers = vi.fn(
+      (...args: Parameters<Parameters<typeof sendStandardMessage>[0]['getStreamHandlers']>) => {
+        const onSuccess = args[6];
+        expect(onSuccess).toBeUndefined();
+
+        return {
+          streamOnError: vi.fn(),
+          streamOnComplete: vi.fn(),
+          streamOnPart: vi.fn(),
+          onThoughtChunk: vi.fn(),
+        };
+      },
+    );
+
+    const { result, unmount } = renderStandardChat({
+      getStreamHandlers,
+    });
+
+    await act(async () => {
+      await result.current.sendStandardMessage({
+        text: 'summarize this report',
+        files: [],
+        editingMessageId: null,
+        activeModelId: 'gemini-3-flash-preview',
+        request: createPreparedRequest(),
+      });
+    });
+
+    expect(getStreamHandlers).toHaveBeenCalledOnce();
 
     unmount();
   });

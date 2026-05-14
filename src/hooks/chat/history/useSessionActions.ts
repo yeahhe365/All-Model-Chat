@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 import { type SavedChatSession } from '@/types';
 import { logService } from '@/services/logService';
-import { generateUniqueId } from '@/utils/chat/ids';
-import { createNewSession } from '@/utils/chat/session';
+import { cloneMessagesWithFreshIds, createNewSession } from '@/utils/chat/session';
 import { cleanupFilePreviewUrls } from '@/utils/fileHelpers';
 import { dbService } from '@/services/db/dbService';
 import { removeSessionScopedLocalStorageEntries } from '@/utils/sessionLocalStorage';
@@ -78,28 +77,7 @@ export const useSessionActions = ({ updateAndPersistSessions, activeJobs }: UseS
         const fullSessionToDuplicate =
           sessionToDuplicate.messages.length > 0 ? sessionToDuplicate : (persistedSession ?? sessionToDuplicate);
 
-        const idMap = new Map<string, string>();
-        const duplicatedMessages = fullSessionToDuplicate.messages
-          .map((message) => {
-            const nextMessageId = generateUniqueId();
-            idMap.set(message.id, nextMessageId);
-
-            return {
-              ...message,
-              id: nextMessageId,
-              files: message.files?.map((file) => ({
-                ...file,
-                id: generateUniqueId(),
-              })),
-              isLoading: false,
-              generationStartTime: undefined,
-              generationEndTime: undefined,
-            };
-          })
-          .map((message) => ({
-            ...message,
-            toolParentMessageId: message.toolParentMessageId ? idMap.get(message.toolParentMessageId) : undefined,
-          }));
+        const duplicatedMessages = cloneMessagesWithFreshIds(fullSessionToDuplicate.messages);
 
         const duplicateTitle =
           fullSessionToDuplicate.title === 'New Chat' ? t('newChat') : fullSessionToDuplicate.title;

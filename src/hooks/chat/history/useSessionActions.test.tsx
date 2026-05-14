@@ -13,15 +13,20 @@ vi.mock('@/services/db/dbService', async () => {
   return createDbServiceMockModule();
 });
 
-vi.mock('@/utils/chat/session', () => ({
-  createNewSession: vi.fn((settings, messages, title) => ({
-    id: `copy-${Math.random().toString(36).slice(2, 8)}`,
-    title,
-    messages,
-    settings,
-    timestamp: Date.now(),
-  })),
-}));
+vi.mock('@/utils/chat/session', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils/chat/session')>();
+
+  return {
+    ...actual,
+    createNewSession: vi.fn((settings, messages, title) => ({
+      id: `copy-${Math.random().toString(36).slice(2, 8)}`,
+      title,
+      messages,
+      settings,
+      timestamp: Date.now(),
+    })),
+  };
+});
 
 vi.mock('@/services/logService', async () => {
   const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');

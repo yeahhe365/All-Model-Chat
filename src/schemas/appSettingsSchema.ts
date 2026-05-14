@@ -29,7 +29,7 @@ const TRANSLATION_TARGET_LANGUAGES = [
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const withDefault = <Output>(schema: z.ZodType<Output>, fallback: Output): z.ZodType<Output> =>
+const parseUnknownWithDefault = <Output>(schema: z.ZodType<Output>, fallback: Output): z.ZodType<Output> =>
   z
     .unknown()
     .optional()
@@ -41,22 +41,14 @@ const withDefault = <Output>(schema: z.ZodType<Output>, fallback: Output): z.Zod
       const parsed = schema.safeParse(value);
       return parsed.success ? parsed.data : fallback;
     });
+
+const withDefault = <Output>(schema: z.ZodType<Output>, fallback: Output): z.ZodType<Output> =>
+  parseUnknownWithDefault(schema, fallback);
 
 const optionalWithDefault = <Output>(
   schema: z.ZodType<Output>,
   fallback: Output | undefined,
-): z.ZodType<Output | undefined> =>
-  z
-    .unknown()
-    .optional()
-    .transform((value) => {
-      if (value === undefined) {
-        return fallback;
-      }
-
-      const parsed = schema.safeParse(value);
-      return parsed.success ? parsed.data : fallback;
-    });
+): z.ZodType<Output | undefined> => parseUnknownWithDefault(schema, fallback);
 
 const nullableStringWithDefault = (fallback: string | null) => z.string().nullable().default(fallback).catch(fallback);
 
@@ -163,14 +155,6 @@ const sanitizeTabModelCycleIds = (value: unknown, fallback: string[] | undefined
 const normalizeLegacyAppSettingsInput = (value: unknown): Record<string, unknown> => {
   const settings = isRecord(value) ? { ...value } : {};
 
-  if (settings.autoLiveArtifactsVisualization === undefined && settings.autoCanvasVisualization !== undefined) {
-    settings.autoLiveArtifactsVisualization = settings.autoCanvasVisualization;
-  }
-
-  if (settings.autoLiveArtifactsModelId === undefined && settings.autoCanvasModelId !== undefined) {
-    settings.autoLiveArtifactsModelId = settings.autoCanvasModelId;
-  }
-
   return settings;
 };
 
@@ -242,8 +226,6 @@ const appSettingsSchema: z.ZodType<AppSettings> = z.object({
   autoFullscreenHtml: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.autoFullscreenHtml),
   showWelcomeSuggestions: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.showWelcomeSuggestions),
   isAudioCompressionEnabled: booleanWithDefault(DEFAULT_APP_SETTINGS.isAudioCompressionEnabled),
-  autoLiveArtifactsVisualization: optionalBooleanWithDefault(DEFAULT_APP_SETTINGS.autoLiveArtifactsVisualization),
-  autoLiveArtifactsModelId: stringWithDefault(DEFAULT_APP_SETTINGS.autoLiveArtifactsModelId),
   liveArtifactsPromptMode: optionalWithDefault(
     z.enum(LIVE_ARTIFACTS_PROMPT_MODES),
     DEFAULT_APP_SETTINGS.liveArtifactsPromptMode,

@@ -56,7 +56,6 @@ interface ChatMessageListRuntimeValue {
     updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution },
   ) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
-  onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
@@ -354,7 +353,6 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       onRetryMessage: chatState.handleRetryMessage,
       onUpdateMessageFile: chatState.handleUpdateMessageFile,
       onFollowUpSuggestionClick,
-      onGenerateLiveArtifacts: chatState.handleGenerateLiveArtifacts,
       onContinueGeneration: chatState.handleContinueGeneration,
       onForkMessage: chatState.handleForkMessage,
       onQuickTTS: chatState.handleQuickTTS,

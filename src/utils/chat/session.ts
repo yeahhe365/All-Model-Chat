@@ -47,6 +47,31 @@ export const createNewSession = (
   groupId,
 });
 
+export const cloneMessagesWithFreshIds = (messages: ChatMessage[]): ChatMessage[] => {
+  const idMap = new Map<string, string>();
+  const clonedMessages = messages.map((message) => {
+    const nextMessageId = generateUniqueId();
+    idMap.set(message.id, nextMessageId);
+
+    return {
+      ...message,
+      id: nextMessageId,
+      files: message.files?.map((file) => ({
+        ...file,
+        id: generateUniqueId(),
+      })),
+      isLoading: false,
+      generationStartTime: undefined,
+      generationEndTime: undefined,
+    };
+  });
+
+  return clonedMessages.map((message) => ({
+    ...message,
+    toolParentMessageId: message.toolParentMessageId ? idMap.get(message.toolParentMessageId) : undefined,
+  }));
+};
+
 export const generateSessionTitle = (messages: ChatMessage[]): string => {
   const visibleMessages = getVisibleChatMessages(messages);
   const firstUserMessage = visibleMessages.find((msg) => msg.role === 'user' && msg.content.trim() !== '');

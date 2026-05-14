@@ -1,15 +1,12 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import type { MarkdownRendererProps } from './BaseMarkdownRenderer';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
-const LazyBaseMarkdownRenderer = lazy(async () => {
-  const module = await import('./BaseMarkdownRendererEntry');
-  return { default: module.BaseMarkdownRendererEntry };
-});
-
-const LazyMarkdownRendererMath = lazy(async () => {
-  const module = await import('./MarkdownRenderer');
-  return { default: module.MarkdownRenderer };
-});
+const LazyBaseMarkdownRenderer = lazyNamedComponent(
+  () => import('./BaseMarkdownRendererEntry'),
+  'BaseMarkdownRendererEntry',
+);
+const LazyMarkdownRendererMath = lazyNamedComponent(() => import('./MarkdownRenderer'), 'MarkdownRenderer');
 
 interface LazyMarkdownRendererProps extends MarkdownRendererProps {
   fallbackMode?: 'raw' | 'none';

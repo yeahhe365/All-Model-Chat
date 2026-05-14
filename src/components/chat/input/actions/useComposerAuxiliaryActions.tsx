@@ -19,6 +19,12 @@ export interface ComposerAuxiliaryAction {
   testId?: string;
 }
 
+const actionText = (label: string, ariaLabel = label) => ({
+  label,
+  ariaLabel,
+  title: label,
+});
+
 export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
   const {
     isFullscreen,
@@ -40,13 +46,14 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
   const localInputEditBlocked = disabled || isWaitingForUpload;
 
   return useMemo(() => {
+    const fullscreenLabel = isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand');
+    const translateLabel = isTranslating ? t('translating_button_title') : t('translate_button_title');
+
     const actions: Array<ComposerAuxiliaryAction | null> = [
       !isNativeAudioModel && onToggleFullscreen
         ? {
             id: 'fullscreen',
-            label: isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand'),
-            ariaLabel: isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand'),
-            title: isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand'),
+            ...actionText(fullscreenLabel),
             icon: isFullscreen ? <Minimize2 size={20} strokeWidth={2} /> : <Maximize2 size={20} strokeWidth={2} />,
             disabled,
             action: onToggleFullscreen,
@@ -56,9 +63,7 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
       !isNativeAudioModel && showInputTranslationButton
         ? {
             id: 'translate',
-            label: isTranslating ? t('translating_button_title') : t('translate_button_title'),
-            ariaLabel: isTranslating ? t('translating_button_title') : t('translate_button_title'),
-            title: isTranslating ? t('translating_button_title') : t('translate_button_title'),
+            ...actionText(translateLabel),
             icon: isTranslating ? (
               <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
             ) : (
@@ -72,9 +77,7 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
       showInputClearButton
         ? {
             id: 'clear',
-            label: t('clearInput_title'),
-            ariaLabel: t('clearInput_aria'),
-            title: t('clearInput_title'),
+            ...actionText(t('clearInput_title'), t('clearInput_aria')),
             icon: <Eraser size={18} strokeWidth={2} />,
             disabled: localInputEditBlocked,
             action: onClearInput,
@@ -84,9 +87,7 @@ export const useComposerAuxiliaryActions = (): ComposerAuxiliaryAction[] => {
       showInputPasteButton
         ? {
             id: 'paste',
-            label: t('pasteClipboard_title'),
-            ariaLabel: t('pasteClipboard_aria'),
-            title: t('pasteClipboard_title'),
+            ...actionText(t('pasteClipboard_title'), t('pasteClipboard_aria')),
             icon: <ClipboardPaste size={18} strokeWidth={2} />,
             disabled: localInputEditBlocked,
             action: onPasteFromClipboard,

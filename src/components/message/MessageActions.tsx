@@ -6,7 +6,6 @@ import {
   Trash2,
   RotateCw,
   Pencil,
-  Wand2,
   CirclePlay,
   MoreHorizontal,
   GitBranch,
@@ -64,7 +63,6 @@ interface MessageActionsProps {
   onEditMessage: (messageId: string, mode: 'update' | 'resend') => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;
-  onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   themeId: string;
@@ -78,7 +76,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   onEditMessage,
   onDeleteMessage,
   onRetryMessage,
-  onGenerateLiveArtifacts,
   onContinueGeneration,
   onForkMessage,
   themeId,
@@ -92,10 +89,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   const showRetryButton = message.role === 'model' || (message.role === 'error' && message.generationStartTime);
   const showContinueGenerationAction = message.role === 'model' && !message.isLoading;
   const showForkAction = message.role === 'model' && !message.isLoading;
-  const showLiveArtifactsAction = Boolean(
-    message.content && !message.isLoading && message.role === 'model' && !message.audioSrc,
-  );
-  const showOverflowActions = showContinueGenerationAction || showForkAction || showLiveArtifactsAction;
+  const showOverflowActions = showContinueGenerationAction || showForkAction;
 
   // Enhanced button styling: lighter default, distinct hover, rounded corners
   const actionButtonClasses =
@@ -227,23 +221,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                   >
                     <GitBranch size={14} strokeWidth={2} />
                     <span>{t('fork_message_title')}</span>
-                  </button>
-                )}
-
-                {showLiveArtifactsAction && (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setIsOverflowOpen(false);
-                      onGenerateLiveArtifacts(message.id, message.content);
-                    }}
-                    title={t('generate_live_artifacts_title')}
-                    aria-label={t('generate_live_artifacts_title')}
-                    className={menuItemClasses}
-                  >
-                    <Wand2 size={14} strokeWidth={2} />
-                    <span>{t('generate_live_artifacts_title')}</span>
                   </button>
                 )}
               </div>

@@ -168,7 +168,6 @@ describe('certain redundancy cleanup guards', () => {
   it('keeps senders on the shared optimistic message pipeline', () => {
     for (const relativePath of [
       'src/features/message-sender/standardChatStrategy.ts',
-      'src/features/message-sender/liveArtifactsStrategy.ts',
       'src/features/message-sender/ttsImagenStrategy.ts',
       'src/features/message-sender/imageEditStrategy.ts',
     ]) {
@@ -491,6 +490,54 @@ describe('certain redundancy cleanup guards', () => {
       expect(source, relativePath).not.toContain('const baseActionsContext: ChatInputActionsContextValue =');
       expect(source, relativePath).not.toContain('const createActionsContextValue =');
     }
+  });
+
+  it('routes named lazy component imports through a shared helper', () => {
+    const helperSource = readProjectFile('src/utils/lazyNamedComponent.ts');
+    expect(helperSource).toContain('loadNamedComponent');
+    expect(helperSource).toContain('lazyNamedComponent');
+
+    const sourceFiles = listProjectSourceFiles('src').filter(
+      (relativePath) => relativePath !== 'src/test/architecture/certainRedundancyCleanup.test.ts',
+    );
+
+    for (const relativePath of sourceFiles) {
+      const source = readProjectFile(relativePath);
+      expect(source, relativePath).not.toMatch(/lazy\(async \(\) => \{/);
+      expect(source, relativePath).not.toMatch(/return\s+\{\s*default:\s*module\./);
+    }
+  });
+
+  it('shares temporary processing file placeholders across upload flows', () => {
+    const helperSource = readProjectFile('src/hooks/file-upload/utils.ts');
+    expect(helperSource).toContain('createProcessingPlaceholderFile');
+
+    for (const relativePath of [
+      'src/hooks/file-upload/useFilePreProcessing.ts',
+      'src/hooks/chat-input/useFilePreProcessingEffects.ts',
+      'src/hooks/files/useFileDragDrop.ts',
+      'src/hooks/file-upload/useFileIdAdder.ts',
+      'src/hooks/file-upload/uploadFileItem.ts',
+    ] as const) {
+      const source = readProjectFile(relativePath);
+      expect(source, relativePath).toContain('createProcessingPlaceholderFile');
+      expect(source, relativePath).not.toMatch(/isProcessing:\s*true,\s*\n\s*uploadState:/);
+    }
+  });
+
+  it('shares chat tool toggle defaults across test fixtures', () => {
+    const toolFixtureSource = readProjectFile('src/test/chatToolFixtures.ts');
+    const chatAreaFixtureSource = readProjectFile('src/test/chatAreaFixtures.tsx');
+    const chatInputFixtureSource = readProjectFile('src/test/chatInputContextFixtures.ts');
+    const toolsMenuTestSource = readProjectFile('src/components/chat/input/ToolsMenu.test.tsx');
+
+    expect(toolFixtureSource).toContain('createChatToolToggleStates');
+    expect(chatAreaFixtureSource).toContain("from './chatToolFixtures'");
+    expect(chatInputFixtureSource).toContain("from './chatToolFixtures'");
+    expect(toolsMenuTestSource).toContain("from '@/test/chatToolFixtures'");
+    expect(chatAreaFixtureSource).not.toContain('const createToolStates');
+    expect(chatInputFixtureSource).not.toContain('const createChatToolToggleStates');
+    expect(toolsMenuTestSource).not.toContain('const createToolStates');
   });
 
   it('isolates scoped chat runtime context from sidebar and modal prop assembly', () => {

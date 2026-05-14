@@ -154,8 +154,6 @@ describe('ModelsSection', () => {
     const onUpdateSettings = vi.fn();
     const initialSettings = {
       ...useSettingsStore.getState().appSettings,
-      autoLiveArtifactsVisualization: false,
-      autoLiveArtifactsModelId: 'gemini-3-flash-preview',
       liveArtifactsPromptMode: 'inline',
       liveArtifactsSystemPrompts: {
         inline: 'Inline custom Live Artifacts prompt',
@@ -188,8 +186,8 @@ describe('ModelsSection', () => {
     });
 
     expect(renderer.container.textContent).toContain('Live Artifacts');
-    expect(renderer.container.textContent).toContain('Auto-open Live Artifacts');
-    expect(renderer.container.textContent).toContain('Live Artifacts Model');
+    expect(renderer.container.textContent).not.toContain('Auto-open Live Artifacts');
+    expect(renderer.container.textContent).not.toContain('Live Artifacts Model');
     expect(renderer.container.textContent).not.toContain('Live Artifacts Prompt Version');
     expect(renderer.container.textContent).toContain('Inline HTML Only');
     expect(renderer.container.textContent).toContain('Live Artifacts Prompt');
@@ -202,27 +200,7 @@ describe('ModelsSection', () => {
     const toggleLabel = Array.from(renderer.container.querySelectorAll('span')).find(
       (element) => element.textContent?.trim() === 'Auto-open Live Artifacts',
     );
-    const toggleInput = toggleLabel?.closest('.group')?.querySelector<HTMLInputElement>('input[type="checkbox"]');
-
-    await act(async () => {
-      toggleInput?.click();
-    });
-
-    expect(onUpdateSettings).toHaveBeenCalledWith({ autoLiveArtifactsVisualization: true });
-
-    await act(async () => {
-      renderer.container
-        .querySelector<HTMLButtonElement>('#live-artifacts-model-select')
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-
-    await act(async () => {
-      Array.from(renderer.container.querySelectorAll('button'))
-        .find((button) => button.textContent?.trim() === 'Gemini 3.1 Pro')
-        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-
-    expect(onUpdateSettings).toHaveBeenCalledWith({ autoLiveArtifactsModelId: 'gemini-3.1-pro-preview' });
+    expect(toggleLabel).toBeUndefined();
 
     await act(async () => {
       renderer.container

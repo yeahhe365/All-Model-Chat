@@ -1,5 +1,5 @@
 import { logService } from '@/services/logService';
-import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { type UploadedFile } from '@/types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
@@ -13,11 +13,9 @@ import { extractDocxText, isDocxFile } from '@/utils/docxPreview';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { isShortcutPressed } from '@/utils/shortcutUtils';
 import { getFileKindFlags, isMarkdownFile, isTextFile } from '@/utils/fileTypeUtils';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
-const LazyPdfViewer = lazy(async () => {
-  const module = await import('@/components/shared/file-preview/PdfViewerEntry');
-  return { default: module.PdfViewer };
-});
+const LazyPdfViewer = lazyNamedComponent(() => import('@/components/shared/file-preview/PdfViewerEntry'), 'PdfViewer');
 
 interface FilePreviewModalProps {
   file: UploadedFile | null;

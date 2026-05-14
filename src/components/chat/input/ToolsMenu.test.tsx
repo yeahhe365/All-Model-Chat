@@ -3,23 +3,12 @@ import { setupProviderTestRenderer as setupTestRenderer } from '@/test/providerT
 import { describe, expect, it, vi } from 'vitest';
 import { setupStoreStateReset } from '@/test/storeTestUtils';
 import { ToolsMenu } from './ToolsMenu';
+import { createChatToolToggleStatesFromFlags } from '@/test/chatToolFixtures';
 
 vi.mock('@/services/logService', async () => {
   const { createLogServiceMockModule } = await import('@/test/moduleMockDoubles');
 
   return createLogServiceMockModule();
-});
-
-const createToolStates = (
-  enabled: Partial<
-    Record<'googleSearch' | 'deepSearch' | 'codeExecution' | 'localPython' | 'urlContext', boolean>
-  > = {},
-) => ({
-  googleSearch: { isEnabled: !!enabled.googleSearch, onToggle: () => {} },
-  deepSearch: { isEnabled: !!enabled.deepSearch, onToggle: () => {} },
-  codeExecution: { isEnabled: !!enabled.codeExecution, onToggle: () => {} },
-  localPython: { isEnabled: !!enabled.localPython, onToggle: () => {} },
-  urlContext: { isEnabled: !!enabled.urlContext, onToggle: () => {} },
 });
 
 const toolUtilityActions = {
@@ -35,7 +24,7 @@ describe('ToolsMenu', () => {
       renderer.root.render(
         <ToolsMenu
           currentModelId="gemini-3.1-flash-live-preview"
-          toolStates={createToolStates({ localPython: true })}
+          toolStates={createChatToolToggleStatesFromFlags({ localPython: true })}
           toolUtilityActions={toolUtilityActions}
           disabled={false}
         />,
@@ -59,7 +48,7 @@ describe('ToolsMenu', () => {
       renderer.root.render(
         <ToolsMenu
           currentModelId="gemini-3.1-flash-image-preview"
-          toolStates={createToolStates()}
+          toolStates={createChatToolToggleStatesFromFlags()}
           toolUtilityActions={toolUtilityActions}
           disabled={false}
         />,
@@ -87,7 +76,7 @@ describe('ToolsMenu', () => {
       renderer.root.render(
         <ToolsMenu
           currentModelId="gemma-3-27b-it"
-          toolStates={createToolStates({ localPython: true })}
+          toolStates={createChatToolToggleStatesFromFlags({ localPython: true })}
           toolUtilityActions={toolUtilityActions}
           disabled={false}
         />,
@@ -113,7 +102,7 @@ describe('ToolsMenu', () => {
       renderer.root.render(
         <ToolsMenu
           currentModelId="gemini-2.5-pro"
-          toolStates={createToolStates({ googleSearch: true, localPython: true })}
+          toolStates={createChatToolToggleStatesFromFlags({ googleSearch: true, localPython: true })}
           toolUtilityActions={toolUtilityActions}
           disabled={false}
         />,
@@ -128,7 +117,7 @@ describe('ToolsMenu', () => {
       renderer.root.render(
         <ToolsMenu
           currentModelId="gemini-3.1-pro-preview"
-          toolStates={createToolStates({ googleSearch: true, localPython: true })}
+          toolStates={createChatToolToggleStatesFromFlags({ googleSearch: true, localPython: true })}
           toolUtilityActions={toolUtilityActions}
           disabled={false}
         />,

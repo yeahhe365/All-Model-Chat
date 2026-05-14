@@ -12,9 +12,8 @@ import type { PreparedModelRequest } from './useModelRequestRunner';
 type MessageLifecycleRunner = Parameters<typeof runOptimisticMessagePipeline>[0]['runMessageLifecycle'];
 
 interface SendStandardMessageParams {
-  props: Omit<StandardChatProps, 'getStreamHandlers' | 'handleGenerateLiveArtifacts'>;
+  props: Omit<StandardChatProps, 'getStreamHandlers'>;
   getStreamHandlers: GetStreamHandlers;
-  handleGenerateLiveArtifacts: (sourceMessageId: string, content: string) => Promise<void>;
   runMessageLifecycle: MessageLifecycleRunner;
   text: string;
   files: UploadedFile[];
@@ -28,7 +27,6 @@ interface SendStandardMessageParams {
 export const sendStandardMessage = async ({
   props,
   getStreamHandlers,
-  handleGenerateLiveArtifacts,
   runMessageLifecycle,
   text: textToUse,
   files: filesToUse,
@@ -133,7 +131,6 @@ export const sendStandardMessage = async ({
         messages,
         updateAndPersistSessions,
         getStreamHandlers,
-        handleGenerateLiveArtifacts,
         aspectRatio,
         imageSize,
         imageOutputMode,

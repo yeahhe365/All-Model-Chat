@@ -44,7 +44,6 @@ describe('MessageActions', () => {
         onEditMessage={() => {}}
         onDeleteMessage={() => {}}
         onRetryMessage={() => {}}
-        onGenerateLiveArtifacts={() => {}}
         onContinueGeneration={() => {}}
         onForkMessage={() => {}}
         themeId="pearl"
@@ -83,14 +82,12 @@ describe('MessageActions', () => {
     expect(deleteButton?.className).not.toContain('scale');
   });
 
-  it('collapses continue generation and Live Artifacts actions into the message overflow menu', () => {
+  it('keeps generation actions in the message overflow menu without a Live Artifacts visualization item', () => {
     const handleContinueGeneration = vi.fn();
-    const handleGenerateLiveArtifacts = vi.fn();
     const handleForkMessage = vi.fn();
 
     act(() => {
       renderMessageActions({
-        onGenerateLiveArtifacts: handleGenerateLiveArtifacts,
         onContinueGeneration: handleContinueGeneration,
         onForkMessage: handleForkMessage,
       });
@@ -121,7 +118,7 @@ describe('MessageActions', () => {
       '[role="menuitem"][aria-label="Fork from here"]',
     );
     expect(continueItem).toBeInTheDocument();
-    expect(liveArtifactsItem).toBeInTheDocument();
+    expect(liveArtifactsItem).not.toBeInTheDocument();
     expect(forkItem).toBeInTheDocument();
 
     act(() => {
@@ -144,18 +141,6 @@ describe('MessageActions', () => {
 
     expect(handleContinueGeneration).toHaveBeenCalledWith('message-1');
     expect(renderer.container.querySelector('[role="menu"]')).not.toBeInTheDocument();
-
-    act(() => {
-      moreButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-    const reopenedLiveArtifactsItem = renderer.container.querySelector<HTMLButtonElement>(
-      '[role="menuitem"][aria-label="Visualize with Live Artifacts"]',
-    );
-    act(() => {
-      reopenedLiveArtifactsItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-
-    expect(handleGenerateLiveArtifacts).toHaveBeenCalledWith('message-1', 'Hello from the model');
   });
 
   it('listens for overflow menu dismissal in the provided document', () => {
@@ -175,7 +160,6 @@ describe('MessageActions', () => {
         onEditMessage={() => {}}
         onDeleteMessage={() => {}}
         onRetryMessage={() => {}}
-        onGenerateLiveArtifacts={() => {}}
         onContinueGeneration={() => {}}
         onForkMessage={() => {}}
         themeId="pearl"
@@ -223,7 +207,6 @@ describe('MessageActions', () => {
             onEditMessage={() => {}}
             onDeleteMessage={() => {}}
             onRetryMessage={() => {}}
-            onGenerateLiveArtifacts={() => {}}
             onContinueGeneration={() => {}}
             onForkMessage={() => {}}
             themeId="pearl"
@@ -236,7 +219,6 @@ describe('MessageActions', () => {
             onEditMessage={() => {}}
             onDeleteMessage={() => {}}
             onRetryMessage={() => {}}
-            onGenerateLiveArtifacts={() => {}}
             onContinueGeneration={() => {}}
             onForkMessage={() => {}}
             themeId="pearl"

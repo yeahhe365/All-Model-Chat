@@ -1,4 +1,3 @@
-import { logService } from '@/services/logService';
 import { createChatHistoryForApi } from '@/utils/chat/builder';
 import { createMessage } from '@/utils/chat/session';
 import { isGemini3Model, isImageModel, shouldStripThinkingFromContext } from '@/utils/modelHelpers';
@@ -12,15 +11,19 @@ import {
   sendOpenAICompatibleMessageNonStream,
   sendOpenAICompatibleMessageStream,
 } from '@/services/api/openaiCompatibleApi';
-import { isLikelyHtml } from '@/utils/codeUtils';
 import { createStandardClientFunctions } from '@/features/standard-chat/standardClientFunctions';
 import { runStandardToolLoop } from '@/features/standard-chat/standardToolLoop';
 import { collectLocalPythonInputFiles } from '@/features/local-python/helpers';
 import { getPyodideService } from '@/features/local-python/loadPyodideService';
 import { updateSessionById } from '@/utils/chat/sessionMutations';
-import type { ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '@/types';
+import type {
+  ChatMessage,
+  ChatSettings as IndividualChatSettings,
+  NonStreamMessageCompleteHandler,
+  UploadedFile,
+} from '@/types';
 import type { ContentPart } from '@/types/chat';
-import type { GetStreamHandlers, SessionsUpdater, StandardChatProps } from './types';
+import type { GetStreamHandlers, SessionsUpdater, StandardChatProps, StreamHandlerFunctions } from './types';
 import type { resolveStandardChatTurn } from './standardChatTurn';
 import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
 
@@ -29,7 +32,6 @@ interface StandardChatApiCallContext {
   messages: ChatMessage[];
   updateAndPersistSessions: SessionsUpdater;
   getStreamHandlers: GetStreamHandlers;
-  handleGenerateLiveArtifacts: (sourceMessageId: string, content: string) => Promise<void>;
   aspectRatio: string;
   imageSize?: string;
   imageOutputMode: StandardChatProps['imageOutputMode'];
@@ -61,12 +63,30 @@ const routeThrownStreamError = async (run: () => Promise<void>, streamOnError: (
   }
 };
 
+const createNonStreamCompleteHandler =
+  ({
+    streamOnPart,
+    onThoughtChunk,
+    streamOnComplete,
+  }: Pick<
+    StreamHandlerFunctions,
+    'streamOnPart' | 'onThoughtChunk' | 'streamOnComplete'
+  >): NonStreamMessageCompleteHandler =>
+  (parts, thoughts, usage, grounding, urlContext) => {
+    for (const part of parts) {
+      streamOnPart(part);
+    }
+    if (thoughts) {
+      onThoughtChunk(thoughts);
+    }
+    streamOnComplete(usage, grounding, urlContext);
+  };
+
 export const performStandardChatApiCall = async ({
   appSettings,
   messages,
   updateAndPersistSessions,
   getStreamHandlers,
-  handleGenerateLiveArtifacts,
   aspectRatio,
   imageSize,
   imageOutputMode,
@@ -121,25 +141,12 @@ export const performStandardChatApiCall = async ({
     generationStartTime,
     sessionToUpdate,
     finalParts,
-    (messageId, content) => {
-      if (
-        !isContinueMode &&
-        appSettings.autoLiveArtifactsVisualization &&
-        content &&
-        content.length > 50 &&
-        !isLikelyHtml(content)
-      ) {
-        const trimmed = content.trim();
-        if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
-          return;
-        }
-        logService.info('Auto-triggering Live Artifacts for message', {
-          msgId: messageId,
-        });
-        handleGenerateLiveArtifacts(messageId, content);
-      }
-    },
   );
+  const nonStreamOnComplete = createNonStreamCompleteHandler({
+    streamOnPart,
+    onThoughtChunk,
+    streamOnComplete,
+  });
 
   if (isOpenAICompatibleMode) {
     const openAICompatibleConfig = {
@@ -180,15 +187,7 @@ export const performStandardChatApiCall = async ({
           openAICompatibleConfig,
           newAbortController.signal,
           streamOnError,
-          (parts, thoughts, usage, grounding, urlContext) => {
-            for (const part of parts) {
-              streamOnPart(part);
-            }
-            if (thoughts) {
-              onThoughtChunk(thoughts);
-            }
-            streamOnComplete(usage, grounding, urlContext);
-          },
+          nonStreamOnComplete,
           finalRole,
         ),
       streamOnError,
@@ -349,15 +348,7 @@ export const performStandardChatApiCall = async ({
         requestConfig,
         newAbortController.signal,
         streamOnError,
-        (parts, thoughts, usage, grounding, urlContext) => {
-          for (const part of parts) {
-            streamOnPart(part);
-          }
-          if (thoughts) {
-            onThoughtChunk(thoughts);
-          }
-          streamOnComplete(usage, grounding, urlContext);
-        },
+        nonStreamOnComplete,
         finalRole,
       ),
     streamOnError,

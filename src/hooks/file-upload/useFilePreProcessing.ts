@@ -8,6 +8,7 @@ import { generateZipContext } from '@/utils/folderImportUtils';
 import { compressAudioToMp3 } from '@/features/audio/audioCompression';
 import { extractDocxText, isDocxFile } from '@/utils/docxPreview';
 import { useI18n } from '@/contexts/I18nContext';
+import { createProcessingPlaceholderFile } from './utils';
 
 interface UseFilePreProcessingProps {
   appSettings: AppSettings;
@@ -43,14 +44,12 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
           const tempId = generateUniqueId();
           writeSelectedFiles((prev) => [
             ...prev,
-            {
+            createProcessingPlaceholderFile({
               id: tempId,
               name: t('fileProcessing_zip').replace('{filename}', file.name),
               type: 'application/zip',
               size: file.size,
-              isProcessing: true,
-              uploadState: 'pending',
-            },
+            }),
           ]);
 
           try {
@@ -68,14 +67,12 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
           const tempId = generateUniqueId();
           writeSelectedFiles((prev) => [
             ...prev,
-            {
+            createProcessingPlaceholderFile({
               id: tempId,
               name: t('fileProcessing_docx').replace('{filename}', file.name),
               type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
               size: file.size,
-              isProcessing: true,
-              uploadState: 'pending',
-            },
+            }),
           ]);
 
           try {
@@ -104,15 +101,13 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
             writeSelectedFiles((prev) => [
               ...prev,
-              {
+              createProcessingPlaceholderFile({
                 id: tempId,
                 name: t('fileProcessing_audio').replace('{filename}', file.name),
                 type: file.type || 'audio/mpeg',
                 size: file.size,
-                isProcessing: true,
-                uploadState: 'pending',
-                abortController: abortController,
-              },
+                abortController,
+              }),
             ]);
 
             try {

@@ -17,7 +17,6 @@ interface MessageProps {
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   onLiveArtifactFollowUp?: (payload: LiveArtifactFollowupPayload) => void;
   showThoughts: boolean;
-  onGenerateLiveArtifacts: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onSuggestionClick?: (suggestion: string) => void;
@@ -71,24 +70,25 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
       'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-2xl border border-transparent';
   }
 
+  const messageActions = (
+    <MessageActions
+      message={message}
+      sessionTitle={props.sessionTitle}
+      messageIndex={props.messageIndex}
+      isGrouped={isGrouped}
+      onEditMessage={props.onEditMessage}
+      onDeleteMessage={props.onDeleteMessage}
+      onRetryMessage={props.onRetryMessage}
+      onContinueGeneration={props.onContinueGeneration}
+      onForkMessage={props.onForkMessage}
+      themeId={themeId}
+    />
+  );
+
   return (
     <div className="relative" data-message-id={message.id} data-message-role={message.role}>
       <div className={`${messageContainerClasses}`}>
-        {message.role !== 'user' && (
-          <MessageActions
-            message={message}
-            sessionTitle={props.sessionTitle}
-            messageIndex={props.messageIndex}
-            isGrouped={isGrouped}
-            onEditMessage={props.onEditMessage}
-            onDeleteMessage={props.onDeleteMessage}
-            onRetryMessage={props.onRetryMessage}
-            onGenerateLiveArtifacts={props.onGenerateLiveArtifacts}
-            onContinueGeneration={props.onContinueGeneration}
-            onForkMessage={props.onForkMessage}
-            themeId={themeId}
-          />
-        )}
+        {message.role !== 'user' && messageActions}
         <div className={`${bubbleClasses}`}>
           <MessageContent
             message={message}
@@ -108,21 +108,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             isGemini3={props.isGemini3}
           />
         </div>
-        {message.role === 'user' && (
-          <MessageActions
-            message={message}
-            sessionTitle={props.sessionTitle}
-            messageIndex={props.messageIndex}
-            isGrouped={isGrouped}
-            onEditMessage={props.onEditMessage}
-            onDeleteMessage={props.onDeleteMessage}
-            onRetryMessage={props.onRetryMessage}
-            onGenerateLiveArtifacts={props.onGenerateLiveArtifacts}
-            onContinueGeneration={props.onContinueGeneration}
-            onForkMessage={props.onForkMessage}
-            themeId={themeId}
-          />
-        )}
+        {message.role === 'user' && messageActions}
       </div>
     </div>
   );

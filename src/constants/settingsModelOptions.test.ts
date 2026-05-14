@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AVAILABLE_LIVE_ARTIFACTS_MODELS,
-  AVAILABLE_TRANSCRIPTION_MODELS,
-  CONNECTION_TEST_MODELS,
-} from './settingsModelOptions';
+import { AVAILABLE_TRANSCRIPTION_MODELS, CONNECTION_TEST_MODELS } from './settingsModelOptions';
 
 describe('settingsModelOptions', () => {
   it('keeps connection test models aligned with the supported defaults', () => {
@@ -20,21 +16,6 @@ describe('settingsModelOptions', () => {
   it('does not expose removed Gemini 2.5 Flash preview models in connection tests', () => {
     expect(CONNECTION_TEST_MODELS.some((model) => model.id === 'gemini-2.5-flash-preview-09-2025')).toBe(false);
     expect(CONNECTION_TEST_MODELS.some((model) => model.id === 'gemini-2.5-flash-lite-preview-09-2025')).toBe(false);
-  });
-
-  it('includes all supported Live Artifacts model choices', () => {
-    const liveArtifactsModelIds = AVAILABLE_LIVE_ARTIFACTS_MODELS.map((model) => model.id);
-
-    expect(liveArtifactsModelIds).toEqual(
-      expect.arrayContaining([
-        'gemini-3-flash-preview',
-        'gemini-3.1-flash-lite-preview',
-        'gemini-robotics-er-1.6-preview',
-        'gemma-4-26b-a4b-it',
-        'gemma-4-31b-it',
-        'gemini-3.1-pro-preview',
-      ]),
-    );
   });
 
   it('does not expose removed Gemini 2.5 Flash preview models for transcription', () => {
