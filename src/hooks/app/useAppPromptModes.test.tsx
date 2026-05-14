@@ -430,6 +430,7 @@ describe('useAppPromptModes', () => {
     expect(setCommandedInput).toHaveBeenCalledWith({
       text: 'Create interactive HTML board.\n',
       id: expect.any(Number),
+      mode: 'replace',
     });
     expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
     expect(result.current.isLiveArtifactsPromptActive).toBe(true);
@@ -437,7 +438,7 @@ describe('useAppPromptModes', () => {
     unmount();
   });
 
-  it('turns off Live Artifacts and clears the input when the suggestion is clicked while already active', async () => {
+  it('keeps Live Artifacts active and replaces the input when the suggestion is clicked while already active', async () => {
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();
     const setCommandedInput = vi.fn() as unknown as (command: InputCommand) => void;
@@ -461,24 +462,15 @@ describe('useAppPromptModes', () => {
     });
 
     expect(handleSendMessage).not.toHaveBeenCalled();
-    expect(setAppSettings).toHaveBeenCalledWith(expect.any(Function));
-    expect(setCurrentChatSettings).toHaveBeenCalledWith(expect.any(Function));
-
-    const appSettingsUpdater = setAppSettings.mock.calls.at(-1)?.[0] as (prev: AppSettings) => AppSettings;
-    const chatSettingsUpdater = setCurrentChatSettings.mock.calls.at(-1)?.[0] as (prev: ChatSettings) => ChatSettings;
-    expect(appSettingsUpdater(createAppSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT })).systemInstruction).toBe(
-      '',
-    );
-    expect(
-      chatSettingsUpdater(createLiveArtifactsChatSettings({ systemInstruction: LIVE_ARTIFACTS_PROMPT }))
-        .systemInstruction,
-    ).toBe('');
     expect(setCommandedInput).toHaveBeenCalledWith({
-      text: '',
+      text: 'Create interactive HTML board.\n',
       id: expect.any(Number),
       mode: 'replace',
     });
     expect(mockLoadLiveArtifactsSystemPrompt).not.toHaveBeenCalled();
+    expect(setAppSettings).not.toHaveBeenCalled();
+    expect(setCurrentChatSettings).not.toHaveBeenCalled();
+    expect(result.current.isLiveArtifactsPromptActive).toBe(true);
 
     unmount();
   });

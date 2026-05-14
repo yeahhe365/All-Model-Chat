@@ -5,7 +5,7 @@ export const messagesTranslations = {
   imageZoom_close_title: { en: 'Close (Esc)', zh: '关闭（Esc）' },
   welcome_greeting: { en: 'How can I help you today?', zh: '有什么可以帮忙的？' },
   welcome_suggestion_title: { en: 'Suggested', zh: '建议' },
-  suggestion_summarize_title: { en: 'Summarize article', zh: '一句话概括' },
+  suggestion_summarize_title: { en: 'Summarize article', zh: '一句话总结' },
   suggestion_summarize_desc: {
     en: 'Please read the following content and distill its core theme into a single sentence. This sentence should include key elements (who, did what, what was the result) and remain concise and powerful:',
     zh: '请阅读以下内容，并用一句话精准提炼其核心主旨。这一句话需要包含关键要素（谁、做了什么、结果如何），保持简练有力：',
@@ -23,7 +23,7 @@ export const messagesTranslations = {
     zh: '请识别并提取附加图片中的所有文字内容。保持原始排版和段落结构，如果包含表格请使用 Markdown 表格格式输出。不要添加任何开场白或结束语：',
   },
   suggestion_ocr_short: { en: 'Extract text from images.', zh: '提取图片中的文字内容。' },
-  suggestion_explain_title: { en: 'Explain Concept', zh: '概念解释' },
+  suggestion_explain_title: { en: 'Explain Concept', zh: '解释概念' },
   suggestion_explain_desc: {
     en: 'Please explain the following concept in simple language. Use analogies or real-life examples to aid understanding, avoiding overly technical jargon so that a beginner with no prior knowledge can easily grasp it:',
     zh: '请用通俗易懂的语言解释以下概念。使用类比或生活中的例子来帮助理解，避免使用过于专业的术语，使零基础的初学者也能轻松掌握：',
@@ -32,13 +32,13 @@ export const messagesTranslations = {
   suggestion_prompt_label: { en: 'Prompt', zh: '提示' },
 
   // New ASR and SRT Translations
-  suggestion_asr_title: { en: 'Audio to Text', zh: '音频转文字' },
+  suggestion_asr_title: { en: 'Audio to Text', zh: '音频转写' },
   suggestion_asr_desc: {
     en: 'Please perform Automatic Speech Recognition (ASR) on the attached audio file. Transcribe the spoken content verbatim into text. Do not summarize, just output the exact words spoken:',
     zh: '请对附加的音频文件进行自动语音识别（ASR）。将语音内容逐字转录为文本。不要总结，请直接输出所说的确切文字：',
   },
   suggestion_asr_short: { en: 'Transcribe audio files verbatim.', zh: '逐字转录音频文件内容。' },
-  suggestion_srt_title: { en: 'Generate Subtitles', zh: '生成字幕' },
+  suggestion_srt_title: { en: 'Generate Subtitles', zh: '视频字幕' },
   suggestion_srt_desc: {
     en: 'Please generate a standard SRT subtitle file for the attached video. Ensure accurate timestamps (format: 00:00:00,000 --> 00:00:00,000) and transcribe the dialogue. Output ONLY the SRT content inside a code block:',
     zh: '请为附加的视频文件生成标准的 SRT 字幕文件。确保时间戳准确（格式：00:00:00,000 --> 00:00:00,000）并转录对话。请仅在代码块中输出 SRT 内容：',
@@ -46,7 +46,7 @@ export const messagesTranslations = {
   suggestion_srt_short: { en: 'Generate SRT subtitles from video.', zh: '从视频生成 SRT 字幕文件。' },
 
   // HTML Generation Translations
-  suggestion_html_title: { en: 'Live Artifacts', zh: 'Live Artifacts' },
+  suggestion_html_title: { en: 'Live Artifacts', zh: '可视化整理' },
   suggestion_html_desc: {
     en: 'Use Live Artifacts to organize the provided information as a structured, responsive HTML artifact. Keep all important information:',
     zh: '请使用 Live Artifacts，将提供的信息整理成结构化、响应式的 HTML 产物。请保留所有重要信息：',

@@ -279,24 +279,6 @@ export const useAppPromptModes = ({
       const { isAutoSendOnSuggestionClick } = appSettings;
 
       if (type === 'organize') {
-        if (isLiveArtifactsPromptActive) {
-          setPendingLiveArtifactsPromptActivation(null);
-          setLiveArtifactsPromptOverrideState({
-            active: false,
-            targetSessionId: currentLiveArtifactsPromptTargetSessionId,
-          });
-          setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
-          if (activeSessionId) {
-            setCurrentChatSettings((prev) => ({
-              ...prev,
-              systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-            }));
-          }
-          setCommandedInput({ text: '', id: Date.now(), mode: 'replace' });
-          focusChatInput(0);
-          return;
-        }
-
         setLiveArtifactsPromptOverrideState({
           active: true,
           targetSessionId: currentLiveArtifactsPromptTargetSessionId,
@@ -306,7 +288,7 @@ export const useAppPromptModes = ({
           await activateLiveArtifactsPrompt(activeSessionId);
         }
 
-        setCommandedInput({ text: `${text}\n`, id: Date.now() });
+        setCommandedInput({ text: `${text}\n`, id: Date.now(), mode: 'replace' });
         focusChatInput(0);
         return;
       }
@@ -327,10 +309,7 @@ export const useAppPromptModes = ({
       currentChatSettings.systemInstruction,
       handleSendMessage,
       isConfiguredLiveArtifactsSystemInstruction,
-      isLiveArtifactsPromptActive,
       setCommandedInput,
-      setAppSettings,
-      setCurrentChatSettings,
     ],
   );
 

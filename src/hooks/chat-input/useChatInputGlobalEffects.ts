@@ -66,6 +66,7 @@ export const useChatInputGlobalEffects = ({
       textarea.focus();
       const textLength = textarea.value.length;
       textarea.setSelectionRange(textLength, textLength);
+      textarea.scrollTop = textarea.scrollHeight;
     }, 0);
   }, [commandedInput, insertText, setInputText, setQuotes, textareaRef]);
 

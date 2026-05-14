@@ -454,6 +454,43 @@ describe('ChatInput', () => {
     expect(valueProbe?.textContent).toBe('Original message updated');
   });
 
+  it('focuses replacement commands at the bottom of the filled input', async () => {
+    vi.useFakeTimers();
+    try {
+      const replacementText = 'Use Live Artifacts to organize this:\n\n';
+      const providerValue = createProviderValue({
+        id: 1,
+        mode: 'replace',
+        text: replacementText,
+      });
+
+      await act(async () => {
+        renderChatInput(providerValue);
+      });
+
+      const textarea = renderer.container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+      expect(textarea).not.toBeNull();
+
+      if (!textarea) {
+        return;
+      }
+
+      Object.defineProperty(textarea, 'scrollHeight', { configurable: true, value: 480 });
+
+      await act(async () => {
+        vi.runOnlyPendingTimers();
+      });
+
+      expect(textarea.value).toBe(replacementText);
+      expect(document.activeElement).toBe(textarea);
+      expect(textarea.selectionStart).toBe(replacementText.length);
+      expect(textarea.selectionEnd).toBe(replacementText.length);
+      expect(textarea.scrollTop).toBe(480);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('sends slash-prefixed text when it does not match an executable command', async () => {
     const onSendMessage = vi.fn();
     const providerValue = createProviderValue(null);
