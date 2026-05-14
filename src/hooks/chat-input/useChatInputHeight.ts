@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 
+const measureChatInputHeight = (chatInputEl: HTMLDivElement) => {
+  const preciseHeight = chatInputEl.getBoundingClientRect().height;
+  return preciseHeight || chatInputEl.offsetHeight;
+};
+
 export const useChatInputHeight = () => {
   const [chatInputHeight, setChatInputHeight] = useState(160); // Default reasonable height
   const chatInputContainerRef = useRef<HTMLDivElement>(null);
@@ -9,13 +14,13 @@ export const useChatInputHeight = () => {
     if (!chatInputEl) return;
 
     const resizeObserver = new ResizeObserver(() => {
-      setChatInputHeight(chatInputEl.offsetHeight);
+      setChatInputHeight(measureChatInputHeight(chatInputEl));
     });
 
     resizeObserver.observe(chatInputEl);
 
     // Initial measurement
-    setChatInputHeight(chatInputEl.offsetHeight);
+    setChatInputHeight(measureChatInputHeight(chatInputEl));
 
     return () => resizeObserver.disconnect();
   }, []);
