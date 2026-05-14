@@ -5,6 +5,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { useWindowContext } from '@/contexts/WindowContext';
 import { IconHistory } from '@/components/icons/CustomIcons';
 import type { SavedChatSession } from '@/types';
+import { SIDEBAR_ICON_BUTTON_CLASS } from './sidebarStyles';
 
 interface CollapsedRecentChatsButtonProps {
   sessions: SavedChatSession[];
@@ -202,7 +203,7 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
             scheduleClose();
           }
         }}
-        className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
+        className={SIDEBAR_ICON_BUTTON_CLASS}
         title={t('history_recent_chats')}
         aria-label={t('history_recent_chats')}
         aria-haspopup="dialog"

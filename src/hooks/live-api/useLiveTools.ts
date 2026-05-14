@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
 import type { LiveClientFunctions, UploadedFile } from '@/types';
+import { toStructuredToolResponse } from '@/features/chat-tools/toolResponse';
 import { logService } from '@/services/logService';
 
 interface UseLiveToolsProps {
@@ -12,14 +13,6 @@ interface UseLiveToolsProps {
 export const useLiveTools = ({ clientFunctions, sessionRef, onGeneratedFiles }: UseLiveToolsProps) => {
   const cancelledCallIdsRef = useRef<Set<string>>(new Set());
   const activeControllersRef = useRef<Map<string, AbortController>>(new Map());
-
-  const toStructuredToolResponse = (value: unknown): Record<string, unknown> => {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value as Record<string, unknown>;
-    }
-
-    return { result: value };
-  };
 
   const cancelToolCalls = useCallback((ids: string[]) => {
     for (const id of ids) {

@@ -30,7 +30,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggle, isOpen, 
       </a>
       <button
         onClick={onToggle}
-        className={`p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
+        className={`p-2 -translate-y-1 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
         aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}
       >
         <IconSidebarToggle size={20} strokeWidth={2} />

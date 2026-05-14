@@ -1,22 +1,14 @@
 import { useCallback, useRef } from 'react';
-import type { LiveServerMessage, Part, Session as LiveSession } from '@google/genai';
+import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
-import type { LiveClientFunctions, ThoughtSupportingPart, UploadedFile } from '@/types';
+import type { LiveClientFunctions, LiveTranscriptHandler, ThoughtSupportingPart, UploadedFile } from '@/types';
 import { createWavBlobFromPCMChunks } from '@/features/audio/audioProcessing';
 import { getContentDeltaFromPart } from '@/features/chat-streaming/messageStreamReducer';
 
 interface UseLiveMessageProcessingProps {
   playAudioChunk: (data: string) => Promise<void>;
   stopAudioPlayback: () => void;
-  onTranscript?: (
-    text: string,
-    role: 'user' | 'model',
-    isFinal: boolean,
-    type?: 'content' | 'thought',
-    audioUrl?: string | null,
-    generatedFiles?: UploadedFile[],
-    apiPart?: Part,
-  ) => void;
+  onTranscript?: LiveTranscriptHandler;
   onGoAway?: (goAway: NonNullable<LiveServerMessage['goAway']>) => void;
   onGeneratedFiles?: (files: UploadedFile[]) => void;
   clientFunctions?: LiveClientFunctions;

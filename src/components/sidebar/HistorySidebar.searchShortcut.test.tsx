@@ -92,4 +92,44 @@ describe('HistorySidebar search shortcut', () => {
     expect(searchButton).not.toBeNull();
     expect(searchButton?.getAttribute('title')).toBe('Search (Ctrl + K)');
   });
+
+  it('keeps the collapsed sidebar toggle aligned with the expanded header toggle', async () => {
+    await act(async () => {
+      renderer.root.render(
+        <HistorySidebar
+          isOpen={false}
+          onToggle={vi.fn()}
+          onAutoClose={vi.fn()}
+          sessions={[]}
+          groups={[]}
+          activeSessionId={null}
+          loadingSessionIds={new Set()}
+          generatingTitleSessionIds={new Set()}
+          onSelectSession={vi.fn()}
+          onNewChat={vi.fn()}
+          onDeleteSession={vi.fn()}
+          onRenameSession={vi.fn()}
+          onTogglePinSession={vi.fn()}
+          onDuplicateSession={vi.fn()}
+          onOpenExportModal={vi.fn()}
+          onAddNewGroup={vi.fn()}
+          onDeleteGroup={vi.fn()}
+          onRenameGroup={vi.fn()}
+          onMoveSessionToGroup={vi.fn()}
+          onToggleGroupExpansion={vi.fn()}
+          onOpenSettingsModal={vi.fn()}
+          themeId="pearl"
+          newChatShortcut=""
+          searchChatsShortcut=""
+        />,
+      );
+    });
+
+    const openToggles = renderer.container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label="Open history sidebar"]',
+    );
+    const collapsedToggle = openToggles[openToggles.length - 1];
+
+    expect(collapsedToggle?.className).toContain('-translate-y-1');
+  });
 });

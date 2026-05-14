@@ -44,4 +44,14 @@ describe('SidebarHeader', () => {
 
     expect(logo).not.toBeNull();
   });
+
+  it('raises the expanded sidebar toggle in the header chrome', () => {
+    act(() => {
+      renderer.root.render(<SidebarHeader isOpen={true} onToggle={vi.fn()} themeId="pearl" />);
+    });
+
+    const toggle = renderer.container.querySelector('button[aria-label="Close history sidebar"]');
+
+    expect(toggle?.className).toContain('-translate-y-1');
+  });
 });

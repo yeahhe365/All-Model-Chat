@@ -21,6 +21,16 @@ export type NonStreamMessageCompleteHandler = (
   urlContextMetadata?: unknown,
 ) => void;
 
+export type LiveTranscriptHandler = (
+  text: string,
+  role: 'user' | 'model',
+  isFinal: boolean,
+  type?: 'content' | 'thought',
+  audioUrl?: string | null,
+  generatedFiles?: UploadedFile[],
+  apiPart?: Part,
+) => void;
+
 export type StreamMessageSender = (
   apiKey: string,
   modelId: string,

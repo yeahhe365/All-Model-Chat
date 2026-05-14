@@ -10,6 +10,7 @@ import { CollapsedRecentChatsButton } from './CollapsedRecentChatsButton';
 import { Search, Settings } from 'lucide-react';
 import { IconNewChat, IconSidebarToggle } from '@/components/icons/CustomIcons';
 import { useHistorySidebarLogic } from '@/hooks/useHistorySidebarLogic';
+import { SIDEBAR_CLICKABLE_ICON_BUTTON_CLASS, SIDEBAR_ICON_LINK_BUTTON_CLASS } from './sidebarStyles';
 
 interface HistorySidebarProps {
   isOpen: boolean;
@@ -43,11 +44,13 @@ const MiniSidebarButton = ({
   icon: Icon,
   title,
   href,
+  className = '',
 }: {
   onClick: () => void;
   icon: React.ElementType;
   title: string;
   href?: string;
+  className?: string;
 }) => {
   if (href) {
     return (
@@ -60,7 +63,7 @@ const MiniSidebarButton = ({
             onClick();
           }
         }}
-        className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] no-underline cursor-pointer"
+        className={[SIDEBAR_ICON_LINK_BUTTON_CLASS, className].filter(Boolean).join(' ')}
         title={title}
         aria-label={title}
       >
@@ -74,7 +77,7 @@ const MiniSidebarButton = ({
         e.stopPropagation();
         onClick();
       }}
-      className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] cursor-pointer"
+      className={[SIDEBAR_CLICKABLE_ICON_BUTTON_CLASS, className].filter(Boolean).join(' ')}
       title={title}
       aria-label={title}
     >
@@ -313,7 +316,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
         }`}
         onClick={onToggle}
       >
-        <MiniSidebarButton onClick={onToggle} icon={IconSidebarToggle} title={t('historySidebarOpen')} />
+        <MiniSidebarButton
+          onClick={onToggle}
+          icon={IconSidebarToggle}
+          title={t('historySidebarOpen')}
+          className="-translate-y-1"
+        />
 
         <div className="w-8 h-px bg-[var(--theme-border-primary)] my-1"></div>
 

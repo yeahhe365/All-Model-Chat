@@ -3,7 +3,7 @@ import type { LiveServerMessage, Part, Session as LiveSession, Tool } from '@goo
 import { float32ToPCM16Base64 } from '@/features/audio/audioProcessing';
 import { getLiveApiClient, LiveApiAuthConfigurationError } from '@/services/api/liveApiAuth';
 import { logService } from '@/services/logService';
-import type { AppSettings, UploadedFile } from '@/types';
+import type { AppSettings, LiveTranscriptHandler } from '@/types';
 import type { LiveErrorState } from './liveErrorState';
 import { useStateWithRef } from '@/hooks/useStateWithRef';
 
@@ -21,15 +21,7 @@ interface UseLiveConnectionProps {
   stopVideo: () => void;
   handleMessage: (msg: LiveServerMessage) => void;
   onClose?: () => void;
-  onTranscript?: (
-    text: string,
-    role: 'user' | 'model',
-    isFinal: boolean,
-    type?: 'content' | 'thought',
-    audioUrl?: string | null,
-    generatedFiles?: UploadedFile[],
-    apiPart?: Part,
-  ) => void;
+  onTranscript?: LiveTranscriptHandler;
   setSessionHandle: (handle: string | null) => void;
   sessionHandleRef: React.MutableRefObject<string | null>;
   sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;

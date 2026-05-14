@@ -2,6 +2,7 @@ import React from 'react';
 import { useI18n } from '@/contexts/I18nContext';
 import { Search, X } from 'lucide-react';
 import { IconNewChat, IconNewGroup } from '@/components/icons/CustomIcons';
+import { SIDEBAR_ACTION_LINK_CLASS, SIDEBAR_ACTION_ROW_CLASS } from './sidebarStyles';
 
 interface SidebarActionsProps {
   onNewChat: () => void;
@@ -48,7 +49,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
         <a
           href="/"
           onClick={handleNewChatClick}
-          className="flex-grow flex items-center gap-3 w-full text-left px-3 h-9 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors no-underline"
+          className={SIDEBAR_ACTION_LINK_CLASS}
           aria-label={t('headerNewChat_aria')}
           title={t('newChat') + (newChatShortcut ? ` (${newChatShortcut})` : '')}
         >
@@ -88,7 +89,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
         ) : (
           <button
             onClick={() => setIsSearching(true)}
-            className="flex items-center gap-3 w-full text-left px-3 h-9 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors"
+            className={SIDEBAR_ACTION_ROW_CLASS}
             aria-label={t('history_search_aria')}
           >
             <Search size={18} className="text-[var(--theme-icon-history)]" strokeWidth={2} />
@@ -99,7 +100,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
       <div>
         <button
           onClick={onAddNewGroup}
-          className="flex items-center gap-3 w-full text-left px-3 h-9 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors"
+          className={SIDEBAR_ACTION_ROW_CLASS}
           aria-label={t('newGroup_aria')}
           title={t('newGroup_button')}
         >

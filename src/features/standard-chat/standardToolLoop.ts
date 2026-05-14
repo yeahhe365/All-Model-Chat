@@ -1,5 +1,6 @@
 import type { FunctionCall, Part, UsageMetadata } from '@google/genai';
 import type { ChatHistoryItem, StandardClientFunctions, UploadedFile } from '@/types';
+import { toStructuredToolResponse } from '@/features/chat-tools/toolResponse';
 import { mergeUsageMetadata, mergeUrlContextMetadata } from '@/features/chat-streaming/messageStreamReducer';
 import {
   getGroundingChunkSource,
@@ -200,14 +201,6 @@ export const runStandardToolLoop = async ({
   let aggregatedUsage: UsageMetadata | undefined;
   let groundingCarryover: GroundingCarryover | undefined;
   let aggregatedUrlContext: unknown;
-
-  const toStructuredToolResponse = (value: unknown): Record<string, unknown> => {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      return value as Record<string, unknown>;
-    }
-
-    return { result: value };
-  };
 
   for (let iteration = 0; iteration < maxIterations; iteration += 1) {
     const turn = await runTurn(contents);
