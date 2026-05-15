@@ -64,6 +64,37 @@ describe('ModelListEditor', () => {
     expect(onSave).toHaveBeenCalledWith([{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: false }]);
   });
 
+  it('cancels editing without saving list changes', () => {
+    const onSave = vi.fn();
+    const setIsEditingList = vi.fn();
+
+    act(() => {
+      renderer.root.render(
+        <ModelListEditor
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: true }]}
+          onSave={onSave}
+          setIsEditingList={setIsEditingList}
+        />,
+      );
+    });
+
+    act(() => {
+      const idInput = renderer.container.querySelector('input[value="gemini-3-flash-preview"]') as HTMLInputElement;
+      idInput.value = 'edited-model';
+      idInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    act(() => {
+      const cancelButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+        button.textContent?.includes('Cancel'),
+      );
+      cancelButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(setIsEditingList).toHaveBeenCalledWith(false);
+  });
+
   it('blocks saving duplicate model ids after trimming whitespace', () => {
     const onSave = vi.fn();
 
@@ -127,7 +158,7 @@ describe('ModelListEditor', () => {
 
   it('resets to caller-provided defaults for independent model lists', async () => {
     const onSave = vi.fn();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirmSpy = vi.spyOn(window, 'confirm');
 
     act(() => {
       renderer.root.render(
@@ -143,11 +174,21 @@ describe('ModelListEditor', () => {
       );
     });
 
-    await act(async () => {
+    act(() => {
       const resetButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
         button.textContent?.includes('Reset'),
       );
       resetButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain('Reset the model list to its defaults?');
+
+    await act(async () => {
+      const confirmResetButton = Array.from(document.body.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Reset',
+      );
+      confirmResetButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     act(() => {

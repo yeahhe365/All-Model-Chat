@@ -3,6 +3,7 @@ import { Plus, RotateCcw, Check } from 'lucide-react';
 import { type ApiMode, type ModelOption } from '@/types';
 import { ModelListEditorRow } from './ModelListEditorRow';
 import { useI18n } from '@/contexts/I18nContext';
+import { ConfirmationModal } from '@/components/modals/ConfirmationModal';
 
 interface ModelListEditorProps {
   availableModels: ModelOption[];
@@ -34,6 +35,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
   const { t } = useI18n();
   const [tempModels, setTempModels] = useState<EditableModelRow[]>(() => toEditableRows(availableModels));
   const [validationMessage, setValidationMessage] = useState('');
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // Sync when entering edit mode (mounting) or parent updates
   useEffect(() => {
@@ -67,16 +69,19 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
     setValidationMessage('');
   };
 
-  const handleResetDefaults = async () => {
-    if (window.confirm(t('settingsResetModelListConfirm'))) {
-      if (defaultModels) {
-        setTempModels(toEditableRows(defaultModels));
-        return;
-      }
-
-      const { getDefaultModelOptions } = await import('@/utils/defaultModelOptions');
-      setTempModels(toEditableRows(getDefaultModelOptions()));
+  const handleConfirmResetDefaults = async () => {
+    if (defaultModels) {
+      setTempModels(toEditableRows(defaultModels));
+      return;
     }
+
+    const { getDefaultModelOptions } = await import('@/utils/defaultModelOptions');
+    setTempModels(toEditableRows(getDefaultModelOptions()));
+  };
+
+  const handleCancelEdit = () => {
+    setValidationMessage('');
+    setIsEditingList(false);
   };
 
   const handleSaveList = () => {
@@ -122,52 +127,71 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
   };
 
   return (
-    <div className="border border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-input)]/50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-      <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2 space-y-2">
-        {tempModels.map((model, idx) => (
-          <ModelListEditorRow
-            key={model._rowId}
-            model={model}
-            index={idx}
-            showApiModeControls={showApiModeControls}
-            onUpdate={handleUpdateTempModel}
-            onDelete={handleDeleteModel}
-          />
-        ))}
+    <>
+      <div className="border border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-input)]/50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2 space-y-2">
+          {tempModels.map((model, idx) => (
+            <ModelListEditorRow
+              key={model._rowId}
+              model={model}
+              index={idx}
+              showApiModeControls={showApiModeControls}
+              onUpdate={handleUpdateTempModel}
+              onDelete={handleDeleteModel}
+            />
+          ))}
 
-        {tempModels.length === 0 && (
-          <div className="p-4 text-center text-xs text-[var(--theme-text-tertiary)] italic">
-            {t('settingsNoModelsInList')}
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-[var(--theme-border-secondary)] p-3 bg-[var(--theme-bg-secondary)]/30 flex items-center justify-between gap-2">
-        <div className="space-y-2 flex-1 min-w-0">
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddModel}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-primary)] bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded hover:bg-[var(--theme-bg-tertiary)] transition-colors"
-            >
-              <Plus size={14} /> {t('settingsAddModel')}
-            </button>
-            <button
-              onClick={handleResetDefaults}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
-            >
-              <RotateCcw size={14} /> {t('settingsResetModelList')}
-            </button>
-          </div>
-          {validationMessage && <p className="text-xs text-[var(--theme-text-danger)]">{validationMessage}</p>}
+          {tempModels.length === 0 && (
+            <div className="p-4 text-center text-xs text-[var(--theme-text-tertiary)] italic">
+              {t('settingsNoModelsInList')}
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={handleSaveList}
-          className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-[var(--theme-text-accent)] bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] rounded transition-colors shadow-sm"
-        >
-          <Check size={14} /> {t('settingsSaveModelList')}
-        </button>
+        <div className="border-t border-[var(--theme-border-secondary)] p-3 bg-[var(--theme-bg-secondary)]/30 flex items-center justify-between gap-2">
+          <div className="space-y-2 flex-1 min-w-0">
+            <div className="flex gap-2">
+              <button
+                onClick={handleAddModel}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-primary)] bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded hover:bg-[var(--theme-bg-tertiary)] transition-colors"
+              >
+                <Plus size={14} /> {t('settingsAddModel')}
+              </button>
+              <button
+                onClick={() => setIsResetConfirmOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
+              >
+                <RotateCcw size={14} /> {t('settingsResetModelList')}
+              </button>
+            </div>
+            {validationMessage && <p className="text-xs text-[var(--theme-text-danger)]">{validationMessage}</p>}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCancelEdit}
+              className="px-4 py-1.5 text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              onClick={handleSaveList}
+              className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-[var(--theme-text-accent)] bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] rounded transition-colors shadow-sm"
+            >
+              <Check size={14} /> {t('settingsSaveModelList')}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+      <ConfirmationModal
+        isOpen={isResetConfirmOpen}
+        onClose={() => setIsResetConfirmOpen(false)}
+        onConfirm={handleConfirmResetDefaults}
+        title={t('settingsResetModelList')}
+        message={t('settingsResetModelListConfirm')}
+        confirmLabel={t('settingsResetModelList')}
+        cancelLabel={t('cancel')}
+      />
+    </>
   );
 };

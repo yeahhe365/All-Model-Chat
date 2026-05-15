@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, X, Pencil } from 'lucide-react';
+import { Bot, Pencil } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 
 interface ModelSelectorHeaderProps {
@@ -16,17 +16,19 @@ export const ModelSelectorHeader: React.FC<ModelSelectorHeaderProps> = ({ isEdit
         <Bot size={14} strokeWidth={1.5} /> {t('settingsManageModelsTitle')}
       </h4>
 
-      <button
-        type="button"
-        onPointerDown={(event) => {
-          event.preventDefault();
-        }}
-        onClick={() => setIsEditingList(!isEditingList)}
-        className={`text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors ${isEditingList ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]'}`}
-      >
-        {isEditingList ? <X size={12} /> : <Pencil size={12} />}
-        {isEditingList ? t('settingsFinishModelListEdit') : t('settingsEditModelList')}
-      </button>
+      {!isEditingList && (
+        <button
+          type="button"
+          onPointerDown={(event) => {
+            event.preventDefault();
+          }}
+          onClick={() => setIsEditingList(true)}
+          className="text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]"
+        >
+          <Pencil size={12} />
+          {t('settingsEditModelList')}
+        </button>
+      )}
     </div>
   );
 };

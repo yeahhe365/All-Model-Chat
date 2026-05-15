@@ -12,7 +12,7 @@ interface RegisteredModel {
 const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-3-flash-preview',
-    name: 'Gemini 3 Flash Preview',
+    name: 'Gemini 3 Flash',
     groups: ['defaultPinned', 'liveArtifacts', 'connectionTest', 'transcription'],
     groupLabels: {
       liveArtifacts: 'Gemini 3 Flash',
@@ -21,12 +21,12 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   },
   {
     id: 'gemini-3.1-flash-live-preview',
-    name: 'Gemini 3.1 Flash Live Preview',
+    name: 'Gemini 3.1 Flash Live',
     groups: ['defaultPinned'],
   },
   {
     id: 'gemini-3.1-flash-lite',
-    name: 'Gemini 3.1 Flash Lite Preview',
+    name: 'Gemini 3.1 Flash Lite',
     groups: ['defaultPinned', 'liveArtifacts', 'connectionTest', 'transcription'],
     groupLabels: {
       liveArtifacts: 'Gemini 3.1 Flash Lite',
@@ -36,7 +36,7 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   },
   {
     id: 'gemini-3.1-pro-preview',
-    name: 'Gemini 3.1 Pro Preview',
+    name: 'Gemini 3.1 Pro',
     groups: ['defaultPinned', 'liveArtifacts', 'transcription', 'connectionTest'],
     groupLabels: {
       liveArtifacts: 'Gemini 3.1 Pro',
@@ -46,7 +46,7 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   },
   {
     id: 'gemini-robotics-er-1.6-preview',
-    name: 'Gemini Robotics-ER 1.6 Preview',
+    name: 'Gemini Robotics-ER 1.6',
     groups: ['defaultPinned', 'liveArtifacts', 'connectionTest'],
     groupLabels: {
       liveArtifacts: 'Gemini Robotics-ER 1.6',
@@ -65,7 +65,7 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   },
   {
     id: 'gemini-3.1-flash-tts-preview',
-    name: 'Gemini 3.1 Flash TTS Preview',
+    name: 'Gemini 3.1 Flash TTS',
     groups: ['tts'],
   },
   {

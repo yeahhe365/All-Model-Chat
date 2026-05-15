@@ -31,4 +31,11 @@ describe('getDefaultModelOptions', () => {
     expect(models.some((model) => model.id === 'gemini-2.5-flash-lite-preview-09-2025')).toBe(false);
     expect(models.some((model) => model.id === 'gemini-2.5-flash-native-audio-preview-12-2025')).toBe(false);
   });
+
+  it('keeps preview ids but omits Preview from default display names', () => {
+    const models = getDefaultModelOptions();
+
+    expect(models.some((model) => model.id.includes('preview'))).toBe(true);
+    expect(models.every((model) => !/\bpreview\b/i.test(model.name))).toBe(true);
+  });
 });
