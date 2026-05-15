@@ -403,14 +403,14 @@ AMC-WebUI/
 
 OpenAI Compatible mode uses a separate model list that you can manage manually or fetch from a compatible endpoint. The table below lists the built-in Gemini Native defaults.
 
-| Type             | Models                                                                                                               |
-| :--------------- | :------------------------------------------------------------------------------------------------------------------- |
+| Type             | Models                                                                                                       |
+| :--------------- | :----------------------------------------------------------------------------------------------------------- |
 | Gemini 3.x       | `gemini-3-flash-preview`, `gemini-3.1-flash-live-preview`, `gemini-3.1-flash-lite`, `gemini-3.1-pro-preview` |
-| Robotics         | `gemini-robotics-er-1.6-preview`                                                                                     |
-| Gemma 4          | `gemma-4-31b-it`, `gemma-4-26b-a4b-it`                                                                               |
-| Imagen 4.0       | `imagen-4.0-fast-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-ultra-generate-001`                           |
-| Image generation | `gemini-2.5-flash-image`, `gemini-3-pro-image-preview`, `gemini-3.1-flash-image-preview`                             |
-| TTS              | `gemini-3.1-flash-tts-preview` with 30 voices                                                                        |
+| Robotics         | `gemini-robotics-er-1.6-preview`                                                                             |
+| Gemma 4          | `gemma-4-31b-it`, `gemma-4-26b-a4b-it`                                                                       |
+| Imagen 4.0       | `imagen-4.0-fast-generate-001`, `imagen-4.0-generate-001`, `imagen-4.0-ultra-generate-001`                   |
+| Image generation | `gemini-2.5-flash-image`, `gemini-3-pro-image-preview`, `gemini-3.1-flash-image-preview`                     |
+| TTS              | `gemini-3.1-flash-tts-preview` with 30 voices                                                                |
 
 ---
 

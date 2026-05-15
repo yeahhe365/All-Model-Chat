@@ -135,12 +135,7 @@ describe('MessageThoughts', () => {
       await Promise.resolve();
     });
 
-    expect(mockTranslateText).toHaveBeenCalledWith(
-      'api-key',
-      'Plan carefully.',
-      'Japanese',
-      'gemini-3.1-flash-lite',
-    );
+    expect(mockTranslateText).toHaveBeenCalledWith('api-key', 'Plan carefully.', 'Japanese', 'gemini-3.1-flash-lite');
   });
 
   it('renders raw thinking blocks using the normal thought panel', () => {

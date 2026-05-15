@@ -124,5 +124,4 @@ describe('AboutSection', () => {
 
     expect(releaseLink?.getAttribute('title')).toBe(`有新版本：${nextPatchVersion}`);
   });
-
 });

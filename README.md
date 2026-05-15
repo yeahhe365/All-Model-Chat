@@ -438,14 +438,14 @@ AMC-WebUI/
 
 OpenAI 兼容模式使用独立模型列表，可在设置中手动维护或从兼容端点拉取；下表列出应用内置的 Gemini 原生默认模型。
 
-| 类型           | 模型                                                                                                         |
-| :------------- | :----------------------------------------------------------------------------------------------------------- |
+| 类型           | 模型                                                                                                 |
+| :------------- | :--------------------------------------------------------------------------------------------------- |
 | **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-live-preview, gemini-3.1-flash-lite, gemini-3.1-pro-preview |
-| **Robotics**   | gemini-robotics-er-1.6-preview                                                                               |
-| **Gemma 4**    | gemma-4-31b-it, gemma-4-26b-a4b-it                                                                           |
-| **Imagen 4.0** | imagen-4.0-fast-generate-001, imagen-4.0-generate-001, imagen-4.0-ultra-generate-001                         |
-| **图片生成**   | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview                           |
-| **TTS**        | gemini-3.1-flash-tts-preview (30 种语音)                                                                     |
+| **Robotics**   | gemini-robotics-er-1.6-preview                                                                       |
+| **Gemma 4**    | gemma-4-31b-it, gemma-4-26b-a4b-it                                                                   |
+| **Imagen 4.0** | imagen-4.0-fast-generate-001, imagen-4.0-generate-001, imagen-4.0-ultra-generate-001                 |
+| **图片生成**   | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview                   |
+| **TTS**        | gemini-3.1-flash-tts-preview (30 种语音)                                                             |
 
 ---
 
