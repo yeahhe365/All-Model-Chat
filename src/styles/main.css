@@ -19,6 +19,22 @@ body,
   overflow: hidden; /* Prevent body scroll, let React app handle scrolling */
 }
 
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+@supports not (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+}
+
 #root {
   display: flex;
   flex-direction: column;

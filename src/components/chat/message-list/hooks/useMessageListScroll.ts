@@ -10,6 +10,66 @@ interface UseMessageListScrollProps {
 
 const CURRENT_TURN_VIEWPORT_OFFSET_PX = 96;
 
+type StoredScrollSnapshot = {
+  messageId: string;
+  scrollTop: number;
+  topOffset: number;
+};
+
+const getScrollStorageKey = (sessionId: string) => `chat_scroll_pos_${sessionId}`;
+
+const parseStoredScrollSnapshot = (rawValue: string | null): StoredScrollSnapshot | number | null => {
+  if (rawValue === null) {
+    return null;
+  }
+
+  const legacyTop = Number(rawValue);
+  if (Number.isFinite(legacyTop)) {
+    return legacyTop;
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as Partial<StoredScrollSnapshot>;
+    if (
+      typeof parsed.messageId === 'string' &&
+      Number.isFinite(parsed.scrollTop) &&
+      Number.isFinite(parsed.topOffset)
+    ) {
+      return {
+        messageId: parsed.messageId,
+        scrollTop: Number(parsed.scrollTop),
+        topOffset: Number(parsed.topOffset),
+      };
+    }
+    if (Number.isFinite(parsed.scrollTop)) {
+      return Number(parsed.scrollTop);
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const createScrollSnapshot = (container: HTMLElement): StoredScrollSnapshot | null => {
+  const containerRect = container.getBoundingClientRect();
+  const renderedMessages = Array.from(container.querySelectorAll<HTMLElement>('[data-message-id]'));
+  const firstVisibleMessage =
+    renderedMessages.find((element) => element.getBoundingClientRect().top >= containerRect.top) ??
+    renderedMessages.find((element) => element.getBoundingClientRect().bottom > containerRect.top);
+
+  const messageId = firstVisibleMessage?.dataset.messageId;
+  if (!firstVisibleMessage || !messageId) {
+    return null;
+  }
+
+  return {
+    messageId,
+    scrollTop: Math.max(0, Math.round(container.scrollTop)),
+    topOffset: Math.round(firstVisibleMessage.getBoundingClientRect().top - containerRect.top),
+  };
+};
+
 export const useMessageListScroll = ({
   messages,
   setScrollContainerRef,
@@ -236,7 +296,11 @@ export const useMessageListScroll = ({
           clearTimeout(scrollSaveTimeoutRef.current);
         }
         scrollSaveTimeoutRef.current = window.setTimeout(() => {
-          localStorage.setItem(`chat_scroll_pos_${activeSessionId}`, scrollTop.toString());
+          const snapshot = createScrollSnapshot(container);
+          localStorage.setItem(
+            getScrollStorageKey(activeSessionId),
+            JSON.stringify(snapshot ?? { scrollTop: Math.max(0, Math.round(scrollTop)) }),
+          );
         }, 300);
       }
     }
@@ -260,7 +324,7 @@ export const useMessageListScroll = ({
     if (lastRestoredSessionIdRef.current !== activeSessionId) {
       // If we have content, perform restoration
       if (messages.length > 0) {
-        const savedPos = localStorage.getItem(`chat_scroll_pos_${activeSessionId}`);
+        const savedSnapshot = parseStoredScrollSnapshot(localStorage.getItem(getScrollStorageKey(activeSessionId)));
         const sessionIdForRestore = activeSessionId;
         clearRestoreTimeout();
 
@@ -269,9 +333,19 @@ export const useMessageListScroll = ({
           restoreTimeoutRef.current = null;
           if (activeSessionIdRef.current !== sessionIdForRestore) return;
 
-          if (savedPos !== null) {
-            const top = parseInt(savedPos, 10);
-            virtuosoRef.current?.scrollTo({ top });
+          if (typeof savedSnapshot === 'number') {
+            virtuosoRef.current?.scrollTo({ top: savedSnapshot });
+          } else if (savedSnapshot) {
+            const targetIndex = messages.findIndex((message) => message.id === savedSnapshot.messageId);
+            if (targetIndex >= 0) {
+              virtuosoRef.current?.scrollToIndex({
+                index: targetIndex,
+                align: 'start',
+                offset: -savedSnapshot.topOffset,
+              });
+            } else {
+              virtuosoRef.current?.scrollTo({ top: savedSnapshot.scrollTop });
+            }
           } else {
             // Default to bottom for new/unvisited sessions
             virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end' });
@@ -281,7 +355,7 @@ export const useMessageListScroll = ({
         }, 50);
       }
     }
-  }, [activeSessionId, messages.length, clearRestoreTimeout]);
+  }, [activeSessionId, messages, clearRestoreTimeout]);
 
   const showScrollDown =
     !atBottom && messages.some((message, index) => index > visibleStartIndex && message.role === 'user');

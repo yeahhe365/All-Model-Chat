@@ -77,6 +77,12 @@ const setElementTop = (element: Element, top: number) => {
   }));
 };
 
+const readStoredScrollSnapshot = (sessionId: string) => {
+  const rawSnapshot = localStorage.getItem(`chat_scroll_pos_${sessionId}`);
+  expect(rawSnapshot).not.toBeNull();
+  return JSON.parse(rawSnapshot!);
+};
+
 describe('useMessageListScroll', () => {
   let storage: Map<string, string>;
 
@@ -104,7 +110,7 @@ describe('useMessageListScroll', () => {
     vi.unstubAllGlobals();
   });
 
-  it('syncs the scroller element, persists scroll position, and respects bottom-state updates', () => {
+  it('syncs the scroller element, persists a visible message anchor, and respects bottom-state updates', () => {
     const setScrollContainerRef = vi.fn();
     const { result, unmount } = renderHook(() =>
       useMessageListScroll({
@@ -120,6 +126,17 @@ describe('useMessageListScroll', () => {
       scrollHeight: { value: 1000, writable: true },
       clientHeight: { value: 200, writable: true },
     });
+    setElementTop(scroller, 100);
+
+    const firstRenderedMessage = document.createElement('div');
+    firstRenderedMessage.dataset.messageId = 'message-1';
+    setElementTop(firstRenderedMessage, 60);
+    scroller.appendChild(firstRenderedMessage);
+
+    const visibleRenderedMessage = document.createElement('div');
+    visibleRenderedMessage.dataset.messageId = 'message-3';
+    setElementTop(visibleRenderedMessage, 116);
+    scroller.appendChild(visibleRenderedMessage);
 
     act(() => {
       result.current.handleScrollerRef(scroller);
@@ -133,7 +150,11 @@ describe('useMessageListScroll', () => {
     });
 
     expect(setScrollContainerRef).toHaveBeenCalledWith(scroller);
-    expect(localStorage.getItem('chat_scroll_pos_session-1')).toBe('220');
+    expect(readStoredScrollSnapshot('session-1')).toEqual({
+      messageId: 'message-3',
+      scrollTop: 220,
+      topOffset: 16,
+    });
     expect(result.current.showScrollDown).toBe(true);
 
     unmount();
@@ -157,14 +178,46 @@ describe('useMessageListScroll', () => {
     unmount();
   });
 
-  it('restores saved scroll position for the active session', () => {
-    localStorage.setItem('chat_scroll_pos_session-restore', '144');
+  it('restores saved scroll anchors by message id and relative offset', () => {
+    localStorage.setItem(
+      'chat_scroll_pos_session-restore',
+      JSON.stringify({ messageId: 'message-3', topOffset: 18, scrollTop: 144 }),
+    );
 
     const { result, unmount } = renderHook(() =>
       useMessageListScroll({
         messages: createMessages(),
         setScrollContainerRef: vi.fn(),
         activeSessionId: 'session-restore',
+      }),
+    );
+
+    const scrollTo = vi.fn();
+    const scrollToIndex = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo,
+      scrollToIndex,
+    } as unknown as VirtuosoHandle;
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(scrollToIndex).toHaveBeenCalledWith({ index: 2, align: 'start', offset: -18 });
+
+    unmount();
+  });
+
+  it('keeps support for legacy numeric scroll restoration entries', () => {
+    localStorage.setItem('chat_scroll_pos_session-legacy-restore', '144');
+
+    const { result, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages: createMessages(),
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-legacy-restore',
       }),
     );
 
@@ -180,6 +233,35 @@ describe('useMessageListScroll', () => {
     });
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 144 });
+
+    unmount();
+  });
+
+  it('falls back to scrollTop when a stored JSON snapshot has no message anchor', () => {
+    localStorage.setItem('chat_scroll_pos_session-json-fallback', JSON.stringify({ scrollTop: 188 }));
+
+    const { result, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages: createMessages(),
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-json-fallback',
+      }),
+    );
+
+    const scrollTo = vi.fn();
+    const scrollToIndex = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo,
+      scrollToIndex,
+    } as unknown as VirtuosoHandle;
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollToIndex).not.toHaveBeenCalled();
+    expect(scrollTo).toHaveBeenCalledWith({ top: 188 });
 
     unmount();
   });

@@ -167,7 +167,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
           ref={preRef}
           className={`${props.className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar !overflow-x-auto`}
           style={{
-            transition: 'max-height 0.3s ease-out',
             overflowY: isExpanded || !isOverflowing ? 'visible' : 'hidden',
             maxHeight: isExpanded || !isOverflowing ? 'none' : `${COLLAPSE_THRESHOLD_PX}px`,
           }}

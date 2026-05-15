@@ -14,12 +14,16 @@ const createModelMessage = (overrides: Partial<ChatMessage> = {}): ChatMessage =
 describe('MessageListFooter', () => {
   const renderer = setupTestRenderer();
 
-  it('keeps the spacer height instantaneous so bottom-edge scroll does not animate', () => {
+  it('uses a bounded loading spacer tied to the measured composer height', () => {
     renderer.render(<MessageListFooter messages={[createModelMessage({ isLoading: true })]} chatInputHeight={144} />);
 
     const spacer = renderer.container.firstElementChild as HTMLDivElement | null;
 
-    expect(spacer?.style.height).toBe('85vh');
+    expect(spacer?.style.height).toContain('52dvh');
+    expect(spacer?.style.height).toContain('164px');
+    expect(spacer?.style.maxHeight).toContain('24rem');
+    expect(spacer?.style.maxHeight).toContain('164px');
+    expect(spacer?.style.height).not.toBe('85vh');
     expect(spacer?.style.transition).toBe('');
     expect(spacer?.style.overflowAnchor).toBe('none');
   });

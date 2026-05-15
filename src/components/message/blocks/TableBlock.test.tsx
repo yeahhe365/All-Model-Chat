@@ -120,4 +120,36 @@ describe('TableBlock', () => {
 
     createObjectUrl.mockRestore();
   });
+
+  it('renders fullscreen tables above modal chrome with contained overlay scrolling', () => {
+    act(() => {
+      renderer.root.render(
+        <WindowProvider window={window} document={document}>
+          <TableBlock>
+            <tbody>
+              <tr>
+                <td>Name</td>
+                <td>Alice</td>
+              </tr>
+            </tbody>
+          </TableBlock>
+        </WindowProvider>,
+      );
+    });
+
+    const fullscreenButton = renderer.container.querySelector('button[title="Fullscreen"]');
+    expect(fullscreenButton).not.toBeNull();
+
+    act(() => {
+      fullscreenButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const overlay = document.body.querySelector('[data-table-fullscreen-overlay="true"]');
+
+    expect(overlay).not.toBeNull();
+    expect(overlay?.getAttribute('role')).toBe('dialog');
+    expect(overlay?.getAttribute('aria-modal')).toBe('true');
+    expect(overlay?.className.toString()).toContain('z-[2200]');
+    expect(overlay?.className.toString()).toContain('overscroll-contain');
+  });
 });

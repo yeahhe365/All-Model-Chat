@@ -90,4 +90,18 @@ describe('UI clarity regressions', () => {
     expect(diagramWrapper).not.toContain('border-[var(--theme-border-secondary)] border-b-0');
     expect(diagramWrapper).not.toContain('bg-[var(--theme-bg-tertiary)]/45');
   });
+
+  it('uses dynamic viewport height for the app root to avoid mobile browser chrome jumps', () => {
+    const mainStyles = readSource('styles/main.css');
+
+    expect(mainStyles).toContain('height: 100dvh;');
+    expect(mainStyles).toContain('@supports not (height: 100dvh)');
+  });
+
+  it('keeps virtualized code blocks from animating height changes while scrolling', () => {
+    const codeBlock = readSource('components/message/blocks/CodeBlock.tsx');
+
+    expect(codeBlock).not.toContain("transition: 'max-height");
+    expect(codeBlock).not.toContain('transition: max-height');
+  });
 });

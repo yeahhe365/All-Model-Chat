@@ -1,5 +1,5 @@
 import { logService } from '@/services/logService';
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Minimize2, Download, FileSpreadsheet, FileText, Copy, Check } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
@@ -54,6 +54,21 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, nod
   useClickOutside(menuRef, () => setShowDownloadMenu(false));
 
   const toggleFullscreen = () => setIsFullscreen(!isFullscreen);
+
+  useEffect(() => {
+    if (!isFullscreen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+
+    targetDocument.addEventListener('keydown', handleKeyDown);
+    return () => targetDocument.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen, targetDocument]);
 
   const handleCopyMarkdown = async () => {
     if (!tableRef.current) return;
@@ -117,7 +132,12 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, nod
   // When fullscreen, we use a portal and a specific layout.
   if (isFullscreen) {
     return createPortal(
-      <div className="fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-10 overflow-auto flex flex-col items-center animate-in fade-in duration-200">
+      <div
+        data-table-fullscreen-overlay="true"
+        role="dialog"
+        aria-modal="true"
+        className="fixed inset-0 z-[2200] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-10 overflow-auto overscroll-contain flex flex-col items-center animate-in fade-in duration-200"
+      >
         <div className="fixed top-4 right-4 flex gap-2 z-50">
           <button
             onClick={handleCopyMarkdown}
