@@ -9,7 +9,6 @@ interface UseMessageListScrollProps {
 }
 
 const CURRENT_TURN_VIEWPORT_OFFSET_PX = 96;
-const SCROLL_BOTTOM_TOP = Number.MAX_SAFE_INTEGER;
 
 export const useMessageListScroll = ({
   messages,
@@ -221,7 +220,7 @@ export const useMessageListScroll = ({
 
     clearAnchorTimeout();
     lastScrollTarget.current = messages.length - 1;
-    virtuosoRef.current?.scrollTo({ top: SCROLL_BOTTOM_TOP, behavior: 'smooth' });
+    virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end', behavior: 'smooth' });
   }, [messages.length, clearAnchorTimeout]);
 
   const handleScroll = useCallback(() => {
@@ -275,7 +274,7 @@ export const useMessageListScroll = ({
             virtuosoRef.current?.scrollTo({ top });
           } else {
             // Default to bottom for new/unvisited sessions
-            virtuosoRef.current?.scrollTo({ top: SCROLL_BOTTOM_TOP });
+            virtuosoRef.current?.scrollToIndex({ index: 'LAST', align: 'end' });
           }
           // Mark restoration as complete for this session ID
           lastRestoredSessionIdRef.current = sessionIdForRestore;

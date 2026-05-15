@@ -99,10 +99,17 @@ describe('MessageList scroll configuration', () => {
         increaseViewportBy: { bottom: 800, top: 800 },
         atBottomThreshold: 150,
         computeItemKey: expect.any(Function),
+        followOutput: expect.any(Function),
       }),
     );
 
-    const props = virtuosoPropsSpy.mock.calls[0]?.[0] as VirtuosoMockProps<ChatMessage>;
+    const props = virtuosoPropsSpy.mock.calls[0]?.[0] as VirtuosoMockProps<ChatMessage> & {
+      className?: string;
+      followOutput?: (isAtBottom: boolean) => false | 'auto';
+    };
     expect(props.computeItemKey?.(0, messages[0])).toBe('message-1');
+    expect(props.followOutput?.(true)).toBe('auto');
+    expect(props.followOutput?.(false)).toBe(false);
+    expect(props.className).toContain('chat-message-list-scroller');
   });
 });

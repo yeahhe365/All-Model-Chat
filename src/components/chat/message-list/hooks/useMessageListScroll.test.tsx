@@ -194,17 +194,19 @@ describe('useMessageListScroll', () => {
     );
 
     const scrollTo = vi.fn();
+    const scrollToIndex = vi.fn();
     const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
     virtuosoRef.current = {
       scrollTo,
-      scrollToIndex: vi.fn(),
+      scrollToIndex,
     } as unknown as VirtuosoHandle;
 
     act(() => {
       vi.advanceTimersByTime(50);
     });
 
-    expect(scrollTo).toHaveBeenCalledWith({ top: Number.MAX_SAFE_INTEGER });
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(scrollToIndex).toHaveBeenCalledWith({ index: 'LAST', align: 'end' });
 
     unmount();
   });
@@ -271,11 +273,12 @@ describe('useMessageListScroll', () => {
       vi.advanceTimersByTime(50);
     });
 
-    expect(scrollTo).toHaveBeenCalledWith({
-      top: Number.MAX_SAFE_INTEGER,
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(scrollToIndex).toHaveBeenCalledWith({
+      index: 'LAST',
+      align: 'end',
       behavior: 'smooth',
     });
-    expect(scrollToIndex).not.toHaveBeenCalled();
 
     unmount();
   });
@@ -535,8 +538,10 @@ describe('useMessageListScroll', () => {
       align: 'start',
       behavior: 'smooth',
     });
-    expect(scrollTo).toHaveBeenCalledWith({
-      top: Number.MAX_SAFE_INTEGER,
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(scrollToIndex).toHaveBeenNthCalledWith(2, {
+      index: 'LAST',
+      align: 'end',
       behavior: 'smooth',
     });
 

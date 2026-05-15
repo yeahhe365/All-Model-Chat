@@ -64,6 +64,10 @@ body,
   background: transparent;
 }
 
+.chat-message-list-scroller {
+  overflow-anchor: none;
+}
+
 /* Hide Scrollbar Utility */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

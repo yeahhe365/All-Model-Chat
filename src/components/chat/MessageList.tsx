@@ -122,6 +122,7 @@ const MessageListComponent: React.FC = () => {
   const isGemini3 = useMemo(() => isGemini3Model(currentChatSettings.modelId), [currentChatSettings.modelId]);
   const markdownPreviewFile = previewFile && isMarkdownFile(previewFile) ? previewFile : null;
   const genericPreviewFile = previewFile && !isMarkdownFile(previewFile) ? previewFile : null;
+  const followOutput = React.useCallback((isAtBottom: boolean) => (isAtBottom ? 'auto' : false), []);
 
   return (
     <>
@@ -137,11 +138,11 @@ const MessageListComponent: React.FC = () => {
             scrollerRef={handleScrollerRef}
             atBottomStateChange={setAtBottom}
             atBottomThreshold={150}
-            followOutput={false} // Disable auto-scroll to bottom during streaming (we handle it via auto-anchor or user interaction)
+            followOutput={followOutput}
             computeItemKey={(_, msg) => msg.id}
             rangeChanged={onRangeChanged}
             increaseViewportBy={{ top: 800, bottom: 800 }}
-            className="custom-scrollbar"
+            className="custom-scrollbar chat-message-list-scroller"
             onScroll={handleScroll}
             components={{
               Footer: () => <MessageListFooter messages={visibleMessages} chatInputHeight={chatInputHeight} />,
