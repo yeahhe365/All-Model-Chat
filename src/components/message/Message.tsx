@@ -20,6 +20,7 @@ interface MessageProps {
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onSuggestionClick?: (suggestion: string) => void;
+  onSuggestionFill?: (suggestion: string) => void;
   onOpenSidePanel: (content: SideViewContent) => void;
   onConfigureFile?: (file: UploadedFile, messageId: string) => void;
   isGemini3?: boolean;
@@ -101,6 +102,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             isMermaidRenderingEnabled={appSettings.isMermaidRenderingEnabled}
             isGraphvizRenderingEnabled={appSettings.isGraphvizRenderingEnabled ?? true}
             onSuggestionClick={props.onSuggestionClick}
+            onSuggestionFill={props.onSuggestionFill}
             appSettings={appSettings}
             themeId={themeId}
             onOpenSidePanel={props.onOpenSidePanel}

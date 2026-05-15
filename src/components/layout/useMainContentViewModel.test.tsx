@@ -90,9 +90,6 @@ const buildApp = (overrides: Partial<AppViewModel> = {}) => {
       updateDismissed: false,
       dismissUpdateBanner: vi.fn(),
       handleRefreshApp: vi.fn(),
-      canCheckForUpdates: false,
-      manualUpdateCheckState: 'idle',
-      handleCheckForUpdates: vi.fn(),
     },
     chatState: {
       activeChat: undefined,

@@ -59,6 +59,19 @@ describe('AppearanceSection', () => {
     expect(renderer.container.textContent).not.toContain('文件传输方式');
   });
 
+  it('does not render the legacy tap-to-send reply toggle', async () => {
+    await renderAppearanceSection({
+      language: 'zh',
+      settings: {
+        isSuggestionsEnabled: true,
+        isAutoSendOnSuggestionClick: true,
+      },
+    });
+
+    expect(renderer.container.textContent).not.toContain('点按回复即发');
+    expect(renderer.container.textContent).not.toContain('Tap to Send Reply');
+  });
+
   it('updates the translate button visibility preference from the input toolbar group', async () => {
     const onUpdate = vi.fn();
 

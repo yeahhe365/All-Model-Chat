@@ -236,6 +236,50 @@ describe('useMessageListScroll', () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
+  it('does not let a pending new-turn anchor pull the view upward after jumping to bottom', () => {
+    let messages = [createMessages()[0]];
+    const { result, rerender, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages,
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-bottom-anchor-cancel',
+      }),
+    );
+
+    const scrollTo = vi.fn();
+    const scrollToIndex = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo,
+      scrollToIndex,
+    } as unknown as VirtuosoHandle;
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    scrollTo.mockClear();
+
+    messages = [createMessages()[0], createMessages()[1]];
+
+    act(() => {
+      rerender();
+    });
+
+    act(() => {
+      result.current.scrollToBottom();
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollTo).toHaveBeenCalledWith({
+      top: Number.MAX_SAFE_INTEGER,
+      behavior: 'smooth',
+    });
+    expect(scrollToIndex).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
   it('does not recalculate bottom-state during scroll handling', () => {
     const { result, unmount } = renderHook(() =>
       useMessageListScroll({

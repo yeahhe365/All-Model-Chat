@@ -438,6 +438,63 @@ describe('useAppPromptModes', () => {
     unmount();
   });
 
+  it('sends follow-up suggestions immediately even when the legacy auto-send preference is false', async () => {
+    const setCommandedInput = vi.fn() as unknown as (command: InputCommand) => void;
+    const handleSendMessage = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: createAppSettings({ isAutoSendOnSuggestionClick: false }),
+        setAppSettings: vi.fn(),
+        activeChat: createLiveArtifactsSession({ title: 'Session 1' }),
+        activeSessionId: 'session-1',
+        currentChatSettings: createLiveArtifactsChatSettings(),
+        setCurrentChatSettings: vi.fn(),
+        handleSendMessage,
+        setCommandedInput,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSuggestionClick('follow-up', 'Show a short example.');
+    });
+
+    expect(handleSendMessage).toHaveBeenCalledWith({ text: 'Show a short example.' });
+    expect(setCommandedInput).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it('fills follow-up suggestions into the input when the fill action is used', async () => {
+    const setCommandedInput = vi.fn() as unknown as (command: InputCommand) => void;
+    const handleSendMessage = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: createAppSettings(),
+        setAppSettings: vi.fn(),
+        activeChat: createLiveArtifactsSession({ title: 'Session 1' }),
+        activeSessionId: 'session-1',
+        currentChatSettings: createLiveArtifactsChatSettings(),
+        setCurrentChatSettings: vi.fn(),
+        handleSendMessage,
+        setCommandedInput,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSuggestionClick('follow-up-fill', 'Compare both options.');
+    });
+
+    expect(handleSendMessage).not.toHaveBeenCalled();
+    expect(setCommandedInput).toHaveBeenCalledWith({
+      text: 'Compare both options.\n',
+      id: expect.any(Number),
+    });
+
+    unmount();
+  });
+
   it('keeps Live Artifacts active and replaces the input when the suggestion is clicked while already active', async () => {
     const setAppSettings = vi.fn();
     const setCurrentChatSettings = vi.fn();

@@ -230,6 +230,7 @@ export const messagesTranslations = {
   metrics_generation_speed: { en: 'Generation Speed (excluding TTFT)', zh: '生成速度（不含首字延迟）' },
   metrics_total_duration: { en: 'Total Duration', zh: '总耗时' },
   generating_suggestions: { en: 'Generating suggestions...', zh: '正在生成建议…' },
+  suggestion_fill_input: { en: 'Fill suggestion into input', zh: '填入输入框' },
   generating_audio: { en: 'Generating Audio...', zh: '正在生成音频…' },
   drag_to_move: { en: 'Drag to move', zh: '拖动以移动' },
   search_sources_title: { en: 'Sources', zh: '来源' },

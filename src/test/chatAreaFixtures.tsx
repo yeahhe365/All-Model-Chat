@@ -84,6 +84,7 @@ type ChatAreaMessageListValue = {
   onSuggestionClick: (suggestion: string) => void;
   onOrganizeInfoClick: (suggestion: string) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
+  onFollowUpSuggestionFill: (suggestion: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
@@ -154,6 +155,7 @@ export const createChatAreaProviderValue = (overrides: ChatAreaProviderValueOver
       onSuggestionClick: vi.fn(),
       onOrganizeInfoClick: vi.fn(),
       onFollowUpSuggestionClick: vi.fn(),
+      onFollowUpSuggestionFill: vi.fn(),
       onContinueGeneration: vi.fn(),
       onForkMessage: vi.fn(),
       onQuickTTS: vi.fn(async () => null),

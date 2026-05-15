@@ -51,6 +51,7 @@ const MessageListComponent: React.FC = () => {
     onRetryMessage,
     onUpdateMessageFile,
     onFollowUpSuggestionClick,
+    onFollowUpSuggestionFill,
     onContinueGeneration,
     onForkMessage,
     onQuickTTS,
@@ -163,6 +164,7 @@ const MessageListComponent: React.FC = () => {
                   onContinueGeneration={onContinueGeneration}
                   onForkMessage={onForkMessage}
                   onSuggestionClick={onFollowUpSuggestionClick}
+                  onSuggestionFill={onFollowUpSuggestionFill}
                   onOpenSidePanel={onOpenSidePanel}
                   onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
                   isGemini3={isGemini3}

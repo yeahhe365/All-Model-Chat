@@ -56,6 +56,7 @@ interface ChatMessageListRuntimeValue {
     updates: { videoMetadata?: VideoMetadata; mediaResolution?: MediaResolution },
   ) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
+  onFollowUpSuggestionFill: (suggestion: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onForkMessage: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
@@ -214,6 +215,13 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
     [handleSuggestionClick],
   );
 
+  const onFollowUpSuggestionFill = useCallback(
+    (text: string) => {
+      handleSuggestionClick('follow-up-fill', text);
+    },
+    [handleSuggestionClick],
+  );
+
   const onMessageSent = useCallback(() => {
     useChatStore.getState().setCommandedInput(null);
   }, []);
@@ -353,12 +361,13 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
       onRetryMessage: chatState.handleRetryMessage,
       onUpdateMessageFile: chatState.handleUpdateMessageFile,
       onFollowUpSuggestionClick,
+      onFollowUpSuggestionFill,
       onContinueGeneration: chatState.handleContinueGeneration,
       onForkMessage: chatState.handleForkMessage,
       onQuickTTS: chatState.handleQuickTTS,
       onOpenSidePanel: handleOpenSidePanel,
     }),
-    [chatState, handleOpenSidePanel, onFollowUpSuggestionClick, sessionTitle],
+    [chatState, handleOpenSidePanel, onFollowUpSuggestionClick, onFollowUpSuggestionFill, sessionTitle],
   );
 
   const input = useMemo<ChatInputRuntimeValue>(

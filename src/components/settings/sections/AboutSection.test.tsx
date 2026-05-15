@@ -125,17 +125,4 @@ describe('AboutSection', () => {
     expect(releaseLink?.getAttribute('title')).toBe(`有新版本：${nextPatchVersion}`);
   });
 
-  it('does not render the manual update check controls in the about panel', async () => {
-    await renderAboutSection();
-
-    const checkButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('检查更新'),
-    );
-
-    expect(checkButton).toBeUndefined();
-    expect(renderer.container.textContent).not.toContain('检查更新');
-    expect(renderer.container.textContent).not.toContain('已是最新');
-    expect(renderer.container.textContent).not.toContain('发现可用更新');
-    expect(renderer.container.textContent).not.toContain('暂时无法检查更新');
-  });
 });

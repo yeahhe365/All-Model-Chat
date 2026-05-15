@@ -17,6 +17,7 @@ interface MessageContentProps {
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
   onSuggestionClick?: (suggestion: string) => void;
+  onSuggestionFill?: (suggestion: string) => void;
   appSettings: AppSettings;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
@@ -45,7 +46,11 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo((props) 
 
       <MessageText {...props} />
 
-      <MessageFooter message={message} onSuggestionClick={props.onSuggestionClick} />
+      <MessageFooter
+        message={message}
+        onSuggestionClick={props.onSuggestionClick}
+        onSuggestionFill={props.onSuggestionFill}
+      />
     </>
   );
 });

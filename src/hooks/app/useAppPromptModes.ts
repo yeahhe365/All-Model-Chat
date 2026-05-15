@@ -25,7 +25,6 @@ interface LiveArtifactsPromptOverrideState {
 interface UseAppPromptModesOptions {
   language?: 'en' | 'zh';
   appSettings: {
-    isAutoSendOnSuggestionClick?: boolean;
     systemInstruction?: string | null;
     liveArtifactsPromptMode?: AppSettings['liveArtifactsPromptMode'];
     liveArtifactsSystemPrompt?: string | null;
@@ -275,9 +274,7 @@ export const useAppPromptModes = ({
   }, [currentChatSettings.systemInstruction, toggleCodePromptMode]);
 
   const handleSuggestionClick = useCallback(
-    async (type: 'homepage' | 'organize' | 'follow-up', text: string) => {
-      const { isAutoSendOnSuggestionClick } = appSettings;
-
+    async (type: 'homepage' | 'organize' | 'follow-up' | 'follow-up-fill', text: string) => {
       if (type === 'organize') {
         setLiveArtifactsPromptOverrideState({
           active: true,
@@ -293,7 +290,7 @@ export const useAppPromptModes = ({
         return;
       }
 
-      if (type === 'follow-up' && (isAutoSendOnSuggestionClick ?? true)) {
+      if (type === 'follow-up') {
         handleSendMessage({ text });
         return;
       }
@@ -304,7 +301,6 @@ export const useAppPromptModes = ({
     [
       activeSessionId,
       activateLiveArtifactsPrompt,
-      appSettings,
       currentLiveArtifactsPromptTargetSessionId,
       currentChatSettings.systemInstruction,
       handleSendMessage,

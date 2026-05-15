@@ -102,17 +102,6 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({ settings, on
             tooltip={t('settings_enableSuggestions_tooltip')}
           />
 
-          {settings.isSuggestionsEnabled && (
-            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <ToggleItem
-                label={t('settings_autoSendOnSuggestionClick_label')}
-                checked={settings.isAutoSendOnSuggestionClick ?? true}
-                onChange={(v) => onUpdate('isAutoSendOnSuggestionClick', v)}
-                tooltip={t('settings_autoSendOnSuggestionClick_tooltip')}
-              />
-            </div>
-          )}
-
           <ToggleItem
             label={t('settings_autoScrollOnSend_label')}
             checked={settings.isAutoScrollOnSendEnabled ?? true}

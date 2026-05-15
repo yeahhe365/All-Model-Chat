@@ -29,7 +29,6 @@ export default defineConfig(({ mode }) => {
         filename: 'sw.ts',
         injectRegister: false,
         manifest: false,
-        includeAssets: ['pwa-192.png', 'pwa-512.png', 'pwa-512-maskable.png'],
         injectManifest: {
           globPatterns: ['**/*.{js,css,html,png,svg,mjs,json,woff,woff2,ttf}'],
           globIgnores: [

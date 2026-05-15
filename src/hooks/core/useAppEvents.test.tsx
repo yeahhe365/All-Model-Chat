@@ -8,13 +8,8 @@ import { setTestMatchMedia } from '@/test/browserEnvironment';
 import { renderHook } from '@/test/testUtils';
 
 const registerPwaMock = vi.fn();
-const updateRegistrationMock = vi.fn();
 const toggleFullscreenMock = vi.fn();
-
-const createRegistrationMock = (): ServiceWorkerRegistration =>
-  ({
-    update: updateRegistrationMock,
-  }) as unknown as ServiceWorkerRegistration;
+let needRefreshCallback: (() => void) | undefined;
 
 vi.mock('@/pwa/register', () => ({
   registerPwa: (...args: unknown[]) => registerPwaMock(...args),
@@ -41,7 +36,7 @@ vi.mock('@/pwa/install', () => ({
   getManualInstallMessage: vi.fn(() => 'manual install'),
 }));
 
-describe('useAppEvents manual update checks', () => {
+describe('useAppEvents PWA lifecycle', () => {
   const appSettings = createAppSettings({
     language: 'en',
     customShortcuts: {},
@@ -59,13 +54,11 @@ describe('useAppEvents manual update checks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('PROD', true);
-    updateRegistrationMock.mockResolvedValue(undefined);
-    registerPwaMock.mockImplementation(
-      ({ onRegisteredSW }: { onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
-        onRegisteredSW?.('/sw.js', createRegistrationMock());
-        return vi.fn(async () => undefined);
-      },
-    );
+    needRefreshCallback = undefined;
+    registerPwaMock.mockImplementation(({ onNeedRefresh }: { onNeedRefresh?: () => void }) => {
+      needRefreshCallback = onNeedRefresh;
+      return vi.fn(async () => undefined);
+    });
 
     setTestMatchMedia(false);
   });
@@ -74,7 +67,7 @@ describe('useAppEvents manual update checks', () => {
     vi.unstubAllEnvs();
   });
 
-  it('reports up-to-date when no new service worker is found', async () => {
+  it('marks an update as available when the service worker requests refresh', async () => {
     const { result, unmount } = renderHook(() =>
       useAppEvents({
         appSettings,
@@ -94,56 +87,11 @@ describe('useAppEvents manual update checks', () => {
 
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
-      await result.current.handleCheckForUpdates();
-      await new Promise((resolve) => setTimeout(resolve, 1300));
-    });
-
-    expect(updateRegistrationMock).toHaveBeenCalledTimes(1);
-    expect(result.current.manualUpdateCheckState).toBe('up-to-date');
-
-    unmount();
-  });
-
-  it('marks an update as available when the registration signals refresh is needed', async () => {
-    let onNeedRefresh: (() => void) | undefined;
-    registerPwaMock.mockImplementation(
-      (options: {
-        onNeedRefresh?: () => void;
-        onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void;
-      }) => {
-        onNeedRefresh = options.onNeedRefresh;
-        options.onRegisteredSW?.('/sw.js', createRegistrationMock());
-        return vi.fn(async () => undefined);
-      },
-    );
-
-    const { result, unmount } = renderHook(() =>
-      useAppEvents({
-        appSettings,
-        setAppSettings: vi.fn(),
-        startNewChat: vi.fn(),
-        currentChatSettings,
-        availableModels,
-        handleSelectModelInHeader: vi.fn(),
-        setIsLogViewerOpen: vi.fn(),
-        onTogglePip: vi.fn(),
-        isPipSupported: false,
-        pipWindow: null,
-        isLoading: false,
-        onStopGenerating: vi.fn(),
-      }),
-    );
-
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      const checkPromise = result.current.handleCheckForUpdates();
-      onNeedRefresh?.();
-      await checkPromise;
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      needRefreshCallback?.();
     });
 
     expect(result.current.needRefresh).toBe(true);
-    expect(result.current.manualUpdateCheckState).toBe('update-available');
+    expect(result.current.updateDismissed).toBe(false);
 
     unmount();
   });

@@ -77,6 +77,12 @@ describe('vite.config runtime ownership', () => {
     expect(config).toContain("'**/fonts/NotoSansCJKsc-VF.ttf.part-*'");
   });
 
+  it('does not duplicate PWA icon precache entries through includeAssets', () => {
+    const config = fs.readFileSync(viteConfigPath, 'utf8');
+
+    expect(config).not.toMatch(/includeAssets:\s*\[[\s\S]*pwa-(?:192|512|512-maskable)\.png/);
+  });
+
   it('keeps Markdown PDF export off the html2canvas/html2pdf screenshot path', () => {
     const source = fs.readFileSync(markdownPdfExportPath, 'utf8');
 

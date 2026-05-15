@@ -118,6 +118,8 @@ export const useMessageListScroll = ({
 
   // Enhanced Navigation Logic: Search data array instead of DOM
   const scrollToPrevTurn = useCallback(() => {
+    clearAnchorTimeout();
+
     const currentStartIndex = visibleRangeRef.current.startIndex;
     let targetIndex = -1;
 
@@ -135,9 +137,11 @@ export const useMessageListScroll = ({
     } else {
       virtuosoRef.current?.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [messages, clearAnchorTimeout]);
 
   const scrollToNextTurn = useCallback(() => {
+    clearAnchorTimeout();
+
     const renderedTurnNavigation = (() => {
       if (!scrollerRef) {
         return null;
@@ -198,25 +202,27 @@ export const useMessageListScroll = ({
 
     lastScrollTarget.current = targetIndex;
     virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
-  }, [messages, scrollerRef]);
+  }, [messages, scrollerRef, clearAnchorTimeout]);
 
   const scrollToTop = useCallback(() => {
     if (messages.length === 0) {
       return;
     }
 
+    clearAnchorTimeout();
     lastScrollTarget.current = 0;
     virtuosoRef.current?.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' });
-  }, [messages.length]);
+  }, [messages.length, clearAnchorTimeout]);
 
   const scrollToBottom = useCallback(() => {
     if (messages.length === 0) {
       return;
     }
 
+    clearAnchorTimeout();
     lastScrollTarget.current = messages.length - 1;
     virtuosoRef.current?.scrollTo({ top: SCROLL_BOTTOM_TOP, behavior: 'smooth' });
-  }, [messages.length]);
+  }, [messages.length, clearAnchorTimeout]);
 
   const handleScroll = useCallback(() => {
     if (document.hidden) return;
