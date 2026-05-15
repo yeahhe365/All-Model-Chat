@@ -139,7 +139,7 @@ describe('MessageThoughts', () => {
       'api-key',
       'Plan carefully.',
       'Japanese',
-      'gemini-3.1-flash-lite-preview',
+      'gemini-3.1-flash-lite',
     );
   });
 

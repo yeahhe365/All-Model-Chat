@@ -5,8 +5,8 @@ const GEMINI_3_REQUIRED_THINKING_MODEL_IDS = [
   'models/gemini-3.1-pro-preview',
   'gemini-3-flash-preview',
   'models/gemini-3-flash-preview',
-  'gemini-3.1-flash-lite-preview',
-  'models/gemini-3.1-flash-lite-preview',
+  'gemini-3.1-flash-lite',
+  'models/gemini-3.1-flash-lite',
 ] as const;
 
 export const GEMINI_3_RO_MODELS: string[] = [...GEMINI_3_REQUIRED_THINKING_MODEL_IDS];
@@ -15,7 +15,7 @@ export const MODELS_MANDATORY_THINKING: string[] = [...GEMINI_3_REQUIRED_THINKIN
 
 export const MODELS_SUPPORTING_RAW_MODE = [
   'gemini-3-flash-preview',
-  'gemini-3.1-flash-lite-preview',
+  'gemini-3.1-flash-lite',
   'gemini-3.1-pro-preview',
   'gemini-robotics-er-1.6-preview',
 ];
@@ -50,4 +50,4 @@ export const DEFAULT_TTS_VOICE = 'Zephyr';
 export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'gemini-3-flash-preview';
 export const DEFAULT_TTS_MODEL_ID = 'gemini-3.1-flash-tts-preview';
 export const DEFAULT_LIVE_ARTIFACTS_MODEL_ID = 'gemini-3-flash-preview';
-export const DEFAULT_THOUGHT_TRANSLATION_MODEL_ID = 'gemini-3.1-flash-lite-preview';
+export const DEFAULT_THOUGHT_TRANSLATION_MODEL_ID = 'gemini-3.1-flash-lite';

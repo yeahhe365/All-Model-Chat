@@ -28,7 +28,7 @@ const MODALITY_TEXT_PRICING: Record<
     response: { TEXT: 3 },
     tool: { TEXT: 0.5, IMAGE: 0.5, AUDIO: 1 },
   },
-  'gemini-3.1-flash-lite-preview': {
+  'gemini-3.1-flash-lite': {
     prompt: { TEXT: 0.25, IMAGE: 0.25, AUDIO: 0.5 },
     cache: { TEXT: 0.025, IMAGE: 0.025, AUDIO: 0.05 },
     response: { TEXT: 1.5 },

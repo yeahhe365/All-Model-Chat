@@ -130,7 +130,7 @@ export const generateSuggestionsApi = async (
       errorLabel: 'Error during suggestions generation:',
       run: async ({ client: ai }) => {
         const response = await ai.models.generateContent({
-          model: 'gemini-3.1-flash-lite-preview',
+          model: 'gemini-3.1-flash-lite',
           contents,
           config: {
             thinkingConfig: { thinkingBudget: -1 }, // auto
@@ -178,7 +178,7 @@ export const generateSuggestionsApi = async (
         errorLabel: 'Fallback suggestions generation also failed:',
         run: async ({ client: ai }) =>
           ai.models.generateContent({
-            model: 'gemini-3.1-flash-lite-preview',
+            model: 'gemini-3.1-flash-lite',
             contents: buildSuggestionContents(userContent, modelContent, language, true),
             config: {
               thinkingConfig: { thinkingBudget: -1 },
@@ -216,7 +216,7 @@ export const generateTitleApi = async (
     errorLabel: 'Error during title generation:',
     run: async ({ client: ai }) => {
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-lite-preview',
+        model: 'gemini-3.1-flash-lite',
         contents,
         config: {
           thinkingConfig: { thinkingBudget: -1 },

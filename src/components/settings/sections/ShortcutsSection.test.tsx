@@ -33,7 +33,7 @@ describe('ShortcutsSection', () => {
           availableModels={[
             { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
             { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
-            { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
+            { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
           ]}
           onUpdateSettings={onUpdateSettings}
         />,

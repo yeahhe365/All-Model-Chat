@@ -25,7 +25,7 @@ const MODEL_REGISTRY: RegisteredModel[] = [
     groups: ['defaultPinned'],
   },
   {
-    id: 'gemini-3.1-flash-lite-preview',
+    id: 'gemini-3.1-flash-lite',
     name: 'Gemini 3.1 Flash Lite Preview',
     groups: ['defaultPinned', 'liveArtifacts', 'connectionTest', 'transcription'],
     groupLabels: {

@@ -5,7 +5,7 @@ describe('settingsModelOptions', () => {
   it('keeps connection test models aligned with the supported defaults', () => {
     expect(CONNECTION_TEST_MODELS.map((model) => model.id)).toEqual([
       'gemini-3-flash-preview',
-      'gemini-3.1-flash-lite-preview',
+      'gemini-3.1-flash-lite',
       'gemini-3.1-pro-preview',
       'gemini-robotics-er-1.6-preview',
       'gemma-4-31b-it',
@@ -34,7 +34,7 @@ describe('settingsModelOptions', () => {
   it('keeps transcription models aligned with the supported list', () => {
     expect(AVAILABLE_TRANSCRIPTION_MODELS.map((model) => model.id)).toEqual([
       'gemini-3-flash-preview',
-      'gemini-3.1-flash-lite-preview',
+      'gemini-3.1-flash-lite',
       'gemini-3.1-pro-preview',
     ]);
   });
