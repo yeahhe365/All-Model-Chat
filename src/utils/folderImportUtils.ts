@@ -1,14 +1,14 @@
-import {
-  buildImportContextFile,
-  generateZipContext as generateZipImportContext,
-  type ImportContextBuildOptions,
-  type PathFileInput,
-} from './import-context/importContextBuilder';
+import type { ImportContextBuildOptions, PathFileInput } from './import-context/importContextBuilder';
 
 export const generateFolderContext = async (
   files: FileList | File[] | PathFileInput[],
   options: ImportContextBuildOptions = {},
-): Promise<File> => buildImportContextFile(files, options);
+): Promise<File> => {
+  const { buildImportContextFile } = await import('./import-context/importContextBuilder');
+  return buildImportContextFile(files, options);
+};
 
-export const generateZipContext = async (zipFile: File, options: ImportContextBuildOptions = {}): Promise<File> =>
-  generateZipImportContext(zipFile, options);
+export const generateZipContext = async (zipFile: File, options: ImportContextBuildOptions = {}): Promise<File> => {
+  const { generateZipContext: generateZipImportContext } = await import('./import-context/importContextBuilder');
+  return generateZipImportContext(zipFile, options);
+};

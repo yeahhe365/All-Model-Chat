@@ -76,7 +76,7 @@ afterEach(() => {
 });
 
 describe('useSelectionPosition', () => {
-  it('reads text selection from the WindowProvider document', () => {
+  it('reads text selection from the WindowProvider document', async () => {
     const { targetWindow, targetDocument, cleanup } = createIsolatedWindowContext();
     const host = targetDocument.createElement('div');
     const strong = targetDocument.createElement('strong');
@@ -104,8 +104,10 @@ describe('useSelectionPosition', () => {
 
     selectNodeInDocument(strong, targetDocument, targetWindow);
 
-    expect(result.current.selectedText).toBe('**hello from pip**');
-    expect(result.current.position).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('**hello from pip**');
+      expect(result.current.position).not.toBeNull();
+    });
 
     targetWindow.getSelection()?.removeAllRanges();
     unmount();
@@ -143,7 +145,7 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
-  it('supports a direct HTMLElement container reference', () => {
+  it('supports a direct HTMLElement container reference', async () => {
     const host = document.createElement('div');
     const textNode = document.createTextNode('hello world');
     host.appendChild(textNode);
@@ -171,13 +173,15 @@ describe('useSelectionPosition', () => {
       document.dispatchEvent(new Event('selectionchange'));
     });
 
-    expect(result.current.selectedText).toBe('hello world');
-    expect(result.current.position).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('hello world');
+      expect(result.current.position).not.toBeNull();
+    });
 
     unmount();
   });
 
-  it('copies markdown text to the clipboard on global copy', () => {
+  it('copies markdown text to the clipboard on global copy', async () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');
     strong.textContent = 'hello world';
@@ -195,7 +199,9 @@ describe('useSelectionPosition', () => {
 
     selectNode(strong);
 
-    expect(result.current.selectedText).toBe('**hello world**');
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('**hello world**');
+    });
 
     const setData = vi.fn();
     const copyEvent = new Event('copy', { bubbles: true, cancelable: true });
@@ -214,7 +220,7 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
-  it('copies plain selected text on global copy when formatting preservation is disabled', () => {
+  it('copies plain selected text on global copy when formatting preservation is disabled', async () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');
     strong.textContent = 'hello world';
@@ -233,7 +239,9 @@ describe('useSelectionPosition', () => {
 
     selectNode(strong);
 
-    expect(result.current.selectedText).toBe('**hello world**');
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('**hello world**');
+    });
 
     const setData = vi.fn();
     const copyEvent = new Event('copy', { bubbles: true, cancelable: true });
@@ -252,7 +260,7 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
-  it('excludes non-selectable UI chrome from formatted and plain selection text', () => {
+  it('excludes non-selectable UI chrome from formatted and plain selection text', async () => {
     const host = document.createElement('div');
     const chrome = document.createElement('span');
     chrome.className = 'select-none';
@@ -284,13 +292,15 @@ describe('useSelectionPosition', () => {
       document.dispatchEvent(new Event('selectionchange'));
     });
 
-    expect(result.current.selectedText).toBe('**hello world**');
-    expect(result.current.selectedCopyText).toBe('hello world');
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('**hello world**');
+      expect(result.current.selectedCopyText).toBe('hello world');
+    });
 
     unmount();
   });
 
-  it('keeps selected code block text plain so partial code copies preserve indentation and operators', () => {
+  it('keeps selected code block text plain so partial code copies preserve indentation and operators', async () => {
     const host = document.createElement('div');
     const pre = document.createElement('pre');
     const code = document.createElement('code');
@@ -331,13 +341,15 @@ describe('useSelectionPosition', () => {
       document.dispatchEvent(new Event('selectionchange'));
     });
 
-    expect(result.current.selectedCopyText).toBe(selectedCode);
-    expect(result.current.selectedCopyText).not.toContain('\\=');
+    await vi.waitFor(() => {
+      expect(result.current.selectedCopyText).toBe(selectedCode);
+      expect(result.current.selectedCopyText).not.toContain('\\=');
+    });
 
     unmount();
   });
 
-  it('notifies when global copy uses the selected markdown text', () => {
+  it('notifies when global copy uses the selected markdown text', async () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');
     strong.textContent = 'hello world';
@@ -346,7 +358,7 @@ describe('useSelectionPosition', () => {
 
     const onCopySuccess = vi.fn();
     const toolbarRef = createToolbarRef();
-    const { unmount } = renderHook(() =>
+    const { result, unmount } = renderHook(() =>
       useSelectionPosition({
         containerRef: host,
         isAudioActive: false,
@@ -356,6 +368,9 @@ describe('useSelectionPosition', () => {
     );
 
     selectNode(strong);
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('**hello world**');
+    });
 
     const copyEvent = new Event('copy', { bubbles: true, cancelable: true });
     Object.defineProperty(copyEvent, 'clipboardData', {
@@ -367,7 +382,9 @@ describe('useSelectionPosition', () => {
       document.dispatchEvent(copyEvent);
     });
 
-    expect(onCopySuccess).toHaveBeenCalledWith('**hello world**');
+    await vi.waitFor(() => {
+      expect(onCopySuccess).toHaveBeenCalledWith('**hello world**');
+    });
 
     unmount();
   });
@@ -412,7 +429,7 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
-  it('clears cached selected text when selection moves outside the container', () => {
+  it('clears cached selected text when selection moves outside the container', async () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');
     strong.textContent = 'hello world';
@@ -433,17 +450,21 @@ describe('useSelectionPosition', () => {
     );
 
     selectNode(strong);
-    expect(result.current.selectedText).toBe('**hello world**');
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('**hello world**');
+    });
 
     selectNode(outside);
 
-    expect(result.current.selectedText).toBe('');
-    expect(result.current.position).toBeNull();
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('');
+      expect(result.current.position).toBeNull();
+    });
 
     unmount();
   });
 
-  it('preserves the toolbar anchor while audio playback is active', () => {
+  it('preserves the toolbar anchor while audio playback is active', async () => {
     const host = document.createElement('div');
     const strong = document.createElement('strong');
     strong.textContent = 'hello world';
@@ -463,8 +484,10 @@ describe('useSelectionPosition', () => {
 
     selectNode(strong);
 
-    expect(result.current.selectedText).toBe('**hello world**');
-    expect(result.current.position).not.toBeNull();
+    await vi.waitFor(() => {
+      expect(result.current.selectedText).toBe('**hello world**');
+      expect(result.current.position).not.toBeNull();
+    });
 
     isAudioActive = true;
     rerender(() =>
@@ -524,7 +547,7 @@ describe('useSelectionPosition', () => {
     unmount();
   });
 
-  it('re-clamps the toolbar position after the toolbar ref becomes available', () => {
+  it('re-clamps the toolbar position after the toolbar ref becomes available', async () => {
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
       value: 390,
@@ -562,7 +585,9 @@ describe('useSelectionPosition', () => {
       document.dispatchEvent(new Event('selectionchange'));
     });
 
-    expect(result.current.position).toEqual({ top: 50, left: 340 });
+    await vi.waitFor(() => {
+      expect(result.current.position).toEqual({ top: 50, left: 340 });
+    });
 
     const toolbar = document.createElement('div');
     toolbar.getBoundingClientRect = () => createRect({ width: 280, height: 44 });
@@ -576,7 +601,9 @@ describe('useSelectionPosition', () => {
       }),
     );
 
-    expect(result.current.position).toEqual({ top: 50, left: 240 });
+    await vi.waitFor(() => {
+      expect(result.current.position).toEqual({ top: 50, left: 240 });
+    });
 
     unmount();
   });

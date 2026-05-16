@@ -1,4 +1,5 @@
 type Listener = () => void;
+type NotifyFrameHandle = ReturnType<typeof requestAnimationFrame>;
 
 const STREAM_ENTRY_TTL_MS = 5 * 60_000;
 
@@ -7,6 +8,8 @@ class StreamingStore {
   private thoughts = new Map<string, string>();
   private listeners = new Map<string, Set<Listener>>();
   private touchedAt = new Map<string, number>();
+  private pendingNotifyIds = new Set<string>();
+  private notifyFrame: NotifyFrameHandle | null = null;
 
   private touch(id: string, now = Date.now()) {
     this.touchedAt.set(id, now);
@@ -59,13 +62,32 @@ class StreamingStore {
   }
 
   private notify(id: string) {
-    this.listeners.get(id)?.forEach((l) => l());
+    this.pendingNotifyIds.add(id);
+
+    if (this.notifyFrame !== null) {
+      return;
+    }
+
+    this.notifyFrame = requestAnimationFrame(() => {
+      this.notifyFrame = null;
+      const ids = Array.from(this.pendingNotifyIds);
+      this.pendingNotifyIds.clear();
+
+      ids.forEach((pendingId) => {
+        this.listeners.get(pendingId)?.forEach((listener) => listener());
+      });
+    });
   }
 
   clear(id: string) {
     this.content.delete(id);
     this.thoughts.delete(id);
     this.touchedAt.delete(id);
+    this.pendingNotifyIds.delete(id);
+    if (this.pendingNotifyIds.size === 0 && this.notifyFrame !== null) {
+      cancelAnimationFrame(this.notifyFrame);
+      this.notifyFrame = null;
+    }
     // Don't delete listeners immediately as component unmount might happen slightly later
   }
 

@@ -15,7 +15,7 @@ interface AcquireObjectUrlOptions {
   ownerId?: string;
 }
 
-export class ObjectUrlManager {
+class ObjectUrlManager {
   private readonly createObjectUrl: (blob: Blob) => string;
   private readonly revokeObjectUrl: (url: string) => void;
   private readonly entries = new Map<string, ObjectUrlEntry>();

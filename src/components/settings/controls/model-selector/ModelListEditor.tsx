@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, RotateCcw, Check } from 'lucide-react';
+import { Plus, RotateCcw } from 'lucide-react';
 import { type ApiMode, type ModelOption } from '@/types';
 import { ModelListEditorRow } from './ModelListEditorRow';
 import { useI18n } from '@/contexts/I18nContext';
@@ -176,9 +176,9 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({
             </button>
             <button
               onClick={handleSaveList}
-              className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-[var(--theme-text-accent)] bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] rounded transition-colors shadow-sm"
+              className="px-4 py-1.5 text-xs font-medium text-[var(--theme-text-accent)] bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] rounded transition-colors shadow-sm"
             >
-              <Check size={14} /> {t('settingsSaveModelList')}
+              {t('settingsSaveModelList')}
             </button>
           </div>
         </div>

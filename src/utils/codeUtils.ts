@@ -6,7 +6,7 @@ interface NormalizePreviewableMarkdownOptions {
 }
 
 const LIVE_ARTIFACT_HTML_LANGUAGE = 'amc-live-artifact-html';
-export const LIVE_ARTIFACT_INTERACTION_LANGUAGE = 'amc-live-artifact-interaction';
+const LIVE_ARTIFACT_INTERACTION_LANGUAGE = 'amc-live-artifact-interaction';
 const HTML_LANGUAGE_ALIASES = new Set(['html', 'htm']);
 const SVG_LANGUAGE_ALIASES = new Set(['svg']);
 const HTML_DOCUMENT_REGEX = /^(?:<!doctype\s+html\b[^>]*>\s*)?<html\b[\s\S]*<\/html>$/i;
@@ -85,7 +85,7 @@ export const isLiveArtifactInteractionLanguage = (language?: string): boolean =>
   return normalizeLanguage(language) === LIVE_ARTIFACT_INTERACTION_LANGUAGE;
 };
 
-export const isLikelyLiveArtifactInteractionJson = (textContent: string): boolean => {
+const isLikelyLiveArtifactInteractionJson = (textContent: string): boolean => {
   const normalizedContent = textContent.trim();
   if (
     !normalizedContent ||
@@ -248,18 +248,6 @@ export const extractPreviewableCodeBlock = (
   }
 
   return null;
-};
-
-export const wrapBarePreviewableDocument = (markdownContent: string): string => {
-  const content = markdownContent.trim();
-  const markupType = getStandaloneDocumentPreviewType(content);
-
-  if (!markupType) {
-    return markdownContent;
-  }
-
-  const artifactLanguage = markupType === 'html' ? LIVE_ARTIFACT_HTML_LANGUAGE : markupType;
-  return `\`\`\`${artifactLanguage}\n${content}\n\`\`\``;
 };
 
 const wrapBarePreviewableArtifact = (

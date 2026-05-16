@@ -1,10 +1,10 @@
-import { act, type SetStateAction } from 'react';
+import { act, type PropsWithChildren, type SetStateAction } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppViewModel } from '@/hooks/app/useApp';
 import type { AppSettings } from '@/types';
 import { renderHook } from '@/test/testUtils';
 import { createAppSettings, createChatSettings, createTheme } from '@/test/factories';
-import { useChatRuntimeValues } from './chat-runtime/ChatRuntimeContext';
+import { ChatRuntimeProvider, useChatHeaderRuntime } from './chat-runtime/ChatRuntimeContext';
 import { CHAT_INPUT_TEXTAREA_SELECTOR } from '@/constants/appConstants';
 
 const mockStores = vi.hoisted(() => {
@@ -41,6 +41,11 @@ vi.mock('@/stores/chatStore', () => ({
 vi.mock('@/utils/shortcutUtils', () => ({
   getShortcutDisplay: vi.fn(() => 'shortcut'),
 }));
+
+const renderChatHeaderRuntime = (app: AppViewModel) =>
+  renderHook(() => useChatHeaderRuntime(), {
+    wrapper: ({ children }: PropsWithChildren) => <ChatRuntimeProvider app={app}>{children}</ChatRuntimeProvider>,
+  });
 
 const buildApp = (overrides: Partial<AppViewModel> = {}) => {
   const appSettings = createAppSettings({
@@ -204,8 +209,8 @@ describe('chat runtime values', () => {
 
   it('shows API-configured OpenAI-compatible models in the header while OpenAI mode is active', () => {
     const app = buildApp();
-    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
-    const header = result.current.header;
+    const { result, unmount } = renderChatHeaderRuntime(app);
+    const header = result.current;
 
     expect(header.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
@@ -249,8 +254,8 @@ describe('chat runtime values', () => {
       },
       getCurrentModelDisplayName: vi.fn(() => 'Gemini 3 Flash Preview'),
     });
-    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
-    const header = result.current.header;
+    const { result, unmount } = renderChatHeaderRuntime(app);
+    const header = result.current;
 
     expect(header.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
@@ -304,11 +309,11 @@ describe('chat runtime values', () => {
       },
       getCurrentModelDisplayName: vi.fn(() => 'Gemini 3 Flash Preview'),
     });
-    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
+    const { result, unmount } = renderChatHeaderRuntime(app);
 
     try {
       act(() => {
-        result.current.header.onSelectModel('gpt-5.5');
+        result.current.onSelectModel('gpt-5.5');
         vi.runAllTimers();
       });
 
@@ -332,8 +337,8 @@ describe('chat runtime values', () => {
       },
       getCurrentModelDisplayName: vi.fn(() => 'Gemini 3 Flash Preview'),
     });
-    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
-    const header = result.current.header;
+    const { result, unmount } = renderChatHeaderRuntime(app);
+    const header = result.current;
 
     expect(header.availableModels).toEqual([
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', apiMode: 'gemini-native' },
@@ -352,8 +357,8 @@ describe('chat runtime values', () => {
 
   it('switches back to Gemini-native mode when selecting a Gemini model from OpenAI mode', () => {
     const app = buildApp();
-    const { result, unmount } = renderHook(() => useChatRuntimeValues(app));
-    const header = result.current.header;
+    const { result, unmount } = renderChatHeaderRuntime(app);
+    const header = result.current;
 
     act(() => {
       header.onSelectModel('gemini-3-flash-preview');

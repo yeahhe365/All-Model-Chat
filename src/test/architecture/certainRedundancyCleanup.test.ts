@@ -30,6 +30,19 @@ describe('certain redundancy cleanup guards', () => {
     expect(fs.existsSync(path.join(projectRoot, 'src/features/chat/input/index.ts'))).toBe(false);
   });
 
+  it('does not expose test-only implementation helpers from production modules', () => {
+    const objectUrlManagerSource = readProjectFile('src/services/objectUrlManager.ts');
+    const audioCompressionSource = readProjectFile('src/features/audio/audioCompression.ts');
+    const modelCapabilitiesSource = readProjectFile('src/stores/modelCapabilitiesStore.ts');
+    const chatRuntimeSource = readProjectFile('src/components/layout/chat-runtime/ChatRuntimeContext.tsx');
+
+    expect(objectUrlManagerSource).not.toContain('export class ObjectUrlManager');
+    expect(audioCompressionSource).not.toContain('export const createAudioCompressionWorkerCode');
+    expect(audioCompressionSource).not.toContain('export const encodeMp3WithWorker');
+    expect(modelCapabilitiesSource).not.toContain('export const useModelCapabilitiesStore');
+    expect(chatRuntimeSource).not.toContain('export const useChatRuntimeValues');
+  });
+
   it('inlines main content prop assembly and trims related interface surface', () => {
     const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
     const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
@@ -54,6 +67,14 @@ describe('certain redundancy cleanup guards', () => {
     expect(apiConfigSource).not.toContain('serverManagedApi?: boolean;');
     expect(apiConfigSource).not.toContain('setLiveApiEphemeralTokenEndpoint?:');
     expect(customIconsSource).not.toContain("export * from './iconUtils';");
+  });
+
+  it('keeps the history sidebar out of the initial main-content chunk', () => {
+    const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
+
+    expect(mainContentSource).not.toContain("import { HistorySidebar } from '@/components/sidebar/HistorySidebar';");
+    expect(mainContentSource).toContain("import('@/components/sidebar/HistorySidebar')");
+    expect(mainContentSource).toContain('LazyHistorySidebar');
   });
 
   it('keeps PiP availability independent from custom API config toggles', () => {

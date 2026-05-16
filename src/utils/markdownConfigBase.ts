@@ -193,7 +193,10 @@ const rehypeSafeInlineStyles = () => {
   };
 };
 
-export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
+export const getBaseRehypePlugins = (
+  allowHtml: boolean,
+  options: { syntaxHighlighting?: boolean } = {},
+): PluggableList => {
   const sanitizeSchema = {
     ...defaultSchema,
     tagNames: [
@@ -308,17 +311,20 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
   }
 
   plugins.push([rehypeSanitize, sanitizeSchema] as const);
-  plugins.push([
-    rehypeHighlight,
-    {
-      ignoreMissing: true,
-      detect: true,
-      languages: HIGHLIGHT_LANGUAGES,
-      aliases: HIGHLIGHT_ALIASES,
-      plainText: HIGHLIGHT_PLAINTEXT,
-      subset: Object.keys(HIGHLIGHT_LANGUAGES),
-    },
-  ] as const);
+
+  if (options.syntaxHighlighting ?? true) {
+    plugins.push([
+      rehypeHighlight,
+      {
+        ignoreMissing: true,
+        detect: true,
+        languages: HIGHLIGHT_LANGUAGES,
+        aliases: HIGHLIGHT_ALIASES,
+        plainText: HIGHLIGHT_PLAINTEXT,
+        subset: Object.keys(HIGHLIGHT_LANGUAGES),
+      },
+    ] as const);
+  }
 
   return plugins;
 };

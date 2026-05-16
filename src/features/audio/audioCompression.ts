@@ -55,9 +55,9 @@ interface EncodeMp3WithWorkerOptions {
   revokeObjectUrl?: (url: string) => void;
 }
 
-export const createAudioCompressionWorkerCode = () => WORKER_CODE;
+const createAudioCompressionWorkerCode = () => WORKER_CODE;
 
-export const encodeMp3WithWorker = async ({
+const encodeMp3WithWorker = async ({
   pcmData,
   sampleRate,
   kbps,

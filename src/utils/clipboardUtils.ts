@@ -1,5 +1,4 @@
 import { ALL_SUPPORTED_MIME_TYPES } from '@/constants/fileConstants';
-import { convertHtmlToMarkdown } from './htmlToMarkdown';
 
 const PASTE_TEXT_AS_FILE_THRESHOLD = 5000;
 
@@ -10,13 +9,13 @@ type PasteResult =
   | { type: 'text'; content: string }
   | { type: 'empty' };
 
-export const processClipboardData = (
+export const processClipboardData = async (
   clipboardData: DataTransfer | null,
   options: {
     isPasteRichTextAsMarkdownEnabled: boolean;
     isPasteAsTextFileEnabled: boolean;
   },
-): PasteResult => {
+): Promise<PasteResult> => {
   if (!clipboardData) return { type: 'empty' };
 
   // 1. Check for Physical Files
@@ -51,6 +50,7 @@ export const processClipboardData = (
   if (htmlContent && options.isPasteRichTextAsMarkdownEnabled) {
     const hasTags = /<[a-z][\s\S]*>/i.test(htmlContent);
     if (hasTags) {
+      const { convertHtmlToMarkdown } = await import('./htmlToMarkdown');
       const markdown = convertHtmlToMarkdown(htmlContent);
       if (markdown) {
         return { type: 'markdown', content: markdown };

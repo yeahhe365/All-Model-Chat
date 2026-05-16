@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { compressAudioToMp3, createAudioCompressionWorkerCode, encodeMp3WithWorker } from './audioCompression';
+import { compressAudioToMp3 } from './audioCompression';
 
 class FakeWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
@@ -20,14 +20,29 @@ class FakeWorker {
   }
 }
 
-describe('createAudioCompressionWorkerCode', () => {
-  it('keeps the embedded lamejs worker bootstrap in the generated code', () => {
-    const workerCode = createAudioCompressionWorkerCode();
+const flushAudioCompressionPipeline = async () => {
+  for (let i = 0; i < 8; i += 1) {
+    await Promise.resolve();
+  }
+};
 
-    expect(workerCode).toContain("importScripts('/lame.min.js')");
-    expect(workerCode).toContain("self.postMessage({ type: 'success'");
+const createAudioContextMock = (audioBuffer: { duration: number }) =>
+  vi.fn(function AudioContextMock(this: { decodeAudioData: ReturnType<typeof vi.fn> }) {
+    this.decodeAudioData = vi.fn().mockResolvedValue(audioBuffer);
   });
-});
+
+const createOfflineAudioContextMock = (pcmData: Float32Array) =>
+  vi.fn(function OfflineAudioContextMock(this: {
+    createBufferSource: ReturnType<typeof vi.fn>;
+    startRendering: ReturnType<typeof vi.fn>;
+    destination: Record<string, never>;
+  }) {
+    this.createBufferSource = vi.fn(() => ({ connect: vi.fn(), start: vi.fn(), buffer: null }));
+    this.startRendering = vi.fn().mockResolvedValue({
+      getChannelData: () => pcmData,
+    });
+    this.destination = {};
+  });
 
 describe('compressAudioToMp3', () => {
   it('returns tiny source files without spinning up the worker pipeline', async () => {
@@ -37,27 +52,31 @@ describe('compressAudioToMp3', () => {
 
     expect(result).toBe(file);
   });
-});
 
-describe('encodeMp3WithWorker', () => {
   it('returns an mp3 file when the worker reports success', async () => {
     const worker = new FakeWorker();
-    const createObjectUrl = vi.fn(() => 'blob:audio-worker');
-    const revokeObjectUrl = vi.fn();
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:audio-worker');
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
     const pcmData = new Float32Array([0.25, -0.25, 0.5]);
-    const sourceFile = new File([new Uint8Array([1, 2, 3])], 'voice.wav', { type: 'audio/wav' });
+    vi.stubGlobal('AudioContext', createAudioContextMock({ duration: 2 }));
+    vi.stubGlobal('OfflineAudioContext', createOfflineAudioContextMock(pcmData));
+    vi.stubGlobal(
+      'Worker',
+      vi.fn(function WorkerMock() {
+        return worker;
+      }),
+    );
+    const sourceFile = new File([new Uint8Array(60 * 1024)], 'voice.wav', { type: 'audio/wav' });
 
-    const promise = encodeMp3WithWorker({
-      pcmData,
-      sampleRate: 16_000,
-      kbps: 64,
-      file: sourceFile,
-      createWorker: vi.fn(() => worker as unknown as Worker),
-      createObjectUrl,
-      revokeObjectUrl,
-    });
+    const promise = compressAudioToMp3(sourceFile);
+
+    await flushAudioCompressionPipeline();
 
     expect(worker.postMessage).toHaveBeenCalledWith({ pcmData, sampleRate: 16_000, kbps: 64 }, [pcmData.buffer]);
+    expect(createObjectUrl).toHaveBeenCalled();
+    const workerCode = await (createObjectUrl.mock.calls[0][0] as Blob).text();
+    expect(workerCode).toContain("importScripts('/lame.min.js')");
+    expect(workerCode).toContain("self.postMessage({ type: 'success'");
 
     worker.emitSuccess([new Uint8Array([7, 8, 9])]);
 
@@ -67,21 +86,28 @@ describe('encodeMp3WithWorker', () => {
     expect(result.type).toBe('audio/mpeg');
     expect(worker.terminate).toHaveBeenCalled();
     expect(revokeObjectUrl).toHaveBeenCalledWith('blob:audio-worker');
+
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('falls back to the original audio when the worker reports an encoding error', async () => {
     const worker = new FakeWorker();
-    const sourceFile = new File([new Uint8Array([4, 5, 6])], 'voice.wav', { type: 'audio/wav' });
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:audio-worker');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.stubGlobal('AudioContext', createAudioContextMock({ duration: 2 }));
+    vi.stubGlobal('OfflineAudioContext', createOfflineAudioContextMock(new Float32Array([0.1])));
+    vi.stubGlobal(
+      'Worker',
+      vi.fn(function WorkerMock() {
+        return worker;
+      }),
+    );
+    const sourceFile = new File([new Uint8Array(60 * 1024)], 'voice.wav', { type: 'audio/wav' });
 
-    const promise = encodeMp3WithWorker({
-      pcmData: new Float32Array([0.1]),
-      sampleRate: 16_000,
-      kbps: 64,
-      file: sourceFile,
-      createWorker: vi.fn(() => worker as unknown as Worker),
-      createObjectUrl: vi.fn(() => 'blob:audio-worker'),
-      revokeObjectUrl: vi.fn(),
-    });
+    const promise = compressAudioToMp3(sourceFile);
+
+    await flushAudioCompressionPipeline();
 
     worker.emitFailure();
 
@@ -89,28 +115,36 @@ describe('encodeMp3WithWorker', () => {
 
     expect(result.name).toBe('voice.wav');
     expect(result.type).toBe('audio/wav');
+
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('rejects with AbortError and tears down the worker when aborted', async () => {
     const worker = new FakeWorker();
-    const revokeObjectUrl = vi.fn();
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:audio-worker');
+    vi.stubGlobal('AudioContext', createAudioContextMock({ duration: 2 }));
+    vi.stubGlobal('OfflineAudioContext', createOfflineAudioContextMock(new Float32Array([0.1, 0.2])));
+    vi.stubGlobal(
+      'Worker',
+      vi.fn(function WorkerMock() {
+        return worker;
+      }),
+    );
     const abortController = new AbortController();
+    const file = new File([new Uint8Array(60 * 1024)], 'voice.wav', { type: 'audio/wav' });
 
-    const promise = encodeMp3WithWorker({
-      pcmData: new Float32Array([0.1, 0.2]),
-      sampleRate: 16_000,
-      kbps: 64,
-      file: new File([new Uint8Array([1, 2])], 'voice.wav', { type: 'audio/wav' }),
-      signal: abortController.signal,
-      createWorker: vi.fn(() => worker as unknown as Worker),
-      createObjectUrl: vi.fn(() => 'blob:audio-worker'),
-      revokeObjectUrl,
-    });
+    const promise = compressAudioToMp3(file, abortController.signal);
 
+    await flushAudioCompressionPipeline();
     abortController.abort();
 
     await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
     expect(worker.terminate).toHaveBeenCalled();
     expect(revokeObjectUrl).toHaveBeenCalledWith('blob:audio-worker');
+
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 });

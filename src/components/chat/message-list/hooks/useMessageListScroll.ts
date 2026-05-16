@@ -292,15 +292,12 @@ export const useMessageListScroll = ({
 
       // Save scroll position for active session
       if (activeSessionId && lastRestoredSessionIdRef.current === activeSessionId && messages.length > 0) {
+        const snapshot = createScrollSnapshot(container) ?? { scrollTop: Math.max(0, Math.round(scrollTop)) };
         if (scrollSaveTimeoutRef.current) {
           clearTimeout(scrollSaveTimeoutRef.current);
         }
         scrollSaveTimeoutRef.current = window.setTimeout(() => {
-          const snapshot = createScrollSnapshot(container);
-          localStorage.setItem(
-            getScrollStorageKey(activeSessionId),
-            JSON.stringify(snapshot ?? { scrollTop: Math.max(0, Math.round(scrollTop)) }),
-          );
+          localStorage.setItem(getScrollStorageKey(activeSessionId), JSON.stringify(snapshot));
         }, 300);
       }
     }

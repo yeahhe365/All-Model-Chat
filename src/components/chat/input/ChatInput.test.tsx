@@ -1,11 +1,10 @@
 import { act, cloneElement, isValidElement, type ReactNode } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatRuntimeValuesProvider } from '@/components/layout/chat-runtime/ChatRuntimeContext';
 import {
+  ChatRuntimeTestProvider,
   applyChatAreaProviderValue,
   createChatAreaProviderValue,
-  createChatRuntimeValues,
   type ChatAreaProviderValue,
 } from '@/test/chatAreaFixtures';
 import { type ChatSettings, type InputCommand, type UploadedFile } from '@/types';
@@ -43,6 +42,9 @@ const mockChatStoreState = vi.hoisted(() => ({
   }),
   setEditingMessageId: vi.fn((value: string | null) => {
     mockChatStoreState.editingMessageId = value;
+  }),
+  setCommandedInput: vi.fn((value: InputCommand | null) => {
+    mockChatStoreState.commandedInput = value;
   }),
   setAspectRatio: vi.fn((value: string) => {
     mockChatStoreState.aspectRatio = value;
@@ -320,9 +322,7 @@ const ChatAreaProvider = ({ value, children }: { value: ChatAreaProviderValue; c
       })
     : children;
 
-  return (
-    <ChatRuntimeValuesProvider value={createChatRuntimeValues(value)}>{versionedChildren}</ChatRuntimeValuesProvider>
-  );
+  return <ChatRuntimeTestProvider value={value}>{versionedChildren}</ChatRuntimeTestProvider>;
 };
 
 const createProviderValue = (commandedInput: InputCommand | null) =>

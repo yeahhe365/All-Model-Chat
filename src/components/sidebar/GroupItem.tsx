@@ -1,8 +1,9 @@
 import React from 'react';
 import { ChevronDown, MoreHorizontal } from 'lucide-react';
 import { type ChatGroup, type SavedChatSession } from '@/types';
-import { SessionItem } from './SessionItem';
+import type { SessionItem } from './SessionItem';
 import { GroupItemMenu } from './GroupItemMenu';
+import { LimitedSessionList } from './LimitedSessionList';
 
 // Define a type for the props that are passed down to SessionItem
 export type SessionItemPassedProps = Omit<React.ComponentProps<typeof SessionItem>, 'session'>;
@@ -139,11 +140,7 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
             }}
           />
         )}
-        <ul className="pl-1 pb-1">
-          {sessions?.map((session) => (
-            <SessionItem key={session.id} session={session} {...childSessionItemProps} />
-          ))}
-        </ul>
+        <LimitedSessionList sessions={sessions ?? []} sessionItemProps={childSessionItemProps} className="pl-1 pb-1" />
       </details>
     </div>
   );

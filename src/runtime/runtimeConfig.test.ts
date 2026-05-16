@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { getProjectUrl, getPyodideBaseUrl, getRuntimeConfigAppSettingsOverrides } from './runtimeConfig';
+import { getPyodideBaseUrl, getRuntimeConfigAppSettingsOverrides } from './runtimeConfig';
 
 const setRuntimeConfig = (config: Record<string, unknown>) => {
   (window as Window & { __AMC_RUNTIME_CONFIG__?: Record<string, unknown> }).__AMC_RUNTIME_CONFIG__ = config;
@@ -14,26 +14,6 @@ describe('runtimeConfig', () => {
 
   it('returns empty overrides when runtime config is missing', () => {
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({});
-  });
-
-  it('returns the default project URL when runtime config is missing', () => {
-    expect(getProjectUrl()).toBe('https://all-model-chat.pages.dev/');
-  });
-
-  it('reads the project URL from window runtime config', () => {
-    window.__AMC_RUNTIME_CONFIG__ = {
-      projectUrl: 'https://deploy.example/amc',
-    };
-
-    expect(getProjectUrl()).toBe('https://deploy.example/amc');
-  });
-
-  it('falls back to the default project URL when runtime config projectUrl is blank', () => {
-    window.__AMC_RUNTIME_CONFIG__ = {
-      projectUrl: '   ',
-    };
-
-    expect(getProjectUrl()).toBe('https://all-model-chat.pages.dev/');
   });
 
   it('returns no Pyodide base URL override when runtime config is missing or blank', () => {

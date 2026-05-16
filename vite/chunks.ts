@@ -32,6 +32,7 @@ const PDF_VIEWER_PACKAGES = ['react-pdf'];
 const PDFJS_PACKAGES = ['pdfjs-dist'];
 const GRAPHVIZ_PACKAGES = ['@viz-js/viz'];
 const DATA_PACKAGES = ['xlsx'];
+const VITE_PRELOAD_HELPER_ID = 'vite/preload-helper';
 
 export const HEAVY_PRELOAD_PATTERNS = [
   /^assets\/pyodide-runtime-.*\.js$/,
@@ -51,6 +52,10 @@ const isSourcePath = (id: string, sourcePath: string) =>
   id.endsWith(sourcePath) || id.includes(sourcePath.replace(/\//g, '\\'));
 
 export const getManualChunk = (id: string) => {
+  if (id.includes(VITE_PRELOAD_HELPER_ID)) {
+    return 'vite-preload-helper';
+  }
+
   if (isSourcePath(id, '/src/constants/settingsModelOptions.ts')) {
     return 'settings-options';
   }

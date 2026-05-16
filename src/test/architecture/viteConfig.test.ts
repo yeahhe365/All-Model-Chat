@@ -9,6 +9,9 @@ const viteStaticAssetsPath = path.join(projectRoot, 'vite/staticAssets.ts');
 const lazyMarkdownRendererPath = path.join(projectRoot, 'src/components/message/LazyMarkdownRenderer.tsx');
 const markdownRendererPath = path.join(projectRoot, 'src/components/message/MarkdownRenderer.tsx');
 const baseMarkdownRendererEntryPath = path.join(projectRoot, 'src/components/message/BaseMarkdownRendererEntry.tsx');
+const i18nContextPath = path.join(projectRoot, 'src/contexts/I18nContext.tsx');
+const i18nTranslationsPath = path.join(projectRoot, 'src/i18n/translations.ts');
+const i18nFeatureTranslationsPath = path.join(projectRoot, 'src/i18n/featureTranslations.ts');
 const indexEntryPath = path.join(projectRoot, 'src/index.tsx');
 const useChatPath = path.join(projectRoot, 'src/hooks/chat/useChat.ts');
 const standardChatStrategyPath = path.join(projectRoot, 'src/features/message-sender/standardChatStrategy.ts');
@@ -19,6 +22,20 @@ const standardClientFunctionsPath = path.join(projectRoot, 'src/features/standar
 const liveClientFunctionsPath = path.join(projectRoot, 'src/hooks/live-api/liveClientFunctions.ts');
 const ttsVoiceSelectorPath = path.join(projectRoot, 'src/components/chat/input/toolbar/TtsVoiceSelector.tsx');
 const markdownPdfExportPath = path.join(projectRoot, 'src/utils/export/markdownPdf.ts');
+const chatInputModalsPath = path.join(projectRoot, 'src/components/chat/input/ChatInputModals.tsx');
+const chatInputFileModalsPath = path.join(projectRoot, 'src/components/chat/input/ChatInputFileModals.tsx');
+const useCreateFileEditorPath = path.join(projectRoot, 'src/hooks/useCreateFileEditor.ts');
+const clipboardUtilsPath = path.join(projectRoot, 'src/utils/clipboardUtils.ts');
+const useChatInputClipboardPath = path.join(projectRoot, 'src/hooks/chat-input/useChatInputClipboard.ts');
+const useSelectionPositionPath = path.join(projectRoot, 'src/hooks/text-selection/useSelectionPosition.ts');
+const tableBlockPath = path.join(projectRoot, 'src/components/message/blocks/TableBlock.tsx');
+const folderImportUtilsPath = path.join(projectRoot, 'src/utils/folderImportUtils.ts');
+const useFileDragDropPath = path.join(projectRoot, 'src/hooks/files/useFileDragDrop.ts');
+const useFilePreProcessingPath = path.join(projectRoot, 'src/hooks/file-upload/useFilePreProcessing.ts');
+const useFilePreProcessingEffectsPath = path.join(projectRoot, 'src/hooks/chat-input/useFilePreProcessingEffects.ts');
+const audioApiPath = path.join(projectRoot, 'src/services/api/generation/audioApi.ts');
+const localPythonClientFunctionToolPath = path.join(projectRoot, 'src/features/local-python/clientFunctionTool.ts');
+const assistantAvatarPath = path.join(projectRoot, 'public/assets/assistant-avatar.png');
 const interfaceTogglesPath = path.join(projectRoot, 'src/components/settings/sections/appearance/InterfaceToggles.tsx');
 
 describe('vite.config runtime ownership', () => {
@@ -35,6 +52,8 @@ describe('vite.config runtime ownership', () => {
     expect(chunks).toContain("'pdfjs-vendor'");
     expect(chunks).toContain("'highlight-vendor'");
     expect(chunks).toContain("'graphviz-vendor'");
+    expect(chunks).toContain("'vite-preload-helper'");
+    expect(chunks).toContain('vite/preload-helper');
     expect(chunks).not.toContain("'html-export-vendor'");
     expect(chunks).not.toContain("'mermaid-vendor'");
     expect(chunks).toMatch(/highlight\.js/);
@@ -74,7 +93,27 @@ describe('vite.config runtime ownership', () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
 
     expect(config).toMatch(/globIgnores:\s*\[[\s\S]*pyodide/i);
+    expect(config).toContain("'**/assets/markdownPdf-*.js'");
+    expect(config).toContain("'**/assets/markdown-vendor-*.js'");
+    expect(config).toContain("'**/assets/math-vendor-*'");
+    expect(config).toContain("'**/assets/genai-vendor-*.js'");
+    expect(config).toContain("'**/assets/highlight-vendor-*.js'");
+    expect(config).toContain("'**/assets/pdf-viewer-vendor-*'");
+    expect(config).toContain("'**/assets/HistorySidebar-*.js'");
+    expect(config).toContain("'**/assets/MermaidBlock-*.js'");
+    expect(config).toContain("'**/assets/*Diagram*.js'");
+    expect(config).toContain("'**/assets/KaTeX_*'");
     expect(config).toContain("'**/fonts/NotoSansCJKsc-VF.ttf.part-*'");
+  });
+
+  it('keeps the assistant avatar sized for its compact message chrome', () => {
+    const avatar = fs.readFileSync(assistantAvatarPath);
+    const pngWidth = avatar.readUInt32BE(16);
+    const pngHeight = avatar.readUInt32BE(20);
+
+    expect(fs.statSync(assistantAvatarPath).size).toBeLessThan(24 * 1024);
+    expect(pngWidth).toBeLessThanOrEqual(160);
+    expect(pngHeight).toBeLessThanOrEqual(160);
   });
 
   it('does not duplicate PWA icon precache entries through includeAssets', () => {
@@ -90,9 +129,93 @@ describe('vite.config runtime ownership', () => {
     expect(source).not.toContain('html2canvas');
     expect(source).not.toContain('html2pdf');
   });
+
+  it('keeps create-file PDF export code out of the initial chat input bundle', () => {
+    const chatInputModalsSource = fs.readFileSync(chatInputModalsPath, 'utf8');
+    const useCreateFileEditorSource = fs.readFileSync(useCreateFileEditorPath, 'utf8');
+
+    expect(chatInputModalsSource).not.toContain('import { CreateTextFileEditor }');
+    expect(chatInputModalsSource).toContain("import('@/components/modals/CreateTextFileEditor')");
+    expect(useCreateFileEditorSource).not.toContain("from '@/utils/export/markdownPdf'");
+    expect(useCreateFileEditorSource).toContain("import('@/utils/export/markdownPdf')");
+  });
+
+  it('keeps optional chat input modals out of the initial chat input bundle', () => {
+    const chatInputModalsSource = fs.readFileSync(chatInputModalsPath, 'utf8');
+    const chatInputFileModalsSource = fs.readFileSync(chatInputFileModalsPath, 'utf8');
+
+    expect(chatInputModalsSource).not.toContain("from '@/components/modals/AudioRecorder'");
+    expect(chatInputModalsSource).not.toContain("from '@/components/modals/HelpModal'");
+    expect(chatInputModalsSource).not.toContain("from '@/components/modals/TextEditorModal'");
+    expect(chatInputModalsSource).toContain("import('@/components/modals/AudioRecorder')");
+    expect(chatInputModalsSource).toContain("import('@/components/modals/HelpModal')");
+    expect(chatInputModalsSource).toContain("import('@/components/modals/TextEditorModal')");
+
+    expect(chatInputFileModalsSource).not.toContain("from '@/components/modals/FileConfigurationModal'");
+    expect(chatInputFileModalsSource).toContain("import('@/components/modals/FileConfigurationModal')");
+  });
+
+  it('keeps HTML-to-Markdown conversion out of the initial chat and message interaction bundles', () => {
+    const clipboardUtilsSource = fs.readFileSync(clipboardUtilsPath, 'utf8');
+    const useChatInputClipboardSource = fs.readFileSync(useChatInputClipboardPath, 'utf8');
+    const useSelectionPositionSource = fs.readFileSync(useSelectionPositionPath, 'utf8');
+    const tableBlockSource = fs.readFileSync(tableBlockPath, 'utf8');
+    const useCreateFileEditorSource = fs.readFileSync(useCreateFileEditorPath, 'utf8');
+
+    expect(clipboardUtilsSource).not.toContain("from './htmlToMarkdown'");
+    expect(useChatInputClipboardSource).not.toContain("from '@/utils/htmlToMarkdown'");
+    expect(useSelectionPositionSource).not.toContain("from '@/utils/htmlToMarkdown'");
+    expect(tableBlockSource).not.toContain("from '@/utils/htmlToMarkdown'");
+    expect(useCreateFileEditorSource).not.toContain("from '@/utils/htmlToMarkdown'");
+
+    expect(clipboardUtilsSource).toContain("import('./htmlToMarkdown')");
+    expect(useSelectionPositionSource).toContain("import('@/utils/htmlToMarkdown')");
+    expect(tableBlockSource).toContain("import('@/utils/htmlToMarkdown')");
+    expect(useCreateFileEditorSource).toContain("import('@/utils/htmlToMarkdown')");
+  });
+
+  it('keeps ZIP and folder import builders out of the initial file upload bundles', () => {
+    const folderImportUtilsSource = fs.readFileSync(folderImportUtilsPath, 'utf8');
+    const useFileDragDropSource = fs.readFileSync(useFileDragDropPath, 'utf8');
+    const useFilePreProcessingSource = fs.readFileSync(useFilePreProcessingPath, 'utf8');
+    const useFilePreProcessingEffectsSource = fs.readFileSync(useFilePreProcessingEffectsPath, 'utf8');
+
+    expect(folderImportUtilsSource).not.toMatch(
+      /import\s+(?!type)[\s\S]*from '\.\/import-context\/importContextBuilder'/,
+    );
+    expect(useFileDragDropSource).not.toContain("from '@/utils/import-context/importContextBuilder'");
+    expect(useFileDragDropSource).not.toContain("from '@/utils/import-context/droppedItems'");
+    expect(useFilePreProcessingSource).not.toContain("from '@/utils/folderImportUtils'");
+    expect(useFilePreProcessingEffectsSource).not.toContain("from '@/utils/folderImportUtils'");
+
+    expect(folderImportUtilsSource).toContain("import('./import-context/importContextBuilder')");
+    expect(useFileDragDropSource).toContain("import('@/utils/import-context/droppedItems')");
+    expect(useFileDragDropSource).toContain("import('@/utils/import-context/importContextBuilder')");
+    expect(useFilePreProcessingSource).toContain("import('@/utils/folderImportUtils')");
+    expect(useFilePreProcessingEffectsSource).toContain("import('@/utils/folderImportUtils')");
+  });
 });
 
 describe('Runtime loading boundaries', () => {
+  it('keeps feature-only translations out of the root i18n startup path', () => {
+    const i18nContextSource = fs.readFileSync(i18nContextPath, 'utf8');
+    const translationsSource = fs.readFileSync(i18nTranslationsPath, 'utf8');
+    const appModalsSource = fs.readFileSync(path.join(projectRoot, 'src/components/modals/AppModals.tsx'), 'utf8');
+
+    expect(i18nContextSource).not.toContain("from '@/i18n/translations'");
+    expect(i18nContextSource).toContain("from '@/i18n/coreTranslations'");
+
+    expect(translationsSource).not.toContain("from './translations/logViewer'");
+    expect(translationsSource).not.toContain("from './translations/scenarios'");
+    expect(translationsSource).not.toContain("from './translations/settings/");
+
+    expect(fs.existsSync(i18nFeatureTranslationsPath)).toBe(true);
+    expect(appModalsSource).toContain('ensureFeatureTranslations');
+    expect(appModalsSource).toContain("ensureFeatureTranslations('settings')");
+    expect(appModalsSource).toContain("ensureFeatureTranslations('logViewer')");
+    expect(appModalsSource).toContain("ensureFeatureTranslations('scenarios')");
+  });
+
   it('loads both base markdown and math markdown renderers lazily', () => {
     const lazyMarkdownSource = fs.readFileSync(lazyMarkdownRendererPath, 'utf8');
 
@@ -133,6 +256,18 @@ describe('Runtime loading boundaries', () => {
 
     expect(standardClientFunctionsSource).not.toContain('@google/genai');
     expect(liveClientFunctionsSource).not.toContain('@google/genai');
+  });
+
+  it('keeps @google/genai out of runtime modules that only need schema literals', () => {
+    const audioApiSource = fs.readFileSync(audioApiPath, 'utf8');
+    const localPythonToolSource = fs.readFileSync(localPythonClientFunctionToolPath, 'utf8');
+
+    expect(audioApiSource).not.toMatch(/import\s+\{\s*ThinkingLevel/);
+    expect(localPythonToolSource).not.toMatch(/import\s+\{\s*Type/);
+    expect(audioApiSource).toContain(
+      "import type { GenerateContentConfig, ThinkingConfig, ThinkingLevel, UsageMetadata } from '@google/genai'",
+    );
+    expect(localPythonToolSource).toContain("import type { FunctionDeclaration, Type } from '@google/genai'");
   });
 
   it('keeps TTS voice options on a single static import path to avoid mixed-import build warnings', () => {

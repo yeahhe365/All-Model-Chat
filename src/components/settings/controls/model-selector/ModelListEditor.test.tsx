@@ -64,6 +64,24 @@ describe('ModelListEditor', () => {
     expect(onSave).toHaveBeenCalledWith([{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: false }]);
   });
 
+  it('renders the save list button without an icon', () => {
+    act(() => {
+      renderer.root.render(
+        <ModelListEditor
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: true }]}
+          onSave={vi.fn()}
+          setIsEditingList={vi.fn()}
+        />,
+      );
+    });
+
+    const saveButton = Array.from(renderer.container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Save List'),
+    );
+
+    expect(saveButton?.querySelector('svg')).toBeNull();
+  });
+
   it('cancels editing without saving list changes', () => {
     const onSave = vi.fn();
     const setIsEditingList = vi.fn();

@@ -4,13 +4,13 @@ import { type SavedChatSession, type ChatGroup } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
-import { SessionItem } from './SessionItem';
 import { GroupItem, type SessionItemPassedProps } from './GroupItem';
 import { CollapsedRecentChatsButton } from './CollapsedRecentChatsButton';
 import { Search, Settings } from 'lucide-react';
 import { IconNewChat, IconSidebarToggle } from '@/components/icons/CustomIcons';
 import { useHistorySidebarLogic } from '@/hooks/useHistorySidebarLogic';
 import { SIDEBAR_CLICKABLE_ICON_BUTTON_CLASS, SIDEBAR_ICON_LINK_BUTTON_CLASS } from './sidebarStyles';
+import { LimitedSessionList } from './LimitedSessionList';
 
 interface HistorySidebarProps {
   isOpen: boolean;
@@ -96,15 +96,10 @@ const SessionListGroup = ({
   sessions: SavedChatSession[];
   sessionItemProps: SessionItemPassedProps;
 }) => {
-  const [parent] = useAutoAnimate<HTMLUListElement>({ duration: 200 });
   return (
     <div>
       <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{title}</div>
-      <ul ref={parent}>
-        {sessions.map((session) => (
-          <SessionItem key={session.id} session={session} {...sessionItemProps} />
-        ))}
-      </ul>
+      <LimitedSessionList sessions={sessions} sessionItemProps={sessionItemProps} />
     </div>
   );
 };

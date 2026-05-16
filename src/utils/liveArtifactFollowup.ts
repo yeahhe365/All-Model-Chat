@@ -43,10 +43,6 @@ const stringifyState = (state: unknown): string | null => {
 
 export const isLiveArtifactFollowupStateWithinLimit = (state: unknown): boolean => stringifyState(state) !== null;
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> => {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
-};
-
 export const normalizeLiveArtifactFollowupPayload = (payload: unknown): LiveArtifactFollowupPayload | null => {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return null;
@@ -78,31 +74,6 @@ export const normalizeLiveArtifactFollowupPayload = (payload: unknown): LiveArti
     ...(title ? { title } : {}),
     ...(source ? { source } : {}),
   };
-};
-
-export const mergeLiveArtifactFollowupState = (
-  payload: unknown,
-  collectedState: Record<string, unknown>,
-): LiveArtifactFollowupPayload | null => {
-  const normalizedPayload = normalizeLiveArtifactFollowupPayload(payload);
-  if (!normalizedPayload) {
-    return null;
-  }
-
-  if (Object.keys(collectedState).length === 0) {
-    return normalizedPayload;
-  }
-
-  const mergedState = isPlainObject(normalizedPayload.state)
-    ? { ...normalizedPayload.state, ...collectedState }
-    : normalizedPayload.state === undefined
-      ? { ...collectedState }
-      : { value: normalizedPayload.state, ...collectedState };
-
-  return normalizeLiveArtifactFollowupPayload({
-    ...normalizedPayload,
-    state: mergedState,
-  });
 };
 
 export const formatLiveArtifactFollowupPrompt = (payload: unknown, language: PromptLanguage = 'zh'): string | null => {

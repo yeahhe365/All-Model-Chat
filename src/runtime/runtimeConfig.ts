@@ -10,8 +10,6 @@ type RuntimeConfigKey =
 
 type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
 
-const DEFAULT_PROJECT_URL = 'https://all-model-chat.pages.dev/';
-
 declare global {
   interface Window {
     __AMC_RUNTIME_CONFIG__?: RuntimeConfigShape;
@@ -51,12 +49,6 @@ function readNullableString(value: unknown): string | null | undefined {
 
 function getRuntimeConfig(): RuntimeConfigShape | undefined {
   return typeof window !== 'undefined' ? window.__AMC_RUNTIME_CONFIG__ : undefined;
-}
-
-export function getProjectUrl(): string {
-  const projectUrl = readNullableString(getRuntimeConfig()?.projectUrl);
-
-  return projectUrl ?? DEFAULT_PROJECT_URL;
 }
 
 export function getPyodideBaseUrl(): string | null {

@@ -163,4 +163,50 @@ describe('useMessageUpdates', () => {
 
     unmount();
   });
+
+  it('defers persistence for live transcript fragments until the turn is final', () => {
+    let sessions: SavedChatSession[] = [
+      createSavedChatSession({
+        id: 'session-1',
+        title: 'Live Session',
+        timestamp: Date.now(),
+        messages: [],
+      }),
+    ];
+
+    const updateAndPersistSessions = vi.fn(
+      (updater: typeof sessions | ((prev: typeof sessions) => typeof sessions)) => {
+        sessions =
+          typeof updater === 'function' ? (updater as (prev: typeof sessions) => typeof sessions)(sessions) : updater;
+        return sessions;
+      },
+    );
+
+    const { result, unmount } = renderHook(() =>
+      useMessageUpdates({
+        activeSessionId: 'session-1',
+        setActiveSessionId: vi.fn(),
+        appSettings: createAppSettings(),
+        currentChatSettings: createChatSettings(),
+        updateAndPersistSessions,
+        userScrolledUpRef: { current: false },
+      }),
+    );
+
+    act(() => {
+      result.current.handleLiveTranscript('partial ', 'model', false, 'content');
+      result.current.handleLiveTranscript('answer', 'model', true, 'content');
+    });
+
+    expect(updateAndPersistSessions).toHaveBeenNthCalledWith(1, expect.any(Function), { persist: false });
+    expect(updateAndPersistSessions).toHaveBeenNthCalledWith(2, expect.any(Function), { persist: true });
+    expect(sessions[0].messages[0]).toEqual(
+      expect.objectContaining({
+        content: 'partial answer',
+        isLoading: false,
+      }),
+    );
+
+    unmount();
+  });
 });

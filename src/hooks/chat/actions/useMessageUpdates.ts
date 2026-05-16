@@ -218,142 +218,144 @@ export const useMessageUpdates = ({
 
       if (!currentSessionId) return;
 
-      updateAndPersistSessions((prev) =>
-        updateSessionById(prev, currentSessionId, (s) => {
-          // Determine which ID we are currently tracking for this role
-          const currentId =
-            role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
-          const messages = [...s.messages];
+      updateAndPersistSessions(
+        (prev) =>
+          updateSessionById(prev, currentSessionId, (s) => {
+            // Determine which ID we are currently tracking for this role
+            const currentId =
+              role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
+            const messages = [...s.messages];
 
-          // Find the index of the existing message, if any
-          let messageIndex = currentId ? messages.findIndex((m) => m.id === currentId) : -1;
+            // Find the index of the existing message, if any
+            let messageIndex = currentId ? messages.findIndex((m) => m.id === currentId) : -1;
 
-          // Only create or update if there is actual text content (or thoughts)
-          // OR if there is an audioUrl to attach (e.g. at the end of a turn even if no text change)
-          if (text || audioUrl || (generatedFiles && generatedFiles.length > 0) || apiPart) {
-            if (messageIndex === -1) {
-              const generationStartTime = new Date();
-              // Start a new message for this turn
-              const newMessage = createMessage(role === 'user' ? 'user' : 'model', '', {
-                isLoading: true, // Mark as loading to indicate active stream/live status
-                firstTokenTimeMs: 0, // Initialize TTFT to 0 for Live API
-                generationStartTime,
-                audioSrc: audioUrl || undefined,
-                audioAutoplay: audioUrl ? false : undefined,
-              });
-
-              if (role === 'model') {
-                let streamState = createMessageStreamState({
-                  generationId: newMessage.id,
+            // Only create or update if there is actual text content (or thoughts)
+            // OR if there is an audioUrl to attach (e.g. at the end of a turn even if no text change)
+            if (text || audioUrl || (generatedFiles && generatedFiles.length > 0) || apiPart) {
+              if (messageIndex === -1) {
+                const generationStartTime = new Date();
+                // Start a new message for this turn
+                const newMessage = createMessage(role === 'user' ? 'user' : 'model', '', {
+                  isLoading: true, // Mark as loading to indicate active stream/live status
+                  firstTokenTimeMs: 0, // Initialize TTFT to 0 for Live API
                   generationStartTime,
+                  audioSrc: audioUrl || undefined,
+                  audioAutoplay: audioUrl ? false : undefined,
                 });
-                streamState = reduceLiveModelStreamInput(streamState, { apiPart, generatedFiles, text, type });
-                liveStreamStateRefs.current.model = streamState;
-                Object.assign(newMessage, getMessageUpdatesFromStreamState(streamState, 0));
-              } else {
-                newMessage.content = type === 'content' ? text : '';
-                newMessage.thoughts = type === 'thought' ? text : undefined;
-                newMessage.files = generatedFiles?.length ? generatedFiles : undefined;
-              }
 
-              messages.push(newMessage);
-
-              // Update ref to track this new message
-              if (role === 'user') liveConversationRefs.current.userId = newMessage.id;
-              else liveConversationRefs.current.modelId = newMessage.id;
-
-              // Update index so we can finalize it below if needed
-              messageIndex = messages.length - 1;
-            } else {
-              // Update existing message content
-              const msg = messages[messageIndex];
-              const updates: Partial<ChatMessage> = {};
-
-              if (role === 'model' && (apiPart || text || generatedFiles?.length)) {
-                let streamState =
-                  liveStreamStateRefs.current.model ??
-                  createMessageStreamState({
-                    generationId: msg.id,
-                    generationStartTime: msg.generationStartTime || msg.timestamp,
+                if (role === 'model') {
+                  let streamState = createMessageStreamState({
+                    generationId: newMessage.id,
+                    generationStartTime,
                   });
-
-                if (!liveStreamStateRefs.current.model) {
-                  streamState = {
-                    ...streamState,
-                    content: msg.content || '',
-                    thoughts: msg.thoughts || '',
-                    apiParts: msg.apiParts || [],
-                    files: msg.files || [],
-                    firstTokenTimeMs: msg.firstTokenTimeMs,
-                  };
-                }
-
-                streamState = reduceLiveModelStreamInput(streamState, { apiPart, generatedFiles, text, type });
-
-                liveStreamStateRefs.current.model = streamState;
-                Object.assign(updates, getMessageUpdatesFromStreamState(streamState, msg.firstTokenTimeMs));
-
-                if (streamState.thoughts && !msg.thinkingTimeMs && streamState.firstContentPartTime) {
-                  updates.thinkingTimeMs =
-                    streamState.firstContentPartTime.getTime() - (msg.generationStartTime || msg.timestamp).getTime();
-                }
-              } else if (text) {
-                if (type === 'thought') {
-                  updates.thoughts = (msg.thoughts || '') + text;
+                  streamState = reduceLiveModelStreamInput(streamState, { apiPart, generatedFiles, text, type });
+                  liveStreamStateRefs.current.model = streamState;
+                  Object.assign(newMessage, getMessageUpdatesFromStreamState(streamState, 0));
                 } else {
-                  // If we are switching to content from thoughts, and thinkingTimeMs isn't set yet
-                  // This effectively "stops" the thinking timer
-                  if (msg.thoughts && !msg.thinkingTimeMs && msg.generationStartTime) {
-                    updates.thinkingTimeMs = new Date().getTime() - msg.generationStartTime.getTime();
-                  }
-                  updates.content = msg.content + text;
+                  newMessage.content = type === 'content' ? text : '';
+                  newMessage.thoughts = type === 'thought' ? text : undefined;
+                  newMessage.files = generatedFiles?.length ? generatedFiles : undefined;
                 }
-              }
 
-              if (audioUrl) {
-                updates.audioSrc = audioUrl;
-                updates.audioAutoplay = false; // Disable autoplay for Live API generated audio
-              }
-              if (generatedFiles?.length) {
-                updates.files = mergeUniqueFiles(updates.files || msg.files, generatedFiles);
-              }
+                messages.push(newMessage);
 
-              messages[messageIndex] = { ...msg, ...updates };
+                // Update ref to track this new message
+                if (role === 'user') liveConversationRefs.current.userId = newMessage.id;
+                else liveConversationRefs.current.modelId = newMessage.id;
+
+                // Update index so we can finalize it below if needed
+                messageIndex = messages.length - 1;
+              } else {
+                // Update existing message content
+                const msg = messages[messageIndex];
+                const updates: Partial<ChatMessage> = {};
+
+                if (role === 'model' && (apiPart || text || generatedFiles?.length)) {
+                  let streamState =
+                    liveStreamStateRefs.current.model ??
+                    createMessageStreamState({
+                      generationId: msg.id,
+                      generationStartTime: msg.generationStartTime || msg.timestamp,
+                    });
+
+                  if (!liveStreamStateRefs.current.model) {
+                    streamState = {
+                      ...streamState,
+                      content: msg.content || '',
+                      thoughts: msg.thoughts || '',
+                      apiParts: msg.apiParts || [],
+                      files: msg.files || [],
+                      firstTokenTimeMs: msg.firstTokenTimeMs,
+                    };
+                  }
+
+                  streamState = reduceLiveModelStreamInput(streamState, { apiPart, generatedFiles, text, type });
+
+                  liveStreamStateRefs.current.model = streamState;
+                  Object.assign(updates, getMessageUpdatesFromStreamState(streamState, msg.firstTokenTimeMs));
+
+                  if (streamState.thoughts && !msg.thinkingTimeMs && streamState.firstContentPartTime) {
+                    updates.thinkingTimeMs =
+                      streamState.firstContentPartTime.getTime() - (msg.generationStartTime || msg.timestamp).getTime();
+                  }
+                } else if (text) {
+                  if (type === 'thought') {
+                    updates.thoughts = (msg.thoughts || '') + text;
+                  } else {
+                    // If we are switching to content from thoughts, and thinkingTimeMs isn't set yet
+                    // This effectively "stops" the thinking timer
+                    if (msg.thoughts && !msg.thinkingTimeMs && msg.generationStartTime) {
+                      updates.thinkingTimeMs = new Date().getTime() - msg.generationStartTime.getTime();
+                    }
+                    updates.content = msg.content + text;
+                  }
+                }
+
+                if (audioUrl) {
+                  updates.audioSrc = audioUrl;
+                  updates.audioAutoplay = false; // Disable autoplay for Live API generated audio
+                }
+                if (generatedFiles?.length) {
+                  updates.files = mergeUniqueFiles(updates.files || msg.files, generatedFiles);
+                }
+
+                messages[messageIndex] = { ...msg, ...updates };
+              }
             }
-          }
 
-          // If the turn is complete (isFinal=true), mark the message as not loading and clear the ref
-          if (isFinal) {
-            if (messageIndex !== -1) {
-              const updatedMsg = messages[messageIndex];
+            // If the turn is complete (isFinal=true), mark the message as not loading and clear the ref
+            if (isFinal) {
+              if (messageIndex !== -1) {
+                const updatedMsg = messages[messageIndex];
 
-              // Finalize thinking time if not already set (e.g. if the message was ONLY thoughts)
-              let finalThinkingTime = updatedMsg.thinkingTimeMs;
-              if (updatedMsg.thoughts && !finalThinkingTime && updatedMsg.generationStartTime) {
-                finalThinkingTime = new Date().getTime() - updatedMsg.generationStartTime.getTime();
+                // Finalize thinking time if not already set (e.g. if the message was ONLY thoughts)
+                let finalThinkingTime = updatedMsg.thinkingTimeMs;
+                if (updatedMsg.thoughts && !finalThinkingTime && updatedMsg.generationStartTime) {
+                  finalThinkingTime = new Date().getTime() - updatedMsg.generationStartTime.getTime();
+                }
+
+                messages[messageIndex] = {
+                  ...updatedMsg,
+                  isLoading: false,
+                  generationEndTime: new Date(),
+                  thinkingTimeMs: finalThinkingTime,
+                };
               }
-
-              messages[messageIndex] = {
-                ...updatedMsg,
-                isLoading: false,
-                generationEndTime: new Date(),
-                thinkingTimeMs: finalThinkingTime,
-              };
+              // Reset tracking ref for this role so next transcript starts a new message bubble
+              if (role === 'user') liveConversationRefs.current.userId = null;
+              else {
+                liveConversationRefs.current.modelId = null;
+                liveStreamStateRefs.current.model = null;
+              }
             }
-            // Reset tracking ref for this role so next transcript starts a new message bubble
-            if (role === 'user') liveConversationRefs.current.userId = null;
-            else {
-              liveConversationRefs.current.modelId = null;
-              liveStreamStateRefs.current.model = null;
-            }
-          }
 
-          return {
-            ...s,
-            messages,
-            timestamp: Date.now(), // Update timestamp on live activity to keep session active/top
-          };
-        }),
+            return {
+              ...s,
+              messages,
+              timestamp: Date.now(), // Update timestamp on live activity to keep session active/top
+            };
+          }),
+        { persist: isFinal },
       );
     },
     [activeSessionId, updateAndPersistSessions, appSettings, currentChatSettings, setActiveSessionId],

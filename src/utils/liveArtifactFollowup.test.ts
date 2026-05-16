@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatLiveArtifactFollowupPrompt,
-  mergeLiveArtifactFollowupState,
   normalizeLiveArtifactFollowupPayload,
 } from './liveArtifactFollowup';
 
@@ -35,25 +34,4 @@ describe('liveArtifactFollowup utilities', () => {
     ).toBeNull();
   });
 
-  it('merges dynamically collected artifact state into a static follow-up payload', () => {
-    expect(
-      mergeLiveArtifactFollowupState(
-        {
-          instruction: '继续生成实施计划',
-          state: { selected: '方案A', note: 'static' },
-        },
-        {
-          selected: '方案B',
-          priority: '低风险优先',
-        },
-      ),
-    ).toEqual({
-      instruction: '继续生成实施计划',
-      state: {
-        selected: '方案B',
-        note: 'static',
-        priority: '低风险优先',
-      },
-    });
-  });
 });

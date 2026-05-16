@@ -5,18 +5,49 @@ import { streamingStore } from '@/services/streamingStore';
 import { renderHook } from '@/test/testUtils';
 
 describe('useMessageStream', () => {
+  let nextAnimationFrameId: number;
+  let scheduledFrames: Map<number, FrameRequestCallback>;
+
+  const flushAnimationFrames = () => {
+    for (const [frameId, callback] of Array.from(scheduledFrames.entries())) {
+      scheduledFrames.delete(frameId);
+      act(() => {
+        callback(16);
+      });
+    }
+  };
+
   beforeEach(() => {
-    vi.useRealTimers();
+    vi.useFakeTimers();
+    nextAnimationFrameId = 0;
+    scheduledFrames = new Map<number, FrameRequestCallback>();
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        const frameId = ++nextAnimationFrameId;
+        scheduledFrames.set(frameId, callback);
+        return frameId;
+      }),
+    );
+    vi.stubGlobal(
+      'cancelAnimationFrame',
+      vi.fn((frameId: number) => {
+        scheduledFrames.delete(frameId);
+      }),
+    );
     streamingStore.clear('message-stream');
     streamingStore.clear('stale-stream');
     streamingStore.clear('active-stream');
+    streamingStore.clear('batched-stream');
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     streamingStore.clear('message-stream');
     streamingStore.clear('stale-stream');
     streamingStore.clear('active-stream');
+    streamingStore.clear('batched-stream');
   });
 
   it('returns live store snapshots while streaming and resets when streaming stops', () => {
@@ -31,6 +62,7 @@ describe('useMessageStream', () => {
       streamingStore.updateContent('message-stream', 'Hello');
       streamingStore.updateThoughts('message-stream', 'Thinking');
     });
+    flushAnimationFrames();
 
     expect(result.current.streamContent).toBe('Hello');
     expect(result.current.streamThoughts).toBe('Thinking');
@@ -42,6 +74,26 @@ describe('useMessageStream', () => {
     expect(result.current.streamThoughts).toBe('');
 
     unmount();
+  });
+
+  it('batches high-frequency stream notifications into a single animation frame', () => {
+    const listener = vi.fn();
+    const unsubscribe = streamingStore.subscribe('batched-stream', listener);
+
+    streamingStore.updateContent('batched-stream', 'Hel');
+    streamingStore.updateContent('batched-stream', 'lo');
+    streamingStore.updateThoughts('batched-stream', 'Thinking');
+
+    expect(streamingStore.getContent('batched-stream')).toBe('Hello');
+    expect(streamingStore.getThoughts('batched-stream')).toBe('Thinking');
+    expect(listener).not.toHaveBeenCalled();
+    expect(scheduledFrames.size).toBe(1);
+
+    flushAnimationFrames();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
   });
 
   it('evicts abandoned stream entries after the gc ttl elapses', () => {

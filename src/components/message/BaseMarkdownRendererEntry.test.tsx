@@ -591,6 +591,18 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(renderer.container.textContent).toContain('Demo Artifact');
   });
 
+  it('skips syntax highlighting while content is still streaming', () => {
+    renderMarkdown({ content: '```js\nconst value = 1;\n```', isLoading: true });
+
+    expect(renderer.container.querySelector('.hljs-keyword')).toBeNull();
+  });
+
+  it('restores syntax highlighting when streaming is complete', () => {
+    renderMarkdown({ content: '```js\nconst value = 1;\n```', isLoading: false });
+
+    expect(renderer.container.querySelector('.hljs-keyword')).not.toBeNull();
+  });
+
   it('renders standalone raw html fragments inside artifact frames instead of the message dom', () => {
     act(() => {
       renderer.root.render(

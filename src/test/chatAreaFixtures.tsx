@@ -1,20 +1,30 @@
-import { act, type ComponentProps, type ReactNode } from 'react';
+import { act, type ReactNode } from 'react';
 import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { vi } from 'vitest';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WindowProvider } from '@/contexts/WindowContext';
-import { ChatRuntimeValuesProvider } from '@/components/layout/chat-runtime/ChatRuntimeContext';
+import {
+  ChatRuntimeProvider,
+  useChatHeaderRuntime,
+  useChatInputRuntime,
+  useChatMessageListRuntime,
+} from '@/components/layout/chat-runtime/ChatRuntimeContext';
 import { useChatStore } from '@/stores/chatStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUIStore } from '@/stores/uiStore';
 import { AVAILABLE_THEMES } from '@/constants/themeConstants';
+import type { AppViewModel } from '@/hooks/app/useApp';
 import type { AppSettings, ChatMessage, ChatSettings, ChatToolToggleStates, ModelOption, UploadedFile } from '@/types';
 import { createAppSettings, createChatSettings } from './factories';
 import { createChatToolToggleStates } from './chatToolFixtures';
 
 export { createAppSettings, createChatSettings } from './factories';
 
-type ChatRuntimeValues = ComponentProps<typeof ChatRuntimeValuesProvider>['value'];
+type ChatRuntimeValues = {
+  header: ReturnType<typeof useChatHeaderRuntime>;
+  messageList: ReturnType<typeof useChatMessageListRuntime>;
+  input: ReturnType<typeof useChatInputRuntime>;
+};
 
 type ChatAreaInputValue = {
   appSettings: AppSettings;
@@ -259,40 +269,155 @@ export const applyChatAreaProviderValue = (value: ChatAreaProviderValue) => {
   useUIStore.setState({ chatInputHeight: value.messageList.chatInputHeight });
 };
 
-export const createChatRuntimeValues = (value: ChatAreaProviderValue): ChatRuntimeValues => ({
-  header: value.header,
-  messageList: value.messageList,
-  input: {
-    onMessageSent: value.input.onMessageSent,
-    onSendMessage: value.input.onSendMessage,
-    onStopGenerating: value.input.onStopGenerating,
-    onCancelEdit: value.input.onCancelEdit,
-    onProcessFiles: value.input.onProcessFiles,
-    onAddFileById: value.input.onAddFileById,
-    onCancelUpload: value.input.onCancelUpload,
-    onTranscribeAudio: value.input.onTranscribeAudio,
-    onClearChat: value.input.onClearChat,
-    onNewChat: value.input.onNewChat,
-    onOpenSettings: value.input.onOpenSettings,
-    onToggleLiveArtifactsPrompt: value.input.onToggleLiveArtifactsPrompt,
-    onTogglePinCurrentSession: value.input.onTogglePinCurrentSession,
-    onRetryLastTurn: value.input.onRetryLastTurn,
-    onSelectModel: value.input.onSelectModel,
-    availableModels: value.input.availableModels,
-    onEditLastUserMessage: value.input.onEditLastUserMessage,
-    onTogglePip: value.input.onTogglePip,
-    isPipActive: value.input.isPipActive,
-    onToggleQuadImages: value.input.onToggleQuadImages,
-    setCurrentChatSettings: value.input.setCurrentChatSettings,
-    onSuggestionClick: value.input.onSuggestionClick,
-    onOrganizeInfoClick: value.input.onOrganizeInfoClick,
-    onAddUserMessage: value.input.onAddUserMessage,
-    onLiveTranscript: value.input.onLiveTranscript,
-    onEditMessageContent: value.input.onUpdateMessageContent,
-    onToggleBBox: value.input.onToggleBBox,
-    onToggleGuide: value.input.onToggleGuide,
-  },
-});
+const createChatRuntimeApp = (value: ChatAreaProviderValue): AppViewModel => {
+  const app = {
+    appSettings: value.input.appSettings,
+    setAppSettings: vi.fn(),
+    currentTheme: AVAILABLE_THEMES.find((theme) => theme.id === value.input.themeId) ?? AVAILABLE_THEMES[0],
+    language: 'en',
+    t: vi.fn((key: string) => key),
+    uiState: {
+      isHistorySidebarOpen: false,
+      setIsHistorySidebarOpen: vi.fn(),
+      setIsHistorySidebarOpenTransient: vi.fn(),
+      isSettingsModalOpen: false,
+      setIsSettingsModalOpen: vi.fn(),
+      isPreloadedMessagesModalOpen: false,
+      setIsPreloadedMessagesModalOpen: vi.fn(),
+      isLogViewerOpen: false,
+      setIsLogViewerOpen: vi.fn(),
+      handleTouchStart: vi.fn(),
+      handleTouchEnd: vi.fn(),
+    },
+    pipState: {
+      isPipSupported: value.header.isPipSupported,
+      isPipActive: value.input.isPipActive,
+      togglePip: value.input.onTogglePip,
+      pipContainer: null,
+      pipWindow: null,
+    },
+    eventsState: {
+      installPromptEvent: null,
+      installState: { state: 'installed', canInstall: false },
+      handleInstallPwa: vi.fn(async () => {}),
+      needRefresh: false,
+      updateDismissed: false,
+      dismissUpdateBanner: vi.fn(),
+      handleRefreshApp: vi.fn(async () => {}),
+    },
+    chatState: {
+      activeChat: undefined,
+      activeSessionId: value.input.activeSessionId,
+      apiModels: value.header.availableModels,
+      currentChatSettings: value.input.currentChatSettings,
+      messages: value.messageList.messages,
+      isLoading: value.input.isLoading,
+      editingMessageId: value.input.editingMessageId,
+      editMode: value.input.editMode,
+      commandedInput: value.input.commandedInput,
+      isAppDraggingOver: value.header.isAppDraggingOver,
+      isProcessingDrop: false,
+      selectedFiles: value.input.selectedFiles,
+      appFileError: value.input.fileError,
+      isAppProcessingFile: value.input.isProcessingFile,
+      savedSessions: [],
+      savedGroups: [],
+      savedScenarios: [],
+      loadingSessionIds:
+        value.input.isLoading && value.input.activeSessionId ? new Set([value.input.activeSessionId]) : new Set(),
+      generatingTitleSessionIds: new Set(),
+      isModelsLoading: false,
+      modelsLoadingError: value.header.modelsLoadingError,
+      isSwitchingModel: false,
+      aspectRatio: value.input.aspectRatio ?? '1:1',
+      imageSize: value.input.imageSize ?? '1K',
+      updateAndPersistSessions: vi.fn(),
+      updateAndPersistGroups: vi.fn(),
+      scrollContainerRef: { current: null },
+      loadChatSession: vi.fn(),
+      handleSendMessage: async (message = {}) => {
+        value.input.onSendMessage(message.text ?? '', { isFastMode: message.isFastMode, files: message.files });
+      },
+      setScrollContainerRef: value.messageList.setScrollContainerRef,
+      handleEditMessage: value.messageList.onEditMessage,
+      handleDeleteMessage: value.messageList.onDeleteMessage,
+      handleRetryMessage: async (messageId: string) => value.messageList.onRetryMessage(messageId),
+      handleUpdateMessageFile: async (...args: Parameters<typeof value.messageList.onUpdateMessageFile>) =>
+        value.messageList.onUpdateMessageFile(...args),
+      handleContinueGeneration: async (messageId: string) => value.messageList.onContinueGeneration(messageId),
+      handleForkMessage: value.messageList.onForkMessage,
+      handleQuickTTS: value.messageList.onQuickTTS,
+      handleStopGenerating: value.input.onStopGenerating,
+      handleCancelEdit: value.input.onCancelEdit,
+      setCommandedInput: vi.fn(),
+      handleProcessAndAddFiles: value.input.onProcessFiles,
+      handleAddFileById: value.input.onAddFileById,
+      handleCancelFileUpload: value.input.onCancelUpload,
+      handleTranscribeAudio: value.input.onTranscribeAudio,
+      toggleGoogleSearch: vi.fn(),
+      toggleCodeExecution: vi.fn(),
+      toggleLocalPython: vi.fn(),
+      toggleUrlContext: vi.fn(),
+      toggleDeepSearch: vi.fn(),
+      handleClearCurrentChat: value.input.onClearChat,
+      handleTogglePinCurrentSession: value.input.onTogglePinCurrentSession,
+      handleTogglePinSession: vi.fn(),
+      handleRetryLastTurn: async () => value.input.onRetryLastTurn(),
+      handleEditLastUserMessage: value.input.onEditLastUserMessage,
+      setCurrentChatSettings: value.input.setCurrentChatSettings,
+      handleAddUserMessage: value.input.onAddUserMessage,
+      handleLiveTranscript: value.input.onLiveTranscript,
+      liveClientFunctions: {},
+      handleUpdateMessageContent: value.input.onUpdateMessageContent,
+      startNewChat: value.input.onNewChat,
+      handleDeleteChatHistorySession: vi.fn(),
+      handleRenameSession: vi.fn(),
+      handleDuplicateSession: vi.fn(),
+      handleAddNewGroup: vi.fn(),
+      handleDeleteGroup: vi.fn(),
+      handleRenameGroup: vi.fn(),
+      handleMoveSessionToGroup: vi.fn(),
+      handleToggleGroupExpansion: vi.fn(),
+      clearCacheAndReload: vi.fn(),
+      clearAllHistory: vi.fn(),
+      handleSaveAllScenarios: vi.fn(),
+      handleLoadPreloadedScenario: vi.fn(),
+      setApiModels: vi.fn(),
+      handleSelectModelInHeader: value.input.onSelectModel,
+      handleAppDragEnter: value.header.handleAppDragEnter,
+      handleAppDragOver: value.header.handleAppDragOver,
+      handleAppDragLeave: value.header.handleAppDragLeave,
+      handleAppDrop: async (event: Parameters<typeof value.header.handleAppDrop>[0]) => value.header.handleAppDrop(event),
+    },
+    activeChat: undefined,
+    sidePanelContent: null,
+    handleOpenSidePanel: value.messageList.onOpenSidePanel,
+    handleCloseSidePanel: vi.fn(),
+    isExportModalOpen: false,
+    setIsExportModalOpen: vi.fn(),
+    exportStatus: 'idle',
+    handleExportChat: vi.fn(),
+    sessionTitle: value.messageList.sessionTitle,
+    handleSaveSettings: vi.fn(),
+    handleSaveCurrentChatSettings: vi.fn(),
+    handleLoadLiveArtifactsPromptAndSave: async () => value.input.onToggleLiveArtifactsPrompt(),
+    handleToggleBBoxMode: async () => value.input.onToggleBBox(),
+    handleToggleGuideMode: async () => value.input.onToggleGuide(),
+    handleSuggestionClick: vi.fn(),
+    isLiveArtifactsPromptActive: value.header.isLiveArtifactsPromptActive,
+    isLiveArtifactsPromptBusy: value.header.isLiveArtifactsPromptBusy,
+    handleSetThinkingLevel: value.header.onSetThinkingLevel,
+    getCurrentModelDisplayName: vi.fn(() => value.header.currentModelName),
+    handleExportAllScenarios: vi.fn(),
+    handleImportAllScenarios: vi.fn(),
+  } satisfies AppViewModel;
+
+  return app;
+};
+
+export const ChatRuntimeTestProvider = ({ value, children }: { value: ChatAreaProviderValue; children: ReactNode }) => (
+  <ChatRuntimeProvider app={createChatRuntimeApp(value)}>{children}</ChatRuntimeProvider>
+);
 
 export const renderWithChatAreaProviders = (
   children: ReactNode,
@@ -312,9 +437,9 @@ export const renderWithChatAreaProviders = (
     root.render(
       <I18nProvider>
         <WindowProvider>
-          <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+          <ChatRuntimeTestProvider value={providerValue}>
             {children}
-          </ChatRuntimeValuesProvider>
+          </ChatRuntimeTestProvider>
         </WindowProvider>
       </I18nProvider>,
     );

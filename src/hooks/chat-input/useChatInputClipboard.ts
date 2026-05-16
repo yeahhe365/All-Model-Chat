@@ -147,7 +147,7 @@ export const useChatInputClipboard = ({
         return false;
       }
 
-      const result = processClipboardData(clipboardData, {
+      const result = await processClipboardData(clipboardData, {
         isPasteRichTextAsMarkdownEnabled: appSettings.isPasteRichTextAsMarkdownEnabled ?? true,
         isPasteAsTextFileEnabled: appSettings.isPasteAsTextFileEnabled ?? true,
       });

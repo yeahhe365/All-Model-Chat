@@ -1,12 +1,11 @@
 import { act } from 'react';
 import { setupProviderTestRenderer } from '@/test/providerTestUtils';
 import { describe, expect, it, vi } from 'vitest';
-import { createChatAreaProviderValue, createChatRuntimeValues } from '@/test/chatAreaFixtures';
+import { ChatRuntimeTestProvider, createChatAreaProviderValue } from '@/test/chatAreaFixtures';
 import {
   createChatInputActionsContextValue,
   createChatInputComposerStatusContextValue,
 } from '@/test/chatInputContextFixtures';
-import { ChatRuntimeValuesProvider } from '@/components/layout/chat-runtime/ChatRuntimeContext';
 import { ChatInputActionsContext, ChatInputComposerStatusContext } from '@/components/chat/input/ChatInputContext';
 
 import { SendControls } from './SendControls';
@@ -19,7 +18,7 @@ describe('SendControls', () => {
 
     act(() => {
       renderer.root.render(
-        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+        <ChatRuntimeTestProvider value={providerValue}>
           <ChatInputActionsContext.Provider value={createChatInputActionsContextValue()}>
             <ChatInputComposerStatusContext.Provider
               value={createChatInputComposerStatusContextValue({ hasTrimmedInput: true })}
@@ -27,7 +26,7 @@ describe('SendControls', () => {
               <SendControls />
             </ChatInputComposerStatusContext.Provider>
           </ChatInputActionsContext.Provider>
-        </ChatRuntimeValuesProvider>,
+        </ChatRuntimeTestProvider>,
       );
     });
 
@@ -46,7 +45,7 @@ describe('SendControls', () => {
 
     act(() => {
       renderer.root.render(
-        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+        <ChatRuntimeTestProvider value={providerValue}>
           <ChatInputActionsContext.Provider
             value={createChatInputActionsContextValue({
               isWaitingForUpload: true,
@@ -61,7 +60,7 @@ describe('SendControls', () => {
               <SendControls />
             </ChatInputComposerStatusContext.Provider>
           </ChatInputActionsContext.Provider>
-        </ChatRuntimeValuesProvider>,
+        </ChatRuntimeTestProvider>,
       );
     });
 

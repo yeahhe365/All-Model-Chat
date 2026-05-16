@@ -1,9 +1,7 @@
 import { logService } from '@/services/logService';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { convertHtmlToMarkdown } from '@/utils/htmlToMarkdown';
 import { createManagedObjectUrl } from '@/services/objectUrlManager';
 import { triggerDownload } from '@/utils/export/core';
-import { createMarkdownPdfBlob } from '@/utils/export/markdownPdf';
 import {
   createInlineImagePlaceholder,
   extractInlineImagePlaceholders,
@@ -106,10 +104,13 @@ export const useCreateFileEditor = ({
 
   // Logic: PDF Generation
   const generatePdfBlob = async (filename: string): Promise<Blob> =>
-    createMarkdownPdfBlob(resolveInlineImagePlaceholders(textContent, imagePlaceholdersRef.current), {
-      filename,
-      themeId,
-    });
+    (await import('@/utils/export/markdownPdf')).createMarkdownPdfBlob(
+      resolveInlineImagePlaceholders(textContent, imagePlaceholdersRef.current),
+      {
+        filename,
+        themeId,
+      },
+    );
 
   const handleSave = async (isProcessing: boolean) => {
     if (isProcessing) return;
@@ -205,12 +206,14 @@ export const useCreateFileEditor = ({
       if (isPasteRichTextAsMarkdownEnabled !== false) {
         const htmlContent = e.clipboardData.getData('text/html');
         if (htmlContent && /<[a-z][\s\S]*>/i.test(htmlContent)) {
-          const markdown = convertHtmlToMarkdown(htmlContent);
-          if (markdown) {
-            e.preventDefault();
-            if (textarea) {
-              const start = textarea.selectionStart;
-              const end = textarea.selectionEnd;
+          e.preventDefault();
+          const start = textarea ? textarea.selectionStart : textContent.length;
+          const end = textarea ? textarea.selectionEnd : textContent.length;
+
+          void (async () => {
+            const { convertHtmlToMarkdown } = await import('@/utils/htmlToMarkdown');
+            const markdown = convertHtmlToMarkdown(htmlContent);
+            if (markdown && textarea) {
               const newValue = textContent.substring(0, start) + markdown + textContent.substring(end);
               setTextContent(newValue);
               setTimeout(() => {
@@ -218,8 +221,8 @@ export const useCreateFileEditor = ({
                 textarea.setSelectionRange(start + markdown.length, start + markdown.length);
               }, 0);
             }
-            return;
-          }
+          })();
+          return;
         }
       }
     },

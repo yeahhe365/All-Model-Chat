@@ -63,6 +63,14 @@ const createThreeTurnMessages = (): ChatMessage[] => [
   },
 ];
 
+const createLongThreadMessages = (count: number): ChatMessage[] =>
+  Array.from({ length: count }, (_, index) => ({
+    id: `long-message-${index + 1}`,
+    role: index % 2 === 0 ? 'user' : 'model',
+    content: `Long thread message ${index + 1}`,
+    timestamp: new Date(Date.parse('2026-04-15T00:00:00.000Z') + index * 1000),
+  }));
+
 const setElementTop = (element: Element, top: number) => {
   element.getBoundingClientRect = vi.fn(() => ({
     top,
@@ -160,6 +168,76 @@ describe('useMessageListScroll', () => {
     unmount();
   });
 
+  it('persists the scroll snapshot captured before a history session switch', () => {
+    let messages = [
+      {
+        id: 'session-a-message',
+        role: 'user' as const,
+        content: 'Session A',
+        timestamp: new Date('2026-04-15T00:00:00.000Z'),
+      },
+    ];
+    let activeSessionId = 'session-a';
+    const { result, rerender, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages,
+        setScrollContainerRef: vi.fn(),
+        activeSessionId,
+      }),
+    );
+
+    const scroller = document.createElement('div');
+    Object.defineProperties(scroller, {
+      scrollTop: { value: 220, writable: true },
+      scrollHeight: { value: 1000, writable: true },
+      clientHeight: { value: 200, writable: true },
+    });
+    setElementTop(scroller, 100);
+
+    const sessionAMessage = document.createElement('div');
+    sessionAMessage.dataset.messageId = 'session-a-message';
+    setElementTop(sessionAMessage, 124);
+    scroller.appendChild(sessionAMessage);
+
+    act(() => {
+      result.current.handleScrollerRef(scroller);
+      vi.advanceTimersByTime(50);
+    });
+
+    act(() => {
+      result.current.handleScroll();
+    });
+
+    scroller.replaceChildren();
+    const sessionBMessage = document.createElement('div');
+    sessionBMessage.dataset.messageId = 'session-b-message';
+    setElementTop(sessionBMessage, 180);
+    scroller.appendChild(sessionBMessage);
+
+    messages = [
+      {
+        id: 'session-b-message',
+        role: 'user' as const,
+        content: 'Session B',
+        timestamp: new Date('2026-04-15T00:00:01.000Z'),
+      },
+    ];
+    activeSessionId = 'session-b';
+
+    act(() => {
+      rerender();
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(readStoredScrollSnapshot('session-a')).toEqual({
+      messageId: 'session-a-message',
+      scrollTop: 220,
+      topOffset: 24,
+    });
+
+    unmount();
+  });
+
   it('shows the previous-turn control while reading a long single-turn response', () => {
     const { result, unmount } = renderHook(() =>
       useMessageListScroll({
@@ -174,6 +252,39 @@ describe('useMessageListScroll', () => {
     });
 
     expect(result.current.showScrollUp).toBe(true);
+
+    unmount();
+  });
+
+  it('restores long history sessions to the saved message anchor instead of an approximate scrollTop', () => {
+    const longMessages = createLongThreadMessages(120);
+    localStorage.setItem(
+      'chat_scroll_pos_session-long-restore',
+      JSON.stringify({ messageId: 'long-message-91', topOffset: 32, scrollTop: 8400 }),
+    );
+
+    const { result, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages: longMessages,
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-long-restore',
+      }),
+    );
+
+    const scrollTo = vi.fn();
+    const scrollToIndex = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo,
+      scrollToIndex,
+    } as unknown as VirtuosoHandle;
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(scrollToIndex).toHaveBeenCalledWith({ index: 90, align: 'start', offset: -32 });
 
     unmount();
   });
@@ -361,6 +472,96 @@ describe('useMessageListScroll', () => {
       align: 'end',
       behavior: 'smooth',
     });
+
+    unmount();
+  });
+
+  it('anchors newly appended model turns in the same restored session', () => {
+    let messages = createMessages().slice(0, 2);
+    const { result, rerender, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages,
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-new-model-turn',
+      }),
+    );
+
+    const scrollToIndex = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo: vi.fn(),
+      scrollToIndex,
+    } as unknown as VirtuosoHandle;
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    scrollToIndex.mockClear();
+
+    messages = [
+      ...messages,
+      {
+        id: 'message-3',
+        role: 'user',
+        content: 'Second turn',
+        timestamp: new Date('2026-04-15T00:00:02.000Z'),
+      },
+      {
+        id: 'message-4',
+        role: 'model',
+        content: '',
+        timestamp: new Date('2026-04-15T00:00:03.000Z'),
+      },
+    ];
+
+    act(() => {
+      rerender();
+    });
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollToIndex).toHaveBeenCalledWith({
+      index: 3,
+      align: 'start',
+      behavior: 'smooth',
+    });
+
+    unmount();
+  });
+
+  it('keeps the current streaming message in place when only its content changes', () => {
+    let messages = createMessages();
+    const { result, rerender, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages,
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-stream-content',
+      }),
+    );
+
+    const scrollToIndex = vi.fn();
+    const virtuosoRef = result.current.virtuosoRef as unknown as { current: VirtuosoHandle | null };
+    virtuosoRef.current = {
+      scrollTo: vi.fn(),
+      scrollToIndex,
+    } as unknown as VirtuosoHandle;
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    scrollToIndex.mockClear();
+
+    messages = messages.map((message) =>
+      message.id === 'message-4' ? { ...message, content: `${message.content}\nstreamed token` } : message,
+    );
+
+    act(() => {
+      rerender();
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(scrollToIndex).not.toHaveBeenCalled();
 
     unmount();
   });

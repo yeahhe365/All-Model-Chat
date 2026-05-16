@@ -161,7 +161,7 @@ const useRequiredContext = <T,>(context: React.Context<T | null>, name: string) 
   return value;
 };
 
-export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
+const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
   const {
     appSettings,
     setAppSettings,
@@ -430,7 +430,7 @@ export const useChatRuntimeValues = (app: AppViewModel): ChatRuntimeValues => {
   );
 };
 
-export const ChatRuntimeValuesProvider: React.FC<ChatRuntimeValuesProviderProps> = ({ value, children }) => (
+const ChatRuntimeValuesProvider: React.FC<ChatRuntimeValuesProviderProps> = ({ value, children }) => (
   <ChatHeaderRuntimeContext.Provider value={value.header}>
     <ChatMessageListRuntimeContext.Provider value={value.messageList}>
       <ChatInputRuntimeContext.Provider value={value.input}>{children}</ChatInputRuntimeContext.Provider>

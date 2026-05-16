@@ -16,7 +16,7 @@ const getCapabilityCacheKey = (modelId: string | null | undefined): string => {
   return normalized || '__empty__';
 };
 
-export const useModelCapabilitiesStore = create<ModelCapabilitiesState & ModelCapabilitiesActions>((set, get) => ({
+const useModelCapabilitiesStore = create<ModelCapabilitiesState & ModelCapabilitiesActions>((set, get) => ({
   capabilitiesByModelId: {},
 
   getCapabilities: (modelId) => {

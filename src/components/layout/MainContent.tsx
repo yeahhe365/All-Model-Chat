@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react';
-import { HistorySidebar } from '@/components/sidebar/HistorySidebar';
 import { ChatArea } from './ChatArea';
 import { AppModals } from '@/components/modals/AppModals';
 import type { AppViewModel } from '@/hooks/app/useApp';
@@ -7,11 +6,21 @@ import { useMainContentViewModel } from './useMainContentViewModel';
 import { ChatRuntimeProvider } from './chat-runtime/ChatRuntimeContext';
 import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
+const LazyHistorySidebar = lazyNamedComponent(() => import('@/components/sidebar/HistorySidebar'), 'HistorySidebar');
 const LazySidePanel = lazyNamedComponent(() => import('./SidePanel'), 'SidePanel');
 
 interface MainContentProps {
   app: AppViewModel;
 }
+
+const HistorySidebarFallback: React.FC<{ isOpen: boolean; themeId: string }> = ({ isOpen, themeId }) => (
+  <aside
+    aria-hidden="true"
+    className={`h-full flex-shrink-0 ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} absolute md:static top-0 left-0 z-50 overflow-hidden border-r border-[var(--theme-border-primary)] ${
+      isOpen ? 'w-64 md:w-[16.2rem] translate-x-0' : 'w-64 md:w-[52.2px] -translate-x-full md:translate-x-0'
+    }`}
+  />
+);
 
 export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   const {
@@ -35,7 +44,9 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         aria-hidden="true"
       />
 
-      <HistorySidebar {...sidebarProps} />
+      <Suspense fallback={<HistorySidebarFallback isOpen={sidebarProps.isOpen} themeId={currentThemeId} />}>
+        <LazyHistorySidebar {...sidebarProps} />
+      </Suspense>
       <ChatRuntimeProvider app={app}>
         <ChatArea />
       </ChatRuntimeProvider>

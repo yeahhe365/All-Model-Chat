@@ -1,4 +1,4 @@
-import { Type, type FunctionDeclaration } from '@google/genai';
+import type { FunctionDeclaration, Type } from '@google/genai';
 import type { ExecutionResult } from './pyodideService';
 import type { UploadedFile } from '@/types';
 import { createUploadedFileFromBase64 } from '@/utils/chat/parsing';
@@ -17,10 +17,10 @@ export const createLocalPythonToolDeclaration = (): FunctionDeclaration => ({
   description:
     'Execute Python code locally in the browser with Pyodide. Use this for calculations, data analysis, CSV inspection, and lightweight plots.',
   parameters: {
-    type: Type.OBJECT,
+    type: 'OBJECT' as Type,
     properties: {
       code: {
-        type: Type.STRING,
+        type: 'STRING' as Type,
         description: 'The Python code to execute locally.',
       },
     },

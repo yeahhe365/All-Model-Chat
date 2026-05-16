@@ -5,11 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createChatAreaProviderValue,
   applyChatAreaProviderValue,
-  createChatRuntimeValues,
+  ChatRuntimeTestProvider,
 } from '@/test/chatAreaFixtures';
 import { useChatStore } from '@/stores/chatStore';
 import { ChatArea } from './ChatArea';
-import { ChatRuntimeValuesProvider } from './chat-runtime/ChatRuntimeContext';
 
 const dispatchTouchEvent = (
   node: Element,
@@ -99,9 +98,9 @@ describe('ChatArea', () => {
 
     act(() => {
       renderer.root.render(
-        <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+        <ChatRuntimeTestProvider value={providerValue}>
           <ChatArea />
-        </ChatRuntimeValuesProvider>,
+        </ChatRuntimeTestProvider>,
       );
     });
   };

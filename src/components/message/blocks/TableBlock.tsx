@@ -7,7 +7,6 @@ import { useWindowContext } from '@/contexts/WindowContext';
 import { createManagedObjectUrl } from '@/services/objectUrlManager';
 import { triggerDownload } from '@/utils/export/core';
 import { useClickOutside } from '@/hooks/useClickOutside';
-import { convertHtmlToMarkdown } from '@/utils/htmlToMarkdown';
 import {
   FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
   MENU_ITEM_BUTTON_CLASS,
@@ -73,6 +72,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, nod
   const handleCopyMarkdown = async () => {
     if (!tableRef.current) return;
     try {
+      const { convertHtmlToMarkdown } = await import('@/utils/htmlToMarkdown');
       const markdown = convertHtmlToMarkdown(tableRef.current.outerHTML);
       await navigator.clipboard.writeText(markdown);
       setIsCopied(true);

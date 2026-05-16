@@ -3,6 +3,7 @@ import { type AppSettings, type ModelOption, type ChatSettings, type SavedScenar
 import type { LogViewerProps } from '@/components/log-viewer/LogViewer';
 import type { PwaInstallState } from '@/pwa/install';
 import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
+import { ensureFeatureTranslations } from '@/i18n/translations';
 
 const LazySettingsModal = lazyNamedComponent(() => import('@/components/settings/SettingsModal'), 'SettingsModal');
 const LazyLogViewer = lazyNamedComponent(() => import('@/components/log-viewer/LogViewer'), 'LogViewer');
@@ -51,6 +52,11 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
     initialTab: 'console',
     initialUsageTab: 'overview',
   });
+  const [readyFeatures, setReadyFeatures] = useState({
+    settings: false,
+    logViewer: false,
+    scenarios: false,
+  });
   const {
     isSettingsModalOpen = false,
     setIsSettingsModalOpen = () => {},
@@ -89,9 +95,54 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
     setIsLogViewerOpen(true);
   };
 
+  React.useEffect(() => {
+    if (!isSettingsModalOpen || readyFeatures.settings) return;
+
+    let isCancelled = false;
+    void ensureFeatureTranslations('settings').then(() => {
+      if (!isCancelled) {
+        setReadyFeatures((current) => ({ ...current, settings: true }));
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isSettingsModalOpen, readyFeatures.settings]);
+
+  React.useEffect(() => {
+    if (!isLogViewerOpen || readyFeatures.logViewer) return;
+
+    let isCancelled = false;
+    void ensureFeatureTranslations('logViewer').then(() => {
+      if (!isCancelled) {
+        setReadyFeatures((current) => ({ ...current, logViewer: true }));
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isLogViewerOpen, readyFeatures.logViewer]);
+
+  React.useEffect(() => {
+    if (!isPreloadedMessagesModalOpen || readyFeatures.scenarios) return;
+
+    let isCancelled = false;
+    void ensureFeatureTranslations('scenarios').then(() => {
+      if (!isCancelled) {
+        setReadyFeatures((current) => ({ ...current, scenarios: true }));
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isPreloadedMessagesModalOpen, readyFeatures.scenarios]);
+
   return (
     <>
-      {isLogViewerOpen && (
+      {isLogViewerOpen && readyFeatures.logViewer && (
         <Suspense fallback={null}>
           <LazyLogViewer
             isOpen={isLogViewerOpen}
@@ -106,7 +157,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
           />
         </Suspense>
       )}
-      {isSettingsModalOpen && (
+      {isSettingsModalOpen && readyFeatures.settings && (
         <Suspense fallback={null}>
           <LazySettingsModal
             isOpen={isSettingsModalOpen}
@@ -128,7 +179,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
           />
         </Suspense>
       )}
-      {isPreloadedMessagesModalOpen && (
+      {isPreloadedMessagesModalOpen && readyFeatures.scenarios && (
         <Suspense fallback={null}>
           <LazyPreloadedMessagesModal
             isOpen={isPreloadedMessagesModalOpen}

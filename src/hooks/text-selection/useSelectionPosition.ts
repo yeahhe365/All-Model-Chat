@@ -1,7 +1,5 @@
-/* eslint-disable react-hooks/refs */
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
 import { useWindowContext } from '@/contexts/WindowContext';
-import { convertHtmlToMarkdown } from '@/utils/htmlToMarkdown';
 import { copySelectionTextToClipboardEvent } from './selectionClipboard';
 import {
   dispatchLiveArtifactClearSelection,
@@ -91,10 +89,12 @@ export const useSelectionPosition = ({
   const selectionBoundsRef = useRef<SelectionBounds | null>(null);
   const selectedTextRef = useRef('');
   const selectedPlainTextRef = useRef('');
+  const selectionRequestIdRef = useRef(0);
   const toolbarNode = toolbarRef.current;
   const { document: targetDocument, window: targetWindow } = useWindowContext();
 
   const clearSelectionState = useCallback(() => {
+    selectionRequestIdRef.current += 1;
     setPosition(null);
     selectionBoundsRef.current = null;
     selectedTextRef.current = '';
@@ -106,6 +106,8 @@ export const useSelectionPosition = ({
   // Monitor selection changes
   useEffect(() => {
     const handleSelectionChange = () => {
+      const requestId = (selectionRequestIdRef.current += 1);
+
       if (isAudioActive) {
         return;
       }
@@ -139,24 +141,44 @@ export const useSelectionPosition = ({
       const rangeIsCodeSelection = isCodeSelection(range);
       const cleanedPlainText = getPlainSelectionText(container);
       const plainText = rangeIsCodeSelection ? (selection.toString() || cleanedPlainText).trim() : cleanedPlainText;
-      const text = rangeIsCodeSelection ? plainText : convertHtmlToMarkdown(html).trim();
 
-      if (!text) {
+      if (!plainText) {
         clearSelectionState();
         return;
       }
 
       const rect = range.getBoundingClientRect();
-      selectionBoundsRef.current = rect;
-      selectedTextRef.current = text;
-      selectedPlainTextRef.current = plainText;
+      const applySelectionState = (text: string) => {
+        if (requestId !== selectionRequestIdRef.current) {
+          return;
+        }
 
-      setPosition({
-        top: rect.top - 50,
-        left: rect.left + rect.width / 2,
-      });
-      setSelectedText(text);
-      setSelectedCopyText(preserveFormattingOnCopy ? text : plainText || text);
+        if (!text) {
+          clearSelectionState();
+          return;
+        }
+
+        selectionBoundsRef.current = rect;
+        selectedTextRef.current = text;
+        selectedPlainTextRef.current = plainText;
+
+        setPosition({
+          top: rect.top - 50,
+          left: rect.left + rect.width / 2,
+        });
+        setSelectedText(text);
+        setSelectedCopyText(preserveFormattingOnCopy ? text : plainText || text);
+      };
+
+      if (rangeIsCodeSelection) {
+        applySelectionState(plainText);
+        return;
+      }
+
+      void (async () => {
+        const { convertHtmlToMarkdown } = await import('@/utils/htmlToMarkdown');
+        applySelectionState(convertHtmlToMarkdown(html).trim());
+      })();
     };
 
     targetDocument.addEventListener('selectionchange', handleSelectionChange);

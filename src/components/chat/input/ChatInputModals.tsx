@@ -1,10 +1,16 @@
-import React from 'react';
-import { AudioRecorder } from '@/components/modals/AudioRecorder';
-import { CreateTextFileEditor } from '@/components/modals/CreateTextFileEditor';
-import { HelpModal } from '@/components/modals/HelpModal';
-import { TextEditorModal } from '@/components/modals/TextEditorModal';
+import React, { Suspense } from 'react';
 import { type CommandInfo, type UploadedFile } from '@/types';
 import { useI18n } from '@/contexts/I18nContext';
+import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
+
+const LazyAudioRecorder = lazyNamedComponent(() => import('@/components/modals/AudioRecorder'), 'AudioRecorder');
+const LazyHelpModal = lazyNamedComponent(() => import('@/components/modals/HelpModal'), 'HelpModal');
+const LazyTextEditorModal = lazyNamedComponent(() => import('@/components/modals/TextEditorModal'), 'TextEditorModal');
+
+const LazyCreateTextFileEditor = lazyNamedComponent(
+  () => import('@/components/modals/CreateTextFileEditor'),
+  'CreateTextFileEditor',
+);
 
 interface ChatInputModalsProps {
   showRecorder: boolean;
@@ -68,32 +74,42 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
 
   return (
     <>
-      {showRecorder && <AudioRecorder onRecord={onAudioRecord} onCancel={onRecorderCancel} />}
+      {showRecorder && (
+        <Suspense fallback={null}>
+          <LazyAudioRecorder onRecord={onAudioRecord} onCancel={onRecorderCancel} />
+        </Suspense>
+      )}
       {showCreateTextFileEditor && (
-        <CreateTextFileEditor
-          onConfirm={onConfirmCreateTextFile}
-          onCancel={onCreateTextFileCancel}
-          isProcessing={isProcessingFile}
-          isLoading={isLoading}
-          initialContent={initialContent}
-          initialFilename={initialFilename}
-          themeId={themeId}
-          isPasteRichTextAsMarkdownEnabled={isPasteRichTextAsMarkdownEnabled}
-        />
+        <Suspense fallback={null}>
+          <LazyCreateTextFileEditor
+            onConfirm={onConfirmCreateTextFile}
+            onCancel={onCreateTextFileCancel}
+            isProcessing={isProcessingFile}
+            isLoading={isLoading}
+            initialContent={initialContent}
+            initialFilename={initialFilename}
+            themeId={themeId}
+            isPasteRichTextAsMarkdownEnabled={isPasteRichTextAsMarkdownEnabled}
+          />
+        </Suspense>
       )}
       {isHelpModalOpen && (
-        <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} />
+        <Suspense fallback={null}>
+          <LazyHelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} />
+        </Suspense>
       )}
 
       {showTtsContextEditor && onCloseTtsContextEditor && setTtsContext && (
-        <TextEditorModal
-          isOpen={showTtsContextEditor}
-          onClose={onCloseTtsContextEditor}
-          title={t('ttsDirectorNotes_title')}
-          value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
-          onChange={setTtsContext}
-          placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}
-        />
+        <Suspense fallback={null}>
+          <LazyTextEditorModal
+            isOpen={showTtsContextEditor}
+            onClose={onCloseTtsContextEditor}
+            title={t('ttsDirectorNotes_title')}
+            value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
+            onChange={setTtsContext}
+            placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}
+          />
+        </Suspense>
       )}
     </>
   );

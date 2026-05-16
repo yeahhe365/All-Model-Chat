@@ -79,14 +79,12 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
   const module = await import('./MessageList');
   const fixtureModule = await import('@/test/chatAreaFixtures');
   const i18nModule = await import('@/contexts/I18nContext');
-  const runtimeModule = await import('@/components/layout/chat-runtime/ChatRuntimeContext');
 
   return {
     MessageList: module.MessageList,
     applyChatAreaProviderValue: fixtureModule.applyChatAreaProviderValue,
-    createChatRuntimeValues: fixtureModule.createChatRuntimeValues,
+    ChatRuntimeTestProvider: fixtureModule.ChatRuntimeTestProvider,
     I18nProvider: i18nModule.I18nProvider,
-    ChatRuntimeValuesProvider: runtimeModule.ChatRuntimeValuesProvider,
   };
 };
 
@@ -107,9 +105,8 @@ describe('MessageList preview chunking', () => {
     const {
       MessageList,
       applyChatAreaProviderValue,
-      createChatRuntimeValues,
+      ChatRuntimeTestProvider,
       I18nProvider,
-      ChatRuntimeValuesProvider,
     } = await loadMessageList(moduleLoadTracker);
     const providerValue = createProviderValue();
 
@@ -119,9 +116,9 @@ describe('MessageList preview chunking', () => {
     act(() => {
       renderer.root.render(
         <I18nProvider>
-          <ChatRuntimeValuesProvider value={createChatRuntimeValues(providerValue)}>
+          <ChatRuntimeTestProvider value={providerValue}>
             <MessageList />
-          </ChatRuntimeValuesProvider>
+          </ChatRuntimeTestProvider>
         </I18nProvider>,
       );
     });

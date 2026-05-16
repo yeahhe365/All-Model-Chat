@@ -1,8 +1,6 @@
 import { logService } from '@/services/logService';
 import type React from 'react';
 import { useState, useCallback } from 'react';
-import { buildImportContextFile } from '@/utils/import-context/importContextBuilder';
-import { processDroppedItems } from '@/utils/import-context/droppedItems';
 import { type UploadedFile } from '@/types';
 import { generateUniqueId } from '@/utils/chat/ids';
 import { useI18n } from '@/contexts/I18nContext';
@@ -87,6 +85,10 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
             }),
           );
 
+          const [{ processDroppedItems }, { buildImportContextFile }] = await Promise.all([
+            import('@/utils/import-context/droppedItems'),
+            import('@/utils/import-context/importContextBuilder'),
+          ]);
           const dropped = await processDroppedItems(items);
 
           if (dropped.files.length > 0 || dropped.emptyDirectoryPaths.length > 0) {

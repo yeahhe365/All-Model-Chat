@@ -2,7 +2,6 @@ import { logService } from '@/services/logService';
 import { useCallback, useRef, useState, type MutableRefObject, type RefObject } from 'react';
 import type { UploadedFile } from '@/types';
 import { generateUniqueId } from '@/utils/chat/ids';
-import { generateFolderContext } from '@/utils/folderImportUtils';
 import { readDirectoryHandle } from '@/utils/import-context/directoryHandleReader';
 import { captureScreenImage } from '@/utils/mediaUtils';
 import { useI18n } from '@/contexts/I18nContext';
@@ -88,6 +87,7 @@ export const useFilePreProcessingEffects = ({
 
       try {
         justInitiatedFileOpRef.current = true;
+        const { generateFolderContext } = await import('@/utils/folderImportUtils');
         const contextFile = await generateFolderContext(files, {
           emptyDirectoryPaths,
         });

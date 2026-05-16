@@ -261,6 +261,7 @@ export const messagesTranslations = {
   scroll_next_turn: { en: 'Scroll to next turn', zh: '滚动到下一轮' },
   audioPlayer_play: { en: 'Play', zh: '播放' },
   audioPlayer_pause: { en: 'Pause', zh: '暂停' },
+  audioPlayer_playback_progress: { en: 'Playback progress', zh: '播放进度' },
   audioPlayer_playback_speed: { en: 'Playback Speed', zh: '播放速度' },
   audioPlayer_download: { en: 'Download Audio', zh: '下载音频' },
   cancelled_by_user: { en: '[Cancelled by user]', zh: '[用户已取消]' },

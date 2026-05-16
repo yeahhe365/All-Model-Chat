@@ -4,7 +4,6 @@ import { Virtuoso } from 'react-virtuoso';
 import { Message } from '@/components/message/Message';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
-import { FileConfigurationModal } from '@/components/modals/FileConfigurationModal';
 import { TextSelectionToolbar } from './message-list/TextSelectionToolbar';
 import { useMessageListUI } from '@/hooks/useMessageListUI';
 import { useMessageListScroll } from './message-list/hooks/useMessageListScroll';
@@ -32,6 +31,10 @@ const LazyFilePreviewModal = lazyNamedComponent(
 const LazyMarkdownPreviewModal = lazyNamedComponent(
   () => import('@/components/modals/MarkdownPreviewModal'),
   'MarkdownPreviewModal',
+);
+const LazyFileConfigurationModal = lazyNamedComponent(
+  () => import('@/components/modals/FileConfigurationModal'),
+  'FileConfigurationModal',
 );
 
 const MessageListComponent: React.FC = () => {
@@ -226,13 +229,17 @@ const MessageListComponent: React.FC = () => {
         </Suspense>
       )}
 
-      <FileConfigurationModal
-        isOpen={!!configuringFile}
-        onClose={() => setConfiguringFile(null)}
-        file={configuringFile?.file || null}
-        onSave={handleSaveFileConfig}
-        isGemini3={isGemini3}
-      />
+      {configuringFile && (
+        <Suspense fallback={null}>
+          <LazyFileConfigurationModal
+            isOpen={!!configuringFile}
+            onClose={() => setConfiguringFile(null)}
+            file={configuringFile.file}
+            onSave={handleSaveFileConfig}
+            isGemini3={isGemini3}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

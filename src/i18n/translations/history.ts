@@ -21,6 +21,7 @@ export const historyTranslations = {
   chat_is_empty: { en: 'Chat is empty', zh: '对话为空' },
   history_allConversations: { en: 'All Conversations', zh: '所有对话' },
   history_pinned: { en: 'Pinned', zh: '已置顶' },
+  history_show_more_chats: { en: 'Show {count} more chats', zh: '再显示 {count} 个对话' },
   history_today: { en: 'Today', zh: '今天' },
   history_yesterday: { en: 'Yesterday', zh: '昨天' },
   history_7_days: { en: 'Previous 7 Days', zh: '最近 7 天' },

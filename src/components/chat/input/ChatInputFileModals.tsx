@@ -1,11 +1,14 @@
 import React, { Suspense } from 'react';
 import { type UploadedFile, type AppSettings, type ModelOption } from '@/types';
-import { FileConfigurationModal } from '@/components/modals/FileConfigurationModal';
 import { type VideoMetadata } from '@/types';
 import { type MediaResolution } from '@/types/settings';
 import { isMarkdownFile } from '@/utils/fileTypeUtils';
 import { lazyNamedComponent } from '@/utils/lazyNamedComponent';
 
+const LazyFileConfigurationModal = lazyNamedComponent(
+  () => import('@/components/modals/FileConfigurationModal'),
+  'FileConfigurationModal',
+);
 const LazyTokenCountModal = lazyNamedComponent(() => import('@/components/modals/TokenCountModal'), 'TokenCountModal');
 const LazyFilePreviewModal = lazyNamedComponent(
   () => import('@/components/modals/FilePreviewModal'),
@@ -65,13 +68,17 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
 
   return (
     <>
-      <FileConfigurationModal
-        isOpen={!!configuringFile}
-        onClose={() => setConfiguringFile(null)}
-        file={configuringFile}
-        onSave={handlers.handleSaveFileConfig}
-        isGemini3={isGemini3}
-      />
+      {configuringFile && (
+        <Suspense fallback={null}>
+          <LazyFileConfigurationModal
+            isOpen={!!configuringFile}
+            onClose={() => setConfiguringFile(null)}
+            file={configuringFile}
+            onSave={handlers.handleSaveFileConfig}
+            isGemini3={isGemini3}
+          />
+        </Suspense>
+      )}
 
       <Suspense fallback={null}>
         <LazyTokenCountModal

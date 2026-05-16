@@ -3,7 +3,6 @@ import {
   extractPreviewableCodeBlock,
   getCodeBlockPreviewType,
   normalizePreviewableMarkdownContent,
-  wrapBarePreviewableDocument,
 } from './codeUtils';
 
 describe('codeUtils preview detection', () => {
@@ -49,23 +48,6 @@ describe('codeUtils preview detection', () => {
       markupType: 'html',
     });
     expect(extractPreviewableCodeBlock('```xml\n<note><to>Jane</to></note>\n```')).toBe(null);
-  });
-
-  it('wraps bare standalone html documents as internal artifact code blocks', () => {
-    const document = '<!DOCTYPE html><html><head><style>body{color:red}</style></head><body>Hello</body></html>';
-
-    expect(wrapBarePreviewableDocument(`\n${document}\n`)).toBe(`\`\`\`amc-live-artifact-html\n${document}\n\`\`\``);
-    expect(extractPreviewableCodeBlock(document)).toEqual({
-      content: document,
-      markupType: 'html',
-    });
-  });
-
-  it('does not wrap raw html fragments or prose that only contains html', () => {
-    const fragment = '<div style="display:flex;gap:12px"><span>Ready</span></div>';
-
-    expect(wrapBarePreviewableDocument(fragment)).toBe(fragment);
-    expect(wrapBarePreviewableDocument(`Here is the page:\n${fragment}`)).toBe(`Here is the page:\n${fragment}`);
   });
 
   it('removes markdown-breaking blank lines inside standalone raw html fragments', () => {

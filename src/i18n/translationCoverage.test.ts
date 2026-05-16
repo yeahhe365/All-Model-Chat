@@ -1,14 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { getTranslator, translations } from './translations';
+import { ensureAllFeatureTranslations, getTranslator, translations } from './translations';
 
 const projectRoot = path.resolve(__dirname, '../..');
 
 const readProjectFile = (relativePath: string) => fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
 
 describe('translation coverage for protected UI surfaces', () => {
-  it('uses real Chinese copy for protected translation keys', () => {
+  it('uses real Chinese copy for protected translation keys', async () => {
+    await ensureAllFeatureTranslations();
     const t = getTranslator('zh');
 
     expect(t('fill_input')).toBe('插入');
@@ -69,7 +70,8 @@ describe('translation coverage for protected UI surfaces', () => {
     expect(t('export_message_dialog_title')).toBe('导出消息');
   });
 
-  it('keeps Chinese UI copy on full-width punctuation where applicable', () => {
+  it('keeps Chinese UI copy on full-width punctuation where applicable', async () => {
+    await ensureAllFeatureTranslations();
     const offenders = Object.entries(translations).flatMap(([key, value]) => {
       const zh = value.zh;
       if (!zh) return [];
@@ -663,7 +665,8 @@ describe('translation coverage for protected UI surfaces', () => {
     });
   });
 
-  it('defines translations for every t() key used in source files', () => {
+  it('defines translations for every t() key used in source files', async () => {
+    await ensureAllFeatureTranslations();
     const sourceFiles = ['src/components', 'src/features', 'src/hooks', 'src/utils'];
 
     const collectFiles = (dir: string): string[] =>
