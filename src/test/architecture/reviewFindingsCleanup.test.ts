@@ -42,6 +42,13 @@ describe('review findings cleanup guards', () => {
     expect(enReadme).toContain('public/runtime-config.js template');
   });
 
+  it('serves module workers with a JavaScript MIME type in Docker', () => {
+    const nginxConfig = readProjectFile('docker/nginx.conf');
+
+    expect(nginxConfig).toMatch(/types\s*\{[\s\S]*application\/javascript\s+[^;}]*\bmjs\b[\s\S]*\}/);
+    expect(nginxConfig).toMatch(/location\s*=\s*\/pdf\.worker\.min\.mjs\s*\{[\s\S]*Cache-Control "no-cache"/);
+  });
+
   it('describes local Python package loading precisely', () => {
     const zhReadme = readProjectFile('README.md');
     const enReadme = readProjectFile('README.en.md');
