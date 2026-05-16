@@ -100,6 +100,19 @@ describe('buildContentParts', () => {
     expect(contentParts[0]).toEqual({ fileData: { mimeType: 'image/png', fileUri: 'files/abc123' } });
   });
 
+  it('uses inlineData when a file is explicitly marked inline even if a stale fileUri remains', async () => {
+    const file = makeFile({
+      fileUri: 'files/stale',
+      fileApiName: 'files/stale',
+      rawFile: new Blob(['img'], { type: 'image/png' }),
+      transferStrategy: 'inline',
+    });
+
+    const { contentParts } = await buildContentParts('Caption', [file]);
+
+    expect(contentParts[0]).toEqual({ inlineData: { mimeType: 'image/png', data: 'base64data' } });
+  });
+
   it('handles YouTube links without mimeType in fileData', async () => {
     const file = makeFile({
       type: 'video/youtube-link',

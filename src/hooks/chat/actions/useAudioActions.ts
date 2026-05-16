@@ -5,6 +5,7 @@ import { getApiKeyErrorTranslationKey, getGeminiKeyForRequest } from '@/utils/ap
 import { transcribeAudioApi } from '@/services/api/generation/audioApi';
 import { useI18n } from '@/contexts/I18nContext';
 import { isOpenAICompatibleApiActive } from '@/utils/openaiCompatibleMode';
+import { usesRemoteFileReference } from '@/utils/chat/fileTransferStrategy';
 
 interface UseAudioActionsProps {
   appSettings: AppSettings;
@@ -36,7 +37,7 @@ export const useAudioActions = ({
       }
 
       if (keyResult.isNewKey && !isOpenAICompatibleApiActive(appSettings)) {
-        const fileRequiresApi = selectedFiles.some((f) => f.fileUri);
+        const fileRequiresApi = selectedFiles.some((f) => usesRemoteFileReference(f) && f.fileUri);
         if (!fileRequiresApi) {
           logService.info('New API key selected for this session due to transcription.');
           setCurrentChatSettings((prev) => ({ ...prev, lockedApiKey: keyResult.key }));

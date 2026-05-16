@@ -173,6 +173,8 @@
 
 ### 方式一：标准开发模式
 
+本地开发必须使用 Node.js 26（仓库提供 `.nvmrc`，CI 与 Docker 镜像也使用同一主版本）。仓库启用了 `engine-strict`，如果你使用 Node 27+ 或 25 及以下版本，`npm install` 会直接失败；建议先执行 `nvm use`。
+
 ```bash
 # 克隆仓库
 git clone https://github.com/yeahhe365/AMC-WebUI.git
@@ -184,6 +186,14 @@ npm install
 # 启动开发服务器
 npm run dev
 ```
+
+如需分析生产包体积，可执行：
+
+```bash
+npm run build:analyze
+```
+
+命令会生成 `dist/bundle-stats.html`，用于查看主包、懒加载 chunk 与 PWA 预缓存边界。
 
 访问 `http://localhost:5175`，在 **设置 -> API 配置** 中填入你的 Gemini API Key。
 

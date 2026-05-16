@@ -352,6 +352,10 @@ export const chatInputTranslations = {
     en: 'Could not refresh the remote file reference for {filename}. Please try again or attach the file again.',
     zh: '无法刷新 {filename} 的远端文件引用。请重试或重新附加该文件。',
   },
+  messageSender_openAICompatibleFileReferenceUnsupported: {
+    en: 'OpenAI-compatible mode cannot send Gemini Files API remote references. Reattach {filename} as a local image, audio, or text file, or switch back to the Gemini API.',
+    zh: 'OpenAI 兼容模式不能发送 Gemini Files API 远端引用。请重新附加 {filename} 作为本地图片、音频或文本文件，或切回 Gemini API。',
+  },
   messageSender_imageModelSupportsImageAndPdfOnly: {
     en: 'Nano Banana 2 supports image and PDF attachments only.',
     zh: 'Nano Banana 2 仅支持图片和 PDF 附件。',

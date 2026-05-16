@@ -1,4 +1,4 @@
-export const dataSettings = {
+const dataSettings = {
   settingsDataManagement: { en: 'Data Management', zh: '数据管理' },
   settingsDataImportsExports: { en: 'Import & Export', zh: '导入与导出' },
   settingsDataSettings: { en: 'App Settings', zh: '应用设置' },
@@ -86,3 +86,4 @@ export const dataSettings = {
     zh: '您确定要清空所有系统日志吗？',
   },
 };
+export default dataSettings;

@@ -3,6 +3,7 @@ import type { UploadedFile } from '@/types';
 import { getFileMetadataApi, uploadFileApi } from '@/services/api/fileApi';
 import { getUploadLifecycleForGeminiState } from '@/hooks/file-upload/utils';
 import { logService } from '@/services/logService';
+import { usesRemoteFileReference } from '@/utils/chat/fileTransferStrategy';
 
 const FILE_API_REFRESH_LEEWAY_MS = 5 * 60 * 1000;
 
@@ -89,7 +90,7 @@ export const ensureFilesApiReferences = async ({
   let nextFiles = files;
 
   for (const file of files) {
-    if (!file.fileApiName) {
+    if (!usesRemoteFileReference(file) || !file.fileApiName) {
       continue;
     }
 

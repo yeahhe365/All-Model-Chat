@@ -1,4 +1,4 @@
-export const modelSettings = {
+const modelSettings = {
   settingsModelParameters: { en: 'Defaults for New Chats', zh: '新对话默认值' },
   settingsDefaultModel: { en: 'Primary Chat Model', zh: '主对话模型' },
   settingsTtsVoice: { en: 'Speech Voice', zh: '语音音色' },
@@ -78,8 +78,8 @@ export const modelSettings = {
   chatBehavior_model_noModels: { en: 'No models available', zh: '无可用模型' },
   settings_filesApi_title: { en: 'File Transfer Method', zh: '文件传输方式' },
   settings_filesApi_desc: {
-    en: 'Choose whether each file type prefers Files API uploads or inline Base64 delivery. Inline requests are limited to 100MB, or 50MB for PDFs; oversized files still fall back to Files API.',
-    zh: '为每种文件类型选择优先通过 Files API 上传，还是尽量以内联 Base64 发送。内联请求上限为 100MB，PDF 为 50MB；超出限制时仍会回退到 Files API。',
+    en: 'Choose whether newly added files prefer Files API uploads or inline delivery. Text files are sent as text when possible; binary files use Base64 inline data. Inline requests are limited to 100MB, or 50MB for PDFs; oversized files still fall back to Files API.',
+    zh: '为新添加的文件选择优先通过 Files API 上传，还是尽量内联发送。文本文件会尽量作为文本发送，二进制文件会使用 Base64 内联数据。内联请求上限为 100MB，PDF 为 50MB；超出限制时仍会回退到 Files API。',
   },
   settings_filesApi_images: { en: 'Images', zh: '图片' },
   settings_filesApi_pdfs: { en: 'PDFs', zh: 'PDF' },
@@ -87,8 +87,8 @@ export const modelSettings = {
   settings_filesApi_video: { en: 'Video', zh: '视频' },
   settings_filesApi_text: { en: 'Text & Code', zh: '文本与代码' },
   settings_filesApi_tooltip: {
-    en: 'On prefers Files API. Off sends content inline as Base64 when possible; oversized files may still use Files API.',
-    zh: '打开时优先使用 Files API。关闭时会尽量以内联 Base64 发送；文件过大时仍可能使用 Files API。',
+    en: 'Applies to files added after changing this setting. On prefers Files API. Off sends content inline when possible; oversized files may still use Files API.',
+    zh: '仅影响更改设置后新添加的文件。打开时优先使用 Files API；关闭时会尽量内联发送，文件过大时仍可能使用 Files API。',
   },
   settings_generateQuadImages_label: { en: 'Quad Image Generation', zh: '四图生成模式' },
   settings_generateQuadImages_tooltip: {
@@ -204,3 +204,4 @@ export const modelSettings = {
   tts_style_knowledgeable: { en: 'Knowledgeable', zh: '知识渊博' },
   tts_style_warm: { en: 'Warm', zh: '温暖' },
 };
+export default modelSettings;

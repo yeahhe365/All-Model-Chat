@@ -14,15 +14,23 @@ const makeSession = (overrides: Partial<SavedChatSession> = {}): SavedChatSessio
 });
 
 function createChannel(originalOnMessage?: (event: MessageEvent<SyncMessage>) => void) {
+  let messageHandler: ((event: MessageEvent<SyncMessage>) => void) | undefined;
   return {
     name: 'all_model_chat_sync_v1',
     onmessage: originalOnMessage ?? null,
     onmessageerror: null,
     postMessage: vi.fn(),
     close: vi.fn(),
-    addEventListener: vi.fn(),
+    addEventListener: vi.fn((eventName: string, handler: (event: MessageEvent<SyncMessage>) => void) => {
+      if (eventName === 'message') {
+        messageHandler = handler;
+      }
+    }),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
+    emitMessage(message: SyncMessage) {
+      messageHandler?.({ data: message } as MessageEvent<SyncMessage>);
+    },
   } as BroadcastChannel;
 }
 
@@ -36,6 +44,7 @@ function createDocumentState(hidden = false) {
         visibilityHandler = handler;
       }
     }),
+    removeEventListener: vi.fn(),
   } as unknown as Document;
 
   return {
@@ -81,9 +90,13 @@ describe('chatStoreSync', () => {
       documentRef: documentState.documentRef,
     });
 
-    channel.onmessage?.({ data: { type: 'SESSIONS_UPDATED' } } as MessageEvent<SyncMessage>);
+    (channel as BroadcastChannel & { emitMessage: (message: SyncMessage) => void }).emitMessage({
+      type: 'SESSIONS_UPDATED',
+    });
 
-    expect(originalOnMessage).toHaveBeenCalled();
+    expect(channel.onmessage).toBe(originalOnMessage);
+    expect(originalOnMessage).not.toHaveBeenCalled();
+    expect(channel.addEventListener).toHaveBeenCalledWith('message', expect.any(Function));
     expect(refreshSessions).toHaveBeenCalledTimes(1);
   });
 
@@ -112,7 +125,9 @@ describe('chatStoreSync', () => {
       documentRef: documentState.documentRef,
     });
 
-    channel.onmessage?.({ data: { type: 'GROUPS_UPDATED' } } as MessageEvent<SyncMessage>);
+    (channel as BroadcastChannel & { emitMessage: (message: SyncMessage) => void }).emitMessage({
+      type: 'GROUPS_UPDATED',
+    });
 
     expect(refreshGroups).not.toHaveBeenCalled();
     documentState.setVisible();
@@ -148,9 +163,10 @@ describe('chatStoreSync', () => {
       documentRef: createDocumentState(false).documentRef,
     });
 
-    channel.onmessage?.({
-      data: { type: 'SESSION_CONTENT_UPDATED', sessionId: 'active' },
-    } as MessageEvent<SyncMessage>);
+    (channel as BroadcastChannel & { emitMessage: (message: SyncMessage) => void }).emitMessage({
+      type: 'SESSION_CONTENT_UPDATED',
+      sessionId: 'active',
+    });
     await vi.waitFor(() => {
       expect(setActiveMessages).toHaveBeenCalledWith([message]);
     });
@@ -184,10 +200,43 @@ describe('chatStoreSync', () => {
       documentRef: createDocumentState(false).documentRef,
     });
 
-    channel.onmessage?.({
-      data: { type: 'SESSION_CONTENT_UPDATED', sessionId: 'active' },
-    } as MessageEvent<SyncMessage>);
+    (channel as BroadcastChannel & { emitMessage: (message: SyncMessage) => void }).emitMessage({
+      type: 'SESSION_CONTENT_UPDATED',
+      sessionId: 'active',
+    });
 
     expect(getSession).not.toHaveBeenCalled();
+  });
+
+  it('cleans up message and visibility listeners', () => {
+    const channel = createChannel();
+    const documentState = createDocumentState(false);
+
+    const cleanup = setupChatStoreSync({
+      store: {
+        getState: () => ({
+          activeSessionId: null,
+          refreshSessions: vi.fn(),
+          refreshGroups: vi.fn(),
+          setActiveMessages: vi.fn(),
+          setSavedSessions: vi.fn(),
+          setLoadingSessionIds: vi.fn(),
+        }),
+      },
+      localLoadingSessionIds: new Set(),
+      getChannel: () => channel,
+      getSession: vi.fn(),
+      rehydrateSession: vi.fn((session: SavedChatSession) => session),
+      logger: { info: vi.fn() },
+      documentRef: documentState.documentRef,
+    });
+
+    cleanup();
+
+    expect(channel.removeEventListener).toHaveBeenCalledWith('message', expect.any(Function));
+    expect(documentState.documentRef.removeEventListener).toHaveBeenCalledWith(
+      'visibilitychange',
+      expect.any(Function),
+    );
   });
 });

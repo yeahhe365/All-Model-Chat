@@ -4,6 +4,7 @@ import { DEFAULT_CHAT_SETTINGS } from '@/constants/appConstants';
 import { logService } from '@/services/logService';
 import { getKeyForRequest } from '@/utils/apiUtils';
 import { generateUniqueId } from '@/utils/chat/ids';
+import { usesRemoteFileReference } from '@/utils/chat/fileTransferStrategy';
 import { createMessage, createNewSession } from '@/utils/chat/session';
 import type { SessionsUpdater } from './types';
 
@@ -48,7 +49,7 @@ interface UseModelRequestRunnerParams {
 }
 
 const hasLockableActiveFile = (files: UploadedFile[]) =>
-  files.some((file) => file.fileUri && file.uploadState === 'active');
+  files.some((file) => usesRemoteFileReference(file) && file.fileUri && file.uploadState === 'active');
 
 export const useModelRequestRunner = ({
   appSettings,

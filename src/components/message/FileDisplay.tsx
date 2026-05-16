@@ -52,7 +52,8 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({
   const { t } = useI18n();
   const [idCopied, setIdCopied] = useState(false);
 
-  const isClickable = file.uploadState === 'active' && !file.error && onFileClick && file.dataUrl;
+  const hasPreviewSource = !!file.dataUrl || file.rawFile instanceof Blob;
+  const isClickable = file.uploadState === 'active' && !file.error && !!onFileClick && hasPreviewSource;
   const { category, canConfigure, ConfigIcon } = getFileCardMeta(file, {
     isGemini3,
     includeTextEditing: false,

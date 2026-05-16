@@ -15,6 +15,7 @@ import { sendStandardMessage } from '@/features/message-sender/standardChatStrat
 import { createSenderStoreActions } from '@/features/message-sender/senderStoreActions';
 import { sendTtsImagenMessage } from '@/features/message-sender/ttsImagenStrategy';
 import { ensureFilesApiReferences } from '@/features/message-sender/fileApiReference';
+import { prepareFilesForOpenAICompatibleMode } from '@/features/message-sender/openAICompatibleFiles';
 import { formatMessageSenderText } from '@/features/message-sender/i18nFormat';
 import { getModelCapabilities } from '@/utils/modelHelpers';
 import { useI18n } from '@/contexts/I18nContext';
@@ -230,7 +231,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
       }
       const { keyToUse, shouldLockKey, generationId, abortController: newAbortController } = request;
       const fileReferenceResult = isOpenAICompatibleMode
-        ? ({ ok: true, files: filesToUse } as const)
+        ? prepareFilesForOpenAICompatibleMode(filesToUse)
         : await ensureFilesApiReferences({
             files: filesToUse,
             apiKey: keyToUse,

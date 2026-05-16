@@ -23,9 +23,37 @@ describe('code style boundaries', () => {
     const packageJson = readProjectFile('package.json');
     const eslintConfig = readProjectFile('eslint.config.js');
 
-    expect(packageJson).toContain('eslint . --ext .ts,.tsx,.js,.mjs');
+    expect(packageJson).toContain('eslint . --ext .ts,.tsx,.js,.mjs --max-warnings=0');
     expect(eslintConfig).toContain("files: ['**/*.{js,mjs}']");
     expect(eslintConfig).toContain('@typescript-eslint/consistent-type-imports');
+    expect(eslintConfig).toContain("files: ['src/test/**/*.{ts,tsx}']");
+    expect(eslintConfig).toContain("'react-refresh/only-export-components': 'off'");
+  });
+
+  it('keeps local development pinned to the Node major used by CI and Docker', () => {
+    const packageJson = JSON.parse(readProjectFile('package.json')) as { engines?: Record<string, string> };
+    const npmrc = readProjectFile('.npmrc');
+    const zhReadme = readProjectFile('README.md');
+    const enReadme = readProjectFile('README.en.md');
+
+    expect(packageJson.engines?.node).toBe('>=26 <27');
+    expect(npmrc).toContain('engine-strict=true');
+    expect(zhReadme).toContain('Node.js 26');
+    expect(enReadme).toContain('Node.js 26');
+  });
+
+  it('reuses build artifacts in docker CI instead of rebuilding the frontend twice', () => {
+    const workflow = readProjectFile('.github/workflows/ci.yml');
+    const dockerBuildJob = workflow.slice(workflow.indexOf('  docker-build:'));
+    const apiDockerfile = readProjectFile('Dockerfile.api');
+
+    expect(workflow).toContain('actions/upload-artifact@v4');
+    expect(workflow).toContain('name: production-build');
+    expect(dockerBuildJob).toContain('actions/download-artifact@v4');
+    expect(dockerBuildJob).not.toContain('npm ci --legacy-peer-deps');
+    expect(dockerBuildJob).not.toContain('npm run build');
+    expect(apiDockerfile).toContain('COPY server/dist /app/server/dist');
+    expect(apiDockerfile).not.toContain('RUN npm run build:api');
   });
 
   it('keeps source imports on the app alias when crossing directories', () => {

@@ -1,15 +1,4 @@
-FROM node:20-alpine AS build
-
-WORKDIR /app
-
-COPY package.json package-lock.json .npmrc ./
-RUN npm ci
-
-COPY server/tsconfig.json server/tsconfig.json
-COPY server/src server/src
-RUN npm run build:api
-
-FROM node:20-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -17,7 +6,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json .npmrc ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-COPY --from=build /app/server/dist /app/server/dist
+COPY server/dist /app/server/dist
 
 EXPOSE 3001
 

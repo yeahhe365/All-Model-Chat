@@ -1,6 +1,6 @@
 import { registerTranslations, type TranslationMap } from './coreTranslations';
 
-export type TranslationFeature = 'settings' | 'logViewer' | 'scenarios';
+type TranslationFeature = 'settings' | 'logViewer' | 'scenarios';
 
 const loadedFeatures = new Set<TranslationFeature>();
 const loadingFeatures = new Map<TranslationFeature, Promise<void>>();
@@ -18,14 +18,14 @@ const loadSettingsTranslations = async (): Promise<TranslationMap> => {
   ]);
 
   return {
-    ...general.generalSettings,
-    ...appearance.appearanceSettings,
-    ...api.apiSettings,
-    ...model.modelSettings,
-    ...data.dataSettings,
-    ...safety.safetySettings,
-    ...shortcuts.shortcutsSettings,
-    ...about.aboutSettings,
+    ...general.default,
+    ...appearance.default,
+    ...api.default,
+    ...model.default,
+    ...data.default,
+    ...safety.default,
+    ...shortcuts.default,
+    ...about.default,
   };
 };
 

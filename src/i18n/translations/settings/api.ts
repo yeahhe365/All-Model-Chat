@@ -1,4 +1,4 @@
-export const apiSettings = {
+const apiSettings = {
   settingsApiConfig: { en: 'API & Connections', zh: 'API 与连接' },
   settingsApiModeLabel: { en: 'API Provider', zh: 'API 提供方' },
   settingsApiModeGeminiNative: { en: 'Gemini Official API', zh: 'Gemini 官方接口' },
@@ -83,3 +83,4 @@ export const apiSettings = {
     zh: '代理提示：连通性测试只检查普通 Gemini 请求。Live 会忽略相对前端代理路径并从此浏览器直连；只有兼容 Live 的绝对 Base URL 会被应用。',
   },
 };
+export default apiSettings;

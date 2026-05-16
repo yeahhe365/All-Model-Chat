@@ -3,8 +3,8 @@ import { createTestRenderer, type TestRenderer } from '@/test/testUtils';
 import { vi } from 'vitest';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WindowProvider } from '@/contexts/WindowContext';
-import {
-  ChatRuntimeProvider,
+import { ChatRuntimeProvider } from '@/components/layout/chat-runtime/ChatRuntimeContext';
+import type {
   useChatHeaderRuntime,
   useChatInputRuntime,
   useChatMessageListRuntime,
@@ -387,7 +387,8 @@ const createChatRuntimeApp = (value: ChatAreaProviderValue): AppViewModel => {
       handleAppDragEnter: value.header.handleAppDragEnter,
       handleAppDragOver: value.header.handleAppDragOver,
       handleAppDragLeave: value.header.handleAppDragLeave,
-      handleAppDrop: async (event: Parameters<typeof value.header.handleAppDrop>[0]) => value.header.handleAppDrop(event),
+      handleAppDrop: async (event: Parameters<typeof value.header.handleAppDrop>[0]) =>
+        value.header.handleAppDrop(event),
     },
     activeChat: undefined,
     sidePanelContent: null,
@@ -437,9 +438,7 @@ export const renderWithChatAreaProviders = (
     root.render(
       <I18nProvider>
         <WindowProvider>
-          <ChatRuntimeTestProvider value={providerValue}>
-            {children}
-          </ChatRuntimeTestProvider>
+          <ChatRuntimeTestProvider value={providerValue}>{children}</ChatRuntimeTestProvider>
         </WindowProvider>
       </I18nProvider>,
     );

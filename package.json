@@ -3,14 +3,18 @@
   "private": true,
   "version": "1.8.10",
   "type": "module",
+  "engines": {
+    "node": ">=26 <27"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:analyze": "vite build --mode analyze",
     "build:api": "tsc -p server/tsconfig.json",
     "preview": "vite preview",
     "clean": "rm -rf dist coverage playwright-report test-results tmp-live-artifact-demo .playwright-visible-demo-profile .codex-dev-server.*",
-    "lint": "eslint . --ext .ts,.tsx,.js,.mjs",
-    "lint:fix": "eslint . --ext .ts,.tsx,.js,.mjs --fix",
+    "lint": "eslint . --ext .ts,.tsx,.js,.mjs --max-warnings=0",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.mjs --fix --max-warnings=0",
     "knip": "knip",
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,css,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,css,json,md,yml,yaml}\"",
@@ -78,6 +82,7 @@
     "jsdom": "^29.0.1",
     "knip": "^6.4.1",
     "prettier": "^3.8.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.58.0",

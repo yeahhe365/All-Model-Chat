@@ -24,6 +24,11 @@ const { mockCopyFileToClipboard, mockExtractDocxText, mockSettingsState, mockTex
   ),
 }));
 
+const { mockCreatedObjectUrls, mockRevokedObjectUrls } = vi.hoisted(() => ({
+  mockCreatedObjectUrls: [] as string[],
+  mockRevokedObjectUrls: [] as string[],
+}));
+
 vi.mock('@/stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
 }));
@@ -69,6 +74,14 @@ vi.mock('@/components/shared/file-preview/TextFileViewer', () => ({
 
 vi.mock('@/utils/fileHelpers', () => ({
   copyFileToClipboard: mockCopyFileToClipboard,
+  cleanupFilePreviewUrl: (file: { dataUrl?: string }) => {
+    if (file.dataUrl) mockRevokedObjectUrls.push(file.dataUrl);
+  },
+  fileToBlobUrl: () => {
+    const url = `blob:modal-preview-${mockCreatedObjectUrls.length + 1}`;
+    mockCreatedObjectUrls.push(url);
+    return url;
+  },
   isMarkdownFile: (file: { name: string; type: string }) =>
     file.type === 'text/markdown' ||
     file.name.toLowerCase().endsWith('.md') ||
@@ -111,6 +124,8 @@ describe('FilePreviewModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreatedObjectUrls.length = 0;
+    mockRevokedObjectUrls.length = 0;
     mockSettingsState.appSettings.customShortcuts = {};
   });
 
@@ -178,6 +193,39 @@ describe('FilePreviewModal', () => {
     expect(viewer).not.toBeNull();
     expect(viewer?.getAttribute('data-render-mode')).toBe('markdown');
     expect(viewer?.getAttribute('data-theme-id')).toBe('pearl');
+  });
+
+  it('creates a temporary preview URL for Files API attachments that only have a local raw file', async () => {
+    const file: UploadedFile = {
+      id: 'txt-files-api-1',
+      name: 'notes.txt',
+      type: 'text/plain',
+      size: 5,
+      rawFile: new File(['hello'], 'notes.txt', { type: 'text/plain' }),
+      fileApiName: 'files/abc123',
+      fileUri: 'https://generativelanguage.googleapis.com/v1beta/files/abc123',
+      transferStrategy: 'files-api',
+      uploadState: 'active',
+    };
+
+    await act(async () => {
+      renderer.root.render(<FilePreviewModal file={file} onClose={() => {}} />);
+      await Promise.resolve();
+    });
+
+    await vi.waitFor(() => {
+      expect(mockTextFileViewer.mock.lastCall?.[0]).toEqual(
+        expect.objectContaining({
+          file: expect.objectContaining({ dataUrl: 'blob:modal-preview-1' }),
+        }),
+      );
+    });
+
+    act(() => {
+      renderer.root.render(<FilePreviewModal file={null} onClose={() => {}} />);
+    });
+
+    expect(mockRevokedObjectUrls).toContain('blob:modal-preview-1');
   });
 
   it('does not hijack copy shortcuts when the user has selected preview text', async () => {

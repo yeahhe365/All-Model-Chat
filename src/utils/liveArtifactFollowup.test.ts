@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  formatLiveArtifactFollowupPrompt,
-  normalizeLiveArtifactFollowupPayload,
-} from './liveArtifactFollowup';
+import { formatLiveArtifactFollowupPrompt, normalizeLiveArtifactFollowupPayload } from './liveArtifactFollowup';
 
 describe('liveArtifactFollowup utilities', () => {
   it('formats a structured Live Artifact follow-up as a chat prompt', () => {
@@ -33,5 +30,4 @@ describe('liveArtifactFollowup utilities', () => {
       }),
     ).toBeNull();
   });
-
 });

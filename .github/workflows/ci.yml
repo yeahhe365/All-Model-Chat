@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npm run format:check
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npm run test
@@ -46,11 +46,18 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npm run build
       - run: npm run build:api
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: |
+            dist
+            server/dist
+          if-no-files-found: error
 
   e2e:
     runs-on: ubuntu-latest
@@ -60,7 +67,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npx playwright install --with-deps chromium
@@ -72,11 +79,9 @@ jobs:
     needs: [build]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/download-artifact@v4
         with:
-          node-version: 24
-          cache: npm
-      - run: npm ci --legacy-peer-deps
-      - run: npm run build
+          name: production-build
+          path: .
       - run: docker build -f Dockerfile.api .
       - run: docker build -f Dockerfile.web .

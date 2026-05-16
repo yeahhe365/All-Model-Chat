@@ -85,4 +85,38 @@ describe('FileDisplay', () => {
     expect(renderer.container.querySelector('[data-thumbnail-kind="video"]')).not.toBeNull();
     expect(renderer.container.querySelector('video')).not.toBeNull();
   });
+
+  it('opens Files API message attachments when a local raw file is available without a preview URL', () => {
+    const onFileClick = vi.fn();
+    const rawFile = new File(['hello'], 'notes.txt', { type: 'text/plain' });
+
+    act(() => {
+      renderer.root.render(
+        <FileDisplay
+          file={createUploadedFile({
+            id: 'files-api-text-1',
+            name: 'notes.txt',
+            type: 'text/plain',
+            size: rawFile.size,
+            rawFile,
+            dataUrl: undefined,
+            fileApiName: 'files/abc123',
+            fileUri: 'https://generativelanguage.googleapis.com/v1beta/files/abc123',
+            transferStrategy: 'files-api',
+          })}
+          onFileClick={onFileClick}
+          isFromMessageList
+        />,
+      );
+    });
+
+    const card = renderer.container.querySelector('.cursor-pointer');
+    expect(card).not.toBeNull();
+
+    act(() => {
+      card!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onFileClick).toHaveBeenCalledTimes(1);
+  });
 });

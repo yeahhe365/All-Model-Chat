@@ -349,7 +349,6 @@
   animation: ripple 0.6s linear;
 }
 
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

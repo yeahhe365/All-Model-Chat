@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import type { ComponentType, PropsWithChildren, ReactNode } from 'react';
 import { render as testingLibraryRender } from '@testing-library/react';
 import type { RenderOptions } from '@testing-library/react';

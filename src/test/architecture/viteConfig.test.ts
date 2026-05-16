@@ -93,17 +93,33 @@ describe('vite.config runtime ownership', () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
 
     expect(config).toMatch(/globIgnores:\s*\[[\s\S]*pyodide/i);
+    expect(config).toContain("'**/bundle-stats.html'");
     expect(config).toContain("'**/assets/markdownPdf-*.js'");
     expect(config).toContain("'**/assets/markdown-vendor-*.js'");
     expect(config).toContain("'**/assets/math-vendor-*'");
     expect(config).toContain("'**/assets/genai-vendor-*.js'");
     expect(config).toContain("'**/assets/highlight-vendor-*.js'");
     expect(config).toContain("'**/assets/pdf-viewer-vendor-*'");
+    expect(config).toContain("'**/assets/graphviz-vendor-*.js'");
     expect(config).toContain("'**/assets/HistorySidebar-*.js'");
     expect(config).toContain("'**/assets/MermaidBlock-*.js'");
     expect(config).toContain("'**/assets/*Diagram*.js'");
     expect(config).toContain("'**/assets/KaTeX_*'");
     expect(config).toContain("'**/fonts/NotoSansCJKsc-VF.ttf.part-*'");
+  });
+
+  it('provides an opt-in bundle analyzer without changing normal production builds', () => {
+    const config = fs.readFileSync(viteConfigPath, 'utf8');
+    const packageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8')) as {
+      scripts?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+
+    expect(packageJson.scripts?.['build:analyze']).toBe('vite build --mode analyze');
+    expect(packageJson.devDependencies).toHaveProperty('rollup-plugin-visualizer');
+    expect(config).toContain("mode === 'analyze'");
+    expect(config).toContain("import('rollup-plugin-visualizer')");
+    expect(config).toContain("filename: 'dist/bundle-stats.html'");
   });
 
   it('keeps the assistant avatar sized for its compact message chrome', () => {

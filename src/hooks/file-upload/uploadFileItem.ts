@@ -99,6 +99,7 @@ export const uploadFileItem = async ({
       progress: 0,
       rawFile: file,
       dataUrl: dataUrl, // Add local preview URL
+      transferStrategy: 'files-api',
       uploadState: 'uploading',
       abortController: controller,
       uploadSpeed: t('upload_starting'),
@@ -168,6 +169,7 @@ export const uploadFileItem = async ({
                 fileUri: uploadedFileInfo.uri,
                 fileApiName: uploadedFileInfo.name,
                 rawFile: file, // Preserve local file reference for preview
+                transferStrategy: 'files-api',
                 uploadState: uploadState,
                 error: uploadState === 'failed' ? t('upload_api_processing_failed') : f.error || undefined,
                 abortController: undefined,
@@ -223,6 +225,7 @@ export const uploadFileItem = async ({
       progress: 0,
       rawFile: file,
       dataUrl: dataUrl,
+      transferStrategy: 'inline',
       mediaResolution: defaultResolution,
     });
     setSelectedFiles((prev) => [...prev, initialFileState]);

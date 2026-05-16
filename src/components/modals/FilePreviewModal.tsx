@@ -1,5 +1,5 @@
 import { logService } from '@/services/logService';
-import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type UploadedFile } from '@/types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
@@ -8,7 +8,7 @@ import { FilePreviewHeader, type FilePreviewHeaderHandle } from '@/components/sh
 import { ImageViewer } from '@/components/shared/file-preview/ImageViewer';
 import { TextFileViewer } from '@/components/shared/file-preview/TextFileViewer';
 import { IconYoutube } from '@/components/icons/CustomIcons';
-import { copyFileToClipboard } from '@/utils/fileHelpers';
+import { cleanupFilePreviewUrl, copyFileToClipboard, fileToBlobUrl } from '@/utils/fileHelpers';
 import { extractDocxText, isDocxFile } from '@/utils/docxPreview';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { isShortcutPressed } from '@/utils/shortcutUtils';
@@ -55,17 +55,35 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
     isDocxCandidate && file.textContent === undefined && !file.rawFile ? t('filePreview_word_unavailable') : null,
   );
   const [isDocxPreviewLoading, setIsDocxPreviewLoading] = useState(false);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const filePreviewHeaderRef = useRef<FilePreviewHeaderHandle>(null);
+  const previewFile = useMemo(() => (localPreviewUrl ? { ...file, dataUrl: localPreviewUrl } : file), [
+    file,
+    localPreviewUrl,
+  ]);
+
+  useEffect(() => {
+    if (file.dataUrl || !(file.rawFile instanceof Blob)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Clear stale object URLs when switching preview files.
+      setLocalPreviewUrl(null);
+      return;
+    }
+
+    const nextPreviewUrl = fileToBlobUrl(file.rawFile);
+    setLocalPreviewUrl(nextPreviewUrl);
+
+    return () => cleanupFilePreviewUrl({ dataUrl: nextPreviewUrl });
+  }, [file]);
 
   const handleCopyShortcut = useCallback(async () => {
-    if (!file.dataUrl) return;
+    if (!previewFile.dataUrl) return;
     try {
-      await copyFileToClipboard(file);
+      await copyFileToClipboard(previewFile);
       filePreviewHeaderRef.current?.showCopyFeedback();
     } catch (err) {
       logService.error('Failed to copy content:', err);
     }
-  }, [file]);
+  }, [previewFile]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -187,7 +205,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
 
         <FilePreviewHeader
           ref={filePreviewHeaderRef}
-          file={file}
+          file={previewFile}
           onClose={onClose}
           isEditable={isEditing}
           onToggleEdit={isText && onSaveText ? handleToggleEdit : undefined}
@@ -223,7 +241,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
 
         <div className="flex-grow w-full h-full overflow-hidden relative">
           {isImage ? (
-            <ImageViewer file={file} />
+            <ImageViewer file={previewFile} />
           ) : isDocxPreviewLoading ? (
             <div className="w-full h-full flex items-center justify-center text-white/70">
               {t('filePreview_loading_word')}
@@ -234,7 +252,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
             </div>
           ) : isText || isDocx ? (
             <TextFileViewer
-              file={file}
+              file={previewFile}
               renderMode={isMarkdown ? 'markdown' : 'plain'}
               themeId={currentThemeId}
               isEditable={isEditing}
@@ -263,13 +281,13 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
                 </div>
               }
             >
-              <LazyPdfViewer file={file} />
+              <LazyPdfViewer file={previewFile} />
             </Suspense>
           ) : isVideo ? (
             <div className="w-full h-full flex items-center justify-center">
-              {file.dataUrl && (
+              {previewFile.dataUrl && (
                 <video
-                  src={file.dataUrl}
+                  src={previewFile.dataUrl}
                   controls
                   className="max-w-[90%] max-h-[80%] rounded-lg shadow-2xl outline-none"
                   playsInline
@@ -296,10 +314,10 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
             </div>
           ) : isAudio ? (
             <div className="w-full h-full flex items-center justify-center">
-              {file.dataUrl && (
+              {previewFile.dataUrl && (
                 <div className="bg-white/15 p-8 rounded-2xl border border-white/10 shadow-2xl flex flex-col items-center gap-4">
                   <FileAudio size={64} className="text-white/50" />
-                  <audio src={file.dataUrl} controls className="w-[300px] sm:w-[400px]" />
+                  <audio src={previewFile.dataUrl} controls className="w-[300px] sm:w-[400px]" />
                 </div>
               )}
             </div>

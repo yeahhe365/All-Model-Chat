@@ -1,4 +1,4 @@
-export const aboutSettings = {
+const aboutSettings = {
   about_title: { en: 'AMC WebUI', zh: 'AMC WebUI' },
   about_version: { en: 'Version', zh: '版本' },
   about_description: {
@@ -20,3 +20,4 @@ export const aboutSettings = {
   },
   pwaUpdate_later: { en: 'Later', zh: '稍后' },
 };
+export default aboutSettings;

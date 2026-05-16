@@ -180,7 +180,8 @@ describe('MessageList image preview', () => {
       });
     });
 
-    expect(onSendMessage).toHaveBeenCalledWith(expect.stringContaining('基于当前选择继续生成实施计划'));
-    expect(onSendMessage).toHaveBeenCalledWith(expect.stringContaining('"selected": "方案B"'));
+    const prompt = onSendMessage.mock.calls[0]?.[0] as string | undefined;
+    expect(prompt).toContain('基于当前选择继续生成实施计划');
+    expect(prompt).toContain('"selected": "方案B"');
   });
 });

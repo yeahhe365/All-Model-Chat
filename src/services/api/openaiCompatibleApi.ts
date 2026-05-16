@@ -88,6 +88,8 @@ const getInlineAudioFormat = (mimeType: string): string => {
   return subtype || 'wav';
 };
 
+const OPENAI_COMPATIBLE_FILE_DATA_ERROR = 'OpenAI-compatible mode cannot send Gemini Files API file references.';
+
 const partToOpenAIContentItems = (
   part: Part,
 ): Array<
@@ -100,10 +102,18 @@ const partToOpenAIContentItems = (
       mimeType?: string;
       data?: string;
     };
+    fileData?: {
+      mimeType?: string;
+      fileUri?: string;
+    };
   };
 
   if (typeof part.text === 'string') {
     return part.text ? [{ type: 'text', text: part.text }] : [];
+  }
+
+  if (partWithMedia.fileData) {
+    throw new Error(OPENAI_COMPATIBLE_FILE_DATA_ERROR);
   }
 
   const inlineData = partWithMedia.inlineData;
@@ -129,6 +139,10 @@ const partToOpenAIContentItems = (
         },
       },
     ];
+  }
+
+  if (inlineData?.data) {
+    throw new Error(`OpenAI-compatible mode cannot send inline ${mimeType || 'media'} attachments.`);
   }
 
   return [];

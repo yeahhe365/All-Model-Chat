@@ -1,4 +1,4 @@
-export const generalSettings = {
+const generalSettings = {
   settingsTitle: { en: 'Settings', zh: '设置' },
   settingsTabChat: { en: 'Chat', zh: '聊天' },
   settingsTabModels: { en: 'Models', zh: '模型' },
@@ -45,3 +45,4 @@ export const generalSettings = {
     zh: '严格官方模式：价格仅汇总拥有精确定价证据的记录，这些证据要么来自官方返回的模态明细，要么来自本地可证明的纯文本请求/响应结构。当旧记录或不支持的记录无法定价时，行内会显示部分金额以及不可定价记录数。由于没有保存缓存 TTL，显式缓存的存储费用不会计入。',
   },
 };
+export default generalSettings;

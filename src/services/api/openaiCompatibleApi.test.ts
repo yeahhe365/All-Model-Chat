@@ -84,6 +84,35 @@ describe('openaiCompatibleApi', () => {
     );
   });
 
+  it('reports Gemini fileData parts instead of silently dropping them', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const onComplete = vi.fn();
+    const onError = vi.fn();
+
+    await sendOpenAICompatibleMessageNonStream(
+      'api-key',
+      'gpt-5.5',
+      [],
+      [{ fileData: { mimeType: 'image/png', fileUri: 'files/abc' } }],
+      {
+        baseUrl: 'https://api.openai.com/v1',
+      },
+      new AbortController().signal,
+      onError,
+      onComplete,
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'OpenAI-compatible mode cannot send Gemini Files API file references.',
+      }),
+    );
+  });
+
   it('fetches OpenAI-compatible model IDs from the models endpoint', async () => {
     const fetchMock = vi.fn<typeof fetch>(async () => {
       return new Response(

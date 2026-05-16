@@ -1,4 +1,4 @@
-export const appearanceSettings = {
+const appearanceSettings = {
   settingsAppearance: { en: 'Appearance', zh: '外观' },
   settingsTheme: { en: 'Theme', zh: '主题' },
   settingsThemeSystem: { en: 'System', zh: '系统' },
@@ -121,3 +121,4 @@ export const appearanceSettings = {
     zh: '在界面中折叠原始推理内容，并在后续 API 上下文中省略它以节省 Token。',
   },
 };
+export default appearanceSettings;

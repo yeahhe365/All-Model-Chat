@@ -102,12 +102,8 @@ describe('MessageList preview chunking', () => {
 
   it('does not load the file preview modal module until the user opens a preview', async () => {
     const moduleLoadTracker = { count: 0 };
-    const {
-      MessageList,
-      applyChatAreaProviderValue,
-      ChatRuntimeTestProvider,
-      I18nProvider,
-    } = await loadMessageList(moduleLoadTracker);
+    const { MessageList, applyChatAreaProviderValue, ChatRuntimeTestProvider, I18nProvider } =
+      await loadMessageList(moduleLoadTracker);
     const providerValue = createProviderValue();
 
     expect(moduleLoadTracker.count).toBe(0);

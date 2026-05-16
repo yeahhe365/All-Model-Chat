@@ -87,6 +87,7 @@ export const useFileIdAdder = ({
           progress: 50,
           uploadState: 'processing_api',
           fileApiName: fileApiId,
+          transferStrategy: 'remote-file-id',
           mediaResolution: defaultResolution,
         }),
       ]);
@@ -128,6 +129,7 @@ export const useFileIdAdder = ({
             size: Number(fileMetadata.sizeBytes) || 0,
             fileUri: fileMetadata.uri,
             fileApiName: fileMetadata.name || fileApiId,
+            transferStrategy: 'remote-file-id',
             isProcessing,
             progress: 100,
             uploadState,

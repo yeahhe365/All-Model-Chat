@@ -3,6 +3,7 @@ import type { PartMediaResolutionLevel } from '@google/genai';
 import { logService } from '@/services/logService';
 import { blobToBase64, fileToString } from '@/utils/fileHelpers';
 import { getFileKindFlags, isImageMimeType, isTextFile } from '@/utils/fileTypeUtils';
+import { usesRemoteFileReference } from '@/utils/chat/fileTransferStrategy';
 import { isGemini3Model } from '@/utils/modelHelpers';
 import { MediaResolution } from '@/types/settings';
 import { stripReasoningMarkup } from './reasoning';
@@ -78,7 +79,7 @@ export const buildContentParts = async (
       // Check if file should be treated as text content (not base64 inlineData)
       const isTextLike = isTextFile(file);
 
-      if (file.fileUri) {
+      if (usesRemoteFileReference(file) && file.fileUri) {
         // 1. Files uploaded via API (or YouTube links)
         if (isYoutube) {
           // For YouTube URLs, do NOT send mimeType, just fileUri.

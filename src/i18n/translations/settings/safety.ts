@@ -1,4 +1,4 @@
-export const safetySettings = {
+const safetySettings = {
   safety_title: { en: 'Safety Settings', zh: '安全设置' },
   safety_description: {
     en: 'Adjust content safety filters. Lower settings allow more content but may carry risks.',
@@ -17,3 +17,4 @@ export const safetySettings = {
   safety_threshold_BLOCK_LOW_AND_ABOVE: { en: 'Block Most', zh: '拦截大部分' },
   safety_changes_apply: { en: 'Changes apply to new messages.', zh: '更改会应用到新的消息。' },
 };
+export default safetySettings;

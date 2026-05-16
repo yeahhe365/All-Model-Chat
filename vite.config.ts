@@ -11,8 +11,20 @@ import { LAMEJS_WORKER_COPY_SOURCE, PDF_WORKER_COPY_SOURCE } from './vite/static
 
 export { getManualChunk } from './vite/chunks';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  const analyzerPlugin =
+    mode === 'analyze'
+      ? [
+          (await import('rollup-plugin-visualizer')).visualizer({
+            filename: 'dist/bundle-stats.html',
+            gzipSize: true,
+            brotliSize: true,
+            template: 'treemap',
+          }),
+        ]
+      : [];
+
   return {
     server: {
       port: 5175,
@@ -33,6 +45,7 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,png,svg,mjs,json,woff,woff2,ttf}'],
           globIgnores: [
             '**/runtime-config.js',
+            '**/bundle-stats.html',
             '**/pyodide/**',
             '**/assets/pyodide-runtime-*.js',
             '**/assets/pdfjs-vendor-*.js',
@@ -72,6 +85,7 @@ export default defineConfig(({ mode }) => {
           },
         ],
       }),
+      ...analyzerPlugin,
     ],
     define: {
       'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
@@ -84,7 +98,7 @@ export default defineConfig(({ mode }) => {
     build: {
       chunkSizeWarningLimit: 1500,
       modulePreload: {
-        resolveDependencies: (_filename, deps) => {
+        resolveDependencies: (_filename: string, deps: string[]) => {
           return deps.filter((dep) => !HEAVY_PRELOAD_PATTERNS.some((pattern) => pattern.test(dep)));
         },
       },

@@ -155,6 +155,8 @@ The project currently focuses on one main application shape: a **Vite + React SP
 
 ### Option 1: Standard Development
 
+Use Node.js 26 for local development. The repository includes `.nvmrc`, and CI plus Docker use the same major version. The repository enables `engine-strict`, so `npm install` fails on Node 27+ or Node 25 and older; run `nvm use` first when needed.
+
 ```bash
 git clone https://github.com/yeahhe365/AMC-WebUI.git
 cd AMC-WebUI
@@ -162,6 +164,14 @@ cd AMC-WebUI
 npm install
 npm run dev
 ```
+
+To inspect production bundle size, run:
+
+```bash
+npm run build:analyze
+```
+
+The command writes `dist/bundle-stats.html` for reviewing the main bundle, lazy chunks, and PWA precache boundaries.
 
 Open `http://localhost:5175`, then add your Gemini API key in **Settings -> API Configuration**.
 

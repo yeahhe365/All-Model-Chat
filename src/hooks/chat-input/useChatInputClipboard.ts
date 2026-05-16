@@ -127,6 +127,7 @@ export const useChatInputClipboard = ({
         type: 'video/youtube-link',
         size: 0,
         fileUri: url,
+        transferStrategy: 'remote-file-id',
         uploadState: 'active',
         isProcessing: false,
       };

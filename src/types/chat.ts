@@ -7,6 +7,8 @@ export interface VideoMetadata {
   fps?: number;
 }
 
+export type FileTransferStrategy = 'inline' | 'files-api' | 'remote-file-id' | 'auto';
+
 export interface UploadedFile {
   id: string;
   name: string;
@@ -35,6 +37,7 @@ export interface UploadedFile {
   fileUri?: string;
   fileApiName?: string;
   fileApiExpirationTime?: string;
+  transferStrategy?: FileTransferStrategy;
   uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled';
   abortController?: AbortController;
   uploadSpeed?: string;

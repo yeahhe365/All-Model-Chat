@@ -1,4 +1,4 @@
-export const shortcutsSettings = {
+const shortcutsSettings = {
   shortcuts_general_title: { en: 'App', zh: '应用' },
   shortcuts_new_chat: { en: 'Start New Chat', zh: '开始新对话' },
   shortcuts_search_chats: { en: 'Search Chats', zh: '搜索聊天' },
@@ -44,3 +44,4 @@ export const shortcutsSettings = {
   shortcuts_current_aria: { en: 'Current shortcut', zh: '当前快捷键' },
   shortcuts_none: { en: 'None', zh: '未设置' },
 };
+export default shortcutsSettings;

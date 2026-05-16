@@ -366,7 +366,7 @@ describe('useMessageSender', () => {
     unmount();
   });
 
-  it('uses the independent OpenAI-compatible model before applying Gemini model routing', async () => {
+  it('converts local Files API references to inline files before sending in OpenAI-compatible mode', async () => {
     mockGetModelCapabilities.mockImplementation((modelId: string) => ({
       isTtsModel: false,
       isRealImagenModel: false,
@@ -375,12 +375,16 @@ describe('useMessageSender', () => {
     }));
 
     const setAppFileError = vi.fn();
+    const rawFile = new File(['image-bytes'], 'reference.png', { type: 'image/png' });
     const selectedFiles = [
       createUploadedFile({
-        name: 'reference.pdf',
-        type: 'application/pdf',
+        name: 'reference.png',
+        type: 'image/png',
+        size: rawFile.size,
+        rawFile,
         fileApiName: 'files/gemini-reference',
         fileUri: 'https://files/gemini-reference',
+        transferStrategy: 'files-api',
       }),
     ];
 
@@ -398,7 +402,7 @@ describe('useMessageSender', () => {
     });
 
     await act(async () => {
-      await result.current.handleSendMessage({ text: 'summarize this PDF' });
+      await result.current.handleSendMessage({ text: 'summarize this image' });
     });
 
     expect(mockGetModelCapabilities).toHaveBeenCalledWith('gpt-5.5');
@@ -407,8 +411,16 @@ describe('useMessageSender', () => {
     expect(mockSendImageEditMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: 'summarize this PDF',
-        files: selectedFiles,
+        text: 'summarize this image',
+        files: [
+          expect.objectContaining({
+            name: 'reference.png',
+            rawFile,
+            fileApiName: undefined,
+            fileUri: undefined,
+            transferStrategy: 'inline',
+          }),
+        ],
         editingMessageId: null,
         activeModelId: 'gpt-5.5',
         isContinueMode: false,
@@ -421,6 +433,52 @@ describe('useMessageSender', () => {
         }),
       }),
     );
+    unmount();
+  });
+
+  it('blocks remote-only Files API references in OpenAI-compatible mode', async () => {
+    mockGetModelCapabilities.mockImplementation((modelId: string) => ({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: modelId === 'gemini-3-pro-image-preview',
+    }));
+
+    const setAppFileError = vi.fn();
+    const selectedFiles = [
+      createUploadedFile({
+        name: 'remote-reference.png',
+        type: 'image/png',
+        rawFile: undefined,
+        fileApiName: 'files/remote-reference',
+        fileUri: 'https://files/remote-reference',
+        transferStrategy: 'remote-file-id',
+      }),
+    ];
+
+    const { result, unmount } = renderMessageSender({
+      appSettings: {
+        isOpenAICompatibleApiEnabled: true,
+        apiMode: 'openai-compatible',
+        openaiCompatibleModelId: 'gpt-5.5',
+      },
+      currentChatSettings: {
+        modelId: 'gemini-3-pro-image-preview',
+      },
+      selectedFiles,
+      setAppFileError,
+    });
+
+    await act(async () => {
+      await result.current.handleSendMessage({ text: 'describe this image' });
+    });
+
+    expect(mockGetModelCapabilities).toHaveBeenCalledWith('gpt-5.5');
+    expect(mockGetFileMetadataApi).not.toHaveBeenCalled();
+    expect(setAppFileError).toHaveBeenCalledWith(
+      'OpenAI 兼容模式不能发送 Gemini Files API 远端引用。请重新附加 remote-reference.png 作为本地图片、音频或文本文件，或切回 Gemini API。',
+    );
+    expect(mockSendStandardMessage).not.toHaveBeenCalled();
     unmount();
   });
 

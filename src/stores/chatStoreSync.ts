@@ -40,18 +40,13 @@ export function setupChatStoreSync({
   const resolvedDocument = documentRef ?? (typeof document !== 'undefined' ? document : undefined);
 
   if (typeof BroadcastChannel === 'undefined' || !resolvedDocument) {
-    return;
+    return () => {};
   }
 
   let isDirty = false;
   const channel = getChannel();
-  const originalOnMessage = channel.onmessage;
 
-  channel.onmessage = (event: MessageEvent<SyncMessage>) => {
-    if (originalOnMessage) {
-      originalOnMessage.call(channel, event);
-    }
-
+  const handleMessage = (event: MessageEvent<SyncMessage>) => {
     const msg = event.data;
 
     switch (msg.type) {
@@ -107,12 +102,20 @@ export function setupChatStoreSync({
     }
   };
 
-  resolvedDocument.addEventListener('visibilitychange', () => {
+  const handleVisibilityChange = () => {
     if (resolvedDocument.visibilityState === 'visible' && isDirty) {
       logger.info('[Sync] Tab visible, syncing pending updates from DB.');
       store.getState().refreshSessions();
       store.getState().refreshGroups();
       isDirty = false;
     }
-  });
+  };
+
+  channel.addEventListener('message', handleMessage);
+  resolvedDocument.addEventListener('visibilitychange', handleVisibilityChange);
+
+  return () => {
+    channel.removeEventListener('message', handleMessage);
+    resolvedDocument.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
 }
